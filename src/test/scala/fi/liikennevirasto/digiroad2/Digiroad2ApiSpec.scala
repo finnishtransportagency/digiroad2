@@ -40,6 +40,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l)))
+    .thenReturn(List(VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
   val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, testRoadLinkService)
@@ -222,7 +224,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating numerical limits should require an operator role") {
-    putJsonWithUserAuth("/linearassets/11112", """{"value":6000}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "existing": [{"id": 11112, "mmlId": 388562360}]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
