@@ -133,53 +133,25 @@
     selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
     selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
-    var isUnknown = function(speedLimit) {
-      return !_.isNumber(speedLimit.value);
+    var lineFeatures = function(linearAssets) {
+      return _.flatten(_.map(linearAssets, function(linearAsset) {
+          var points = _.map(linearAsset.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAsset);
+      }));
     };
 
-    var lineFeatures = function(speedLimits) {
-      return _.map(speedLimits, function(speedLimit) {
-        var points = _.map(speedLimit.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(speedLimit), type);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+    var renderFeatures = function(linearAssets) {
+      var linearAssetsWithType = _.map(linearAssets, function(limit) {
+        var expired = _.isUndefined(limit.id) || limit.expired;
+        return _.merge({}, limit, { type: 'line', expired: expired + '' });
       });
-    };
-
-    var dottedLineFeatures = function(speedLimits) {
-      var solidLines = lineFeatures(speedLimits);
-      var dottedOverlay = lineFeatures(_.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'overlay' }); }));
-      return solidLines.concat(dottedOverlay);
-    };
-
-    var limitSigns = function(speedLimits) {
-      return _.map(speedLimits, function(speedLimit) {
-        var points = _.map(speedLimit.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = new GeometryUtils().calculateMidpointOfLineString(road);
-        var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(speedLimit), type);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
-      });
-    };
-
-    var renderFeatures = function(speedLimits) {
-      var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-      var offsetBySideCode = function(speedLimit) {
-        return LinearAsset().offsetBySideCode(applicationModel.zoom.level, speedLimit);
+      var offsetBySideCode = function(linearAsset) {
+        return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
       };
-      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
-      var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
-      var highSpeedLimits = speedLimitsSplitAt70kmh[true];
-
-      return lineFeatures(lowSpeedLimits)
-        .concat(dottedLineFeatures(highSpeedLimits))
-        .concat(limitSigns(speedLimitsWithAdjustments));
+      var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
+      return lineFeatures(linearAssetsWithAdjustments);
     };
 
     return {
