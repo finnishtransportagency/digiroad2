@@ -8,8 +8,8 @@
       var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
       var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-      var expiredChecked = selectedLinearAsset.expired() ? 'checked' : '';
-      var nonExpiredChecked = selectedLinearAsset.expired() ? '' : 'checked';
+      var expiredChecked = selectedLinearAsset.isUnknown() ? 'checked' : '';
+      var nonExpiredChecked = selectedLinearAsset.isUnknown() ? '' : 'checked';
       var title = selectedLinearAsset.isNew() ?
         '<span>' + newTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
@@ -18,7 +18,7 @@
         if (unit) {
           return selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() + ' ' + unit : '-';
         } else {
-          return selectedLinearAsset.expired() ? 'ei ole' : 'on';
+          return selectedLinearAsset.isUnknown() ? 'ei ole' : 'on';
         }
       };
       var measureInput = function() {
@@ -72,7 +72,7 @@
 
     var setupNumericalLimitInput = function(toggleElement, inputElement, selectedLinearAsset) {
       inputElement.val(selectedLinearAsset.getValue());
-      inputElement.prop('disabled', selectedLinearAsset.expired());
+      inputElement.prop('disabled', selectedLinearAsset.isUnknown());
       inputElement.on('input', function(event) {
         var value = parseInt(removeWhitespace($(event.currentTarget).val()), 10);
         selectedLinearAsset.setValue(value);
