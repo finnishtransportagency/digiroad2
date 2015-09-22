@@ -455,7 +455,7 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(existingAssets, value.map(_.intValue()), expired.getOrElse(false), user.username)
+        val updatedIds = linearAssetService.update(existingAssets.map(_.id), value.map(_.intValue()), expired.getOrElse(false), user.username)
         val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username)
         updatedIds ++ created.map(_.id)
     }

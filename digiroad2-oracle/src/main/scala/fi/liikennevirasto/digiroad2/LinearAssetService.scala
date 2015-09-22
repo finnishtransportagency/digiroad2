@@ -141,11 +141,11 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(existingAssets: Seq[ExistingLinearAsset], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     withDynTransaction {
-      existingAssets.map { existingAsset =>
-        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(existingAsset.id, _, username))
-        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(existingAsset.id, expired, username)
+      ids.map { id =>
+        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
+        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
         val updatedId = valueUpdate.orElse(expirationUpdate)
         updatedId.getOrElse(throw new NoSuchElementException)
       }
