@@ -1,11 +1,5 @@
 (function (root) {
   var template = function(selectedSpeedLimit) {
-    var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
-    var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
-    var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
-      var selected = value === selectedSpeedLimit.getValue() ? " selected" : "";
-      return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-    }));
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
@@ -36,6 +30,12 @@
 
     var limitValueButtons = function() {
       var singleValueElement = function(sideCode) {
+        var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
+        var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
+        var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
+          var selected = value === selectedSpeedLimit.getValue() ? " selected" : "";
+          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+        }));
         var speedLimitClass = sideCode ? "speed-limit-" + sideCode : "speed-limit";
         var template =  _.template(
           '<div class="form-group editable">' +
