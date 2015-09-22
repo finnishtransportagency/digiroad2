@@ -193,7 +193,7 @@ var URLRouter = function(map, backend, models) {
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
-        style: {}
+        style: SpeedLimitStyle(applicationModel)
       });
       return acc;
     }, {});
@@ -211,18 +211,6 @@ var URLRouter = function(map, backend, models) {
         linearAsset: LinearAsset(),
         backend: backend,
         roadLayer: roadLayer
-      }),
-      linearAsset: new LinearAssetLayer2({
-        map: map,
-        application: applicationModel,
-        collection: models.linearAssetsCollection2,
-        selectedSpeedLimit: models.selectedLinearAsset2,
-        geometryUtils: new GeometryUtils(),
-        linearAsset: LinearAsset(),
-        roadLayer: roadLayer,
-        multiElementEventCategory: 'totalWeightLimits',
-        singleElementEventCategory: 'totalWeightLimit',
-        style: SpeedLimitStyle(applicationModel)
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, new GeometryUtils(), models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers);
