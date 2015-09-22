@@ -171,11 +171,11 @@ var URLRouter = function(map, backend, models) {
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
-      new LinearAssetForm(
+      LinearAssetForm2.initialize(
           linearAsset.selectedLinearAsset,
+          linearAsset.singleElementEventCategory,
           linearAsset.newTitle,
           linearAsset.className,
-          linearAsset.singleElementEventCategory,
           linearAsset.unit,
           linearAsset.editControlLabels);
     });
