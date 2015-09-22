@@ -47,12 +47,31 @@
       cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
     };
 
+    var expirationRules = [
+      new OpenLayersRule().where('expired').is(true).use({strokeColor: '#7f7f7c'}),
+      new OpenLayersRule().where('expired').is(false).use({strokeColor: '#ff0000'})
+    ];
+
+    var zoomLevelRules = [
+      new OpenLayersRule().where('level', applicationModel.zoom).is(9).use(RoadLayerSelectionStyle.linkSizeLookup[9]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(10).use(RoadLayerSelectionStyle.linkSizeLookup[10]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(11).use(RoadLayerSelectionStyle.linkSizeLookup[11]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(12).use(RoadLayerSelectionStyle.linkSizeLookup[12]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(13).use(RoadLayerSelectionStyle.linkSizeLookup[13]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(14).use(RoadLayerSelectionStyle.linkSizeLookup[14]),
+      new OpenLayersRule().where('level', applicationModel.zoom).is(15).use(RoadLayerSelectionStyle.linkSizeLookup[15])
+    ];
+
+    var featureTypeRules = [
+      new OpenLayersRule().where('type').is('line').use({ strokeOpacity: 0.7 }),
+      new OpenLayersRule().where('type').is('cutter').use({ externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 })
+    ];
+
     var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    browseStyle.addRules(expirationRules);
+    browseStyle.addRules(zoomLevelRules);
+    browseStyle.addRules(featureTypeRules);
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
-    browseStyleMap.addUniqueValueRules('default', 'expired', styleLookup);
-    browseStyleMap.addUniqueValueRules('default', 'level', RoadLayerSelectionStyle.linkSizeLookup, applicationModel.zoom);
-    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
-    browseStyle.addRules(validityDirectionStyleRules);
 
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.15
@@ -81,7 +100,7 @@
     var renderFeatures = function(linearAssets) {
       var linearAssetsWithType = _.map(linearAssets, function(limit) {
         var expired = _.isUndefined(limit.id) || limit.expired;
-        return _.merge({}, limit, { type: 'line', expired: expired + '' });
+        return _.merge({}, limit, { type: 'line', expired: expired });
       });
       var offsetBySideCode = function(linearAsset) {
         return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
