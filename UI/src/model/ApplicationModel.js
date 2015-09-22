@@ -1,6 +1,8 @@
 (function(root) {
   root.ApplicationModel = function(models) {
-    var zoomLevel;
+    var zoom = {
+      level: undefined
+    };
     var selectedLayer = 'massTransitStop';
     var selectedTool = 'Select';
     var centerLonLat;
@@ -16,11 +18,14 @@
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
     };
+    var setZoomLevel = function(level) {
+      zoom.level = level;
+    };
 
     return {
       moveMap: function(zoom, bbox) {
-        var hasZoomLevelChanged = zoomLevel !== zoom;
-        zoomLevel = zoom;
+        var hasZoomLevelChanged = zoom.level !== zoom;
+        setZoomLevel(zoom);
         centerLonLat = bbox.getCenterLonLat();
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
       },
@@ -33,9 +38,8 @@
       getSelectedTool: function() {
         return selectedTool;
       },
-      setZoomLevel: function(level) {
-        zoomLevel = level;
-      },
+      zoom: zoom,
+      setZoomLevel: setZoomLevel,
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },
@@ -60,7 +64,7 @@
         return isDirty();
       },
       canZoomOut: function() {
-        return !(isDirty() && (zoomLevel <= minDirtyZoomLevel));
+        return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
       assetDragDelay: 100,
       assetGroupingDistance: 36,

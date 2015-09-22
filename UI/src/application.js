@@ -224,7 +224,7 @@ var URLRouter = function(map, backend, models) {
         roadLayer: roadLayer,
         multiElementEventCategory: 'totalWeightLimits',
         singleElementEventCategory: 'totalWeightLimit',
-        style: {}
+        style: SpeedLimitStyle(applicationModel)
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers);
