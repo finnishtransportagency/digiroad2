@@ -185,7 +185,7 @@ var URLRouter = function(map, backend, models) {
         map: map,
         application: applicationModel,
         collection: asset.collection,
-        selectedSpeedLimit: models.selectedLinearAsset2,
+        selectedSpeedLimit: asset.selectedLinearAsset,
         roadCollection: models.roadCollection,
         geometryUtils: new GeometryUtils(),
         linearAsset: LinearAsset(),
@@ -352,15 +352,13 @@ var URLRouter = function(map, backend, models) {
     var roadCollection = new RoadCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
-    var linearAssetsCollection2 = new LinearAssetsCollection2(backend, 30, 'totalWeightLimit', 'totalWeightLimits');
-    var selectedLinearAsset2 = new SelectedLinearAsset2(backend, linearAssetsCollection2, 30, 'totalWeightLimit', 'totalWeightLimits');
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var linearAssets = _.map(linearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection2(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedLinearAsset = new SelectedLinearAsset2(backend, spec.typeId, collection, spec.singleElementEventCategory);
+      var selectedLinearAsset = new SelectedLinearAsset2(backend, collection, spec.typeId, spec.singleElementEventCategory);
       return _.merge({}, spec, {
         collection: collection,
         selectedLinearAsset: selectedLinearAsset
@@ -373,8 +371,6 @@ var URLRouter = function(map, backend, models) {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
-      linearAssetsCollection2: linearAssetsCollection2,
-      selectedLinearAsset2: selectedLinearAsset2,
       selectedLinkProperty: selectedLinkProperty,
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
