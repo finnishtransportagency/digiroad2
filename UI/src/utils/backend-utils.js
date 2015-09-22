@@ -151,11 +151,11 @@
       });
     }, 1000);
 
-    this.updateLinearAsset = _.throttle(function(id, data, success, failure) {
+    this.updateLinearAssets = _.throttle(function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/linearassets/" + id,
+        url: "api/linearassets",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

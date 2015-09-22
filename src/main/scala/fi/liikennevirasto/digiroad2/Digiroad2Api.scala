@@ -439,26 +439,6 @@ with GZipSupport {
     }
   }
 
-
-  put("/linearassets/:id") {
-    val user = userProvider.getCurrentUser()
-    val id = params("id").toLong
-    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite)) {
-      halt(Unauthorized("User not authorized"))
-    }
-    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
-    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
-    (expiredOption, valueOption) match {
-      case (None, None) => BadRequest("Numerical limit value or expiration not provided")
-      case (expired, value) =>
-        value.foreach(validateNumericalLimitValue)
-        linearAssetService.update(Seq(id), value.map(_.intValue()), expired.getOrElse(false), user.username, (_) => Unit) match {
-          case Nil => NotFound("Linear asset " + id + " not found")
-          case segmentIds => linearAssetService.getById(segmentIds.head)
-        }
-    }
-  }
-
   put("/linearassets") {
     val user = userProvider.getCurrentUser()
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
