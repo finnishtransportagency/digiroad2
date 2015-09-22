@@ -9,7 +9,7 @@ window.LinearAssetLayer2 = function(params) {
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = 'linearAsset';
+      layerName = params.layerName;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;

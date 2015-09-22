@@ -183,18 +183,19 @@ var URLRouter = function(map, backend, models) {
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-      acc[asset.layerName] = new LinearAssetLayer({
+      acc[asset.layerName] = new LinearAssetLayer2({
         map: map,
         application: applicationModel,
         collection: asset.collection,
-        selectedLinearAsset: asset.selectedLinearAsset,
+        selectedSpeedLimit: models.selectedLinearAsset2,
         roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAssetsUtility,
         roadLayer: roadLayer,
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
-        singleElementEventCategory: asset.singleElementEventCategory
+        singleElementEventCategory: asset.singleElementEventCategory,
+        style: {}
       });
       return acc;
     }, {});
@@ -220,7 +221,6 @@ var URLRouter = function(map, backend, models) {
         selectedSpeedLimit: models.selectedLinearAsset2,
         geometryUtils: geometryUtils,
         linearAsset: linearAssetsUtility,
-        backend: backend,
         roadLayer: roadLayer,
         multiElementEventCategory: 'totalWeightLimits',
         singleElementEventCategory: 'totalWeightLimit',
@@ -373,8 +373,8 @@ var URLRouter = function(map, backend, models) {
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var linearAssets = _.map(linearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedLinearAsset = new SelectedLinearAsset(backend, spec.typeId, collection, spec.singleElementEventCategory);
+      var collection = new LinearAssetsCollection2(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var selectedLinearAsset = new SelectedLinearAsset2(backend, spec.typeId, collection, spec.singleElementEventCategory);
       return _.merge({}, spec, {
         collection: collection,
         selectedLinearAsset: selectedLinearAsset
