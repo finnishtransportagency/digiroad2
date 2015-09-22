@@ -106,7 +106,7 @@
     this.getAllCarTrafficRoads = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {
-          return roadLink.isCarTrafficRoad();
+          return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass != "Unknown");
         })
         .map(function(roadLink) {
           return roadLink.getData();
