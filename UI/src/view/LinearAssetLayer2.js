@@ -418,18 +418,24 @@ window.LinearAssetLayer2 = function(params) {
     vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
 
     if (selectedSpeedLimit.exists()) {
-      selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
-      if (feature) {
-        selectControl.select(feature);
-      }
-      highlightMultipleSpeedLimitFeatures();
-      selectControl.onSelect = speedLimitOnSelect;
+      withoutOnSelect(function() {
+        var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+        if (feature) {
+          selectControl.select(feature);
+        }
+        highlightMultipleSpeedLimitFeatures();
+      });
 
       if (selectedSpeedLimit.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
     }
+  };
+
+  var withoutOnSelect = function(f) {
+    selectControl.onSelect = function() {};
+    f();
+    selectControl.onSelect = speedLimitOnSelect;
   };
 
   var dottedLineFeatures = function(speedLimits) {
