@@ -6,6 +6,7 @@ window.LinearAssetLayer2 = function(params) {
       geometryUtils = params.geometryUtils,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer,
+      style = params.style,
       layerName = 'linearAsset';
 
   Layer.call(this, layerName, roadLayer);
@@ -233,6 +234,7 @@ window.LinearAssetLayer2 = function(params) {
   browseStyle.addRules(overlayStyleRules);
   browseStyle.addRules(validityDirectionStyleRules);
   browseStyle.addRules(oneWayOverlayStyleRules);
+  style.browsing = browseStyleMap;
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15,
@@ -253,8 +255,9 @@ window.LinearAssetLayer2 = function(params) {
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
   selectionDefaultStyle.addRules([unknownLimitStyleRule]);
+  style.selection = selectionStyle;
 
-  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
   vectorLayer.setOpacity(1);
   map.addLayer(vectorLayer);
 
@@ -278,7 +281,7 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = selectionStyle;
+    vectorLayer.styleMap = style.selection;
     highlightSpeedLimitFeatures();
     vectorLayer.redraw();
   };
@@ -328,7 +331,7 @@ window.LinearAssetLayer2 = function(params) {
       selectControl.unhighlight(feature);
     });
 
-    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.styleMap = style.browsing;
     vectorLayer.redraw();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
@@ -390,12 +393,12 @@ window.LinearAssetLayer2 = function(params) {
     _.each(vectorLayer.features, function(feature) {
       selectControl.unhighlight(feature);
     });
-    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.styleMap = style.browsing;
     vectorLayer.redraw();
   };
 
   var activateSelectionStyle = function(selectedSpeedLimits) {
-    vectorLayer.styleMap = selectionStyle;
+    vectorLayer.styleMap = style.selection;
     selectedSpeedLimit.openMultiple(selectedSpeedLimits);
     highlightMultipleSpeedLimitFeatures();
     vectorLayer.redraw();
@@ -590,7 +593,7 @@ window.LinearAssetLayer2 = function(params) {
   var reset = function() {
     stop();
     selectControl.unselectAll();
-    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.styleMap = style.browsing;
   };
 
   var show = function(map) {

@@ -221,7 +221,8 @@ var URLRouter = function(map, backend, models) {
         geometryUtils: geometryUtils,
         linearAsset: linearAssetsUtility,
         backend: backend,
-        roadLayer: roadLayer
+        roadLayer: roadLayer,
+        style: {}
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers);
