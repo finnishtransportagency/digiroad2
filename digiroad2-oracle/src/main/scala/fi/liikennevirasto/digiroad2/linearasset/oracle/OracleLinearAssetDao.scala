@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
+case class PersistedSpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
+                               modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime])
 
 trait OracleLinearAssetDao {
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
@@ -225,6 +227,23 @@ trait OracleLinearAssetDao {
     }
   }
 
+  def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
+    val speedLimit = sql"""
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+        where a.asset_type_id = 20 and a.id = $id
+        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].firstOption
+
+    speedLimit.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
+      PersistedSpeedLimit(id, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    }
+  }
+
   def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, value) = sql"""
       select a.modified_by, a.modified_date, a.created_by, a.created_date, e.value
@@ -251,6 +270,9 @@ trait OracleLinearAssetDao {
     municipalityValidation(roadLinkService.fetchVVHRoadlink(mmlId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
   }
+
+  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int) =
+    createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
 
   def insertEnumeratedValue(assetId: Long, valuePropertyId: String)(value: Int) = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
@@ -356,15 +378,6 @@ trait OracleLinearAssetDao {
     updateMValues(id, existingLinkMeasures)
     val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value).get
     createdId
-  }
-
-  def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Long = {
-    val speedLimit = getSpeedLimitLinksById(id).head
-    val separable = speedLimit.sideCode == SideCode.BothDirections && speedLimit.trafficDirection == TrafficDirection.BothDirections
-    if (!separable) throw new IllegalArgumentException
-    updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
-    updateSideCode(id, SideCode.TowardsDigitizing)
-    createSpeedLimitWithoutDuplicates(username, speedLimit.mmlId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
   }
 
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {

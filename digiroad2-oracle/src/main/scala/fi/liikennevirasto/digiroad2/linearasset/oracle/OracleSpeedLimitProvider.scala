@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, UnknownLimit}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -98,9 +98,35 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
+  private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
+    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.mmlId).get
+
+    SpeedLimit(
+      persistedSpeedLimit.id, persistedSpeedLimit.mmlId, persistedSpeedLimit.sideCode,
+      roadLink.trafficDirection, persistedSpeedLimit.value,
+      GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
+      persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
+      persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
+      persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate)
+  }
+
+  private def isSeparableValidation(speedLimit: SpeedLimit): SpeedLimit = {
+    val separable = speedLimit.sideCode == SideCode.BothDirections && speedLimit.trafficDirection == TrafficDirection.BothDirections
+    if (!separable) throw new IllegalArgumentException
+    speedLimit
+  }
+
   override def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
+    val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
+      .map(toSpeedLimit)
+      .map(isSeparableValidation)
+      .get
+
     withDynTransaction {
-      val newId = dao.separateSpeedLimit(id, valueTowardsDigitization, valueAgainstDigitization, username, municipalityValidation)
+      dao.updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
+      dao.updateSideCode(id, SideCode.TowardsDigitizing)
+      val newId = dao.createSpeedLimit(username, speedLimit.mmlId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
+
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }
