@@ -141,11 +141,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(existingAssets: Seq[ExistingLinearAsset], value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
-    roadLinkService.fetchVVHRoadlinks(existingAssets.map(_.mmlId).toSet)
-      .map(_.municipalityCode)
-      .foreach(municipalityValidation)
-
+  def update(existingAssets: Seq[ExistingLinearAsset], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     withDynTransaction {
       existingAssets.map { existingAsset =>
         val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(existingAsset.id, _, username))
@@ -205,15 +201,12 @@ trait LinearAssetOperations {
     }
   }
 
-  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
+  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String) = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
         val sideCode = 1
         val expired = false
-        // todo: fetch all roadlinks with single request outside transaction
-        val roadLink = roadLinkService.fetchVVHRoadlink(newAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-        municipalityValidation(roadLink.municipalityCode)
-        createWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
       }
     }
   }

@@ -446,12 +446,17 @@ with GZipSupport {
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val existingAssets = (parsedBody \ "existing").extract[Seq[ExistingLinearAsset]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
+    val mmlIds = newLimits.map(_.mmlId) ++ existingAssets.map(_.mmlId)
+    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
     (expiredOption, valueOption) match {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(existingAssets, value.map(_.intValue()), expired.getOrElse(false), user.username, validateUserMunicipalityAccess(user))
-        val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username, validateUserMunicipalityAccess(user))
+        val updatedIds = linearAssetService.update(existingAssets, value.map(_.intValue()), expired.getOrElse(false), user.username)
+        val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username)
         updatedIds ++ created.map(_.id)
     }
   }
