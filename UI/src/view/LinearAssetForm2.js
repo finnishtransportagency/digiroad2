@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  var template = function(selectedSpeedLimit) {
+  var template = function(selectedSpeedLimit, formElements) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
@@ -33,25 +33,8 @@
     };
 
     var limitValueButtons = function() {
-      var singleValueElement = function(sideCode) {
-        var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
-        var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
-        var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
-          var selected = value === selectedSpeedLimit.getValue() ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-        }));
-        var speedLimitClass = sideCode ? "speed-limit-" + sideCode : "speed-limit";
-        var template =  _.template(
-          '<div class="form-group editable">' +
-            '<% if(sideCode) { %> <span class="marker"><%- sideCode %></span> <% } %>' +
-            '<label class="control-label">Rajoitus</label>' +
-            '<p class="form-control-static">' + (selectedSpeedLimit.getValue() || 'Tuntematon') + '</p>' +
-            '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-          '</div>');
-        return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
-      };
-      var separateValueElement = singleValueElement("a") + singleValueElement("b");
-      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
+      var separateValueElement = formElements.singleValueElement(selectedSpeedLimit, "a") + formElements.singleValueElement(selectedSpeedLimit, "b");
+      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedSpeedLimit);
     };
 
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
@@ -86,7 +69,7 @@
     }
   };
 
-  function bindEvents(selectedSpeedLimit, eventCategory) {
+  function bindEvents(selectedSpeedLimit, eventCategory, formElements) {
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -98,7 +81,7 @@
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     };
     eventbus.on(events('selected', 'cancelled'), function() {
-      rootElement.html(template(selectedSpeedLimit));
+      rootElement.html(template(selectedSpeedLimit, formElements));
       var extractValue = function(event) {
         return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
       };
