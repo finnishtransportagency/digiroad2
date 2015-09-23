@@ -44,7 +44,7 @@
     this.fetch = function(boundingBox) {
       return backend.getLinearAssets(boundingBox, typeId, function() {}).then(function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
-          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
+          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, 'value'); });
         });
         var knownSpeedLimits = partitionedSpeedLimitGroups[true] || [];
         var unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function(speedLimitGroup) {
@@ -58,7 +58,7 @@
     };
 
     var isUnknown = function(speedLimit) {
-      return !_.has(speedLimit, 'id');
+      return !_.has(speedLimit, 'value');
     };
 
     var isEqual = function(a, b) {
