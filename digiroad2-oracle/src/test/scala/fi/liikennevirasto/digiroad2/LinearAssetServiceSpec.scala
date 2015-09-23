@@ -63,7 +63,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
-    val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
+    val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
     linearAssets should have size 1
     linearAssets.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     linearAssets.map(_.mmlId) should be(Seq(1))
