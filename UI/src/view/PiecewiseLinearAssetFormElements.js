@@ -39,7 +39,8 @@
         var removeWhitespace = function(s) {
           return s.replace(/\s/g, '');
         };
-        return parseInt(removeWhitespace(inputElement.val()), 10);
+        var value = parseInt(removeWhitespace(inputElement.val()), 10);
+        return _.isFinite(value) ? value : undefined;
       };
 
       inputElement.on('input', function(event) {
@@ -67,9 +68,10 @@
 
     function measureInput(selectedLinearAsset) {
       if (unit) {
+        var value = selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() : '';
         return '' +
           '<div class="labelless input-unit-combination input-group">' +
-            '<input type="text" class="form-control ' + className + '" value="' + selectedLinearAsset.getValue()  + '">' +
+            '<input type="text" class="form-control ' + className + '" value="' + value  + '">' +
             '<span class="input-group-addon">' + unit + '</span>' +
           '</div>';
       } else {
