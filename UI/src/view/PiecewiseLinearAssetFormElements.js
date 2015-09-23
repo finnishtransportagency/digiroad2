@@ -26,24 +26,34 @@
               '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
             '</div>' +
           '</div>' +
-          measureInput() +
+          measureInput(selectedLinearAsset) +
         '</div>';
 
       return readOnlyFormGroup + editableFormGroup;
     }
 
     function bindEvents(rootElement, selectedLinearAsset) {
-      var inputElement = rootElement.find('.' + className);
+      var inputElement = rootElement.find('input.' + className);
       var toggleElement = rootElement.find('.radio input');
+      var inputElementValue = function() {
+        var removeWhitespace = function(s) {
+          return s.replace(/\s/g, '');
+        };
+        return parseInt(removeWhitespace(inputElement.val()), 10);
+      };
 
       inputElement.on('input', function(event) {
-        selectedLinearAsset.setValue(parseInt($(event.currentTarget).val(), 10));
+        selectedLinearAsset.setValue(inputElementValue());
       });
 
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
-        selectedLinearAsset.removeValue();
         inputElement.prop('disabled', disabled);
+        if (disabled) {
+          selectedLinearAsset.removeValue();
+        } else {
+          selectedLinearAsset.setValue(inputElementValue());
+        }
       });
     }
 
@@ -55,11 +65,11 @@
       }
     }
 
-    function measureInput() {
+    function measureInput(selectedLinearAsset) {
       if (unit) {
         return '' +
           '<div class="labelless input-unit-combination input-group">' +
-            '<input type="text" class="form-control ' + className + '">' +
+            '<input type="text" class="form-control ' + className + '" value="' + selectedLinearAsset.getValue()  + '">' +
             '<span class="input-group-addon">' + unit + '</span>' +
           '</div>';
       } else {
