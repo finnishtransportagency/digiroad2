@@ -1,7 +1,8 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className) {
     return {
-      singleValueElement: singleValueElement
+      singleValueElement: singleValueElement,
+      bindEvents: bindEvents
     };
 
     function singleValueElement(selectedLinearAsset, sideCode) {
@@ -29,6 +30,21 @@
         '</div>';
 
       return readOnlyFormGroup + editableFormGroup;
+    }
+
+    function bindEvents(rootElement, selectedLinearAsset) {
+      var inputElement = rootElement.find('.' + className);
+      var toggleElement = rootElement.find('.radio input');
+
+      inputElement.on('input', function(event) {
+        selectedLinearAsset.setValue(parseInt($(event.currentTarget).val(), 10));
+      });
+
+      toggleElement.on('change', function(event) {
+        var disabled = $(event.currentTarget).val() === 'disabled';
+        // TODO: selectedLinearAsset.setExpired(disabled);
+        inputElement.prop('disabled', disabled);
+      });
     }
 
     function valueString(selectedLinearAsset) {
