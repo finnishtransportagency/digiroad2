@@ -19,7 +19,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 
-  def withDynTransaction[T](f: => T): T
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def roadLinkService: RoadLinkService
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
@@ -66,33 +66,33 @@ trait LinearAssetOperations {
   }
 
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAsset] = {
-    withDynTransaction {
-      val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-      val mmlIds = roadLinks.map(_.mmlId)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val mmlIds = roadLinks.map(_.mmlId)
 
-      val existingAssets = dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId).groupBy(_.mmlId)
+    val existingAssets = withDynTransaction {
+      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId).groupBy(_.mmlId)
+    }
 
-      val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
-      eventBus.publish("linearAssets:update", changeSet)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
+    eventBus.publish("linearAssets:update", changeSet)
 
-      filledTopology
-   }
+    filledTopology
   }
 
   def getByMunicipality(typeId: Int, municipality: Int): (Seq[PersistedLinearAsset], Map[Long, Seq[Point]]) = {
-    withDynTransaction {
-      val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
-      val mmlIds = roadLinks.map(_.mmlId).toList
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
+    val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val linearAssets = dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-
-      val linkGeometries: Map[Long, Seq[Point]] =
-        roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
-          acc + (roadLink.mmlId -> roadLink.geometry)
-        }
-
-      (linearAssets, linkGeometries)
+    val linearAssets = withDynTransaction {
+      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
     }
+
+    val linkGeometries: Map[Long, Seq[Point]] =
+      roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
+        acc + (roadLink.mmlId -> roadLink.geometry)
+      }
+
+    (linearAssets, linkGeometries)
   }
 
   private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
@@ -233,7 +233,6 @@ trait LinearAssetOperations {
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
-  def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImpl
