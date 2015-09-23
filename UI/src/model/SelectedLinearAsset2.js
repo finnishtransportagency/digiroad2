@@ -160,7 +160,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
+      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalSpeedLimitValue }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger(singleElementEvent('cancelled'), self);
@@ -187,7 +187,8 @@
     };
 
     this.getValue = function() {
-      return getProperty('value');
+      var value = getProperty('value');
+      return _.isNull(value) ? undefined : value;
     };
 
     this.getModifiedBy = function() {
