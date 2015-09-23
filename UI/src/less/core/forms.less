@@ -74,7 +74,7 @@ input[type="checkbox"]:focus {
 // input[type="tel"]
 // input[type="color"]
 
-.form-control:not(.choice-group) {
+.form-control {
   display: block;
   width: 100%;
   height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
@@ -328,6 +328,10 @@ input[type="checkbox"] {
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
   }
+
+  .labelless {
+    margin-left: (@control-label-width + @control-label-margin);
+  }
 }
 
 // Inverted colors
@@ -339,7 +343,7 @@ input[type="checkbox"] {
     color: @gray-lighter;
   }
 
-  .form-control:not(.choice-group) {
+  .form-control {
     border-color: @input-border-dark;
     color: @input-color-dark;
     background-color: @input-bg-dark;

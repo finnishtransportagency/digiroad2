@@ -1,20 +1,43 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className) {
+    function measureInput() {
+      if(unit) {
+        return '' +
+          '<div class="input-group labelless">' +
+            '<input type="text" class="form-control ' + className + '">' +
+            '<span class="input-group-addon">' + unit + '</span>' +
+          '</div>';
+      }
+      else {
+        return '';
+      }
+    }
+
     function singleValueElement(selectedLinearAsset, sideCode) {
       var expiredChecked = selectedLinearAsset.isUnknown() ? 'checked' : '';
       var nonExpiredChecked = selectedLinearAsset.isUnknown() ? '' : 'checked';
-      return '<div class="form-group editable">' +
-        '<label class="control-label">' + editControlLabels.title + '</label>' +
-        '<p class="form-control-static ' + className + '">' + valueString(selectedLinearAsset) + '</p>' +
-        '<div class="choice-group form-control">' +
-          '<div class="radio">' +
-            '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+
+      var readOnlyFormGroup = '' +
+        '<div class="form-group read-only">' +
+          '<label class="control-label">' + editControlLabels.title + '</label>' +
+          '<p class="form-control-static ' + className + '">' + valueString(selectedLinearAsset) + '</p>' +
+        '</div>';
+
+      var editableFormGroup = '' +
+        '<div class="form-group editable">' +
+          '<label class="control-label">' + editControlLabels.title + '</label>' +
+          '<div class="choice-group">' +
+            '<div class="radio">' +
+              '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+            '</div>' +
+            '<div class="radio">' +
+              '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
+            '</div>' +
           '</div>' +
-          '<div class="radio">' +
-            '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
+          measureInput() +
+        '</div>';
+
+      return readOnlyFormGroup + editableFormGroup;
     }
 
     function valueString(selectedLinearAsset) {

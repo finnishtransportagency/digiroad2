@@ -72,8 +72,8 @@
   function bindEvents(selectedSpeedLimit, eventCategory, formElements) {
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
-      rootElement.find('.editable .form-control-static').toggle(readOnly);
-      rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.read-only.form-group').toggle(readOnly);
+      rootElement.find('.editable.form-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
     };
