@@ -6,7 +6,7 @@
       return '<div class="form-group editable">' +
         '<label class="control-label">' + editControlLabels.title + '</label>' +
         '<p class="form-control-static ' + className + '">' + valueString(selectedLinearAsset) + '</p>' +
-        '<div class="choice-group">' +
+        '<div class="choice-group form-control">' +
           '<div class="radio">' +
             '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
           '</div>' +
