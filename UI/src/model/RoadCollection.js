@@ -103,7 +103,7 @@
       });
     };
 
-    this.getAllCarTrafficRoads = function() {
+    this.getRoadsForMassTransitStops = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {
           return roadLink.isCarTrafficRoad() && (roadLink.getData().administrativeClass != "Unknown");
