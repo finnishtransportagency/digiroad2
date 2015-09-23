@@ -1,17 +1,8 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className) {
-    function measureInput() {
-      if(unit) {
-        return '' +
-          '<div class="labelless input-unit-combination input-group">' +
-            '<input type="text" class="form-control ' + className + '">' +
-            '<span class="input-group-addon">' + unit + '</span>' +
-          '</div>';
-      }
-      else {
-        return '';
-      }
-    }
+    return {
+      singleValueElement: singleValueElement
+    };
 
     function singleValueElement(selectedLinearAsset, sideCode) {
       var expiredChecked = selectedLinearAsset.isUnknown() ? 'checked' : '';
@@ -48,8 +39,16 @@
       }
     }
 
-    return {
-      singleValueElement: singleValueElement
-    };
+    function measureInput() {
+      if (unit) {
+        return '' +
+          '<div class="labelless input-unit-combination input-group">' +
+            '<input type="text" class="form-control ' + className + '">' +
+            '<span class="input-group-addon">' + unit + '</span>' +
+          '</div>';
+      } else {
+        return '';
+      }
+    }
   };
 })(this);
