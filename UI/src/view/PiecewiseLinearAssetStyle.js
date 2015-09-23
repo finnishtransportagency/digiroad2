@@ -51,7 +51,7 @@
 
     var renderFeatures = function(linearAssets) {
       var linearAssetsWithType = _.map(linearAssets, function(limit) {
-        var expired = _.isUndefined(limit.value) || limit.expired;
+        var expired = _.isUndefined(limit.value);
         return _.merge({}, limit, { type: 'line', expired: expired });
       });
       var offsetBySideCode = function(linearAsset) {
