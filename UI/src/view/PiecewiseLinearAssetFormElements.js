@@ -3,7 +3,7 @@
     function measureInput() {
       if(unit) {
         return '' +
-          '<div class="input-group labelless">' +
+          '<div class="labelless input-unit-combination input-group">' +
             '<input type="text" class="form-control ' + className + '">' +
             '<span class="input-group-addon">' + unit + '</span>' +
           '</div>';
