@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -99,7 +99,7 @@ trait LinearAssetOperations {
     linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
       LinearAsset(
-        id, mmlId, sideCode, value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
+        id, mmlId, SideCode(sideCode), value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimePropertyFormat.print),
         createdBy, createdAt.map(DateTimePropertyFormat.print), typeId)
     }

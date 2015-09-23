@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 
 object LinearAssetPartitioner extends GraphPartitioner {
   def partition(links: Seq[LinearAsset], roadLinksForSpeedLimits: Map[Long, VVHRoadLinkWithProperties]): Seq[Seq[LinearAsset]] = {
-    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections.value)
+    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
     val linkGroups = twoWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.mmlId)
       val roadIdentifier = roadLink.map(RoadLinkUtility.roadIdentifierFromRoadLink)

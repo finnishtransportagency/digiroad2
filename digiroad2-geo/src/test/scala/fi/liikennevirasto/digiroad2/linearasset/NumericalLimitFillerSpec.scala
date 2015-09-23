@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset.{Motorway, TrafficDirection, Municipality}
 import org.scalatest._
 
@@ -12,7 +13,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
     val (filledTopology, _) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(1))
+    filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
     filledTopology.map(_.mmlId) should be(Seq(1))

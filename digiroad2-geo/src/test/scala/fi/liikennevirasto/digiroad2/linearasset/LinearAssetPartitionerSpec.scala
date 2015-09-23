@@ -6,7 +6,7 @@ import org.scalatest._
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
   private def linearAsset(mmlId: Long, value: Int, geometry: Seq[Point]) = {
-    LinearAsset(0, mmlId, SideCode.BothDirections.value, Some(value), geometry, false, 0.0, 0.0, Set.empty[Point], None, None, None, None, 30)
+    LinearAsset(0, mmlId, SideCode.BothDirections, Some(value), geometry, false, 0.0, 0.0, Set.empty[Point], None, None, None, None, 30)
   }
 
   private def roadLinkForSpeedLimit(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
