@@ -105,6 +105,9 @@
       rootElement.find('select.speed-limit-b').change(function(event) {
         selectedSpeedLimit.setBValue(extractValue(event));
       });
+      rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
+      rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
+      rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedSpeedLimit.cancel(); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselect', function() {
@@ -115,9 +118,6 @@
       rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedSpeedLimit.isSaveable());
       rootElement.find('.form-controls.speed-limit button.cancel').attr('disabled', false);
     });
-    rootElement.on('click', '#separate-limit', function() { selectedSpeedLimit.separate(); });
-    rootElement.on('click', '.form-controls.speed-limit button.save', function() { selectedSpeedLimit.save(); });
-    rootElement.on('click', '.form-controls.speed-limit button.cancel', function() { selectedSpeedLimit.cancel(); });
     eventbus.on('layer:selected', function(layer) {
       if(layer === 'speedLimit') {
         renderLinktoWorkList();
