@@ -65,7 +65,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[LinearAsset]] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     val mmlIds = roadLinks.map(_.mmlId)
 
@@ -95,17 +95,17 @@ trait LinearAssetOperations {
     (linearAssets, linkGeometries)
   }
 
-  private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
+  private def getByIdWithoutTransaction(id: Long): Option[PieceWiseLinearAsset] = {
     linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
-      LinearAsset(
+      PieceWiseLinearAsset(
         id, mmlId, SideCode(sideCode), value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimePropertyFormat.print),
         createdBy, createdAt.map(DateTimePropertyFormat.print), typeId)
     }
   }
 
-  def getById(id: Long): Option[LinearAsset] = {
+  def getById(id: Long): Option[PieceWiseLinearAsset] = {
     withDynTransaction {
       getByIdWithoutTransaction(id)
     }
@@ -166,7 +166,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): LinearAsset = {
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PieceWiseLinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
@@ -188,7 +188,7 @@ trait LinearAssetOperations {
     getByIdWithoutTransaction(id).get
   }
 
-  def createNew(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): LinearAsset = {
+  def createNew(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): PieceWiseLinearAsset = {
     val sideCode = 1
     val startMeasure = 0
     val expired = false
@@ -209,11 +209,11 @@ trait LinearAssetOperations {
     }
   }
 
-  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[LinearAsset] = {
+  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[PieceWiseLinearAsset] = {
     val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
 
-    val limit: LinearAsset = getById(id).get
+    val limit: PieceWiseLinearAsset = getById(id).get
     val createdId = withDynTransaction {
       Queries.updateAssetModified(id, username).execute
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id)

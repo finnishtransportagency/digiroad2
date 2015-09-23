@@ -53,7 +53,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
-      SpeedLimitPartitioner.partition(filledTopology, roadLinksByMmlId)
+      LinearAssetPartitioner.partition(filledTopology, roadLinksByMmlId)
     }
   }
 
