@@ -16,6 +16,6 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
     filledTopology.map(_.mmlId) should be(Seq(1))
-    filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
 }
