@@ -216,7 +216,7 @@
 
     this.setValue = function(value) {
       if (value != selection[0].value) {
-        var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
