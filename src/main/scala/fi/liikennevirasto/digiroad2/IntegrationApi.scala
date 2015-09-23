@@ -182,15 +182,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-    val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
+    val linearAssets = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
     linearAssets.map { link =>
       val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(
         Modification(link.createdDateTime, None),
         Modification(link.modifiedDateTime, None))
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(link.mmlId), link.startMeasure, link.endMeasure)
       Map("id" -> link.id,
-        "points" -> geometry,
+        "points" -> link.geometry,
         "value" -> link.value,
         "side_code" -> link.sideCode,
         "mmlId" -> link.mmlId,

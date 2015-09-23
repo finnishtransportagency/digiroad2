@@ -71,20 +71,19 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.mmlId).mapValues(_.head))
   }
 
-  def getByMunicipality(typeId: Int, municipality: Int): (Seq[PersistedLinearAsset], Map[Long, Seq[Point]]) = {
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
+  def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
     val mmlIds = roadLinks.map(_.mmlId).toList
 
     val linearAssets = withDynTransaction {
-      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId).groupBy(_.mmlId)
     }
 
-    val linkGeometries: Map[Long, Seq[Point]] =
-      roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
-        acc + (roadLink.mmlId -> roadLink.geometry)
-      }
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets, typeId)
+    eventBus.publish("linearAssets:update", changeSet)
 
-    (linearAssets, linkGeometries)
+    //TODO: filter unknowns
+    filledTopology
   }
 
   private def getByIdWithoutTransaction(id: Long): Option[PieceWiseLinearAsset] = {
@@ -92,8 +91,8 @@ trait LinearAssetOperations {
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
         id, mmlId, SideCode(sideCode), value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
-        modifiedBy, modifiedAt.map(DateTimePropertyFormat.print),
-        createdBy, createdAt.map(DateTimePropertyFormat.print), typeId)
+        modifiedBy, modifiedAt,
+        createdBy, createdAt, typeId)
     }
   }
 
