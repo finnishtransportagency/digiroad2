@@ -223,6 +223,10 @@
       }
     };
 
+    this.removeValue = function() {
+      this.setValue(undefined);
+    };
+
     this.setAValue = function(value) {
       if (value != selection[0].value) {
         selection[0].value = value;

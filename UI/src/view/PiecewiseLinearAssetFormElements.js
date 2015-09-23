@@ -42,7 +42,7 @@
 
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
-        // TODO: selectedLinearAsset.setExpired(disabled);
+        selectedLinearAsset.removeValue();
         inputElement.prop('disabled', disabled);
       });
     }
