@@ -103,4 +103,14 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
   }
+
+  test("separate unknown and existing asset") {
+    val linearAssets = Seq(
+      LinearAsset(0, 1, SideCode.BothDirections, None, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), false, 0.0, 0.0, Set.empty[Point], None, None, None, None, 30),
+      LinearAsset(1, 2, SideCode.BothDirections, None, Seq(Point(10.2, 0.0), Point(20.0, 0.0)), false, 0.0, 0.0, Set.empty[Point], None, None, None, None, 30))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)), 2l -> roadLinkForSpeedLimit(Left(1)))
+
+    val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
+    groupedLinks should have size 2
+  }
 }

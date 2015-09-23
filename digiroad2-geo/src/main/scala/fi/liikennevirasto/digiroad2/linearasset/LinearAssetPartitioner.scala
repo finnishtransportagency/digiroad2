@@ -8,9 +8,10 @@ object LinearAssetPartitioner extends GraphPartitioner {
     val linkGroups = twoWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.mmlId)
       val roadIdentifier = roadLink.map(RoadLinkUtility.roadIdentifierFromRoadLink)
-      (roadIdentifier, roadLink.map(_.administrativeClass), link.value)
+      (roadIdentifier, roadLink.map(_.administrativeClass), link.value, link.id == 0)
     }
-    val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined }
+
+    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _), _) => roadIdentifier.isDefined }
 
     val clusters = for (linkGroup <- linksToPartition.values.toSeq;
                         cluster <- clusterLinks(linkGroup)) yield cluster
