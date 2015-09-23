@@ -74,8 +74,6 @@
     var toggleMode = function(readOnly) {
       rootElement.find('.read-only.form-group').toggle(readOnly);
       rootElement.find('.editable.form-group').toggle(!readOnly);
-      rootElement.find('.form-controls').toggle(!readOnly);
-      rootElement.find('#separate-limit').toggle(!readOnly);
     };
     var events = function() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
