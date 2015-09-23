@@ -50,8 +50,8 @@ object NumericalLimitFiller {
       PieceWiseLinearAsset(
         dbAsset.id, dbAsset.mmlId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
         dbAsset.startMeasure, dbAsset.endMeasure,
-        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime.map(DateTimePropertyFormat.print),
-        dbAsset.createdBy, dbAsset.createdDateTime.map(DateTimePropertyFormat.print), typeId)
+        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
+        dbAsset.createdBy, dbAsset.createdDateTime, typeId)
     }
   }
 
