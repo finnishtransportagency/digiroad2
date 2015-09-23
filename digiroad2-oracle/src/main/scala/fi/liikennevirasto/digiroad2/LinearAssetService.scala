@@ -82,7 +82,6 @@ trait LinearAssetOperations {
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
 
-    //TODO: filter unknowns
     filledTopology
   }
 
