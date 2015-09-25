@@ -58,7 +58,7 @@
     };
 
     var isUnknown = function(speedLimit) {
-      return !_.has(speedLimit, 'value');
+      return _.isUndefined(speedLimit.value);
     };
 
     var isEqual = function(a, b) {
