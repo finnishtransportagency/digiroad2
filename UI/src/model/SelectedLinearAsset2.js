@@ -105,12 +105,12 @@
           return { ids: _.pluck(selection, 'id') };
         }
       };
-      var payload = _.merge({value: self.getValue()}, payloadContents());
+      var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
 
-      backend.updateSpeedLimits(payload, function(speedLimits) {
+      backend.updateLinearAssets(payload, function(speedLimits) {
         dirty = false;
         self.close();
-        eventbus.trigger(singleElementEvent('speedLimit:saved'));
+        eventbus.trigger(singleElementEvent('saved'));
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
