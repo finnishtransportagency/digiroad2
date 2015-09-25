@@ -10,15 +10,6 @@
       rootElement.html(template(selectedLinearAsset, formElements));
       formElements.bindEvents(rootElement, selectedLinearAsset);
 
-      rootElement.find('select.speed-limit').change(function(event) {
-        selectedLinearAsset.setValue(extractValue(event));
-      });
-      rootElement.find('select.speed-limit-a').change(function(event) {
-        selectedLinearAsset.setAValue(extractValue(event));
-      });
-      rootElement.find('select.speed-limit-b').change(function(event) {
-        selectedLinearAsset.setBValue(extractValue(event));
-      });
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
@@ -49,10 +40,6 @@
 
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
-    }
-
-    function extractValue(event) {
-      return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
     }
   }
 
