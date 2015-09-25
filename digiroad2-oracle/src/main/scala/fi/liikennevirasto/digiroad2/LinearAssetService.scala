@@ -20,6 +20,7 @@ trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
@@ -30,30 +31,12 @@ trait LinearAssetOperations {
   }
 
   private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Double, Double, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
-    val linearAssets = sql"""
-      select a.id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
-             a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
-             a.asset_type_id
-        from asset a
-        join asset_link al on a.id = al.asset_id
-        join lrm_position pos on al.position_id = pos.id
-        join property p on p.public_id = $valuePropertyId
-        left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-        where a.id = $id
-      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].firstOption
+    val linearAssets = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption
 
-    linearAssets.map { case (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
-      val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      val points = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-      (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
-    }
-  }
-
-  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: Seq[PersistedLinearAsset]) = {
-    val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset.mmlId == link.mmlId))
-
-    roadLinksWithoutAssets.map { link =>
-      PersistedLinearAsset(0L, link.mmlId, 1, None, 0.0, link.length, None, None, None, None, false)
+    linearAssets.map { asset =>
+      val roadLink = roadLinkService.fetchVVHRoadlink(asset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val points = GeometryUtils.truncateGeometry(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+      (asset.id, asset.mmlId, asset.sideCode, asset.value, asset.startMeasure, asset.endMeasure, points, asset.modifiedBy, asset.modifiedDateTime, asset.createdBy, asset.createdDateTime, asset.expired, asset.typeId)
     }
   }
 
@@ -95,8 +78,14 @@ trait LinearAssetOperations {
     }
   }
 
+  def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
+    withDynSession {
+      dao.fetchLinearAssetsByIds(ids, valuePropertyId)
+    }
+  }
+
   def getById(id: Long): Option[PieceWiseLinearAsset] = {
-    withDynTransaction {
+    withDynSession {
       getByIdWithoutTransaction(id)
     }
   }

@@ -224,7 +224,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating numerical limits should require an operator role") {
-    putJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "existing": [{"id": 11112, "mmlId": 388562360}]}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "ids": [11112]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

@@ -21,14 +21,25 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(30, Seq(1), "mittarajoitus"))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false, 30)))
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = mockLinearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
+  }
+
+  object ServiceWithDao extends LinearAssetOperations {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
+      override val roadLinkService: RoadLinkService = mockRoadLinkService
+    }
     override def eventBus: DigiroadEventBus = mockEventBus
   }
 
@@ -36,8 +47,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Expire numerical limit") {
     runWithRollback {
-      PassThroughService.update(Seq(11111l), None, true, "lol")
-      val limit = PassThroughService.getById(11111)
+      ServiceWithDao.update(Seq(11111l), None, true, "lol")
+      val limit = ServiceWithDao.getById(11111)
       limit.get.value should be (Some(4000))
       limit.get.expired should be (true)
     }
@@ -45,8 +56,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithRollback {
-      PassThroughService.update(Seq(11111l), Some(2000), false, "lol")
-      val limit = PassThroughService.getById(11111)
+      ServiceWithDao.update(Seq(11111l), Some(2000), false, "lol")
+      val limit = ServiceWithDao.getById(11111)
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
     }
@@ -54,9 +65,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Create new linear asset") {
     runWithRollback {
-      val newAssets = PassThroughService.create(Seq(NewLimit(388562360l, 0, 20)), 30, Some(1000), "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLimit(388562360l, 0, 20)), 30, Some(1000), "testuser")
       newAssets.length should be(1)
-      val asset = PassThroughService.getById(newAssets.head.id)
+      val asset = ServiceWithDao.getById(newAssets.head.id)
       asset.get.value should be (Some(1000))
       asset.get.expired should be (false)
     }
