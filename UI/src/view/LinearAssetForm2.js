@@ -11,8 +11,8 @@
       formElements.bindEvents(rootElement, selectedLinearAsset);
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
-      rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedLinearAsset.save(); });
-      rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
+      rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
+      rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
@@ -20,8 +20,8 @@
     });
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
-      rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedLinearAsset.isSaveable());
-      rootElement.find('.form-controls.speed-limit button.cancel').attr('disabled', false);
+      rootElement.find('.form-controls.linear-asset button.save').attr('disabled', !selectedLinearAsset.isSaveable());
+      rootElement.find('.form-controls.linear-asset button.cancel').attr('disabled', false);
     });
     eventbus.on('layer:selected', function(layer) {
       if(layer === 'speedLimit') {
@@ -77,7 +77,7 @@
       return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset);
     };
 
-    var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
+    var header = '<header>' + title() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +
@@ -94,7 +94,7 @@
                separatorButton() +
              '</div>' +
            '</div>' +
-           '<footer class="speed-limit form-controls" style="display: none">' +
+           '<footer class="linear-asset form-controls" style="display: none">' +
              buttons +
            '</footer>';
   }
@@ -104,7 +104,7 @@
     if(notRendered) {
       $('#information-content').append('' +
         '<div class="form form-horizontal">' +
-          '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
+          '<a id="work-list-link" class="unknown-linear-assets" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
         '</div>');
     }
   }
