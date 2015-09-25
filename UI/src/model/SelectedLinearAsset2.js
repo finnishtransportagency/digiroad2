@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedLinearAsset2 = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.SelectedLinearAsset2 = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     var selection = [];
     var self = this;
     var dirty = false;
@@ -257,7 +257,8 @@
     };
 
     this.isSeparable = function() {
-      return !self.isUnknown() &&
+      return isSeparableAssetType &&
+        !self.isUnknown() &&
         getProperty('sideCode') === validitydirections.bothDirections &&
         getProperty('trafficDirection') === 'BothDirections' &&
         !self.isSplit() &&

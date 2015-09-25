@@ -359,7 +359,8 @@ var URLRouter = function(map, backend, models) {
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var linearAssets = _.map(linearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection2(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedLinearAsset = new SelectedLinearAsset2(backend, collection, spec.typeId, spec.singleElementEventCategory);
+      var selectedLinearAsset = new SelectedLinearAsset2(backend, collection, spec.typeId,
+                                                         spec.singleElementEventCategory, spec.multiElementEventCategory, false);
       return _.merge({}, spec, {
         collection: collection,
         selectedLinearAsset: selectedLinearAsset
