@@ -13,6 +13,7 @@ window.LinearAssetLayer2 = function(params) {
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
+  me.minZoomForContent = zoomlevels.minZoomForAssets;
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -134,6 +135,7 @@ window.LinearAssetLayer2 = function(params) {
 
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
   vectorLayer.setOpacity(1);
+  vectorLayer.setVisibility(false);
   map.addLayer(vectorLayer);
 
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
@@ -321,29 +323,32 @@ window.LinearAssetLayer2 = function(params) {
     decorateSelection();
   };
 
+  this.layerStarted = function(eventListener) {
+    bindEvents(eventListener);
+    changeTool(application.getSelectedTool());
+    updateMassUpdateHandlerState();
+  };
+  this.refreshView = function() {
+    vectorLayer.setVisibility(true);
+    adjustStylesByZoomLevel(map.getZoom);
+    collection.fetch(map.getExtent()).then(function() {
+      eventbus.trigger('layer:speedLimit:moved');
+    });
+  };
+  this.activateSelection = function() {
+    updateMassUpdateHandlerState();
+    doubleClickSelectControl.activate();
+  };
+  this.deactivateSelection = function() {
+    updateMassUpdateHandlerState();
+    doubleClickSelectControl.deactivate();
+  };
+
   var handleSpeedLimitCancelled = function() {
     doubleClickSelectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   };
-
-  var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
-      vectorLayer.setVisibility(true);
-      adjustStylesByZoomLevel(state.zoom);
-      start();
-      collection.fetch(state.bbox).then(function() {
-        eventbus.trigger('layer:speedLimit:moved');
-      });
-    } else {
-      vectorLayer.setVisibility(false);
-      stop();
-      eventbus.trigger('layer:speedLimit:moved');
-    }
-  };
-
-  // TODO: Stop listening to map:moved events when layer is stopped
-  eventbus.on('map:moved', handleMapMoved);
 
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
@@ -461,6 +466,7 @@ window.LinearAssetLayer2 = function(params) {
     update: update,
     vectorLayer: vectorLayer,
     show: show,
-    hide: hideLayer
+    hide: hideLayer,
+    minZoomForContent: me.minZoomForContent
   };
 };
