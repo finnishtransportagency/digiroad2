@@ -3,11 +3,11 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
-      rootElement.html(template(selectedLinearAsset, formElements));
+      rootElement.html(template(selectedLinearAsset, formElements, newTitle));
       formElements.bindEvents(rootElement, selectedLinearAsset);
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
@@ -43,7 +43,7 @@
     }
   }
 
-  function template(selectedLinearAsset, formElements) {
+  function template(selectedLinearAsset, formElements, newTitle) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
@@ -53,7 +53,7 @@
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var title = function() {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
-        return '<span>Uusi nopeusrajoitus</span>';
+        return '<span>' + newTitle + '</span>';
       } else if (selectedLinearAsset.count() == 1) {
         return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
       } else {
