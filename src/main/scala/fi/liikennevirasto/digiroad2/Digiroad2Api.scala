@@ -420,7 +420,11 @@ with GZipSupport {
             "points" -> link.geometry,
             "expired" -> link.expired,
             "startMeasure" -> link.startMeasure,
-            "endMeasure" -> link.endMeasure
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime
           )
         }
       }
