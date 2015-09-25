@@ -3,33 +3,33 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedSpeedLimit, eventCategory, formElements) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
-      rootElement.html(template(selectedSpeedLimit, formElements));
-      formElements.bindEvents(rootElement, selectedSpeedLimit);
+      rootElement.html(template(selectedLinearAsset, formElements));
+      formElements.bindEvents(rootElement, selectedLinearAsset);
 
       rootElement.find('select.speed-limit').change(function(event) {
-        selectedSpeedLimit.setValue(extractValue(event));
+        selectedLinearAsset.setValue(extractValue(event));
       });
       rootElement.find('select.speed-limit-a').change(function(event) {
-        selectedSpeedLimit.setAValue(extractValue(event));
+        selectedLinearAsset.setAValue(extractValue(event));
       });
       rootElement.find('select.speed-limit-b').change(function(event) {
-        selectedSpeedLimit.setBValue(extractValue(event));
+        selectedLinearAsset.setBValue(extractValue(event));
       });
-      rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
-      rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
-      rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedSpeedLimit.cancel(); });
+      rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
+      rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedLinearAsset.save(); });
+      rootElement.find('.form-controls.speed-limit button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);
-    eventbus.on(events('valueChanged'), function(selectedSpeedLimit) {
-      rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedSpeedLimit.isSaveable());
+    eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
+      rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedLinearAsset.isSaveable());
       rootElement.find('.form-controls.speed-limit button.cancel').attr('disabled', false);
     });
     eventbus.on('layer:selected', function(layer) {
@@ -56,26 +56,26 @@
     }
   }
 
-  function template(selectedSpeedLimit, formElements) {
-    var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
-    var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
-    var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
-    var createdDateTime = selectedSpeedLimit.getCreatedDateTime() ? ' ' + selectedSpeedLimit.getCreatedDateTime() : '';
-    var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
+  function template(selectedLinearAsset, formElements) {
+    var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
+    var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
+    var createdBy = selectedLinearAsset.getCreatedBy() || '-';
+    var createdDateTime = selectedLinearAsset.getCreatedDateTime() ? ' ' + selectedLinearAsset.getCreatedDateTime() : '';
+    var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var title = function() {
-      if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
+      if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
         return '<span>Uusi nopeusrajoitus</span>';
-      } else if (selectedSpeedLimit.count() == 1) {
-        return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
+      } else if (selectedLinearAsset.count() == 1) {
+        return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
       } else {
         return '<span>Nopeusrajoitus</span>';
       }
     };
 
     var separatorButton = function() {
-      if (selectedSpeedLimit.isSeparable()) {
+      if (selectedLinearAsset.isSeparable()) {
         return '<div class="form-group editable">' +
         '<label class="control-label"></label>' +
         '<button class="cancel btn btn-secondary" id="separate-limit">Jaa nopeusrajoitus kaksisuuntaiseksi</button>' +
@@ -86,8 +86,8 @@
     };
 
     var limitValueButtons = function() {
-      var separateValueElement = formElements.singleValueElement(selectedSpeedLimit, "a") + formElements.singleValueElement(selectedSpeedLimit, "b");
-      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedSpeedLimit);
+      var separateValueElement = formElements.singleValueElement(selectedLinearAsset, "a") + formElements.singleValueElement(selectedLinearAsset, "b");
+      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset);
     };
 
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
@@ -101,7 +101,7 @@
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
+                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinearAsset.count() + '</p>' +
                '</div>' +
                limitValueButtons() +
                separatorButton() +
