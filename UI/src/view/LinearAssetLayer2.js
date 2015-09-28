@@ -23,7 +23,7 @@ window.LinearAssetLayer2 = function(params) {
     return multiElementEventCategory + ':' + eventName;
   };
 
-  var SpeedLimitCutter = function(vectorLayer, collection) {
+  var SpeedLimitCutter = function(eventListener, vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
@@ -130,7 +130,6 @@ window.LinearAssetLayer2 = function(params) {
     };
   };
 
-  var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
@@ -141,7 +140,7 @@ window.LinearAssetLayer2 = function(params) {
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
   map.addLayer(indicatorLayer);
 
-  var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
+  var speedLimitCutter = new SpeedLimitCutter(me.eventListener, vectorLayer, collection);
 
   var highlightMultipleSpeedLimitFeatures = function() {
     var partitioned = _.groupBy(vectorLayer.features, function(feature) {
@@ -201,7 +200,7 @@ window.LinearAssetLayer2 = function(params) {
     collection.fetch(map.getExtent());
   }
 
-  var handleSpeedLimitUnSelected = function(selection) {
+  var handleSpeedLimitUnSelected = function(eventListener, selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
       return selection.isSelected(feature.attributes);
     }), function(feature) {
@@ -243,8 +242,6 @@ window.LinearAssetLayer2 = function(params) {
     doubleClickSelectControl.deactivate();
     updateMassUpdateHandlerState();
     speedLimitCutter.deactivate();
-    eventListener.stopListening(eventbus);
-    eventListener.running = false;
   };
 
   var activateBrowseStyle = function() {
@@ -262,15 +259,18 @@ window.LinearAssetLayer2 = function(params) {
     vectorLayer.redraw();
   };
 
-  var bindEvents = function() {
+  var bindEvents = function(eventListener) {
+    var speedLimitChanged = _.partial(handleSpeedLimitChanged, eventListener);
+    var speedLimitCancelled = _.partial(handleSpeedLimitCancelled, eventListener);
+    var speedLimitUnSelected = _.partial(handleSpeedLimitUnSelected, eventListener);
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, singleElementEvents('selected', 'multiSelected'), handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleSpeedLimitSaved);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), handleSpeedLimitChanged);
-    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), handleSpeedLimitCancelled);
-    eventListener.listenTo(eventbus, singleElementEvents('unselect'), handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), speedLimitChanged);
+    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), speedLimitCancelled);
+    eventListener.listenTo(eventbus, singleElementEvents('unselect'), speedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, singleElementEvents('selectByMmlId'), selectSpeedLimitByMmlId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
@@ -294,7 +294,7 @@ window.LinearAssetLayer2 = function(params) {
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  var handleSpeedLimitChanged = function(selectedSpeedLimit) {
+  var handleSpeedLimitChanged = function(eventListener, selectedSpeedLimit) {
     doubleClickSelectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
@@ -305,7 +305,6 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   this.layerStarted = function(eventListener) {
-    eventListener.running = false;
     bindEvents(eventListener);
     changeTool(application.getSelectedTool());
     updateMassUpdateHandlerState();
@@ -326,7 +325,7 @@ window.LinearAssetLayer2 = function(params) {
     doubleClickSelectControl.deactivate();
   };
 
-  var handleSpeedLimitCancelled = function() {
+  var handleSpeedLimitCancelled = function(eventListener) {
     doubleClickSelectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
