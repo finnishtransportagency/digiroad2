@@ -209,11 +209,8 @@
     };
 
     var show = function(map) {
-      me.show();
       map.addLayer(indicatorLayer);
-      if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        me.start();
-      }
+      me.show(map);
     };
 
     var hideLayer = function() {

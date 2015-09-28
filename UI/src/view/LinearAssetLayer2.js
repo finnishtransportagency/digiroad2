@@ -213,16 +213,6 @@ window.LinearAssetLayer2 = function(params) {
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
 
-  var update = function(zoom, boundingBox) {
-    if (zoomlevels.isInAssetZoomLevel(zoom)) {
-      adjustStylesByZoomLevel(zoom);
-      start();
-      return collection.fetch(boundingBox);
-    } else {
-      return $.Deferred().resolve();
-    }
-  };
-
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
     vectorLayer.redraw();
@@ -246,15 +236,6 @@ window.LinearAssetLayer2 = function(params) {
       massUpdateHandler.activate();
     } else {
       massUpdateHandler.deactivate();
-    }
-  };
-
-  var start = function() {
-    if (!eventListener.running) {
-      eventListener.running = true;
-      bindEvents();
-      changeTool(application.getSelectedTool());
-      updateMassUpdateHandlerState();
     }
   };
 
@@ -324,15 +305,16 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   this.layerStarted = function(eventListener) {
+    eventListener.running = false;
     bindEvents(eventListener);
     changeTool(application.getSelectedTool());
     updateMassUpdateHandlerState();
   };
-  this.refreshView = function() {
+  this.refreshView = function(event) {
     vectorLayer.setVisibility(true);
     adjustStylesByZoomLevel(map.getZoom);
     collection.fetch(map.getExtent()).then(function() {
-      eventbus.trigger('layer:speedLimit:moved');
+      eventbus.trigger('layer:speedLimit:' + event);
     });
   };
   this.activateSelection = function() {
@@ -449,22 +431,18 @@ window.LinearAssetLayer2 = function(params) {
   var show = function(map) {
     vectorLayer.setVisibility(true);
     indicatorLayer.setVisibility(true);
-    var layerUpdated = update(map.getZoom(), map.getExtent());
-    layerUpdated.then(function() {
-      eventbus.trigger('layer:speedLimit:shown');
-    });
-    me.show();
+    me.show(map);
   };
 
   var hideLayer = function(map) {
     reset();
     vectorLayer.setVisibility(false);
     indicatorLayer.setVisibility(false);
+    me.stop();
     me.hide();
   };
 
   return {
-    update: update,
     vectorLayer: vectorLayer,
     show: show,
     hide: hideLayer,

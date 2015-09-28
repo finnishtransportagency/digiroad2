@@ -27,12 +27,12 @@
     this.deactivateSelection = function() {
       me.selectControl.deactivate();
     };
-    this.start = function() {
+    this.start = function(event) {
       if (!me.isStarted()) {
         me.activateSelection();
         me.eventListener.running = true;
         me.layerStarted(me.eventListener);
-        me.refreshView();
+        me.refreshView(event);
       }
     };
     this.stop = function() {
@@ -47,10 +47,10 @@
     this.handleMapMoved = function(state) {
       if (state.selectedLayer === layerName && state.zoom >= me.minZoomForContent) {
         if (!me.isStarted()) {
-          me.start();
+          me.start('moved');
         }
         else {
-          me.refreshView();
+          me.refreshView('moved');
         }
       } else {
         me.stop();
@@ -69,8 +69,11 @@
       layer.addFeatures(oneWaySigns);
     };
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
-    this.show = function() {
+    this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
+      if (map.getZoom() >= me.minZoomForContent) {
+        me.start('shown');
+      }
     };
     this.hide = function() {
       roadLayer.clear();
