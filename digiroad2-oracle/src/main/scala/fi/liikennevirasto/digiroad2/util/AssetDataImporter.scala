@@ -511,6 +511,8 @@ class AssetDataImporter {
     }
   }
 
+  def generateValuesForLitRoads(): Unit = ???
+
   private def getAssetIdRange(typeId: Int): (Int, Int) = {
     withDynSession {
       sql"""
