@@ -51,7 +51,7 @@
         var disabled = $(event.currentTarget).val() === 'disabled';
         inputElement.prop('disabled', disabled);
         if (disabled) {
-          selectedLinearAsset.removeValue();
+          selectedLinearAsset.expire();
         } else {
           selectedLinearAsset.setValue(inputElementValue());
         }

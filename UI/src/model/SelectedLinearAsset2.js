@@ -98,13 +98,6 @@
 
     var saveExisting = function() {
       eventbus.trigger(singleElementEvent('saving'));
-      var payloadContents = function() {
-        if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
-        } else {
-          return { ids: _.pluck(selection, 'id') };
-        }
-      };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
 
       backend.updateLinearAssets(payload, function(speedLimits) {
@@ -115,6 +108,14 @@
         eventbus.trigger('asset:updateFailed');
       });
     };
+
+    function payloadContents() {
+      if (self.isUnknown()) {
+        return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
+      } else {
+        return { ids: _.pluck(selection, 'id'), expired: !!selection[0].expired };
+      }
+    }
 
     var isUnknown = function(speedLimit) {
       return !_.has(speedLimit, 'id');
@@ -224,8 +225,10 @@
       }
     };
 
-    this.removeValue = function() {
-      this.setValue(undefined);
+    this.expire = function() {
+      selection[0].expired = true;
+      dirty = true;
+      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.setAValue = function(value) {
