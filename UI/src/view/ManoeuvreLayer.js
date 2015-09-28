@@ -209,6 +209,7 @@
     };
 
     var show = function(map) {
+      me.show();
       map.addLayer(indicatorLayer);
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         me.start();

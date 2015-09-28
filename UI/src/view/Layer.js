@@ -69,10 +69,13 @@
       layer.addFeatures(oneWaySigns);
     };
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
+    this.show = function() {
+      eventbus.on('map:moved', me.handleMapMoved);
+    };
     this.hide = function() {
       roadLayer.clear();
+      eventbus.off('map:moved', me.handleMapMoved);
     };
 
-    eventbus.on('map:moved', this.handleMapMoved);
   };
 })(this);

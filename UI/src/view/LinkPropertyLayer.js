@@ -226,6 +226,7 @@
     };
 
     var show = function(map) {
+      me.show();
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         me.start();
       }

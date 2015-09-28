@@ -453,6 +453,7 @@ window.LinearAssetLayer2 = function(params) {
     layerUpdated.then(function() {
       eventbus.trigger('layer:speedLimit:shown');
     });
+    me.show();
   };
 
   var hideLayer = function(map) {
