@@ -1,16 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -20,7 +17,6 @@ trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
@@ -79,13 +75,13 @@ trait LinearAssetOperations {
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynSession {
+    withDynTransaction {
       dao.fetchLinearAssetsByIds(ids, valuePropertyId)
     }
   }
 
   def getById(id: Long): Option[PieceWiseLinearAsset] = {
-    withDynSession {
+    withDynTransaction {
       getByIdWithoutTransaction(id)
     }
   }

@@ -27,7 +27,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
@@ -35,7 +34,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   object ServiceWithDao extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
-    override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
       override val roadLinkService: RoadLinkService = mockRoadLinkService

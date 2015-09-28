@@ -43,13 +43,15 @@ object OracleDatabase {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested session")
     else {
-      transactionOpen.set(true)
-      val ret = Database.forDataSource(OracleDatabase.ds).withDynSession {
-        setSessionLanguage()
-        f
+      try {
+        transactionOpen.set(true)
+        Database.forDataSource(OracleDatabase.ds).withDynSession {
+          setSessionLanguage()
+          f
+        }
+      } finally {
+        transactionOpen.set(false)
       }
-      transactionOpen.set(false)
-      ret
     }
   }
 
