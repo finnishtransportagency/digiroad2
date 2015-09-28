@@ -211,6 +211,15 @@ object DataFixture {
     println("\n")
   }
 
+  def generateValuesForLitRoads(): Unit = {
+    println("\nGenerating values for lit roads")
+    println(DateTime.now())
+    dataImporter.generateValuesForLitRoads()
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -264,9 +273,11 @@ object DataFixture {
         importLitRoadsFromConversion()
       case Some("dropped_numericallimits") =>
         generateDroppedNumericalLimits()
+      case Some("generate_values_for_lit_roads") =>
+        generateValuesForLitRoads()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | repair")
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | generate_values_for_lit_roads | repair")
     }
   }
 }
