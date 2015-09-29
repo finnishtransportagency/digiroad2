@@ -182,7 +182,7 @@ window.LinearAssetLayer2 = function(params) {
   var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, function(speedLimits) {
     activateSelectionStyle(speedLimits);
 
-    SpeedLimitMassUpdateDialog.show({
+    LinearAssetMassUpdateDialog.show({
       count: selectedSpeedLimit.count(),
       onCancel: cancelSelection,
       onSave: function(newSpeedLimit) {
