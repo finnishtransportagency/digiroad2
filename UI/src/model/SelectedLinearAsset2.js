@@ -225,10 +225,6 @@
       }
     };
 
-    this.removeValue = function() {
-      this.setValue(undefined);
-    };
-
     this.setAValue = function(value) {
       if (value != selection[0].value) {
         selection[0].value = value;
@@ -241,6 +237,18 @@
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
+    };
+
+    this.removeValue = function() {
+      this.setValue(undefined);
+    };
+
+    this.removeAValue = function() {
+      this.setAValue(undefined);
+    };
+
+    this.removeBValue = function() {
+      this.setBValue(undefined);
     };
 
     this.isDirty = function() {

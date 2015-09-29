@@ -136,6 +136,12 @@ window.LinearAssetLayer2 = function(params) {
   vectorLayer.setVisibility(false);
   map.addLayer(vectorLayer);
 
+  function reportFeatureCount() {
+    console.log('Features in ' + layerName + ' ' + vectorLayer.features.length);
+    setTimeout(reportFeatureCount, 2000);
+  }
+  setTimeout(reportFeatureCount, 2000);
+
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
   map.addLayer(indicatorLayer);
 
