@@ -67,11 +67,11 @@
       });
 
       inputElementA.on('input', function(event) {
-        selectedLinearAsset.setValueA(inputElementValue(inputElementA));
+        selectedLinearAsset.setAValue(inputElementValue(inputElementA));
       });
 
       inputElementB.on('input', function(event) {
-        selectedLinearAsset.setValueB(inputElementValue(inputElementB));
+        selectedLinearAsset.setBValue(inputElementValue(inputElementB));
       });
 
       toggleElement.on('change', function(event) {
