@@ -46,15 +46,21 @@
       return readOnlyFormGroup + editableFormGroup;
     }
 
-    function bindEvents(rootElement, selectedLinearAsset) {
-      var inputElement = rootElement.find('.input-unit-combination input.' + generateClassName());
-      var inputElementA = rootElement.find('.input-unit-combination input.' + generateClassName('a'));
-      var inputElementB = rootElement.find('.input-unit-combination input.' + generateClassName('b'));
-      var toggleElement = rootElement.find('.radio input.' + generateClassName());
-      var toggleElementA = rootElement.find('.radio input.' + generateClassName('a'));
-      var toggleElementB = rootElement.find('.radio input.' + generateClassName('b'));
+    function bindEvents(rootElement, selectedLinearAsset, sideCode) {
+      var inputElement = rootElement.find('.input-unit-combination input.' + generateClassName(sideCode));
+      var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
+      var valueSetters = {
+        a: selectedLinearAsset.setAValue,
+        b: selectedLinearAsset.setBValue
+      };
+      var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
+      var valueRemovers = {
+        a: selectedLinearAsset.removeAValue,
+        b: selectedLinearAsset.removeBValue
+      };
+      var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
-      var inputElementValue = function(inputElement) {
+      var inputElementValue = function() {
         var removeWhitespace = function(s) {
           return s.replace(/\s/g, '');
         };
@@ -63,44 +69,16 @@
       };
 
       inputElement.on('input', function(event) {
-        selectedLinearAsset.setValue(inputElementValue(inputElement));
-      });
-
-      inputElementA.on('input', function(event) {
-        selectedLinearAsset.setAValue(inputElementValue(inputElementA));
-      });
-
-      inputElementB.on('input', function(event) {
-        selectedLinearAsset.setBValue(inputElementValue(inputElementB));
+        setValue(inputElementValue());
       });
 
       toggleElement.on('change', function(event) {
         var disabled = $(event.currentTarget).val() === 'disabled';
         inputElement.prop('disabled', disabled);
         if (disabled) {
-          selectedLinearAsset.removeValue();
+          removeValue();
         } else {
-          selectedLinearAsset.setValue(inputElementValue(inputElement));
-        }
-      });
-
-      toggleElementA.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElementA.prop('disabled', disabled);
-        if (disabled) {
-          selectedLinearAsset.removeAValue();
-        } else {
-          selectedLinearAsset.setAValue(inputElementValue(inputElementA));
-        }
-      });
-
-      toggleElementB.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElementB.prop('disabled', disabled);
-        if (disabled) {
-          selectedLinearAsset.removeBValue();
-        } else {
-          selectedLinearAsset.setBValue(inputElementValue(inputElementB));
+          setValue(inputElementValue());
         }
       });
     }

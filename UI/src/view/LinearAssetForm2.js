@@ -8,7 +8,12 @@
 
     eventbus.on(events('selected', 'cancelled'), function() {
       rootElement.html(template(selectedLinearAsset, formElements, newTitle));
-      formElements.bindEvents(rootElement, selectedLinearAsset);
+      if (selectedLinearAsset.isSplitOrSeparated()) {
+        formElements.bindEvents(rootElement, selectedLinearAsset, 'a');
+        formElements.bindEvents(rootElement, selectedLinearAsset, 'b');
+      } else {
+        formElements.bindEvents(rootElement, selectedLinearAsset);
+      }
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });

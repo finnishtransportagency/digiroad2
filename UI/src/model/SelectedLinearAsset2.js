@@ -242,15 +242,15 @@
     };
 
     this.removeValue = function() {
-      this.setValue(undefined);
+      self.setValue(undefined);
     };
 
     this.removeAValue = function() {
-      this.setAValue(undefined);
+      self.setAValue(undefined);
     };
 
     this.removeBValue = function() {
-      this.setBValue(undefined);
+      self.setBValue(undefined);
     };
 
     this.isDirty = function() {
