@@ -195,7 +195,8 @@ var URLRouter = function(map, backend, models) {
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
-        style: PiecewiseLinearAssetStyle(applicationModel)
+        style: PiecewiseLinearAssetStyle(applicationModel),
+        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className)
       });
       return acc;
     }, {});

@@ -8,21 +8,13 @@
       onCancel = options.onCancel,
       onSave = options.onSave;
 
-    var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
-    var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
-      var selected = value === 50 ? " selected" : "";
-      return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-    });
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
       '<div class="modal-dialog">' +
       '<div class="content">' +
-      'Olet valinnut <%- count %> nopeusrajoitusta' +
+      'Olet valinnut <%- count %> linkkiä' +
       '</div>' +
-      '<div class="form-group editable">' +
-      '<label class="control-label">Rajoitus</label>' +
-      '<select class="form-control">' + speedLimitOptionTags.join('') + '</select>' +
-      '</div>' +
+      options.element +
       '<div class="actions">' +
       '<button class="btn btn-primary save">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +

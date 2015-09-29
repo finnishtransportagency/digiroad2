@@ -189,7 +189,8 @@ window.LinearAssetLayer2 = function(params) {
         selectedSpeedLimit.saveMultiple(newSpeedLimit);
         activateBrowseStyle();
         selectedSpeedLimit.closeMultiple();
-      }
+      },
+      element: $(params.formElements.singleValueElement(selectedSpeedLimit))[1].outerHTML
     });
   });
 
