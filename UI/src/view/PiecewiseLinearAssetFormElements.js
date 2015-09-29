@@ -116,12 +116,13 @@
     function measureInput(selectedLinearAsset, sideCode) {
       if (unit) {
         var value = selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() : '';
+        var disabled = selectedLinearAsset.isUnknown() ? 'disabled' : '';
         return '' +
           '<div class="labelless input-unit-combination input-group">' +
             '<input ' +
               'type="text" ' +
               'class="form-control ' + generateClassName(sideCode) + '" ' +
-              'value="' + value  + '">' +
+              'value="' + value  + '" ' + disabled + ' >' +
             '<span class="input-group-addon">' + unit + '</span>' +
           '</div>';
       } else {
