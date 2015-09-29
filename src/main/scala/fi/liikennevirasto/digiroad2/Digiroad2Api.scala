@@ -498,14 +498,13 @@ with GZipSupport {
 
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
-    val value = (parsedBody \ "value").extractOpt[BigInt]
-    value.foreach(validateNumericalLimitValue)
-    val expired = (parsedBody \ "expired").extract[Boolean]
-    val id = params("id").toLong
-    val username = user.username
-    val measure = (parsedBody \ "splitMeasure").extract[Double]
-    linearAssetService.split(id, mmlId, measure, value.map(_.intValue()), expired, username, validateUserMunicipalityAccess(user))
+
+    linearAssetService.split(params("id").toLong,
+      (parsedBody \ "splitMeasure").extract[Double],
+      (parsedBody \ "existingValue").extract[Option[Int]],
+      (parsedBody \ "createdValue").extract[Option[Int]],
+      user.username,
+      validateUserMunicipalityAccess(user))
   }
 
   put("/speedlimits") {

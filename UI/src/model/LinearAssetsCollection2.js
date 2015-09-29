@@ -146,7 +146,7 @@
     };
 
     this.saveSplit = function(callback) {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+      backend.splitLinearAssets(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
         eventbus.trigger(singleElementEvent('saved'));
         splitSpeedLimits = {};
         dirty = false;

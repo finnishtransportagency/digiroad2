@@ -120,12 +120,16 @@ trait LinearAssetOperations {
 
   def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     withDynTransaction {
-      ids.map { id =>
-        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
-        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
-        val updatedId = valueUpdate.orElse(expirationUpdate)
-        updatedId.getOrElse(throw new NoSuchElementException)
-      }
+      updateWithoutTransaction(ids, value, expired, username)
+    }
+  }
+
+  private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+    ids.map { id =>
+      val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
+      val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
+      val updatedId = valueUpdate.orElse(expirationUpdate)
+      updatedId.getOrElse(throw new scala.NoSuchElementException)
     }
   }
 
@@ -188,20 +192,24 @@ trait LinearAssetOperations {
     }
   }
 
-  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[PieceWiseLinearAsset] = {
-    val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[PieceWiseLinearAsset] = {
+    withDynTransaction {
+      val createdId = splitLinearAsset(id, splitMeasure, createdValue, username, municipalityValidation)
+      updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
+      Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
+    }
+  }
+
+  private def splitLinearAsset(id: Long, splitMeasure: Double, value: Option[Int], username: String, municipalityValidation: (Int) => Unit): Long = {
+    val linearAsset = getByIdWithoutTransaction(id).get
+    val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
 
-    val limit: PieceWiseLinearAsset = getById(id).get
-    val createdId = withDynTransaction {
-      Queries.updateAssetModified(id, username).execute
-      val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id)
-      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
+    Queries.updateAssetModified(id, username).execute
+    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
-      OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
-      createWithoutTransaction(limit.typeId, mmlId, value, expired, sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
-    }
-    Seq(getById(id).get, getById(createdId).get)
+    OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
+    createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, value, false, linearAsset.sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
   }
 
   def drop(ids: Set[Long]): Unit = {

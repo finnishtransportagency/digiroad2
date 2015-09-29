@@ -187,12 +187,12 @@
       });
     }, 1000);
 
-    this.splitLinearAssets = function(id, mmlId, splitMeasure, value, expired, success, failure) {
+    this.splitLinearAssets = function(id, splitMeasure, createdValue, existingValue, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/linearassets/" + id,
-        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: value, expired: expired}),
+        data: JSON.stringify({splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
         dataType: "json",
         success: success,
         error: failure
