@@ -21,6 +21,7 @@
 
       var editableFormGroup = '' +
         '<div class="form-group editable">' +
+          sideCodeMarker(sideCode) +
           '<label class="control-label">' + editControlLabels.title + '</label>' +
           '<div class="choice-group">' +
             '<div class="radio">' +
@@ -39,11 +40,19 @@
                   'value="enabled" ' + withValue + '/>' +
               '</label>' +
             '</div>' +
+            measureInput(selectedLinearAsset, sideCode) +
           '</div>' +
-          measureInput(selectedLinearAsset, sideCode) +
         '</div>';
 
       return readOnlyFormGroup + editableFormGroup;
+    }
+
+    function sideCodeMarker(sideCode) {
+      if (_.isUndefined(sideCode)) {
+        return '';
+      } else {
+        return '<span class="marker">' + sideCode + '</span>';
+      }
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
@@ -96,7 +105,7 @@
         var value = selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() : '';
         var disabled = selectedLinearAsset.isUnknown() ? 'disabled' : '';
         return '' +
-          '<div class="labelless input-unit-combination input-group">' +
+          '<div class="input-unit-combination input-group">' +
             '<input ' +
               'type="text" ' +
               'class="form-control ' + generateClassName(sideCode) + '" ' +
