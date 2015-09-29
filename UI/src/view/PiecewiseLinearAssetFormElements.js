@@ -10,8 +10,8 @@
     }
 
     function singleValueElement(selectedLinearAsset, sideCode) {
-      var expiredChecked = selectedLinearAsset.isUnknown() ? 'checked' : '';
-      var nonExpiredChecked = selectedLinearAsset.isUnknown() ? '' : 'checked';
+      var withoutValue = selectedLinearAsset.isUnknown() ? 'checked' : '';
+      var withValue = selectedLinearAsset.isUnknown() ? '' : 'checked';
 
       var readOnlyFormGroup = '' +
         '<div class="form-group read-only">' +
@@ -28,7 +28,7 @@
                 '<input ' + 
                   'class="' + generateClassName(sideCode) + '" ' +
                   'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                  'value="disabled" ' + expiredChecked + '/>' +
+                  'value="disabled" ' + withoutValue + '/>' +
               '</label>' +
             '</div>' +
             '<div class="radio">' +
@@ -36,7 +36,7 @@
                 '<input ' +
                   'class="' + generateClassName(sideCode) + '" ' +
                   'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                  'value="enabled" ' + nonExpiredChecked + '/>' +
+                  'value="enabled" ' + withValue + '/>' +
               '</label>' +
             '</div>' +
           '</div>' +
