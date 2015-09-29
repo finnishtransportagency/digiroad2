@@ -194,13 +194,13 @@ trait LinearAssetOperations {
 
   def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[PieceWiseLinearAsset] = {
     withDynTransaction {
-      val createdId = splitLinearAsset(id, splitMeasure, createdValue, username, municipalityValidation)
+      val createdIdOption = splitLinearAsset(id, splitMeasure, createdValue, username, municipalityValidation)
       updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
+      Seq(getByIdWithoutTransaction(id).get) ++ Seq(createdIdOption.flatMap(getByIdWithoutTransaction)).flatten
     }
   }
 
-  private def splitLinearAsset(id: Long, splitMeasure: Double, value: Option[Int], username: String, municipalityValidation: (Int) => Unit): Long = {
+  private def splitLinearAsset(id: Long, splitMeasure: Double, optionalValue: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
     val linearAsset = getByIdWithoutTransaction(id).get
     val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
@@ -209,7 +209,9 @@ trait LinearAssetOperations {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
     OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
-    createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, value, false, linearAsset.sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+    optionalValue.map { value =>
+      createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+    }
   }
 
   def drop(ids: Set[Long]): Unit = {
