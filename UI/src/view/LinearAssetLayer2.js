@@ -4,7 +4,6 @@ window.LinearAssetLayer2 = function(params) {
       collection = params.collection,
       selectedSpeedLimit = params.selectedSpeedLimit,
       geometryUtils = params.geometryUtils,
-      linearAsset = params.linearAsset,
       roadLayer = params.roadLayer,
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,

@@ -191,7 +191,6 @@ var URLRouter = function(map, backend, models) {
         selectedSpeedLimit: asset.selectedLinearAsset,
         roadCollection: models.roadCollection,
         geometryUtils: new GeometryUtils(),
-        linearAsset: LinearAsset(),
         roadLayer: roadLayer,
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
