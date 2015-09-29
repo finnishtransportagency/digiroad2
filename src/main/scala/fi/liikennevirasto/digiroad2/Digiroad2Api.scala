@@ -470,6 +470,17 @@ with GZipSupport {
     }
   }
 
+  delete("/linearassets") {
+    val user = userProvider.getCurrentUser()
+    val ids = (parsedBody \ "ids").extract[Set[Long]]
+    val mmlIds = linearAssetService.getPersistedAssetsByIds(ids).map(_.mmlId)
+    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
+    linearAssetService.update(ids.toSeq, None, true, user.username)
+  }
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val mmlId = (parsedBody \ "mmlId").extract[Long]

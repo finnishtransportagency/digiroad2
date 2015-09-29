@@ -106,8 +106,9 @@
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
+      var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.updateLinearAssets;
 
-      backend.updateLinearAssets(payload, function() {
+      backendOperation(payload, function() {
         dirty = false;
         self.close();
         eventbus.trigger(singleElementEvent('saved'));

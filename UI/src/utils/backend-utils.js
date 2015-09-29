@@ -175,6 +175,18 @@
       });
     }, 1000);
 
+    this.deleteLinearAssets = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/linearassets",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.splitLinearAssets = function(id, mmlId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
