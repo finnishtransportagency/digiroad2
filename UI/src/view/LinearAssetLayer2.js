@@ -318,6 +318,10 @@ window.LinearAssetLayer2 = function(params) {
     updateMassUpdateHandlerState();
     doubleClickSelectControl.deactivate();
   };
+  this.removeLayerFeatures = function() {
+    vectorLayer.removeAllFeatures();
+    indicatorLayer.clearMarkers();
+  };
 
   var handleSpeedLimitCancelled = function(eventListener) {
     doubleClickSelectControl.activate();
@@ -374,8 +378,7 @@ window.LinearAssetLayer2 = function(params) {
 
   var redrawSpeedLimits = function(speedLimitChains) {
     doubleClickSelectControl.deactivate();
-    vectorLayer.removeAllFeatures();
-    indicatorLayer.clearMarkers();
+    me.removeLayerFeatures();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       doubleClickSelectControl.activate();
     }
