@@ -107,7 +107,7 @@
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
 
-      backend.updateLinearAssets(payload, function(speedLimits) {
+      backend.updateLinearAssets(payload, function() {
         dirty = false;
         self.close();
         eventbus.trigger(singleElementEvent('saved'));
