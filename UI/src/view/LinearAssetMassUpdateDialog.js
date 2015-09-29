@@ -37,11 +37,11 @@
       $('.mass-update-modal .save').on('click', function() {
         $('.modal-dialog').find('.actions button').attr('disabled', true);
 
-        var newSpeedLimit = parseInt($('.mass-update-modal select').val(), 10);
+        var newValue = parseInt($('.mass-update-modal input[type="text"]').val(), 10);
 
         purge();
 
-        onSave(newSpeedLimit);
+        onSave(newValue);
       });
     };
 

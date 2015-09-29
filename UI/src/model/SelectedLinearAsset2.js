@@ -70,9 +70,10 @@
       var payload = {
         newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
         ids: _.pluck(knownSpeedLimits, 'id'),
-        value: value
+        value: value,
+        typeId: typeId
       };
-      backend.updateSpeedLimits(payload, function() {
+      backend.updateLinearAssets(payload, function() {
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
         eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
