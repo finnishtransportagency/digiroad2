@@ -238,12 +238,6 @@ window.LinearAssetLayer2 = function(params) {
     }
   };
 
-  var stop = function() {
-    doubleClickSelectControl.deactivate();
-    updateMassUpdateHandlerState();
-    speedLimitCutter.deactivate();
-  };
-
   var activateBrowseStyle = function() {
     _.each(vectorLayer.features, function(feature) {
       selectControl.unhighlight(feature);
@@ -422,9 +416,9 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   var reset = function() {
-    stop();
     selectControl.unselectAll();
     vectorLayer.styleMap = style.browsing;
+    speedLimitCutter.deactivate();
   };
 
   var show = function(map) {
