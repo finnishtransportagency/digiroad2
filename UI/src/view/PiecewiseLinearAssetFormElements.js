@@ -80,7 +80,8 @@
         if (disabled) {
           setValue('');
         } else {
-          setValue(inputElementValue(inputElement));
+          var value = unit ? inputElementValue(inputElement) : defaultValue;
+          setValue(value);
         }
       });
     }
@@ -117,7 +118,8 @@
         if (disabled) {
           removeValue();
         } else {
-          setValue(inputElementValue());
+          var value = unit ? inputElementValue() : defaultValue;
+          setValue(value);
         }
       });
     }
