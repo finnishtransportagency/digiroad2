@@ -147,7 +147,7 @@
       var bus = new Bacon.Bus();
 
       var responses = bus
-        .debounceImmediate(200)
+        .debounce(200)
         .flatMapLatest(function(data) {
           return Bacon
             .fromPromise(getPromise.apply(undefined, data.arguments))
