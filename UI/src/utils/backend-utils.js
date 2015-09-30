@@ -145,12 +145,6 @@
       });
     }, 1000);
 
-    this.getLinearAsset = _.throttle(function(id, callback) {
-      $.getJSON('api/linearassets/' + id, function(linearAsset) {
-        callback(linearAsset);
-      });
-    }, 1000);
-
     this.updateLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
