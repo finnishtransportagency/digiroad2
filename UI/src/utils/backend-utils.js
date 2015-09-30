@@ -139,9 +139,24 @@
       });
     };
 
-    this.getLinearAssets = _.throttle(function(boundingBox, typeId) {
+    this.getLinearAssets = throttledLatest(function(boundingBox, typeId) {
       return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
-    }, 1000);
+    });
+
+    function throttledLatest(f) {
+      return _.throttle(latestOnly(f), 1000);
+    }
+
+    function latestOnly(f) {
+      var inFlight;
+      return function() {
+        if (inFlight) {
+          inFlight.abort();
+        }
+        inFlight = f.apply(undefined, arguments);
+        return inFlight;
+      };
+    }
 
     this.updateLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
