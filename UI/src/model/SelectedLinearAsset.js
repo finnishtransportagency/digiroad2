@@ -3,7 +3,7 @@
     var selection = [];
     var self = this;
     var dirty = false;
-    var originalSpeedLimitValue = null;
+    var originalLinearAssetValue = null;
     var isSeparated = false;
 
     var singleElementEvent = function(eventName) {
@@ -14,10 +14,10 @@
       return multiElementEventCategory + ':' + eventName;
     };
 
-    this.splitSpeedLimit = function(id, split) {
-      collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
-        selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
-        originalSpeedLimitValue = splitSpeedLimits.existing.value;
+    this.splitLinearAsset = function(id, split) {
+      collection.splitLinearAsset(id, split, function(splitLinearAssets) {
+        selection = [splitLinearAssets.created, splitLinearAssets.existing];
+        originalLinearAssetValue = splitLinearAssets.existing.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger(singleElementEvent('selected'), self);
@@ -25,7 +25,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateSpeedLimit(this.getId());
+      selection = collection.separateLinearAsset(this.getId());
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
@@ -33,20 +33,20 @@
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
-    this.open = function(speedLimit, singleLinkSelect) {
+    this.open = function(linearAsset, singleLinkSelect) {
       self.close();
-      selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimitValue = self.getValue();
+      selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
+      originalLinearAssetValue = self.getValue();
       collection.setSelection(self);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
-    this.openMultiple = function(speedLimits) {
-      var partitioned = _.groupBy(speedLimits, isUnknown);
-      var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
-      var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
+    this.openMultiple = function(linearAssets) {
+      var partitioned = _.groupBy(linearAssets, isUnknown);
+      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
 
-      selection = existingSpeedLimits.concat(unknownSpeedLimits);
+      selection = existingLinearAssets.concat(unknownLinearAssets);
     };
 
     this.close = function() {
@@ -64,12 +64,12 @@
     this.saveMultiple = function(value) {
       eventbus.trigger(singleElementEvent('saving'));
       var partition = _.groupBy(selection, isUnknown);
-      var unknownSpeedLimits = partition[true];
-      var knownSpeedLimits = partition[false];
+      var unknownLinearAssets = partition[true];
+      var knownLinearAssets = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
-        ids: _.pluck(knownSpeedLimits, 'id'),
+        newLimits: _.map(unknownLinearAssets, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
+        ids: _.pluck(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
       };
@@ -119,8 +119,8 @@
       });
     };
 
-    var isUnknown = function(speedLimit) {
-      return !_.has(speedLimit, 'id');
+    var isUnknown = function(linearAsset) {
+      return !_.has(linearAsset, 'id');
     };
 
     this.isUnknown = function() {
@@ -152,8 +152,8 @@
     var cancelCreation = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
       if (isSeparated) {
-        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
-        collection.replaceSegments([selection[0]], [originalSpeedLimit]);
+        var originalLinearAsset = _.merge({}, selection[0], {value: originalLinearAssetValue, sideCode: 1});
+        collection.replaceSegments([selection[0]], [originalLinearAsset]);
       }
       collection.setSelection(null);
       selection = [];
@@ -163,7 +163,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalSpeedLimitValue }); });
+      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger(singleElementEvent('cancelled'), self);
@@ -261,9 +261,9 @@
       return !_.isNumber(self.getId());
     };
 
-    this.isSelected = function(speedLimit) {
-      return _.some(selection, function(selectedSpeedLimit) {
-        return isEqual(speedLimit, selectedSpeedLimit);
+    this.isSelected = function(linearAsset) {
+      return _.some(selection, function(selectedLinearAsset) {
+        return isEqual(linearAsset, selectedLinearAsset);
       });
     };
 

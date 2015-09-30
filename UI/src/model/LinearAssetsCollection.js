@@ -1,10 +1,10 @@
 (function(root) {
   root.LinearAssetsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
-    var speedLimits = [];
+    var linearAssets = [];
     var dirty = false;
     var selection = null;
     var self = this;
-    var splitSpeedLimits = {};
+    var splitLinearAssets = {};
     var separatedLimit = {};
 
     var singleElementEvent = function(eventName) {
@@ -15,13 +15,13 @@
       return multiElementEventCategory + ':' + eventName;
     };
 
-    var maintainSelectedSpeedLimitChain = function(collection) {
+    var maintainSelectedLinearAssetChain = function(collection) {
       if (!selection) return collection;
 
-      var isSelected = function (speedLimit) { return selection.isSelected(speedLimit); };
+      var isSelected = function (linearAsset) { return selection.isSelected(linearAsset); };
 
-      var collectionPartitionedBySelection = _.groupBy(collection, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, isSelected);
+      var collectionPartitionedBySelection = _.groupBy(collection, function(linearAssetGroup) {
+        return _.some(linearAssetGroup, isSelected);
       });
       var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
 
@@ -32,33 +32,33 @@
     };
 
     this.getAll = function() {
-      return maintainSelectedSpeedLimitChain(speedLimits);
+      return maintainSelectedLinearAssetChain(linearAssets);
     };
 
-    var generateUnknownLimitId = function(speedLimit) {
-      return speedLimit.mmlId.toString() +
-          speedLimit.startMeasure.toFixed(2) +
-          speedLimit.endMeasure.toFixed(2);
+    var generateUnknownLimitId = function(linearAsset) {
+      return linearAsset.mmlId.toString() +
+          linearAsset.startMeasure.toFixed(2) +
+          linearAsset.endMeasure.toFixed(2);
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getLinearAssets(boundingBox, typeId, function() {}).then(function(speedLimitGroups) {
-        var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
-          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, 'value'); });
+      return backend.getLinearAssets(boundingBox, typeId, function() {}).then(function(linearAssetGroups) {
+        var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
+          return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
         });
-        var knownSpeedLimits = partitionedSpeedLimitGroups[true] || [];
-        var unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function(speedLimitGroup) {
-          return _.map(speedLimitGroup, function(speedLimit) {
-            return _.merge({}, speedLimit, { generatedId: generateUnknownLimitId(speedLimit) });
+        var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
+        var unknownLinearAssets = _.map(partitionedLinearAssetGroups[false], function(linearAssetGroup) {
+          return _.map(linearAssetGroup, function(linearAsset) {
+            return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
           });
         }) || [];
-        speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
+        linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
       });
     };
 
-    var isUnknown = function(speedLimit) {
-      return _.isUndefined(speedLimit.value);
+    var isUnknown = function(linearAsset) {
+      return _.isUndefined(linearAsset.value);
     };
 
     var isEqual = function(a, b) {
@@ -67,8 +67,8 @@
     };
 
     this.getGroup = function(segment) {
-      return _.find(speedLimits, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, function(s) { return isEqual(s, segment); });
+      return _.find(linearAssets, function(linearAssetGroup) {
+        return _.some(linearAssetGroup, function(s) { return isEqual(s, segment); });
       });
     };
 
@@ -77,16 +77,16 @@
     };
 
     var replaceGroup = function(collection, segment, newGroup) {
-      return _.reject(collection, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, function(s) {
+      return _.reject(collection, function(linearAssetGroup) {
+        return _.some(linearAssetGroup, function(s) {
           return isEqual(s, segment);
         });
       }).concat([newGroup]);
     };
 
     var replaceOneSegment = function(collection, segment, newSegment) {
-      var collectionPartitionedBySegment = _.groupBy(collection, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, function(s) {
+      var collectionPartitionedBySegment = _.groupBy(collection, function(linearAssetGroup) {
+        return _.some(linearAssetGroup, function(s) {
           return isEqual(s, segment);
         });
       });
@@ -99,13 +99,13 @@
     };
 
     this.replaceSegments = function(selection, newSegments) {
-      if (splitSpeedLimits.created) {
-        splitSpeedLimits.created.value = newSegments[0].value;
+      if (splitLinearAssets.created) {
+        splitLinearAssets.created.value = newSegments[0].value;
       }
       else if (selection.length === 1) {
-        speedLimits = replaceOneSegment(speedLimits, selection[0], newSegments[0]);
+        linearAssets = replaceOneSegment(linearAssets, selection[0], newSegments[0]);
       } else {
-        speedLimits = replaceGroup(speedLimits, selection[0], newSegments);
+        linearAssets = replaceGroup(linearAssets, selection[0], newSegments);
       }
       return newSegments;
     };
@@ -117,8 +117,8 @@
       return new OpenLayers.Geometry.LineString(points).getLength();
     };
 
-    this.splitSpeedLimit = function(id, split, callback) {
-      var link = _.find(_.flatten(speedLimits), { id: id });
+    this.splitLinearAsset = function(id, split, callback) {
+      var link = _.find(_.flatten(linearAssets), { id: id });
 
       var left = _.cloneDeep(link);
       left.points = split.firstSplitVertices;
@@ -127,28 +127,28 @@
       right.points = split.secondSplitVertices;
 
       if (calculateMeasure(left) < calculateMeasure(right)) {
-        splitSpeedLimits.created = left;
-        splitSpeedLimits.existing = right;
+        splitLinearAssets.created = left;
+        splitLinearAssets.existing = right;
       } else {
-        splitSpeedLimits.created = right;
-        splitSpeedLimits.existing = left;
+        splitLinearAssets.created = right;
+        splitLinearAssets.existing = left;
       }
 
-      splitSpeedLimits.created.id = null;
-      splitSpeedLimits.splitMeasure = split.splitMeasure;
+      splitLinearAssets.created.id = null;
+      splitLinearAssets.splitMeasure = split.splitMeasure;
 
-      splitSpeedLimits.created.marker = 'A';
-      splitSpeedLimits.existing.marker = 'B';
+      splitLinearAssets.created.marker = 'A';
+      splitLinearAssets.existing.marker = 'B';
 
       dirty = true;
-      callback(splitSpeedLimits);
+      callback(splitLinearAssets);
       eventbus.trigger(multiElementEvent('fetched'), self.getAll());
     };
 
     this.saveSplit = function(callback) {
-      backend.splitLinearAssets(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+      backend.splitLinearAssets(splitLinearAssets.existing.id, splitLinearAssets.splitMeasure, splitLinearAssets.created.value, splitLinearAssets.existing.value, function() {
         eventbus.trigger(singleElementEvent('saved'));
-        splitSpeedLimits = {};
+        splitLinearAssets = {};
         dirty = false;
         callback();
       }, function() {
@@ -168,7 +168,7 @@
 
     this.cancelCreation = function() {
       dirty = false;
-      splitSpeedLimits = {};
+      splitLinearAssets = {};
       eventbus.trigger(multiElementEvent('fetched'), self.getAll());
     };
 
@@ -176,8 +176,8 @@
       return dirty;
     };
 
-    this.separateSpeedLimit = function(id) {
-      var originalLimit = _.find(_.flatten(speedLimits), { id: id });
+    this.separateLinearAsset = function(id) {
+      var originalLimit = _.find(_.flatten(linearAssets), { id: id });
       var limitA = _.cloneDeep(originalLimit);
       var limitB = _.cloneDeep(originalLimit);
 
