@@ -12,22 +12,23 @@
       '<div class="modal-overlay mass-update-modal">' +
       '<div class="modal-dialog">' +
       '<div class="content">' +
-      'Olet valinnut <%- count %> linkkiä' +
+      'Olet valinnut <%- count %> tielinkkiä' +
       '</div>' +
-      options.formElements.singleValueEditElement(undefined, true) +
+      '<%- editElement %>'+
       '<div class="actions">' +
       '<button class="btn btn-primary save">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +
       '</div>' +
       '</div>' +
       '</div>' +
-      '<div id="hid" style="visibility: hidden;"></div>div>';
+      '<div id="value-element" style="visibility: hidden;"></div>div>';
 
     var renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({
-        count: count
+        count: count,
+        editElement: options.formElements.singleValueEditElement(undefined, true)
       }));
-      options.formElements.bindMassUpdateDialog(container, $('#hid'));
+      options.formElements.bindMassUpdateDialog(container, $('#value-element'));
     };
 
     var bindEvents = function() {
@@ -39,7 +40,7 @@
       $('.mass-update-modal .save').on('click', function() {
         $('.modal-dialog').find('.actions button').attr('disabled', true);
 
-        var newValue = parseInt($('#hid').text(), 10);
+        var newValue = parseInt($('#value-element').text(), 10);
 
         purge();
 
