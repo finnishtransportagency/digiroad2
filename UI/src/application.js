@@ -110,7 +110,7 @@ var URLRouter = function(map, backend, models) {
       indicatorOverlay();
     });
 
-    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available', function(asset) {
+    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available', function() {
       jQuery('.spinner-overlay').remove();
     });
 

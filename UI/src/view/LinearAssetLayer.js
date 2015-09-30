@@ -277,7 +277,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
   };
 
-  var handleLinearAssetSelected = function(selectedLinearAsset) {
+  var handleLinearAssetSelected = function() {
     setSelectionStyleAndHighlightFeature();
   };
 
@@ -437,7 +437,7 @@ window.LinearAssetLayer = function(params) {
     me.show(map);
   };
 
-  var hideLayer = function(map) {
+  var hideLayer = function() {
     reset();
     vectorLayer.setVisibility(false);
     indicatorLayer.setVisibility(false);
