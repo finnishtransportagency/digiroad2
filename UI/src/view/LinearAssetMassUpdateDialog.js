@@ -14,7 +14,7 @@
       '<div class="content">' +
       'Olet valinnut <%- count %> tielinkkiä' +
       '</div>' +
-      '<%- editElement %>'+
+      '<%= editElement %>'+
       '<div class="actions">' +
       '<button class="btn btn-primary save">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +
