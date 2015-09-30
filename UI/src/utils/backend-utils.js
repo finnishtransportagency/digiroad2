@@ -139,8 +139,8 @@
       });
     };
 
-    this.getLinearAssets = _.throttle(function(boundingBox, typeId, callback) {
-      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox, callback);
+    this.getLinearAssets = _.throttle(function(boundingBox, typeId) {
+      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
     }, 1000);
 
     this.updateLinearAssets = _.throttle(function(data, success, failure) {

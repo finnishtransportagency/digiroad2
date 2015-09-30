@@ -42,7 +42,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getLinearAssets(boundingBox, typeId, function() {}).then(function(linearAssetGroups) {
+      return backend.getLinearAssets(boundingBox, typeId).then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
         });
