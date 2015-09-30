@@ -173,7 +173,7 @@ var URLRouter = function(map, backend, models) {
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
-      LinearAssetForm2.initialize(
+      LinearAssetForm.initialize(
           linearAsset.selectedLinearAsset,
           linearAsset.singleElementEventCategory,
           PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
@@ -184,7 +184,7 @@ var URLRouter = function(map, backend, models) {
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-      acc[asset.layerName] = new LinearAssetLayer2({
+      acc[asset.layerName] = new LinearAssetLayer({
         map: map,
         application: applicationModel,
         collection: asset.collection,
@@ -361,8 +361,8 @@ var URLRouter = function(map, backend, models) {
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var linearAssets = _.map(linearAssetSpecs, function(spec) {
-      var collection = new LinearAssetsCollection2(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedLinearAsset = new SelectedLinearAsset2(backend, collection, spec.typeId,
+      var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var selectedLinearAsset = new SelectedLinearAsset(backend, collection, spec.typeId,
                                                          spec.singleElementEventCategory, spec.multiElementEventCategory, false);
       return _.merge({}, spec, {
         collection: collection,

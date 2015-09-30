@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedLinearAsset2 = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
+  root.SelectedLinearAsset = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     var selection = [];
     var self = this;
     var dirty = false;

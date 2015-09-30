@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetsCollection2 = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.LinearAssetsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
     var speedLimits = [];
     var dirty = false;
     var selection = null;

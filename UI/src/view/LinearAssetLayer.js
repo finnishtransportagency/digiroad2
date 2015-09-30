@@ -1,4 +1,4 @@
-window.LinearAssetLayer2 = function(params) {
+window.LinearAssetLayer = function(params) {
   var map = params.map,
       application = params.application,
       collection = params.collection,

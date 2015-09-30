@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinearAssetForm2 = {
+  root.LinearAssetForm = {
     initialize: bindEvents
   };
 
