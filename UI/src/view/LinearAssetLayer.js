@@ -2,7 +2,7 @@ window.LinearAssetLayer = function(params) {
   var map = params.map,
       application = params.application,
       collection = params.collection,
-      selectedSpeedLimit = params.selectedSpeedLimit,
+      selectedLinearAsset = params.selectedLinearAsset,
       geometryUtils = params.geometryUtils,
       roadLayer = params.roadLayer,
       multiElementEventCategory = params.multiElementEventCategory,
@@ -22,7 +22,7 @@ window.LinearAssetLayer = function(params) {
     return multiElementEventCategory + ':' + eventName;
   };
 
-  var SpeedLimitCutter = function(eventListener, vectorLayer, collection) {
+  var LinearAssetCutter = function(eventListener, vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
@@ -64,11 +64,11 @@ window.LinearAssetLayer = function(params) {
       });
     };
 
-    var isWithinCutThreshold = function(speedLimitLink) {
-      return speedLimitLink && speedLimitLink.distance < CUT_THRESHOLD;
+    var isWithinCutThreshold = function(linearAssetLink) {
+      return linearAssetLink && linearAssetLink.distance < CUT_THRESHOLD;
     };
 
-    var findNearestSpeedLimitLink = function(point) {
+    var findNearestLinearAssetLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
         .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
@@ -86,11 +86,11 @@ window.LinearAssetLayer = function(params) {
     this.updateByPosition = function(position) {
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint);
-      if (!closestSpeedLimitLink) {
+      var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
+      if (!closestLinearAssetLink) {
         return;
       }
-      var distanceObject = closestSpeedLimitLink.distanceObject;
+      var distanceObject = closestLinearAssetLink.distanceObject;
       if (isWithinCutThreshold(distanceObject)) {
         moveTo(distanceObject.x0, distanceObject.y0);
       } else {
@@ -104,26 +104,26 @@ window.LinearAssetLayer = function(params) {
         return new OpenLayers.Geometry.LineString(openlayersPoints);
       };
 
-      var calculateSplitProperties = function(nearestSpeedLimit, point) {
-        var lineString = pointsToLineString(nearestSpeedLimit.points);
-        var startMeasureOffset = nearestSpeedLimit.startMeasure;
+      var calculateSplitProperties = function(nearestLinearAsset, point) {
+        var lineString = pointsToLineString(nearestLinearAsset.points);
+        var startMeasureOffset = nearestLinearAsset.startMeasure;
         var splitMeasure = geometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
-        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestSpeedLimit.points), point);
+        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestLinearAsset.points), point);
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
       var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestSpeedLimitLink(mousePoint);
+      var nearest = findNearestLinearAssetLink(mousePoint);
 
       if (!isWithinCutThreshold(nearest.distanceObject)) {
         return;
       }
 
-      var nearestSpeedLimit = nearest.feature.attributes;
-      var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
-      selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
+      var nearestLinearAsset = nearest.feature.attributes;
+      var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
+      selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
       remove();
     };
@@ -145,11 +145,11 @@ window.LinearAssetLayer = function(params) {
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
   map.addLayer(indicatorLayer);
 
-  var speedLimitCutter = new SpeedLimitCutter(me.eventListener, vectorLayer, collection);
+  var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
-  var highlightMultipleSpeedLimitFeatures = function() {
+  var highlightMultipleLinearAssetFeatures = function() {
     var partitioned = _.groupBy(vectorLayer.features, function(feature) {
-      return selectedSpeedLimit.isSelected(feature.attributes);
+      return selectedLinearAsset.isSelected(feature.attributes);
     });
     var selected = partitioned[true];
     var unSelected = partitioned[false];
@@ -157,56 +157,56 @@ window.LinearAssetLayer = function(params) {
     _.each(unSelected, function(feature) { selectControl.unhighlight(feature); });
   };
 
-  var highlightSpeedLimitFeatures = function() {
-    highlightMultipleSpeedLimitFeatures();
+  var highlightLinearAssetFeatures = function() {
+    highlightMultipleLinearAssetFeatures();
   };
 
   var setSelectionStyleAndHighlightFeature = function() {
     vectorLayer.styleMap = style.selection;
-    highlightSpeedLimitFeatures();
+    highlightLinearAssetFeatures();
     vectorLayer.redraw();
   };
 
-  var speedLimitOnSelect = function(feature) {
-    selectedSpeedLimit.open(feature.attributes, feature.singleLinkSelect);
+  var linearAssetOnSelect = function(feature) {
+    selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
     setSelectionStyleAndHighlightFeature();
   };
 
-  var speedLimitOnUnselect = function() {
-    if (selectedSpeedLimit.exists()) {
-      selectedSpeedLimit.close();
+  var linearAssetOnUnselect = function() {
+    if (selectedLinearAsset.exists()) {
+      selectedLinearAsset.close();
     }
   };
 
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-    onSelect: speedLimitOnSelect,
-    onUnselect: speedLimitOnUnselect
+    onSelect: linearAssetOnSelect,
+    onUnselect: linearAssetOnUnselect
   });
   map.addControl(selectControl);
   var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
-  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, function(speedLimits) {
-    activateSelectionStyle(speedLimits);
+  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
+    activateSelectionStyle(linearAssets);
 
     LinearAssetMassUpdateDialog.show({
-      count: selectedSpeedLimit.count(),
+      count: selectedLinearAsset.count(),
       onCancel: cancelSelection,
-      onSave: function(newSpeedLimit) {
-        selectedSpeedLimit.saveMultiple(newSpeedLimit);
+      onSave: function(newLinearAsset) {
+        selectedLinearAsset.saveMultiple(newLinearAsset);
         activateBrowseStyle();
-        selectedSpeedLimit.closeMultiple();
+        selectedLinearAsset.closeMultiple();
       },
-      element: $(params.formElements.singleValueElement(selectedSpeedLimit))[1].outerHTML
+      element: $(params.formElements.singleValueElement(selectedLinearAsset))[1].outerHTML
     });
   });
 
   function cancelSelection() {
-    selectedSpeedLimit.closeMultiple();
+    selectedLinearAsset.closeMultiple();
     activateBrowseStyle();
     collection.fetch(map.getExtent());
   }
 
-  var handleSpeedLimitUnSelected = function(eventListener, selection) {
+  var handleLinearAssetUnSelected = function(eventListener, selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
       return selection.isSelected(feature.attributes);
     }), function(feature) {
@@ -226,9 +226,9 @@ window.LinearAssetLayer = function(params) {
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       doubleClickSelectControl.deactivate();
-      speedLimitCutter.activate();
+      linearAssetCutter.activate();
     } else if (tool === 'Select') {
-      speedLimitCutter.deactivate();
+      linearAssetCutter.deactivate();
       doubleClickSelectControl.activate();
     }
     updateMassUpdateHandlerState();
@@ -252,55 +252,55 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var activateSelectionStyle = function(selectedSpeedLimits) {
+  var activateSelectionStyle = function(selectedLinearAssets) {
     vectorLayer.styleMap = style.selection;
-    selectedSpeedLimit.openMultiple(selectedSpeedLimits);
-    highlightMultipleSpeedLimitFeatures();
+    selectedLinearAsset.openMultiple(selectedLinearAssets);
+    highlightMultipleLinearAssetFeatures();
     vectorLayer.redraw();
   };
 
   var bindEvents = function(eventListener) {
-    var speedLimitChanged = _.partial(handleSpeedLimitChanged, eventListener);
-    var speedLimitCancelled = _.partial(handleSpeedLimitCancelled, eventListener);
-    var speedLimitUnSelected = _.partial(handleSpeedLimitUnSelected, eventListener);
-    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawSpeedLimits);
+    var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
+    var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
+    var linearAssetUnSelected = _.partial(handleLinearAssetUnSelected, eventListener);
+    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, singleElementEvents('selected', 'multiSelected'), handleSpeedLimitSelected);
-    eventListener.listenTo(eventbus, singleElementEvents('saved'), handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), speedLimitChanged);
-    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), speedLimitCancelled);
-    eventListener.listenTo(eventbus, singleElementEvents('unselect'), speedLimitUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected', 'multiSelected'), handleLinearAssetSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
+    eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
+    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
+    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
-    eventListener.listenTo(eventbus, singleElementEvents('selectByMmlId'), selectSpeedLimitByMmlId);
+    eventListener.listenTo(eventbus, singleElementEvents('selectByMmlId'), selectLinearAssetByMmlId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
   };
 
-  var handleSpeedLimitSelected = function(selectedSpeedLimit) {
+  var handleLinearAssetSelected = function(selectedLinearAsset) {
     setSelectionStyleAndHighlightFeature();
   };
 
-  var selectSpeedLimitByMmlId = function(mmlId) {
+  var selectLinearAssetByMmlId = function(mmlId) {
     var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.mmlId === mmlId; });
     if (feature) {
       selectControl.select(feature);
     }
   };
 
-  var handleSpeedLimitSaved = function() {
+  var handleLinearAssetSaved = function() {
     collection.fetch(map.getExtent());
     applicationModel.setSelectedTool('Select');
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  var handleSpeedLimitChanged = function(eventListener, selectedSpeedLimit) {
+  var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
     doubleClickSelectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
-    vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    drawSpeedLimits(selectedSpeedLimit.get());
+    var selectedLinearAssetFeatures = _.filter(vectorLayer.features, function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
+    vectorLayer.removeFeatures(selectedLinearAssetFeatures);
+    drawLinearAssets(selectedLinearAsset.get());
     decorateSelection();
   };
 
@@ -313,7 +313,7 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.setVisibility(true);
     adjustStylesByZoomLevel(map.getZoom);
     collection.fetch(map.getExtent()).then(function() {
-      eventbus.trigger('layer:speedLimit:' + event);
+      eventbus.trigger('layer:linearAsset:' + event);
     });
   };
   this.activateSelection = function() {
@@ -329,10 +329,10 @@ window.LinearAssetLayer = function(params) {
     indicatorLayer.clearMarkers();
   };
 
-  var handleSpeedLimitCancelled = function(eventListener) {
+  var handleLinearAssetCancelled = function(eventListener) {
     doubleClickSelectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    redrawSpeedLimits(collection.getAll());
+    redrawLinearAssets(collection.getAll());
   };
 
   var drawIndicators = function(links) {
@@ -370,7 +370,7 @@ window.LinearAssetLayer = function(params) {
     };
 
     var indicators = function() {
-      if (selectedSpeedLimit.isSplit()) {
+      if (selectedLinearAsset.isSplit()) {
         return indicatorsForSplit();
       } else {
         return indicatorsForSeparation();
@@ -382,38 +382,38 @@ window.LinearAssetLayer = function(params) {
     });
   };
 
-  var redrawSpeedLimits = function(speedLimitChains) {
+  var redrawLinearAssets = function(linearAssetChains) {
     doubleClickSelectControl.deactivate();
     me.removeLayerFeatures();
-    if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
+    if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
       doubleClickSelectControl.activate();
     }
 
-    var speedLimits = _.flatten(speedLimitChains);
-    drawSpeedLimits(speedLimits);
+    var linearAssets = _.flatten(linearAssetChains);
+    drawLinearAssets(linearAssets);
     decorateSelection();
   };
 
-  var drawSpeedLimits = function(speedLimits) {
-    vectorLayer.addFeatures(style.renderFeatures(speedLimits));
+  var drawLinearAssets = function(linearAssets) {
+    vectorLayer.addFeatures(style.renderFeatures(linearAssets));
   };
 
   var decorateSelection = function() {
-    var offsetBySideCode = function(speedLimit) {
-      return LinearAsset().offsetBySideCode(applicationModel.zoom.level, speedLimit);
+    var offsetBySideCode = function(linearAsset) {
+      return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
     };
 
-    if (selectedSpeedLimit.exists()) {
+    if (selectedLinearAsset.exists()) {
       withoutOnSelect(function() {
-        var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+        var feature = _.find(vectorLayer.features, function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
         if (feature) {
           selectControl.select(feature);
         }
-        highlightMultipleSpeedLimitFeatures();
+        highlightMultipleLinearAssetFeatures();
       });
 
-      if (selectedSpeedLimit.isSplitOrSeparated()) {
-        drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
+      if (selectedLinearAsset.isSplitOrSeparated()) {
+        drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
   };
@@ -421,13 +421,13 @@ window.LinearAssetLayer = function(params) {
   var withoutOnSelect = function(f) {
     selectControl.onSelect = function() {};
     f();
-    selectControl.onSelect = speedLimitOnSelect;
+    selectControl.onSelect = linearAssetOnSelect;
   };
 
   var reset = function() {
     selectControl.unselectAll();
     vectorLayer.styleMap = style.browsing;
-    speedLimitCutter.deactivate();
+    linearAssetCutter.deactivate();
   };
 
   var show = function(map) {

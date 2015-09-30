@@ -188,7 +188,7 @@ var URLRouter = function(map, backend, models) {
         map: map,
         application: applicationModel,
         collection: asset.collection,
-        selectedSpeedLimit: asset.selectedLinearAsset,
+        selectedLinearAsset: asset.selectedLinearAsset,
         roadCollection: models.roadCollection,
         geometryUtils: new GeometryUtils(),
         roadLayer: roadLayer,
