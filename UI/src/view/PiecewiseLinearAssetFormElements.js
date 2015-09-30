@@ -56,22 +56,22 @@
       }
     }
 
-    function bindMassUpdateDialog(rootElement) {
+    function inputElementValue(input) {
+      var removeWhitespace = function(s) {
+        return s.replace(/\s/g, '');
+      };
+      var value = parseInt(removeWhitespace(input.val()), 10);
+      return _.isFinite(value) ? value : undefined;
+    }
+
+    function bindMassUpdateDialog(rootElement, valueElement) {
       var inputElement = rootElement.find('.input-unit-combination input.' + className);
       var toggleElement = rootElement.find('.radio input.' + className);
       function setValue(value){
-        $('#hid').text(value);
+        valueElement.text(value);
       }
-      var inputElementValue = function() {
-        var removeWhitespace = function(s) {
-          return s.replace(/\s/g, '');
-        };
-        var value = parseInt(removeWhitespace(inputElement.val()), 10);
-        return _.isFinite(value) ? value : undefined;
-      };
-
       inputElement.on('input', function() {
-        setValue(inputElementValue());
+        setValue(inputElementValue(inputElement));
       });
 
       toggleElement.on('change', function(event) {
@@ -80,7 +80,7 @@
         if (disabled) {
           setValue('');
         } else {
-          setValue(inputElementValue());
+          setValue(inputElementValue(inputElement));
         }
       });
     }
@@ -117,8 +117,7 @@
         if (disabled) {
           removeValue();
         } else {
-          var value = unit ? inputElementValue() : defaultValue;
-          setValue(value);
+          setValue(inputElementValue());
         }
       });
     }

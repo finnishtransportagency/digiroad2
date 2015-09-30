@@ -27,7 +27,7 @@
       var container = $('.container').append(_.template(confirmDiv)({
         count: count
       }));
-      options.formElements.bindMassUpdateDialog(container, options.selectedAsset);
+      options.formElements.bindMassUpdateDialog(container, $('#hid'));
     };
 
     var bindEvents = function() {
