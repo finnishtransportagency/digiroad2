@@ -158,12 +158,10 @@
         .toEventStream();
 
       responses.onError(function (error) {
-        console.error('getLinearAssets', error);
         // TODO: reject promise
       });
 
       responses.onValue(function (event) {
-        console.log('getLinearAssets.onValue', event);
         event.deferred.resolve(event.data);
       });
 
