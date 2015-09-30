@@ -10,14 +10,14 @@
       return sideCode ? className + '-' + sideCode : className;
     }
 
-    function singleValueElement(selectedLinearAsset, sideCode) {
-      var withoutValue = selectedLinearAsset.isUnknown() ? 'checked' : '';
-      var withValue = selectedLinearAsset.isUnknown() ? '' : 'checked';
+    function singleValueElement(currentValue, isUnknown, sideCode) {
+      var withoutValue = isUnknown ? 'checked' : '';
+      var withValue = isUnknown ? '' : 'checked';
 
       var readOnlyFormGroup = '' +
         '<div class="form-group read-only">' +
           '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<p class="form-control-static ' + className + '">' + valueString(selectedLinearAsset) + '</p>' +
+          '<p class="form-control-static ' + className + '">' + valueString(currentValue, isUnknown) + '</p>' +
         '</div>';
 
       var editableFormGroup = '' +
@@ -41,7 +41,7 @@
                   'value="enabled" ' + withValue + '/>' +
               '</label>' +
             '</div>' +
-            measureInput(selectedLinearAsset, sideCode) +
+            measureInput(currentValue, isUnknown, sideCode) +
           '</div>' +
         '</div>';
 
@@ -122,18 +122,18 @@
       });
     }
 
-    function valueString(selectedLinearAsset) {
+    function valueString(currentValue, isUnknown) {
       if (unit) {
-        return selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() + ' ' + unit : '-';
+        return currentValue ? currentValue + ' ' + unit : '-';
       } else {
-        return selectedLinearAsset.isUnknown() ? 'ei ole' : 'on';
+        return isUnknown ? 'ei ole' : 'on';
       }
     }
 
-    function measureInput(selectedLinearAsset, sideCode) {
+    function measureInput(currentValue, isUnknown, sideCode) {
       if (unit) {
-        var value = selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() : '';
-        var disabled = selectedLinearAsset.isUnknown() ? 'disabled' : '';
+        var value = currentValue ? currentValue : '';
+        var disabled = isUnknown ? 'disabled' : '';
         return '' +
           '<div class="input-unit-combination input-group">' +
             '<input ' +

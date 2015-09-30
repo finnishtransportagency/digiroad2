@@ -14,7 +14,7 @@
       '<div class="content">' +
       'Olet valinnut <%- count %> linkkiä' +
       '</div>' +
-      options.formElements.singleValueElement(options.selectedAsset) +
+      options.formElements.singleValueElement(undefined, true) +
       '<div class="actions">' +
       '<button class="btn btn-primary save">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +

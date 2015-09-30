@@ -78,8 +78,8 @@
     };
 
     var limitValueButtons = function() {
-      var separateValueElement = formElements.singleValueElement(selectedLinearAsset, "a") + formElements.singleValueElement(selectedLinearAsset, "b");
-      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset);
+      var separateValueElement = formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown(), "a") + formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown(), "b");
+      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown());
     };
 
     var header = '<header>' + title() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';
