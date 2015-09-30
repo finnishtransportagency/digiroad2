@@ -197,7 +197,7 @@ window.LinearAssetLayer = function(params) {
         selectedLinearAsset.closeMultiple();
       },
       formElements: params.formElements,
-      selectedAsset: selectedSpeedLimit
+      selectedAsset: selectedLinearAsset
     });
   });
 
