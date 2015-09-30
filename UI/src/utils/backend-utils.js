@@ -155,18 +155,6 @@
       });
     }, 1000);
 
-    this.createLinearAsset = _.throttle(function(typeId, linearAsset, success, error) {
-      $.ajax({
-        contentType: "application/json",
-        type: "POST",
-        url: "api/linearassets?typeId=" + typeId,
-        data: JSON.stringify(linearAsset),
-        dataType: "json",
-        success: success,
-        error: error
-      });
-    }, 1000);
-
     this.deleteLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
