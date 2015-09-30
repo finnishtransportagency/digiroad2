@@ -139,13 +139,9 @@
       });
     };
 
-    this.getLinearAssets = throttledLatest(function(boundingBox, typeId) {
+    this.getLinearAssets = latestOnly(function (boundingBox, typeId) {
       return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
     });
-
-    function throttledLatest(f) {
-      return _.throttle(latestOnly(f), 1000);
-    }
 
     function latestOnly(f) {
       var inFlight;
