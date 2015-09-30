@@ -21,6 +21,11 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
     props
   }
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
 
   val dataImporter = new AssetDataImporter
 
@@ -205,7 +210,7 @@ object DataFixture {
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
-    dataImporter.generateDroppedNumericalLimits()
+    dataImporter.generateDroppedNumericalLimits(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println("complete at time: ")
     println(DateTime.now())
     println("\n")

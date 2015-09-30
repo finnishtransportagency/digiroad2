@@ -238,8 +238,8 @@ class AssetDataImporter {
     bw.close()
   }
 
-  def generateDroppedNumericalLimits(): Unit = {
-    val roadLinkService = new VVHRoadLinkService(new VVHClient("localhost:6080"), null)
+  def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
+    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
 
     val limits = OracleDatabase.withDynSession {
