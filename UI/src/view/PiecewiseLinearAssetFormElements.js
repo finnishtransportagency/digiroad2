@@ -100,16 +100,8 @@
       };
       var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
-      var inputElementValue = function() {
-        var removeWhitespace = function(s) {
-          return s.replace(/\s/g, '');
-        };
-        var value = parseInt(removeWhitespace(inputElement.val()), 10);
-        return _.isFinite(value) ? value : undefined;
-      };
-
-      inputElement.on('input', function(event) {
-        setValue(inputElementValue());
+      inputElement.on('input', function() {
+        setValue(inputElementValue(inputElement));
       });
 
       toggleElement.on('change', function(event) {
@@ -118,7 +110,7 @@
         if (disabled) {
           removeValue();
         } else {
-          var value = unit ? inputElementValue() : defaultValue;
+          var value = unit ? inputElementValue(inputElement) : defaultValue;
           setValue(value);
         }
       });
