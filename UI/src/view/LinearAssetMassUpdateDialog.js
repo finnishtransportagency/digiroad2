@@ -14,18 +14,20 @@
       '<div class="content">' +
       'Olet valinnut <%- count %> linkkiä' +
       '</div>' +
-      options.element +
+      options.formElements.singleValueElement(options.selectedAsset) +
       '<div class="actions">' +
       '<button class="btn btn-primary save">Tallenna</button>' +
       '<button class="btn btn-secondary close">Peruuta</button>' +
       '</div>' +
       '</div>' +
-      '</div>';
+      '</div>' +
+      '<div id="hid" style="visibility: hidden;"></div>div>';
 
     var renderDialog = function() {
-      $('.container').append(_.template(confirmDiv)({
+      var container = $('.container').append(_.template(confirmDiv)({
         count: count
       }));
+      options.formElements.bindMassUpdateDialog(container, options.selectedAsset);
     };
 
     var bindEvents = function() {
@@ -37,7 +39,7 @@
       $('.mass-update-modal .save').on('click', function() {
         $('.modal-dialog').find('.actions button').attr('disabled', true);
 
-        var newValue = parseInt($('.mass-update-modal input[type="text"]').val(), 10);
+        var newValue = parseInt($('#hid').text(), 10);
 
         purge();
 

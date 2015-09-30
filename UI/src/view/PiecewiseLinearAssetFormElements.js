@@ -2,7 +2,8 @@
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className, defaultValue) {
     return {
       singleValueElement: singleValueElement,
-      bindEvents: bindEvents
+      bindEvents: bindEvents,
+      bindMassUpdateDialog: bindMassUpdateDialog
     };
 
     function generateClassName(sideCode) {
@@ -53,6 +54,35 @@
       } else {
         return '<span class="marker">' + sideCode + '</span>';
       }
+    }
+
+    function bindMassUpdateDialog(rootElement) {
+      var inputElement = rootElement.find('.input-unit-combination input.' + className);
+      var toggleElement = rootElement.find('.radio input.' + className);
+      function setValue(value){
+        $('#hid').text(value);
+      }
+      var inputElementValue = function() {
+        var removeWhitespace = function(s) {
+          return s.replace(/\s/g, '');
+        };
+        var value = parseInt(removeWhitespace(inputElement.val()), 10);
+        return _.isFinite(value) ? value : undefined;
+      };
+
+      inputElement.on('input', function() {
+        setValue(inputElementValue());
+      });
+
+      toggleElement.on('change', function(event) {
+        var disabled = $(event.currentTarget).val() === 'disabled';
+        inputElement.prop('disabled', disabled);
+        if (disabled) {
+          setValue('');
+        } else {
+          setValue(inputElementValue());
+        }
+      });
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
