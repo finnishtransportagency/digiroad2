@@ -176,7 +176,7 @@ var URLRouter = function(map, backend, models) {
       LinearAssetForm2.initialize(
           linearAsset.selectedLinearAsset,
           linearAsset.singleElementEventCategory,
-          PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className),
+          PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
           linearAsset.newTitle,
           linearAsset.className,
           linearAsset.unit,
@@ -196,7 +196,7 @@ var URLRouter = function(map, backend, models) {
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: PiecewiseLinearAssetStyle(applicationModel),
-        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className)
+        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue)
       });
       return acc;
     }, {});
@@ -339,6 +339,7 @@ var URLRouter = function(map, backend, models) {
       },
       {
         typeId: 100,
+        defaultValue: 1,
         singleElementEventCategory: 'litRoad',
         multiElementEventCategory: 'litRoads',
         layerName: 'litRoad',

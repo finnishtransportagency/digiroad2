@@ -1,5 +1,5 @@
 (function(root) {
-  root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className) {
+  root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className, defaultValue) {
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents
@@ -87,7 +87,8 @@
         if (disabled) {
           removeValue();
         } else {
-          setValue(inputElementValue());
+          var value = unit ? inputElementValue() : defaultValue;
+          setValue(value);
         }
       });
     }
