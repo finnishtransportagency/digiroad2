@@ -98,6 +98,112 @@ var URLRouter = function(map, backend, models) {
 };
 
 (function(application) {
+  var linearAssetSpecs = [
+    {
+      typeId: 30,
+      singleElementEventCategory: 'totalWeightLimit',
+      multiElementEventCategory: 'totalWeightLimits',
+      layerName: 'totalWeightLimit',
+      title: 'Suurin sallittu massa',
+      newTitle: 'Uusi suurin sallittu massa',
+      className: 'total-weight-limit',
+      unit: 'kg',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 40,
+      singleElementEventCategory: 'trailerTruckWeightLimit',
+      multiElementEventCategory: 'trailerTruckWeightLimits',
+      layerName: 'trailerTruckWeightLimit',
+      title: 'Yhdistelmän suurin sallittu massa',
+      newTitle: 'Uusi yhdistelmän suurin sallittu massa',
+      className: 'trailer-truck-weight-limit',
+      unit: 'kg',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 50,
+      singleElementEventCategory: 'axleWeightLimit',
+      multiElementEventCategory: 'axleWeightLimits',
+      layerName: 'axleWeightLimit',
+      title: 'Suurin sallittu akselimassa',
+      newTitle: 'Uusi suurin sallittu akselimassa',
+      className: 'axle-weight-limit',
+      unit: 'kg',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 60,
+      singleElementEventCategory: 'bogieWeightLimit',
+      multiElementEventCategory: 'bogieWeightlLimits',
+      layerName: 'bogieWeightLimit',
+      title: 'Suurin sallittu telimassa',
+      newTitle: 'Uusi suurin sallittu telimassa',
+      className: 'bogie-weight-limit',
+      unit: 'kg',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 70,
+      singleElementEventCategory: 'heightLimit',
+      multiElementEventCategory: 'heightLimits',
+      layerName: 'heightLimit',
+      title: 'Suurin sallittu korkeus',
+      newTitle: 'Uusi suurin sallittu korkeus',
+      className: 'height-limit',
+      unit: 'cm',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 80,
+      singleElementEventCategory: 'lengthLimit',
+      multiElementEventCategory: 'lengthLimits',
+      layerName: 'lengthLimit',
+      title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      newTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      className: 'length-limit',
+      unit: 'cm',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 90,
+      singleElementEventCategory: 'widthLimit',
+      multiElementEventCategory: 'widthLimits',
+      layerName: 'widthLimit',
+      title: 'Suurin sallittu leveys',
+      newTitle: 'Uusi suurin sallittu leveys',
+      className: 'width-limit',
+      unit: 'cm',
+      editControlLabels: { title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta' }
+    },
+    {
+      typeId: 100,
+      defaultValue: 1,
+      singleElementEventCategory: 'litRoad',
+      multiElementEventCategory: 'litRoads',
+      layerName: 'litRoad',
+      title: 'Valaistu tie',
+      newTitle: 'Uusi valaistu tie',
+      className: 'lit-road',
+      editControlLabels: { title: 'Valaistus',
+        enabled: 'Valaistus',
+        disabled: 'Ei valaistusta' }
+    }
+  ];
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
@@ -106,19 +212,22 @@ var URLRouter = function(map, backend, models) {
   };
 
   var bindEvents = function() {
-    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving', function() {
+    var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
+    var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
+    var savingEventNames = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
+    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving ' + savingEventNames, function() {
       indicatorOverlay();
     });
-
-    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available', function() {
+    var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
+    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
     eventbus.on('asset:saved', function() {
       jQuery('.spinner-overlay').remove();
     });
-
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed', function() {
+    var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
@@ -245,112 +354,6 @@ var URLRouter = function(map, backend, models) {
   };
 
   application.start = function(customBackend, withTileMaps) {
-    var linearAssetSpecs = [
-      {
-        typeId: 30,
-        singleElementEventCategory: 'totalWeightLimit',
-        multiElementEventCategory: 'totalWeightLimits',
-        layerName: 'totalWeightLimit',
-        title: 'Suurin sallittu massa',
-        newTitle: 'Uusi suurin sallittu massa',
-        className: 'total-weight-limit',
-        unit: 'kg',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 40,
-        singleElementEventCategory: 'trailerTruckWeightLimit',
-        multiElementEventCategory: 'trailerTruckWeightLimits',
-        layerName: 'trailerTruckWeightLimit',
-        title: 'Yhdistelmän suurin sallittu massa',
-        newTitle: 'Uusi yhdistelmän suurin sallittu massa',
-        className: 'trailer-truck-weight-limit',
-        unit: 'kg',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 50,
-        singleElementEventCategory: 'axleWeightLimit',
-        multiElementEventCategory: 'axleWeightLimits',
-        layerName: 'axleWeightLimit',
-        title: 'Suurin sallittu akselimassa',
-        newTitle: 'Uusi suurin sallittu akselimassa',
-        className: 'axle-weight-limit',
-        unit: 'kg',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 60,
-        singleElementEventCategory: 'bogieWeightLimit',
-        multiElementEventCategory: 'bogieWeightlLimits',
-        layerName: 'bogieWeightLimit',
-        title: 'Suurin sallittu telimassa',
-        newTitle: 'Uusi suurin sallittu telimassa',
-        className: 'bogie-weight-limit',
-        unit: 'kg',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 70,
-        singleElementEventCategory: 'heightLimit',
-        multiElementEventCategory: 'heightLimits',
-        layerName: 'heightLimit',
-        title: 'Suurin sallittu korkeus',
-        newTitle: 'Uusi suurin sallittu korkeus',
-        className: 'height-limit',
-        unit: 'cm',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 80,
-        singleElementEventCategory: 'lengthLimit',
-        multiElementEventCategory: 'lengthLimits',
-        layerName: 'lengthLimit',
-        title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-        newTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-        className: 'length-limit',
-        unit: 'cm',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 90,
-        singleElementEventCategory: 'widthLimit',
-        multiElementEventCategory: 'widthLimits',
-        layerName: 'widthLimit',
-        title: 'Suurin sallittu leveys',
-        newTitle: 'Uusi suurin sallittu leveys',
-        className: 'width-limit',
-        unit: 'cm',
-        editControlLabels: { title: 'Rajoitus',
-                             enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' }
-      },
-      {
-        typeId: 100,
-        defaultValue: 1,
-        singleElementEventCategory: 'litRoad',
-        multiElementEventCategory: 'litRoads',
-        layerName: 'litRoad',
-        title: 'Valaistu tie',
-        newTitle: 'Uusi valaistu tie',
-        className: 'lit-road',
-        editControlLabels: { title: 'Valaistus',
-                             enabled: 'Valaistus',
-                             disabled: 'Ei valaistusta' }
-      }
-    ];
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
