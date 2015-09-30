@@ -3,49 +3,51 @@
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents,
-      bindMassUpdateDialog: bindMassUpdateDialog
+      bindMassUpdateDialog: bindMassUpdateDialog,
+      singleValueEditElement: singleValueEditElement
     };
 
     function generateClassName(sideCode) {
       return sideCode ? className + '-' + sideCode : className;
     }
 
-    function singleValueElement(currentValue, isUnknown, sideCode) {
+    function singleValueEditElement(currentValue, isUnknown, sideCode) {
       var withoutValue = isUnknown ? 'checked' : '';
       var withValue = isUnknown ? '' : 'checked';
-
-      var readOnlyFormGroup = '' +
-        '<div class="form-group read-only">' +
-          '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<p class="form-control-static ' + className + '">' + valueString(currentValue, isUnknown) + '</p>' +
-        '</div>';
-
-      var editableFormGroup = '' +
+      return '' +
         '<div class="form-group editable">' +
           sideCodeMarker(sideCode) +
           '<label class="control-label">' + editControlLabels.title + '</label>' +
           '<div class="choice-group">' +
             '<div class="radio">' +
               '<label>' + editControlLabels.disabled +
-                '<input ' + 
-                  'class="' + generateClassName(sideCode) + '" ' +
-                  'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                  'value="disabled" ' + withoutValue + '/>' +
+                '<input ' +
+                'class="' + generateClassName(sideCode) + '" ' +
+                'type="radio" name="' + generateClassName(sideCode) + '" ' +
+                'value="disabled" ' + withoutValue + '/>' +
               '</label>' +
             '</div>' +
             '<div class="radio">' +
               '<label>' + editControlLabels.enabled +
                 '<input ' +
-                  'class="' + generateClassName(sideCode) + '" ' +
-                  'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                  'value="enabled" ' + withValue + '/>' +
+                'class="' + generateClassName(sideCode) + '" ' +
+                'type="radio" name="' + generateClassName(sideCode) + '" ' +
+                'value="enabled" ' + withValue + '/>' +
               '</label>' +
             '</div>' +
             measureInput(currentValue, isUnknown, sideCode) +
           '</div>' +
         '</div>';
+    }
 
-      return readOnlyFormGroup + editableFormGroup;
+    function singleValueElement(currentValue, isUnknown, sideCode) {
+      var readOnlyFormGroup = '' +
+        '<div class="form-group read-only">' +
+          '<label class="control-label">' + editControlLabels.title + '</label>' +
+          '<p class="form-control-static ' + className + '">' + valueString(currentValue, isUnknown) + '</p>' +
+        '</div>';
+
+      return readOnlyFormGroup + singleValueEditElement(currentValue, isUnknown, sideCode);
     }
 
     function sideCodeMarker(sideCode) {
