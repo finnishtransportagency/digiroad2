@@ -18,7 +18,9 @@
     "pikaday": "1.2.0",
     "openlayers": "release-2.13.1",
     "backbone": "1.1.2",
-    "proj4": "2.3.3"
+    "proj4": "2.3.3",
+    "bacon.jquery": "~0.4.12",
+    "bacon": "~0.7.74"
   },
   "devDependencies": {
     "mocha": "1.13.0",

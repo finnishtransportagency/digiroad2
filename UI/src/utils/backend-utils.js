@@ -139,19 +139,39 @@
       });
     };
 
-    this.getLinearAssets = latestOnly(function (boundingBox, typeId) {
-      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
+    this.getLinearAssets = keepingOnlyNewestPromise(function(boundingBox, typeId) {
+      return $.getJSON('api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId);
     });
 
-    function latestOnly(f) {
-      var inFlight;
+    function keepingOnlyNewestPromise(getPromise) {
+      var bus = new Bacon.Bus();
+
+      var responses = bus
+        .debounceImmediate(200)
+        .flatMapLatest(function(data) {
+          return Bacon
+            .fromPromise(getPromise.apply(undefined, data.arguments))
+            .map(function(response) {
+              return {data: response, deferred: data.deferred};
+            });
+        })
+        .toEventStream();
+
+      responses.onError(function (error) {
+        console.error('getLinearAssets', error);
+        // TODO: reject promise
+      });
+
+      responses.onValue(function (event) {
+        console.log('getLinearAssets.onValue', event);
+        event.deferred.resolve(event.data);
+      });
+
       return function() {
-        if (inFlight) {
-          inFlight.abort();
-        }
-        inFlight = f.apply(undefined, arguments);
-        return inFlight;
-      };
+        var deferred = $.Deferred();
+        bus.push({arguments: arguments, deferred: deferred});
+        return deferred.promise();
+      }
     }
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
