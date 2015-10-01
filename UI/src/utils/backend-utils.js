@@ -150,8 +150,9 @@
       var responses = requests.debounce(200).ajax();
 
       return function() {
+        var promise = responses.toDeferred().promise();
         requests.push(getParams.apply(undefined, arguments));
-        return responses.toDeferred();
+        return promise;
       };
     }
 
