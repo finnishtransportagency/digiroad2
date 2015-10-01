@@ -69,9 +69,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       originalSpeedLimitSegments(1)._1 should be(originalId)
       originalSpeedLimitSegments(0)._9 should be("expired_splitted_linearasset")
       originalSpeedLimitSegments(1)._9 should be("expired_splitted_linearasset")
-      // todo: verify is expired (i.e. valid_to date is older than current time)
-      originalSpeedLimitSegments(0)._8.isDefined should be(true)
-      originalSpeedLimitSegments(1)._8.isDefined should be(true)
+      originalSpeedLimitSegments(0)._8.get.isBeforeNow should be(true)
+      originalSpeedLimitSegments(1)._8.get.isBeforeNow should be(true)
       originalSpeedLimitSegments(0)._10.isDefined should be(true)
       originalSpeedLimitSegments(1)._10.isDefined should be(true)
     }
