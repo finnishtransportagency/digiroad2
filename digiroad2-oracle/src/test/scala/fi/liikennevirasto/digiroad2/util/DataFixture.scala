@@ -216,6 +216,15 @@ object DataFixture {
     println("\n")
   }
 
+  def unfloatLinearAssets(): Unit = {
+    println("\nUnfloat multi link linear assets")
+    println(DateTime.now())
+    dataImporter.unfloatLinearAssets()
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -269,6 +278,8 @@ object DataFixture {
         importLitRoadsFromConversion()
       case Some("dropped_numericallimits") =>
         generateDroppedNumericalLimits()
+      case Some("unfloat_linear_assets") =>
+        unfloatLinearAssets()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | repair")

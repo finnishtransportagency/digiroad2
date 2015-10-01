@@ -604,7 +604,16 @@ class AssetDataImporter {
       println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
     }
   }
-  
+
+  def unfloatLinearAssets(): Unit = {
+    withDynTransaction {
+      sqlu"""
+        update asset a set floating=0
+        where a.asset_type_id in (30,40,50,60,70,80,90,100)
+        and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
+    }
+  }
+
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
