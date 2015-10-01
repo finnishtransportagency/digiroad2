@@ -225,6 +225,19 @@ object DataFixture {
     println("\n")
   }
 
+  def expireSplitAssetsWithoutMml(): Unit = {
+    println("\nExpiring split linear assets that do not have mml id")
+    println(DateTime.now())
+    val assetTypes = Seq(30, 40, 50, 60, 70, 80, 90, 100)
+    assetTypes.foreach { typeId =>
+      println("Expiring asset type " + typeId)
+      dataImporter.expireSplitAssetsWithoutMml(typeId)
+    }
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -280,9 +293,12 @@ object DataFixture {
         generateDroppedNumericalLimits()
       case Some("unfloat_linear_assets") =>
         unfloatLinearAssets()
+      case Some("expire_split_assets_without_mml") =>
+        expireSplitAssetsWithoutMml()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | repair")
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
+        " unfloat_linear_assets | expire_split_assets_without_mml | repair")
     }
   }
 }

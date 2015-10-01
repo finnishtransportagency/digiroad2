@@ -276,6 +276,21 @@ class AssetDataImporter {
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
 
+  def expireSplitAssetsWithoutMml(typeId: Int) = {
+    val chunkSize = 1000
+    val splitAssetsWithoutMmlIdFilter = """
+      a.created_by like 'split_linearasset_%'
+      and lrm.mml_id is null
+      and (a.valid_to > sysdate or a.valid_to is null)"""
+    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutMmlIdFilter)
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      expireSplitLinearAssetsWithoutMmlId(typeId, chunkStart, chunkEnd)
+      println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+  }
+
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
     val litRoadLinks: Seq[(Long, Long, Double, Double, Int)] = conversionDatabase.withDynSession {
       sql"""
@@ -511,12 +526,25 @@ class AssetDataImporter {
     }
   }
 
-  private def getAssetIdRange(typeId: Int): (Int, Int) = {
+  private def getAssetIdRange(typeId: Int, includeSingleLinkAssets: Boolean = false): (Int, Int) = {
+    val multiSegmentFilter = if (includeSingleLinkAssets) "" else "and (select count(*) from asset_link where asset_id = a.id) > 1"
     withDynSession {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
+      """.as[(Int, Int)].first
+    }
+  }
+
+  private def getAssetIdRangeWithFilter(typeId: Int, filter: String): (Int, Int) = {
+    withDynSession {
+      sql"""
+        select min(a.id), max(a.id)
+        from asset a
+        join asset_link al on al.asset_id = a.id
+        join lrm_position lrm on lrm.id = al.position_id
+        where a.asset_type_id = $typeId and #$filter
       """.as[(Int, Int)].first
     }
   }
@@ -580,6 +608,27 @@ class AssetDataImporter {
       val assetsToFloat = linearAssetLinks.map(_._1).toSet
       dao.floatLinearAssets(assetsToFloat)
       println(s"removed ${assetsToFloat.size} multilink assets")
+    }
+  }
+
+  private def expireSplitLinearAssetsWithoutMmlId(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
+    withDynTransaction {
+      sqlu"""
+        update asset
+          set modified_by = 'expired_asset_without_mml', modified_date = sysdate, valid_to = sysdate
+          where id in (
+            select a.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.created_by like 'split_linearasset_%'
+            and lrm.mml_id is null
+            and (a.valid_to > sysdate or a.valid_to is null)
+            and a.id between $chunkStart and $chunkEnd
+            and a.asset_type_id = $typeId)
+        """.execute
+
+      println(s"expired assets with ids between $chunkStart and $chunkEnd")
     }
   }
 
