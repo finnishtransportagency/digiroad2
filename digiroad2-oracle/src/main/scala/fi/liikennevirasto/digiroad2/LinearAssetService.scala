@@ -166,7 +166,7 @@ trait LinearAssetOperations {
       select * from dual
     """.execute
 
-    value.foreach(OracleLinearAssetDao.insertValue(id, valuePropertyId))
+    value.foreach(dao.insertValue(id, valuePropertyId))
 
     getByIdWithoutTransaction(id).get
   }
@@ -208,7 +208,7 @@ trait LinearAssetOperations {
     Queries.updateAssetModified(id, username).execute
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
 
-    OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
+    dao.updateMValues(id, existingLinkMeasures)
     optionalValue.map { value =>
       createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
