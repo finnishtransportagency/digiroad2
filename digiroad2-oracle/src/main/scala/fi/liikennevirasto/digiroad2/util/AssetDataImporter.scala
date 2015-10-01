@@ -582,9 +582,11 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
+    // todo: use only service or dao here
     val dao = new OracleLinearAssetDao {
       override val roadLinkService: RoadLinkService = null
     }
+    val service = new LinearAssetService(null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""
@@ -605,9 +607,9 @@ class AssetDataImporter {
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
 
-      val assetsToFloat = linearAssetLinks.map(_._1).toSet
-      dao.floatLinearAssets(assetsToFloat)
-      println(s"removed ${assetsToFloat.size} multilink assets")
+      val assetsToExpire = linearAssetLinks.map(_._1).toSet
+      service.expireWithoutTransaction(assetsToExpire, "expired_splitted_linearasset")
+      println(s"removed ${assetsToExpire.size} multilink assets")
     }
   }
 
