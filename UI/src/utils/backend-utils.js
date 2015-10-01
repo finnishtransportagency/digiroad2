@@ -140,36 +140,19 @@
     };
 
     this.getLinearAssets = keepingOnlyNewestPromise(function(boundingBox, typeId) {
-      return $.getJSON('api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId);
+      return {
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+      };
     });
 
-    function keepingOnlyNewestPromise(getPromise) {
-      var bus = new Bacon.Bus();
-
-      var responses = bus
-        .debounce(200)
-        .flatMapLatest(function(data) {
-          return Bacon
-            .fromPromise(getPromise.apply(undefined, data.arguments))
-            .map(function(response) {
-              return {data: response, deferred: data.deferred};
-            });
-        })
-        .toEventStream();
-
-      responses.onError(function (error) {
-        // TODO: reject promise
-      });
-
-      responses.onValue(function (event) {
-        event.deferred.resolve(event.data);
-      });
+    function keepingOnlyNewestPromise(getParams) {
+      var requests = new Bacon.Bus();
+      var responses = requests.debounce(200).ajax();
 
       return function() {
-        var deferred = $.Deferred();
-        bus.push({arguments: arguments, deferred: deferred});
-        return deferred.promise();
-      }
+        requests.push(getParams.apply(undefined, arguments));
+        return responses.toDeferred();
+      };
     }
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
