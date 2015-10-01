@@ -96,8 +96,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
 
       originalSpeedLimitSegments.length should be(2)
-      originalSpeedLimitSegments(0)._7 should be(true)
-      originalSpeedLimitSegments(1)._7 should be(true)
+      originalSpeedLimitSegments(0)._8.get.isBeforeNow should be(true)
+      originalSpeedLimitSegments(1)._8.get.isBeforeNow should be(true)
       originalSpeedLimitSegments(0)._1 should be(originalId)
       originalSpeedLimitSegments(1)._1 should be(originalId)
     }
