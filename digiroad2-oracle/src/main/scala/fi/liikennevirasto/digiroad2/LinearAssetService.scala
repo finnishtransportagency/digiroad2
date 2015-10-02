@@ -237,13 +237,6 @@ trait LinearAssetOperations {
     }
     Seq(getById(id).get, getById(createdId).get)
   }
-
-  def expireWithoutTransaction(ids: Set[Long], username: String): Unit = {
-    ids.foreach { id =>
-      val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, true, username)
-      if (expirationUpdate.isEmpty) dynamicSession.rollback()
-    }
-  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService) extends LinearAssetOperations {
