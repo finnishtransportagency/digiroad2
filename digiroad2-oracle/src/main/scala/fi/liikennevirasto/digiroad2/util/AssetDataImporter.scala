@@ -596,7 +596,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and floating = 0
+            and (a.valid_to > sysdate or a.valid_to is null)
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list
@@ -647,7 +647,10 @@ class AssetDataImporter {
 
   def splitMultiLinkAssetsToSingleLinkAssets(typeId: Int) {
     val chunkSize = 1000
-    val (minId, maxId) = getAssetIdRange(typeId)
+    val multiLinkLinearAssetsFilter = """
+        (a.valid_to > sysdate or a.valid_to is null)
+        and (select count(*) from asset_link where asset_id = a.id) > 1"""
+    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, multiLinkLinearAssetsFilter)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case(chunkStart, chunkEnd) =>
       val start = System.currentTimeMillis()
