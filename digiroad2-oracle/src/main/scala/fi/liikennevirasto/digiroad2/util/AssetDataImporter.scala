@@ -605,13 +605,14 @@ class AssetDataImporter {
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
 
-      if (linearAssetLinks.length > 0) {
-        val assetsIdsToExpire = linearAssetLinks.map(_._1).mkString(",")
+      val assetsIdsToExpire = linearAssetLinks.map(_._1).toSet
+      if (assetsIdsToExpire.size > 0) {
+        val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
         sqlu"""update asset
                set modified_by = 'expired_splitted_linearasset', modified_date = sysdate, valid_to = sysdate
-               where id in (#$assetsIdsToExpire)""".execute
+               where id in (#$assetsIdsToExpireString)""".execute
       }
-      println(s"removed ${linearAssetLinks.length} multilink assets")
+      println(s"removed ${assetsIdsToExpire.size} multilink assets")
     }
   }
 
