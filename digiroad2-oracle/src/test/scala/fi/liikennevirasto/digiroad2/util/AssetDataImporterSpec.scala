@@ -51,35 +51,35 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   test("Split multi-link total weight limit assets") {
     TestTransactions.runWithRollback() {
-      val originalId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
-      insertNumericalLimitValue(originalId, 40000)
+      val originalId1 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
+      val originalId2 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(3), 0, 50), LinearAssetSegment(Some(4), 0, 50)))
+      insertNumericalLimitValue(originalId1, 40000)
+      insertNumericalLimitValue(originalId2, 50000)
 
       assetDataImporter.splitMultiLinkAssetsToSingleLinkAssets(30)
 
-      val splitSegments = fetchNumericalLimitSegments(s"split_linearasset_$originalId")
+      val splitSegments = (fetchNumericalLimitSegments(s"split_linearasset_$originalId1") ++
+                           fetchNumericalLimitSegments(s"split_linearasset_$originalId2")).sortBy(_._3)
 
-      splitSegments.length shouldBe 2
-      splitSegments(0)._1 shouldNot be(splitSegments(1)._1)
+      splitSegments.map(_._3).toSet should be(Set(1, 2, 3, 4))
+      splitSegments.length shouldBe 4
+      splitSegments.map(_._1).toSet.size should be(4)
       splitSegments(0)._6 should be(Some(40000))
       splitSegments(1)._6 should be(Some(40000))
-      splitSegments.map(_._3).toSet should be(Set(1, 2))
-      splitSegments(0)._7 should be(false)
-      splitSegments(1)._7 should be(false)
+      splitSegments(2)._6 should be(Some(50000))
+      splitSegments(3)._6 should be(Some(50000))
+      splitSegments.foreach(segment => segment._7 should be (false))
 
-      val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
+      val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec").sortBy(_._3)
 
-      originalSpeedLimitSegments.length should be(2)
-      originalSpeedLimitSegments(0)._7 should be(false)
-      originalSpeedLimitSegments(1)._7 should be(false)
-      originalSpeedLimitSegments(0)._1 should be(originalId)
-      originalSpeedLimitSegments(1)._1 should be(originalId)
-      originalSpeedLimitSegments(0)._9 should be("expired_splitted_linearasset")
-      originalSpeedLimitSegments(1)._9 should be("expired_splitted_linearasset")
-      val now = DateTime.now().plusSeconds(2)
-      originalSpeedLimitSegments(0)._8.get.isBefore(now) should be(true)
-      originalSpeedLimitSegments(1)._8.get.isBefore(now) should be(true)
-      originalSpeedLimitSegments(0)._10.isDefined should be(true)
-      originalSpeedLimitSegments(1)._10.isDefined should be(true)
+      originalSpeedLimitSegments.length should be(4)
+      originalSpeedLimitSegments.map(_._1).toSet should be(Set(originalId1, originalId2))
+      originalSpeedLimitSegments.foreach { case (_, _, mmlId, _, _, _, floating, validTo, modifiedBy, _) =>
+        val now = DateTime.now().plusSeconds(2) // add two seconds because of date time precision in db
+        validTo.get.isBefore(now) should be(true)
+        floating should be(false)
+        modifiedBy should be("expired_splitted_linearasset")
+      }
     }
   }
 
