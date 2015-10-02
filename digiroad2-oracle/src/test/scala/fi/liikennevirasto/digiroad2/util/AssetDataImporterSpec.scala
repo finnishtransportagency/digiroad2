@@ -112,8 +112,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   test("Assign values to lit road properties") {
     TestTransactions.runWithRollback() {
-      val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(1, 0, 50)))
-      val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(1, 0, 50)))
+      val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50)))
+      val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50)))
       insertNumericalLimitValue(numericalLimitId, 40000)
 
       assetDataImporter.generateValuesForLitRoads()

@@ -554,7 +554,7 @@ class AssetDataImporter {
 
   def processInChunks(typeId: Int, assetTypeName: String)(f: (Int, Int) => Unit): Unit = {
     val chunkSize = 1000
-    val (minId, maxId) = getAssetIdRange(typeId)
+    val (minId, maxId) = getAssetIdRange(typeId, true)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case (chunkStart, chunkEnd) =>
       val startTime = System.currentTimeMillis()
