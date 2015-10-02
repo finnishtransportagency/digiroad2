@@ -97,7 +97,7 @@ class AssetDataImporter {
     getBatchDrivers(1, size, 500)
   }
 
-  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
+  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
     if ((m - n) < step) {
       List((n, m))
     } else {
@@ -238,8 +238,8 @@ class AssetDataImporter {
     bw.close()
   }
 
-  def generateDroppedNumericalLimits(): Unit = {
-    val roadLinkService = new VVHRoadLinkService(new VVHClient("localhost:6080"), null)
+  def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
+    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
 
     val limits = OracleDatabase.withDynSession {
@@ -274,6 +274,21 @@ class AssetDataImporter {
       exportCsv(asset_name(key), values)
     }
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+  }
+
+  def expireSplitAssetsWithoutMml(typeId: Int) = {
+    val chunkSize = 1000
+    val splitAssetsWithoutMmlIdFilter = """
+      a.created_by like 'split_linearasset_%'
+      and lrm.mml_id is null
+      and (a.valid_to > sysdate or a.valid_to is null)"""
+    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutMmlIdFilter)
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      expireSplitLinearAssetsWithoutMmlId(typeId, chunkStart, chunkEnd)
+      println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
   }
 
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
@@ -510,7 +525,7 @@ class AssetDataImporter {
       }
     }
   }
-
+  
   def generateValuesForLitRoads(): Unit = {
     processInChunks(100, "lit roads") { (chunkStart, chunkEnd) =>
       withDynTransaction {
@@ -547,17 +562,28 @@ class AssetDataImporter {
       println(s"*** Processed $assetTypeName between $chunkStart and $chunkEnd in ${System.currentTimeMillis() - startTime} ms.")
     }
   }
-
-  private def getAssetIdRange(typeId: Int): (Int, Int) = {
+  private def getAssetIdRange(typeId: Int, includeSingleLinkAssets: Boolean = false): (Int, Int) = {
+    val multiSegmentFilter = if (includeSingleLinkAssets) "" else "and (select count(*) from asset_link where asset_id = a.id) > 1"
     withDynSession {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0
+        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
       """.as[(Int, Int)].first
     }
   }
 
+  private def getAssetIdRangeWithFilter(typeId: Int, filter: String): (Int, Int) = {
+    withDynSession {
+      sql"""
+        select min(a.id), max(a.id)
+        from asset a
+        join asset_link al on al.asset_id = a.id
+        join lrm_position lrm on lrm.id = al.position_id
+        where a.asset_type_id = $typeId and #$filter
+      """.as[(Int, Int)].first
+    }
+  }
   private def getAssetIdRangeOfMultiLinkAssets(typeId: Int): (Int, Int) = {
     withDynSession {
       sql"""
@@ -567,15 +593,14 @@ class AssetDataImporter {
       """.as[(Int, Int)].first
     }
   }
+  
+  private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
+    val dao = new OracleLinearAssetDao {
+      override val roadLinkService: RoadLinkService = null
+    }
 
-  def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
-    processInChunks(20, "speed limits") { (chunkStart, chunkEnd) =>
-      val dao = new OracleLinearAssetDao {
-        override val roadLinkService: RoadLinkService = null
-      }
-
-      withDynTransaction {
-        val speedLimitLinks = sql"""
+    withDynTransaction {
+      val speedLimitLinks = sql"""
             select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
             from asset a
             join asset_link al on a.id = al.asset_id
@@ -589,51 +614,108 @@ class AssetDataImporter {
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Option[Int], Double, Double)].list
 
-        speedLimitLinks.foreach { speedLimitLink =>
-          val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-          dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertEnumeratedValue(_, "rajoitus"))
-        }
-        println(s"created ${speedLimitLinks.length} new single link speed limits")
-
-        val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
-        dao.floatLinearAssets(speedLimitsToFloat)
-        println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
+      speedLimitLinks.foreach { speedLimitLink =>
+        val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertEnumeratedValue(_, "rajoitus"))
       }
+      println(s"created ${speedLimitLinks.length} new single link speed limits")
+
+      val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
+      dao.floatLinearAssets(speedLimitsToFloat)
+      println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
     }
   }
 
-  def splitMultiLinkAssetsToSingleLinkAssets(typeId: Int) {
+  private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
     val dao = new OracleLinearAssetDao {
       override val roadLinkService: RoadLinkService = null
     }
 
-    processInChunks(typeId, "linear assets") { (chunkStart, chunkEnd) =>
-      withDynTransaction {
-        val linearAssetLinks = sql"""
-          select a.id, pos.mml_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
-          from asset a
-          join asset_link al on a.id = al.asset_id
-          join lrm_position pos on al.position_id = pos.id
-          left join number_property_value n on a.id = n.asset_id
-          where a.asset_type_id = $typeId
-          and floating = 0
-          and (select count(*) from asset_link where asset_id = a.id) > 1
-          and a.id between $chunkStart and $chunkEnd
-        """.as[(Long, Long, Int, Double, Double, Option[Int])].list
+    withDynTransaction {
+      val linearAssetLinks = sql"""
+            select a.id, pos.mml_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            left join number_property_value n on a.id = n.asset_id
+            where a.asset_type_id = $typeId
+            and floating = 0
+            and (select count(*) from asset_link where asset_id = a.id) > 1
+            and a.id between $chunkStart and $chunkEnd
+          """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
-        linearAssetLinks.foreach { case (id, mmlId, sideCode, startMeasure, endMeasure, value) =>
-          dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertValue(_, "mittarajoitus"))
-        }
-
-        println(s"created ${linearAssetLinks.length} new single link linear assets")
-
-        val assetsToFloat = linearAssetLinks.map(_._1).toSet
-        dao.floatLinearAssets(assetsToFloat)
-        println(s"removed ${assetsToFloat.size} multilink assets")
+      linearAssetLinks.foreach { case (id, mmlId, sideCode, startMeasure, endMeasure, value) =>
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertValue(_, "mittarajoitus"))
       }
+
+      println(s"created ${linearAssetLinks.length} new single link linear assets")
+
+      val assetsIdsToExpire = linearAssetLinks.map(_._1).toSet
+      if (assetsIdsToExpire.size > 0) {
+        val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
+        sqlu"""update asset
+               set modified_by = 'expired_splitted_linearasset', modified_date = sysdate, valid_to = sysdate
+               where id in (#$assetsIdsToExpireString)""".execute
+      }
+      println(s"removed ${assetsIdsToExpire.size} multilink assets")
     }
   }
-  
+
+  private def expireSplitLinearAssetsWithoutMmlId(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
+    withDynTransaction {
+      sqlu"""
+        update asset
+          set modified_by = 'expired_asset_without_mml', modified_date = sysdate, valid_to = sysdate
+          where id in (
+            select a.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.created_by like 'split_linearasset_%'
+            and lrm.mml_id is null
+            and (a.valid_to > sysdate or a.valid_to is null)
+            and a.id between $chunkStart and $chunkEnd
+            and a.asset_type_id = $typeId)
+        """.execute
+
+      println(s"expired assets with ids between $chunkStart and $chunkEnd")
+    }
+  }
+
+  def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
+    val chunkSize = 1000
+    val (minId, maxId) = getAssetIdRange(20)
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      splitSpeedLimits(chunkStart, chunkEnd)
+      println("*** Processed speed limits between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+  }
+
+  def splitMultiLinkAssetsToSingleLinkAssets(typeId: Int) {
+    val chunkSize = 1000
+    val multiLinkLinearAssetsFilter = """
+        (a.valid_to > sysdate or a.valid_to is null)
+        and (select count(*) from asset_link where asset_id = a.id) > 1"""
+    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, multiLinkLinearAssetsFilter)
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      splitLinearAssets(typeId, chunkStart, chunkEnd)
+      println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+  }
+
+  def unfloatLinearAssets(): Unit = {
+    withDynTransaction {
+      sqlu"""
+        update asset a set floating=0
+        where a.asset_type_id in (30,40,50,60,70,80,90,100)
+        and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
+    }
+  }
+
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)

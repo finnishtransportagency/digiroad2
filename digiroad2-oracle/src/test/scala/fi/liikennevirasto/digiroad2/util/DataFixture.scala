@@ -21,6 +21,11 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
     props
   }
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
 
   val dataImporter = new AssetDataImporter
 
@@ -205,7 +210,29 @@ object DataFixture {
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
-    dataImporter.generateDroppedNumericalLimits()
+    dataImporter.generateDroppedNumericalLimits(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def unfloatLinearAssets(): Unit = {
+    println("\nUnfloat multi link linear assets")
+    println(DateTime.now())
+    dataImporter.unfloatLinearAssets()
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def expireSplitAssetsWithoutMml(): Unit = {
+    println("\nExpiring split linear assets that do not have mml id")
+    println(DateTime.now())
+    val assetTypes = Seq(30, 40, 50, 60, 70, 80, 90, 100)
+    assetTypes.foreach { typeId =>
+      println("Expiring asset type " + typeId)
+      dataImporter.expireSplitAssetsWithoutMml(typeId)
+    }
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -275,9 +302,14 @@ object DataFixture {
         generateDroppedNumericalLimits()
       case Some("generate_values_for_lit_roads") =>
         generateValuesForLitRoads()
+      case Some("unfloat_linear_assets") =>
+        unfloatLinearAssets()
+      case Some("expire_split_assets_without_mml") =>
+        expireSplitAssetsWithoutMml()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | generate_values_for_lit_roads | repair")
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
+        " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | repair")
     }
   }
 }

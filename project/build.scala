@@ -68,7 +68,8 @@ object Digiroad2Build extends Build {
         "com.googlecode.flyway" % "flyway-core" % "2.3" % "test"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
+      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
   ) dependsOn(geoJar)
 
