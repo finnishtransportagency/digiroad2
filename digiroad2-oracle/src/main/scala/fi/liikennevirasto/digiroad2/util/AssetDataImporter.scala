@@ -97,7 +97,7 @@ class AssetDataImporter {
     getBatchDrivers(1, size, 500)
   }
 
-  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
+  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
     if ((m - n) < step) {
       List((n, m))
     } else {

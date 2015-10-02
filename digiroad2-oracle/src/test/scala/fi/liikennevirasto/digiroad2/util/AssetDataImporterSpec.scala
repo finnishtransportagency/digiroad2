@@ -16,6 +16,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
   }
 
+  test("Batch drivers chunck size") {
+    assetDataImporter.getBatchDrivers(1, 10000, 1000)
+      .map( chunk => (chunk._2 - chunk._1) + 1)
+      .foreach { chunkSize => chunkSize shouldBe 1000 }
+  }
+
   test("Split multi-link speed limit assets") {
     TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(20, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
