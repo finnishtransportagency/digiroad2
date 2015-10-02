@@ -75,8 +75,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       originalSpeedLimitSegments(1)._1 should be(originalId)
       originalSpeedLimitSegments(0)._9 should be("expired_splitted_linearasset")
       originalSpeedLimitSegments(1)._9 should be("expired_splitted_linearasset")
-      originalSpeedLimitSegments(0)._8.get.isBeforeNow should be(true)
-      originalSpeedLimitSegments(1)._8.get.isBeforeNow should be(true)
+      val now = DateTime.now().plusSeconds(2)
+      originalSpeedLimitSegments(0)._8.get.isBefore(now) should be(true)
+      originalSpeedLimitSegments(1)._8.get.isBefore(now) should be(true)
       originalSpeedLimitSegments(0)._10.isDefined should be(true)
       originalSpeedLimitSegments(1)._10.isDefined should be(true)
     }
@@ -101,8 +102,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
 
       originalSpeedLimitSegments.length should be(2)
-      originalSpeedLimitSegments(0)._8.get.isBeforeNow should be(true)
-      originalSpeedLimitSegments(1)._8.get.isBeforeNow should be(true)
+      val now = DateTime.now().plusSeconds(2)
+      originalSpeedLimitSegments(0)._8.get.isBefore(now) should be(true)
+      originalSpeedLimitSegments(1)._8.get.isBefore(now) should be(true)
       originalSpeedLimitSegments(0)._1 should be(originalId)
       originalSpeedLimitSegments(1)._1 should be(originalId)
     }
