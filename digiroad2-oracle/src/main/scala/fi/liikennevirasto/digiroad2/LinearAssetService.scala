@@ -165,17 +165,6 @@ trait LinearAssetOperations {
     getByIdWithoutTransaction(id).get
   }
 
-  def createNew(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): PieceWiseLinearAsset = {
-    val sideCode = 1
-    val startMeasure = 0
-    val expired = false
-    val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    municipalityValidation(roadLink.municipalityCode)
-    withDynTransaction {
-      createWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, startMeasure, GeometryUtils.geometryLength(roadLink.geometry), username)
-    }
-  }
-
   def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String) = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>

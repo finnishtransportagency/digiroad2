@@ -475,21 +475,6 @@ with GZipSupport {
     linearAssetService.update(ids.toSeq, None, true, user.username)
   }
 
-  post("/linearassets") {
-    val user = userProvider.getCurrentUser()
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
-    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val value = (parsedBody \ "value").extractOpt[BigInt]
-    value.foreach(validateNumericalLimitValue)
-    val username = user.username
-    linearAssetService.createNew(
-      typeId = typeId,
-      mmlId = mmlId,
-      value = value.map(_.intValue()),
-      username = username,
-      municipalityValidation = validateUserMunicipalityAccess(user))
-  }
-
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
 
