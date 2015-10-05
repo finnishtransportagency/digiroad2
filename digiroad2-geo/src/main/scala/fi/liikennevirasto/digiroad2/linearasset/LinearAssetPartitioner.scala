@@ -7,7 +7,7 @@ object LinearAssetPartitioner extends GraphPartitioner {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
     val linkGroups = twoWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.mmlId)
-      val roadIdentifier = roadLink.map(RoadLinkUtility.roadIdentifierFromRoadLink)
+      val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
       (roadIdentifier, roadLink.map(_.administrativeClass), link.value, link.id == 0)
     }
 

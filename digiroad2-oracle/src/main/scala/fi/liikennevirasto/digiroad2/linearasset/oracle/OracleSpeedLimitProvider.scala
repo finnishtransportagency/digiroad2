@@ -35,8 +35,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     val generatedLimits = speedLimits.filter(_.id == 0)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByMmlId(limit.mmlId)
-      val municipalityCode = RoadLinkUtility.municipalityCodeFromAttributes(roadLink.attributes)
-      UnknownSpeedLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass)
+      UnknownSpeedLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass)
     }
   }
 
