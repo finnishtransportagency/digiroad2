@@ -11,16 +11,16 @@
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-      '<div class="modal-dialog">' +
-      '<div class="content">' +
-      'Olet valinnut <%- count %> tielinkkiä' +
-      '</div>' +
-      '<%= editElement %>'+
-      '<div class="actions">' +
-      '<button class="btn btn-primary save">Tallenna</button>' +
-      '<button class="btn btn-secondary close">Peruuta</button>' +
-      '</div>' +
-      '</div>' +
+        '<div class="modal-dialog">' +
+          '<div class="content">' +
+            'Olet valinnut <%- count %> tielinkkiä' +
+          '</div>' +
+          '<%= editElement %>'+
+          '<div class="actions">' +
+            '<button class="btn btn-primary save">Tallenna</button>' +
+            '<button class="btn btn-secondary close">Peruuta</button>' +
+          '</div>' +
+        '</div>' +
       '</div>';
 
     function setValue(value) {
