@@ -122,8 +122,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
         override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
       }
       dao.floatLinearAssets(Set(300100, 300101))
-      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      speedLimits._1.map(_.id) should equal(Seq(200352))
+      val (speedLimits, _) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      speedLimits.map(_.id) should equal(Seq(200352))
       dynamicSession.rollback()
     }
   }

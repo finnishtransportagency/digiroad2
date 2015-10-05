@@ -2,14 +2,11 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, UnknownLimit}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-// FIXME:
-// - move common asset functionality to asset service
 class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
@@ -34,15 +31,28 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
+  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, VVHRoadLinkWithProperties]): Seq[UnknownSpeedLimit] = {
+    val generatedLimits = speedLimits.filter(_.id == 0)
+    generatedLimits.map { limit =>
+      val roadLink = roadLinksByMmlId(limit.mmlId)
+      UnknownSpeedLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass)
+    }
+  }
+
   override def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
-      val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val speedLimits = speedLimitLinks.groupBy(_.id)
+      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      val speedLimits = speedLimitLinks.groupBy(_.mmlId)
+      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
 
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
-      eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      SpeedLimitPartitioner.partition(filledTopology, linkGeometries)
+      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      eventbus.publish("linearAssets:update", changeSet)
+
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
+
+      LinearAssetPartitioner.partition(filledTopology, roadLinksByMmlId)
     }
   }
 
@@ -62,23 +72,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
-  override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-    }
-  }
-
-  override def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-    }
-  }
-
-  override def persistUnknown(limits: Seq[UnknownLimit]): Unit = {
+  override def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
     }
@@ -134,16 +128,16 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
   override def get(municipality: Int): Seq[SpeedLimit] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
-      val (speedLimitLinks, roadLinksByMmlId) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.id))
-      eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      filledTopology
-    }
-  }
+      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
 
-  override def drop(ids: Set[Long]): Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(ids)
+      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
+      eventbus.publish("linearAssets:update", changeSet)
+
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
+
+      filledTopology
     }
   }
 
@@ -152,7 +146,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
       }
-      eventbus.publish("speedLimits:purgeUnknown", newLimits.map(_.mmlId).toSet)
+      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.mmlId).toSet)
       createdIds
     }
   }

@@ -125,8 +125,8 @@
 
   .form-horizontal {
     .control-label {
-      width: 140px;
-      margin-right: 10px;
+      width: @control-label-width;
+      margin-right: @control-label-margin;
       font-size: @font-size-xs;
       margin-top: 5px;
     }
@@ -136,16 +136,9 @@
     .select,
     .form-control-static,
     .choice-group,
-    .btn-block,
-    .input-group {
+    .btn-block {
       width: 210px;
       margin-top: 6px;
-    }
-
-    .input-group {
-      .form-control {
-        width: 100%;
-      }
     }
 
     .asset-log-info {

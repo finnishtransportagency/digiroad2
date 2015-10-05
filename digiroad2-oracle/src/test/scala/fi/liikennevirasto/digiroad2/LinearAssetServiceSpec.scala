@@ -1,83 +1,84 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, PersistedLinearAsset, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.mockito.Matchers._
 import org.mockito.Mockito._
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+      VVHRoadLinkWithProperties(
+        1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None)))
+
+  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(30, Seq(1), "mittarajoitus"))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false, 30)))
+
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val linearAssetDao = new OracleLinearAssetDao {
+    override val roadLinkService: RoadLinkService = mockRoadLinkService
+  }
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OracleLinearAssetDao = mockLinearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
+  }
+
+  object ServiceWithDao extends LinearAssetOperations {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
 
   test("Expire numerical limit") {
     runWithRollback {
-      PassThroughService.update(11111, None, true, "lol")
-      val limit = PassThroughService.getById(11111)
-      limit.get.value should be (Some(4000))
-      limit.get.expired should be (true)
+      ServiceWithDao.update(Seq(11111l), None, true, "lol")
+      val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      limit.value should be (Some(4000))
+      limit.expired should be (true)
     }
   }
 
   test("Update numerical limit") {
     runWithRollback {
-      PassThroughService.update(11111, Some(2000), false, "lol")
-      val limit = PassThroughService.getById(11111)
-      limit.get.value should be (Some(2000))
-      limit.get.expired should be (false)
+      ServiceWithDao.update(Seq(11111l), Some(2000), false, "lol")
+      val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      limit.value should be (Some(2000))
+      limit.expired should be (false)
     }
   }
 
-  test("calculate end points of one link speed limit") {
-    val links = List((Point(373028.812006694, 6678475.44858997), Point(373044.204553789, 6678442.81292882)))
-    PassThroughService.calculateEndPoints(links) shouldBe Set(Point(373028.812006694, 6678475.44858997),
-      Point(373044.204553789, 6678442.81292882))
-  }
-
-  test("calculate end points of two link speed limit") {
-    val links = List((Point(374134.233471419, 6677240.50731189), Point(374120.876216048, 6677240.61213817)), (Point(374120.876216048, 6677240.61213817), Point(374083.159979821, 6677239.66865146)))
-    PassThroughService.calculateEndPoints(links) shouldBe Set(Point(374134.233471419, 6677240.50731189),
-      Point(374083.159979821, 6677239.66865146))
-  }
-
-  test("calculate end points of two link speed limit - order shouldn't matter") {
-    val links = List((Point(374134.233471419, 6677240.50731189), Point(374120.876216048, 6677240.61213817)), (Point(374120.876216048, 6677240.61213817), Point(374083.159979821, 6677239.66865146)))
-    PassThroughService.calculateEndPoints(links.reverse) shouldBe Set(Point(374134.233471419, 6677240.50731189),
-      Point(374083.159979821, 6677239.66865146))
-  }
-
-  test("calculate end points of three link speed limit") {
-    val links = List((Point(372564.918268001, 6678035.95699387), Point(372450.464234144, 6678051.64592463)),
-      (Point(372572.589549587, 6678017.88260562), Point(372564.91838001, 6678035.95670311)),
-      (Point(372573.640063694, 6678008.0175942), Point(372572.589549587, 6678017.88260562)))
-
-    PassThroughService.calculateEndPoints(links) shouldBe Set(Point(372573.640063694, 6678008.0175942),
-      Point(372450.464234144, 6678051.64592463))
-  }
-
-  test("calculate end points of speed limit where end points are not first points of their respective links") {
-    val links = List((Point(1.0, 0.0), Point(0.0, 0.0)),
-      (Point(1.0, 0.0), Point(2.0, 0.0)))
-
-    PassThroughService.calculateEndPoints(links) shouldBe Set(Point(0.0, 0.0), Point(2.0, 0.0))
-  }
-
-  test("get limits by municipality") {
+  test("Create new linear asset") {
     runWithRollback {
-      val (limits, _): (List[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime], Option[DateTime])], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
-      limits.length should be (2)
-      Set(limits(0)._1, limits(1)._1) should be (Set(11111, 11112))
+      val newAssets = ServiceWithDao.create(Seq(NewLimit(388562360l, 0, 20)), 30, Some(1000), "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head.id), "mittarajoitus").head
+      asset.value should be (Some(1000))
+      asset.expired should be (false)
     }
+  }
+
+  test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
+    val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
+    linearAssets should have size 1
+    linearAssets.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    linearAssets.map(_.mmlId) should be(Seq(1))
+    linearAssets.map(_.value) should be(Seq(Some(40000)))
+    verify(mockEventBus, times(1))
+      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
   }
 }

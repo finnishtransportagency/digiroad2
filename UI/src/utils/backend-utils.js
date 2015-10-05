@@ -139,23 +139,26 @@
       });
     };
 
-    this.getLinearAssets = _.throttle(function(boundingBox, typeId, callback) {
-      $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox, function(linearAssets) {
-        callback(linearAssets);
-      });
-    }, 1000);
+    this.getLinearAssets = latestOnly(function (boundingBox, typeId) {
+      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
+    });
 
-    this.getLinearAsset = _.throttle(function(id, callback) {
-      $.getJSON('api/linearassets/' + id, function(linearAsset) {
-        callback(linearAsset);
-      });
-    }, 1000);
+    function latestOnly(f) {
+      var inFlight;
+      return function() {
+        if (inFlight) {
+          inFlight.abort();
+        }
+        inFlight = f.apply(undefined, arguments);
+        return inFlight;
+      };
+    }
 
-    this.updateLinearAsset = _.throttle(function(id, data, success, failure) {
+    this.updateLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/linearassets/" + id,
+        url: "api/linearassets",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -163,24 +166,24 @@
       });
     }, 1000);
 
-    this.createLinearAsset = _.throttle(function(typeId, linearAsset, success, error) {
+    this.deleteLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "POST",
-        url: "api/linearassets?typeId=" + typeId,
-        data: JSON.stringify(linearAsset),
+        type: "DELETE",
+        url: "api/linearassets",
+        data: JSON.stringify(data),
         dataType: "json",
         success: success,
-        error: error
+        error: failure
       });
     }, 1000);
 
-    this.splitLinearAssets = function(id, mmlId, splitMeasure, value, expired, success, failure) {
+    this.splitLinearAssets = function(id, splitMeasure, createdValue, existingValue, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/linearassets/" + id,
-        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: value, expired: expired}),
+        data: JSON.stringify({splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
         dataType: "json",
         success: success,
         error: failure

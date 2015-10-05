@@ -4,9 +4,9 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, SpeedLimitTimeStamps, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit, SpeedLimitTimeStamps, VVHRoadLinkWithProperties}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -73,8 +73,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-    timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-      .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+    timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
+      .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
       .getOrElse(""))
   }
 
@@ -180,21 +180,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
+  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-    val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+    val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
     linearAssets.map { link =>
-      val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdAt, modifiedAt) = link
-      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
-      Map("id" -> assetId,
-        "points" -> geometry,
-        "value" -> value,
-        "side_code" -> sideCode,
-        "mmlId" -> mmlId,
-        "startMeasure" -> startMeasure,
-        "endMeasure" -> endMeasure,
+      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(
+        Modification(link.createdDateTime, None),
+        Modification(link.modifiedDateTime, None))
+      Map("id" -> link.id,
+        "points" -> link.geometry,
+        "value" -> link.value,
+        "side_code" -> link.sideCode.value,
+        "mmlId" -> link.mmlId,
+        "startMeasure" -> link.startMeasure,
+        "endMeasure" -> link.endMeasure,
          extractModificationTime(timeStamps))
     }
   }

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -22,8 +22,11 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val roadLink = VVHRoadLinkWithProperties(1105998302l, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None)
+  val roadLink = VVHRoadLinkWithProperties(
+    1l, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
+    TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(List(roadLink))
 
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -63,6 +66,32 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       val created = speedLimits.find(_.id != 200097).get
       existing.value should be(Some(50))
       created.value should be(Some(60))
+    }
+  }
+
+  test("request unknown speed limit persist in bounding box fetch") {
+    runWithRollback {
+      val eventBus = MockitoSugar.mock[DigiroadEventBus]
+      val provider = new OracleSpeedLimitProvider(eventBus, mockRoadLinkService) {
+        override def withDynTransaction[T](f: => T): T = f
+      }
+
+      provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
+
+      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
+    }
+  }
+
+  test("request unknown speed limit persist in municipality fetch") {
+    runWithRollback {
+      val eventBus = MockitoSugar.mock[DigiroadEventBus]
+      val provider = new OracleSpeedLimitProvider(eventBus, mockRoadLinkService) {
+        override def withDynTransaction[T](f: => T): T = f
+      }
+
+      provider.get(235)
+
+      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
     }
   }
 

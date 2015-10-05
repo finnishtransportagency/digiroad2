@@ -525,7 +525,43 @@ class AssetDataImporter {
       }
     }
   }
+  
+  def generateValuesForLitRoads(): Unit = {
+    processInChunks(100, "lit roads") { (chunkStart, chunkEnd) =>
+      withDynTransaction {
+        val litRoads = sql"""
+          select a.id, p.id
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join property p on p.public_id = 'mittarajoitus'
+            left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+            where a.id between $chunkStart and $chunkEnd and a.asset_type_id = 100
+        """.as[(Long, Long)].list
 
+        litRoads.foreach { case (assetId, propertyId) =>
+          val id = Sequences.nextPrimaryKeySeqValue
+          sqlu"""
+            insert into number_property_value (id, asset_id, property_id, value)
+            values ($id, $assetId, $propertyId, 1)
+          """.execute
+        }
+
+        println(s"Assigned value to ${litRoads.length} lit road assets")
+      }
+    }
+  }
+
+  def processInChunks(typeId: Int, assetTypeName: String)(f: (Int, Int) => Unit): Unit = {
+    val chunkSize = 1000
+    val (minId, maxId) = getAssetIdRange(typeId, true)
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
+    chunks.foreach { case (chunkStart, chunkEnd) =>
+      val startTime = System.currentTimeMillis()
+      f(chunkStart, chunkEnd)
+      println(s"*** Processed $assetTypeName between $chunkStart and $chunkEnd in ${System.currentTimeMillis() - startTime} ms.")
+    }
+  }
   private def getAssetIdRange(typeId: Int, includeSingleLinkAssets: Boolean = false): (Int, Int) = {
     val multiSegmentFilter = if (includeSingleLinkAssets) "" else "and (select count(*) from asset_link where asset_id = a.id) > 1"
     withDynSession {
@@ -548,7 +584,16 @@ class AssetDataImporter {
       """.as[(Int, Int)].first
     }
   }
-
+  private def getAssetIdRangeOfMultiLinkAssets(typeId: Int): (Int, Int) = {
+    withDynSession {
+      sql"""
+        select min(a.id), max(a.id)
+        from asset a
+        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+      """.as[(Int, Int)].first
+    }
+  }
+  
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
     val dao = new OracleLinearAssetDao {
       override val roadLinkService: RoadLinkService = null
@@ -594,7 +639,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and (a.valid_to > sysdate or a.valid_to is null)
+            and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list

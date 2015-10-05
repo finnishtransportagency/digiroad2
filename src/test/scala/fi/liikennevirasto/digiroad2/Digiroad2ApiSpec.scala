@@ -12,6 +12,8 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
+case class LinearAssetFromApi(id: Option[Long], mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
+
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestPropertyId = "katos"
@@ -27,7 +29,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(List(
-      VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(7478l, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     ))
   when(mockVVHClient.fetchVVHRoadlink(362964704))
@@ -38,6 +40,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l)))
+    .thenReturn(List(VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
   val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, testRoadLinkService)
@@ -47,7 +51,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   }
-  val testLinearAssetService = new LinearAssetService(testRoadLinkService)
+  val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 
   addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
@@ -206,8 +210,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      val parsedBody = parse(body).extract[List[LinearAssetLink]]
-      parsedBody.size should be(2)
+      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      parsedBody.size should be(3)
+      parsedBody.count(_.id.isEmpty) should be(1)
+      parsedBody.count(_.id.isDefined) should be(2)
     }
   }
 
@@ -218,7 +224,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating numerical limits should require an operator role") {
-    putJsonWithUserAuth("/linearassets/11112", """{"value":6000}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "ids": [11112]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

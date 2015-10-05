@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, NewLimit, RoadLinkPartitioner}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLinkPartitioner, SpeedLimitProvider}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
@@ -13,6 +13,8 @@ import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
+
+case class ExistingLinearAsset(id: Long, mmlId: Long)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
@@ -27,7 +29,7 @@ with GZipSupport {
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
-  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))
@@ -401,7 +403,6 @@ with GZipSupport {
     speedLimitProvider.getUnknown(includedMunicipalities)
   }
 
-
   get("/linearassets") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -409,16 +410,27 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities).map { links =>
+        links.map { link =>
+          Map(
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "mmlId" -> link.mmlId,
+            "sideCode" -> link.sideCode,
+            "value" -> link.value,
+            "points" -> link.geometry,
+            "expired" -> link.expired,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime
+          )
+        }
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
-  }
-
-  get("/linearassets/:segmentId") {
-    val segmentId = params("segmentId")
-    linearAssetService.getById(segmentId.toLong)
-      .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
   }
 
   private def validateNumericalLimitValue(value: BigInt): Unit = {
@@ -429,51 +441,49 @@ with GZipSupport {
     }
   }
 
-
-  put("/linearassets/:id") {
+  put("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val id = params("id").toLong
-    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite)) {
-      halt(Unauthorized("User not authorized"))
-    }
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
+    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
+    val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
+    val mmlIds = newLimits.map(_.mmlId) ++ existingMmlIds
+    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
     (expiredOption, valueOption) match {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        linearAssetService.update(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => linearAssetService.getById(segmentId)
-          case None => NotFound("Linear asset " + id + " not found")
-        }
+        val updatedIds = linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
+        val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username)
+        updatedIds ++ created.map(_.id)
     }
   }
 
-  post("/linearassets") {
+  delete("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
-    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val value = (parsedBody \ "value").extractOpt[BigInt]
-    value.foreach(validateNumericalLimitValue)
-    val username = user.username
-    linearAssetService.createNew(
-      typeId = typeId,
-      mmlId = mmlId,
-      value = value.map(_.intValue()),
-      username = username,
-      municipalityValidation = validateUserMunicipalityAccess(user))
+    val ids = (parsedBody \ "ids").extract[Set[Long]]
+    val mmlIds = linearAssetService.getPersistedAssetsByIds(ids).map(_.mmlId)
+    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+      .map(_.municipalityCode)
+      .foreach(validateUserMunicipalityAccess(user))
+
+    linearAssetService.update(ids.toSeq, None, true, user.username)
   }
 
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
-    val value = (parsedBody \ "value").extractOpt[BigInt]
-    value.foreach(validateNumericalLimitValue)
-    val expired = (parsedBody \ "expired").extract[Boolean]
-    val id = params("id").toLong
-    val username = user.username
-    val measure = (parsedBody \ "splitMeasure").extract[Double]
-    linearAssetService.split(id, mmlId, measure, value.map(_.intValue()), expired, username, validateUserMunicipalityAccess(user))
+
+    linearAssetService.split(params("id").toLong,
+      (parsedBody \ "splitMeasure").extract[Double],
+      (parsedBody \ "existingValue").extract[Option[Int]],
+      (parsedBody \ "createdValue").extract[Option[Int]],
+      user.username,
+      validateUserMunicipalityAccess(user))
   }
 
   put("/speedlimits") {

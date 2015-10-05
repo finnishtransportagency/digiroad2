@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
@@ -68,7 +67,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+  def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement("""
         insert into unknown_speed_limit (mml_id, municipality_code, administrative_class)
         select ?, ?, ?
@@ -157,6 +156,46 @@ trait OracleLinearAssetDao {
     }
   }
 
+  def fetchLinearAssetsByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.mml_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = $valuePropertyId
+          join #$idTableName i on i.id = a.id
+          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      assets.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      }
+    }
+  }
+
+  def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(mmlIds.toSet) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = $valuePropertyId
+          join #$idTableName i on i.id = pos.mml_id
+          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.asset_type_id = $assetTypeId
+          and (a.valid_to >= sysdate or a.valid_to is null)"""
+        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      }
+    }
+  }
+
   private def fetchSpeedLimitsByMmlId(mmlId: Long) = {
     sql"""
       select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
@@ -169,40 +208,26 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
-    val topology = toTopology(roadLinks)
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[VVHRoadLinkWithProperties]) = {
+    val topology = filterSupportedLinks(roadLinks)
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
-  private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
-    def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
-      attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
-    }
+  private def filterSupportedLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[VVHRoadLinkWithProperties] = {
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = {
       val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
       val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)
 
       allowedFunctionalClasses.contains(link.functionalClass % 10) && !disallowedLinkTypes.contains(link.linkType.value)
     }
-    def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
-      link.geometry,
-      link.length,
-      link.administrativeClass,
-      link.mmlId,
-      RoadLinkUtility.roadIdentifierFromRoadLink(link),
-      link.trafficDirection,
-      municipalityCodeFromAttributes(link.attributes))
 
-    roadLinks
-      .filter(isCarTrafficRoad)
-      .map(toRoadLinkForSpeedLimit)
-      .groupBy(_.mmlId).mapValues(_.head)
+    roadLinks.filter(isCarTrafficRoad)
   }
 
-  private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+  private def createGeometryForSegment(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
-    val roadLink = topology.get(mmlId).get
+    val roadLink = topology.find(_.mmlId == mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
     SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }

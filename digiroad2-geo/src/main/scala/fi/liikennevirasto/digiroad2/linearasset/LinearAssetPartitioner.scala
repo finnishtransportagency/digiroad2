@@ -2,14 +2,16 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 
-object SpeedLimitPartitioner extends GraphPartitioner {
-  def partition(links: Seq[SpeedLimit], roadLinksForSpeedLimits: Map[Long, RoadLinkForSpeedLimit]): Seq[Seq[SpeedLimit]] = {
+object LinearAssetPartitioner extends GraphPartitioner {
+  def partition[T <: LinearAsset](links: Seq[T], roadLinksForSpeedLimits: Map[Long, VVHRoadLinkWithProperties]): Seq[Seq[T]] = {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
     val linkGroups = twoWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.mmlId)
-      (roadLink.map(_.roadIdentifier), roadLink.map(_.administrativeClass), link.value)
+      val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
+      (roadIdentifier, roadLink.map(_.administrativeClass), link.value, link.id == 0)
     }
-    val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined }
+
+    val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _), _) => roadIdentifier.isDefined }
 
     val clusters = for (linkGroup <- linksToPartition.values.toSeq;
                         cluster <- clusterLinks(linkGroup)) yield cluster

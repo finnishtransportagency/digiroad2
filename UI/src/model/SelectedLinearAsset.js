@@ -1,199 +1,293 @@
 (function(root) {
-  root.SelectedLinearAsset = function(backend, typeId, collection, singleElementEventCategory) {
-    var current = null;
+  root.SelectedLinearAsset = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
+    var selection = [];
     var self = this;
     var dirty = false;
-    var originalValue = null;
-    var originalExpired = null;
+    var originalLinearAssetValue = null;
+    var isSeparated = false;
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
     };
 
-    eventbus.on(singleElementEvent('split'), function() {
-      collection.fetchLinearAsset(null, function(linearAsset) {
-        current = linearAsset;
-        current.isSplit = true;
-        originalValue = linearAsset.value;
-        originalExpired = linearAsset.expired;
-        dirty = true;
-        eventbus.trigger(singleElementEvent('selected'), self);
-      });
-    });
+    var multiElementEvent = function(eventName) {
+      return multiElementEventCategory + ':' + eventName;
+    };
 
-    this.open = function(id) {
-      self.close();
-      collection.fetchLinearAsset(id, function(linearAsset) {
-        current = linearAsset;
-        originalValue = linearAsset.value;
-        originalExpired = linearAsset.expired;
+    this.splitLinearAsset = function(id, split) {
+      collection.splitLinearAsset(id, split, function(splitLinearAssets) {
+        selection = [splitLinearAssets.created, splitLinearAssets.existing];
+        originalLinearAssetValue = splitLinearAssets.existing.value;
+        dirty = true;
+        collection.setSelection(self);
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
 
-    this.create = function(mmlId, points) {
-      self.close();
-      var endpoints = [_.first(points), _.last(points)];
-      originalValue = null;
-      originalExpired = true;
-      current = {
-        id: null,
-        mmlId: mmlId,
-        endpoints: endpoints,
-        value: null,
-        expired: true,
-        sideCode: 1,
-        links: [{
-          mmlId: mmlId,
-          points: points
-        }]
-      };
+    this.separate = function() {
+      selection = collection.separateLinearAsset(this.getId());
+      isSeparated = true;
+      dirty = true;
+      eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
+      eventbus.trigger(singleElementEvent('separated'), self);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
+    this.open = function(linearAsset, singleLinkSelect) {
+      self.close();
+      selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
+      originalLinearAssetValue = self.getValue();
+      collection.setSelection(self);
+      eventbus.trigger(singleElementEvent('selected'), self);
+    };
+
+    this.openMultiple = function(linearAssets) {
+      var partitioned = _.groupBy(linearAssets, isUnknown);
+      var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
+      var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
+      selection = existingLinearAssets.concat(unknownLinearAssets);
+      eventbus.trigger(singleElementEvent('multiSelected'));
+    };
+
     this.close = function() {
-      if (current && !dirty) {
-        var id = current.id;
-        var mmlId = current.mmlId;
-        if (current.expired) {
-          collection.remove(id);
-        }
-        current = null;
-        eventbus.trigger(singleElementEvent('unselected'), id, mmlId);
+      if (!_.isEmpty(selection) && !dirty) {
+        eventbus.trigger(singleElementEvent('unselect'), self);
+        collection.setSelection(null);
+        selection = [];
       }
     };
 
-    this.cancelSplit = function() {
-      var id = current.id;
-      current = null;
-      dirty = false;
-      collection.cancelSplit();
-      eventbus.trigger(singleElementEvent('unselected'), id);
+    this.closeMultiple = function() {
+      selection = [];
+    };
+
+    this.saveMultiple = function(value) {
+      eventbus.trigger(singleElementEvent('saving'));
+      var partition = _.groupBy(selection, isUnknown);
+      var unknownLinearAssets = partition[true];
+      var knownLinearAssets = partition[false];
+
+      var payload = {
+        newLimits: _.map(unknownLinearAssets, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
+        ids: _.pluck(knownLinearAssets, 'id'),
+        value: value,
+        typeId: typeId
+      };
+      var backendOperation = _.isNumber(value) ? backend.updateLinearAssets : backend.deleteLinearAssets;
+      backendOperation(payload, function() {
+        eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
+      }, function() {
+        eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
+      });
+    };
+
+    var saveSplit = function() {
+      eventbus.trigger(singleElementEvent('saving'));
+      collection.saveSplit(function() {
+        dirty = false;
+        self.close();
+      });
+    };
+
+    var saveSeparation = function() {
+      eventbus.trigger(singleElementEvent('saving'));
+      collection.saveSeparation(function() {
+        dirty = false;
+        isSeparated = false;
+        self.close();
+      });
+    };
+
+    var saveExisting = function() {
+      eventbus.trigger(singleElementEvent('saving'));
+      var payloadContents = function() {
+        if (self.isUnknown()) {
+          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
+        } else {
+          return { ids: _.pluck(selection, 'id') };
+        }
+      };
+      var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
+      var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.updateLinearAssets;
+
+      backendOperation(payload, function() {
+        dirty = false;
+        self.close();
+        eventbus.trigger(singleElementEvent('saved'));
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
+    var isUnknown = function(linearAsset) {
+      return !_.has(linearAsset, 'id');
+    };
+
+    this.isUnknown = function() {
+      return isUnknown(selection[0]);
+    };
+
+    this.isSplit = function() {
+      return !isSeparated && selection[0].id === null;
+    };
+
+    this.isSeparated = function() {
+      return isSeparated;
+    };
+
+    this.isSplitOrSeparated = function() {
+      return this.isSplit() || this.isSeparated();
     };
 
     this.save = function() {
-      var success = function(linearAsset) {
-        var wasNew = isNew();
-        dirty = false;
-        current = _.merge({}, current, linearAsset);
-        originalValue = current.value;
-        originalExpired = current.expired;
-        if (wasNew) {
-          collection.add(current);
-        }
-        eventbus.trigger(singleElementEvent('saved'), current);
-      };
-      var failure = function() {
-        eventbus.trigger('asset:updateFailed');
-      };
-
-      if (current.isSplit) {
-        collection.saveSplit(current);
+      if (self.isSplit()) {
+        saveSplit();
+      } else if (isSeparated) {
+        saveSeparation();
       } else {
-        if (expired() && isNew()) {
-          return;
-        }
-
-        if (isNew()) {
-          backend.createLinearAsset(typeId, current, success, failure);
-        } else {
-          backend.updateLinearAsset(current.id, current, success, failure);
-        }
+        saveExisting();
       }
     };
 
-    this.cancel = function() {
-      if (current.isSplit) {
-        self.cancelSplit();
-        return;
+    var cancelCreation = function() {
+      eventbus.trigger(singleElementEvent('unselect'), self);
+      if (isSeparated) {
+        var originalLinearAsset = _.merge({}, selection[0], {value: originalLinearAssetValue, sideCode: 1});
+        collection.replaceSegments([selection[0]], [originalLinearAsset]);
       }
-      current.value = originalValue;
-      current.expired = originalExpired;
-      if (!isNew()) {
-        collection.changeLimitValue(current.id, originalValue);
-        collection.changeExpired(current.id, originalExpired);
-      }
+      collection.setSelection(null);
+      selection = [];
+      dirty = false;
+      isSeparated = false;
+      collection.cancelCreation();
+    };
+
+    var cancelExisting = function() {
+      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
+      selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger(singleElementEvent('cancelled'), self);
     };
 
-    var exists = function() {
-      return current !== null;
+    this.cancel = function() {
+      if (self.isSplit() || self.isSeparated()) {
+        cancelCreation();
+      } else {
+        cancelExisting();
+      }
     };
 
-    this.exists = exists;
+    this.exists = function() {
+      return !_.isEmpty(selection);
+    };
+
+    var getProperty = function(propertyName) {
+      return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
+    };
 
     this.getId = function() {
-      return current.id;
-    };
-
-    this.getMmlId = function() {
-      return current.mmlId;
+      return getProperty('id');
     };
 
     this.getValue = function() {
-      return current.value;
+      var value = getProperty('value');
+      return _.isNull(value) ? undefined : value;
     };
-
-    var expired = function() {
-      return current.expired;
-    };
-
-    this.expired = expired;
 
     this.getModifiedBy = function() {
-      return current.modifiedBy;
+      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedBy;
     };
 
     this.getModifiedDateTime = function() {
-      return current.modifiedDateTime;
+      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedAt;
     };
 
     this.getCreatedBy = function() {
-      return current.createdBy;
+      return selection.length === 1 ? getProperty('createdBy') : null;
     };
 
     this.getCreatedDateTime = function() {
-      return current.createdDateTime;
+      return selection.length === 1 ? getProperty('createdAt') : null;
     };
 
     this.get = function() {
-      return current;
+      return selection;
+    };
+
+    this.count = function() {
+      return selection.length;
     };
 
     this.setValue = function(value) {
-      if (value != current.value) {
-        if (!isNew()) { collection.changeLimitValue(current.id, value); }
-        current.value = value;
+      if (value != selection[0].value) {
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+        selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
-        eventbus.trigger(singleElementEvent('limitChanged'), self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
-    this.setExpired = function(expired) {
-      if (expired != current.expired) {
-        if (!isNew()) { collection.changeExpired(current.id, expired); }
-        current.expired = expired;
-        dirty = true;
-        eventbus.trigger(singleElementEvent('expirationChanged'), self);
+    this.setAValue = function(value) {
+      if (value != selection[0].value) {
+        selection[0].value = value;
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
+    };
+
+    this.setBValue = function(value) {
+      if (value != selection[1].value) {
+        selection[1].value = value;
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
+      }
+    };
+
+    this.removeValue = function() {
+      self.setValue(undefined);
+    };
+
+    this.removeAValue = function() {
+      self.setAValue(undefined);
+    };
+
+    this.removeBValue = function() {
+      self.setBValue(undefined);
     };
 
     this.isDirty = function() {
       return dirty;
     };
 
-    var isNew = function() {
-      return exists() && current.id === null;
+    this.isNew = function() {
+      return !_.isNumber(self.getId());
     };
 
-    this.isNew = isNew;
+    this.isSelected = function(linearAsset) {
+      return _.some(selection, function(selectedLinearAsset) {
+        return isEqual(linearAsset, selectedLinearAsset);
+      });
+    };
 
-    eventbus.on(singleElementEvent('saved'), function(linearAsset) {
-      current = linearAsset;
-      originalValue = linearAsset.value;
-      originalExpired = linearAsset.expired;
-      dirty = false;
-    });
+    this.isSeparable = function() {
+      return isSeparableAssetType &&
+        !self.isUnknown() &&
+        getProperty('sideCode') === validitydirections.bothDirections &&
+        getProperty('trafficDirection') === 'BothDirections' &&
+        !self.isSplit() &&
+        selection.length === 1;
+    };
+
+    this.isSaveable = function() {
+      var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
+      if (this.isDirty()) {
+        if (this.isSplitOrSeparated() && valuesDiffer()) return true;
+        else if (!this.isSplitOrSeparated()) return true;
+      }
+      return false;
+    };
+
+    var isEqual = function(a, b) {
+      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
+        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+    };
   };
 })(this);
