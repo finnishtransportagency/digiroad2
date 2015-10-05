@@ -6,7 +6,8 @@
   function init(options) {
     var count = options.count,
       onCancel = options.onCancel,
-      onSave = options.onSave;
+      onSave = options.onSave,
+      currentValue;
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
@@ -20,15 +21,25 @@
       '<button class="btn btn-secondary close">Peruuta</button>' +
       '</div>' +
       '</div>' +
-      '</div>' +
-      '<div id="value-element" style="visibility: hidden;"></div>div>';
+      '</div>';
+
+    function setValue(value) {
+      currentValue = value;
+    }
+
+    function removeValue() {
+      currentValue = undefined;
+    }
 
     var renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({
         count: count,
         editElement: options.formElements.singleValueEditElement(undefined, true)
       }));
-      options.formElements.bindMassUpdateDialog(container, $('#value-element'));
+      options.formElements.bindEvents(container, {
+        setValue: setValue,
+        removeValue: removeValue
+      });
     };
 
     var bindEvents = function() {
@@ -38,13 +49,8 @@
       });
 
       $('.mass-update-modal .save').on('click', function() {
-        $('.modal-dialog').find('.actions button').attr('disabled', true);
-
-        var newValue = parseInt($('#value-element').text(), 10);
-
         purge();
-
-        onSave(newValue);
+        onSave(currentValue);
       });
     };
 

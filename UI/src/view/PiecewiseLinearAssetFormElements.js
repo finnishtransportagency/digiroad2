@@ -3,7 +3,6 @@
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents,
-      bindMassUpdateDialog: bindMassUpdateDialog,
       singleValueEditElement: singleValueEditElement
     };
 
@@ -64,28 +63,6 @@
       };
       var value = parseInt(removeWhitespace(input.val()), 10);
       return _.isFinite(value) ? value : undefined;
-    }
-
-    function bindMassUpdateDialog(rootElement, valueElement) {
-      var inputElement = rootElement.find('.input-unit-combination input.' + className);
-      var toggleElement = rootElement.find('.radio input.' + className);
-      function setValue(value){
-        valueElement.text(value);
-      }
-      inputElement.on('input', function() {
-        setValue(inputElementValue(inputElement));
-      });
-
-      toggleElement.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElement.prop('disabled', disabled);
-        if (disabled) {
-          setValue('');
-        } else {
-          var value = unit ? inputElementValue(inputElement) : defaultValue;
-          setValue(value);
-        }
-      });
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {

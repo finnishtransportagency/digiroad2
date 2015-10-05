@@ -185,8 +185,8 @@ window.LinearAssetLayer = function(params) {
     LinearAssetMassUpdateDialog.show({
       count: selectedLinearAsset.count(),
       onCancel: cancelSelection,
-      onSave: function(newLinearAsset) {
-        selectedLinearAsset.saveMultiple(newLinearAsset);
+      onSave: function(value) {
+        selectedLinearAsset.saveMultiple(value);
         activateBrowseStyle();
         selectedLinearAsset.closeMultiple();
       },

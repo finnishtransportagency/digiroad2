@@ -73,7 +73,7 @@
         value: value,
         typeId: typeId
       };
-      var backendOperation = _.isNaN(value) ? backend.deleteLinearAssets : backend.updateLinearAssets;
+      var backendOperation = _.isNumber(value) ? backend.updateLinearAssets : backend.deleteLinearAssets;
       backendOperation(payload, function() {
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
