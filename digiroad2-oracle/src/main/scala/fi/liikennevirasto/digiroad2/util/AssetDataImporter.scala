@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
-import org.joda.time.{Seconds, DateTime, LocalDate}
+import org.joda.time.{Period, Seconds, DateTime, LocalDate}
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -288,6 +288,78 @@ class AssetDataImporter {
       val start = System.currentTimeMillis()
       expireSplitLinearAssetsWithoutMmlId(typeId, chunkStart, chunkEnd)
       println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+  }
+
+  def importPavedRoadsFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 26, 110)
+  }
+
+  def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
+    val allLinks = conversionDatabase.withDynSession {
+      sql"""
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $conversionTypeId
+       """.as[(Long, Long, Double, Double, Int)].list
+    }
+
+    println(s"*** Found ${allLinks.length} asset links in conversion database")
+
+    val groupSize = 1000
+    val groupedLinks = allLinks.grouped(groupSize).toList
+    val totalGroupCount = groupedLinks.length
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, 1)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val valuePS = dynamicSession.prepareStatement("insert into number_property_value (id, asset_id, property_id, value) values (?, ?, (select id from property where public_id = 'mittarajoitus'), 1)")
+
+      println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
+
+      groupedLinks.zipWithIndex.foreach { case (links, i) =>
+        val startTime = DateTime.now()
+
+        println(s"*** Importing group ${i+1} of $totalGroupCount")
+
+        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, typeId)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          val valueId = Sequences.nextPrimaryKeySeqValue
+          valuePS.setLong(1, valueId)
+          valuePS.setLong(2, assetId)
+          valuePS.addBatch()
+        }
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        valuePS.executeBatch()
+
+        val seconds = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
+
+        println(s"*** Imported ${links.length} linear asset links in $seconds seconds (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      valuePS.close()
     }
   }
 
