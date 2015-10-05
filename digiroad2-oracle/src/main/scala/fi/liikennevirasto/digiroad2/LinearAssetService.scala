@@ -84,12 +84,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def getById(id: Long): Option[PieceWiseLinearAsset] = {
-    withDynTransaction {
-      getByIdWithoutTransaction(id)
-    }
-  }
-
   private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
 

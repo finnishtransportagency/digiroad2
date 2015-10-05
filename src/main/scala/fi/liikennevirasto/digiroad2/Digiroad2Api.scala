@@ -433,12 +433,6 @@ with GZipSupport {
     }
   }
 
-  get("/linearassets/:segmentId") {
-    val segmentId = params("segmentId")
-    linearAssetService.getById(segmentId.toLong)
-      .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
-  }
-
   private def validateNumericalLimitValue(value: BigInt): Unit = {
     if (value > Integer.MAX_VALUE) {
       halt(BadRequest("Numerical limit value too big"))
