@@ -45,8 +45,8 @@
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.unique(partitioned[true] || [], 'generatedId');
-
       selection = existingLinearAssets.concat(unknownLinearAssets);
+      eventbus.trigger(singleElementEvent('multiSelected'));
     };
 
     this.close = function() {

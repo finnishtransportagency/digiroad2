@@ -180,7 +180,7 @@ window.LinearAssetLayer = function(params) {
   var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
   var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
-    activateSelectionStyle(linearAssets);
+    selectedLinearAsset.openMultiple(linearAssets);
 
     LinearAssetMassUpdateDialog.show({
       count: selectedLinearAsset.count(),
@@ -244,13 +244,6 @@ window.LinearAssetLayer = function(params) {
       selectControl.unhighlight(feature);
     });
     vectorLayer.styleMap = style.browsing;
-    vectorLayer.redraw();
-  };
-
-  var activateSelectionStyle = function(selectedLinearAssets) {
-    vectorLayer.styleMap = style.selection;
-    selectedLinearAsset.openMultiple(selectedLinearAssets);
-    highlightMultipleLinearAssetFeatures();
     vectorLayer.redraw();
   };
 
