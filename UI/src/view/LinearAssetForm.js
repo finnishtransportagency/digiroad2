@@ -3,11 +3,11 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
-      rootElement.html(template(selectedLinearAsset, formElements, newTitle));
+      rootElement.html(template(selectedLinearAsset, formElements, newTitle, title));
       if (selectedLinearAsset.isSplitOrSeparated()) {
         formElements.bindEvents(rootElement, selectedLinearAsset, 'a');
         formElements.bindEvents(rootElement, selectedLinearAsset, 'b');
@@ -48,7 +48,7 @@
     }
   }
 
-  function template(selectedLinearAsset, formElements, newTitle) {
+  function template(selectedLinearAsset, formElements, newTitle, title) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
@@ -56,13 +56,13 @@
     var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var title = function() {
+    var generateTitle = function() {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
         return '<span>' + newTitle + '</span>';
       } else if (selectedLinearAsset.count() == 1) {
         return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
       } else {
-        return '<span>Nopeusrajoitus</span>';
+        return '<span>' + title + '</span>';
       }
     };
 
@@ -82,7 +82,7 @@
       return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown());
     };
 
-    var header = '<header>' + title() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';
+    var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +

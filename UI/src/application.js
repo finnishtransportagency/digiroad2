@@ -287,9 +287,7 @@ var URLRouter = function(map, backend, models) {
           linearAsset.singleElementEventCategory,
           PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
           linearAsset.newTitle,
-          linearAsset.className,
-          linearAsset.unit,
-          linearAsset.editControlLabels);
+          linearAsset.title);
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
