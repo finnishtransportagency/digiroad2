@@ -41,6 +41,8 @@ namespace :deploy do
       execute "cp #{deploy_to}/newrelic/* #{release_path}/."
       execute "cd #{release_path} && chmod 700 start.sh"
       execute "cd #{release_path} && nohup ./start.sh"
+      execute "cd #{release_path} && tmux kill-server"
+      execute "cd #{release_path} && tmux new -s 'waiting for your commands' -d"
     end
   end
 
@@ -57,8 +59,6 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a bower_components src/main/webapp/"
       execute "killall -q java; exit 0"
-      execute "cd #{release_path} && tmux kill-server"
-      execute "cd #{release_path} && tmux new -s 'waiting for your commands' -d"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end
