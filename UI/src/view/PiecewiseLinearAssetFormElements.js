@@ -62,7 +62,7 @@
         return s.replace(/\s/g, '');
       };
       var value = parseInt(removeWhitespace(input.val()), 10);
-      return _.isFinite(value) ? value : undefined;
+      return _.isFinite(value) ? value : 0;
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {

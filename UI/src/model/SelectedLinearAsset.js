@@ -278,9 +278,18 @@
 
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
+      var isValidValue = function(val) {
+        if(_.isUndefined(val)) { return true; }
+        else if(val > 0) { return true; }
+      };
+
       if (this.isDirty()) {
-        if (this.isSplitOrSeparated() && valuesDiffer()) return true;
-        else if (!this.isSplitOrSeparated()) return true;
+        if (this.isSplitOrSeparated() && valuesDiffer()) {
+          return isValidValue(selection[0].value) && isValidValue(selection[1].value);
+        }
+        else if (!this.isSplitOrSeparated()) {
+          return isValidValue(selection[0].value);
+        }
       }
       return false;
     };
