@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -16,7 +17,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
-import org.joda.time.{Period, Seconds, DateTime, LocalDate}
+import org.joda.time._
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -296,16 +297,20 @@ class AssetDataImporter {
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
+    println("*** Fetching asset links from conversion database")
+    val startTime = DateTime.now()
+
     val allLinks = conversionDatabase.withDynSession {
       sql"""
-          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          select * from (select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
+          ) where rownum < 10000
        """.as[(Long, Long, Double, Double, Int)].list
     }
 
-    println(s"*** Found ${allLinks.length} asset links in conversion database")
+    println(s"*** Fetched ${allLinks.length} asset links from conversion database in ${humanReadableDurationSince(startTime)}")
 
     val groupSize = 1000
     val groupedLinks = allLinks.grouped(groupSize).toList
@@ -321,8 +326,6 @@ class AssetDataImporter {
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
-
-        println(s"*** Importing group ${i+1} of $totalGroupCount")
 
         links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
@@ -353,15 +356,21 @@ class AssetDataImporter {
         assetLinkPS.executeBatch()
         valuePS.executeBatch()
 
-        val seconds = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
-
-        println(s"*** Imported ${links.length} linear asset links in $seconds seconds (done ${i + 1}/$totalGroupCount)" )
+        println(s"*** Imported ${links.length} linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
       assetPS.close()
       lrmPositionPS.close()
       assetLinkPS.close()
       valuePS.close()
     }
+
+    println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
+  }
+
+  def humanReadableDurationSince(startTime: DateTime): String = {
+    val periodFormatter = new PeriodFormatterBuilder().appendDays().appendSuffix(" days, ").appendHours().appendSuffix(" hours, ").appendSeconds().appendSuffix(" seconds").toFormatter
+    val humanReadablePeriod = periodFormatter.print(new Period(startTime, DateTime.now()))
+    humanReadablePeriod
   }
 
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
