@@ -24,11 +24,17 @@
       '</div>';
 
     function setValue(value) {
-      currentValue = value;
+      if (value > 0){
+        currentValue = value;
+        $('button.save').prop('disabled', '');
+      } else {
+        $('button.save').prop('disabled', 'disabled');
+      }
     }
 
     function removeValue() {
       currentValue = undefined;
+      $('button.save').prop('disabled', '');
     }
 
     var renderDialog = function() {
