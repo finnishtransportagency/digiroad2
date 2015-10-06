@@ -302,17 +302,16 @@ class AssetDataImporter {
 
     val allLinks = conversionDatabase.withDynSession {
       sql"""
-          select * from (select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
-          ) where rownum < 10000
        """.as[(Long, Long, Double, Double, Int)].list
     }
 
     println(s"*** Fetched ${allLinks.length} asset links from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val groupSize = 1000
+    val groupSize = 10000
     val groupedLinks = allLinks.grouped(groupSize).toList
     val totalGroupCount = groupedLinks.length
 
