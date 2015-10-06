@@ -347,6 +347,7 @@ class AssetDataImporter {
           valuePS.setLong(2, assetId)
           valuePS.addBatch()
         }
+
         assetPS.executeBatch()
         lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
