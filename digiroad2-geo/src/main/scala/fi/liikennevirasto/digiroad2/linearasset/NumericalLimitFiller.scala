@@ -58,7 +58,7 @@ object NumericalLimitFiller {
   def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil).filter(_.startMeasure < roadLink.length)
       val (adjustedAssets, assetAdjustments) = adjustTwoWaySegments(roadLink, assetsOnRoadLink, changeSet)
 
       val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets, typeId)
