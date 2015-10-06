@@ -49,6 +49,8 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
 
+      eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.mmlId).toSet)
+
       val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
