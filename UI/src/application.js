@@ -275,6 +275,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Ruuhkautumisherkkä',
         disabled: 'Ei ruuhkautumisherkkä'
       }
+    },
+    {
+      typeId: 160,
+      defaultValue: 1,
+      singleElementEventCategory: 'public-transport-lane',
+      multiElementEventCategory: 'public-transport-lanes',
+      layerName: 'publicTransportLane',
+      title: 'Joukkoliikennekaistat',
+      newTitle: 'Uusi joukkoliikennekaista',
+      className: 'public-transport-lane',
+      editControlLabels: {
+        title: 'Joukkoliikennekaista',
+        enabled: 'Joukkoliikennekaista',
+        disabled: 'Ei joukkoliikennekaistaa'
+      }
     }
   ];
   var localizedStrings;
