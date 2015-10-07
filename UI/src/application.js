@@ -245,6 +245,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
       }
+    },
+    {
+      typeId: 140,
+      singleElementEventCategory: 'laneCount',
+      multiElementEventCategory: 'laneCounts',
+      layerName: 'laneCount',
+      title: 'Kaistojen lukumäärä',
+      newTitle: 'Uusi kaistojen lukumäärä',
+      className: 'lane-count',
+      unit: 'kaista(a)',
+      editControlLabels: {
+        title: 'Kaistojen lukumäärä',
+        enabled: 'Kaistojen lukumäärä',
+        disabled: 'Ei kaistojen lukumäärää'
+      }
     }
   ];
   var localizedStrings;
