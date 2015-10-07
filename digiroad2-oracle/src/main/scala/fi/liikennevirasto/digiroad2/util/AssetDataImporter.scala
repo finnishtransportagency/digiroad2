@@ -250,7 +250,7 @@ class AssetDataImporter {
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100,110)
+           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120)
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
@@ -273,7 +273,8 @@ class AssetDataImporter {
       80 -> "length_limits",
       90 -> "width_limits",
       100 -> "lit_roads",
-      110 -> "paved_roads")
+      110 -> "paved_roads",
+      120 -> "road_widths")
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
@@ -300,17 +301,21 @@ class AssetDataImporter {
     importLinearAssetsFromConversion(conversionDatabase, 26, 110)
   }
 
+  def importRoadWidthsFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 8, 120)
+  }
+
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
     println("*** Fetching asset links from conversion database")
     val startTime = DateTime.now()
 
     val allLinks = conversionDatabase.withDynSession {
       sql"""
-          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
-       """.as[(Long, Long, Double, Double, Int)].list
+       """.as[(Long, Long, Double, Double, Int, Int)].list
     }
 
     println(s"*** Fetched ${allLinks.length} asset links from conversion database in ${humanReadableDurationSince(startTime)}")
@@ -323,14 +328,14 @@ class AssetDataImporter {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, 1)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-      val valuePS = dynamicSession.prepareStatement("insert into number_property_value (id, asset_id, property_id, value) values (?, ?, (select id from property where public_id = 'mittarajoitus'), 1)")
+      val valuePS = dynamicSession.prepareStatement("insert into number_property_value (id, asset_id, property_id, value) values (?, ?, (select id from property where public_id = 'mittarajoitus'), ?)")
 
       println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
 
-        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _) =>
+        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, typeId)
@@ -351,6 +356,7 @@ class AssetDataImporter {
           val valueId = Sequences.nextPrimaryKeySeqValue
           valuePS.setLong(1, valueId)
           valuePS.setLong(2, assetId)
+          valuePS.setLong(3, value)
           valuePS.addBatch()
         }
 
@@ -440,6 +446,7 @@ class AssetDataImporter {
        select segm_id, tielinkki_id, puoli, alkum, loppum, arvo
          from segments
          where tyyppi = $sourceTypeId
+
        """
     val numericalLimitLinks: Seq[(Long, Long, Int, Double, Double, Int)] = database.withDynSession {
       query.as[(Long, Long, Int, Double, Double, Int)].list
