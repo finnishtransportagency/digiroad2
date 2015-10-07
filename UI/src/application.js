@@ -202,6 +202,19 @@ var URLRouter = function(map, backend, models) {
       editControlLabels: { title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta' }
+    },
+    {
+      typeId: 110,
+      defaultValue: 1,
+      singleElementEventCategory: 'pavedRoad',
+      multiElementEventCategory: 'pavedRoads',
+      layerName: 'pavedRoad',
+      title: 'Päällystetty tie',
+      newTitle: 'Uusi päällystetty tie',
+      className: 'paved-road',
+      editControlLabels: { title: 'Päällyste',
+        enabled: 'Päällyste',
+        disabled: 'Ei päällystettä' }
     }
   ];
   var localizedStrings;

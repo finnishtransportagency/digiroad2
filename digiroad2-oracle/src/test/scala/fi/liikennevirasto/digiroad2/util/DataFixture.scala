@@ -64,7 +64,8 @@ object DataFixture {
       "kauniainen_traffic_directions.sql",
       "kauniainen_link_types.sql",
       "test_fixture_sequences.sql",
-      "kauniainen_lit_roads.sql"))
+      "kauniainen_lit_roads.sql",
+      "kauniainen_paved_roads.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
@@ -207,6 +208,13 @@ object DataFixture {
     println("\n")
   }
 
+  def importPavedRoads(): Unit = {
+    println(s"\nCommencing paved roads import from conversion at time: ${DateTime.now()}")
+    dataImporter.importPavedRoadsFromConversion(Conversion.database())
+    println(s"Paved roads import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
@@ -306,10 +314,14 @@ object DataFixture {
         unfloatLinearAssets()
       case Some("expire_split_assets_without_mml") =>
         expireSplitAssetsWithoutMml()
+      case Some("paved_roads") =>
+        importPavedRoads()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
-        " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | repair")
+        " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
+        " paved_roads |" +
+        " repair")
     }
   }
 }

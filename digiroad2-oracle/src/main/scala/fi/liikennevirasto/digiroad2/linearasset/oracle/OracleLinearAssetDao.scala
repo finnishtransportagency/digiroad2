@@ -168,6 +168,7 @@ trait OracleLinearAssetDao {
           join property p on p.public_id = $valuePropertyId
           join #$idTableName i on i.id = a.id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.floating = 0
       """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
       assets.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
         PersistedLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
@@ -188,7 +189,8 @@ trait OracleLinearAssetDao {
           join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)"""
+          and (a.valid_to >= sysdate or a.valid_to is null)
+          and a.floating = 0"""
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
       assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
         PersistedLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)

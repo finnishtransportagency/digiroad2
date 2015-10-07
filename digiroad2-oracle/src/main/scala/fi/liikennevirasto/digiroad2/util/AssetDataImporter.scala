@@ -7,6 +7,7 @@ import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -16,7 +17,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
-import org.joda.time.{Seconds, DateTime, LocalDate}
+import org.joda.time._
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -226,7 +227,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int, Int)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -244,14 +245,14 @@ class AssetDataImporter {
 
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100)
+           where a.asset_type_id in (30,40,50,60,70,80,90,100,110)
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Int, Int, Int, Int)].list
+         """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
     println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
@@ -261,16 +262,20 @@ class AssetDataImporter {
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
     println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
-    val asset_name = Map(30 -> "total_weight_limits",
+    val floatingLimits = limits.filter(_._7 == 1)
+
+    val asset_name = Map(
+      30 -> "total_weight_limits",
       40 -> "trailer_truck_weight_limits",
       50 -> "axle_weight_limits",
       60 -> "bogie_weight_limits",
       70 -> "height_limits",
       80 -> "length_limits",
       90 -> "width_limits",
-      100 -> "lit_roads")
+      100 -> "lit_roads",
+      110 -> "paved_roads")
 
-    nonExistingLimits.groupBy(_._6).foreach { case (key, values) =>
+    (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
     }
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
@@ -289,6 +294,86 @@ class AssetDataImporter {
       expireSplitLinearAssetsWithoutMmlId(typeId, chunkStart, chunkEnd)
       println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
     }
+  }
+
+  def importPavedRoadsFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 26, 110)
+  }
+
+  def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
+    println("*** Fetching asset links from conversion database")
+    val startTime = DateTime.now()
+
+    val allLinks = conversionDatabase.withDynSession {
+      sql"""
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $conversionTypeId
+       """.as[(Long, Long, Double, Double, Int)].list
+    }
+
+    println(s"*** Fetched ${allLinks.length} asset links from conversion database in ${humanReadableDurationSince(startTime)}")
+
+    val groupSize = 10000
+    val groupedLinks = allLinks.grouped(groupSize).toList
+    val totalGroupCount = groupedLinks.length
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, 1)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val valuePS = dynamicSession.prepareStatement("insert into number_property_value (id, asset_id, property_id, value) values (?, ?, (select id from property where public_id = 'mittarajoitus'), 1)")
+
+      println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
+
+      groupedLinks.zipWithIndex.foreach { case (links, i) =>
+        val startTime = DateTime.now()
+
+        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, typeId)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          val valueId = Sequences.nextPrimaryKeySeqValue
+          valuePS.setLong(1, valueId)
+          valuePS.setLong(2, assetId)
+          valuePS.addBatch()
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        valuePS.executeBatch()
+
+        println(s"*** Imported ${links.length} linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      valuePS.close()
+    }
+
+    println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
+  }
+
+  def humanReadableDurationSince(startTime: DateTime): String = {
+    val periodFormatter = new PeriodFormatterBuilder().appendDays().appendSuffix(" days, ").appendHours().appendSuffix(" hours, ").appendSeconds().appendSuffix(" seconds").toFormatter
+    val humanReadablePeriod = periodFormatter.print(new Period(startTime, DateTime.now()))
+    humanReadablePeriod
   }
 
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
