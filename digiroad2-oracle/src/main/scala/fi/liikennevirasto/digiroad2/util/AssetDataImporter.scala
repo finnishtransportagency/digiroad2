@@ -274,7 +274,7 @@ class AssetDataImporter {
       90 -> "width_limits",
       100 -> "lit_roads",
       110 -> "paved_roads",
-      120 -> "road_width")
+      120 -> "road_widths")
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
