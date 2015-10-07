@@ -214,6 +214,12 @@ object DataFixture {
     println(s"Paved roads import complete at time: ${DateTime.now()}")
     println()
   }
+  def importRoadWidths(): Unit = {
+    println(s"\nCommencing road widths import from conversion at time: ${DateTime.now()}")
+    dataImporter.importRoadWidthsFromConversion(Conversion.database())
+    println(s"Road widths import complete at time: ${DateTime.now()}")
+    println()
+  }
 
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
@@ -316,11 +322,13 @@ object DataFixture {
         expireSplitAssetsWithoutMml()
       case Some("paved_roads") =>
         importPavedRoads()
+      case Some("road_widths") =>
+        importRoadWidths()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " paved_roads |" +
+        " paved_roads | road_widths |" +
         " repair")
     }
   }
