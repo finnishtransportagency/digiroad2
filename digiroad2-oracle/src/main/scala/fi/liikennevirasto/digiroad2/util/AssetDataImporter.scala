@@ -227,7 +227,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int, Int)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -245,14 +245,14 @@ class AssetDataImporter {
 
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in (30,40,50,60,70,80,90,100,110)
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Int, Int, Int, Int)].list
+         """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
     println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
@@ -261,6 +261,8 @@ class AssetDataImporter {
 
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
     println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val floatingLimits = limits.filter(_._7 == 1)
 
     val asset_name = Map(
       30 -> "total_weight_limits",
@@ -273,7 +275,7 @@ class AssetDataImporter {
       100 -> "lit_roads",
       110 -> "paved_roads")
 
-    nonExistingLimits.groupBy(_._6).foreach { case (key, values) =>
+    (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
     }
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
