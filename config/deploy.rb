@@ -41,13 +41,13 @@ namespace :deploy do
       execute "cp #{deploy_to}/newrelic/* #{release_path}/."
       execute "cd #{release_path} && chmod 700 start.sh"
       execute "cd #{release_path} && nohup ./start.sh"
-      execute "cd #{release_path} && tmux kill-server"
       execute "cd #{release_path} && tmux new -s 'waiting for your commands' -d"
     end
   end
 
   task :prepare_release do
     on roles(:all) do |host|
+      execute "tmux kill-server"
       execute "cd #{release_path} && npm install && bower install && grunt deploy"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
       execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
