@@ -250,7 +250,7 @@ class AssetDataImporter {
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100,110)
+           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120)
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
