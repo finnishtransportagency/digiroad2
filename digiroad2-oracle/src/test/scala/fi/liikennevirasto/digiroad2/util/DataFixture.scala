@@ -214,6 +214,7 @@ object DataFixture {
     println(s"Paved roads import complete at time: ${DateTime.now()}")
     println()
   }
+
   def importRoadWidths(): Unit = {
     println(s"\nCommencing road widths import from conversion at time: ${DateTime.now()}")
     dataImporter.importRoadWidthsFromConversion(Conversion.database())
