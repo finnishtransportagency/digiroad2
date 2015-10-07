@@ -35,6 +35,12 @@ object NumericalLimitFiller {
     }
   }
 
+  private def dropSegmentsOutsideGeometry(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
+    val droppedAssetIds = segmentsOutsideGeometry.map(_.id).toSet
+    (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+  }
+
   private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[PersistedLinearAsset], typeId: Int): Seq[PersistedLinearAsset] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
@@ -43,7 +49,7 @@ object NumericalLimitFiller {
     }
   }
 
-  def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLinkGeometry: Seq[Point]): Seq[PieceWiseLinearAsset] = {
+  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLinkGeometry: Seq[Point]): Seq[PieceWiseLinearAsset] = {
     dbAssets.map { dbAsset =>
       val points = GeometryUtils.truncateGeometry(roadLinkGeometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
@@ -56,12 +62,20 @@ object NumericalLimitFiller {
   }
 
   def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
+      dropSegmentsOutsideGeometry,
+      adjustTwoWaySegments
+    )
+
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil).filter(_.startMeasure < roadLink.length)
-      val (adjustedAssets, assetAdjustments) = adjustTwoWaySegments(roadLink, assetsOnRoadLink, changeSet)
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
 
+      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
       val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets, typeId)
+
       (existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink.geometry), assetAdjustments)
     }
   }
