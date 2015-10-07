@@ -215,6 +215,21 @@ var URLRouter = function(map, backend, models) {
       editControlLabels: { title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä' }
+    },
+    {
+      typeId: 120,
+      singleElementEventCategory: 'roadWidth',
+      multiElementEventCategory: 'roadWidth',
+      layerName: 'roadWidth',
+      title: 'Tien leveys',
+      newTitle: 'Uusi tien leveys',
+      className: 'road-width',
+      unit: 'cm',
+      editControlLabels: {
+        title: 'Leveys',
+        enabled: 'Leveys',
+        disabled: 'Ei leveyttä'
+      }
     }
   ];
   var localizedStrings;
