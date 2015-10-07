@@ -260,6 +260,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Kaistojen lukumäärä',
         disabled: 'Ei kaistojen lukumäärää'
       }
+    },
+    {
+      typeId: 150,
+      defaultValue: 1,
+      singleElementEventCategory: 'congestionTendency',
+      multiElementEventCategory: 'congestionTendencies',
+      layerName: 'congestionTendency',
+      title: 'Ruuhkautumisherkkyys',
+      newTitle: 'Uusi ruuhkautumisherkkä tie',
+      className: 'congestion-tendency',
+      editControlLabels: {
+        title: 'Ruuhkautumisherkkyys',
+        enabled: 'Ruuhkautumisherkkä',
+        disabled: 'Ei ruuhkautumisherkkä'
+      }
     }
   ];
   var localizedStrings;
