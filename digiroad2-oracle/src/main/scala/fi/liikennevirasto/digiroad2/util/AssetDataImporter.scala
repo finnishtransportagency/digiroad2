@@ -250,7 +250,7 @@ class AssetDataImporter {
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120)
+           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120, 130, 150, 170)
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
@@ -274,7 +274,10 @@ class AssetDataImporter {
       90 -> "width_limits",
       100 -> "lit_roads",
       110 -> "paved_roads",
-      120 -> "road_widths")
+      120 -> "road_widths",
+      130 -> "roads_affected_by_thawing",
+      150 -> "congestion_tendency",
+      170 -> "traffic_volumes")
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
