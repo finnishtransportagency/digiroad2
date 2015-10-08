@@ -227,7 +227,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int, Int)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int, Boolean)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -266,7 +266,7 @@ class AssetDataImporter {
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in (#${asset_name.keys.mkString(",")})
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Int, Int, Int, Int, Int)].list
+         """.as[(Long, Long, Int, Int, Int, Int, Boolean)].list
     }
     println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
@@ -276,7 +276,7 @@ class AssetDataImporter {
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
     println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
-    val floatingLimits = limits.filter(_._7 == 1)
+    val floatingLimits = limits.filter(_._7)
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
