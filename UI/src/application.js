@@ -256,7 +256,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
       editControlLabels: {
-        title: 'Ruuhkautumisherkkyys',
+        title: 'Herkkyys',
         enabled: 'Ruuhkautumisherkkä',
         disabled: 'Ei ruuhkautumisherkkä'
       }
