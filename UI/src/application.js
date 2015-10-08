@@ -290,6 +290,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
       }
+    },
+    {
+      typeId: 170,
+      singleElementEventCategory: 'traffic',
+      multiElementEventCategory: 'traffic',
+      layerName: 'traffic',
+      title: 'Liikennemäärä',
+      newTitle: 'Uusi liikennemäärä',
+      className: 'traffic',
+      unit: 'ajoneuvoa/vuorokausi',
+      editControlLabels: {
+        title: '',
+        enabled: 'Liikennemäärä',
+        disabled: 'Ei tiedossa'
+      }
     }
   ];
   var localizedStrings;
