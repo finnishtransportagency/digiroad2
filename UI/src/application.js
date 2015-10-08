@@ -279,8 +279,8 @@ var URLRouter = function(map, backend, models) {
     {
       typeId: 160,
       defaultValue: 1,
-      singleElementEventCategory: 'public-transport-lane',
-      multiElementEventCategory: 'public-transport-lanes',
+      singleElementEventCategory: 'publicTransportLane',
+      multiElementEventCategory: 'publicTransportLanes',
       layerName: 'publicTransportLane',
       title: 'Joukkoliikennekaistat',
       newTitle: 'Uusi joukkoliikennekaista',
