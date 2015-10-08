@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
@@ -49,25 +49,25 @@ object NumericalLimitFiller {
     }
   }
 
-  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLinkGeometry: Seq[Point]): Seq[PieceWiseLinearAsset] = {
+  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: VVHRoadLinkWithProperties): Seq[PieceWiseLinearAssetOut] = {
     dbAssets.map { dbAsset =>
-      val points = GeometryUtils.truncateGeometry(roadLinkGeometry, dbAsset.startMeasure, dbAsset.endMeasure)
+      val points = GeometryUtils.truncateGeometry(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
-      PieceWiseLinearAsset(
+      PieceWiseLinearAssetOut(
         dbAsset.id, dbAsset.mmlId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
         dbAsset.startMeasure, dbAsset.endMeasure,
         Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
-        dbAsset.createdBy, dbAsset.createdDateTime, dbAsset.typeId)
+        dbAsset.createdBy, dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection)
     }
   }
 
-  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAssetOut], ChangeSet) = {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       adjustTwoWaySegments
     )
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PieceWiseLinearAssetOut], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
 
@@ -76,7 +76,7 @@ object NumericalLimitFiller {
       }
       val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets, typeId)
 
-      (existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink.geometry), assetAdjustments)
+      (existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink), assetAdjustments)
     }
   }
 }
