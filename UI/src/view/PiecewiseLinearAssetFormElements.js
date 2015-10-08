@@ -2,8 +2,7 @@
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className, defaultValue) {
     return {
       singleValueElement: singleValueElement,
-      bindEvents: bindEvents,
-      singleValueEditElement: singleValueEditElement
+      bindEvents: bindEvents
     };
 
     function generateClassName(sideCode) {
