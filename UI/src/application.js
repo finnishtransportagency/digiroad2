@@ -170,7 +170,7 @@ var URLRouter = function(map, backend, models) {
       multiElementEventCategory: 'lengthLimits',
       layerName: 'lengthLimit',
       title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-      newTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      newTitle: 'Uusi pituusrajoitus',
       className: 'length-limit',
       unit: 'cm',
       editControlLabels: { title: 'Rajoitus',
@@ -229,6 +229,51 @@ var URLRouter = function(map, backend, models) {
         title: 'Leveys',
         enabled: 'Leveys',
         disabled: 'Ei leveyttä'
+      }
+    },
+    {
+      typeId: 130,
+      defaultValue: 1,
+      singleElementEventCategory: 'roadDamagedByThaw',
+      multiElementEventCategory: 'roadsDamagedByThaw',
+      layerName: 'roadDamagedByThaw',
+      title: 'Kelirikko',
+      newTitle: 'Uusi kelirikko',
+      className: 'road-damaged-by-thaw',
+      editControlLabels: {
+        title: 'Kelirikko',
+        enabled: 'Kelirikko',
+        disabled: 'Ei kelirikkoa'
+      }
+    },
+    {
+      typeId: 150,
+      defaultValue: 1,
+      singleElementEventCategory: 'congestionTendency',
+      multiElementEventCategory: 'congestionTendencies',
+      layerName: 'congestionTendency',
+      title: 'Ruuhkautumisherkkyys',
+      newTitle: 'Uusi ruuhkautumisherkkä tie',
+      className: 'congestion-tendency',
+      editControlLabels: {
+        title: 'Herkkyys',
+        enabled: 'Ruuhkautumisherkkä',
+        disabled: 'Ei ruuhkautumisherkkä'
+      }
+    },
+    {
+      typeId: 170,
+      singleElementEventCategory: 'trafficVolume',
+      multiElementEventCategory: 'trafficVolumes',
+      layerName: 'trafficVolume',
+      title: 'Liikennemäärä',
+      newTitle: 'Uusi liikennemäärä',
+      className: 'traffic-volume',
+      unit: 'ajoneuvoa/vuorokausi',
+      editControlLabels: {
+        title: '',
+        enabled: 'Liikennemäärä',
+        disabled: 'Ei tiedossa'
       }
     }
   ];

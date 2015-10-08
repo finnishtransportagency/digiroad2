@@ -242,6 +242,20 @@ class AssetDataImporter {
   def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
+    val asset_name = Map(
+      30 -> "total_weight_limits",
+      40 -> "trailer_truck_weight_limits",
+      50 -> "axle_weight_limits",
+      60 -> "bogie_weight_limits",
+      70 -> "height_limits",
+      80 -> "length_limits",
+      90 -> "width_limits",
+      100 -> "lit_roads",
+      110 -> "paved_roads",
+      120 -> "road_widths",
+      130 -> "roads_affected_by_thawing",
+      150 -> "congestion_tendency",
+      170 -> "traffic_volumes")
 
     val limits = OracleDatabase.withDynSession {
       sql"""
@@ -250,7 +264,7 @@ class AssetDataImporter {
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120)
+           where a.asset_type_id in (#${asset_name.keys.mkString(",")})
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Int, Int, Int, Int, Int)].list
     }
@@ -263,18 +277,6 @@ class AssetDataImporter {
     println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
     val floatingLimits = limits.filter(_._7 == 1)
-
-    val asset_name = Map(
-      30 -> "total_weight_limits",
-      40 -> "trailer_truck_weight_limits",
-      50 -> "axle_weight_limits",
-      60 -> "bogie_weight_limits",
-      70 -> "height_limits",
-      80 -> "length_limits",
-      90 -> "width_limits",
-      100 -> "lit_roads",
-      110 -> "paved_roads",
-      120 -> "road_widths")
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
@@ -303,6 +305,14 @@ class AssetDataImporter {
 
   def importRoadWidthsFromConversion(conversionDatabase: DatabaseDef) = {
     importLinearAssetsFromConversion(conversionDatabase, 8, 120)
+  }
+
+  def importRoadsAffectedByThawingFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 6, 130)
+  }
+
+  def importTrafficVolumesFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 33, 170)
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {

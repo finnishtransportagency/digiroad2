@@ -222,6 +222,20 @@ object DataFixture {
     println()
   }
 
+  def importRoadsAffectedByThawing(): Unit = {
+    println(s"\nCommencing thaw damage import from conversion at time: ${DateTime.now()}")
+    dataImporter.importRoadsAffectedByThawingFromConversion(Conversion.database())
+    println(s"Road thaw damage complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  def importTrafficVolumes(): Unit = {
+    println(s"\nCommencing traffic volume import from conversion at time: ${DateTime.now()}")
+    dataImporter.importTrafficVolumesFromConversion(Conversion.database())
+    println(s"Traffic volume import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
@@ -325,11 +339,15 @@ object DataFixture {
         importPavedRoads()
       case Some("road_widths") =>
         importRoadWidths()
+      case Some("roads_affected_by_thawing") =>
+        importRoadsAffectedByThawing()
+      case Some("traffic_volumes") =>
+        importTrafficVolumes()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " paved_roads | road_widths |" +
+        " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes |" +
         " repair")
     }
   }
