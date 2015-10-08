@@ -290,6 +290,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Lukumäärä',
         disabled: 'Ei lukumäärää'
       }
+    },
+    {
+      typeId: 160,
+      defaultValue: 1,
+      singleElementEventCategory: 'massTransitLane',
+      multiElementEventCategory: 'massTransitLanes',
+      layerName: 'massTransitLanes',
+      title: 'Joukkoliikennekaista',
+      newTitle: 'Uusi joukkoliikennekaista',
+      className: 'mass-transit-lane',
+      editControlLabels: {
+        title: 'Kaista',
+        enabled: 'Joukkoliikennekaista',
+        disabled: 'Ei joukkoliikennekaistaa'
+      }
     }
   ];
   var localizedStrings;
