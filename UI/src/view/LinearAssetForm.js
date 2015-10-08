@@ -38,8 +38,8 @@
     });
 
     function toggleMode(readOnly) {
-      rootElement.find('.read-only.form-group').toggle(readOnly);
-      rootElement.find('.editable.form-group').toggle(!readOnly);
+      rootElement.find('.editable .form-control-static').toggle(readOnly);
+      rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     }
 

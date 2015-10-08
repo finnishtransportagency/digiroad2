@@ -14,39 +14,35 @@
       var withoutValue = isUnknown ? 'checked' : '';
       var withValue = isUnknown ? '' : 'checked';
       return '' +
-        '<div class="form-group editable">' +
-          sideCodeMarker(sideCode) +
-          '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<div class="choice-group">' +
-            '<div class="radio">' +
-              '<label>' + editControlLabels.disabled +
-                '<input ' +
-                'class="' + generateClassName(sideCode) + '" ' +
-                'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                'value="disabled" ' + withoutValue + '/>' +
-              '</label>' +
-            '</div>' +
-            '<div class="radio">' +
-              '<label>' + editControlLabels.enabled +
-                '<input ' +
-                'class="' + generateClassName(sideCode) + '" ' +
-                'type="radio" name="' + generateClassName(sideCode) + '" ' +
-                'value="enabled" ' + withValue + '/>' +
-              '</label>' +
-            '</div>' +
-            measureInput(currentValue, isUnknown, sideCode) +
+        sideCodeMarker(sideCode) +
+        '<div class="choice-group">' +
+          '<div class="radio">' +
+            '<label>' + editControlLabels.disabled +
+              '<input ' +
+              'class="' + generateClassName(sideCode) + '" ' +
+              'type="radio" name="' + generateClassName(sideCode) + '" ' +
+              'value="disabled" ' + withoutValue + '/>' +
+            '</label>' +
           '</div>' +
+          '<div class="radio">' +
+            '<label>' + editControlLabels.enabled +
+              '<input ' +
+              'class="' + generateClassName(sideCode) + '" ' +
+              'type="radio" name="' + generateClassName(sideCode) + '" ' +
+              'value="enabled" ' + withValue + '/>' +
+            '</label>' +
+          '</div>' +
+          measureInput(currentValue, isUnknown, sideCode) +
         '</div>';
     }
 
     function singleValueElement(currentValue, isUnknown, sideCode) {
-      var readOnlyFormGroup = '' +
-        '<div class="form-group read-only">' +
+      return '' +
+        '<div class="form-group editable">' +
           '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<p class="form-control-static ' + className + '">' + valueString(currentValue, isUnknown) + '</p>' +
+          '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue, isUnknown) + '</p>' +
+          singleValueEditElement(currentValue, isUnknown, sideCode) +
         '</div>';
-
-      return readOnlyFormGroup + singleValueEditElement(currentValue, isUnknown, sideCode);
     }
 
     function sideCodeMarker(sideCode) {
