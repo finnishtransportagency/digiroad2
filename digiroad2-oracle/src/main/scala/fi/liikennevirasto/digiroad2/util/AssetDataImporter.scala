@@ -315,17 +315,21 @@ class AssetDataImporter {
     importLinearAssetsFromConversion(conversionDatabase, 33, 170)
   }
 
+  def importNumberOfLanesFromConversion(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 5, 140)
+  }
+
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
     println("*** Fetching asset links from conversion database")
     val startTime = DateTime.now()
 
     val allLinks = conversionDatabase.withDynSession {
       sql"""
-          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
-       """.as[(Long, Long, Double, Double, Int, Int)].list
+       """.as[(Long, Long, Double, Double, Int, Int, Int)].list
     }
 
     println(s"*** Fetched ${allLinks.length} asset links from conversion database in ${humanReadableDurationSince(startTime)}")
@@ -336,7 +340,7 @@ class AssetDataImporter {
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, 1)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into number_property_value (id, asset_id, property_id, value) values (?, ?, (select id from property where public_id = 'mittarajoitus'), ?)")
 
@@ -345,7 +349,7 @@ class AssetDataImporter {
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
 
-        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value) =>
+        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, typeId)
@@ -357,6 +361,7 @@ class AssetDataImporter {
           lrmPositionPS.setLong(3, mmlId)
           lrmPositionPS.setDouble(4, startMeasure)
           lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, sideCode)
           lrmPositionPS.addBatch()
 
           assetLinkPS.setLong(1, assetId)
