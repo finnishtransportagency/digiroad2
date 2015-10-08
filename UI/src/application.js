@@ -108,6 +108,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi suurin sallittu massa',
       className: 'total-weight-limit',
       unit: 'kg',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -121,6 +122,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi yhdistelmän suurin sallittu massa',
       className: 'trailer-truck-weight-limit',
       unit: 'kg',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -134,6 +136,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi suurin sallittu akselimassa',
       className: 'axle-weight-limit',
       unit: 'kg',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -147,6 +150,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi suurin sallittu telimassa',
       className: 'bogie-weight-limit',
       unit: 'kg',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -160,6 +164,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi suurin sallittu korkeus',
       className: 'height-limit',
       unit: 'cm',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -173,6 +178,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi pituusrajoitus',
       className: 'length-limit',
       unit: 'cm',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -186,6 +192,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi suurin sallittu leveys',
       className: 'width-limit',
       unit: 'cm',
+      isSeparable: false,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -199,6 +206,7 @@ var URLRouter = function(map, backend, models) {
       title: 'Valaistu tie',
       newTitle: 'Uusi valaistu tie',
       className: 'lit-road',
+      isSeparable: false,
       editControlLabels: { title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta' }
@@ -212,6 +220,7 @@ var URLRouter = function(map, backend, models) {
       title: 'Päällystetty tie',
       newTitle: 'Uusi päällystetty tie',
       className: 'paved-road',
+      isSeparable: false,
       editControlLabels: { title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä' }
@@ -225,6 +234,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi tien leveys',
       className: 'road-width',
       unit: 'cm',
+      isSeparable: false,
       editControlLabels: {
         title: 'Leveys',
         enabled: 'Leveys',
@@ -240,6 +250,7 @@ var URLRouter = function(map, backend, models) {
       title: 'Kelirikko',
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
+      isSeparable: false,
       editControlLabels: {
         title: 'Kelirikko',
         enabled: 'Kelirikko',
@@ -255,6 +266,7 @@ var URLRouter = function(map, backend, models) {
       title: 'Ruuhkautumisherkkyys',
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
+      isSeparable: false,
       editControlLabels: {
         title: 'Herkkyys',
         enabled: 'Ruuhkautumisherkkä',
@@ -270,6 +282,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi liikennemäärä',
       className: 'traffic-volume',
       unit: 'ajoneuvoa/vuorokausi',
+      isSeparable: false,
       editControlLabels: {
         title: '',
         enabled: 'Liikennemäärä',
@@ -285,6 +298,7 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi kaistojen lukumäärä',
       className: 'lane-count',
       unit: 'kpl',
+      isSeparable: true,
       editControlLabels: {
         title: 'Lukumäärä',
         enabled: 'Lukumäärä',
@@ -467,7 +481,7 @@ var URLRouter = function(map, backend, models) {
     var linearAssets = _.map(linearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
       var selectedLinearAsset = new SelectedLinearAsset(backend, collection, spec.typeId,
-                                                         spec.singleElementEventCategory, spec.multiElementEventCategory, false);
+                                                         spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
       return _.merge({}, spec, {
         collection: collection,
         selectedLinearAsset: selectedLinearAsset
