@@ -170,7 +170,7 @@ var URLRouter = function(map, backend, models) {
       multiElementEventCategory: 'lengthLimits',
       layerName: 'lengthLimit',
       title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-      newTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      newTitle: 'Uusi pituusrajoitus',
       className: 'length-limit',
       unit: 'cm',
       editControlLabels: { title: 'Rajoitus',
