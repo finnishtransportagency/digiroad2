@@ -275,6 +275,21 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Liikennemäärä',
         disabled: 'Ei tiedossa'
       }
+    },
+    {
+      typeId: 140,
+      singleElementEventCategory: 'laneCount',
+      multiElementEventCategory: 'laneCounts',
+      layerName: 'numberOfLanes',
+      title: 'Kaistojen lukumäärä',
+      newTitle: 'Uusi kaistojen lukumäärä',
+      className: 'lane-count',
+      unit: 'kpl',
+      editControlLabels: {
+        title: 'Lukumäärä',
+        enabled: 'Lukumäärä',
+        disabled: 'Ei lukumäärää'
+      }
     }
   ];
   var localizedStrings;
