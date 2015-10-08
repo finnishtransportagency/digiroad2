@@ -269,7 +269,6 @@
 
     this.isSeparable = function() {
       return isSeparableAssetType &&
-        !self.isUnknown() &&
         getProperty('sideCode') === validitydirections.bothDirections &&
         getProperty('trafficDirection') === 'BothDirections' &&
         !self.isSplit() &&
