@@ -113,7 +113,7 @@
               'type="text" ' +
               'class="form-control ' + generateClassName(sideCode) + '" ' +
               'value="' + value  + '" ' + disabled + ' >' +
-            '<span class="input-group-addon">' + unit + '</span>' +
+            '<span class="input-group-addon ' + className + '">' + unit + '</span>' +
           '</div>';
       } else {
         return '';
