@@ -293,12 +293,12 @@ var URLRouter = function(map, backend, models) {
     },
     {
       typeId: 170,
-      singleElementEventCategory: 'traffic',
-      multiElementEventCategory: 'traffic',
-      layerName: 'traffic',
+      singleElementEventCategory: 'trafficVolume',
+      multiElementEventCategory: 'trafficVolumes',
+      layerName: 'trafficVolume',
       title: 'Liikennemäärä',
       newTitle: 'Uusi liikennemäärä',
-      className: 'traffic',
+      className: 'traffic-volume',
       unit: 'ajoneuvoa/vuorokausi',
       editControlLabels: {
         title: '',
