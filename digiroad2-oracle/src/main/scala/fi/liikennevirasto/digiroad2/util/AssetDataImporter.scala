@@ -242,28 +242,6 @@ class AssetDataImporter {
   def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
-
-    val limits = OracleDatabase.withDynSession {
-      sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
-           from asset a
-           join ASSET_LINK al on a.id = al.asset_id
-           join LRM_POSITION pos on al.position_id = pos.id
-           left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (30,40,50,60,70,80,90,100,110,120, 130, 150, 170)
-           and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Int, Int, Int, Int, Int)].list
-    }
-    println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
-    println("*** fetched all road links from VVH "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
-    println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val floatingLimits = limits.filter(_._7 == 1)
-
     val asset_name = Map(
       30 -> "total_weight_limits",
       40 -> "trailer_truck_weight_limits",
@@ -278,6 +256,27 @@ class AssetDataImporter {
       130 -> "roads_affected_by_thawing",
       150 -> "congestion_tendency",
       170 -> "traffic_volumes")
+
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           left join number_property_value s on s.asset_id = a.id
+           where a.asset_type_id in (#${asset_name.keys.mkString(",")})
+           and (valid_to is null or valid_to >= sysdate)
+         """.as[(Long, Long, Int, Int, Int, Int, Int)].list
+    }
+    println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
+    println("*** fetched all road links from VVH "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val floatingLimits = limits.filter(_._7 == 1)
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
