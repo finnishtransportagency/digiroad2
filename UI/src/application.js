@@ -247,21 +247,6 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 140,
-      singleElementEventCategory: 'laneCount',
-      multiElementEventCategory: 'laneCounts',
-      layerName: 'laneCount',
-      title: 'Kaistojen lukumäärä',
-      newTitle: 'Uusi kaistojen lukumäärä',
-      className: 'lane-count',
-      unit: 'kaista(a)',
-      editControlLabels: {
-        title: 'Kaistojen lukumäärä',
-        enabled: 'Kaistojen lukumäärä',
-        disabled: 'Ei kaistojen lukumäärää'
-      }
-    },
-    {
       typeId: 150,
       defaultValue: 1,
       singleElementEventCategory: 'congestionTendency',
@@ -274,21 +259,6 @@ var URLRouter = function(map, backend, models) {
         title: 'Ruuhkautumisherkkyys',
         enabled: 'Ruuhkautumisherkkä',
         disabled: 'Ei ruuhkautumisherkkä'
-      }
-    },
-    {
-      typeId: 160,
-      defaultValue: 1,
-      singleElementEventCategory: 'publicTransportLane',
-      multiElementEventCategory: 'publicTransportLanes',
-      layerName: 'publicTransportLane',
-      title: 'Joukkoliikennekaistat',
-      newTitle: 'Uusi joukkoliikennekaista',
-      className: 'public-transport-lane',
-      editControlLabels: {
-        title: 'Joukkoliikennekaista',
-        enabled: 'Joukkoliikennekaista',
-        disabled: 'Ei joukkoliikennekaistaa'
       }
     },
     {
