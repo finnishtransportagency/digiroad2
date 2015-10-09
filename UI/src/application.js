@@ -314,6 +314,7 @@ var URLRouter = function(map, backend, models) {
       title: 'Joukkoliikennekaista',
       newTitle: 'Uusi joukkoliikennekaista',
       className: 'mass-transit-lane',
+      isSeparable: true,
       editControlLabels: {
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
