@@ -41,6 +41,7 @@
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
+      rootElement.find('#separate-limit').toggle(!readOnly);
     }
 
     function events() {
