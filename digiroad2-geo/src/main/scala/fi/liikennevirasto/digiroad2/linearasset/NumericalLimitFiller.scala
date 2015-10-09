@@ -54,11 +54,26 @@ object NumericalLimitFiller {
     }
   }
 
-  private def generateNonExistingLinearAssets(typeId: Int)(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
       PersistedLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId)
+    }
+    (segments ++ generated, changeSet)
+  }
+
+  private def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+      val lrmPositions: Seq[(Double, Double)] = segments
+        .filter { s => s.sideCode == sideCode.value || s.sideCode == SideCode.BothDirections.value }
+        .map { x => (x.startMeasure, x.endMeasure) }
+      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
+      remainders.map { segment =>
+        PersistedLinearAsset(0L, roadLink.mmlId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId)
+      }
+    } else {
+      Nil
     }
     (segments ++ generated, changeSet)
   }
@@ -80,7 +95,9 @@ object NumericalLimitFiller {
       dropSegmentsOutsideGeometry,
       adjustTwoWaySegments,
       adjustSegmentSideCodes,
-      generateNonExistingLinearAssets(typeId)
+      generateTwoSidedNonExistingLinearAssets(typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
     )
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing, BothDirections}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, Motorway, TrafficDirection, Municipality}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
 import org.scalatest._
 
 class NumericalLimitFillerSpec extends FunSuite with Matchers {
@@ -68,5 +68,26 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 3l).map(_.mmlId) should be(Seq(2l))
 
     changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1l, SideCode.BothDirections)))
+  }
+
+  test("generate one-sided asset when two-way road link is half-covered") {
+    val topology = Seq(
+      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None))
+    val linearAssets = Map(
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(1), 0.0, 10.0, None, None, None, None, false, 110)))
+
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
+
+    filledTopology should have size 2
+    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
+    filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(1)))
+    filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))
+    filledTopology.filter(_.id == 0).map(_.value) should be(Seq(None))
+    filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil))
   }
 }
