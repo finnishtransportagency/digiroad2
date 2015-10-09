@@ -58,10 +58,6 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  private def getByIdWithoutTransaction(id: Long): Option[PersistedLinearAsset] = {
-    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption
-  }
-
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchLinearAssetsByIds(ids, valuePropertyId)
@@ -146,7 +142,7 @@ trait LinearAssetOperations {
 
     value.foreach(dao.insertValue(id, valuePropertyId))
 
-    getByIdWithoutTransaction(id).get
+    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
   }
 
   def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String): Seq[PersistedLinearAsset] = {
@@ -163,12 +159,12 @@ trait LinearAssetOperations {
     withDynTransaction {
       val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)
       updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      (Seq(getByIdWithoutTransaction(id).map(_.id)) ++ Seq(createdIdOption)).flatten
+      (Seq(dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption.map(_.id)) ++ Seq(createdIdOption)).flatten
     }
   }
 
   private def splitWithoutTransaction(id: Long, splitMeasure: Double, optionalValue: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
-    val linearAsset = getByIdWithoutTransaction(id).get
+    val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
     val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
 
@@ -189,7 +185,7 @@ trait LinearAssetOperations {
 
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction{
-      val existing = getByIdWithoutTransaction(id).head
+      val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
       updateValue(id, valueTowardsDigitization, username)
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
       val created = createWithoutTransaction(existing.typeId, existing.mmlId, Some(valueAgainstDigitization), false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
