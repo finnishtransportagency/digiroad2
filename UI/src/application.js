@@ -301,8 +301,8 @@ var URLRouter = function(map, backend, models) {
       isSeparable: true,
       editControlLabels: {
         title: 'Lukumäärä',
-        enabled: 'Lukumäärä',
-        disabled: 'Ei lukumäärää'
+        enabled: 'Useampia kaistoja',
+        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
       }
     },
     {
