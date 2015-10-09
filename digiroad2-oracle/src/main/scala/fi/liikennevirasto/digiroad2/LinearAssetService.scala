@@ -26,16 +26,6 @@ trait LinearAssetOperations {
     new BoneCPDataSource(cfg)
   }
 
-  private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Double, Double, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
-    val linearAssets = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption
-
-    linearAssets.map { asset =>
-      val roadLink = roadLinkService.fetchVVHRoadlink(asset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-      val points = GeometryUtils.truncateGeometry(roadLink.geometry, asset.startMeasure, asset.endMeasure)
-      (asset.id, asset.mmlId, asset.sideCode, asset.value, asset.startMeasure, asset.endMeasure, points, asset.modifiedBy, asset.modifiedDateTime, asset.createdBy, asset.createdDateTime, asset.expired, asset.typeId)
-    }
-  }
-
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     val mmlIds = roadLinks.map(_.mmlId)
@@ -69,13 +59,7 @@ trait LinearAssetOperations {
   }
 
   private def getByIdWithoutTransaction(id: Long): Option[PersistedLinearAsset] = {
-    linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
-      val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
-      PersistedLinearAsset(
-        id, mmlId, sideCode, value, startMeasure, endMeasure,
-        modifiedBy, modifiedAt,
-        createdBy, createdAt, expired, typeId)
-    }
+    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
