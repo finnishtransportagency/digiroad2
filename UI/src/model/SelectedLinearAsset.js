@@ -25,7 +25,7 @@
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(this.getId());
+      selection = collection.separateLinearAsset(_.first(selection));
       isSeparated = true;
       dirty = true;
       eventbus.trigger(multiElementEvent('fetched'), collection.getAll());

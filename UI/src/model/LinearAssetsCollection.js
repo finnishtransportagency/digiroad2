@@ -176,10 +176,9 @@
       return dirty;
     };
 
-    this.separateLinearAsset = function(id) {
-      var originalLimit = _.find(_.flatten(linearAssets), { id: id });
-      var limitA = _.cloneDeep(originalLimit);
-      var limitB = _.cloneDeep(originalLimit);
+    this.separateLinearAsset = function(selectedLinearAsset) {
+      var limitA = _.cloneDeep(selectedLinearAsset);
+      var limitB = _.cloneDeep(selectedLinearAsset);
 
       limitA.sideCode = 2;
       limitA.marker = 'A';
