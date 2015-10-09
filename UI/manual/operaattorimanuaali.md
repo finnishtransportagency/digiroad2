@@ -70,6 +70,7 @@ Tuonnin onnistuessa j&auml;rjestelm&auml; ilmoittaa:"CSV tiedosto k&auml;sitelty
 
 Huomioita csv-tiedostosta:
 
+- CSV-tuonti ei toimi oikein, jos tiedostossa on pys&auml;kkej&auml;, jotka ovat irti geometriasta (floating)
 - .csv-tiedoston encoding-valinnan tulee olla "Encode in UTF-8 without BOM", encodingin saa vaihettua esimerkiksi Notepad++:lla
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
