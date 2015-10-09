@@ -81,4 +81,24 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     verify(mockEventBus, times(1))
       .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
   }
+
+  test("Separate linear asset") {
+    runWithRollback {
+      val newLimit = NewLimit(388562360, 0, 10)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      val createdId = ServiceWithDao.separate(asset.id, 2, 3, "unittest", (i) => Unit).filter(_ != asset.id).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
+
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      oldLimit.value should be (Some(2))
+      oldLimit.modifiedBy should be (Some("unittest"))
+
+      createdLimit.mmlId should be (388562360)
+      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdLimit.value should be (Some(3))
+      createdLimit.createdBy should be (Some("unittest"))
+    }
+  }
 }

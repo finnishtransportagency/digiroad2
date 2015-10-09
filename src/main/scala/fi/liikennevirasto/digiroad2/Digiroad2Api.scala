@@ -448,6 +448,16 @@ with GZipSupport {
       validateUserMunicipalityAccess(user))
   }
 
+  post("/linearassets/:id/separate") {
+    val user = userProvider.getCurrentUser()
+
+    linearAssetService.separate(params("id").toLong,
+      (parsedBody \ "valueTowardsDigitization").extract[Int],
+      (parsedBody \ "valueAgainstDigitization").extract[Int],
+      user.username,
+      validateUserMunicipalityAccess(user))
+  }
+
   get("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities

@@ -186,6 +186,18 @@ trait LinearAssetOperations {
       dao.floatLinearAssets(ids)
     }
   }
+
+  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    withDynTransaction{
+      val existing = getByIdWithoutTransaction(id).head
+      updateLinearAssetValue(id, valueTowardsDigitization, username)
+      dao.updateSideCode(id, SideCode.TowardsDigitizing)
+      val created = createWithoutTransaction(existing.typeId, existing.mmlId, Some(valueAgainstDigitization), false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
+
+      Seq(existing.id, created.id)
+    }
+  }
+
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
