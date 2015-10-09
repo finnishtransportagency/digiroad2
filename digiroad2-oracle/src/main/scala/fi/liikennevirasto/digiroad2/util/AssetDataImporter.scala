@@ -255,7 +255,9 @@ class AssetDataImporter {
       120 -> "road_widths",
       130 -> "roads_affected_by_thawing",
       150 -> "congestion_tendency",
-      170 -> "traffic_volumes")
+      170 -> "traffic_volumes",
+      140 -> "number_of_lanes",
+      160 -> "mass_transit_lanes")
 
     val limits = OracleDatabase.withDynSession {
       sql"""
