@@ -49,11 +49,11 @@ object NumericalLimitFiller {
     }
   }
 
-  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: VVHRoadLinkWithProperties): Seq[PieceWiseLinearAssetOut] = {
+  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: VVHRoadLinkWithProperties): Seq[PieceWiseLinearAsset] = {
     dbAssets.map { dbAsset =>
       val points = GeometryUtils.truncateGeometry(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
-      PieceWiseLinearAssetOut(
+      PieceWiseLinearAsset(
         dbAsset.id, dbAsset.mmlId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
         dbAsset.startMeasure, dbAsset.endMeasure,
         Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
@@ -61,13 +61,13 @@ object NumericalLimitFiller {
     }
   }
 
-  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAssetOut], ChangeSet) = {
+  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       adjustTwoWaySegments
     )
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAssetOut], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
 

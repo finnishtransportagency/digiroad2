@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAssetOut, NewLimit, RoadLinkPartitioner, SpeedLimitProvider}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, NewLimit, RoadLinkPartitioner, SpeedLimitProvider}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime

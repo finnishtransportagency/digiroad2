@@ -36,7 +36,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAssetOut]] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     val mmlIds = roadLinks.map(_.mmlId)
 
@@ -52,7 +52,7 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.mmlId).mapValues(_.head))
   }
 
-  def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAssetOut] = {
+  def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
     val mmlIds = roadLinks.map(_.mmlId).toList
 
@@ -68,13 +68,13 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  private def getByIdWithoutTransaction(id: Long): Option[PieceWiseLinearAsset] = {
+  private def getByIdWithoutTransaction(id: Long): Option[PersistedLinearAsset] = {
     linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
-      PieceWiseLinearAsset(
-        id, mmlId, SideCode(sideCode), value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
+      PersistedLinearAsset(
+        id, mmlId, sideCode, value, startMeasure, endMeasure,
         modifiedBy, modifiedAt,
-        createdBy, createdAt, typeId)
+        createdBy, createdAt, expired, typeId)
     }
   }
 
@@ -143,7 +143,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PieceWiseLinearAsset = {
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
@@ -165,7 +165,7 @@ trait LinearAssetOperations {
     getByIdWithoutTransaction(id).get
   }
 
-  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String) = {
+  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
         val sideCode = 1
@@ -175,11 +175,11 @@ trait LinearAssetOperations {
     }
   }
 
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[PieceWiseLinearAsset] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIdOption = splitLinearAsset(id, splitMeasure, createdValue, username, municipalityValidation)
       updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      Seq(getByIdWithoutTransaction(id).get) ++ Seq(createdIdOption.flatMap(getByIdWithoutTransaction)).flatten
+      (Seq(getByIdWithoutTransaction(id).map(_.id)) ++ Seq(createdIdOption)).flatten
     }
   }
 
@@ -193,7 +193,7 @@ trait LinearAssetOperations {
 
     dao.updateMValues(id, existingLinkMeasures)
     optionalValue.map { value =>
-      createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
   }
 

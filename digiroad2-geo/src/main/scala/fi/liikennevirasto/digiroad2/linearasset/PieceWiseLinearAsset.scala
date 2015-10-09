@@ -11,14 +11,7 @@ trait LinearAsset extends PolyLine {
   val value: Option[Int]
 }
 
-//TODO: use PersistedLinearAsset instead on PieceWiseLinearAsset
 case class PieceWiseLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], geometry: Seq[Point], expired: Boolean,
-                       startMeasure: Double, endMeasure: Double,
-                       endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
-                       createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int)
-
-//TODO: rename to PieceWiseLinearAsset once PieceWiseLinearAsset is replaced by PersistedLinearAsset
-case class PieceWiseLinearAssetOut(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], geometry: Seq[Point], expired: Boolean,
                                    startMeasure: Double, endMeasure: Double,
                                    endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                    createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection) extends LinearAsset

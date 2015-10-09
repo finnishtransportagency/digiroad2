@@ -182,8 +182,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-    def isUnknown(asset:PieceWiseLinearAssetOut) = asset.id == 0
-    val linearAssets: Seq[PieceWiseLinearAssetOut] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+    val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
     linearAssets.map { link =>
       val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(
