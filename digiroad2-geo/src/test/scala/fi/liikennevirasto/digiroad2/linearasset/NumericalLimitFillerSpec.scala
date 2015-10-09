@@ -51,23 +51,31 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(1), 0.0, 10.0, None, None, None, None, false, 110)),
       2l -> Seq(
         PersistedLinearAsset(2l, 2l, 2, Some(1), 0.0, 5.0, None, None, None, None, false, 110),
-        PersistedLinearAsset(3l, 2l, 3, Some(1), 5.0, 10.0, None, None, None, None, false, 110)
+        PersistedLinearAsset(3l, 2l, 3, Some(1), 7.0, 10.0, None, None, None, None, false, 110),
+        PersistedLinearAsset(4l, 2l, SideCode.BothDirections.value, Some(1), 5.0, 7.0, None, None, None, None, false, 110)
       )
     )
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
-    filledTopology should have size 3
+    filledTopology should have size 4
+
     filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1l).map(_.mmlId) should be(Seq(1l))
 
-    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(TowardsDigitizing))
+    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 2l).map(_.mmlId) should be(Seq(2l))
 
-    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(AgainstDigitizing))
+    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 3l).map(_.mmlId) should be(Seq(2l))
 
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1l, SideCode.BothDirections)))
+    filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 4l).map(_.mmlId) should be(Seq(2l))
+
+    changeSet.adjustedSideCodes should be(Seq(
+      SideCodeAdjustment(1l, SideCode.BothDirections),
+      SideCodeAdjustment(2l, SideCode.BothDirections),
+      SideCodeAdjustment(3l, SideCode.BothDirections)))
   }
 
   test("generate one-sided asset when two-way road link is half-covered") {

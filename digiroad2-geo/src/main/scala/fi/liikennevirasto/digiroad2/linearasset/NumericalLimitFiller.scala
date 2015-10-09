@@ -45,12 +45,13 @@ object NumericalLimitFiller {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
       (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
-    if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections.value && oneWayTrafficDirection) {
-      val segment = segments.head
-      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections))
-      (Seq(segment.copy(sideCode = SideCode.BothDirections.value)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
-    } else {
+
+    if (!oneWayTrafficDirection) {
       (segments, changeSet)
+    } else {
+      val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections.value }
+      val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections.value), SideCodeAdjustment(s.id, SideCode.BothDirections)) }
+      (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
   }
 
