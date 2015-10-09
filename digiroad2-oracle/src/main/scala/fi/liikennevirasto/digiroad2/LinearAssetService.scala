@@ -69,6 +69,59 @@ trait LinearAssetOperations {
     }
   }
 
+  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
+    withDynTransaction {
+      adjustments.foreach { adjustment =>
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+    }
+  }
+
+  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
+    withDynTransaction {
+      adjustments.foreach { adjustment =>
+        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
+      }
+    }
+  }
+
+  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      newLinearAssets.map { newAsset =>
+        val sideCode = 1
+        val expired = false
+        createWithoutTransaction(typeId, newAsset.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+      }
+    }
+  }
+
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    withDynTransaction {
+      val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)
+      updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
+      (Seq(dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption.map(_.id)) ++ Seq(createdIdOption)).flatten
+    }
+  }
+
+  def drop(ids: Set[Long]): Unit = {
+    withDynTransaction {
+      dao.floatLinearAssets(ids)
+    }
+  }
+
+  def separate(id: Long, valueTowardsDigitization: Option[Int], valueAgainstDigitization: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+    val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    municipalityValidation(roadLink.municipalityCode)
+    withDynTransaction{
+      val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+      updateWithoutTransaction(Seq(id), valueTowardsDigitization, valueTowardsDigitization.isEmpty, username)
+      dao.updateSideCode(id, SideCode.TowardsDigitizing)
+      val created = createWithoutTransaction(existing.typeId, existing.mmlId, valueAgainstDigitization, valueAgainstDigitization.isEmpty, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
+      Seq(existing.id, created.id)
+    }
+  }
+
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int = {
       sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
@@ -107,22 +160,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-    }
-  }
-
-  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-    }
-  }
-
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -145,24 +182,6 @@ trait LinearAssetOperations {
     dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
   }
 
-  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      newLinearAssets.map { newAsset =>
-        val sideCode = 1
-        val expired = false
-        createWithoutTransaction(typeId, newAsset.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
-      }
-    }
-  }
-
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
-    withDynTransaction {
-      val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)
-      updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      (Seq(dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption.map(_.id)) ++ Seq(createdIdOption)).flatten
-    }
-  }
-
   private def splitWithoutTransaction(id: Long, splitMeasure: Double, optionalValue: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
     val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
     val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -176,26 +195,6 @@ trait LinearAssetOperations {
       createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
   }
-
-  def drop(ids: Set[Long]): Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(ids)
-    }
-  }
-
-  def separate(id: Long, valueTowardsDigitization: Option[Int], valueAgainstDigitization: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
-    val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-    val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    municipalityValidation(roadLink.municipalityCode)
-    withDynTransaction{
-      val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-      updateWithoutTransaction(Seq(id), valueTowardsDigitization, valueTowardsDigitization.isEmpty, username)
-      dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val created = createWithoutTransaction(existing.typeId, existing.mmlId, valueAgainstDigitization, valueAgainstDigitization.isEmpty, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-      Seq(existing.id, created.id)
-    }
-  }
-
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
