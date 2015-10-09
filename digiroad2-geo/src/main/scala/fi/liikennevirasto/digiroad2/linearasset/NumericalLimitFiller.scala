@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
 object NumericalLimitFiller {
@@ -41,6 +41,19 @@ object NumericalLimitFiller {
     (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
   }
 
+  private def adjustSegmentSideCodes(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val oneWayTrafficDirection =
+      (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
+      (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
+    if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections.value && oneWayTrafficDirection) {
+      val segment = segments.head
+      val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections))
+      (Seq(segment.copy(sideCode = SideCode.BothDirections.value)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
+    } else {
+      (segments, changeSet)
+    }
+  }
+
   private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[PersistedLinearAsset], typeId: Int): Seq[PersistedLinearAsset] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
@@ -64,7 +77,8 @@ object NumericalLimitFiller {
   def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
-      adjustTwoWaySegments
+      adjustTwoWaySegments,
+      adjustSegmentSideCodes
     )
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
