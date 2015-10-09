@@ -70,7 +70,7 @@
       if (selectedLinearAsset.isSeparable()) {
         return '<div class="form-group editable">' +
         '<label class="control-label"></label>' +
-        '<button class="cancel btn btn-secondary" id="separate-limit">Jaa nopeusrajoitus kaksisuuntaiseksi</button>' +
+        '<button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
         '</div>';
       } else {
         return '';
