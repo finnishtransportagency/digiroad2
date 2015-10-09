@@ -157,25 +157,20 @@
     };
 
     this.saveSeparation = function(callback) {
+      var success = function() {
+        eventbus.trigger(singleElementEvent('saved'));
+        dirty = false;
+        callback();
+      };
+      var failure = function() {
+        eventbus.trigger('asset:updateFailed');
+      };
+
       if (separatedLimit.A.id) {
-        backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
-          eventbus.trigger(singleElementEvent('saved'));
-          dirty = false;
-          callback();
-        }, function() {
-          eventbus.trigger('asset:updateFailed');
-        });
+        backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
       } else {
-        var separatedLimits = _.filter([separatedLimit.A, separatedLimit.B], function(limit) {
-          return _.has(limit, 'value');
-        });
-        backend.createSeparatedLinearAssets(typeId, separatedLimits, function() {
-          eventbus.trigger(singleElementEvent('saved'));
-          dirty = false;
-          callback();
-        }, function() {
-          eventbus.trigger('asset:updateFailed');
-        });
+        var separatedLimits = _.filter([separatedLimit.A, separatedLimit.B], function(limit) { return _.has(limit, 'value'); });
+        backend.createSeparatedLinearAssets(typeId, separatedLimits, success, failure);
       }
     };
 
