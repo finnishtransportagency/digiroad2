@@ -95,6 +95,15 @@ trait LinearAssetOperations {
     }
   }
 
+  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      newLinearAssets.map { newAsset =>
+        val expired = false
+        createWithoutTransaction(typeId, newAsset.mmlId, newAsset.value, expired, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+      }
+    }
+  }
+
   def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)

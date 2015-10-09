@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, NewLimit, RoadLinkPartitioner, SpeedLimitProvider}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
@@ -456,6 +456,14 @@ with GZipSupport {
       (parsedBody \ "valueAgainstDigitization").extractOpt[Int],
       user.username,
       validateUserMunicipalityAccess(user))
+  }
+
+  post("/linearassets/separate") {
+    val user = userProvider.getCurrentUser()
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val newLinearAssets = (parsedBody \ "newLinearAssets").extract[Seq[NewLinearAsset]]
+
+    linearAssetService.create(newLinearAssets, typeId, user.username)
   }
 
   get("/speedlimits") {
