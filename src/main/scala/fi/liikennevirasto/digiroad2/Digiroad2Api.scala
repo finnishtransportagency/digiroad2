@@ -452,8 +452,8 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
 
     linearAssetService.separate(params("id").toLong,
-      (parsedBody \ "valueTowardsDigitization").extract[Int],
-      (parsedBody \ "valueAgainstDigitization").extract[Int],
+      (parsedBody \ "valueTowardsDigitization").extractOpt[Int],
+      (parsedBody \ "valueAgainstDigitization").extractOpt[Int],
       user.username,
       validateUserMunicipalityAccess(user))
   }

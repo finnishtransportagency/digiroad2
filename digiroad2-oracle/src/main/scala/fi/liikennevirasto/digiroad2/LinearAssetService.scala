@@ -183,13 +183,12 @@ trait LinearAssetOperations {
     }
   }
 
-  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def separate(id: Long, valueTowardsDigitization: Option[Int], valueAgainstDigitization: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction{
       val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-      updateValue(id, valueTowardsDigitization, username)
+      updateWithoutTransaction(Seq(id), valueTowardsDigitization, valueTowardsDigitization.isEmpty, username)
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val created = createWithoutTransaction(existing.typeId, existing.mmlId, Some(valueAgainstDigitization), false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-
+      val created = createWithoutTransaction(existing.typeId, existing.mmlId, valueAgainstDigitization, valueAgainstDigitization.isEmpty, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
       Seq(existing.id, created.id)
     }
   }
