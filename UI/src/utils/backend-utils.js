@@ -154,10 +154,10 @@
       };
     }
 
-    this.updateLinearAssets = _.throttle(function(data, success, failure) {
+    this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
+        type: "POST",
         url: "api/linearassets",
         data: JSON.stringify(data),
         dataType: "json",

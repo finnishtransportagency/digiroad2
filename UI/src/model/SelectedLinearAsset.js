@@ -68,12 +68,12 @@
       var knownLinearAssets = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownLinearAssets, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
+        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value:value, expired: false }); }),
         ids: _.pluck(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
       };
-      var backendOperation = _.isNumber(value) ? backend.updateLinearAssets : backend.deleteLinearAssets;
+      var backendOperation = _.isNumber(value) ? backend.createLinearAssets : backend.deleteLinearAssets;
       backendOperation(payload, function() {
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
@@ -102,13 +102,13 @@
       eventbus.trigger(singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
+          return { newLimits: selection };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
-      var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.updateLinearAssets;
+      var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.createLinearAssets;
 
       backendOperation(payload, function() {
         dirty = false;
