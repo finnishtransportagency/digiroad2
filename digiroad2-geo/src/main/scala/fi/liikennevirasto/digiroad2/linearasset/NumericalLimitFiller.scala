@@ -54,12 +54,13 @@ object NumericalLimitFiller {
     }
   }
 
-  private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[PersistedLinearAsset], typeId: Int): Seq[PersistedLinearAsset] = {
-    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
+  private def generateNonExistingLinearAssets(typeId: Int)(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
-    remainders.map { segment =>
+    val generated = remainders.map { segment =>
       PersistedLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId)
     }
+    (segments ++ generated, changeSet)
   }
 
   private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: VVHRoadLinkWithProperties): Seq[PieceWiseLinearAsset] = {
@@ -78,7 +79,8 @@ object NumericalLimitFiller {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       adjustTwoWaySegments,
-      adjustSegmentSideCodes
+      adjustSegmentSideCodes,
+      generateNonExistingLinearAssets(typeId)
     )
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
@@ -88,9 +90,8 @@ object NumericalLimitFiller {
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets, typeId)
 
-      (existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink), assetAdjustments)
+      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }
 }
