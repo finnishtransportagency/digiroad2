@@ -157,7 +157,7 @@
     };
 
     this.saveSeparation = function(callback) {
-      backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
+      backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
         eventbus.trigger(singleElementEvent('saved'));
         dirty = false;
         callback();

@@ -190,6 +190,18 @@
       });
     };
 
+    this.separateLinearAssets = function(id, valueTowardsDigitization, valueAgainstDigitization, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/linearassets/" + id + "/separate",
+        data: JSON.stringify({valueTowardsDigitization: valueTowardsDigitization, valueAgainstDigitization: valueAgainstDigitization}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
     };
