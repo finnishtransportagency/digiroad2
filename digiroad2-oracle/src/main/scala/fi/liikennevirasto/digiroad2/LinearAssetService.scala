@@ -63,11 +63,6 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
-    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
-
-
-
   def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, expired, username)
@@ -75,6 +70,10 @@ trait LinearAssetOperations {
   }
 
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+    def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int = {
+      sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
+    }
+
     def updateValue(id: Long, value: Int, username: String): Option[Long] = {
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
       val assetsUpdated = Queries.updateAssetModified(id, username).first
