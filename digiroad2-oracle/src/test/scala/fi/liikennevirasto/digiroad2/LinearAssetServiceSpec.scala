@@ -101,6 +101,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       createdLimit.createdBy should be (Some("unittest"))
     }
   }
+
   test("Separate with empty value towards digitization") {
     runWithRollback {
       val newLimit = NewLimit(388562360, 0, 10)
@@ -121,6 +122,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       createdLimit.createdBy should be (Some("unittest"))
     }
   }
+
   test("Separate with empty value against digitization") {
     runWithRollback {
       val newLimit = NewLimit(388562360, 0, 10)
@@ -139,6 +141,17 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit.expired should be (true)
       createdLimit.createdBy should be (Some("unittest"))
+    }
+  }
+
+  test("Separation should call municipalityValidation") {
+    def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+    runWithRollback {
+      val newLimit = NewLimit(388562360, 0, 10)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      intercept[IllegalArgumentException] {
+        ServiceWithDao.separate(asset.id, Some(1), Some(2), "unittest", failingMunicipalityValidation)
+      }
     }
   }
 }
