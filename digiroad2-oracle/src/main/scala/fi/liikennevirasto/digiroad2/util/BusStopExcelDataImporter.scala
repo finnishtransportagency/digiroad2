@@ -52,11 +52,11 @@ class BusStopExcelDataImporter(dataSource: DataSource) {
       val results = parseStopDataFromCsvFile(csvFile).map { stopData =>
         updateAssetData(stopData)
       }
-      val (updated: List[Updated], notFound: List[NotFound]) = results.partition(result => result match {
+      val (updated, notFound) = results.partition {
         case Updated(_) => true
         case _ => false
-      })
-      ImportResult(updated, notFound)
+      }
+      ImportResult(updated.asInstanceOf, notFound.asInstanceOf)
     }
   }
 

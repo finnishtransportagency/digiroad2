@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unchecked")
 public class OracleArray {
     private static interface RowToElement<T> {
         T convert(ResultSet row) throws SQLException;

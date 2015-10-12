@@ -33,11 +33,11 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
-class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
+class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
-    case x: Set[Long]         => speedLimitProvider.purgeUnknown(x)
-    case x: Seq[UnknownSpeedLimit] => speedLimitProvider.persistUnknown(x)
-    case _                    => println("speedLimitFiller: Received unknown message")
+    case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf)
+    case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf)
+    case _      => println("speedLimitFiller: Received unknown message")
   }
 }
 
@@ -64,7 +64,7 @@ object Digiroad2Context {
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], speedLimitProvider), name = "speedLimitUpdater")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
