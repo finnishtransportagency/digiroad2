@@ -297,11 +297,11 @@ var URLRouter = function(map, backend, models) {
       title: 'Kaistojen lukumäärä',
       newTitle: 'Uusi kaistojen lukumäärä',
       className: 'lane-count',
-      unit: 'kpl',
+      unit: 'kpl / suunta',
       isSeparable: true,
       editControlLabels: {
         title: 'Lukumäärä',
-        enabled: 'Useampia kaistoja',
+        enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Linkin mukainen tyypillinen kaistamäärä'
       }
     },
