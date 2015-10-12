@@ -43,21 +43,6 @@ public class OracleArray {
         }
     }
 
-    private static class RowToNumericalLimit implements RowToElement<Tuple7<Long,Long,Long,Int,Int,Double,Double>> {
-        @Override
-        public Tuple7<Long, Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
-            long id = row.getLong(1);
-            long roadLinkId = row.getLong(2);
-            long mmlId = row.getLong(3);
-            int sideCode = row.getInt(4);
-            Integer limitValue = new Integer(row.getInt(5));
-            if(row.wasNull()) { limitValue = null; }
-            double startMeasure = row.getDouble(6);
-            double endMeasure = row.getDouble(7);
-            return new Tuple7(id, roadLinkId, mmlId, sideCode, limitValue, startMeasure, endMeasure);
-        }
-    }
-
     private static class RowToManoeuvre implements RowToElement<Tuple7<Long, Int, Long, Int, DateTime, String, String>> {
         @Override
         public Tuple7<Long, Int, Long, Int, DateTime, String, String> convert(ResultSet row) throws SQLException {
