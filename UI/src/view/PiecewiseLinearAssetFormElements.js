@@ -10,8 +10,8 @@
     }
 
     function singleValueEditElement(currentValue, isUnknown, sideCode) {
-      var withoutValue = isUnknown ? 'checked' : '';
-      var withValue = isUnknown ? '' : 'checked';
+      var withoutValue = currentValue ? '' : 'checked';
+      var withValue = currentValue ? 'checked' : '';
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="choice-group">' +
