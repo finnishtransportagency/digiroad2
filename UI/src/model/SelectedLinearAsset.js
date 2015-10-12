@@ -259,10 +259,6 @@
       return dirty;
     };
 
-    this.isNew = function() {
-      return !_.isNumber(self.getId());
-    };
-
     this.isSelected = function(linearAsset) {
       return _.some(selection, function(selectedLinearAsset) {
         return isEqual(linearAsset, selectedLinearAsset);
