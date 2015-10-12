@@ -56,6 +56,16 @@ object SpeedLimitFiller {
       changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
+  private def capToGeometry(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
+    val cappedSegments = overflowingSegments.map { s =>
+      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, s.startMeasure, linkLength), endMeasure = linkLength),
+        MValueAdjustment(s.id, roadLink.mmlId, s.startMeasure, linkLength))
+    }
+    (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
+  }
+
   private def adjustSegmentSideCodes(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections) {
       val segment = segments.head
@@ -102,6 +112,7 @@ object SpeedLimitFiller {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
       dropRedundantSegments,
       adjustSegmentMValues,
+      capToGeometry,
       adjustSegmentSideCodes,
       dropShortLimits
     )

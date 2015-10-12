@@ -578,7 +578,7 @@ _Suurin sallittu -valinta._
 
 ##Suurin sallittu x7 tietojen katselu##
 
-Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml; (6).
+Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustieton&auml;kym&auml; (6).
 
 ![Suurimman sallitun tietojen katselu](k31.JPG)
 
@@ -586,7 +586,15 @@ _Suurin sallittu -katselutila._
 
 ##Suurin sallittu x7 ominaisuustietojen muokkaus##
 
-Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Muokkaustilassa Suurin sallittu -rajoituksille voi antaa uusia arvoja ja niit&auml; voi katkaista. Rajoituksien arvoja voi muokata kolmella tavalla:
+1.	Koko rajoitusketjulle kerralla.
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+3.	Monivalinnan avulla kokonaiselle alueelle.
+
+
+###Rajoituksen arvon muokkaus###
+
+Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa rajoituksissa.
 
@@ -594,15 +602,27 @@ Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen
 
 _Suurin sallittu -valinnan muokkaus._
 
+###Suurin sallittu -kohteiden muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Useamman rajoituksen arvon muokkaus kerralla](k62.JPG)
+
+_Useamman rajoituksen arvon muokkaus kerralla._
+
 ####Suurin sallittu -kohteen katkaisu####
 
 Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
+
+Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
 
 ![Suurin sallittu -kohteen katkaisu](k35.JPG)
 
 _Suurin sallittu -kohteen katkaisu._
 
-Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen rajoituksen ID ja arvo. Lyhyempi osa tulee valituksi kartalla (4) ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Arvokentt&auml;&auml;n voi kirjata rajoitukselle uuden arvon, sen voi j&auml;tt&auml;&auml; ennalleen tai poistaa voimasta valitsemalla ”Ei rajoitusta”. Oletusarvona on sama rajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. Uusi rajoitus tallennetaan Tallenna-painikkeesta (8). Tallentamisen j&auml;lkeen rajoitukselle generoidaan taustaj&auml;rjestelm&auml;ss&auml; ID. Ennen tallennusta rajoituksen katkaisemisen voi perua Peruuta-painikkeesta, joka palauttaa alkuper&auml;isen rajoituksen voimaan (9).
+Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
 
 ![Suurin sallittu -kohteen katkaisu](k36.JPG)
 
@@ -618,7 +638,7 @@ _Suurin sallittu -kohteen poistaminen._
 
 ####Uuden suurin sallittu -kohteen lis&auml;&auml;minen####
 
-Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella.
+Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla linkin geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
 
 ![Suurin sallittu -kohteen lis&auml;ys](k34.JPG)
 
@@ -627,7 +647,7 @@ _Suurin sallittu -kohteen lis&auml;&auml;minen._
 8. Valaistu tie
 ----------------------
 
-Valaistu tie on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistu tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3).  Valaistuksen arvo on kyll&auml; tai ei. 
+Valaistu tie on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistu tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3). Valaistuksen arvo on kyll&auml; tai ei. 
 
 ![Valaistu tie](k57.jpg)
 
@@ -635,7 +655,7 @@ _Valaistu tie._
 
 ##Valaistustietojen katselu##
 
-Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei.
+Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko valaistusketju, eli kaikki linkit, joilla on sama valaistustieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valaistusketjussa.
 
 ![Valaistustiedon katselu](k58.jpg)
 
@@ -645,11 +665,15 @@ _Valaistustiedon katselu._
 
 Valaistus-tietoja voi muokata muokkaustilassa. Valaistuksen voi lis&auml;t&auml;, poistaa ja valaistusgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
 
+###Valaistustiedon lis&auml;ys###
+
 Uusi valaistus lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Valaistus" (6). Uusi valaistus-tieto n&auml;kyy kartalla punaisena.
 
 ![Valaistustiedon lis&auml;ys](k59.jpg)
 
 _Valaistustiedon lis&auml;ys._
+
+###Valaistustiedon poistaminen###
 
 Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei valaistusta" (7). Kun valaistustieto on poistettu, kohde muuttuu kartalla harmaaksi.
 
@@ -657,7 +681,19 @@ Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan omin
 
 _Valaistustiedon poistaminen._
 
-Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisun j&auml;lkeen valituksi j&auml;&auml; lyhyempi p&auml;tk&auml;, jolle voi tallentaa tiedon valaistuksesta ominaisuustietotauluun (9).
+###Valaistuksen muokkaus monivalintaty&ouml;kalulla###
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa valaistuksen kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan valaistuksen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Valaistuksen monivalinta](k63.JPG)
+
+_Valaistuksen monivalinta._
+
+###Valaistuksen katkaisu###
+
+Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
 
 ![Valaistusgeometrian katkaisu](k61.jpg)
 

@@ -23,7 +23,7 @@ object Digiroad2Build extends Build {
       name := Digiroad2GeoName,
       version := Version,
       scalaVersion := ScalaVersion,
-      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+      scalacOptions ++= Seq("-unchecked", "-feature"),
       resolvers ++= Seq(
         Classpaths.typesafeReleases,
         "opengeo" at "http://repo.opengeo.org/",
@@ -48,7 +48,7 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+      scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
@@ -85,7 +85,7 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+      scalacOptions ++= Seq("-unchecked", "-feature"),
       parallelExecution in Test := false,
       fork in (Compile,run) := true,
       testOptions in Test ++= (
