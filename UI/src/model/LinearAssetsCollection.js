@@ -58,8 +58,15 @@
     };
 
     var isEqual = function(a, b) {
-      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
-        (!_.isUndefined(a.id) && !_.isUndefined(b.id) && (a.id === b.id));
+      function equalUnknown() {
+        return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId));
+      }
+
+      function equalExisting() {
+        return (!_.isUndefined(a.id) && !_.isUndefined(b.id) && (a.id === b.id));
+      }
+
+      return equalUnknown() || equalExisting();
     };
 
     this.getGroup = function(segment) {
