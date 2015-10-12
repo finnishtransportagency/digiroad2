@@ -101,7 +101,7 @@
     function measureInput(currentValue, isUnknown, sideCode) {
       if (unit) {
         var value = currentValue ? currentValue : '';
-        var disabled = isUnknown ? 'disabled' : '';
+        var disabled = currentValue ? '' : 'disabled';
         return '' +
           '<div class="input-unit-combination input-group">' +
             '<input ' +
