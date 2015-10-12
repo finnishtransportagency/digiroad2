@@ -58,11 +58,13 @@
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var generateTitle = function() {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
-        return '<span>' + newTitle + '</span>';
-      } else if (selectedLinearAsset.count() == 1) {
-        return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
+        return '<span>' + (applicationModel.isReadOnly() ? title : newTitle) + '</span>';
       } else {
-        return '<span>' + title + '</span>';
+        if (selectedLinearAsset.count() === 1) {
+          return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
+        } else {
+          return '<span>' + title + '</span>';
+        }
       }
     };
 
