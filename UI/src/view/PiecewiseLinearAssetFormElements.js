@@ -9,7 +9,7 @@
       return sideCode ? className + '-' + sideCode : className;
     }
 
-    function singleValueEditElement(currentValue, isUnknown, sideCode) {
+    function singleValueEditElement(currentValue, sideCode) {
       var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
       var withValue = _.isUndefined(currentValue) ? '' : 'checked';
       return '' +
@@ -31,16 +31,16 @@
               'value="enabled" ' + withValue + '/>' +
             '</label>' +
           '</div>' +
-          measureInput(currentValue, isUnknown, sideCode) +
+          measureInput(currentValue, sideCode) +
         '</div>';
     }
 
-    function singleValueElement(currentValue, isUnknown, sideCode) {
+    function singleValueElement(currentValue, sideCode) {
       return '' +
         '<div class="form-group editable">' +
           '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue, isUnknown) + '</p>' +
-          singleValueEditElement(currentValue, isUnknown, sideCode) +
+          '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
+          singleValueEditElement(currentValue, sideCode) +
         '</div>';
     }
 
@@ -90,15 +90,15 @@
       });
     }
 
-    function valueString(currentValue, isUnknown) {
+    function valueString(currentValue) {
       if (unit) {
         return currentValue ? currentValue + ' ' + unit : '-';
       } else {
-        return isUnknown ? 'ei ole' : 'on';
+        return currentValue ? 'ei ole' : 'on';
       }
     }
 
-    function measureInput(currentValue, isUnknown, sideCode) {
+    function measureInput(currentValue, sideCode) {
       if (unit) {
         var value = currentValue ? currentValue : '';
         var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
