@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, PersistedLinearAsset, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NewLimit, PersistedLinearAsset, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -64,7 +64,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Create new linear asset") {
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLimit(388562360l, 0, 20)), 30, Some(1000), "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, Some(1000), 1)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head.id), "mittarajoitus").head
       asset.value should be (Some(1000))
@@ -84,8 +84,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate linear asset") {
     runWithRollback {
-      val newLimit = NewLimit(388562360, 0, 10)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(asset.id, Some(2), Some(3), "unittest", (i) => Unit).filter(_ != asset.id).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
@@ -104,8 +104,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate with empty value towards digitization") {
     runWithRollback {
-      val newLimit = NewLimit(388562360, 0, 10)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(asset.id, None, Some(3), "unittest", (i) => Unit).filter(_ != asset.id).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
@@ -125,8 +125,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate with empty value against digitization") {
     runWithRollback {
-      val newLimit = NewLimit(388562360, 0, 10)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(asset.id, Some(2), None, "unittest", (i) => Unit).filter(_ != asset.id).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
@@ -147,8 +147,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Separation should call municipalityValidation") {
     def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
     runWithRollback {
-      val newLimit = NewLimit(388562360, 0, 10)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, Some(1), "test").head
+      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       intercept[IllegalArgumentException] {
         ServiceWithDao.separate(asset.id, Some(1), Some(2), "unittest", failingMunicipalityValidation)
       }

@@ -85,16 +85,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      newLinearAssets.map { newAsset =>
-        val sideCode = 1
-        val expired = false
-        createWithoutTransaction(typeId, newAsset.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
-      }
-    }
-  }
-
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
