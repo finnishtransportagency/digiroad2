@@ -10,8 +10,8 @@
     }
 
     function singleValueEditElement(currentValue, isUnknown, sideCode) {
-      var withoutValue = currentValue ? '' : 'checked';
-      var withValue = currentValue ? 'checked' : '';
+      var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
+      var withValue = _.isUndefined(currentValue) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="choice-group">' +
@@ -101,7 +101,7 @@
     function measureInput(currentValue, isUnknown, sideCode) {
       if (unit) {
         var value = currentValue ? currentValue : '';
-        var disabled = currentValue ? '' : 'disabled';
+        var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
         return '' +
           '<div class="input-unit-combination input-group">' +
             '<input ' +
