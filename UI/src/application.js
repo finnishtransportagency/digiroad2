@@ -247,21 +247,6 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 130,
-      defaultValue: 1,
-      singleElementEventCategory: 'roadDamagedByThaw',
-      multiElementEventCategory: 'roadsDamagedByThaw',
-      layerName: 'roadDamagedByThaw',
-      title: 'Kelirikko',
-      newTitle: 'Uusi kelirikko',
-      className: 'road-damaged-by-thaw',
-      editControlLabels: {
-        title: 'Kelirikko',
-        enabled: 'Kelirikko',
-        disabled: 'Ei kelirikkoa'
-      }
-    },
-    {
       typeId: 150,
       defaultValue: 1,
       singleElementEventCategory: 'congestionTendency',
