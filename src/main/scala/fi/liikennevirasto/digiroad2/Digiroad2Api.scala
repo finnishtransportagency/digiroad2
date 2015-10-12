@@ -403,29 +403,6 @@ with GZipSupport {
     }
   }
 
-  put("/linearassets") {
-    val user = userProvider.getCurrentUser()
-    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
-    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
-    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
-    val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
-    val mmlIds = newLimits.map(_.mmlId) ++ existingMmlIds
-    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
-      .map(_.municipalityCode)
-      .foreach(validateUserMunicipalityAccess(user))
-
-    (expiredOption, valueOption) match {
-      case (None, None) => BadRequest("Numerical limit value or expiration not provided")
-      case (expired, value) =>
-        value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
-        val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username)
-        updatedIds ++ created.map(_.id)
-    }
-  }
-
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
