@@ -237,8 +237,8 @@ var URLRouter = function(map, backend, models) {
       isSeparable: false,
       editControlLabels: {
         title: 'Leveys',
-        enabled: 'Leveys',
-        disabled: 'Ei leveyttä'
+        enabled: 'Leveys tiedossa',
+        disabled: 'Leveys ei tiedossa'
       }
     },
     {
