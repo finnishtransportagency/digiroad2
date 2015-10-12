@@ -14,6 +14,7 @@ $(function() {
   var queryString = window.location.search.substring(1);
   var parameters = parseQueryParameters(queryString);
   var fakeMode = parameters.withFakeData === 'true';
+  var isExperimental = parameters.isExperimental === 'true';
 
   Analytics.start();
 
@@ -25,6 +26,6 @@ $(function() {
         .withSpeedLimitsData(speedLimitsData));
     });
   } else {
-    Application.start();
+    Application.start(undefined, undefined, isExperimental);
   }
 });

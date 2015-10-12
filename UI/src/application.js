@@ -202,19 +202,24 @@ var URLRouter = function(map, backend, models) {
       editControlLabels: { title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta' }
-    },
+    }
+  ];
+
+  var experimentalAssetSpecs = [
     {
-      typeId: 110,
+      typeId: 130,
       defaultValue: 1,
-      singleElementEventCategory: 'pavedRoad',
-      multiElementEventCategory: 'pavedRoads',
-      layerName: 'pavedRoad',
-      title: 'Päällystetty tie',
-      newTitle: 'Uusi päällystetty tie',
-      className: 'paved-road',
-      editControlLabels: { title: 'Päällyste',
-        enabled: 'Päällyste',
-        disabled: 'Ei päällystettä' }
+      singleElementEventCategory: 'roadDamagedByThaw',
+      multiElementEventCategory: 'roadsDamagedByThaw',
+      layerName: 'roadDamagedByThaw',
+      title: 'Kelirikko',
+      newTitle: 'Uusi kelirikko',
+      className: 'road-damaged-by-thaw',
+      editControlLabels: {
+        title: 'Kelirikko',
+        enabled: 'Kelirikko',
+        disabled: 'Ei kelirikkoa'
+      }
     },
     {
       typeId: 120,
@@ -229,21 +234,6 @@ var URLRouter = function(map, backend, models) {
         title: 'Leveys',
         enabled: 'Leveys',
         disabled: 'Ei leveyttä'
-      }
-    },
-    {
-      typeId: 130,
-      defaultValue: 1,
-      singleElementEventCategory: 'roadDamagedByThaw',
-      multiElementEventCategory: 'roadsDamagedByThaw',
-      layerName: 'roadDamagedByThaw',
-      title: 'Kelirikko',
-      newTitle: 'Uusi kelirikko',
-      className: 'road-damaged-by-thaw',
-      editControlLabels: {
-        title: 'Kelirikko',
-        enabled: 'Kelirikko',
-        disabled: 'Ei kelirikkoa'
       }
     },
     {
@@ -262,6 +252,19 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
+      typeId: 110,
+      defaultValue: 1,
+      singleElementEventCategory: 'pavedRoad',
+      multiElementEventCategory: 'pavedRoads',
+      layerName: 'pavedRoad',
+      title: 'Päällystetty tie',
+      newTitle: 'Uusi päällystetty tie',
+      className: 'paved-road',
+      editControlLabels: { title: 'Päällyste',
+        enabled: 'Päällyste',
+        disabled: 'Ei päällystettä' }
+    },
+    {
       typeId: 170,
       singleElementEventCategory: 'trafficVolume',
       multiElementEventCategory: 'trafficVolumes',
@@ -277,6 +280,7 @@ var URLRouter = function(map, backend, models) {
       }
     }
   ];
+
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
@@ -284,7 +288,7 @@ var URLRouter = function(map, backend, models) {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var bindEvents = function() {
+  var bindEvents = function(linearAssetSpecs) {
     var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
     var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
     var savingEventNames = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
@@ -424,7 +428,7 @@ var URLRouter = function(map, backend, models) {
     }
   };
 
-  application.start = function(customBackend, withTileMaps) {
+  application.start = function(customBackend, withTileMaps, isExperimental) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -434,7 +438,9 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
-    var linearAssets = _.map(linearAssetSpecs, function(spec) {
+    var enabledExperimentalAssets = isExperimental ? experimentalAssetSpecs : [];
+    var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
+    var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
       var selectedLinearAsset = new SelectedLinearAsset(backend, collection, spec.typeId,
                                                          spec.singleElementEventCategory, spec.multiElementEventCategory, false);
@@ -457,7 +463,7 @@ var URLRouter = function(map, backend, models) {
       manoeuvresCollection: manoeuvresCollection
     };
 
-    bindEvents();
+    bindEvents(enabledLinearAssetSpecs);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
