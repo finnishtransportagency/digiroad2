@@ -57,13 +57,9 @@
       });
     };
 
-    var isUnknown = function(linearAsset) {
-      return _.isUndefined(linearAsset.value);
-    };
-
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
-        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+        (!_.isUndefined(a.id) && !_.isUndefined(b.id) && (a.id === b.id));
     };
 
     this.getGroup = function(segment) {

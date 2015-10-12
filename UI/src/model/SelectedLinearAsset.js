@@ -152,7 +152,9 @@
     var cancelCreation = function() {
       eventbus.trigger(singleElementEvent('unselect'), self);
       if (isSeparated) {
-        var originalLinearAsset = _.merge({}, selection[0], {value: originalLinearAssetValue, sideCode: 1});
+        var originalLinearAsset = _.cloneDeep(selection[0]);
+        originalLinearAsset.value = originalLinearAssetValue;
+        originalLinearAsset.sideCode = 1;
         collection.replaceSegments([selection[0]], [originalLinearAsset]);
       }
       collection.setSelection(null);
