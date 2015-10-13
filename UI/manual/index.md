@@ -3,6 +3,8 @@ Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;ohje
 
 __Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&auml;&auml;n Digiroad-tietoja.__
 
+__Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
+
 1. Miten p&auml;&auml;st&auml; alkuun?
 -----------------------
 
@@ -698,3 +700,336 @@ Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoi
 ![Valaistusgeometrian katkaisu](k61.jpg)
 
 _Valaistusgeometrian katkaisu._
+
+9. Kelirikko
+----------------------
+
+Kelirikko on viivamainen kohde. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
+
+![Kelirikko](k64.JPG)
+
+_Kelirikko._
+
+##Kelirikkotietojen katselu##
+
+Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko kelirikkoketju, eli kaikki linkit, joilla on sama kelirikkotieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Kelirikkotiedolla on lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; kelirikon arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; kelirikkoketjussa. 
+
+![Kelirikko katselu](k65.JPG)
+
+_Kelirikkotiedon katselu._
+
+##Kelirikkotietojen muokkaus##
+
+Kelirikkotietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa kelirikolle voi antaa uuden arvon (kyll&auml;/ei) ja niit&auml; voi katkaista. Kelirikon arvoa voi muokata kolmella tavalla:
+
+1. Koko kelirikkoketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Kelirikko muokkaus](k66.JPG)
+
+_Kelirikkotiedon muokkaus._
+
+###Kelirikkotiedon lis&auml;ys###
+Uusi kelirikkotieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Kelirikko" (6). Uusi kelirikkotieto n&auml;kyy kartalla punaisena.
+
+![Kelirikko lis&auml;ys](k67.JPG)
+
+_Kelirikkotiedon lis&auml;ys._
+
+###Kelirikkotiedon poistaminen###
+
+Kelirikkotiedon voi poistaa valitsemalla tielinkin, jolla on kelirikko ja oikean laidan ominaisuustietotaulusta kohdan "Ei kelirikkoa" (7). Kun kelirikkotieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Kelirikko poisto](k68.JPG)
+
+_Kelirikkotiedon poistaminen._
+
+###Kelirikkojen muokkaus monivalintaty&ouml;kalulla###
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa kelirikon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan kelirikon arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Kelirikko monivalinta](k69.JPG)
+
+_Kelirikon monivalinta._
+
+###Kelirikkotiedon katkaisu###
+
+Tarvittaessa kelirikon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan kelirikon geometriasta kohtaa, josta se halutaan katkaista. Kelirikon geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Kelirikon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kelirikkotiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko kelirikkoketjua.
+
+Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Kelirikko katkaisu](k70.JPG)
+
+_Kelirikkogeometrian katkaisu._
+
+10. Tien leveys
+----------------------
+
+Kartalle voi valita tietolajit-paletista (1) Tien leveys -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
+
+![Tien leveys](k71.JPG)
+
+_Tien leveys -valinta._
+
+##Tien leveyden katselu##
+
+Yksitt&auml;isen tien leveys -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki linkit, joilla on sama tien leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustieton&auml;kym&auml; (6). Tien leveydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; tien leveyden arvo senttimetrein&auml;, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
+
+![Tien leveys katselu](k72.JPG)
+
+_Tien leveys -katselutila._
+
+##Tien leveys -kohteiden muokkaus##
+
+Tien leveys -tietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa tien leveydelle voi antaa uuden arvon (cm), tietoja voi poistaa sek&auml; leveysgeometrian voi katkaista. Tien leveyden arvoa voi muokata kolmella tavalla:
+
+1. Koko leveysketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+###Tien leveyden muokkaus###
+
+Tien leveys -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Tien leveyden arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+
+![Tien leveys muokkaus](k73.JPG)
+
+_Tien leveyden muokkaus._
+
+###Tien leveyden muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin leveyden voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko linkkien p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan tien leveyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Tien leveys monivalinta](k74.JPG)
+
+_Useamman tien leveyden muokkaus kerralla._
+
+###Tien leveys -kohteen katkaisu###
+
+Tien leveys -kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi muuttaa tien leveytt&auml; lyhyill&auml; tieosuuksilla. Leikkausty&ouml;kalulla klikataan leveyden geometriasta kohtaa, josta leveystieto halutaan katkaista. Leveyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
+Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko leveysketjua.
+
+![Tien leveys katkaisu](k75.JPG)
+
+_Tien leveys -geometrian katkaisu._
+
+Katkaistun leveystiedon osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille m&auml;&auml;ritell&auml;&auml;n arvot oikean laidan kentiss&auml; (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet leveystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tien leveys j&auml;&auml; voimaan.
+
+Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille tieosuuksille eri arvot, jotta tallennus on mahdollista.
+
+![Tien leveys katkaisu2](k76.JPG)
+
+_Tien leveys -kohteen katkaisu._
+
+###Tien leveys -kohteen poistaminen###
+
+Tielinkin tien leveys -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Leveys-kohdasta "Leveys ei tiedossa".
+
+![Tien leveys poisto](k77.JPG)
+
+_Tien leveys -kohteen poistaminen._
+
+###Uuden tien leveys -kohteen lis&auml;&auml;minen###
+
+Tielinkille voi lis&auml;t&auml; tien leveys -kohteen valitsemalla linkin geometrian (4) Tien leveys -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin leveyden tiedot. Valitaan "Leveys tiedossa" ja sy&ouml;tet&auml;&auml;n leveys sy&ouml;tekentt&auml;&auml;n.  Tien leveys tallennetaan painamalla Tallenna (8). Uuden tien leveys -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+
+![Tien leveys lisays](k78.JPG)
+
+_Tien leveys -kohteen lis&auml;&auml;minen._
+
+11. Ruuhkautumisherkkyys (kuvat puuttuu)
+----------------------
+
+Ruuhkautumisherkkyys on viivamainen kohde. Ruuhkautumisherkkyys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Ruuhkautumisherkkyys -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu ruuhkautumisherkkyys, se piirtyy kartalle punaisella viivalla (2). Ruuhkautumattomat tielinkit ovat harmaita (3). Ruuhkautumisherkkyyden arvo on kyll&auml; tai ei.
+
+![Ruuhka](k79.JPG)
+
+_Ruuhkautumisherkkyys._
+
+##Ruuhkautumisherkkyystietojen katselu##
+
+Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko ruuhkautumisherkkyysketju, eli kaikki linkit, joilla on sama ruuhkautumisherkkyystieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Ruuhkautumisherkkyydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; ruuhkautumisherkkyyden arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
+
+![Ruuhka katselu](k80.JPG)
+
+_Ruuhkautumisherkkyystiedon katselu._
+
+##Ruuhkautumisherkkyystietojen muokkaus##
+
+Ruuhkautumisherkkyys-tietoja voi muokata muokkaustilassa. Ruuhkautumisherkkyyden voi lis&auml;t&auml;, poistaa ja ruuhkautumisherkkyysgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Ruuhkautumisherkkyyden arvoa voi muokata kolmella tavalla:
+
+1. Koko ruuhkautumisherkkyysketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+###Ruuhkautumisherkkyystiedon lis&auml;ys###
+
+Uusi ruuhkautumisherkkyystieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Ruuhkautumisherkk&auml;" (6). Uusi ruuhkautumisherkkyys-tieto n&auml;kyy kartalla punaisena.
+
+![Ruuhka lisays](k81.JPG)
+
+_Ruuhkautumisherkkyystiedon lis&auml;ys._
+
+###Ruuhkautumisherkkyystiedon poistaminen###
+
+Ruuhkautumisherkkyystiedon voi poistaa valitsemalla ruuhkautumisherk&auml;n kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei ruuhkautumisherkk&auml; " (7). Kun ruuhkautumisherkkyystieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Ruuhka poisto](k82.JPG)
+
+_Ruuhkautumisherkkyystiedon poistaminen._
+
+###Ruuhkautumisherkkyyden muokkaus monivalintaty&ouml;kalulla###
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa ruuhkautumisherkkyystiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan ruuhkautumisherkkyyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Ruuhka monivalinta](k83.JPG)
+
+_Ruuhkautumisherkkyyden monivalinta._
+
+###Ruuhkautumisherkkyystiedon katkaisu###
+
+Tarvittaessa ruuhkautumisherkkyystiedon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan ruuhkautumisherkkyyden geometriasta kohtaa, josta se halutaan katkaista. Ruuhkautumisherkkyyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Ruuhkautumisherkkyystiedon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta tieosuudesta on kyse (5). Uudet ruuhkautumisherkkyystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+Huom! Ruuhkautumisherkkyystiedon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Ruuhka katko](k84.JPG)
+
+_Ruuhkautumisherkkyysgeometrian katkaisu._
+
+12. P&auml;&auml;llystetty tie
+----------------------
+
+P&auml;&auml;llystetty tie on viivamainen kohde. P&auml;&auml;llystys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. P&auml;&auml;llystetty tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle punaisella viivalla (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen arvo on kyll&auml; tai ei.
+
+![Paallyste](k85.JPG)
+
+_P&auml;&auml;llystetty tie._
+
+##P&auml;&auml;llystetietojen katselu##
+
+Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
+
+![Paallyste katselu](k86.JPG)
+
+_P&auml;&auml;llystetiedon katselu._
+
+##P&auml;&auml;llystetietojen muokkaus##
+
+P&auml;&auml;llystetietoja voi muokata muokkaustilassa. P&auml;&auml;llystetiedon voi lis&auml;t&auml;, poistaa ja p&auml;&auml;llystegeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+P&auml;&auml;llysteen arvoa voi muokata kolmella tavalla:
+
+1. Koko p&auml;&auml;llysteketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+###P&auml;&auml;llystetiedon lis&auml;ys###
+
+Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "P&auml;&auml;llyste" (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla punaisena.
+
+![Paallyste lisays](k87.JPG)
+
+_P&auml;&auml;llystetiedon lis&auml;ys._
+
+###P&auml;&auml;llystetiedon poistaminen###
+
+P&auml;&auml;llystetiedon voi poistaa valitsemalla p&auml;&auml;llystetyn kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei p&auml;&auml;llystett&auml;" (7). Kun p&auml;&auml;llystetieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Paallyste poisto](k88.JPG)
+
+_P&auml;&auml;llystetiedon poistaminen._
+
+###P&auml;&auml;llystetiedon muokkaus monivalintaty&ouml;kalulla###
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Paallyste monivalinta](k89.JPG)
+
+_P&auml;&auml;llysteen monivalinta._
+
+###P&auml;&auml;llysteen katkaisu###
+
+Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan p&auml;&auml;llysteen geometriasta kohtaa, josta se halutaan katkaista. P&auml;&auml;llysteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. P&auml;&auml;llysteen katkaisussa uusille tieosuuksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet p&auml;&auml;llystetiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen p&auml;&auml;llystetieto j&auml;&auml; voimaan.
+
+Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Paallyste katko](k90.JPG)
+
+_P&auml;&auml;llystegeometrian katkaisu._
+
+13. Liikennem&auml;&auml;r&auml;
+----------------------
+
+Kartalle voi valita tietolajit-paletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
+
+![Liikennemaara](k91.JPG)
+
+_Liikennem&auml;&auml;r&auml; -valinta._
+
+##Liikennem&auml;&auml;r&auml;tietojen katselu##
+
+Yksitt&auml;isen liikennem&auml;&auml;r&auml;kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko liikennem&auml;&auml;r&auml;ketju, eli kaikki tieosuudet, joilla on sama liikennem&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustieton&auml;kym&auml; (6). Liikennem&auml;&auml;r&auml;ll&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; liikennem&auml;&auml;r&auml;n arvo (kokonaisluku), sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
+
+![Liikennemaarakatselu](k92.JPG)
+
+_Liikennem&auml;&auml;r&auml;-katselutila._
+
+##Liikennem&auml;&auml;rien ominaisuustietojen muokkaus##
+
+Liikennem&auml;&auml;r&auml;n voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa liikennem&auml;&auml;r&auml;lle voi antaa uuden arvon (kokonaisluku ajoneuvoa/vuorokausi), tietoja voi poistaa sek&auml; liikennem&auml;&auml;r&auml;geometrian voi katkaista. Liikennem&auml;&auml;r&auml;n arvoa voi muokata kolmella tavalla:
+
+1. Koko liikennem&auml;&auml;r&auml;ketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+###Liikennem&auml;&auml;r&auml;n arvon muokkaus###
+
+Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Liikennem&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+
+![Liikennemaara muokkaus](k93.JPG)
+
+_Liikennem&auml;&auml;r&auml;n muokkaus._
+
+###Liikennem&auml;&auml;rien muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin liikennem&auml;&auml;r&auml;arvon voi muuttaa kerralla. Halutut geometriat valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan liikennem&auml;&auml;r&auml;lle tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Liikennemaara monivalinta](k94.JPG)
+
+_Useamman tieosuuden liikennem&auml;&auml;r&auml;n muokkaus kerralla._
+
+###Liikennem&auml;&auml;r&auml;kohteen katkaisu###
+
+Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
+Katkaistun geometrian osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
+
+Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille liikennem&auml;&auml;r&auml;tiedoille eri arvot, jotta tallennus on mahdollista.
+
+![Liikennemaara katkaisu](k95.JPG)
+
+_Liikennem&auml;&auml;r&auml;kohteen katkaisu._
+
+###Liikennem&auml;&auml;r&auml;kohteen poistaminen###
+
+Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla "Ei tiedossa".
+
+![Liikennemaara poisto](k96.JPG)
+
+_Liikennem&auml;&auml;r&auml;tiedon poistaminen._
+
+###Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen###
+
+Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna (8). Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+
+![Liikennemaara lisays](k97.JPG)
+
+_Liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
+
