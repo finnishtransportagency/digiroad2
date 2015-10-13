@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 
 object SpeedLimitFiller {
@@ -76,6 +76,20 @@ object SpeedLimitFiller {
     }
   }
 
+  private def makeOneWaySegmentsTwoWayOnOneWayLink(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    val oneWayTrafficDirection =
+      (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
+      (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
+
+    if (!oneWayTrafficDirection) {
+      (segments, changeSet)
+    } else {
+      val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections.value }
+      val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections)) }
+      (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
+    }
+  }
+
   private def dropRedundantSegments(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val headOption = segments.headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
@@ -114,6 +128,7 @@ object SpeedLimitFiller {
       adjustSegmentMValues,
       capToGeometry,
       adjustSegmentSideCodes,
+      makeOneWaySegmentsTwoWayOnOneWayLink,
       dropShortLimits
     )
 

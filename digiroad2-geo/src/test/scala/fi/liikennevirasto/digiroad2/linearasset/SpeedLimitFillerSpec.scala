@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, MValueAdjustment, ChangeSet}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
@@ -11,6 +12,10 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     VVHRoadLinkWithProperties(
       1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
+  }
+
+  private def oneWayRoadLink(mmlId: Int, geometry: Seq[Point], trafficDirection: TrafficDirection) = {
+    roadLink(mmlId, geometry).copy(trafficDirection = trafficDirection)
   }
 
   test("drop segment outside of link geometry") {
@@ -103,6 +108,19 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
     changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, SideCode.BothDirections))
+  }
+
+  test("adjust one-way speed limits on one-way road link into two-way speed limits") {
+    val topology = Seq(
+      oneWayRoadLink(1, Seq(Point(0.0, 0.0), Point(2.0, 0.0)), TrafficDirection.TowardsDigitizing))
+    val speedLimits = Map(
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(40), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None),
+                SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(50), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology should have size 2
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
+    changeSet.adjustedSideCodes should have size 2
+    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.BothDirections), SideCodeAdjustment(2, SideCode.BothDirections)))
   }
 
   test("merge speed limits with same value on shared road link") {
