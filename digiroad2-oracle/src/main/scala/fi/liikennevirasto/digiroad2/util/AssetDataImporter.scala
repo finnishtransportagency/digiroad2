@@ -321,6 +321,10 @@ class AssetDataImporter {
     importLinearAssetsFromConversion(conversionDatabase, 5, 140)
   }
 
+  def importWinterSpeedLimits(conversionDatabase: DatabaseDef) = {
+    importLinearAssetsFromConversion(conversionDatabase, 31, 180)
+  }
+
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
     println("*** Fetching asset links from conversion database")
     val startTime = DateTime.now()
