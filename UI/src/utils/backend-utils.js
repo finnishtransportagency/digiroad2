@@ -10,11 +10,16 @@
         });
     };
 
-    this.getRoadLinks = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
-        callback(data);
+    this.getRoadLinks = (function() {
+      var requestor = latestResponseRequestor(function(boundingBox) {
+        return {
+          url: 'api/roadlinks?bbox=' + boundingBox
+        };
       });
-    }, 1000);
+      return function(boundingBox, callback) {
+        requestor(boundingBox).then(callback);
+      };
+    })();
 
     this.getRoadLinksFromVVH = _.throttle(function(boundingBox, callback) {
       $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
@@ -144,21 +149,6 @@
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
-
-    function latestResponseRequestor(getParams) {
-      var deferred;
-      var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
-        return Bacon.$.ajax(params, true);
-      });
-
-      return function() {
-        if (deferred) { deferred.reject(); }
-        deferred = responses.toDeferred();
-        requests.push(getParams.apply(undefined, arguments));
-        return deferred.promise();
-      };
-    }
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
@@ -291,6 +281,21 @@
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
     };
+
+    function latestResponseRequestor(getParams) {
+      var deferred;
+      var requests = new Bacon.Bus();
+      var responses = requests.debounce(200).flatMapLatest(function(params) {
+        return Bacon.$.ajax(params, true);
+      });
+
+      return function() {
+        if (deferred) { deferred.reject(); }
+        deferred = responses.toDeferred();
+        requests.push(getParams.apply(undefined, arguments));
+        return deferred.promise();
+      };
+    }
 
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
