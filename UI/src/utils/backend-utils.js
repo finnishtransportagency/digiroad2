@@ -10,22 +10,17 @@
         });
     };
 
-    this.getRoadLinks = (function() {
-      var requestor = latestResponseRequestor(function(boundingBox) {
-        return {
-          url: 'api/roadlinks?bbox=' + boundingBox
-        };
-      });
-      return function(boundingBox, callback) {
-        requestor(boundingBox).then(callback);
+    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks?bbox=' + boundingBox
       };
-    })();
+    });
 
-    this.getRoadLinksFromVVH = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
+    this.getRoadLinksFromVVH = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks2?bbox=' + boundingBox
+      };
+    });
 
     this.getManoeuvres = _.throttle(function(boundingBox, callback) {
       $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
@@ -280,6 +275,13 @@
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
+    };
+
+    function createCallbackRequestor(getParameters) {
+      var requestor = latestResponseRequestor(getParameters);
+      return function(parameter, callback) {
+        requestor(parameter).then(callback);
+      };
     };
 
     function latestResponseRequestor(getParams) {
