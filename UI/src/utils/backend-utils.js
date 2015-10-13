@@ -139,13 +139,13 @@
       });
     };
 
-    this.getLinearAssets = keepingOnlyNewestPromise(function(boundingBox, typeId) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 
-    function keepingOnlyNewestPromise(getParams) {
+    function latestResponseRequestor(getParams) {
       var requests = new Bacon.Bus();
       var responses = requests.debounce(200).ajax();
 
