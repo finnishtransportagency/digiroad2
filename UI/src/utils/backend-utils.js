@@ -146,13 +146,17 @@
     });
 
     function latestResponseRequestor(getParams) {
+      var deferred;
       var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).ajax();
+      var responses = requests.debounce(200).flatMapLatest(function(params) {
+        return Bacon.$.ajax(params, true);
+      });
 
       return function() {
-        var promise = responses.toDeferred().promise();
+        if (deferred) { deferred.reject(); }
+        deferred = responses.toDeferred();
         requests.push(getParams.apply(undefined, arguments));
-        return promise;
+        return deferred.promise();
       };
     }
 
