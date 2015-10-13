@@ -325,6 +325,23 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
       }
+    },
+    {
+      typeId: 180,
+      defaultValue: 1,
+      singleElementEventCategory: 'winterSpeedLimit',
+      multiElementEventCategory: 'winterSpeedLimits',
+      layerName: 'winterSpeedLimits',
+      title: 'Talvinopeusrajoitus',
+      newTitle: 'Uusi talvinopeusrajoitus',
+      className: 'winter-speed-limits',
+      unit: 'km/h',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'Rajoitus',
+        enabled: 'Talvinopeusrajoitus',
+        disabled: 'Ei talvinopeusrajoitusta'
+      }
     }
   ];
 
