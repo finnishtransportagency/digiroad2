@@ -94,7 +94,7 @@
       if (unit) {
         return currentValue ? currentValue + ' ' + unit : '-';
       } else {
-        return currentValue ? 'ei ole' : 'on';
+        return currentValue ? 'on' : 'ei ole';
       }
     }
 
