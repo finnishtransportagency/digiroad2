@@ -66,8 +66,9 @@ object SpeedLimitFiller {
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
 
-  private def adjustSegmentSideCodes(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections) {
+  private def adjustLopsidedLimit(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    val onlyLimitOnLink = segments.length == 1 && segments.head.sideCode != SideCode.BothDirections
+    if (onlyLimitOnLink) {
       val segment = segments.head
       val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections))
       (Seq(segment.copy(sideCode = SideCode.BothDirections)), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ sideCodeAdjustments))
@@ -76,15 +77,11 @@ object SpeedLimitFiller {
     }
   }
 
-  private def makeOneWaySegmentsTwoWayOnOneWayLink(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val oneWayTrafficDirection =
-      (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
-      (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
-
-    if (!oneWayTrafficDirection) {
+  private def adjustSideCodeOnOneWayLink(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
     } else {
-      val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections.value }
+      val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections }
       val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections)) }
       (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
@@ -127,8 +124,8 @@ object SpeedLimitFiller {
       dropRedundantSegments,
       adjustSegmentMValues,
       capToGeometry,
-      adjustSegmentSideCodes,
-      makeOneWaySegmentsTwoWayOnOneWayLink,
+      adjustLopsidedLimit,
+      adjustSideCodeOnOneWayLink,
       dropShortLimits
     )
 
