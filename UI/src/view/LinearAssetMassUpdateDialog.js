@@ -40,7 +40,7 @@
     var renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({
         count: count,
-        editElement: options.formElements.singleValueElement(undefined, true)
+        editElement: options.formElements.singleValueElement(undefined)
       }));
       options.formElements.bindEvents(container, {
         setValue: setValue,

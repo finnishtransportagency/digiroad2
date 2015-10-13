@@ -6,7 +6,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit, SpeedLimitTimeStamps, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -223,7 +223,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "railway_crossings" => PointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
         case "vehicle_allowed" => ReadOnlyLinearAssetService.getByMunicipality(1, municipalityNumber)
         case "vehicle_not_allowed" => ReadOnlyLinearAssetService.getByMunicipality(29, municipalityNumber)
-        case "number_of_lanes" => ReadOnlyLinearAssetService.getByMunicipality(5, municipalityNumber)
+        case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
+        case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
         case "widths" => linearAssetsToApi(120, municipalityNumber)
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)

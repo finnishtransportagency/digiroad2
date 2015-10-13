@@ -41,6 +41,7 @@
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
+      rootElement.find('#separate-limit').toggle(!readOnly);
     }
 
     function events() {
@@ -72,7 +73,7 @@
       if (selectedLinearAsset.isSeparable()) {
         return '<div class="form-group editable">' +
         '<label class="control-label"></label>' +
-        '<button class="cancel btn btn-secondary" id="separate-limit">Jaa nopeusrajoitus kaksisuuntaiseksi</button>' +
+        '<button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
         '</div>';
       } else {
         return '';
@@ -80,8 +81,8 @@
     };
 
     var limitValueButtons = function() {
-      var separateValueElement = formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown(), "a") + formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown(), "b");
-      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue(), selectedLinearAsset.isUnknown());
+      var separateValueElement = formElements.singleValueElement(selectedLinearAsset.getValue(), "a") + formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
+      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue());
     };
 
     var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';

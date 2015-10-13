@@ -154,10 +154,10 @@
       };
     }
 
-    this.updateLinearAssets = _.throttle(function(data, success, failure) {
+    this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
+        type: "POST",
         url: "api/linearassets",
         data: JSON.stringify(data),
         dataType: "json",
@@ -184,6 +184,30 @@
         type: "POST",
         url: "api/linearassets/" + id,
         data: JSON.stringify({splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.separateLinearAssets = function(id, valueTowardsDigitization, valueAgainstDigitization, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/linearassets/" + id + "/separate",
+        data: JSON.stringify({valueTowardsDigitization: valueTowardsDigitization, valueAgainstDigitization: valueAgainstDigitization}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.createSeparatedLinearAssets = function(typeId, newLinearAssets, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/linearassets/separate",
+        data: JSON.stringify({typeId: typeId, newLinearAssets: newLinearAssets}),
         dataType: "json",
         success: success,
         error: failure

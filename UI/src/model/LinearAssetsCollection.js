@@ -57,13 +57,16 @@
       });
     };
 
-    var isUnknown = function(linearAsset) {
-      return _.isUndefined(linearAsset.value);
-    };
-
     var isEqual = function(a, b) {
-      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
-        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+      function equalUnknown() {
+        return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId));
+      }
+
+      function equalExisting() {
+        return (!_.isUndefined(a.id) && !_.isUndefined(b.id) && (a.id === b.id));
+      }
+
+      return equalUnknown() || equalExisting();
     };
 
     this.getGroup = function(segment) {
@@ -157,13 +160,21 @@
     };
 
     this.saveSeparation = function(callback) {
-      backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
+      var success = function() {
         eventbus.trigger(singleElementEvent('saved'));
         dirty = false;
         callback();
-      }, function() {
+      };
+      var failure = function() {
         eventbus.trigger('asset:updateFailed');
-      });
+      };
+
+      if (separatedLimit.A.id) {
+        backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
+      } else {
+        var separatedLimits = _.filter([separatedLimit.A, separatedLimit.B], function(limit) { return !_.isUndefined(limit.value); });
+        backend.createSeparatedLinearAssets(typeId, separatedLimits, success, failure);
+      }
     };
 
     this.cancelCreation = function() {
@@ -176,10 +187,9 @@
       return dirty;
     };
 
-    this.separateLinearAsset = function(id) {
-      var originalLimit = _.find(_.flatten(linearAssets), { id: id });
-      var limitA = _.cloneDeep(originalLimit);
-      var limitB = _.cloneDeep(originalLimit);
+    this.separateLinearAsset = function(selectedLinearAsset) {
+      var limitA = _.cloneDeep(selectedLinearAsset);
+      var limitB = _.cloneDeep(selectedLinearAsset);
 
       limitA.sideCode = 2;
       limitA.marker = 'A';

@@ -236,6 +236,13 @@ object DataFixture {
     println()
   }
 
+  def importNumberOfLanes(): Unit = {
+    println(s"\nCommencing number of lanes import from conversion at time: ${DateTime.now()}")
+    dataImporter.importNumberOfLanesFromConversion(Conversion.database())
+    println(s"Number of lanes import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
@@ -343,11 +350,13 @@ object DataFixture {
         importRoadsAffectedByThawing()
       case Some("traffic_volumes") =>
         importTrafficVolumes()
+      case Some("number_of_lanes") =>
+        importNumberOfLanes()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes |" +
+        " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
         " repair")
     }
   }
