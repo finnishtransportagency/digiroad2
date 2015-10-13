@@ -68,7 +68,7 @@
       var knownLinearAssets = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value:value, expired: false }); }),
+        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, expired: false }); }),
         ids: _.pluck(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
