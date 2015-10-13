@@ -22,11 +22,11 @@
       };
     });
 
-    this.getManoeuvres = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
+    this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/manoeuvres?bbox=' + boundingBox
+      };
+    });
 
     this.updateManoeuvreDetails = function(details, success, failure) {
        $.ajax({
@@ -82,14 +82,17 @@
       });
     };
 
-    this.getAssetsWithCallback = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/massTransitStops?bbox=' + boundingBox, callback)
-        .fail(function() { console.log("error"); });
-    }, 1000);
+    this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/massTransitStops?bbox=' + boundingBox
+      };
+    });
 
-    this.getSpeedLimits = _.throttle(function (boundingBox) {
-      return $.getJSON('api/speedlimits?bbox=' + boundingBox);
-    }, 1000);
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/speedlimits?bbox=' + boundingBox
+      };
+    });
 
     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
@@ -282,9 +285,9 @@
       return function(parameter, callback) {
         requestor(parameter).then(callback);
       };
-    };
+    }
 
-    function latestResponseRequestor(getParams) {
+    function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
       var responses = requests.debounce(200).flatMapLatest(function(params) {
@@ -294,7 +297,7 @@
       return function() {
         if (deferred) { deferred.reject(); }
         deferred = responses.toDeferred();
-        requests.push(getParams.apply(undefined, arguments));
+        requests.push(getParameters.apply(undefined, arguments));
         return deferred.promise();
       };
     }
