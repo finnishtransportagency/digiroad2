@@ -341,7 +341,8 @@ var URLRouter = function(map, backend, models) {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
         disabled: 'Ei talvinopeusrajoitusta'
-      }
+      },
+      elementType: 'dropdown'
     }
   ];
 
@@ -423,55 +424,29 @@ var URLRouter = function(map, backend, models) {
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
-      if(linearAsset.layerName == 'winterSpeedLimits') {
-        LinearAssetForm.initialize(
-          linearAsset.selectedLinearAsset,
-          linearAsset.singleElementEventCategory,
-          DropDownFormElement(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
-          linearAsset.newTitle,
-          linearAsset.title);
-      } else {
-        LinearAssetForm.initialize(
-          linearAsset.selectedLinearAsset,
-          linearAsset.singleElementEventCategory,
-          PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
-          linearAsset.newTitle,
-          linearAsset.title);
-      }
+      LinearAssetForm.initialize(
+        linearAsset.selectedLinearAsset,
+        linearAsset.singleElementEventCategory,
+        getFormElement(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType),
+        linearAsset.newTitle,
+        linearAsset.title);
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-      if(asset.layerName == 'winterSpeedLimits') {
-        acc[asset.layerName] = new LinearAssetLayer({
-          map: map,
-          application: applicationModel,
-          collection: asset.collection,
-          selectedLinearAsset: asset.selectedLinearAsset,
-          roadCollection: models.roadCollection,
-          geometryUtils: new GeometryUtils(),
-          roadLayer: roadLayer,
-          layerName: asset.layerName,
-          multiElementEventCategory: asset.multiElementEventCategory,
-          singleElementEventCategory: asset.singleElementEventCategory,
-          style: PiecewiseLinearAssetStyle(applicationModel),
-          formElements: DropDownFormElement(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue)
-        });
-      } else {
-        acc[asset.layerName] = new LinearAssetLayer({
-          map: map,
-          application: applicationModel,
-          collection: asset.collection,
-          selectedLinearAsset: asset.selectedLinearAsset,
-          roadCollection: models.roadCollection,
-          geometryUtils: new GeometryUtils(),
-          roadLayer: roadLayer,
-          layerName: asset.layerName,
-          multiElementEventCategory: asset.multiElementEventCategory,
-          singleElementEventCategory: asset.singleElementEventCategory,
-          style: PiecewiseLinearAssetStyle(applicationModel),
-          formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue)
-        });
-      }
+      acc[asset.layerName] = new LinearAssetLayer({
+        map: map,
+        application: applicationModel,
+        collection: asset.collection,
+        selectedLinearAsset: asset.selectedLinearAsset,
+        roadCollection: models.roadCollection,
+        geometryUtils: new GeometryUtils(),
+        roadLayer: roadLayer,
+        layerName: asset.layerName,
+        multiElementEventCategory: asset.multiElementEventCategory,
+        singleElementEventCategory: asset.singleElementEventCategory,
+        style: PiecewiseLinearAssetStyle(applicationModel),
+        formElements: getFormElement(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType)
+      });
       return acc;
     }, {});
 
