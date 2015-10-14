@@ -10,23 +10,23 @@
         });
     };
 
-    this.getRoadLinks = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
+    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks?bbox=' + boundingBox
+      };
+    });
 
-    this.getRoadLinksFromVVH = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
+    this.getRoadLinksFromVVH = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks2?bbox=' + boundingBox
+      };
+    });
 
-    this.getManoeuvres = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
+    this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/manoeuvres?bbox=' + boundingBox
+      };
+    });
 
     this.updateManoeuvreDetails = function(details, success, failure) {
        $.ajax({
@@ -82,14 +82,17 @@
       });
     };
 
-    this.getAssetsWithCallback = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/massTransitStops?bbox=' + boundingBox, callback)
-        .fail(function() { console.log("error"); });
-    }, 1000);
+    this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/massTransitStops?bbox=' + boundingBox
+      };
+    });
 
-    this.getSpeedLimits = _.throttle(function (boundingBox) {
-      return $.getJSON('api/speedlimits?bbox=' + boundingBox);
-    }, 1000);
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/speedlimits?bbox=' + boundingBox
+      };
+    });
 
     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
@@ -139,20 +142,11 @@
       });
     };
 
-    this.getLinearAssets = latestOnly(function (boundingBox, typeId) {
-      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox);
-    });
-
-    function latestOnly(f) {
-      var inFlight;
-      return function() {
-        if (inFlight) {
-          inFlight.abort();
-        }
-        inFlight = f.apply(undefined, arguments);
-        return inFlight;
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
       };
-    }
+    });
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
@@ -285,6 +279,28 @@
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
     };
+
+    function createCallbackRequestor(getParameters) {
+      var requestor = latestResponseRequestor(getParameters);
+      return function(parameter, callback) {
+        requestor(parameter).then(callback);
+      };
+    }
+
+    function latestResponseRequestor(getParameters) {
+      var deferred;
+      var requests = new Bacon.Bus();
+      var responses = requests.debounce(200).flatMapLatest(function(params) {
+        return Bacon.$.ajax(params, true);
+      });
+
+      return function() {
+        if (deferred) { deferred.reject(); }
+        deferred = responses.toDeferred();
+        requests.push(getParameters.apply(undefined, arguments));
+        return deferred.promise();
+      };
+    }
 
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
