@@ -1,55 +1,89 @@
 (function(root) {
+  function generateClassName(className, sideCode) {
+    return sideCode ? className + '-' + sideCode : className;
+  }
+
+  function sideCodeMarker(sideCode) {
+    if (_.isUndefined(sideCode)) {
+      return '';
+    } else {
+      return '<span class="marker">' + sideCode + '</span>';
+    }
+  }
+
+  function singleValueEditElement(currentValue, sideCode, editControlLabels, input, className) {
+    var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
+    var withValue = _.isUndefined(currentValue) ? '' : 'checked';
+    return '' +
+      sideCodeMarker(sideCode) +
+      '<div class="choice-group">' +
+      '<div class="radio">' +
+      '<label>' + editControlLabels.disabled +
+      '<input ' +
+      'class="' + generateClassName(className, sideCode) + '" ' +
+      'type="radio" name="' + generateClassName(className, sideCode) + '" ' +
+      'value="disabled" ' + withoutValue + '/>' +
+      '</label>' +
+      '</div>' +
+      '<div class="radio">' +
+      '<label>' + editControlLabels.enabled +
+      '<input ' +
+      'class="' + generateClassName(className, sideCode) + '" ' +
+      'type="radio" name="' + generateClassName(className, sideCode) + '" ' +
+      'value="enabled" ' + withValue + '/>' +
+      '</label>' +
+      '</div>' +
+      input +
+      '</div>';
+  }
+
+  function bindEventsLol(rootElement, selectedLinearAsset, sideCode, inputElementValue, unit, defaultValue, className) {
+    var inputElement = rootElement.find('.input-unit-combination .' + generateClassName(className, sideCode));
+    var toggleElement = rootElement.find('.radio input.' + generateClassName(className, sideCode));
+    var valueSetters = {
+      a: selectedLinearAsset.setAValue,
+      b: selectedLinearAsset.setBValue
+    };
+    var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
+    var valueRemovers = {
+      a: selectedLinearAsset.removeAValue,
+      b: selectedLinearAsset.removeBValue
+    };
+    var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
+
+    inputElement.on('input', function() {
+      setValue(inputElementValue(inputElement));
+    });
+
+    toggleElement.on('change', function(event) {
+      var disabled = $(event.currentTarget).val() === 'disabled';
+      inputElement.prop('disabled', disabled);
+      if (disabled) {
+        removeValue();
+      } else {
+        var value = unit ? inputElementValue(inputElement) : defaultValue;
+        setValue(value);
+      }
+    });
+  }
+
+  function singleValueElementLol(currentValue, sideCode, editControlLabels, className, valueString, measureInput) {
+    return '' +
+      '<div class="form-group editable">' +
+      '<label class="control-label">' + editControlLabels.title + '</label>' +
+      '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
+      singleValueEditElement(currentValue, sideCode, editControlLabels, measureInput(currentValue, sideCode), className) +
+      '</div>';
+  }
+
   root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className, defaultValue) {
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents
     };
 
-    function generateClassName(sideCode) {
-      return sideCode ? className + '-' + sideCode : className;
-    }
-
-    function singleValueEditElement(currentValue, sideCode) {
-      var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
-      var withValue = _.isUndefined(currentValue) ? '' : 'checked';
-      return '' +
-        sideCodeMarker(sideCode) +
-        '<div class="choice-group">' +
-          '<div class="radio">' +
-            '<label>' + editControlLabels.disabled +
-              '<input ' +
-              'class="' + generateClassName(sideCode) + '" ' +
-              'type="radio" name="' + generateClassName(sideCode) + '" ' +
-              'value="disabled" ' + withoutValue + '/>' +
-            '</label>' +
-          '</div>' +
-          '<div class="radio">' +
-            '<label>' + editControlLabels.enabled +
-              '<input ' +
-              'class="' + generateClassName(sideCode) + '" ' +
-              'type="radio" name="' + generateClassName(sideCode) + '" ' +
-              'value="enabled" ' + withValue + '/>' +
-            '</label>' +
-          '</div>' +
-          measureInput(currentValue, sideCode) +
-        '</div>';
-    }
-
     function singleValueElement(currentValue, sideCode) {
-      return '' +
-        '<div class="form-group editable">' +
-          '<label class="control-label">' + editControlLabels.title + '</label>' +
-          '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
-          singleValueEditElement(currentValue, sideCode) +
-        '</div>';
-    }
-
-    function sideCodeMarker(sideCode) {
-      if (_.isUndefined(sideCode)) {
-        return '';
-      } else {
-        return '<span class="marker">' + sideCode + '</span>';
-      }
+      return singleValueElementLol(currentValue, sideCode, editControlLabels, className, valueString, measureInput);
     }
 
     function inputElementValue(input) {
@@ -61,33 +95,7 @@
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
-      var inputElement = rootElement.find('.input-unit-combination input.' + generateClassName(sideCode));
-      var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
-      var valueSetters = {
-        a: selectedLinearAsset.setAValue,
-        b: selectedLinearAsset.setBValue
-      };
-      var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
-      var valueRemovers = {
-        a: selectedLinearAsset.removeAValue,
-        b: selectedLinearAsset.removeBValue
-      };
-      var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
-
-      inputElement.on('input', function() {
-        setValue(inputElementValue(inputElement));
-      });
-
-      toggleElement.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElement.prop('disabled', disabled);
-        if (disabled) {
-          removeValue();
-        } else {
-          var value = unit ? inputElementValue(inputElement) : defaultValue;
-          setValue(value);
-        }
-      });
+      bindEventsLol(rootElement, selectedLinearAsset, sideCode, inputElementValue, unit, defaultValue,className);
     }
 
     function valueString(currentValue) {
@@ -106,7 +114,7 @@
           '<div class="input-unit-combination input-group">' +
             '<input ' +
               'type="text" ' +
-              'class="form-control ' + generateClassName(sideCode) + '" ' +
+              'class="form-control ' + generateClassName(className, sideCode) + '" ' +
               'value="' + value  + '" ' + disabled + ' >' +
             '<span class="input-group-addon ' + className + '">' + unit + '</span>' +
           '</div>';
@@ -116,7 +124,10 @@
     }
   };
 
+
+
   root.DropDownFormElement = function DropDownFormElementConstructor(unit, editControlLabels, className, defaultValue) {
+
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents
@@ -127,50 +138,7 @@
     }
 
     function singleValueElement(currentValue, sideCode) {
-      return '' +
-        '<div class="form-group editable">' +
-        '<label class="control-label">' + editControlLabels.title + '</label>' +
-        '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
-        singleValueEditElement(currentValue, sideCode) +
-        '</div>';
-    }
-
-    function singleValueEditElement(currentValue, sideCode) {
-      var withoutValue = _.isUndefined(currentValue) ? 'checked' : '';
-      var withValue = _.isUndefined(currentValue) ? '' : 'checked';
-      return '' +
-        sideCodeMarker(sideCode) +
-        '<div class="choice-group">' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.disabled +
-        '<input ' +
-        'class="' + generateClassName(sideCode) + '" ' +
-        'type="radio" name="' + generateClassName(sideCode) + '" ' +
-        'value="disabled" ' + withoutValue + '/>' +
-        '</label>' +
-        '</div>' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.enabled +
-        '<input ' +
-        'class="' + generateClassName(sideCode) + '" ' +
-        'type="radio" name="' + generateClassName(sideCode) + '" ' +
-        'value="enabled" ' + withValue + '/>' +
-        '</label>' +
-        '</div>' +
-        measureInput(currentValue, sideCode) +
-        '</div>';
-    }
-
-    function generateClassName(sideCode) {
-      return sideCode ? className + '-' + sideCode : className;
-    }
-
-    function sideCodeMarker(sideCode) {
-      if (_.isUndefined(sideCode)) {
-        return '';
-      } else {
-        return '<span class="marker">' + sideCode + '</span>';
-      }
+      return singleValueElementLol(currentValue, sideCode, editControlLabels, className, valueString, measureInput);
     }
 
     function measureInput(currentValue, sideCode) {
@@ -197,33 +165,7 @@
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
-      var inputElement = rootElement.find('.input-unit-combination .' + generateClassName(sideCode));
-      var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
-      var valueSetters = {
-        a: selectedLinearAsset.setAValue,
-        b: selectedLinearAsset.setBValue
-      };
-      var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
-      var valueRemovers = {
-        a: selectedLinearAsset.removeAValue,
-        b: selectedLinearAsset.removeBValue
-      };
-      var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
-
-      inputElement.on('input', function() {
-        setValue(inputElementValue(inputElement));
-      });
-
-      toggleElement.on('change', function(event) {
-        var disabled = $(event.currentTarget).val() === 'disabled';
-        inputElement.prop('disabled', disabled);
-        if (disabled) {
-          removeValue();
-        } else {
-          var value = unit ? inputElementValue(inputElement) : defaultValue;
-          setValue(value);
-        }
-      });
+      bindEventsLol(rootElement, selectedLinearAsset, sideCode, inputElementValue, unit,defaultValue,className);
     }
   };
 })(this);
