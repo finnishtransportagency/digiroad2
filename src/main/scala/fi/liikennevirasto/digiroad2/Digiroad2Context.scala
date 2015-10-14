@@ -35,8 +35,8 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
 
 class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
-    case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf)
-    case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf)
+    case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
+    case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
     case _      => println("speedLimitFiller: Received unknown message")
   }
 }

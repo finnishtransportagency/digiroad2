@@ -98,6 +98,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
+        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
         "commons-io" % "commons-io" % "2.4",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
