@@ -8,6 +8,7 @@
 
     eventbus.on(events('selected', 'cancelled'), function() {
       rootElement.html(template(selectedLinearAsset, formElements, newTitle, title));
+
       if (selectedLinearAsset.isSplitOrSeparated()) {
         formElements.bindEvents(rootElement, selectedLinearAsset, 'a');
         formElements.bindEvents(rootElement, selectedLinearAsset, 'b');
@@ -42,6 +43,8 @@
       rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
+      rootElement.find('.read-only-title').toggle(readOnly);
+      rootElement.find('.edit-mode-title').toggle(!readOnly);
     }
 
     function events() {
@@ -59,7 +62,8 @@
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var generateTitle = function() {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
-        return '<span>' + (applicationModel.isReadOnly() ? title : newTitle) + '</span>';
+        return '<span class="read-only-title">' + title + '</span>' +
+            '<span class="edit-mode-title">' + newTitle + '</span>';
       } else {
         if (selectedLinearAsset.count() === 1) {
           return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
