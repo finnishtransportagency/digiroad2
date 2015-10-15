@@ -45,7 +45,7 @@
         '</div>';
     }
 
-    function bindEvents(inputElementValue, rootElement, selectedLinearAsset, sideCode, unit) {
+    function bindEvents(inputElementValue, rootElement, selectedLinearAsset, sideCode) {
       var inputElement = rootElement.find('.input-unit-combination .' + generateClassName(sideCode));
       var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
       var valueSetters = {
