@@ -4,9 +4,7 @@
   };
 
   function initialize(container, searchBox, layerSelectBox, assetElements) {
-    container.append('<div class="navigation-panel"></div>');
-
-    var navigationPanel = $('.navigation-panel');
+    var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
     navigationPanel.append(layerSelectBox.element);
@@ -27,5 +25,7 @@
       if (previousControl) previousControl.hide();
       assetControls[layer].show();
     });
+
+    container.append(navigationPanel);
   }
 })(this);
