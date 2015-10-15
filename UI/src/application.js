@@ -427,7 +427,7 @@ var URLRouter = function(map, backend, models) {
       LinearAssetForm.initialize(
         linearAsset.selectedLinearAsset,
         linearAsset.singleElementEventCategory,
-        getFormElement(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType),
+        PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType),
         linearAsset.newTitle,
         linearAsset.title);
     });
@@ -445,7 +445,7 @@ var URLRouter = function(map, backend, models) {
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: PiecewiseLinearAssetStyle(applicationModel),
-        formElements: getFormElement(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType)
+        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType)
       });
       return acc;
     }, {});

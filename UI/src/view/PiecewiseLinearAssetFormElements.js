@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.getFormElement = function getFormElement(unit, editControlLabels, className, defaultValue, elementType) {
+  root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType) {
     var formElem = (elementType === 'dropdown') ? dropDownFormElement(unit) : inputFormElement(unit);
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
