@@ -328,7 +328,6 @@ var URLRouter = function(map, backend, models) {
     },
     {
       typeId: 180,
-      defaultValue: 1,
       singleElementEventCategory: 'winterSpeedLimit',
       multiElementEventCategory: 'winterSpeedLimits',
       layerName: 'winterSpeedLimits',
