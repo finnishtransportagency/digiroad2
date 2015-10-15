@@ -550,6 +550,7 @@ var URLRouter = function(map, backend, models) {
       new SearchBox(
         new InstructionsPopup($('.digiroad2')),
         new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
+      new LayerSelectBox(),
       assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit));
 
     AssetForm.initialize(backend);

@@ -3,12 +3,13 @@
     initialize: initialize
   };
 
-  function initialize(container, searchBox, assetElements) {
+  function initialize(container, searchBox, layerSelectBox, assetElements) {
     container.append('<div class="navigation-panel"></div>');
 
     var navigationPanel = $('.navigation-panel');
 
     navigationPanel.append(searchBox.element);
+    navigationPanel.append(layerSelectBox.element);
 
     _.forEach(assetElements, function(asset) {
       navigationPanel.append(asset.element.hide());
