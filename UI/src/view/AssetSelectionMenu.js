@@ -8,6 +8,10 @@
 
     assetSelection.append(assetLinks);
 
+    assetSelection.on('click', 'a', function() {
+      assetSelection.hide()
+    });
+
     container.append(assetSelection.hide());
 
     function show() {
