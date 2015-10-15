@@ -543,6 +543,7 @@ var URLRouter = function(map, backend, models) {
                            linearAssets,
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
+    NavigationPanel.initialize($('#map-tools'));
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
