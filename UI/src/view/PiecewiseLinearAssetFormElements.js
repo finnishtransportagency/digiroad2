@@ -25,22 +25,22 @@
       return '' +
         sideCodeMarker(sideCode) +
         '<div class="choice-group">' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.disabled +
-        '<input ' +
-        'class="' + generateClassName(sideCode) + '" ' +
-        'type="radio" name="' + generateClassName(sideCode) + '" ' +
-        'value="disabled" ' + withoutValue + '/>' +
-        '</label>' +
-        '</div>' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.enabled +
-        '<input ' +
-        'class="' + generateClassName(sideCode) + '" ' +
-        'type="radio" name="' + generateClassName(sideCode) + '" ' +
-        'value="enabled" ' + withValue + '/>' +
-        '</label>' +
-        '</div>' +
+        '  <div class="radio">' +
+        '    <label>' + editControlLabels.disabled +
+        '      <input ' +
+        '      class="' + generateClassName(sideCode) + '" ' +
+        '      type="radio" name="' + generateClassName(sideCode) + '" ' +
+        '      value="disabled" ' + withoutValue + '/>' +
+        '    </label>' +
+        '  </div>' +
+        '  <div class="radio">' +
+        '    <label>' + editControlLabels.enabled +
+        '      <input ' +
+        '      class="' + generateClassName(sideCode) + '" ' +
+        '      type="radio" name="' + generateClassName(sideCode) + '" ' +
+        '      value="enabled" ' + withValue + '/>' +
+        '    </label>' +
+        '  </div>' +
         input +
         '</div>';
     }
@@ -78,8 +78,8 @@
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
       return '' +
         '<div class="form-group editable">' +
-        '<label class="control-label">' + editControlLabels.title + '</label>' +
-        '<p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
+        '  <label class="control-label">' + editControlLabels.title + '</label>' +
+        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode))) +
         '</div>';
     }
@@ -114,11 +114,11 @@
         var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
         return '' +
           '<div class="input-unit-combination input-group">' +
-            '<input ' +
-              'type="text" ' +
-              'class="form-control ' + className + '" ' +
-              'value="' + value  + '" ' + disabled + ' >' +
-            '<span class="input-group-addon ' + className + '">' + unit + '</span>' +
+          '  <input ' +
+          '    type="text" ' +
+          '    class="form-control ' + className + '" ' +
+          '    value="' + value  + '" ' + disabled + ' >' +
+          '  <span class="input-group-addon ' + className + '">' + unit + '</span>' +
           '</div>';
       } else {
         return '';
@@ -148,7 +148,7 @@
 
       var template =  _.template(
         '<div class="input-unit-combination">' +
-        '<select <%- disabled %> class="form-control <%- speedLimitClass %>" ><%= optionTags %></select>' +
+        '  <select <%- disabled %> class="form-control <%- speedLimitClass %>" ><%= optionTags %></select>' +
         '</div>');
       return template({speedLimitClass: className, optionTags: speedLimitOptionTags, disabled: disabled});
     }
