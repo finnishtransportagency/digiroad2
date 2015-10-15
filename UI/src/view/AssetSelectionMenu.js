@@ -2,16 +2,11 @@
   root.AssetSelectionMenu = function(container, assets) {
     var assetSelection = $('<div class=asset-selection></div>');
 
-    var assetLinks = _.chain(assets)
-      .pluck('title')
-      .map(function(title) {
-        return $('<span>' + title + '</span>');
-      })
-      .value();
+    var assetLinks = _.map(assets, function(asset) {
+      return $('<a href="#' + asset.layerName + '">' + asset.title + '</a>');
+    })
 
-    _.forEach(assetLinks, function(link) {
-      assetSelection.append(link);
-    });
+    assetSelection.append(assetLinks);
 
     container.append(assetSelection.hide());
 
