@@ -701,7 +701,8 @@ Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoi
 
 _Valaistusgeometrian katkaisu._
 
-9. Kelirikko
+
+9. Kelirikko (toistaiseksi vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
 Kelirikko on viivamainen kohde. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
@@ -765,7 +766,7 @@ Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometri
 
 _Kelirikkogeometrian katkaisu._
 
-10. Tien leveys
+10. Tien leveys (toistaiseksi vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
 Kartalle voi valita tietolajit-paletista (1) Tien leveys -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
@@ -842,7 +843,7 @@ Tielinkille voi lis&auml;t&auml; tien leveys -kohteen valitsemalla linkin geomet
 
 _Tien leveys -kohteen lis&auml;&auml;minen._
 
-11. Ruuhkautumisherkkyys (kuvat puuttuu)
+11. Ruuhkautumisherkkyys (toistaiseksi vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
 Ruuhkautumisherkkyys on viivamainen kohde. Ruuhkautumisherkkyys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Ruuhkautumisherkkyys -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu ruuhkautumisherkkyys, se piirtyy kartalle punaisella viivalla (2). Ruuhkautumattomat tielinkit ovat harmaita (3). Ruuhkautumisherkkyyden arvo on kyll&auml; tai ei.
@@ -898,11 +899,11 @@ Tarvittaessa ruuhkautumisherkkyystiedon voi katkaista leikkausty&ouml;kalulla (8
 
 Huom! Ruuhkautumisherkkyystiedon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
-![Ruuhka katko](k84.JPG)
+![Ruuhka katko](k84.jpg)
 
 _Ruuhkautumisherkkyysgeometrian katkaisu._
 
-12. P&auml;&auml;llystetty tie
+12. P&auml;&auml;llystetty tie (toistaiseksi vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
 P&auml;&auml;llystetty tie on viivamainen kohde. P&auml;&auml;llystys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. P&auml;&auml;llystetty tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle punaisella viivalla (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen arvo on kyll&auml; tai ei.
@@ -962,7 +963,7 @@ Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusi
 
 _P&auml;&auml;llystegeometrian katkaisu._
 
-13. Liikennem&auml;&auml;r&auml;
+13. Liikennem&auml;&auml;r&auml; (toistaiseksi vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
 Kartalle voi valita tietolajit-paletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
