@@ -59,7 +59,7 @@
       };
       var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
-      inputElement.on('input', function() {
+      inputElement.on('input change', function() {
         setValue(inputElementValue(inputElement));
       });
 
