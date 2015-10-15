@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType) {
+  root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
     var formElem = (elementType === 'dropdown') ? dropDownFormElement(unit) : inputFormElement(unit);
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
@@ -80,7 +80,7 @@
         '<div class="form-group editable">' +
         '  <label class="control-label">' + editControlLabels.title + '</label>' +
         '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
-        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode))) +
+        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
   };
@@ -127,6 +127,11 @@
   }
 
   function dropDownFormElement(unit) {
+    var template =  _.template(
+      '<div class="input-unit-combination">' +
+      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
+      '</div>');
+
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
@@ -137,20 +142,15 @@
       return currentValue ? currentValue + ' ' + unit : '-';
     }
 
-    function measureInput(currentValue, className) {
-      var SPEED_LIMITS = [100, 80, 70, 60];
-      var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
+    function measureInput(currentValue, className, possibleValues) {
+      var optionTags = _.map(possibleValues, function(value) {
         var selected = value === currentValue ? " selected" : "";
         return '<option value="' + value + '"' + selected + '>' + value + '</option>';
       }).join('');
       var value = currentValue ? currentValue : '';
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
-      var template =  _.template(
-        '<div class="input-unit-combination">' +
-        '  <select <%- disabled %> class="form-control <%- speedLimitClass %>" ><%= optionTags %></select>' +
-        '</div>');
-      return template({speedLimitClass: className, optionTags: speedLimitOptionTags, disabled: disabled});
+      return template({className: className, optionTags: optionTags, disabled: disabled});
     }
 
     function inputElementValue(input) {

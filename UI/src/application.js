@@ -342,7 +342,8 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Talvinopeusrajoitus',
         disabled: 'Ei talvinopeusrajoitusta'
       },
-      elementType: 'dropdown'
+      elementType: 'dropdown',
+      possibleValues: [100, 80, 70, 60]
     }
   ];
 
@@ -427,7 +428,7 @@ var URLRouter = function(map, backend, models) {
       LinearAssetForm.initialize(
         linearAsset.selectedLinearAsset,
         linearAsset.singleElementEventCategory,
-        PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType),
+        PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType, linearAsset.possibleValues),
         linearAsset.newTitle,
         linearAsset.title);
     });
@@ -445,7 +446,7 @@ var URLRouter = function(map, backend, models) {
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: PiecewiseLinearAssetStyle(applicationModel),
-        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType)
+        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType, asset.possibleValues)
       });
       return acc;
     }, {});
