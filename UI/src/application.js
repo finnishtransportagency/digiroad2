@@ -543,13 +543,15 @@ var URLRouter = function(map, backend, models) {
                            linearAssets,
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
+
+
     NavigationPanel.initialize(
       $('#map-tools'),
-      new InstructionsPopup($('.digiroad2')),
-      new LocationSearch(backend, window.applicationModel, new GeometryUtils()),
-      linearAssets,
-      linkPropertiesModel,
-      selectedSpeedLimit);
+      new SearchBox(
+        new InstructionsPopup($('.digiroad2')),
+        new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
+      assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit));
+
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
@@ -561,6 +563,27 @@ var URLRouter = function(map, backend, models) {
       });
     });
   };
+
+  function assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
+    var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
+    var massTransitBox = new ActionPanelBoxes.AssetBox();
+    var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
+    var manoeuvreBox = new ManoeuvreBox();
+
+    return _.map(linearAssets, function(asset) {
+      var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+      var assetBox = new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
+      return {
+        layerName: asset.layerName,
+        element: assetBox.element
+      };
+    }).concat([
+      {layerName: 'linkProperty', element: roadLinkBox.element},
+      {layerName: 'massTransitStop', element: massTransitBox.element},
+      {layerName: 'speedLimit', element: speedLimitBox.element},
+      {layerName: 'manoeuvre', element: manoeuvreBox.element},
+    ]);
+  }
 
   application.restart = function(backend, withTileMaps) {
     localizedStrings = undefined;

@@ -3,31 +3,12 @@
     initialize: initialize
   };
 
-  function initialize(container, instructionsPopup, locationSearch, linearAssets, linkPropertiesModel, selectedSpeedLimit) {
+  function initialize(container, searchBox, assetElements) {
     container.append('<div class="navigation-panel"></div>');
 
     var navigationPanel = $('.navigation-panel');
 
-    navigationPanel.append(new SearchBox(instructionsPopup, locationSearch).element);
-
-    var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
-    var massTransitBox = new ActionPanelBoxes.AssetBox();
-    var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
-    var manoeuvreBox = new ManoeuvreBox();
-
-    var assetElements = _.map(linearAssets, function(asset) {
-      var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-      var assetBox = new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
-      return {
-        layerName: asset.layerName,
-        element: assetBox.element
-      };
-    }).concat([
-      {layerName: 'linkProperty', element: roadLinkBox.element},
-      {layerName: 'massTransitStop', element: massTransitBox.element},
-      {layerName: 'speedLimit', element: speedLimitBox.element},
-      {layerName: 'manoeuvre', element: manoeuvreBox.element},
-    ]);
+    navigationPanel.append(searchBox.element);
 
     _.forEach(assetElements, function(asset) {
       navigationPanel.append(asset.element.hide());
