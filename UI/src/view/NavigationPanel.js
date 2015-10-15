@@ -3,8 +3,11 @@
     initialize: initialize
   };
 
-  function initialize(container) {
-    var element = '<div class="navigation-panel"></div>';
-    container.append(element);
+  function initialize(container, instructionsPopup, locationSearch) {
+    container.append('<div class="navigation-panel"></div>');
+
+    var element = $('.navigation-panel');
+
+    element.append(new SearchBox(instructionsPopup, locationSearch).element);
   }
 })(this);
