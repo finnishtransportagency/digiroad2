@@ -230,7 +230,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "paved_roads" => linearAssetsToApi(110, municipalityNumber)
         case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
         case "built_up_area" => ReadOnlyLinearAssetService.getByMunicipality(30, municipalityNumber)
-        case "speed_limits_during_winter" => ReadOnlyLinearAssetService.getByMunicipality(31, municipalityNumber)
+        case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "exit_numbers" => ReadOnlyLinearAssetService.getByMunicipality(34, municipalityNumber)

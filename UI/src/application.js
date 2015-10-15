@@ -325,6 +325,24 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
       }
+    },
+    {
+      typeId: 180,
+      singleElementEventCategory: 'winterSpeedLimit',
+      multiElementEventCategory: 'winterSpeedLimits',
+      layerName: 'winterSpeedLimits',
+      title: 'Talvinopeusrajoitus',
+      newTitle: 'Uusi talvinopeusrajoitus',
+      className: 'winter-speed-limits',
+      unit: 'km/h',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'Rajoitus',
+        enabled: 'Talvinopeusrajoitus',
+        disabled: 'Ei talvinopeusrajoitusta'
+      },
+      elementType: 'dropdown',
+      possibleValues: [100, 80, 70, 60]
     }
   ];
 
@@ -407,11 +425,11 @@ var URLRouter = function(map, backend, models) {
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
       LinearAssetForm.initialize(
-          linearAsset.selectedLinearAsset,
-          linearAsset.singleElementEventCategory,
-          PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue),
-          linearAsset.newTitle,
-          linearAsset.title);
+        linearAsset.selectedLinearAsset,
+        linearAsset.singleElementEventCategory,
+        PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className, linearAsset.defaultValue, linearAsset.elementType, linearAsset.possibleValues),
+        linearAsset.newTitle,
+        linearAsset.title);
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
@@ -427,7 +445,7 @@ var URLRouter = function(map, backend, models) {
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: PiecewiseLinearAssetStyle(applicationModel),
-        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue)
+        formElements: PiecewiseLinearAssetFormElements(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType, asset.possibleValues)
       });
       return acc;
     }, {});

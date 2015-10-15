@@ -243,6 +243,13 @@ object DataFixture {
     println()
   }
 
+  def importWinterSpeedLimits(): Unit = {
+    println(s"\nCommencing winter speed limits import from conversion at time: ${DateTime.now()}")
+    dataImporter.importWinterSpeedLimits(Conversion.database())
+    println(s"Winter speed limits import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
@@ -352,6 +359,8 @@ object DataFixture {
         importTrafficVolumes()
       case Some("number_of_lanes") =>
         importNumberOfLanes()
+      case Some("winter_speed_limits") =>
+        importWinterSpeedLimits()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
