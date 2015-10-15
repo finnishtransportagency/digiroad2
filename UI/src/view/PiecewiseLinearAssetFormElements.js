@@ -145,7 +145,7 @@
     function measureInput(currentValue, className, possibleValues) {
       var optionTags = _.map(possibleValues, function(value) {
         var selected = value === currentValue ? " selected" : "";
-        return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+        return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
       }).join('');
       var value = currentValue ? currentValue : '';
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
