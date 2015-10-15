@@ -10,7 +10,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     _.each(features, function(feature) {
       expect(feature.attributes.value).to.equal(limitValue);
     });
-    expect($('#feature-attributes .speed-limit :selected')).to.have.text(limitValue.toString());
+    expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
   };
 
   describe('when loading application with speed limit data', function() {
