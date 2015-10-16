@@ -4,7 +4,7 @@
 
     var assetLinks = _.map(assets, function(asset) {
       return $('<a href="#' + asset.layerName + '">' + asset.title + '</a>');
-    })
+    });
 
     assetSelection.append(assetLinks);
 

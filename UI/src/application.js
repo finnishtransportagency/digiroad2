@@ -544,14 +544,14 @@ var URLRouter = function(map, backend, models) {
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
 
-
+    var assets = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
         new InstructionsPopup($('.digiroad2')),
         new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
-      new LayerSelectBox(AssetSelectionMenu($('.container'), linearAssets)),
-      assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit));
+      new LayerSelectBox(AssetSelectionMenu($('.container'), assets)),
+      assets);
 
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
@@ -575,14 +575,15 @@ var URLRouter = function(map, backend, models) {
       var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
       var assetBox = new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
       return {
+        title: asset.title,
         layerName: asset.layerName,
         element: assetBox.element
       };
     }).concat([
-      {layerName: 'linkProperty', element: roadLinkBox.element},
-      {layerName: 'massTransitStop', element: massTransitBox.element},
-      {layerName: 'speedLimit', element: speedLimitBox.element},
-      {layerName: 'manoeuvre', element: manoeuvreBox.element},
+      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox.element},
+      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox.element},
+      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox.element},
+      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox.element},
     ]);
   }
 
