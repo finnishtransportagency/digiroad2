@@ -544,6 +544,8 @@ var URLRouter = function(map, backend, models) {
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
 
+    EditModeDisclaimer.initialize(new InstructionsPopup($('.digiroad2')));
+
     var assets = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
     NavigationPanel.initialize(
       $('#map-tools'),
