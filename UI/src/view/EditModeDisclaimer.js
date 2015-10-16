@@ -23,8 +23,10 @@
       }
     }
 
-    eventbus.on('application:readOnly', handleEditMessage);
-    eventbus.on('application:readOnly', showEditInstructionsPopup);
+    eventbus.on('application:readOnly', function(readOnly) {
+      handleEditMessage(readOnly);
+      showEditInstructionsPopup(readOnly);
+    });
 
     $('#header').append(editMessage.hide());
   }
