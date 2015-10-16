@@ -25,8 +25,6 @@
         var linearAssetBox = new LinearAssetBox(linearAsset.selectedLinearAsset, linearAsset.layerName, linearAsset.title, linearAsset.className, legendValues);
         $('.action-panels').append(linearAssetBox.element);
       });
-
-      backend.getUserRoles();
     }
   };
 }(this));
