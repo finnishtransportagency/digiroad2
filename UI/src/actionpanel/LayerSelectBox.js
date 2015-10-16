@@ -15,6 +15,6 @@
     };
 
     bindEvents();
-    this.element = groupDiv.append(layerSelectDiv.append(panelHeader));
+    this.element = groupDiv.append(layerSelectDiv.append(panelHeader).append(assetSelection.element));
   };
 })(this);
