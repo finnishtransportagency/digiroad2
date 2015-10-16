@@ -3,7 +3,7 @@
     var assetSelection = $('<div class=asset-selection></div>');
 
     var assetLinks = _.map(assets, function(asset) {
-      return $('<a href="#' + asset.layerName + '">' + asset.title + '</a>');
+      return $('<a href="#' + asset.layerName + '">' + asset.title + '</a><br/>');
     });
 
     assetSelection.append(assetLinks).hide();
