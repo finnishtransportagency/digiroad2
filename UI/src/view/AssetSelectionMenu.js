@@ -20,13 +20,12 @@
       assetSelection.hide();
     });
 
-
-    function show() {
-      assetSelection.show();
+    function toggle() {
+      assetSelection.toggle();
     }
 
     return {
-      show: show,
+      toggle: toggle,
       element: assetSelection
     };
   };

@@ -6,12 +6,7 @@
     var panelHeader = $('<div class="panel-header"></div>').append(selectLayerButton);
 
     var bindEvents = function() {
-      var showAssetSelection = function() {
-        assetSelection.show();
-      };
-      selectLayerButton.on('click', function() {
-        showAssetSelection();
-      });
+      selectLayerButton.on('click', assetSelection.toggle);
     };
 
     bindEvents();
