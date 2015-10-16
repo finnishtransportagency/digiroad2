@@ -9,7 +9,7 @@
     assetSelection.append(assetLinks);
 
     assetSelection.on('click', 'a', function() {
-      assetSelection.hide()
+      assetSelection.hide();
     });
 
     container.append(assetSelection.hide());
