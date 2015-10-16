@@ -3,7 +3,7 @@
     var zoom = {
       level: undefined
     };
-    var selectedLayer = 'massTransitStop';
+    var selectedLayer;
     var selectedTool = 'Select';
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;

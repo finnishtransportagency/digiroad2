@@ -32,14 +32,15 @@ define(['AssetsTestData',
     );
   };
 
-  var clearAddressBar = function() {
-    window.location.hash = '';
+  var clearAddressBar = function(hash) {
+    window.location.hash = hash || '';
+
   };
 
-  var restartApplication = function(callback, backend) {
+  var restartApplication = function(callback, backend, hash) {
     unbindEvents();
     clearDom();
-    clearAddressBar();
+    clearAddressBar(hash);
     eventbus.once('map:initialized', function(map) {
       applicationModel.assetDragDelay = 0;
       callback(map);

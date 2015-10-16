@@ -9,6 +9,10 @@ var URLRouter = function(map, backend, models) {
       this.route(/^([A-Za-z]+)$/, function(layer) {
         applicationModel.selectLayer(layer);
       });
+
+      this.route(/^$/, function() {
+        applicationModel.selectLayer('massTransitStop');
+      });
     },
 
     routes: {
@@ -71,10 +75,11 @@ var URLRouter = function(map, backend, models) {
   });
 
   var router = new Router();
-  // Tests seem to start Backbone.History multiple times
-  if (!Backbone.History.started) {
-    Backbone.history.start();
-  }
+
+  // We need to restart the router history so that tests can reset
+  // the application before each test.
+  Backbone.history.stop();
+  Backbone.history.start();
 
   eventbus.on('asset:closed', function() {
     router.navigate('massTransitStop');
@@ -494,7 +499,7 @@ var URLRouter = function(map, backend, models) {
     if (localizedStrings) {
       setupProjections();
       var map = setupMap(backend, models, linearAssets, withTileMaps, startupParameters);
-      new URLRouter(map, backend, models);
+      window.router = new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     }
   };
@@ -544,12 +549,6 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource].concat(selectedLinearAssetModels));
-    ActionPanel.initialize(backend,
-                           instructionsPopup,
-                           selectedSpeedLimit,
-                           linearAssets,
-                           linkPropertiesModel,
-                           new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
 
     EditModeDisclaimer.initialize(instructionsPopup);
 

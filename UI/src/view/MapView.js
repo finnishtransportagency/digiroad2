@@ -8,7 +8,10 @@
     };
 
     var minZoomForContent = function() {
-      return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
+      if (applicationModel.getSelectedLayer()) {
+        return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
+      }
+      return zoomlevels.minZoomForAssets;
     };
 
     var mapMovedHandler = function(mapState) {
@@ -70,7 +73,7 @@
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
-      layerToBeHidden.hide(map);
+      if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
