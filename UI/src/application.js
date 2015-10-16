@@ -209,7 +209,8 @@ var URLRouter = function(map, backend, models) {
       isSeparable: false,
       editControlLabels: { title: 'Valaistus',
         enabled: 'Valaistus',
-        disabled: 'Ei valaistusta' }
+        disabled: 'Ei valaistusta' },
+      assetSelectorGroup: 2
     }
   ];
 
@@ -244,7 +245,8 @@ var URLRouter = function(map, backend, models) {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
         disabled: 'Leveys ei tiedossa'
-      }
+      },
+      assetSelectorGroup: 2
     },
     {
       typeId: 150,
@@ -276,7 +278,8 @@ var URLRouter = function(map, backend, models) {
         title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä' 
-      }
+      },
+      assetSelectorGroup: 2
     },
     {
       typeId: 170,
@@ -308,7 +311,8 @@ var URLRouter = function(map, backend, models) {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Linkin mukainen tyypillinen kaistamäärä'
-      }
+      },
+      assetSelectorGroup: 2
     },
     {
       typeId: 160,
@@ -324,7 +328,8 @@ var URLRouter = function(map, backend, models) {
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
-      }
+      },
+      assetSelectorGroup: 2
     },
     {
       typeId: 180,
@@ -342,7 +347,8 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei talvinopeusrajoitusta'
       },
       elementType: 'dropdown',
-      possibleValues: [100, 80, 70, 60]
+      possibleValues: [100, 80, 70, 60],
+      assetSelectorGroup: 3
     }
   ];
 
@@ -581,7 +587,8 @@ var URLRouter = function(map, backend, models) {
       return {
         title: asset.title,
         layerName: asset.layerName,
-        element: assetBox.element
+        element: assetBox.element,
+        group: asset.assetSelectorGroup
       };
     }).concat([
       {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox.element, group: 1},
