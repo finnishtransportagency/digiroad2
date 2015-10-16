@@ -11,6 +11,7 @@
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
+        setSelectedTool('Select');
         eventbus.trigger('application:readOnly', newState);
       }
     };
@@ -22,6 +23,13 @@
       zoom.level = level;
     };
 
+    function setSelectedTool(tool) {
+      if (tool !== selectedTool) {
+        selectedTool = tool;
+        eventbus.trigger('tool:changed', tool);
+      }
+    }
+
     return {
       moveMap: function(zoom, bbox) {
         var hasZoomLevelChanged = zoom.level !== zoom;
@@ -29,12 +37,7 @@
         centerLonLat = bbox.getCenterLonLat();
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
       },
-      setSelectedTool: function(tool) {
-        if (tool !== selectedTool) {
-          selectedTool = tool;
-          eventbus.trigger('tool:changed', tool);
-        }
-      },
+      setSelectedTool: setSelectedTool,
       getSelectedTool: function() {
         return selectedTool;
       },

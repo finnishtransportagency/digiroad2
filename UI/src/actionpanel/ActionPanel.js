@@ -46,10 +46,6 @@
         }
       };
 
-      eventbus.on('application:readOnly', function() {
-        applicationModel.setSelectedTool('Select');
-      });
-
       eventbus.on('application:readOnly', handleEditMessage);
 
       eventbus.on('application:readOnly', showEditInstructionsPopup);
