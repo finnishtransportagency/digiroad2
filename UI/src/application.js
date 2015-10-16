@@ -503,6 +503,7 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
+    var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var enabledExperimentalAssets = isExperimental ? experimentalAssetSpecs : [];
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
@@ -538,19 +539,19 @@ var URLRouter = function(map, backend, models) {
       selectedLinkProperty,
       selectedManoeuvreSource].concat(selectedLinearAssetModels));
     ActionPanel.initialize(backend,
-                           new InstructionsPopup($('.digiroad2')),
+                           instructionsPopup,
                            selectedSpeedLimit,
                            linearAssets,
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
 
-    EditModeDisclaimer.initialize(new InstructionsPopup($('.digiroad2')));
+    EditModeDisclaimer.initialize(instructionsPopup);
 
     var assets = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
-        new InstructionsPopup($('.digiroad2')),
+        instructionsPopup,
         new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
       new LayerSelectBox(AssetSelectionMenu(assets)),
       assets);
