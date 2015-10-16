@@ -580,10 +580,10 @@ var URLRouter = function(map, backend, models) {
         element: assetBox.element
       };
     }).concat([
-      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox.element},
-      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox.element},
-      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox.element},
-      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox.element},
+      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox.element, group: 1},
+      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox.element, group: 3},
+      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox.element, group: 3},
+      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox.element}
     ]);
   }
 

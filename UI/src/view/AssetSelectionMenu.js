@@ -1,14 +1,22 @@
-(function(root) {
-  root.AssetSelectionMenu = function(assets) {
+(function (root) {
+  root.AssetSelectionMenu = function (assets) {
     var assetSelection = $('<div class=asset-selection></div>');
 
-    var assetLinks = _.map(assets, function(asset) {
-      return $('<a href="#' + asset.layerName + '">' + asset.title + '</a><br/>');
-    });
+    var assetLinks =
+      _.chain(assets)
+        .groupBy('group')
+        .mapValues(function (assets) {
+          return _.map(assets, function (asset) {
+            return $('<a href="#' + asset.layerName + '">' + asset.title + '</a><br/>');
+          }).concat($('<br/>'));
+        })
+        .values()
+        .flatten()
+        .value();
 
     assetSelection.append(assetLinks).hide();
 
-    assetSelection.on('click', 'a', function() {
+    assetSelection.on('click', 'a', function () {
       assetSelection.hide();
     });
 
