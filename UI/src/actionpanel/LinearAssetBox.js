@@ -1,12 +1,5 @@
 (function(root) {
   root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues) {
-    var collapsedTemplate = [
-      '<div class="panel ' + className + '">',
-      '  <header class="panel-header">',
-      '    ' + title,
-      '  </header>',
-      '</div>'].join('');
-
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -25,8 +18,7 @@
       '</div>'].join('');
 
     var elements = {
-      collapsed: $(collapsedTemplate),
-      expanded: $(expandedTemplate).hide()
+      expanded: $(expandedTemplate)
     };
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
@@ -35,27 +27,7 @@
        new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
-    var bindDOMEventHandlers = function() {
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer(layerName);
-        });
-      });
-    };
-
     var bindExternalEventHandlers = function() {
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== layerName) {
-          editModeToggle.reset();
-          elements.expanded.hide();
-          elements.collapsed.show();
-        } else {
-          elements.collapsed.hide();
-          elements.expanded.show();
-        }
-      }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
@@ -68,21 +40,9 @@
       });
     };
 
-    bindDOMEventHandlers();
-
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group simple-limit ' + className + 's"/>')
-      .append(elements.collapsed)
-      .append(elements.expanded);
-  };
-
-  var executeOrShowConfirmDialog = function(f) {
-    if (applicationModel.isDirty()) {
-      new Confirm();
-    } else {
-      f();
-    }
+    this.element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded);
   };
 })(this);
 
