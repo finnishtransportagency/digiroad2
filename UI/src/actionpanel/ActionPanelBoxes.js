@@ -97,14 +97,6 @@
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindExternalEventHandlers = function() {
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'speedLimit') {
-          editModeToggle.reset();
-          elements.expanded.hide();
-        } else {
-          elements.expanded.show();
-        }
-      }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
