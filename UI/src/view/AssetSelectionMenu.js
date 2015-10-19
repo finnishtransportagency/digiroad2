@@ -1,6 +1,7 @@
 (function (root) {
-  root.AssetSelectionMenu = function(assetGroups) {
-    var assetSelection = $('<div class=asset-selection></div>');
+  root.AssetSelectionMenu = function(assetGroups, options) {
+    var onSelection = options.onSelect;
+    var assetSelection = $('<div class="asset-selection"></div>');
 
     var assetLinks =
       _.chain(assetGroups)
@@ -23,10 +24,21 @@
 
     assetSelection.append(assetLinks).hide();
 
-    assetSelection.on('click', 'input', function() {
+    startListening();
+
+    function startListening() {
+      assetSelection.on('click', 'input', onClick);
+    }
+
+    function stopListening() {
+      assetSelection.off('click', 'input', onClick);
+    }
+
+    function onClick() {
       hide();
-      window.location.hash = '#' + $(this).val();
-    });
+      onSelection($(this).val());
+      return true;
+    }
 
     function toggle() {
       assetSelection.toggle();
@@ -36,10 +48,17 @@
       assetSelection.hide();
     }
 
+    function select(layer) {
+      stopListening();
+      assetSelection.find('input[value="' + layer + '"]').click()
+      startListening();
+    }
+
     return {
       toggle: toggle,
       hide: hide,
-      element: assetSelection
+      element: assetSelection,
+      select: select
     };
   };
 })(this);

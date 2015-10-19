@@ -548,13 +548,25 @@ var URLRouter = function(map, backend, models) {
 
     var assetGroups = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
 
+    var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
+      onSelect: function(layerName) {
+        window.location.hash = layerName;
+      }
+    });
+
+    eventbus.on('layer:selected', function(layer) {
+      assetSelectionMenu.select(layer);
+    });
+
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
         instructionsPopup,
-        new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
-      new LayerSelectBox(AssetSelectionMenu(assetGroups)),
-      assetGroups);
+        new LocationSearch(backend, window.applicationModel, new GeometryUtils())
+      ),
+      new LayerSelectBox(assetSelectionMenu),
+      assetGroups
+    );
 
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
