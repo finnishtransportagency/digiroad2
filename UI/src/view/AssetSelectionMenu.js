@@ -50,7 +50,7 @@
 
     function select(layer) {
       stopListening();
-      assetSelection.find('input[value="' + layer + '"]').click()
+      assetSelection.find('input[value="' + layer + '"]').click();
       startListening();
     }
 

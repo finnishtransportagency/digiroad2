@@ -179,7 +179,7 @@ var URLRouter = function(map, backend, models) {
       singleElementEventCategory: 'lengthLimit',
       multiElementEventCategory: 'lengthLimits',
       layerName: 'lengthLimit',
-      title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      title: 'Suurin sallittu pituus',
       newTitle: 'Uusi pituusrajoitus',
       className: 'length-limit',
       unit: 'cm',
@@ -208,13 +208,15 @@ var URLRouter = function(map, backend, models) {
       singleElementEventCategory: 'litRoad',
       multiElementEventCategory: 'litRoads',
       layerName: 'litRoad',
-      title: 'Valaistu tie',
-      newTitle: 'Uusi valaistu tie',
+      title: 'Valaistus',
+      newTitle: 'Uusi valaistus',
       className: 'lit-road',
       isSeparable: false,
-      editControlLabels: { title: 'Valaistus',
+      editControlLabels: {
+        title: 'Valaistus',
         enabled: 'Valaistus',
-        disabled: 'Ei valaistusta' }
+        disabled: 'Ei valaistusta'
+      }
     }
   ];
 
@@ -240,8 +242,8 @@ var URLRouter = function(map, backend, models) {
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
-      title: 'Tien leveys',
-      newTitle: 'Uusi tien leveys',
+      title: 'Leveys',
+      newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
       isSeparable: false,
@@ -257,14 +259,14 @@ var URLRouter = function(map, backend, models) {
       singleElementEventCategory: 'congestionTendency',
       multiElementEventCategory: 'congestionTendencies',
       layerName: 'congestionTendency',
-      title: 'Ruuhkautumisherkkyys',
+      title: 'Ruuhkaantumisherkkyys',
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
       isSeparable: false,
       editControlLabels: {
         title: 'Herkkyys',
-        enabled: 'Ruuhkautumisherkkä',
-        disabled: 'Ei ruuhkautumisherkkä'
+        enabled: 'Ruuhkaantumisherkkä',
+        disabled: 'Ei ruuhkaantumisherkkä'
       }
     },
     {
@@ -273,8 +275,8 @@ var URLRouter = function(map, backend, models) {
       singleElementEventCategory: 'pavedRoad',
       multiElementEventCategory: 'pavedRoads',
       layerName: 'pavedRoad',
-      title: 'Päällystetty tie',
-      newTitle: 'Uusi päällystetty tie',
+      title: 'Päällyste',
+      newTitle: 'Uusi päällyste',
       className: 'paved-road',
       isSeparable: false,
       editControlLabels: { 

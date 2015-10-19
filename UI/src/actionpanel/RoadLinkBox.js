@@ -1,8 +1,7 @@
 (function(root) {
   root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
-    var title = 'Tielinkit';
-    var layerName = 'linkProperty';
+    var title = 'Tielinkki';
 
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
