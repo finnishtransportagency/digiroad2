@@ -71,13 +71,6 @@
   ActionPanelBoxes.ToolSelection = ToolSelection;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
-    var collapsedTemplate = [
-      '<div class="panel speed-limits">',
-      '  <header class="panel-header">',
-      '    Nopeusrajoitukset',
-      '  </header>',
-      '</div>'].join('');
-
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
       return '<div class="legend-entry">' +
@@ -97,31 +90,18 @@
       '</div>'].join('');
 
     var elements = {
-      collapsed: $(collapsedTemplate),
       expanded: $(expandedTemplate).hide()
     };
 
     var toolSelection = new ToolSelection(selectedSpeedLimit, [new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
-    var bindDOMEventHandlers = function() {
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer('speedLimit');
-        });
-      });
-    };
-
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== 'speedLimit') {
           editModeToggle.reset();
           elements.expanded.hide();
-          elements.collapsed.show();
         } else {
-          elements.collapsed.hide();
           elements.expanded.show();
         }
       }, this);
@@ -137,12 +117,9 @@
       });
     };
 
-    bindDOMEventHandlers();
-
     bindExternalEventHandlers();
 
     this.element = $('<div class="panel-group speed-limits"/>')
-      .append(elements.collapsed)
       .append(elements.expanded);
   };
 
