@@ -327,6 +327,8 @@
 
     bindExternalEventHandlers();
 
+    toggleRoadType(true);
+
     this.element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.expanded)
       .append(elements.editMode);
