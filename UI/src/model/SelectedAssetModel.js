@@ -108,6 +108,7 @@
           eventbus.trigger('asset:updateCancelled', asset);
         });
       } else {
+        currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
       }
     };
