@@ -214,8 +214,7 @@ var URLRouter = function(map, backend, models) {
       isSeparable: false,
       editControlLabels: { title: 'Valaistus',
         enabled: 'Valaistus',
-        disabled: 'Ei valaistusta' },
-      assetSelectorGroup: 2
+        disabled: 'Ei valaistusta' }
     }
   ];
 
@@ -250,8 +249,7 @@ var URLRouter = function(map, backend, models) {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
         disabled: 'Leveys ei tiedossa'
-      },
-      assetSelectorGroup: 2
+      }
     },
     {
       typeId: 150,
@@ -283,8 +281,7 @@ var URLRouter = function(map, backend, models) {
         title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä' 
-      },
-      assetSelectorGroup: 2
+      }
     },
     {
       typeId: 170,
@@ -316,8 +313,7 @@ var URLRouter = function(map, backend, models) {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Linkin mukainen tyypillinen kaistamäärä'
-      },
-      assetSelectorGroup: 2
+      }
     },
     {
       typeId: 160,
@@ -333,8 +329,7 @@ var URLRouter = function(map, backend, models) {
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
-      },
-      assetSelectorGroup: 2
+      }
     },
     {
       typeId: 180,
@@ -352,8 +347,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei talvinopeusrajoitusta'
       },
       elementType: 'dropdown',
-      possibleValues: [100, 80, 70, 60],
-      assetSelectorGroup: 3
+      possibleValues: [100, 80, 70, 60]
     }
   ];
 
@@ -601,7 +595,7 @@ var URLRouter = function(map, backend, models) {
     var manoeuvreBox = new ManoeuvreBox();
 
     return [
-      [{title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox}],
+      [{title: 'Tielinkki', layerName: 'linkProperty', element: roadLinkBox}],
       [
         getLinearAsset(assetType.litRoad),
         getLinearAsset(assetType.pavedRoad),
@@ -610,11 +604,11 @@ var URLRouter = function(map, backend, models) {
         getLinearAsset(assetType.massTransitLane)
       ],
       [
-        {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox},
+        {title: 'Nopeusrajoitus', layerName: 'speedLimit', element: speedLimitBox},
         getLinearAsset(assetType.winterSpeedLimit)
       ],
       [
-        {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox, group: 3}
+        {title: 'Joukkoliikenteen pysäkki', layerName: 'massTransitStop', element: massTransitBox}
       ],
       [
         getLinearAsset(assetType.trafficVolume),
