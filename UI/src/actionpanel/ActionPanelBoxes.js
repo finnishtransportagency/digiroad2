@@ -387,8 +387,6 @@
 
     bindExternalEventHandlers();
 
-    toggleRoadType(applicationModel.isRoadTypeShown());
-
     this.element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.collapsed)
       .append(elements.expanded)
