@@ -1,11 +1,10 @@
 (function (root) {
-  root.AssetSelectionMenu = function (assets) {
+  root.AssetSelectionMenu = function(assetGroups) {
     var assetSelection = $('<div class=asset-selection></div>');
 
     var assetLinks =
-      _.chain(assets)
-        .groupBy('group')
-        .mapValues(function (assets) {
+      _.chain(assetGroups)
+        .mapValues(function(assets) {
           return _.map(assets, function (asset) {
             return $('<a href="#' + asset.layerName + '">' + asset.title + '</a><br/>');
           }).concat($('<br/>'));

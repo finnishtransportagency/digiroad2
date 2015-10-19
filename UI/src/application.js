@@ -552,14 +552,15 @@ var URLRouter = function(map, backend, models) {
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
-    var assets = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
+    var assetGroups = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
+
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
         instructionsPopup,
         new LocationSearch(backend, window.applicationModel, new GeometryUtils())),
-      new LayerSelectBox(AssetSelectionMenu(assets)),
-      assets);
+      new LayerSelectBox(AssetSelectionMenu(assetGroups)),
+      assetGroups);
 
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
@@ -574,27 +575,74 @@ var URLRouter = function(map, backend, models) {
     });
   };
 
+  var assetType = {
+    totalWeightLimit: 30,
+    trailerTruckWeightLimit: 40,
+    axleWeightLimit: 50,
+    bogieWeightLimit: 60,
+    heightLimit: 70,
+    lengthLimit: 80,
+    widthLimit: 90,
+    litRoad: 100,
+    pavedRoad: 110,
+    width: 120,
+    damagedByThaw: 130,
+    numberOfLanes: 140,
+    congestionTendency: 150,
+    massTransitLane: 160,
+    trafficVolume: 170,
+    winterSpeedLimit: 180
+  };
+
   function assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new ActionPanelBoxes.AssetBox();
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
 
-    return _.map(linearAssets, function(asset) {
+    return [
+      [{title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox}],
+      [
+        getLinearAsset(assetType.litRoad),
+        getLinearAsset(assetType.pavedRoad),
+        getLinearAsset(assetType.width),
+        getLinearAsset(assetType.numberOfLanes),
+        getLinearAsset(assetType.massTransitLane)
+      ],
+      [
+        {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox},
+        getLinearAsset(assetType.winterSpeedLimit)
+      ],
+      [
+        {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox, group: 3}
+      ],
+      [
+        getLinearAsset(assetType.trafficVolume),
+        getLinearAsset(assetType.congestionTendency),
+        getLinearAsset(assetType.damagedByThaw)
+      ],
+      [
+        {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox},
+        getLinearAsset(assetType.totalWeightLimit),
+        getLinearAsset(assetType.trailerTruckWeightLimit),
+        getLinearAsset(assetType.axleWeightLimit),
+        getLinearAsset(assetType.bogieWeightLimit),
+        getLinearAsset(assetType.heightLimit),
+        getLinearAsset(assetType.lengthLimit),
+        getLinearAsset(assetType.widthLimit)
+      ]
+    ];
+
+    function getLinearAsset(typeId) {
+      var asset = _.find(linearAssets, {typeId: typeId});
       var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
       var assetBox = new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
       return {
         title: asset.title,
         layerName: asset.layerName,
-        element: assetBox,
-        group: asset.assetSelectorGroup
+        element: assetBox
       };
-    }).concat([
-      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox, group: 1},
-      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox, group: 3},
-      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox, group: 3},
-      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox}
-    ]);
+    }
   }
 
   application.restart = function(backend, withTileMaps) {

@@ -3,13 +3,15 @@
     initialize: initialize
   };
 
-  function initialize(container, searchBox, layerSelectBox, assetElements) {
+  function initialize(container, searchBox, layerSelectBox, assetElementGroups) {
     var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
     navigationPanel.append(layerSelectBox.element);
 
-    _.forEach(assetElements, function(asset) {
+    var assetElements = _.flatten(assetElementGroups);
+
+    assetElements.forEach(function(asset) {
       navigationPanel.append(asset.element.domElement);
     });
 
