@@ -90,7 +90,7 @@
       '</div>'].join('');
 
     var elements = {
-      expanded: $(expandedTemplate).hide()
+      expanded: $(expandedTemplate)
     };
 
     var toolSelection = new ToolSelection(selectedSpeedLimit, [new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
