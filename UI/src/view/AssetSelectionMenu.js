@@ -4,10 +4,18 @@
 
     var assetLinks =
       _.chain(assetGroups)
-        .mapValues(function(assets) {
+        .map(function(assets) {
           return _.map(assets, function (asset) {
-            return $('<a href="#' + asset.layerName + '">' + asset.title + '</a><br/>');
-          }).concat($('<br/>'));
+            return $('<label>', {
+              'for': 'nav-' + asset.layerName,
+              text: ' ' + asset.title
+            }).prepend($('<input>', {
+              type: 'radio',
+              name: 'navigation-radio',
+              id: 'nav-' + asset.layerName,
+              value: asset.layerName
+            }));
+          }).concat($('<br>'));
         })
         .values()
         .flatten()
@@ -15,8 +23,9 @@
 
     assetSelection.append(assetLinks).hide();
 
-    assetSelection.on('click', 'a', function () {
-      assetSelection.hide();
+    assetSelection.on('click', 'input', function() {
+      hide();
+      window.location.hash = '#' + $(this).val();
     });
 
     function toggle() {
