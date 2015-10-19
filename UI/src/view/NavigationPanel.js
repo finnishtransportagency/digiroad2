@@ -10,7 +10,7 @@
     navigationPanel.append(layerSelectBox.element);
 
     _.forEach(assetElements, function(asset) {
-      navigationPanel.append(asset.element.hide());
+      navigationPanel.append(asset.element.domElement);
     });
 
     var assetControls = _.chain(assetElements)

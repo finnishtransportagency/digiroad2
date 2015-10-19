@@ -127,6 +127,21 @@
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(functionalClassLegend);
-    this.element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded);
+    var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      editModeToggle.reset();
+      element.hide();
+    }
+
+    return {
+      domElement: element,
+      show: show,
+      hide: hide
+    };
   };
 })(this);

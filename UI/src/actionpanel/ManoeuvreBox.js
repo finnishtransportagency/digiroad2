@@ -70,9 +70,25 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group manoeuvres-limit manoeuvres"/>')
+    var element = $('<div class="panel-group manoeuvres-limit manoeuvres"/>')
       .append(elements.collapsed)
-      .append(elements.expanded);
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      editModeToggle.reset();
+      element.hide();
+    }
+
+    return {
+      domElement: element,
+      show: show,
+      hide: hide
+    };
   };
 
   var executeOrShowConfirmDialog = function(f) {

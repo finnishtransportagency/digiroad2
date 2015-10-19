@@ -42,7 +42,22 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded);
+    var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      element.hide();
+      editModeToggle.reset();
+    }
+
+    return {
+      domElement: element,
+      show: show,
+      hide: hide
+    };
   };
 })(this);
 

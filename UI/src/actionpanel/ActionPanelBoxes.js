@@ -111,8 +111,24 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group speed-limits"/>')
-      .append(elements.expanded);
+    var element = $('<div class="panel-group speed-limits"/>')
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      editModeToggle.reset();
+      element.hide();
+    }
+
+    return {
+      domElement: element,
+      show: show,
+      hide: hide
+    };
   };
 
   var executeOrShowConfirmDialog = function(f) {
@@ -329,9 +345,29 @@
 
     toggleRoadType(true);
 
-    this.element = $('<div class="panel-group mass-transit-stops"/>')
+    var element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.expanded)
-      .append(elements.editMode);
+      .append(elements.editMode)
+      .hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      elements.editMode.hide();
+      elements.expanded.show();
+      actionButtons.removeClass('active');
+      actionButtons.filter('.select').addClass('active');
+      applicationModel.setReadOnly(true);
+      element.hide();
+    }
+
+    return {
+      domElement: element,
+      show: show,
+      hide: hide
+    };
   };
 })(window.ActionPanelBoxes = window.ActionPanelBoxes || {});
 

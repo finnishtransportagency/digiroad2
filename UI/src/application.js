@@ -586,14 +586,14 @@ var URLRouter = function(map, backend, models) {
       return {
         title: asset.title,
         layerName: asset.layerName,
-        element: assetBox.element,
+        element: assetBox,
         group: asset.assetSelectorGroup
       };
     }).concat([
-      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox.element, group: 1},
-      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox.element, group: 3},
-      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox.element, group: 3},
-      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox.element}
+      {title: 'Tielinkit', layerName: 'linkProperty', element: roadLinkBox, group: 1},
+      {title: 'Joukkoliikenteen pysäkit', layerName: 'massTransitStop', element: massTransitBox, group: 3},
+      {title: 'Nopeusrajoitukset', layerName: 'speedLimit', element: speedLimitBox, group: 3},
+      {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox}
     ]);
   }
 
