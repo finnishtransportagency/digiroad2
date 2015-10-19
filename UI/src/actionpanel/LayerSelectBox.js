@@ -7,6 +7,12 @@
 
     var bindEvents = function() {
       selectLayerButton.on('click', assetSelection.toggle);
+      $(document).on('click', function(evt) {
+        var clickOutside = !$(evt.target).closest('.navigation-panel').length;
+        if (clickOutside) {
+          assetSelection.hide();
+        }
+      });
     };
 
     bindEvents();

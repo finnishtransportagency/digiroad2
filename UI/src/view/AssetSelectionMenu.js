@@ -24,8 +24,13 @@
       assetSelection.toggle();
     }
 
+    function hide() {
+      assetSelection.hide();
+    }
+
     return {
       toggle: toggle,
+      hide: hide,
       element: assetSelection
     };
   };
