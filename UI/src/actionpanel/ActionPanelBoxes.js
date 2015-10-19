@@ -344,17 +344,6 @@
         assetsModel.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'massTransitStop') {
-          elements.expanded.hide();
-          elements.editMode.hide();
-        } else {
-          elements.expanded.show();
-        }
-        actionButtons.removeClass('active');
-        actionButtons.filter('.select').addClass('active');
-      }, this);
-
       eventbus.on('roles:fetched', function(roles) {
         if (!_.contains(roles, 'viewer')) {
           elements.expanded.find('.action-mode-btn').show();
