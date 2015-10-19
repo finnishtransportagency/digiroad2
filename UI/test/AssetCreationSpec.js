@@ -11,7 +11,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         testHelpers.clickVisibleEditModeButton();
         $('.action.add').click();
         done();
-      }, undefined, 'massTransitStop');
+      });
     });
 
     describe('and creating a new asset', function() {
