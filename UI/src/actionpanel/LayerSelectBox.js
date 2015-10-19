@@ -6,7 +6,15 @@
     var panelHeader = $('<div class="panel-header"></div>').append(selectLayerButton);
 
     var bindEvents = function() {
-      selectLayerButton.on('click', assetSelection.toggle);
+      function selectLayerOrShowConfirmDialog() {
+        if (applicationModel.isDirty()) {
+          new Confirm();
+        } else {
+          assetSelection.toggle();
+        }
+      }
+
+      selectLayerButton.on('click', selectLayerOrShowConfirmDialog);
 
       $(document).on('click', function(evt) {
         var clickOutside = !$(evt.target).closest('.navigation-panel').length;
