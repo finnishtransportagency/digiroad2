@@ -251,15 +251,7 @@
       '  </div>',
       '</div>'].join('');
 
-    var collapsedTemplate = [
-      '<div class="panel mass-transit-stops">',
-      '  <header class="panel-header">',
-      '    Joukkoliikenteen pys&auml;kit',
-      '  </header>',
-      '</div>'].join('');
-
     var elements = {
-      collapsed: $(collapsedTemplate).hide(),
       expanded: $(expandedTemplate),
       editMode: $(editModeTemplate).hide()
     };
@@ -315,14 +307,6 @@
         }
       });
 
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer('massTransitStop');
-        });
-      });
-
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
       var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
 
@@ -364,9 +348,7 @@
         if (selectedLayer !== 'massTransitStop') {
           elements.expanded.hide();
           elements.editMode.hide();
-          elements.collapsed.show();
         } else {
-          elements.collapsed.hide();
           elements.expanded.show();
         }
         actionButtons.removeClass('active');
@@ -388,7 +370,6 @@
     bindExternalEventHandlers();
 
     this.element = $('<div class="panel-group mass-transit-stops"/>')
-      .append(elements.collapsed)
       .append(elements.expanded)
       .append(elements.editMode);
   };
