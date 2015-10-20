@@ -548,7 +548,7 @@ var URLRouter = function(map, backend, models) {
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
-    var assetGroups = assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit);
+    var assetGroups = groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
       onSelect: function(layerName) {
@@ -602,7 +602,7 @@ var URLRouter = function(map, backend, models) {
     winterSpeedLimit: 180
   };
 
-  function assetElements(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
+  function groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new ActionPanelBoxes.AssetBox();
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
