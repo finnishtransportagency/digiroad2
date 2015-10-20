@@ -31,14 +31,15 @@
       assetSelection.on('click', 'input', onClick);
     }
 
-    function stopListening() {
+    function ignoringEvents(f) {
       assetSelection.off('click', 'input', onClick);
+      f();
+      startListening();
     }
 
     function onClick() {
       hide();
       onSelection($(this).val());
-      return true;
     }
 
     function toggle() {
@@ -50,9 +51,9 @@
     }
 
     function select(layer) {
-      stopListening();
-      assetSelection.find('input[value="' + layer + '"]').click();
-      startListening();
+      ignoringEvents(function() {
+        assetSelection.find('input[value="' + layer + '"]').click();
+      });
     }
 
     return {
