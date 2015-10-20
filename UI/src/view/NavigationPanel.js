@@ -24,6 +24,17 @@
       .zipObject()
       .value();
 
+    bindEvents();
+
+    eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
+      var previousControl = assetControlMap[previouslySelectedLayer];
+      if (previousControl) previousControl.hide();
+      assetControlMap[layer].show();
+      assetElementDiv.show();
+    });
+
+    container.append(navigationPanel);
+    
     function bindEvents() {
       layerSelectBox.button.on('click', function() {
         assetElementDiv.toggle();
@@ -44,18 +55,6 @@
           assetElementDiv.show();
         }
       });
-
     }
-
-    bindEvents();
-
-    eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var previousControl = assetControlMap[previouslySelectedLayer];
-      if (previousControl) previousControl.hide();
-      assetControlMap[layer].show();
-      assetElementDiv.show();
-    });
-
-    container.append(navigationPanel);
   }
 })(this);
