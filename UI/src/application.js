@@ -633,11 +633,11 @@ var URLRouter = function(map, backend, models) {
 
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
-      if (!asset) {
-        return [];
+      if (asset) {
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
       }
-      var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-      return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
+      return [];
     }
   }
 
