@@ -153,12 +153,7 @@ define(['AssetsTestData',
  };
 
  var selectLayer = function(layerName) {
-   var domSelector = {
-     speedLimit: '.panel.speed-limits',
-     linkProperty: '.panel.road-link',
-     massTransitStop: '.panel.mass-transit-stops'
-   };
-   $(domSelector[layerName]).click();
+   applicationModel.selectLayer(layerName);
  };
 
  return {

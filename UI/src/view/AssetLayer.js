@@ -6,15 +6,11 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
 
-  map.addLayer(assetDirectionLayer);
-  map.addLayer(assetLayer);
-
   var selectedControl = 'Select';
 
   var clickTimestamp;
   var clickCoords;
   var assetIsMoving = false;
-
 
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
@@ -594,7 +590,6 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
       bindEvents();
     }
   };
-  startListening();
 
   var stopListening = function() {
     eventListener.stopListening(eventbus);

@@ -1,13 +1,7 @@
 (function(root) {
   root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
-    var title = 'Tielinkit';
-    var layerName = 'linkProperty';
-
-    var collapsedTemplate = _.template('' +
-      '<div class="panel <%= className %>">' +
-        '<header class="panel-header"><%- title %></header>' +
-      '</div>');
+    var title = 'Tielinkki';
 
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
@@ -106,19 +100,10 @@
     };
 
     var elements = {
-      collapsed: $(collapsedTemplate(templateAttributes)),
-      expanded: $(expandedTemplate(templateAttributes)).hide()
+      expanded: $(expandedTemplate(templateAttributes))
     };
 
     var bindDOMEventHandlers = function() {
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer(layerName);
-        });
-      });
-
       elements.expanded.find('input[name="dataset"]').change(function(event) {
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
@@ -129,16 +114,6 @@
     };
 
     var bindExternalEventHandlers = function() {
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== layerName) {
-          editModeToggle.reset();
-          elements.expanded.hide();
-          elements.collapsed.show();
-        } else {
-          elements.collapsed.hide();
-          elements.expanded.show();
-        }
-      }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           elements.expanded.append(editModeToggle.element);
@@ -151,17 +126,23 @@
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(functionalClassLegend);
-    this.element = $('<div class="panel-group ' + className + 's"/>')
-      .append(elements.collapsed)
-      .append(elements.expanded);
-  };
+    var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
-  var executeOrShowConfirmDialog = function(f) {
-    if (applicationModel.isDirty()) {
-      new Confirm();
-    } else {
-      f();
+    function show() {
+      element.show();
     }
-  };
 
+    function hide() {
+      editModeToggle.reset();
+      element.hide();
+    }
+
+    return {
+      title: title,
+      layerName: 'linkProperty',
+      element: element,
+      show: show,
+      hide: hide
+    };
+  };
 })(this);

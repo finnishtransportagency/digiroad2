@@ -71,13 +71,6 @@
   ActionPanelBoxes.ToolSelection = ToolSelection;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
-    var collapsedTemplate = [
-      '<div class="panel speed-limits">',
-      '  <header class="panel-header">',
-      '    Nopeusrajoitukset',
-      '  </header>',
-      '</div>'].join('');
-
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
       return '<div class="legend-entry">' +
@@ -97,34 +90,13 @@
       '</div>'].join('');
 
     var elements = {
-      collapsed: $(collapsedTemplate),
-      expanded: $(expandedTemplate).hide()
+      expanded: $(expandedTemplate)
     };
 
     var toolSelection = new ToolSelection(selectedSpeedLimit, [new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
-    var bindDOMEventHandlers = function() {
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer('speedLimit');
-        });
-      });
-    };
-
     var bindExternalEventHandlers = function() {
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'speedLimit') {
-          editModeToggle.reset();
-          elements.expanded.hide();
-          elements.collapsed.show();
-        } else {
-          elements.collapsed.hide();
-          elements.expanded.show();
-        }
-      }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
@@ -137,13 +109,28 @@
       });
     };
 
-    bindDOMEventHandlers();
-
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group speed-limits"/>')
-      .append(elements.collapsed)
-      .append(elements.expanded);
+    var element = $('<div class="panel-group speed-limits"/>')
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      editModeToggle.reset();
+      element.hide();
+    }
+
+    return {
+      title: 'Nopeusrajoitus',
+      layerName: 'speedLimit',
+      element: element,
+      show: show,
+      hide: hide
+    };
   };
 
   var executeOrShowConfirmDialog = function(f) {
@@ -180,7 +167,7 @@
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Joukkoliikenteen pys&auml;kit',
+      '    Joukkoliikenteen pysäkki',
       '  </header>',
       '  <div class="panel-section">',
       '    <div class="checkbox">',
@@ -213,7 +200,7 @@
     var editModeTemplate = [
       '<div class="panel">',
       '  <header class="panel-header edit">',
-      '    Joukkoliikenteen pys&auml;kit',
+      '    Joukkoliikenteen pysäkki',
       '  </header>',
       '  <div class="panel-section">',
       '    <div class="checkbox">',
@@ -251,15 +238,7 @@
       '  </div>',
       '</div>'].join('');
 
-    var collapsedTemplate = [
-      '<div class="panel mass-transit-stops">',
-      '  <header class="panel-header">',
-      '    Joukkoliikenteen pys&auml;kit',
-      '  </header>',
-      '</div>'].join('');
-
     var elements = {
-      collapsed: $(collapsedTemplate).hide(),
       expanded: $(expandedTemplate),
       editMode: $(editModeTemplate).hide()
     };
@@ -315,14 +294,6 @@
         }
       });
 
-      elements.collapsed.click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.collapsed.hide();
-          elements.expanded.show();
-          applicationModel.selectLayer('massTransitStop');
-        });
-      });
-
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
       var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
 
@@ -360,19 +331,6 @@
         assetsModel.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
-      eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'massTransitStop') {
-          elements.expanded.hide();
-          elements.editMode.hide();
-          elements.collapsed.show();
-        } else {
-          elements.collapsed.hide();
-          elements.expanded.show();
-        }
-        actionButtons.removeClass('active');
-        actionButtons.filter('.select').addClass('active');
-      }, this);
-
       eventbus.on('roles:fetched', function(roles) {
         if (!_.contains(roles, 'viewer')) {
           elements.expanded.find('.action-mode-btn').show();
@@ -387,12 +345,33 @@
 
     bindExternalEventHandlers();
 
-    toggleRoadType(applicationModel.isRoadTypeShown());
+    toggleRoadType(true);
 
-    this.element = $('<div class="panel-group mass-transit-stops"/>')
-      .append(elements.collapsed)
+    var element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.expanded)
-      .append(elements.editMode);
+      .append(elements.editMode)
+      .hide();
+
+    function show() {
+      element.show();
+    }
+
+    function hide() {
+      elements.editMode.hide();
+      elements.expanded.show();
+      actionButtons.removeClass('active');
+      actionButtons.filter('.select').addClass('active');
+      applicationModel.setReadOnly(true);
+      element.hide();
+    }
+
+    return {
+      title: 'Joukkoliikenteen pysäkki',
+      layerName: 'massTransitStop',
+      element: element,
+      show: show,
+      hide: hide
+    };
   };
 })(window.ActionPanelBoxes = window.ActionPanelBoxes || {});
 

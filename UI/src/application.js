@@ -9,6 +9,10 @@ var URLRouter = function(map, backend, models) {
       this.route(/^([A-Za-z]+)$/, function(layer) {
         applicationModel.selectLayer(layer);
       });
+
+      this.route(/^$/, function() {
+        applicationModel.selectLayer('massTransitStop');
+      });
     },
 
     routes: {
@@ -71,10 +75,11 @@ var URLRouter = function(map, backend, models) {
   });
 
   var router = new Router();
-  // Tests seem to start Backbone.History multiple times
-  if (!Backbone.History.started) {
-    Backbone.history.start();
-  }
+
+  // We need to restart the router history so that tests can reset
+  // the application before each test.
+  Backbone.history.stop();
+  Backbone.history.start();
 
   eventbus.on('asset:closed', function() {
     router.navigate('massTransitStop');
@@ -98,9 +103,28 @@ var URLRouter = function(map, backend, models) {
 };
 
 (function(application) {
+  var assetType = {
+    totalWeightLimit: 30,
+    trailerTruckWeightLimit: 40,
+    axleWeightLimit: 50,
+    bogieWeightLimit: 60,
+    heightLimit: 70,
+    lengthLimit: 80,
+    widthLimit: 90,
+    litRoad: 100,
+    pavedRoad: 110,
+    width: 120,
+    damagedByThaw: 130,
+    numberOfLanes: 140,
+    congestionTendency: 150,
+    massTransitLane: 160,
+    trafficVolume: 170,
+    winterSpeedLimit: 180
+  };
+
   var linearAssetSpecs = [
     {
-      typeId: 30,
+      typeId: assetType.totalWeightLimit,
       singleElementEventCategory: 'totalWeightLimit',
       multiElementEventCategory: 'totalWeightLimits',
       layerName: 'totalWeightLimit',
@@ -114,7 +138,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 40,
+      typeId: assetType.trailerTruckWeightLimit,
       singleElementEventCategory: 'trailerTruckWeightLimit',
       multiElementEventCategory: 'trailerTruckWeightLimits',
       layerName: 'trailerTruckWeightLimit',
@@ -128,7 +152,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 50,
+      typeId: assetType.axleWeightLimit,
       singleElementEventCategory: 'axleWeightLimit',
       multiElementEventCategory: 'axleWeightLimits',
       layerName: 'axleWeightLimit',
@@ -142,7 +166,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 60,
+      typeId: assetType.bogieWeightLimit,
       singleElementEventCategory: 'bogieWeightLimit',
       multiElementEventCategory: 'bogieWeightlLimits',
       layerName: 'bogieWeightLimit',
@@ -156,7 +180,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 70,
+      typeId: assetType.heightLimit,
       singleElementEventCategory: 'heightLimit',
       multiElementEventCategory: 'heightLimits',
       layerName: 'heightLimit',
@@ -170,11 +194,11 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 80,
+      typeId: assetType.lengthLimit,
       singleElementEventCategory: 'lengthLimit',
       multiElementEventCategory: 'lengthLimits',
       layerName: 'lengthLimit',
-      title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+      title: 'Suurin sallittu pituus',
       newTitle: 'Uusi pituusrajoitus',
       className: 'length-limit',
       unit: 'cm',
@@ -184,7 +208,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 90,
+      typeId: assetType.widthLimit,
       singleElementEventCategory: 'widthLimit',
       multiElementEventCategory: 'widthLimits',
       layerName: 'widthLimit',
@@ -198,24 +222,26 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 100,
+      typeId: assetType.litRoad,
       defaultValue: 1,
       singleElementEventCategory: 'litRoad',
       multiElementEventCategory: 'litRoads',
       layerName: 'litRoad',
-      title: 'Valaistu tie',
-      newTitle: 'Uusi valaistu tie',
+      title: 'Valaistus',
+      newTitle: 'Uusi valaistus',
       className: 'lit-road',
       isSeparable: false,
-      editControlLabels: { title: 'Valaistus',
+      editControlLabels: {
+        title: 'Valaistus',
         enabled: 'Valaistus',
-        disabled: 'Ei valaistusta' }
+        disabled: 'Ei valaistusta'
+      }
     }
   ];
 
   var experimentalAssetSpecs = [
     {
-      typeId: 130,
+      typeId: assetType.roadDamagedByThaw,
       defaultValue: 1,
       singleElementEventCategory: 'roadDamagedByThaw',
       multiElementEventCategory: 'roadsDamagedByThaw',
@@ -231,12 +257,12 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 120,
+      typeId: assetType.roadWidth,
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
-      title: 'Tien leveys',
-      newTitle: 'Uusi tien leveys',
+      title: 'Leveys',
+      newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
       isSeparable: false,
@@ -247,29 +273,29 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 150,
+      typeId: assetType.congestionTendency,
       defaultValue: 1,
       singleElementEventCategory: 'congestionTendency',
       multiElementEventCategory: 'congestionTendencies',
       layerName: 'congestionTendency',
-      title: 'Ruuhkautumisherkkyys',
+      title: 'Ruuhkaantumisherkkyys',
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
       isSeparable: false,
       editControlLabels: {
         title: 'Herkkyys',
-        enabled: 'Ruuhkautumisherkkä',
-        disabled: 'Ei ruuhkautumisherkkä'
+        enabled: 'Ruuhkaantumisherkkä',
+        disabled: 'Ei ruuhkaantumisherkkä'
       }
     },
     {
-      typeId: 110,
+      typeId: assetType.pavedRoad,
       defaultValue: 1,
       singleElementEventCategory: 'pavedRoad',
       multiElementEventCategory: 'pavedRoads',
       layerName: 'pavedRoad',
-      title: 'Päällystetty tie',
-      newTitle: 'Uusi päällystetty tie',
+      title: 'Päällyste',
+      newTitle: 'Uusi päällyste',
       className: 'paved-road',
       isSeparable: false,
       editControlLabels: { 
@@ -279,7 +305,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 170,
+      typeId: assetType.trafficVolume,
       singleElementEventCategory: 'trafficVolume',
       multiElementEventCategory: 'trafficVolumes',
       layerName: 'trafficVolume',
@@ -295,7 +321,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 140,
+      typeId: assetType.laneCount,
       singleElementEventCategory: 'laneCount',
       multiElementEventCategory: 'laneCounts',
       layerName: 'numberOfLanes',
@@ -311,7 +337,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 160,
+      typeId: assetType.massTransitLane,
       defaultValue: 1,
       singleElementEventCategory: 'massTransitLane',
       multiElementEventCategory: 'massTransitLanes',
@@ -327,7 +353,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 180,
+      typeId: assetType.winterSpeedLimit,
       singleElementEventCategory: 'winterSpeedLimit',
       multiElementEventCategory: 'winterSpeedLimits',
       layerName: 'winterSpeedLimits',
@@ -503,6 +529,7 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
+    var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var enabledExperimentalAssets = isExperimental ? experimentalAssetSpecs : [];
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
@@ -537,15 +564,35 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource].concat(selectedLinearAssetModels));
-    ActionPanel.initialize(backend,
-                           new InstructionsPopup($('.digiroad2')),
-                           selectedSpeedLimit,
-                           linearAssets,
-                           linkPropertiesModel,
-                           new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
+
+    EditModeDisclaimer.initialize(instructionsPopup);
+
+    var assetGroups = groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit);
+
+    var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
+      onSelect: function(layerName) {
+        window.location.hash = layerName;
+      }
+    });
+
+    eventbus.on('layer:selected', function(layer) {
+      assetSelectionMenu.select(layer);
+    });
+
+    NavigationPanel.initialize(
+      $('#map-tools'),
+      new SearchBox(
+        instructionsPopup,
+        new LocationSearch(backend, window.applicationModel, new GeometryUtils())
+      ),
+      new LayerSelectBox(assetSelectionMenu),
+      assetGroups
+    );
+
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
+    backend.getUserRoles();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
@@ -554,6 +601,45 @@ var URLRouter = function(map, backend, models) {
       });
     });
   };
+
+  function groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
+    var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
+    var massTransitBox = new ActionPanelBoxes.AssetBox();
+    var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
+    var manoeuvreBox = new ManoeuvreBox();
+
+    return [
+      [roadLinkBox],
+      [].concat(getLinearAsset(assetType.litRoad))
+        .concat(getLinearAsset(assetType.pavedRoad))
+        .concat(getLinearAsset(assetType.width))
+        .concat(getLinearAsset(assetType.numberOfLanes))
+        .concat(getLinearAsset(assetType.massTransitLane)),
+      [speedLimitBox]
+        .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [massTransitBox],
+      [].concat(getLinearAsset(assetType.trafficVolume))
+        .concat(getLinearAsset(assetType.congestionTendency))
+        .concat(getLinearAsset(assetType.damagedByThaw)),
+      [manoeuvreBox]
+        .concat(getLinearAsset(assetType.totalWeightLimit))
+        .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
+        .concat(getLinearAsset(assetType.axleWeightLimit))
+        .concat(getLinearAsset(assetType.bogieWeightLimit))
+        .concat(getLinearAsset(assetType.heightLimit))
+        .concat(getLinearAsset(assetType.lengthLimit))
+        .concat(getLinearAsset(assetType.widthLimit))
+    ];
+
+    function getLinearAsset(typeId) {
+      var asset = _.find(linearAssets, {typeId: typeId});
+      if (asset) {
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
+      }
+      return [];
+    }
+  }
 
   application.restart = function(backend, withTileMaps) {
     localizedStrings = undefined;
