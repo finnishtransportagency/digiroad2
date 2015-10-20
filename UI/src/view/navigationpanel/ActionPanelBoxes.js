@@ -200,7 +200,7 @@
     var editModeTemplate = [
       '<div class="panel">',
       '  <header class="panel-header edit">',
-      '    Joukkoliikenteen pys&auml;kit',
+      '    Joukkoliikenteen pysäkki',
       '  </header>',
       '  <div class="panel-section">',
       '    <div class="checkbox">',
