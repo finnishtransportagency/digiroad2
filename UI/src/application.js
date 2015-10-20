@@ -236,12 +236,9 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta'
       }
-    }
-  ];
-
-  var experimentalAssetSpecs = [
+    },
     {
-      typeId: assetType.roadDamagedByThaw,
+      typeId: assetType.damagedByThaw,
       defaultValue: 1,
       singleElementEventCategory: 'roadDamagedByThaw',
       multiElementEventCategory: 'roadsDamagedByThaw',
@@ -257,7 +254,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: assetType.roadWidth,
+      typeId: assetType.width,
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
@@ -298,10 +295,10 @@ var URLRouter = function(map, backend, models) {
       newTitle: 'Uusi päällyste',
       className: 'paved-road',
       isSeparable: false,
-      editControlLabels: { 
+      editControlLabels: {
         title: 'Päällyste',
         enabled: 'Päällyste',
-        disabled: 'Ei päällystettä' 
+        disabled: 'Ei päällystettä'
       }
     },
     {
@@ -321,7 +318,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: assetType.laneCount,
+      typeId: assetType.numberOfLanes,
       singleElementEventCategory: 'laneCount',
       multiElementEventCategory: 'laneCounts',
       layerName: 'numberOfLanes',
@@ -371,6 +368,8 @@ var URLRouter = function(map, backend, models) {
       possibleValues: [100, 80, 70, 60]
     }
   ];
+
+  var experimentalAssetSpecs = [];
 
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
