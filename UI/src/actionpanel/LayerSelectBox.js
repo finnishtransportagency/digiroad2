@@ -9,24 +9,16 @@
       function selectLayerOrShowConfirmDialog() {
         if (applicationModel.isDirty()) {
           new Confirm();
-        } else {
-          assetSelection.toggle();
         }
       }
-
       selectLayerButton.on('click', selectLayerOrShowConfirmDialog);
-
-      $(document).on('click', function(evt) {
-        var clickOutside = !$(evt.target).closest('.navigation-panel').length;
-        if (clickOutside) { assetSelection.hide(); }
-      });
-
-      $(document).keyup(function(evt) {
-        if (evt.keyCode === 27) { assetSelection.hide(); }
-      });
     };
 
     bindEvents();
+
+    this.hide = assetSelection.hide;
+    this.toggle = assetSelection.toggle;
+    this.button = selectLayerButton;
     this.element = groupDiv.append(layerSelectDiv.append(panelHeader).append(assetSelection.element));
   };
 })(this);
