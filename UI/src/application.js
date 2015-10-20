@@ -610,41 +610,34 @@ var URLRouter = function(map, backend, models) {
 
     return [
       [roadLinkBox],
-      [
-        getLinearAsset(assetType.litRoad),
-        getLinearAsset(assetType.pavedRoad),
-        getLinearAsset(assetType.width),
-        getLinearAsset(assetType.numberOfLanes),
-        getLinearAsset(assetType.massTransitLane)
-      ],
-      [
-        speedLimitBox,
-        getLinearAsset(assetType.winterSpeedLimit)
-      ],
-      [
-        massTransitBox
-      ],
-      [
-        getLinearAsset(assetType.trafficVolume),
-        getLinearAsset(assetType.congestionTendency),
-        getLinearAsset(assetType.damagedByThaw)
-      ],
-      [
-        manoeuvreBox,
-        getLinearAsset(assetType.totalWeightLimit),
-        getLinearAsset(assetType.trailerTruckWeightLimit),
-        getLinearAsset(assetType.axleWeightLimit),
-        getLinearAsset(assetType.bogieWeightLimit),
-        getLinearAsset(assetType.heightLimit),
-        getLinearAsset(assetType.lengthLimit),
-        getLinearAsset(assetType.widthLimit)
-      ]
+      [].concat(getLinearAsset(assetType.litRoad))
+        .concat(getLinearAsset(assetType.pavedRoad))
+        .concat(getLinearAsset(assetType.width))
+        .concat(getLinearAsset(assetType.numberOfLanes))
+        .concat(getLinearAsset(assetType.massTransitLane)),
+      [speedLimitBox]
+        .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [massTransitBox],
+      [].concat(getLinearAsset(assetType.trafficVolume))
+        .concat(getLinearAsset(assetType.congestionTendency))
+        .concat(getLinearAsset(assetType.damagedByThaw)),
+      [manoeuvreBox]
+        .concat(getLinearAsset(assetType.totalWeightLimit))
+        .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
+        .concat(getLinearAsset(assetType.axleWeightLimit))
+        .concat(getLinearAsset(assetType.bogieWeightLimit))
+        .concat(getLinearAsset(assetType.heightLimit))
+        .concat(getLinearAsset(assetType.lengthLimit))
+        .concat(getLinearAsset(assetType.widthLimit))
     ];
 
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
+      if (!asset) {
+        return [];
+      }
       var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-      return new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
+      return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
     }
   }
 
