@@ -138,7 +138,9 @@
     }
 
     return {
-      domElement: element,
+      title: title,
+      layerName: 'linkProperty',
+      element: element,
       show: show,
       hide: hide
     };

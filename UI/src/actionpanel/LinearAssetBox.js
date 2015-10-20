@@ -54,7 +54,9 @@
     }
 
     return {
-      domElement: element,
+      title: title,
+      layerName: layerName,
+      element: element,
       show: show,
       hide: hide
     };

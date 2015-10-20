@@ -13,13 +13,13 @@
 
     var assetElementDiv = $('<div></div>');
     assetElements.forEach(function(asset) {
-      assetElementDiv.append(asset.element.domElement);
+      assetElementDiv.append(asset.element);
     });
     navigationPanel.append(assetElementDiv);
 
     var assetControls = _.chain(assetElements)
       .map(function(asset) {
-        return [asset.layerName, asset.element];
+        return [asset.layerName, asset];
       })
       .zipObject()
       .value();

@@ -125,7 +125,9 @@
     }
 
     return {
-      domElement: element,
+      title: 'Nopeusrajoitus',
+      layerName: 'speedLimit',
+      element: element,
       show: show,
       hide: hide
     };
@@ -364,7 +366,9 @@
     }
 
     return {
-      domElement: element,
+      title: 'Joukkoliikenteen pysäkki',
+      layerName: 'massTransitStop',
+      element: element,
       show: show,
       hide: hide
     };

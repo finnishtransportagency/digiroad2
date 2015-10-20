@@ -54,7 +54,9 @@
     }
 
     return {
-      domElement: element,
+      title: 'Kääntymisrajoitus',
+      layerName: layerName,
+      element: element,
       show: show,
       hide: hide
     };

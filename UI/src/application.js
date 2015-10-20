@@ -609,7 +609,7 @@ var URLRouter = function(map, backend, models) {
     var manoeuvreBox = new ManoeuvreBox();
 
     return [
-      [{title: 'Tielinkki', layerName: 'linkProperty', element: roadLinkBox}],
+      [roadLinkBox],
       [
         getLinearAsset(assetType.litRoad),
         getLinearAsset(assetType.pavedRoad),
@@ -618,11 +618,11 @@ var URLRouter = function(map, backend, models) {
         getLinearAsset(assetType.massTransitLane)
       ],
       [
-        {title: 'Nopeusrajoitus', layerName: 'speedLimit', element: speedLimitBox},
+        speedLimitBox,
         getLinearAsset(assetType.winterSpeedLimit)
       ],
       [
-        {title: 'Joukkoliikenteen pysäkki', layerName: 'massTransitStop', element: massTransitBox}
+        massTransitBox
       ],
       [
         getLinearAsset(assetType.trafficVolume),
@@ -630,7 +630,7 @@ var URLRouter = function(map, backend, models) {
         getLinearAsset(assetType.damagedByThaw)
       ],
       [
-        {title: 'Kääntymisrajoitus', layerName: 'manoeuvre', element: manoeuvreBox},
+        manoeuvreBox,
         getLinearAsset(assetType.totalWeightLimit),
         getLinearAsset(assetType.trailerTruckWeightLimit),
         getLinearAsset(assetType.axleWeightLimit),
@@ -644,12 +644,7 @@ var URLRouter = function(map, backend, models) {
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-      var assetBox = new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
-      return {
-        title: asset.title,
-        layerName: asset.layerName,
-        element: assetBox
-      };
+      return new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues);
     }
   }
 
