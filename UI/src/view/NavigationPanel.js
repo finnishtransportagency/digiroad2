@@ -3,21 +3,21 @@
     initialize: initialize
   };
 
-  function initialize(container, searchBox, layerSelectBox, assetElementGroups) {
+  function initialize(container, searchBox, layerSelectBox, assetControlGroups) {
     var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
     navigationPanel.append(layerSelectBox.element);
 
-    var assetElements = _.flatten(assetElementGroups);
+    var assetControls = _.flatten(assetControlGroups);
 
     var assetElementDiv = $('<div></div>');
-    assetElements.forEach(function(asset) {
+    assetControls.forEach(function(asset) {
       assetElementDiv.append(asset.element);
     });
     navigationPanel.append(assetElementDiv);
 
-    var assetControls = _.chain(assetElements)
+    var assetControlMap = _.chain(assetControls)
       .map(function(asset) {
         return [asset.layerName, asset];
       })
@@ -50,9 +50,9 @@
     bindEvents();
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var previousControl = assetControls[previouslySelectedLayer];
+      var previousControl = assetControlMap[previouslySelectedLayer];
       if (previousControl) previousControl.hide();
-      assetControls[layer].show();
+      assetControlMap[layer].show();
       assetElementDiv.show();
     });
 
