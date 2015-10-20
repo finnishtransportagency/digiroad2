@@ -16,9 +16,11 @@
 
     bindEvents();
 
-    this.hide = assetSelection.hide;
-    this.toggle = assetSelection.toggle;
-    this.button = selectLayerButton;
-    this.element = groupDiv.append(layerSelectDiv.append(panelHeader).append(assetSelection.element));
+    return {
+      hide: assetSelection.hide,
+      toggle: assetSelection.toggle,
+      button: selectLayerButton,
+      element: groupDiv.append(layerSelectDiv.append(panelHeader).append(assetSelection.element))
+    };
   };
 })(this);
