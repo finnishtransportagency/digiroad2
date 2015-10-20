@@ -495,7 +495,7 @@ var URLRouter = function(map, backend, models) {
     if (localizedStrings) {
       setupProjections();
       var map = setupMap(backend, models, linearAssets, withTileMaps, startupParameters);
-      window.router = new URLRouter(map, backend, models);
+      new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     }
   };
