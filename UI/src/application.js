@@ -103,9 +103,28 @@ var URLRouter = function(map, backend, models) {
 };
 
 (function(application) {
+  var assetType = {
+    totalWeightLimit: 30,
+    trailerTruckWeightLimit: 40,
+    axleWeightLimit: 50,
+    bogieWeightLimit: 60,
+    heightLimit: 70,
+    lengthLimit: 80,
+    widthLimit: 90,
+    litRoad: 100,
+    pavedRoad: 110,
+    width: 120,
+    damagedByThaw: 130,
+    numberOfLanes: 140,
+    congestionTendency: 150,
+    massTransitLane: 160,
+    trafficVolume: 170,
+    winterSpeedLimit: 180
+  };
+
   var linearAssetSpecs = [
     {
-      typeId: 30,
+      typeId: assetType.totalWeightLimit,
       singleElementEventCategory: 'totalWeightLimit',
       multiElementEventCategory: 'totalWeightLimits',
       layerName: 'totalWeightLimit',
@@ -119,7 +138,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 40,
+      typeId: assetType.trailerTruckWeightLimit,
       singleElementEventCategory: 'trailerTruckWeightLimit',
       multiElementEventCategory: 'trailerTruckWeightLimits',
       layerName: 'trailerTruckWeightLimit',
@@ -133,7 +152,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 50,
+      typeId: assetType.axleWeightLimit,
       singleElementEventCategory: 'axleWeightLimit',
       multiElementEventCategory: 'axleWeightLimits',
       layerName: 'axleWeightLimit',
@@ -147,7 +166,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 60,
+      typeId: assetType.bogieWeightLimit,
       singleElementEventCategory: 'bogieWeightLimit',
       multiElementEventCategory: 'bogieWeightlLimits',
       layerName: 'bogieWeightLimit',
@@ -161,7 +180,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 70,
+      typeId: assetType.heightLimit,
       singleElementEventCategory: 'heightLimit',
       multiElementEventCategory: 'heightLimits',
       layerName: 'heightLimit',
@@ -175,7 +194,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 80,
+      typeId: assetType.lengthLimit,
       singleElementEventCategory: 'lengthLimit',
       multiElementEventCategory: 'lengthLimits',
       layerName: 'lengthLimit',
@@ -189,7 +208,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 90,
+      typeId: assetType.widthLimit,
       singleElementEventCategory: 'widthLimit',
       multiElementEventCategory: 'widthLimits',
       layerName: 'widthLimit',
@@ -203,7 +222,7 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta' }
     },
     {
-      typeId: 100,
+      typeId: assetType.litRoad,
       defaultValue: 1,
       singleElementEventCategory: 'litRoad',
       multiElementEventCategory: 'litRoads',
@@ -222,7 +241,7 @@ var URLRouter = function(map, backend, models) {
 
   var experimentalAssetSpecs = [
     {
-      typeId: 130,
+      typeId: assetType.roadDamagedByThaw,
       defaultValue: 1,
       singleElementEventCategory: 'roadDamagedByThaw',
       multiElementEventCategory: 'roadsDamagedByThaw',
@@ -238,7 +257,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 120,
+      typeId: assetType.roadWidth,
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
@@ -254,7 +273,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 150,
+      typeId: assetType.congestionTendency,
       defaultValue: 1,
       singleElementEventCategory: 'congestionTendency',
       multiElementEventCategory: 'congestionTendencies',
@@ -270,7 +289,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 110,
+      typeId: assetType.pavedRoad,
       defaultValue: 1,
       singleElementEventCategory: 'pavedRoad',
       multiElementEventCategory: 'pavedRoads',
@@ -286,7 +305,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 170,
+      typeId: assetType.trafficVolume,
       singleElementEventCategory: 'trafficVolume',
       multiElementEventCategory: 'trafficVolumes',
       layerName: 'trafficVolume',
@@ -302,7 +321,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 140,
+      typeId: assetType.laneCount,
       singleElementEventCategory: 'laneCount',
       multiElementEventCategory: 'laneCounts',
       layerName: 'numberOfLanes',
@@ -318,7 +337,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 160,
+      typeId: assetType.massTransitLane,
       defaultValue: 1,
       singleElementEventCategory: 'massTransitLane',
       multiElementEventCategory: 'massTransitLanes',
@@ -334,7 +353,7 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: 180,
+      typeId: assetType.winterSpeedLimit,
       singleElementEventCategory: 'winterSpeedLimit',
       multiElementEventCategory: 'winterSpeedLimits',
       layerName: 'winterSpeedLimits',
@@ -581,25 +600,6 @@ var URLRouter = function(map, backend, models) {
         startApplication(backend, models, linearAssets, tileMaps, startupParameters);
       });
     });
-  };
-
-  var assetType = {
-    totalWeightLimit: 30,
-    trailerTruckWeightLimit: 40,
-    axleWeightLimit: 50,
-    bogieWeightLimit: 60,
-    heightLimit: 70,
-    lengthLimit: 80,
-    widthLimit: 90,
-    litRoad: 100,
-    pavedRoad: 110,
-    width: 120,
-    damagedByThaw: 130,
-    numberOfLanes: 140,
-    congestionTendency: 150,
-    massTransitLane: 160,
-    trafficVolume: 170,
-    winterSpeedLimit: 180
   };
 
   function groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
