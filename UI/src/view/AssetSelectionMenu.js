@@ -6,7 +6,8 @@
     var assetLinks =
       _.chain(assetGroups)
         .map(function(assets) {
-          return _.map(assets, function (asset) {
+          var assetGroupDiv = $('<div class="asset-group"></div>');
+          return assetGroupDiv.append(_.map(assets, function (asset) {
             return $('<label>', {
               'for': 'nav-' + asset.layerName,
               text: ' ' + asset.title
@@ -16,7 +17,7 @@
               id: 'nav-' + asset.layerName,
               value: asset.layerName
             }));
-          }).concat($('<br>'));
+          }));
         })
         .values()
         .flatten()
