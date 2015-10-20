@@ -32,7 +32,7 @@ define(['AssetsTestData',
     );
   };
 
-  var clearAddressBar = function(hash) {
+  var clearAddressBar = function() {
     window.location.hash = '';
   };
 
