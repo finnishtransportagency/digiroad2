@@ -225,7 +225,9 @@ trait OracleLinearAssetDao {
 
       groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
         val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
-        PersistedLinearAsset(assetId, mmlId, sideCode, None, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+        val prohibitionValues = rowsByProhibitionId.map { case (prohibitionId, rows) => ProhibitionValue(rows.head._5, Nil) }.toSeq
+        // TODO: construct validity periods and exceptions
+        PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }.toSeq
     }
   }
