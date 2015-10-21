@@ -480,7 +480,7 @@ with GZipSupport {
             "mmlId" -> link.mmlId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value,
+            "value" -> link.value.map(_.value),
             "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
