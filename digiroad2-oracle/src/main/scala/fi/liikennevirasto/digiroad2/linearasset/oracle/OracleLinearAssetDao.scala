@@ -212,7 +212,7 @@ trait OracleLinearAssetDao {
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
           join #$idTableName i on i.id = pos.mml_id
-          left join prohibition_value_period pvp on pvp.prohibition_value_id = pv.id
+          left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
@@ -220,6 +220,8 @@ trait OracleLinearAssetDao {
 
       val groupedByAssets = assets.groupBy(_._1)
       val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
+
+      // TODO: Fetch prohibition exceptions too.
 
       groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
         val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
