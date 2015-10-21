@@ -20,8 +20,8 @@ case class NumericValue(value: Int) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Seq[ValidityPeriod])
-case class ValidityPeriod(startHour: Int, endHour: Int)
+case class ProhibitionValue(typeId: Int, validityPeriods: Seq[ProhibitionValidityPeriod])
+case class ProhibitionValidityPeriod(startHour: Int, endHour: Int)
 
 case class PieceWiseLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Value], geometry: Seq[Point], expired: Boolean,
                                 startMeasure: Double, endMeasure: Double,
