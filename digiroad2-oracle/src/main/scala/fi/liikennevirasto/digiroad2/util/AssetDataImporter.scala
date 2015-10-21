@@ -325,6 +325,74 @@ class AssetDataImporter {
     importLinearAssetsFromConversion(conversionDatabase, 31, 180)
   }
 
+  def importProhibitions(conversionDatabase: DatabaseDef) = {
+    val municipality = 235
+    val conversionTypeId = 29
+    val typeId = 190
+
+    println("*** Fetching prohibitions from conversion database")
+    val startTime = DateTime.now()
+
+    val allLinks = conversionDatabase.withDynSession {
+      sql"""
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $conversionTypeId
+          and kunta_nro = $municipality
+       """.as[(Long, Long, Double, Double, Int, Int, Int)].list
+    }
+
+    println(s"*** Fetched ${allLinks.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
+
+    val groupSize = 10000
+    val groupedLinks = allLinks.grouped(groupSize).toList
+    val totalGroupCount = groupedLinks.length
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+      println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
+
+      groupedLinks.zipWithIndex.foreach { case (links, i) =>
+        val startTime = DateTime.now()
+
+        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, typeId)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, sideCode)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+
+        println(s"*** Imported ${links.length} linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+    }
+
+    println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
+  }
+
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
     println("*** Fetching asset links from conversion database")
     val startTime = DateTime.now()
