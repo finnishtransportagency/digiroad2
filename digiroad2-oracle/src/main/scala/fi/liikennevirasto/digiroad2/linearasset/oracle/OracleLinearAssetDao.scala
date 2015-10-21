@@ -237,7 +237,7 @@ trait OracleLinearAssetDao {
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
           ProhibitionValidityPeriod(row._7.get, row._8.get)
         }
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions(prohibitionId))
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions.getOrElse(prohibitionId, Nil))
       }.toSeq
       PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
     }.toSeq
