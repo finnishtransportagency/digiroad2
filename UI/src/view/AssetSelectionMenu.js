@@ -8,7 +8,7 @@
         .map(function(assets) {
           var assetGroupDiv = $('<div class="asset-group"></div>');
           return assetGroupDiv.append(_.map(assets, function (asset) {
-            return $('<label>', {
+            return $('<div class="radio">').append($('<label>', {
               'for': 'nav-' + asset.layerName,
               text: ' ' + asset.title
             }).prepend($('<input>', {
@@ -16,7 +16,7 @@
               name: 'navigation-radio',
               id: 'nav-' + asset.layerName,
               value: asset.layerName
-            }));
+            })));
           }));
         })
         .values()
