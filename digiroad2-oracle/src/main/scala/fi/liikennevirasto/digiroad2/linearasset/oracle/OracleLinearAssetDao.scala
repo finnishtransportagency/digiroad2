@@ -199,8 +199,8 @@ trait OracleLinearAssetDao {
   }
 
   def fetchProhibitionsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      val assets = sql"""
+    val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
+      sql"""
         select a.id, pos.mml_id, pos.side_code,
                pv.id, pv.type,
                pvp.type, pvp.start_hour, pvp.end_hour,
@@ -217,29 +217,32 @@ trait OracleLinearAssetDao {
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Int, Int, Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-
-      val groupedByAssets = assets.groupBy(_._1)
-      val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
-
-      groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
-        val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
-        val prohibitionValues = rowsByProhibitionId.map { case (prohibitionId, rows) =>
-          val exceptions = sql"""
-             select pe.type
-             from PROHIBITION_EXCEPTION pe
-             where pe.PROHIBITION_VALUE_ID = $prohibitionId
-          """.as[(Int)].list
-
-          val prohibitionType = rows.head._5
-          val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-            ProhibitionValidityPeriod(row._7.get, row._8.get)
-          }
-          ProhibitionValue(prohibitionType, validityPeriods, exceptions)
-        }.toSeq
-        PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
-      }.toSeq
     }
+
+    val exceptions = MassQuery.withIds(assets.map(_._4.toLong).toSet) { idTableName =>
+      sql"""
+         select pe.PROHIBITION_VALUE_ID, pe.type
+         from PROHIBITION_EXCEPTION pe
+         join #$idTableName i on i.id = pe.prohibition_value_id
+      """.as[(Int, Int)].list
+    }
+
+    val groupedByAssets = assets.groupBy(_._1)
+    val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
+
+    groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
+      val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
+      val prohibitionValues = rowsByProhibitionId.map { case (prohibitionId, rows) =>
+        val prohibitionType = rows.head._5
+        val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
+          ProhibitionValidityPeriod(row._7.get, row._8.get)
+        }
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions.filter(_._1 == prohibitionId).map(_._2))
+      }.toSeq
+      PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+    }.toSeq
   }
+
 
   private def fetchSpeedLimitsByMmlId(mmlId: Long) = {
     sql"""
