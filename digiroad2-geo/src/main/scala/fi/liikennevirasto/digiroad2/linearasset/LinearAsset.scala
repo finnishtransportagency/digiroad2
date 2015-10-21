@@ -11,9 +11,15 @@ trait LinearAsset extends PolyLine {
   val value: Option[Value]
 }
 
-sealed trait Value { }
-case class NumericValue(value: Int) extends Value
-case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value
+sealed trait Value {
+  def toJson: Any
+}
+case class NumericValue(value: Int) extends Value {
+  override def toJson: Any = value
+}
+case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
+  override def toJson: Any = prohibitions
+}
 case class ProhibitionValue(typeId: Int, validityPeriods: Seq[ValidityPeriod])
 case class ValidityPeriod(startHour: Int, endHour: Int)
 

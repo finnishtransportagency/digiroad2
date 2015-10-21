@@ -378,7 +378,7 @@ with GZipSupport {
             "mmlId" -> link.mmlId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value,
+            "value" -> link.value.map(_.toJson),
             "points" -> link.geometry,
             "expired" -> link.expired,
             "startMeasure" -> link.startMeasure,
