@@ -89,7 +89,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
-    filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(1)))
+    filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))

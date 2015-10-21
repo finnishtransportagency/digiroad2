@@ -52,7 +52,7 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId).toList
 
     val linearAssets = withDynTransaction {
-      dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
+      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
         .filterNot(_.expired)
         .groupBy(_.mmlId)
     }
