@@ -330,6 +330,20 @@ class AssetDataImporter {
       roadLinks.find(_.mmlId == mmlId)
     }
 
+    def validate(roadLinks: Seq[VVHRoadlink], mmlId: Long, value: Int): Either[String, VVHRoadlink] = {
+      findRoadLink(roadLinks, mmlId) match {
+        case Some(roadLink) =>
+          if (Set(21, 22).contains(value)) Left("Invalid type for prohibition.")
+          else Right(roadLink)
+        case _ => Left(s"No VVH road link found for mml id $mmlId.")
+      }
+    }
+
+    def prohibitionValues(conversionValue: Int): Seq[Int] = {
+      if (conversionValue == 20) Seq(24, 25)
+      else Seq(conversionValue)
+    }
+
     val municipality = 235
     val conversionTypeId = 29
     val typeId = 190
@@ -359,6 +373,7 @@ class AssetDataImporter {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
 
       println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
 
@@ -366,8 +381,8 @@ class AssetDataImporter {
         val startTime = DateTime.now()
 
         links.foreach { case (segmentId, roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
-          findRoadLink(roadLinks, mmlId) match {
-            case Some(roadLink) =>
+          validate(roadLinks, mmlId, value) match {
+            case Right(roadLink) =>
               val assetId = Sequences.nextPrimaryKeySeqValue
               assetPS.setLong(1, assetId)
               assetPS.setInt(2, typeId)
@@ -385,7 +400,16 @@ class AssetDataImporter {
               assetLinkPS.setLong(1, assetId)
               assetLinkPS.setLong(2, lrmPositionId)
               assetLinkPS.addBatch()
-            case _ => println(s"*** No VVH road link found for mml id $mmlId. $segmentId dropped.")
+
+              val values = prohibitionValues(value)
+              values.foreach { prohibitionValue =>
+                val valueId = Sequences.nextPrimaryKeySeqValue
+                valuePS.setLong(1, valueId)
+                valuePS.setLong(2, assetId)
+                valuePS.setLong(3, prohibitionValue)
+                valuePS.addBatch()
+              }
+            case Left(validationError) => println(s"*** $validationError $segmentId dropped.")
           }
 
         }
@@ -393,12 +417,14 @@ class AssetDataImporter {
         assetPS.executeBatch()
         lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
+        valuePS.executeBatch()
 
         println(s"*** Imported ${links.length} linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
       assetPS.close()
       lrmPositionPS.close()
       assetLinkPS.close()
+      valuePS.close()
     }
 
     println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
