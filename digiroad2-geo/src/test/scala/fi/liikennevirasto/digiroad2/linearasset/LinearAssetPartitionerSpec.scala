@@ -5,10 +5,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
-  case class TestLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], geometry: Seq[Point]) extends LinearAsset
+  case class TestLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point]) extends LinearAsset
 
   private def linearAsset(mmlId: Long, value: Int, geometry: Seq[Point]) = {
-    TestLinearAsset(0, mmlId, SideCode.BothDirections, Some(value), geometry)
+    TestLinearAsset(0, mmlId, SideCode.BothDirections, Some(NumericValue(value)), geometry)
   }
 
   private def roadLinkForSpeedLimit(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {

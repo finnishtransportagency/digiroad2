@@ -30,9 +30,15 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId)
 
     val existingAssets = withDynTransaction {
-      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-        .filterNot(_.expired)
-        .groupBy(_.mmlId)
+      if (typeId == 190) {
+        dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
+          .filterNot(_.expired)
+          .groupBy(_.mmlId)
+      } else {
+        dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+          .filterNot(_.expired)
+          .groupBy(_.mmlId)
+      }
     }
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
@@ -46,7 +52,7 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId).toList
 
     val linearAssets = withDynTransaction {
-      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+      dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
         .filterNot(_.expired)
         .groupBy(_.mmlId)
     }
