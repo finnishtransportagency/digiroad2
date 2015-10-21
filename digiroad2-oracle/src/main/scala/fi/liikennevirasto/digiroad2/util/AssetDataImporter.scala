@@ -325,10 +325,15 @@ class AssetDataImporter {
     importLinearAssetsFromConversion(conversionDatabase, 31, 180)
   }
 
-  def importProhibitions(conversionDatabase: DatabaseDef) = {
+  def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
+    def findRoadLink(roadLinks: Seq[VVHRoadlink], mmlId: Long): Option[VVHRoadlink] = {
+      roadLinks.find(_.mmlId == mmlId)
+    }
+
     val municipality = 235
     val conversionTypeId = 29
     val typeId = 190
+    val vvhClient = new VVHClient(vvhServiceHost)
 
     println("*** Fetching prohibitions from conversion database")
     val startTime = DateTime.now()
@@ -345,6 +350,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${allLinks.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
+    val roadLinks = vvhClient.fetchVVHRoadlinks(allLinks.map(_._2).toSet)
     val groupSize = 10000
     val groupedLinks = allLinks.grouped(groupSize).toList
     val totalGroupCount = groupedLinks.length
@@ -360,23 +366,28 @@ class AssetDataImporter {
         val startTime = DateTime.now()
 
         links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
-          val assetId = Sequences.nextPrimaryKeySeqValue
-          assetPS.setLong(1, assetId)
-          assetPS.setInt(2, typeId)
-          assetPS.addBatch()
+          findRoadLink(roadLinks, mmlId) match {
+            case Some(roadLink) =>
+              val assetId = Sequences.nextPrimaryKeySeqValue
+              assetPS.setLong(1, assetId)
+              assetPS.setInt(2, typeId)
+              assetPS.addBatch()
 
-          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-          lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, roadLinkId)
-          lrmPositionPS.setLong(3, mmlId)
-          lrmPositionPS.setDouble(4, startMeasure)
-          lrmPositionPS.setDouble(5, endMeasure)
-          lrmPositionPS.setInt(6, sideCode)
-          lrmPositionPS.addBatch()
+              val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+              lrmPositionPS.setLong(1, lrmPositionId)
+              lrmPositionPS.setLong(2, roadLinkId)
+              lrmPositionPS.setLong(3, mmlId)
+              lrmPositionPS.setDouble(4, 0.0)
+              lrmPositionPS.setDouble(5, GeometryUtils.geometryLength(roadLink.geometry))
+              lrmPositionPS.setInt(6, sideCode)
+              lrmPositionPS.addBatch()
 
-          assetLinkPS.setLong(1, assetId)
-          assetLinkPS.setLong(2, lrmPositionId)
-          assetLinkPS.addBatch()
+              assetLinkPS.setLong(1, assetId)
+              assetLinkPS.setLong(2, lrmPositionId)
+              assetLinkPS.addBatch()
+            case _ => println(s"*** No VVH road link found for mml id $mmlId")
+          }
+
         }
 
         assetPS.executeBatch()

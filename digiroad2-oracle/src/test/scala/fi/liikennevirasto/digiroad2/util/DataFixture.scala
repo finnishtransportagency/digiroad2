@@ -252,7 +252,7 @@ object DataFixture {
 
   def importProhibitions(): Unit = {
     println(s"\nCommencing prohibition import from conversion at time: ${DateTime.now()}")
-    dataImporter.importProhibitions(Conversion.database())
+    dataImporter.importProhibitions(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Prohibition import complete at time: ${DateTime.now()}")
     println()
   }
