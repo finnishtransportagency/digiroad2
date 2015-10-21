@@ -221,18 +221,21 @@ trait OracleLinearAssetDao {
       val groupedByAssets = assets.groupBy(_._1)
       val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
 
-      // TODO: Fetch prohibition exceptions too.
-
       groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
         val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
         val prohibitionValues = rowsByProhibitionId.map { case (prohibitionId, rows) =>
+          val exceptions = sql"""
+             select pe.type
+             from PROHIBITION_EXCEPTION pe
+             where pe.PROHIBITION_VALUE_ID = $prohibitionId
+          """.as[(Int)].list
+
           val prohibitionType = rows.head._5
           val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
             ProhibitionValidityPeriod(row._7.get, row._8.get)
           }
-          ProhibitionValue(prohibitionType, validityPeriods)
+          ProhibitionValue(prohibitionType, validityPeriods, exceptions)
         }.toSeq
-        // TODO: Construct validity exceptions.
         PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }.toSeq
     }
