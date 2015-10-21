@@ -340,17 +340,17 @@ class AssetDataImporter {
 
     val allLinks = conversionDatabase.withDynSession {
       sql"""
-          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
+          select s.segm_id, s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
           and kunta_nro = $municipality
-       """.as[(Long, Long, Double, Double, Int, Int, Int)].list
+       """.as[(Long, Long, Long, Double, Double, Int, Int, Int)].list
     }
 
     println(s"*** Fetched ${allLinks.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.fetchVVHRoadlinks(allLinks.map(_._2).toSet)
+    val roadLinks = vvhClient.fetchVVHRoadlinks(allLinks.map(_._3).toSet)
     val groupSize = 10000
     val groupedLinks = allLinks.grouped(groupSize).toList
     val totalGroupCount = groupedLinks.length
@@ -365,7 +365,7 @@ class AssetDataImporter {
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
 
-        links.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
+        links.foreach { case (segmentId, roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
           findRoadLink(roadLinks, mmlId) match {
             case Some(roadLink) =>
               val assetId = Sequences.nextPrimaryKeySeqValue
@@ -385,7 +385,7 @@ class AssetDataImporter {
               assetLinkPS.setLong(1, assetId)
               assetLinkPS.setLong(2, lrmPositionId)
               assetLinkPS.addBatch()
-            case _ => println(s"*** No VVH road link found for mml id $mmlId")
+            case _ => println(s"*** No VVH road link found for mml id $mmlId. $segmentId dropped.")
           }
 
         }
