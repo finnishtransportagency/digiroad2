@@ -225,7 +225,7 @@ trait OracleLinearAssetDao {
          from PROHIBITION_EXCEPTION pe
          join #$idTableName i on i.id = pe.prohibition_value_id
       """.as[(Int, Int)].list
-    }
+    }.groupBy(_._1).mapValues(exceptions => exceptions.map(_._2))
 
     val groupedByAssets = assets.groupBy(_._1)
     val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
@@ -237,7 +237,7 @@ trait OracleLinearAssetDao {
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
           ProhibitionValidityPeriod(row._7.get, row._8.get)
         }
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions.filter(_._1 == prohibitionId).map(_._2))
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions(prohibitionId))
       }.toSeq
       PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
     }.toSeq
