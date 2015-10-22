@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -259,36 +260,67 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  def setupTestProhibition(mmlId: Long, prohibitionTypes: Set[Int]): Unit = {
+  def setupTestProhibition(mmlId: Long, 
+                           prohibitions: Seq[ProhibitionValue]): Unit = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
     sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values ($assetId,190,'dr2_test_data')""".execute
     sqlu"""insert into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $mmlId, 0, 100, 1)""".execute
-    sqlu"""insert into asset_link (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
-    prohibitionTypes.foreach { prohibitionType =>
+    sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
+
+    prohibitions.foreach { prohibition =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
-      sqlu"""insert into prohibition_value(ID, ASSET_ID, TYPE) values ($prohibitionId, $assetId, $prohibitionType)""".execute
+      val prohibitionType = prohibition.typeId
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $assetId, $prohibitionType)""".execute
+
+      prohibition.validityPeriods.map { validityPeriod =>
+        val validityId = Sequences.nextPrimaryKeySeqValue
+        val startHour = validityPeriod.startHour
+        val endHour = validityPeriod.endHour
+        val daysOfWeek = validityPeriod.days.value
+        sqlu"""insert into PROHIBITION_VALIDITY_PERIOD (ID, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR)
+               values ($validityId, $prohibitionId, $daysOfWeek, $startHour, $endHour)""".execute
+      }
     }
+    
   }
 
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
+    val fixtureProhibitionValues = Seq(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Nil))
 
     Database.forDataSource(ds).withDynTransaction {
-      setupTestProhibition(mmlId, Set(10))
+      setupTestProhibition(mmlId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(1L), "")
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId), "")
 
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
 
-      val prohibitions = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
-      prohibitions.size should be(1)
-      prohibitions.head.typeId should be(10)
-      prohibitions.head.validityPeriods should be(Nil)
-      prohibitions.head.exceptions should be(Nil)
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
+      fetchedProhibitionValues should equal(fixtureProhibitionValues)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("fetch prohibition with validity period") {
+    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val mmlId = 1l
+    val fixtureProhibitionValues = Seq(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
+
+    Database.forDataSource(ds).withDynTransaction {
+      setupTestProhibition(mmlId, fixtureProhibitionValues)
+
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId), "")
+
+      persistedAssets.size should be(1)
+      persistedAssets.head.mmlId should be(mmlId)
+
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
+      fetchedProhibitionValues should equal(fixtureProhibitionValues)
 
       dynamicSession.rollback()
     }
