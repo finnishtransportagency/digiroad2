@@ -42,7 +42,7 @@ class TimeDomainParser {
 
     def duration = '{' ~> log(durationPart)("durationPart") <~ '}'  ^^ { case p => p }
 
-    def spec = '[' ~> log(time)("time") ~ log(duration)("duration") <~ ']' ^^ { case time ~ duration =>
+    def spec = log(time)("time") ~ log(duration)("duration") ^^ { case time ~ duration =>
       time match {
         case (None, Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
