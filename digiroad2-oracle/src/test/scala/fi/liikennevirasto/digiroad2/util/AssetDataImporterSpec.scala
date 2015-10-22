@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, PersistedLinearAsset, LinearAsset}
-import fi.liikennevirasto.digiroad2.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -181,11 +181,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
     val segmentsByMmlId = validSegments.groupBy(_._3)
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
+      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
       val expandedSegments = expandSegments(segments)
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
         val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, Nil) }
-        Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
+        Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
     }.toSeq ++
       segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}. ${s._1} dropped.") } ++
@@ -196,7 +197,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
     val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 4, 1)
     val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
     val result: Seq[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks)
@@ -209,7 +210,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 2)
     val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 4, 3)
     val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
@@ -223,7 +224,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
     val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 4, 3)
     val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
@@ -247,12 +248,24 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 21, 1)
     val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 22, 1)
     val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
 
     result should be(Set(Left("Invalid type for prohibition. 1 dropped."), Left("Invalid type for prohibition. 2 dropped.")))
+  }
+
+  test("Adjust segment measurements to road link") {
+    val segment1 = (1l, 1l, 1l, 0.0, 0.5, 235, 2, 1)
+    val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+
+    val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
+
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
+    result should be(Set(conversionResult1))
   }
 
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
