@@ -362,7 +362,7 @@ class AssetDataImporter {
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
-        val convertedProhibitions = convertToProhibitions(links, roadLinks)
+        val convertedProhibitions = convertToProhibitions(links, roadLinks, Nil)
         convertedProhibitions.foreach {
           case Right(asset) =>
             val assetId = Sequences.nextPrimaryKeySeqValue
@@ -416,16 +416,17 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink]): Seq[Either[String, PersistedLinearAsset]] = {
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
     val segmentsByMmlId = validSegments.groupBy(_._3)
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
+      val roadLinkExceptions = exceptions.filter(_._2 == mmlId).map(_._3)
       val expandedSegments = expandSegments(segments)
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
-        val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, Nil) }
+        val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, roadLinkExceptions) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
     }.toSeq ++
