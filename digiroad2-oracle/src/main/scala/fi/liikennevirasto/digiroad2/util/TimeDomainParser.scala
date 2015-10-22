@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ProhibitionValidityPeriod}
 
-import scala.util.parsing.combinator.RegexParsers
+import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 
 class TimeDomainParser {
   private object parser extends RegexParsers {
@@ -24,6 +24,11 @@ class TimeDomainParser {
     }
     case class Time(unit: TimeUnit.TimeUnit, number: Int)
     case class Duration(unit: DurationUnit.DurationUnit, number: Int)
+
+    sealed trait Expr
+    case class Scalar(p: ProhibitionValidityPeriod) extends Expr
+    case class And(left: Expr, right: Expr) extends Expr
+    case class Or(left: Expr, right: Expr) extends Expr
 
     def number = """\d+""".r ^^ { _.toInt }
     def timeLetter = acceptMatch("time letter", TimeUnit.fromChar)
@@ -50,17 +55,27 @@ class TimeDomainParser {
       }
     }
 
-    def and = '[' ~> rep1sep(log(spec)("spec"), '*') <~ ']' ^^ { specs => specs.reduce { (a, b) => a.and(b) } }
-    def or = '[' ~> rep1sep(log(and)("spec"), '+') <~ ']'
+    def expr: Parser[Expr] = term ~ rep(or) ^^ { case a~b => (a /: b)((acc,f) => f(acc)) }
+    def or: Parser[Expr => Expr] = '+' ~ term ^^ { case '+' ~ b => Or(_, b) }
+    def term: Parser[Expr] = factor ~ rep(and) ^^ { case a~b => (a /: b)((acc,f) => f(acc)) }
+    def and: Parser[Expr => Expr] = '*' ~ factor ^^ { case '*' ~ b => And(_, b) }
+    def factor: Parser[Expr] = spec ^^ Scalar | '[' ~> expr <~ ']'
 
-    def expr = log(spec)("spec") | log(and)("and") | log(or)("or")
-
-    def apply(input: String): Option[Seq[ProhibitionValidityPeriod]] = parseAll(expr, input) match {
-      case Success(result, _) => Some(result match {
-        case p: ProhibitionValidityPeriod => Seq(p)
-        case ps: List[Any] => ps.asInstanceOf[List[ProhibitionValidityPeriod]]
-      })
+    def apply(input: String): Option[Seq[ProhibitionValidityPeriod]] = parseAll(phrase(expr), input) match {
+      case Success(result, _) => Some(eval(result))
       case _ => None
+    }
+
+    private def eval: PartialFunction[Expr, Seq[ProhibitionValidityPeriod]] = {
+      case Or(l, r)  => eval(l) ++ eval(r)
+      case And(l, r) => distribute(eval(l), eval(r))
+      case Scalar(v) => Seq(v)
+    }
+
+    private def distribute(left: Seq[ProhibitionValidityPeriod], right: Seq[ProhibitionValidityPeriod]): Seq[ProhibitionValidityPeriod] = {
+      // Assume there is only one value in `right`.
+      val expr = right.head
+      left.map { l => l.and(expr) }
     }
   }
 
