@@ -32,14 +32,10 @@ trait LinearAssetOperations {
     val existingAssets = withDynTransaction {
       if (typeId == 190) {
         dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
-          .filterNot(_.expired)
-          .groupBy(_.mmlId)
       } else {
         dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-          .filterNot(_.expired)
-          .groupBy(_.mmlId)
       }
-    }
+    }.filterNot(_.expired).groupBy(_.mmlId)
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
