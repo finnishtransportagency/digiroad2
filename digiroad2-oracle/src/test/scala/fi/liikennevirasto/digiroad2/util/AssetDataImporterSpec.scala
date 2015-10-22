@@ -177,7 +177,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink]): Seq[Either[String, PersistedLinearAsset]] = {
-    val segmentsByMmlId = prohibitionSegments.groupBy(_._3)
+    val (validSegments, invalidSegments) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
+    val segmentsByMmlId = validSegments.groupBy(_._3)
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val expandedSegments = expandSegments(segments)
 
@@ -185,7 +186,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, Nil) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
       }
-    }.toSeq
+    }.toSeq ++ invalidSegments.map { s => Left(s"No VVH road link found for mml id ${s._3}.") }
   }
 
   test("Two prohibition segments on the same link produces one asset with two prohibition values") {
@@ -227,6 +228,16 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
     val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil), ProhibitionValue(4, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
     result should be(Set(conversionResult1, conversionResult2))
+  }
+
+  test("Segment without associated road link from VVH is dropped") {
+    val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
+    val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val roadLinks: Seq[VVHRoadlink] = Nil
+
+    val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
+
+    result should be(Set(Left("No VVH road link found for mml id 1.")))
   }
 
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
