@@ -358,7 +358,7 @@ class AssetDataImporter {
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
 
-      println(s"*** Importing ${allLinks.length} links in $totalGroupCount groups of $groupSize each")
+      println(s"*** Importing ${allLinks.length} prohibitions in $totalGroupCount groups of $groupSize each")
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
@@ -393,20 +393,18 @@ class AssetDataImporter {
           case Left(validationError) => println(s"*** $validationError")
         }
 
-        assetPS.executeBatch()
+        val executedAssetInserts = assetPS.executeBatch().length
         lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
         valuePS.executeBatch()
 
-        println(s"*** Imported ${links.length} linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+        println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
       assetPS.close()
       lrmPositionPS.close()
       assetLinkPS.close()
       valuePS.close()
     }
-
-    println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
   }
 
   private def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
