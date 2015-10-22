@@ -167,11 +167,24 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
+  def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
+    if (segments.forall(_._8 == 1)) segments
+    else {
+      val (bothSided, oneSided) = segments.partition(_._8 == 1)
+      val splitSegments = bothSided.flatMap { x => Seq(x.copy(_8 = 2), x.copy(_8 = 3)) }
+      splitSegments ++ oneSided
+    }
+  }
+
   def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink]): Seq[Either[String, PersistedLinearAsset]] = {
-    val segmentsByMmlId = prohibitionSegments.groupBy { x => (x._3, x._8) }
-    segmentsByMmlId.map { case ((mmlId, sideCode), segments) =>
-      val prohibitionValues = segments.map { x => ProhibitionValue(x._7, Nil, Nil) }
-      Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
+    val segmentsByMmlId = prohibitionSegments.groupBy(_._3)
+    segmentsByMmlId.flatMap { case (mmlId, segments) =>
+      val expandedSegments = expandSegments(segments)
+
+      expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
+        val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, Nil) }
+        Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
+      }
     }.toSeq
   }
 
@@ -199,6 +212,20 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
     val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
+    result should be(Set(conversionResult1, conversionResult2))
+  }
+
+  test("Two-sided prohibition segment and one-sided prohibition segment produces two assets with combined prohibitions on one side") {
+    val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
+    val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 4, 3)
+    val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+
+    val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
+
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil), ProhibitionValue(4, Nil, Nil)))), 0.0, 1.0, None, None, None, None, false, 190))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
