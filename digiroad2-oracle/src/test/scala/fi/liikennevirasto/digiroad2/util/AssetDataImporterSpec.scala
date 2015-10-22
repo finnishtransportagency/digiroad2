@@ -188,7 +188,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
       }
     }.toSeq ++
-      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}.") } ++
+      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}. ${s._1} dropped.") } ++
       segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") }
   }
 
@@ -240,7 +240,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks).toSet
 
-    result should be(Set(Left("No VVH road link found for mml id 1.")))
+    result should be(Set(Left("No VVH road link found for mml id 1. 1 dropped.")))
   }
 
   test("Drop prohibition segments of type maintenance drive and drive to plot") {
