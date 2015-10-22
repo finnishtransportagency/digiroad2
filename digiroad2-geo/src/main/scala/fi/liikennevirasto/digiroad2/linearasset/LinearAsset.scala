@@ -21,9 +21,13 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
 case class ProhibitionValue(typeId: Int, validityPeriods: Seq[ProhibitionValidityPeriod], exceptions: Seq[Int])
-case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek)
+case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
+  def and(b: ProhibitionValidityPeriod): ProhibitionValidityPeriod = {
+    ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days))
+  }
+}
 
-sealed trait ValidityPeriodDayOfWeek { def value: Int }
+sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }
 object ValidityPeriodDayOfWeek {
   def apply(value: Int) = Seq(Weekday, Saturday, Sunday).find(_.value == value).getOrElse(Unknown)
   def fromTimeDomainValue(value: Int) = value match {
@@ -32,6 +36,15 @@ object ValidityPeriodDayOfWeek {
     case 7 => Saturday
     case _ => Unknown
   }
+  def moreSpecific: PartialFunction[(ValidityPeriodDayOfWeek, ValidityPeriodDayOfWeek), ValidityPeriodDayOfWeek] = {
+    case (Unknown, d) => d
+    case (d, Unknown) => d
+    case (d, Weekday) => d
+    case (Weekday, d) => d
+    case (a, b) if a == b => a
+    case (_, _) => Unknown
+  }
+
   case object Weekday extends ValidityPeriodDayOfWeek { val value = 1 }
   case object Saturday extends ValidityPeriodDayOfWeek { val value = 2 }
   case object Sunday extends ValidityPeriodDayOfWeek { val value = 3 }
