@@ -17,4 +17,12 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
   test("and") {
     parser.parse("[[(h8){h8}]*[(t2){d5}]]") should be(Some(Seq(ProhibitionValidityPeriod(8, 16, ValidityPeriodDayOfWeek.Weekday))))
   }
+
+  test("doesn't crash") {
+    val resource = getClass.getResource("time_domain_test_values.txt")
+    val lines = scala.io.Source.fromURL(resource).getLines()
+    lines.foreach { line =>
+      parser.parse(line)
+    }
+  }
 }
