@@ -420,12 +420,12 @@ class AssetDataImporter {
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
     val segmentsByMmlId = validSegments.groupBy(_._3)
-    val (validExceptions, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
+    val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
+    val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
       val roadLinkExceptions = validExceptions
         .filter(_._2 == mmlId)
-        .filterNot(_._3 == 1)
         .map(_._3)
       val expandedSegments = expandSegments(segments)
 
@@ -436,7 +436,8 @@ class AssetDataImporter {
     }.toSeq ++
       segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}. ${s._1} dropped.") } ++
       segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") } ++
-      exceptionsWithoutProhibition.map { ex => Left(s"No prohibition found on mml id ${ex._2}. Dropped exception ${ex._1}.")}
+      exceptionsWithoutProhibition.map { ex => Left(s"No prohibition found on mml id ${ex._2}. Dropped exception ${ex._1}.")} ++
+      exceptionAllowingAll.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
