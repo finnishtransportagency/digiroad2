@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, PersistedLinearAsset, LinearAsset}
+import fi.liikennevirasto.digiroad2.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
@@ -162,6 +165,27 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       differentAssetType.map(_._8.isDefined) should be(Some(false))
       differentAssetType.map(_._10.isDefined) should be(Some(false))
     }
+  }
+
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink]): Seq[Either[String, PersistedLinearAsset]] = {
+    val segmentsByMmlId = prohibitionSegments.groupBy(_._3)
+    segmentsByMmlId.map { case (mmlId, segments) =>
+      val prohibitionValues = segments.map { x => ProhibitionValue(x._7, Nil, Nil) }
+      Right(PersistedLinearAsset(0l, mmlId, segments.head._8, Some(Prohibitions(prohibitionValues)), 0.0, 1.0, None, None, None, None, false, 190))
+    }.toSeq
+  }
+
+  test("Two prohibition segments on the same link produces one asset with two prohibition values") {
+    val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
+    val segment2 = (2l, 1l, 1l, 0.0, 1.0, 235, 4, 1)
+    val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val roadLink = VVHRoadlink(1l, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+
+    val result: Seq[Either[String, PersistedLinearAsset]] = convertToProhibitions(prohibitionSegments, roadLinks)
+
+    val expectedValue = Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Nil), ProhibitionValue(4, Nil, Nil))))
+    result should be(Seq(Right(PersistedLinearAsset(0l, 1l, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190))))
   }
 
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
