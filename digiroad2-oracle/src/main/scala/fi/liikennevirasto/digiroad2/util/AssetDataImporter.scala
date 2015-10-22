@@ -422,7 +422,10 @@ class AssetDataImporter {
     val segmentsByMmlId = validSegments.groupBy(_._3)
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
-      val roadLinkExceptions = exceptions.filter(_._2 == mmlId).map(_._3)
+      val roadLinkExceptions = exceptions
+        .filter(_._2 == mmlId)
+        .filterNot(_._3 == 1)
+        .map(_._3)
       val expandedSegments = expandSegments(segments)
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
