@@ -6,6 +6,7 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
+import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, ProhibitionValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
@@ -326,24 +327,6 @@ class AssetDataImporter {
   }
 
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
-    def findRoadLink(roadLinks: Seq[VVHRoadlink], mmlId: Long): Option[VVHRoadlink] = {
-      roadLinks.find(_.mmlId == mmlId)
-    }
-
-    def validate(roadLinks: Seq[VVHRoadlink], mmlId: Long, value: Int): Either[String, VVHRoadlink] = {
-      findRoadLink(roadLinks, mmlId) match {
-        case Some(roadLink) =>
-          if (Set(21, 22).contains(value)) Left("Invalid type for prohibition.")
-          else Right(roadLink)
-        case _ => Left(s"No VVH road link found for mml id $mmlId.")
-      }
-    }
-
-    def prohibitionValues(conversionValue: Int): Seq[Int] = {
-      if (conversionValue == 20) Seq(24, 25)
-      else Seq(conversionValue)
-    }
-
     val municipality = 235
     val conversionTypeId = 29
     val typeId = 190
@@ -371,7 +354,7 @@ class AssetDataImporter {
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
 
@@ -379,39 +362,35 @@ class AssetDataImporter {
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
+        val convertedProhibitions = convertToProhibitions(links, roadLinks)
+        convertedProhibitions.foreach {
+          case Right(asset) =>
+            val assetId = Sequences.nextPrimaryKeySeqValue
+            assetPS.setLong(1, assetId)
+            assetPS.setInt(2, typeId)
+            assetPS.addBatch()
 
-        links.foreach { case (segmentId, roadLinkId, mmlId, startMeasure, endMeasure, _, value, sideCode) =>
-          validate(roadLinks, mmlId, value) match {
-            case Right(roadLink) =>
-              val assetId = Sequences.nextPrimaryKeySeqValue
-              assetPS.setLong(1, assetId)
-              assetPS.setInt(2, typeId)
-              assetPS.addBatch()
+            val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+            lrmPositionPS.setLong(1, lrmPositionId)
+            lrmPositionPS.setLong(2, asset.mmlId)
+            lrmPositionPS.setDouble(3, asset.startMeasure)
+            lrmPositionPS.setDouble(4, asset.endMeasure)
+            lrmPositionPS.setInt(5, asset.sideCode)
+            lrmPositionPS.addBatch()
 
-              val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-              lrmPositionPS.setLong(1, lrmPositionId)
-              lrmPositionPS.setLong(2, roadLinkId)
-              lrmPositionPS.setLong(3, mmlId)
-              lrmPositionPS.setDouble(4, 0.0)
-              lrmPositionPS.setDouble(5, GeometryUtils.geometryLength(roadLink.geometry))
-              lrmPositionPS.setInt(6, sideCode)
-              lrmPositionPS.addBatch()
+            assetLinkPS.setLong(1, assetId)
+            assetLinkPS.setLong(2, lrmPositionId)
+            assetLinkPS.addBatch()
 
-              assetLinkPS.setLong(1, assetId)
-              assetLinkPS.setLong(2, lrmPositionId)
-              assetLinkPS.addBatch()
-
-              val values = prohibitionValues(value)
-              values.foreach { prohibitionValue =>
-                val valueId = Sequences.nextPrimaryKeySeqValue
-                valuePS.setLong(1, valueId)
-                valuePS.setLong(2, assetId)
-                valuePS.setLong(3, prohibitionValue)
-                valuePS.addBatch()
-              }
-            case Left(validationError) => println(s"*** $validationError $segmentId dropped.")
-          }
-
+            val value: Prohibitions = asset.value.get.asInstanceOf[Prohibitions]
+            value.prohibitions.foreach { prohibitionValue =>
+              val valueId = Sequences.nextPrimaryKeySeqValue
+              valuePS.setLong(1, valueId)
+              valuePS.setLong(2, assetId)
+              valuePS.setLong(3, prohibitionValue.typeId)
+              valuePS.addBatch()
+            }
+          case Left(validationError) => println(s"*** $validationError")
         }
 
         assetPS.executeBatch()
@@ -428,6 +407,32 @@ class AssetDataImporter {
     }
 
     println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
+  }
+
+  private def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
+    if (segments.forall(_._8 == 1)) segments
+    else {
+      val (bothSided, oneSided) = segments.partition(_._8 == 1)
+      val splitSegments = bothSided.flatMap { x => Seq(x.copy(_8 = 2), x.copy(_8 = 3)) }
+      splitSegments ++ oneSided
+    }
+  }
+
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink]): Seq[Either[String, PersistedLinearAsset]] = {
+    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
+    val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
+    val segmentsByMmlId = validSegments.groupBy(_._3)
+    segmentsByMmlId.flatMap { case (mmlId, segments) =>
+      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
+      val expandedSegments = expandSegments(segments)
+
+      expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
+        val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, Nil) }
+        Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
+      }
+    }.toSeq ++
+      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}. ${s._1} dropped.") } ++
+      segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") }
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
