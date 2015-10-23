@@ -338,12 +338,12 @@ class AssetDataImporter {
 
     val prohibitions = conversionDatabase.withDynSession {
       sql"""
-          select s.segm_id, s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
+          select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
           and kunta_nro = $municipality
-       """.as[(Long, Long, Long, Double, Double, Int, Int, Int)].list
+       """.as[(Long, Long, Double, Double, Int, Int, Int)].list
     }
 
     val exceptions = conversionDatabase.withDynSession {
@@ -358,7 +358,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._3).toSet)
+    val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._2).toSet)
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
@@ -423,11 +423,11 @@ class AssetDataImporter {
     }
   }
 
-  private def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
-    if (segments.forall(_._8 == 1) && exceptionSideCodes.forall(_ == 1)) segments
+  private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int)], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int)] = {
+    if (segments.forall(_._7 == 1) && exceptionSideCodes.forall(_ == 1)) segments
     else {
-      val (bothSided, oneSided) = segments.partition(_._8 == 1)
-      val splitSegments = bothSided.flatMap { x => Seq(x.copy(_8 = 2), x.copy(_8 = 3)) }
+      val (bothSided, oneSided) = segments.partition(_._7 == 1)
+      val splitSegments = bothSided.flatMap { x => Seq(x.copy(_7 = 2), x.copy(_7 = 3)) }
       splitSegments ++ oneSided
     }
   }
@@ -441,25 +441,25 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
-    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
-    val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
-    val segmentsByMmlId = validSegments.groupBy(_._3)
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
+    val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._6) }
+    val segmentsByMmlId = validSegments.groupBy(_._2)
     val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
     val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
-      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._8))
+      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._7))
 
-      expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
+      expandedSegments.groupBy(_._7).map { case (sideCode, segmentsPerSide) =>
         val prohibitionValues = segmentsPerSide.map { x =>
           val exceptionsForProhibition = expandedExceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
-          ProhibitionValue(x._7, Set.empty, exceptionsForProhibition) }
+          ProhibitionValue(x._6, Set.empty, exceptionsForProhibition) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
     }.toSeq ++
-      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._3}. ${s._1} dropped.") } ++
+      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._2}. ${s._1} dropped.") } ++
       segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") } ++
       exceptionsWithoutProhibition.map { ex => Left(s"No prohibition found on mml id ${ex._2}. Dropped exception ${ex._1}.")} ++
       exceptionAllowingAll.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
