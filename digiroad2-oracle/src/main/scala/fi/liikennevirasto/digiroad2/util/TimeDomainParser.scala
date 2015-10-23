@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ProhibitionValidityPeriod}
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, ValidityPeriodDayOfWeek}
 
-import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
+import scala.util.parsing.combinator.RegexParsers
 
 class TimeDomainParser {
   private object parser extends RegexParsers {
@@ -26,7 +26,7 @@ class TimeDomainParser {
     case class Duration(unit: DurationUnit.DurationUnit, number: Int)
 
     sealed trait Expr
-    case class Scalar(p: ProhibitionValidityPeriod) extends Expr
+    case class Scalar(ps: Seq[ProhibitionValidityPeriod]) extends Expr
     case class And(left: Expr, right: Expr) extends Expr
     case class Or(left: Expr, right: Expr) extends Expr
 
@@ -42,16 +42,31 @@ class TimeDomainParser {
 
     def duration = '{' ~> log(durationPart)("durationPart") <~ '}'  ^^ { case p => p }
 
-    def spec = log(time)("time") ~ log(duration)("duration") ^^ { case time ~ duration =>
+    def spec = log(log(time)("time") ~ log(duration)("duration"))("spec") ^^ { case time ~ duration =>
       time match {
         case (None, Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
-          ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday)
+          Seq(ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday))
         case (None, Time(TimeUnit.DayOfWeek, day)) =>
-          ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.fromTimeDomainValue(day))
+          val days = durationToDays(day, duration)
+          days.map { day => ProhibitionValidityPeriod(0, 24, day) }
         case (Some(Time(TimeUnit.DayOfWeek, day)), Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
-          ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.fromTimeDomainValue(day))
+          val days = durationToDays(day, duration)
+          days.map { day => ProhibitionValidityPeriod(hour, endHour, day) }
+      }
+    }
+
+    def durationToDays(day: Int, duration: Duration): Seq[ValidityPeriodDayOfWeek] = {
+      (day, duration) match {
+        case (7, Duration(DurationUnit.Days, 2)) =>
+          Seq(ValidityPeriodDayOfWeek.Saturday, ValidityPeriodDayOfWeek.Sunday)
+        case (1, _) =>
+          Seq(ValidityPeriodDayOfWeek.Sunday)
+        case (2, _) =>
+          Seq(ValidityPeriodDayOfWeek.Weekday)
+        case (7, _) =>
+          Seq(ValidityPeriodDayOfWeek.Saturday)
       }
     }
 
@@ -69,11 +84,12 @@ class TimeDomainParser {
     private def eval: PartialFunction[Expr, Seq[ProhibitionValidityPeriod]] = {
       case Or(l, r)  => eval(l) ++ eval(r)
       case And(l, r) => distribute(eval(l), eval(r))
-      case Scalar(v) => Seq(v)
+      case Scalar(v) => v
     }
 
     private def distribute(left: Seq[ProhibitionValidityPeriod], right: Seq[ProhibitionValidityPeriod]): Seq[ProhibitionValidityPeriod] = {
       // Assume there is only one value in `right`.
+      // ((1+2)+3)+4
       val expr = right.head
       left.map { l => l.and(expr) }
     }
