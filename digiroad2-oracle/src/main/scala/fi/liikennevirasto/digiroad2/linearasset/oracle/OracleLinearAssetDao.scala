@@ -214,18 +214,18 @@ trait OracleLinearAssetDao {
           join prohibition_value pv on pv.asset_id = a.id
           join #$idTableName i on i.id = pos.mml_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
-          left join PROHIBITION_EXCEPTION pe on pe.prohibition_value_id = pv.id
+          left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Int, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
     }
 
-    val groupedByAssets = assets.groupBy(_._1)
-    val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
+    val groupedByAssetId = assets.groupBy(_._1)
+    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
-    groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
-      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
+    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
+      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.map { case (_, rows) =>
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
