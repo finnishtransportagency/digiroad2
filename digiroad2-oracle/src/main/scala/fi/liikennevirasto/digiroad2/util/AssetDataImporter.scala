@@ -349,8 +349,8 @@ class AssetDataImporter {
 
     val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._3).toSet)
     val groupSize = 10000
-    val groupedLinks = prohibitions.grouped(groupSize).toList
-    val totalGroupCount = groupedLinks.length
+    val groupedProhibitions = prohibitions.grouped(groupSize).toList
+    val totalGroupCount = groupedProhibitions.length
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
@@ -360,7 +360,7 @@ class AssetDataImporter {
 
       println(s"*** Importing ${prohibitions.length} prohibitions in $totalGroupCount groups of $groupSize each")
 
-      groupedLinks.zipWithIndex.foreach { case (links, i) =>
+      groupedProhibitions.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
         val convertedProhibitions = convertToProhibitions(links, roadLinks, Nil)
         convertedProhibitions.foreach {
