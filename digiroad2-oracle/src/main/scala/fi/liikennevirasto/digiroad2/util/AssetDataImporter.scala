@@ -20,6 +20,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import sun.plugin2.liveconnect.JSExceptions
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import slick.jdbc.StaticQuery.interpolation
@@ -416,6 +417,15 @@ class AssetDataImporter {
     }
   }
 
+  def expandExceptions(exceptions: Seq[(Long, Long, Int, Int)], prohibitionSideCodes: Seq[(Int)]) = {
+    if (exceptions.forall(_._4 == 1) && prohibitionSideCodes.forall(_ == 1)) exceptions
+    else {
+      val (bothSided, oneSided) = exceptions.partition(_._4 == 1)
+      val splitExceptions = bothSided.flatMap { x => Seq(x.copy(_4 = 2), x.copy(_4 = 3)) }
+      splitExceptions ++ oneSided
+    }
+  }
+
   def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._3) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._7) }
@@ -425,10 +435,11 @@ class AssetDataImporter {
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
+      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._8))
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
         val prohibitionValues = segmentsPerSide.map { x =>
-          val exceptionsForProhibition: Seq[Int] = validExceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3)
+          val exceptionsForProhibition: Seq[Int] = expandedExceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3)
           ProhibitionValue(x._7, Nil, exceptionsForProhibition) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
