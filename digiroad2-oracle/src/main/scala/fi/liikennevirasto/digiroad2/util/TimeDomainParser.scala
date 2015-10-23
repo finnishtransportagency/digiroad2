@@ -26,7 +26,7 @@ class TimeDomainParser {
     case class Duration(unit: DurationUnit.DurationUnit, number: Int)
 
     sealed trait Expr
-    case class Scalar(ps: Seq[ProhibitionValidityPeriod]) extends Expr
+    case class Scalar(ps: Seq[Either[String, ProhibitionValidityPeriod]]) extends Expr
     case class And(left: Expr, right: Expr) extends Expr
     case class Or(left: Expr, right: Expr) extends Expr
 
@@ -38,35 +38,39 @@ class TimeDomainParser {
 
     def simpleTime = timePart ^^ { case p => (None, p) }
     def complexTime = timePart ~ timePart ^^ { case a ~ b => (Some(a), b) }
-    def time = '(' ~> (log(complexTime)("complexTime") | log(simpleTime)("simpleTime")) <~ ')'
+    def time = '(' ~> (complexTime | simpleTime) <~ ')'
 
-    def duration = '{' ~> log(durationPart)("durationPart") <~ '}'  ^^ { case p => p }
+    def duration = '{' ~> durationPart <~ '}'  ^^ { case p => p }
 
-    def spec = log(log(time)("time") ~ log(duration)("duration"))("spec") ^^ { case time ~ duration =>
+    def spec = (time ~ duration) ^^ { case time ~ duration =>
       time match {
         case (None, Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
-          Seq(ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday))
+          Seq(Right(ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday)))
         case (None, Time(TimeUnit.DayOfWeek, day)) =>
           val days = durationToDays(day, duration)
-          days.map { day => ProhibitionValidityPeriod(0, 24, day) }
+          days.fold({ x => Seq(Left(x)) }, _.map { day => Right(ProhibitionValidityPeriod(0, 24, day)) })
         case (Some(Time(TimeUnit.DayOfWeek, day)), Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
           val days = durationToDays(day, duration)
-          days.map { day => ProhibitionValidityPeriod(hour, endHour, day) }
+          days.fold({ x => Seq(Left(x)) }, _.map { day => Right(ProhibitionValidityPeriod(hour, endHour, day)) })
+        case _ =>
+          Seq(Left(s"Couldn't parse specification: $time"))
       }
     }
 
-    def durationToDays(day: Int, duration: Duration): Seq[ValidityPeriodDayOfWeek] = {
+    def durationToDays(day: Int, duration: Duration): Either[String, Seq[ValidityPeriodDayOfWeek]] = {
       (day, duration) match {
         case (7, Duration(DurationUnit.Days, 2)) =>
-          Seq(ValidityPeriodDayOfWeek.Saturday, ValidityPeriodDayOfWeek.Sunday)
+          Right(Seq(ValidityPeriodDayOfWeek.Saturday, ValidityPeriodDayOfWeek.Sunday))
         case (1, _) =>
-          Seq(ValidityPeriodDayOfWeek.Sunday)
+          Right(Seq(ValidityPeriodDayOfWeek.Sunday))
         case (2, _) =>
-          Seq(ValidityPeriodDayOfWeek.Weekday)
+          Right(Seq(ValidityPeriodDayOfWeek.Weekday))
         case (7, _) =>
-          Seq(ValidityPeriodDayOfWeek.Saturday)
+          Right(Seq(ValidityPeriodDayOfWeek.Saturday))
+        case _ =>
+          Left(s"Unsupported day, duration combination. day: $day duration: $duration")
       }
     }
 
@@ -76,26 +80,31 @@ class TimeDomainParser {
     def and: Parser[Expr => Expr] = '*' ~ factor ^^ { case '*' ~ b => And(_, b) }
     def factor: Parser[Expr] = spec ^^ Scalar | '[' ~> expr <~ ']'
 
-    def apply(input: String): Option[Seq[ProhibitionValidityPeriod]] = parseAll(phrase(expr), input) match {
-      case Success(result, _) => Some(eval(result))
-      case _ => None
+    def apply(input: String): Seq[Either[String, ProhibitionValidityPeriod]] = parseAll(phrase(expr), input) match {
+      case Success(result, _) => eval(result)
+      case NoSuccess(msg, _) => Seq(Left(s"Parsing time domain string $input failed with message: $msg"))
     }
 
-    private def eval: PartialFunction[Expr, Seq[ProhibitionValidityPeriod]] = {
+    private def eval: PartialFunction[Expr, Seq[Either[String, ProhibitionValidityPeriod]]] = {
       case Or(l, r)  => eval(l) ++ eval(r)
       case And(l, r) => distribute(eval(l), eval(r))
       case Scalar(v) => v
     }
 
-    private def distribute(left: Seq[ProhibitionValidityPeriod], right: Seq[ProhibitionValidityPeriod]): Seq[ProhibitionValidityPeriod] = {
+    private def distribute(left: Seq[Either[String, ProhibitionValidityPeriod]], right: Seq[Either[String, ProhibitionValidityPeriod]]): Seq[Either[String, ProhibitionValidityPeriod]] = {
       // Assume there is only one value in `right`.
       // ((1+2)+3)+4
       val expr = right.head
-      left.map { l => l.and(expr) }
+      left.map { l =>
+        (l, expr) match {
+          case (Right(leftPeriod), Right(rightPeriod)) => Right(leftPeriod.and(rightPeriod))
+          case _ => Left(s"Distribution failure. Left value: $l Right value: $expr")
+        }
+      }
     }
   }
 
-  def parse(s: String): Option[Seq[ProhibitionValidityPeriod]] = {
+  def parse(s: String): Seq[Either[String, ProhibitionValidityPeriod]] = {
     parser(s)
   }
 }
