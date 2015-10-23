@@ -335,7 +335,7 @@ class AssetDataImporter {
     println("*** Fetching prohibitions from conversion database")
     val startTime = DateTime.now()
 
-    val allLinks = conversionDatabase.withDynSession {
+    val prohibitions = conversionDatabase.withDynSession {
       sql"""
           select s.segm_id, s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
           from segments s
@@ -345,11 +345,11 @@ class AssetDataImporter {
        """.as[(Long, Long, Long, Double, Double, Int, Int, Int)].list
     }
 
-    println(s"*** Fetched ${allLinks.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
+    println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.fetchVVHRoadlinks(allLinks.map(_._3).toSet)
+    val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._3).toSet)
     val groupSize = 10000
-    val groupedLinks = allLinks.grouped(groupSize).toList
+    val groupedLinks = prohibitions.grouped(groupSize).toList
     val totalGroupCount = groupedLinks.length
 
     OracleDatabase.withDynTransaction {
@@ -358,7 +358,7 @@ class AssetDataImporter {
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
 
-      println(s"*** Importing ${allLinks.length} prohibitions in $totalGroupCount groups of $groupSize each")
+      println(s"*** Importing ${prohibitions.length} prohibitions in $totalGroupCount groups of $groupSize each")
 
       groupedLinks.zipWithIndex.foreach { case (links, i) =>
         val startTime = DateTime.now()
