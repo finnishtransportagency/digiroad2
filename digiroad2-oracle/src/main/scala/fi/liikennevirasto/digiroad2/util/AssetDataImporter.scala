@@ -430,7 +430,9 @@ class AssetDataImporter {
       val expandedSegments = expandSegments(segments)
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
-        val prohibitionValues = segmentsPerSide.map { x => ProhibitionValue(x._7, Nil, roadLinkExceptions) }
+        val prohibitionValues = segmentsPerSide.map { x =>
+          val exceptionsForProhibition: Seq[Int] = validExceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3)
+          ProhibitionValue(x._7, Nil, exceptionsForProhibition) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
     }.toSeq ++
