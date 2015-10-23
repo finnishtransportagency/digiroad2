@@ -298,6 +298,20 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     result should be(Set(conversionResult1, conversionResult2))
   }
 
+  test("One sided exception splits two sided prohibition") {
+    val segment1 = (1l, 1l, 1l, 0.0, 1.0, 235, 2, 1)
+    val prohibitionSegments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val exceptions = Seq((1l, 1l, 8, 2), (1l, 1l, 9, 3))
+
+    val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
+
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Seq(8))))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Nil, Seq(9))))), 0.0, 1.0, None, None, None, None, false, 190))
+    result should be(Set(conversionResult1, conversionResult2))
+  }
+
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
 
   private def createMultiLinkLinearAsset(typeId: Int,

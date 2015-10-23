@@ -407,8 +407,8 @@ class AssetDataImporter {
     }
   }
 
-  private def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
-    if (segments.forall(_._8 == 1)) segments
+  private def expandSegments(segments: Seq[(Long, Long, Long, Double, Double, Int, Int, Int)], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Long, Double, Double, Int, Int, Int)] = {
+    if (segments.forall(_._8 == 1) && exceptionSideCodes.forall(_ == 1)) segments
     else {
       val (bothSided, oneSided) = segments.partition(_._8 == 1)
       val splitSegments = bothSided.flatMap { x => Seq(x.copy(_8 = 2), x.copy(_8 = 3)) }
@@ -424,10 +424,7 @@ class AssetDataImporter {
     val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
-      val roadLinkExceptions = validExceptions
-        .filter(_._2 == mmlId)
-        .map(_._3)
-      val expandedSegments = expandSegments(segments)
+      val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
 
       expandedSegments.groupBy(_._8).map { case (sideCode, segmentsPerSide) =>
         val prohibitionValues = segmentsPerSide.map { x =>
