@@ -250,7 +250,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   def setupTestProhibition(mmlId: Long, 
-                           prohibitionValues: Seq[ProhibitionValue]): Unit = {
+                           prohibitionValues: Set[ProhibitionValue]): Unit = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
@@ -281,7 +281,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
-    val fixtureProhibitionValues = Seq(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Nil))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Nil))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -291,7 +291,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
 
-      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
     }
   }
@@ -299,7 +299,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
-    val fixtureProhibitionValues = Seq(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -309,7 +309,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
 
-      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
     }
   }
@@ -317,7 +317,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period and exceptions") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
-    val fixtureProhibitionValues = Seq(
+    val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Seq(1, 2, 3)))
 
     runWithRollback {
@@ -328,8 +328,42 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
 
-      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
+    }
+  }
+
+  test("fetch multiple prohibitions") {
+    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val mmlId1 = 1l
+    val mmlId2 = 2l
+    val mmlId3 = 3l
+    val mmlId4 = 4l
+    val fixtureProhibitionValues1 = Set(
+      ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Seq(1, 2, 3)),
+      ProhibitionValue(typeId = 9, validityPeriods = Nil, exceptions = Seq(1, 2)))
+    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Nil, exceptions = Nil))
+    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Seq(1)))
+    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
+
+    runWithRollback {
+      setupTestProhibition(mmlId1, fixtureProhibitionValues1)
+      setupTestProhibition(mmlId2, fixtureProhibitionValues2)
+      setupTestProhibition(mmlId3, fixtureProhibitionValues3)
+      setupTestProhibition(mmlId4, fixtureProhibitionValues4)
+
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId1, mmlId2, mmlId3, mmlId4), "")
+
+      val sortedPersistedAssets = persistedAssets.sortBy(_.mmlId)
+      sortedPersistedAssets.size should be(4)
+      sortedPersistedAssets(0).mmlId should be(mmlId1)
+      sortedPersistedAssets(0).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues1)
+      sortedPersistedAssets(1).mmlId should be(mmlId2)
+      sortedPersistedAssets(1).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues2)
+      sortedPersistedAssets(2).mmlId should be(mmlId3)
+      sortedPersistedAssets(2).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues3)
+      sortedPersistedAssets(3).mmlId should be(mmlId4)
+      sortedPersistedAssets(3).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues4)
     }
   }
 }
