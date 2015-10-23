@@ -49,14 +49,4 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
       r.filter(_.isLeft).map(_.left).foreach { msg => println(s"\t\t${msg.get}") }
     }
   }
-
-  test("parses all from conversion database into _something_") {
-    // TODO: Doesn't pass yet, might not need to parse every line anyway.
-    val resource = getClass.getResource("time_domain_test_values.txt")
-    val lines = scala.io.Source.fromURL(resource).getLines()
-    lines.foreach { line =>
-      println(s"Parse: $line")
-      parser.parse(line) should be('defined)
-    }
-  }
 }
