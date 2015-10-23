@@ -204,6 +204,7 @@ trait OracleLinearAssetDao {
         select a.id, pos.mml_id, pos.side_code,
                pv.id, pv.type,
                pvp.type, pvp.start_hour, pvp.end_hour,
+               pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
@@ -213,31 +214,25 @@ trait OracleLinearAssetDao {
           join prohibition_value pv on pv.asset_id = a.id
           join #$idTableName i on i.id = pos.mml_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
+          left join PROHIBITION_EXCEPTION pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Int, Int, Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+        .as[(Long, Long, Int, Int, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
     }
-
-    val exceptions = MassQuery.withIds(assets.map(_._4.toLong).toSet) { idTableName =>
-      sql"""
-         select pe.PROHIBITION_VALUE_ID, pe.type
-         from PROHIBITION_EXCEPTION pe
-         join #$idTableName i on i.id = pe.prohibition_value_id
-      """.as[(Int, Int)].list
-    }.groupBy(_._1).mapValues(exceptions => exceptions.map(_._2))
 
     val groupedByAssets = assets.groupBy(_._1)
     val groupedByProhibition = groupedByAssets.mapValues(_.groupBy(_._4))
 
     groupedByProhibition.map { case (assetId, rowsByProhibitionId) =>
-      val (_, mmlId, sideCode, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
-      val prohibitionValues = rowsByProhibitionId.map { case (prohibitionId, rows) =>
+      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) = groupedByAssets(assetId).head
+      val prohibitionValues = rowsByProhibitionId.map { case (_, rows) =>
         val prohibitionType = rows.head._5
+        val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
           ProhibitionValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
-        }
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions.getOrElse(prohibitionId, Nil))
+        }.toSet
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }.toSeq
       PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
     }.toSeq

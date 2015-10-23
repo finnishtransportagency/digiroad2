@@ -20,7 +20,7 @@ case class NumericValue(value: Int) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Seq[ProhibitionValidityPeriod], exceptions: Seq[Int])
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ProhibitionValidityPeriod], exceptions: Set[Int])
 case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
   def and(b: ProhibitionValidityPeriod): ProhibitionValidityPeriod = {
     ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days))

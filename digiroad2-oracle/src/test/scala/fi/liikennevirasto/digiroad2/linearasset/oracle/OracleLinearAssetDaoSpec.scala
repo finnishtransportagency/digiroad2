@@ -281,7 +281,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Nil))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -299,7 +299,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -318,7 +318,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
     val mmlId = 1l
     val fixtureProhibitionValues = Set(
-      ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Seq(1, 2, 3)))
+      ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -340,11 +340,12 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val mmlId3 = 3l
     val mmlId4 = 4l
     val fixtureProhibitionValues1 = Set(
-      ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Seq(1, 2, 3)),
-      ProhibitionValue(typeId = 9, validityPeriods = Nil, exceptions = Seq(1, 2)))
-    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Nil, exceptions = Nil))
-    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Nil, exceptions = Seq(1)))
-    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Seq(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Nil))
+      ProhibitionValue(typeId = 10, Set(
+        ProhibitionValidityPeriod(12, 16, Weekday), ProhibitionValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3)),
+      ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2)))
+    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty))
+    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1)))
+    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
       setupTestProhibition(mmlId1, fixtureProhibitionValues1)
