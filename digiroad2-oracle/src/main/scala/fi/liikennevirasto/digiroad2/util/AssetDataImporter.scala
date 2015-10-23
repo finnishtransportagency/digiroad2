@@ -20,7 +20,6 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory
-import sun.plugin2.liveconnect.JSExceptions
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import slick.jdbc.StaticQuery.interpolation
