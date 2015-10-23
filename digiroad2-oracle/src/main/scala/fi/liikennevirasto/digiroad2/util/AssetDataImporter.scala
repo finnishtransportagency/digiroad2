@@ -348,9 +348,6 @@ class AssetDataImporter {
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
     val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._3).toSet)
-    val groupSize = 10000
-    val groupedProhibitions = prohibitions.grouped(groupSize).toList
-    val totalGroupCount = groupedProhibitions.length
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
@@ -358,48 +355,46 @@ class AssetDataImporter {
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
 
-      println(s"*** Importing ${prohibitions.length} prohibitions in $totalGroupCount groups of $groupSize each")
+      println(s"*** Importing ${prohibitions.length} prohibitions")
 
-      groupedProhibitions.zipWithIndex.foreach { case (links, i) =>
-        val startTime = DateTime.now()
-        val convertedProhibitions = convertToProhibitions(links, roadLinks, Nil)
-        convertedProhibitions.foreach {
-          case Right(asset) =>
-            val assetId = Sequences.nextPrimaryKeySeqValue
-            assetPS.setLong(1, assetId)
-            assetPS.setInt(2, typeId)
-            assetPS.addBatch()
+      val conversionResults = convertToProhibitions(prohibitions, roadLinks, Nil)
+      conversionResults.foreach {
+        case Right(asset) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, typeId)
+          assetPS.addBatch()
 
-            val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-            lrmPositionPS.setLong(1, lrmPositionId)
-            lrmPositionPS.setLong(2, asset.mmlId)
-            lrmPositionPS.setDouble(3, asset.startMeasure)
-            lrmPositionPS.setDouble(4, asset.endMeasure)
-            lrmPositionPS.setInt(5, asset.sideCode)
-            lrmPositionPS.addBatch()
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, asset.mmlId)
+          lrmPositionPS.setDouble(3, asset.startMeasure)
+          lrmPositionPS.setDouble(4, asset.endMeasure)
+          lrmPositionPS.setInt(5, asset.sideCode)
+          lrmPositionPS.addBatch()
 
-            assetLinkPS.setLong(1, assetId)
-            assetLinkPS.setLong(2, lrmPositionId)
-            assetLinkPS.addBatch()
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
 
-            val value: Prohibitions = asset.value.get.asInstanceOf[Prohibitions]
-            value.prohibitions.foreach { prohibitionValue =>
-              val valueId = Sequences.nextPrimaryKeySeqValue
-              valuePS.setLong(1, valueId)
-              valuePS.setLong(2, assetId)
-              valuePS.setLong(3, prohibitionValue.typeId)
-              valuePS.addBatch()
-            }
-          case Left(validationError) => println(s"*** $validationError")
-        }
-
-        val executedAssetInserts = assetPS.executeBatch().length
-        lrmPositionPS.executeBatch()
-        assetLinkPS.executeBatch()
-        valuePS.executeBatch()
-
-        println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+          val value: Prohibitions = asset.value.get.asInstanceOf[Prohibitions]
+          value.prohibitions.foreach { prohibitionValue =>
+            val valueId = Sequences.nextPrimaryKeySeqValue
+            valuePS.setLong(1, valueId)
+            valuePS.setLong(2, assetId)
+            valuePS.setLong(3, prohibitionValue.typeId)
+            valuePS.addBatch()
+          }
+        case Left(validationError) => println(s"*** $validationError")
       }
+
+      val executedAssetInserts = assetPS.executeBatch().length
+      lrmPositionPS.executeBatch()
+      assetLinkPS.executeBatch()
+      valuePS.executeBatch()
+
+      println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)}")
+
       assetPS.close()
       lrmPositionPS.close()
       assetLinkPS.close()
