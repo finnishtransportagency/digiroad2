@@ -327,8 +327,9 @@ class AssetDataImporter {
   }
 
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
-    val municipality = 235
+    val municipality = 91
     val conversionTypeId = 29
+    val exceptionTypeId = 1
     val typeId = 190
     val vvhClient = new VVHClient(vvhServiceHost)
 
@@ -345,6 +346,16 @@ class AssetDataImporter {
        """.as[(Long, Long, Long, Double, Double, Int, Int, Int)].list
     }
 
+    val exceptions = conversionDatabase.withDynSession {
+      sql"""
+          select s.segm_id, t.mml_id, s.arvo, s.puoli
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $exceptionTypeId
+          and kunta_nro = $municipality
+       """.as[(Long, Long, Int, Int)].list
+    }
+
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
     val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._3).toSet)
@@ -354,10 +365,11 @@ class AssetDataImporter {
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
+      val exceptionPS = dynamicSession.prepareStatement("insert into prohibition_exception (id, prohibition_value_id, type) values (?, ?, ?)")
 
       println(s"*** Importing ${prohibitions.length} prohibitions")
 
-      val conversionResults = convertToProhibitions(prohibitions, roadLinks, Nil)
+      val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
       conversionResults.foreach {
         case Right(asset) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
@@ -384,6 +396,13 @@ class AssetDataImporter {
             valuePS.setLong(2, assetId)
             valuePS.setLong(3, prohibitionValue.typeId)
             valuePS.addBatch()
+            prohibitionValue.exceptions.foreach { exceptionType =>
+              val exceptionId = Sequences.nextPrimaryKeySeqValue
+              exceptionPS.setLong(1, exceptionId)
+              exceptionPS.setLong(2, valueId)
+              exceptionPS.setInt(3, exceptionType)
+              exceptionPS.addBatch()
+            }
           }
         case Left(validationError) => println(s"*** $validationError")
       }
@@ -392,6 +411,7 @@ class AssetDataImporter {
       lrmPositionPS.executeBatch()
       assetLinkPS.executeBatch()
       valuePS.executeBatch()
+      exceptionPS.executeBatch()
 
       println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)}")
 
@@ -399,6 +419,7 @@ class AssetDataImporter {
       lrmPositionPS.close()
       assetLinkPS.close()
       valuePS.close()
+      exceptionPS.close()
     }
   }
 
