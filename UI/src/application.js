@@ -318,22 +318,6 @@ var URLRouter = function(map, backend, models) {
       }
     },
     {
-      typeId: assetType.numberOfLanes,
-      singleElementEventCategory: 'laneCount',
-      multiElementEventCategory: 'laneCounts',
-      layerName: 'numberOfLanes',
-      title: 'Kaistojen lukumäärä',
-      newTitle: 'Uusi kaistojen lukumäärä',
-      className: 'lane-count',
-      unit: 'kpl / suunta',
-      isSeparable: true,
-      editControlLabels: {
-        title: 'Lukumäärä',
-        enabled: 'Kaistojen lukumäärä / suunta',
-        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
-      }
-    },
-    {
       typeId: assetType.massTransitLane,
       defaultValue: 1,
       singleElementEventCategory: 'massTransitLane',
@@ -369,7 +353,24 @@ var URLRouter = function(map, backend, models) {
     }
   ];
 
-  var experimentalAssetSpecs = [];
+  var experimentalAssetSpecs = [
+    {
+      typeId: assetType.numberOfLanes,
+      singleElementEventCategory: 'laneCount',
+      multiElementEventCategory: 'laneCounts',
+      layerName: 'numberOfLanes',
+      title: 'Kaistojen lukumäärä',
+      newTitle: 'Uusi kaistojen lukumäärä',
+      className: 'lane-count',
+      unit: 'kpl / suunta',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'Lukumäärä',
+        enabled: 'Kaistojen lukumäärä / suunta',
+        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
+      }
+    }
+  ];
 
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
