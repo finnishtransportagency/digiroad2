@@ -198,9 +198,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def valueToApi(value: Option[Value]) = {
     value match {
       case Some(Prohibitions(x)) => x.map { prohibitionValue =>
-        Map("exceptions" -> prohibitionValue.exceptions,
-            "typeId" -> prohibitionValue.typeId,
-            "validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
+        val exceptions = prohibitionValue.exceptions.toList match {
+          case Nil => Map()
+          case items => Map("exceptions" -> items)
+        }
+        val validityPeriods = prohibitionValue.validityPeriods.toList match {
+          case Nil => Map()
+          case _ => Map("validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
+        }
+        Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case _ => value.map(_.toJson)
     }
