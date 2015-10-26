@@ -6,7 +6,7 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
-import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, ProhibitionValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, Prohibitions, ProhibitionValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
@@ -442,11 +442,13 @@ class AssetDataImporter {
   }
 
   def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+    val timeDomainParser = new TimeDomainParser
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._6) }
     val segmentsByMmlId = validSegments.groupBy(_._2)
     val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
     val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
+
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
@@ -454,8 +456,9 @@ class AssetDataImporter {
 
       expandedSegments.groupBy(_._7).map { case (sideCode, segmentsPerSide) =>
         val prohibitionValues = segmentsPerSide.map { x =>
+          val validityPeriods = x._8.toSet.flatMap { timeDomainString: String => timeDomainParser.parse(timeDomainString).filter(_.isRight).map(_.right.get) }
           val exceptionsForProhibition = expandedExceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
-          ProhibitionValue(x._6, Set.empty, exceptionsForProhibition) }
+          ProhibitionValue(x._6, validityPeriods, exceptionsForProhibition) }
         Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190))
       }
     }.toSeq ++

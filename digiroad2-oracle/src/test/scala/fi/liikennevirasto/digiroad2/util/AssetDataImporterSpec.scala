@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, PersistedLinearAsset, LinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
@@ -337,6 +337,19 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
     val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
     result should be(Set(conversionResult1, conversionResult2))
+  }
+
+  test("Parse validity period into prohibition") {
+    val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7}]*[(t2){d5}]]"))
+    val prohibitionSegments = Seq(segment)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+
+    val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
+
+    val expectedValidityPeriods = Set(ProhibitionValidityPeriod(8, 15, ValidityPeriodDayOfWeek.Weekday))
+    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    result should be(Set(expectedConversionResult))
   }
 
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
