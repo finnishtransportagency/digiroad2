@@ -29,13 +29,7 @@ trait LinearAssetOperations {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     val mmlIds = roadLinks.map(_.mmlId)
 
-    val existingAssets = withDynTransaction {
-      if (typeId == 190) {
-        dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
-      } else {
-        dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-      }
-    }.filterNot(_.expired).groupBy(_.mmlId)
+    val existingAssets = fetchLinearAssets(typeId, mmlIds)
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
@@ -45,18 +39,24 @@ trait LinearAssetOperations {
 
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
-    val mmlIds = roadLinks.map(_.mmlId).toList
+    val mmlIds = roadLinks.map(_.mmlId)
 
-    val linearAssets = withDynTransaction {
-      dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-        .filterNot(_.expired)
-        .groupBy(_.mmlId)
-    }
+    val linearAssets = fetchLinearAssets(typeId, mmlIds)
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
 
     filledTopology
+  }
+
+  private def fetchLinearAssets(typeId: Int, mmlIds: Seq[Long]): Map[Long, Seq[PersistedLinearAsset]] = {
+    withDynTransaction {
+      if (typeId == 190) {
+        dao.fetchProhibitionsByMmlIds(typeId, mmlIds, valuePropertyId)
+      } else {
+        dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+      }
+    }.filterNot(_.expired).groupBy(_.mmlId)
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {

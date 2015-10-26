@@ -82,6 +82,21 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
   }
 
+  test("Municipality fetch dispatches to dao based on asset type id") {
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadLinkWithProperties(
+        1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None)))
+
+    when(mockLinearAssetDao.fetchProhibitionsByMmlIds(190, Seq(1l), "mittarajoitus")).thenReturn(Nil)
+    PassThroughService.getByMunicipality(190, 235)
+    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(190, Seq(1l), "mittarajoitus")
+
+    when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")).thenReturn(Nil)
+    PassThroughService.getByMunicipality(100, 235)
+    verify(mockLinearAssetDao).fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")
+  }
+
   test("Separate linear asset") {
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
