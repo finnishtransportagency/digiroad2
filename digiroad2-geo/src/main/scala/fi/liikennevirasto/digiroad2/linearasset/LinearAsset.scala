@@ -25,6 +25,13 @@ case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: Validit
   def and(b: ProhibitionValidityPeriod): ProhibitionValidityPeriod = {
     ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days))
   }
+  def duration(): Int = {
+    if (endHour > startHour) {
+      endHour - startHour
+    } else {
+      24 - startHour + endHour
+    }
+  }
 }
 
 sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }

@@ -6,6 +6,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -180,6 +181,27 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def toTimeDomain(validityPeriod: ProhibitionValidityPeriod) = {
+    val dayOfWeek = validityPeriod.days match {
+      case Saturday => "t7"
+      case Sunday => "t1"
+      case _ => ""
+    }
+
+    s"[(${dayOfWeek}h${validityPeriod.startHour}){h${validityPeriod.duration()}}]"
+  }
+
+  def valueToApi(value: Option[Value]) = {
+    value match {
+      case Some(Prohibitions(x)) => x.map { prohibitionValue =>
+        Map("exceptions" -> prohibitionValue.exceptions,
+            "typeId" -> prohibitionValue.typeId,
+            "validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
+      }
+      case _ => value.map(_.toJson)
+    }
+  }
+
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
@@ -191,7 +213,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         Modification(link.modifiedDateTime, None))
       Map("id" -> link.id,
         "points" -> link.geometry,
-        "value" -> link.value,
+        "value" -> valueToApi(link.value),
         "side_code" -> link.sideCode.value,
         "mmlId" -> link.mmlId,
         "startMeasure" -> link.startMeasure,
@@ -223,6 +245,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "railway_crossings" => PointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
         case "vehicle_allowed" => ReadOnlyLinearAssetService.getByMunicipality(1, municipalityNumber)
         case "vehicle_not_allowed" => ReadOnlyLinearAssetService.getByMunicipality(29, municipalityNumber)
+        case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
