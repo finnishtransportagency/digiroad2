@@ -360,7 +360,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val expectedConversionError = Left("Parsing time domain string [[(h8){h7 failed with message: end of input")
+    val expectedConversionError = Left("Parsing time domain string [[(h8){h7 failed with message: end of input. Dropped prohibition 1.")
     result should be(Set(expectedConversionError))
   }
 

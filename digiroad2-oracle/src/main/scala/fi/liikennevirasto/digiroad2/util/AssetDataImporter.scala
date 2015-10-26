@@ -446,7 +446,7 @@ class AssetDataImporter {
     segments.map { segment =>
       val validityPeriodParsingResults: Seq[Either[String, ProhibitionValidityPeriod]] = segment._8.toSeq.flatMap { timeDomainString: String => timeDomainParser.parse(timeDomainString) }
       if (validityPeriodParsingResults.exists(_.isLeft)) {
-        Left(validityPeriodParsingResults.filter(_.isLeft).map(_.left.get))
+        Left(validityPeriodParsingResults.filter(_.isLeft).map{ result => s"${result.left.get}. Dropped prohibition ${segment._1}." })
       } else {
         val validityPeriods = validityPeriodParsingResults.map(_.right.get)
         val exceptionsForProhibition = exceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
