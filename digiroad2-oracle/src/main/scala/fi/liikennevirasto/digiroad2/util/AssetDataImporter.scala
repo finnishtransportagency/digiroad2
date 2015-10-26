@@ -338,12 +338,12 @@ class AssetDataImporter {
 
     val prohibitions = conversionDatabase.withDynSession {
       sql"""
-          select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli
+          select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli, s.aika
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
           and kunta_nro = $municipality
-       """.as[(Long, Long, Double, Double, Int, Int, Int)].list
+       """.as[(Long, Long, Double, Double, Int, Int, Int, Option[String])].list
     }
 
     val exceptions = conversionDatabase.withDynSession {
@@ -423,7 +423,7 @@ class AssetDataImporter {
     }
   }
 
-  private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int)], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int)] = {
+  private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])] = {
     if (segments.forall(_._7 == 1) && exceptionSideCodes.forall(_ == 1)) segments
     else {
       val (bothSided, oneSided) = segments.partition(_._7 == 1)
@@ -441,7 +441,7 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._6) }
     val segmentsByMmlId = validSegments.groupBy(_._2)

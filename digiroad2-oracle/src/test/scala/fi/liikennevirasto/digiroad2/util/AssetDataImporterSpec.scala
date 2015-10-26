@@ -167,10 +167,22 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
+  private def prohibitionSegment(id: Long = 1l,
+                                 mmlId: Long = 1l,
+                                 startMeasure: Double = 0.0,
+                                 endMeasure: Double = 1.0,
+                                 municipality: Int = 235,
+                                 value: Int = 2,
+                                 sideCode: Int = 1,
+                                 validityPeriod: Option[String] = None):
+  (Long, Long, Double, Double, Int, Int, Int, Option[String]) = {
+    (id, mmlId, startMeasure, endMeasure, municipality, value, sideCode, validityPeriod)
+  }
+
   test("Two prohibition segments on the same link produces one asset with two prohibition values") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 1)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 4, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment()
+    val segment2 = prohibitionSegment(id = 2l, value = 4)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
@@ -181,9 +193,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Two prohibition segments on the same link with different side codes produces two assets with one prohibition value") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 2)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 4, 3)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment(sideCode = 2)
+    val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
@@ -195,9 +207,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Two-sided prohibition segment and one-sided prohibition segment produces two assets with combined prohibitions on one side") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 1)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 4, 3)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment()
+    val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
@@ -209,8 +221,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Segment without associated road link from VVH is dropped") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
     val roadLinks: Seq[VVHRoadlink] = Nil
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
@@ -219,9 +231,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Drop prohibition segments of type maintenance drive and drive to plot") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 21, 1)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 22, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment(value = 21)
+    val segment2 = prohibitionSegment(id = 2l, value = 22)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
@@ -231,8 +243,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Adjust segment measurements to road link") {
-    val segment1 = (1l, 1l, 0.0, 0.5, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment(endMeasure = 0.5)
+    val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
 
@@ -243,8 +255,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Include exception in prohibition value") {
-    val segment1 = (1l, 1l, 0.0, 0.5, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 1))
@@ -256,8 +268,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Exceptions that do not relate to prohibition are not included") {
-    val segment1 = (1l, 1l, 0.0, 0.5, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 2l, 8, 1))
@@ -270,8 +282,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Filter out exceptions that allow all traffic") {
-    val segment1 = (1l, 1l, 0.0, 0.5, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 1, 1))
@@ -284,9 +296,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Exception affects prohibition with same side code") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 2)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 4, 3)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment(sideCode = 2)
+    val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 2))
@@ -299,8 +311,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("One sided exception splits two sided prohibition") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 1)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1)
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 2), (1l, 1l, 9, 3))
@@ -313,9 +325,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Two sided exceptions affect one sided prohibitions") {
-    val segment1 = (1l, 1l, 0.0, 1.0, 235, 2, 2)
-    val segment2 = (2l, 1l, 0.0, 1.0, 235, 4, 3)
-    val prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int)] = Seq(segment1, segment2)
+    val segment1 = prohibitionSegment(sideCode = 2)
+    val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
+    val prohibitionSegments = Seq(segment1, segment2)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
     val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 1))
