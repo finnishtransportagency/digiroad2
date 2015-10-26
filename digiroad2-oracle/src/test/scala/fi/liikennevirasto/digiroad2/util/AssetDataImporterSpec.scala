@@ -352,6 +352,18 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     result should be(Set(expectedConversionResult))
   }
 
+  test("Report parse error from time domain parsing") {
+    val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7"))
+    val prohibitionSegments = Seq(segment)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+
+    val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
+
+    val expectedConversionError = Left("Parsing time domain string [[(h8){h7 failed with message: end of input")
+    result should be(Set(expectedConversionError))
+  }
+
   case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
 
   private def createMultiLinkLinearAsset(typeId: Int,
