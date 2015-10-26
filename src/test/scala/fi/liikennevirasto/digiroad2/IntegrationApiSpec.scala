@@ -58,5 +58,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     integrationApi.toTimeDomain(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday)) should be("[(h23){h1}]")
     integrationApi.toTimeDomain(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7h21){h10}]")
     integrationApi.toTimeDomain(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1h21){h10}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7h0){h24}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1h0){h24}]")
   }
 }

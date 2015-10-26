@@ -6,7 +6,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Sunday, Saturday}
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -181,14 +181,18 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def toTimeDomain(validityPeriod: ProhibitionValidityPeriod) = {
+  def toTimeDomain(validityPeriod: ProhibitionValidityPeriod): String = {
     val dayOfWeek = validityPeriod.days match {
       case Saturday => "t7"
       case Sunday => "t1"
       case _ => ""
     }
-
-    s"[(${dayOfWeek}h${validityPeriod.startHour}){h${validityPeriod.duration()}}]"
+    val everyWeekday = validityPeriod.days == Weekday && validityPeriod.startHour == 0 && validityPeriod.endHour == 24
+    if(everyWeekday) {
+      s"[(t2){d5}]"
+    } else {
+      s"[(${dayOfWeek}h${validityPeriod.startHour}){h${validityPeriod.duration()}}]"
+    }
   }
 
   def valueToApi(value: Option[Value]) = {
