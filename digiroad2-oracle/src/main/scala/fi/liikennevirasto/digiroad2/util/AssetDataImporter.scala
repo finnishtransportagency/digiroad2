@@ -366,6 +366,7 @@ class AssetDataImporter {
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
       val exceptionPS = dynamicSession.prepareStatement("insert into prohibition_exception (id, prohibition_value_id, type) values (?, ?, ?)")
+      val validityPeriodPS = dynamicSession.prepareStatement("insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (?, ?, ?, ?, ?)")
 
       println(s"*** Importing ${prohibitions.length} prohibitions")
 
@@ -403,6 +404,15 @@ class AssetDataImporter {
               exceptionPS.setInt(3, exceptionType)
               exceptionPS.addBatch()
             }
+            prohibitionValue.validityPeriods.foreach { validityPeriod =>
+              val validityPeriodId = Sequences.nextPrimaryKeySeqValue
+              validityPeriodPS.setLong(1, validityPeriodId)
+              validityPeriodPS.setLong(2, valueId)
+              validityPeriodPS.setInt(3, validityPeriod.days.value)
+              validityPeriodPS.setInt(4, validityPeriod.startHour)
+              validityPeriodPS.setInt(5, validityPeriod.endHour)
+              validityPeriodPS.addBatch()
+            }
           }
         case Left(validationError) => println(s"*** $validationError")
       }
@@ -412,6 +422,7 @@ class AssetDataImporter {
       assetLinkPS.executeBatch()
       valuePS.executeBatch()
       exceptionPS.executeBatch()
+      validityPeriodPS.executeBatch()
 
       println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)}")
 
@@ -420,6 +431,7 @@ class AssetDataImporter {
       assetLinkPS.close()
       valuePS.close()
       exceptionPS.close()
+      validityPeriodPS.close()
     }
   }
 
