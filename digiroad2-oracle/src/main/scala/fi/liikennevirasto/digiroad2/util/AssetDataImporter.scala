@@ -450,16 +450,18 @@ class AssetDataImporter {
     }
   }
 
-  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], mmlId: Long, sideCode: Int): Seq[Either[Seq[String], ProhibitionValue]] = {
+  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], mmlId: Long, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
     val timeDomainParser = new TimeDomainParser
     segments.map { segment =>
-      val validityPeriodParsingResults: Seq[Either[String, ProhibitionValidityPeriod]] = segment._8.toSeq.flatMap { timeDomainString: String => timeDomainParser.parse(timeDomainString) }
-      if (validityPeriodParsingResults.exists(_.isLeft)) {
-        Left(validityPeriodParsingResults.filter(_.isLeft).map{ result => s"${result.left.get}. Dropped prohibition ${segment._1}." })
-      } else {
-        val validityPeriods = validityPeriodParsingResults.map(_.right.get)
-        val exceptionsForProhibition = exceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
-        Right(ProhibitionValue(segment._6, validityPeriods.toSet, exceptionsForProhibition))
+      val exceptionsForProhibition = exceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
+
+      segment._8 match {
+        case None => Right(ProhibitionValue(segment._6, Set.empty, exceptionsForProhibition))
+        case Some(timeDomainString) =>
+          timeDomainParser.parse(timeDomainString) match {
+            case Left(err) => Left(s"${err}. Dropped prohibition ${segment._1}.")
+            case Right(periods) => Right(ProhibitionValue(segment._6, periods.toSet, exceptionsForProhibition))
+          }
       }
     }
   }
@@ -477,12 +479,12 @@ class AssetDataImporter {
       val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._7))
 
       expandedSegments.groupBy(_._7).flatMap { case (sideCode, segmentsPerSide) =>
-        val prohibitionResults: Seq[Either[Seq[String], ProhibitionValue]] = parseProhibitionValues(segmentsPerSide, expandedExceptions, mmlId, sideCode)
-        val linearAssets: Seq[Either[String, PersistedLinearAsset]] = prohibitionResults.filter(_.isRight).map(_.right.get) match {
+        val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, mmlId, sideCode)
+        val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
           case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190)))
         }
-        val parseErrors: Seq[Either[String, PersistedLinearAsset]] = prohibitionResults.filter(_.isLeft).flatMap(_.left.get).map(Left(_))
+        val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
       }
     }.toSeq ++

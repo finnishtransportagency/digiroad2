@@ -7,18 +7,15 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
   val parser = new TimeDomainParser
 
   test("simple") {
-    parser.parse("[(h6){h4}]") should be(Seq(Right(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday))))
-    parser.parse("[(h23){h1}]") should be(Seq(Right(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday))))
-    parser.parse("[(t7h21){h10}]") should be(Seq(Right(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
-    parser.parse("[(t2){d5}]") should be(Seq(Right(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday))))
-    parser.parse("[(t7h21){h10}]") should be(Seq(Right(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
+    parser.parse("[(h6){h4}]") should be(Right(Seq(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday))))
+    parser.parse("[(h23){h1}]") should be(Right(Seq(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday))))
+    parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
+    parser.parse("[(t2){d5}]") should be(Right(Seq(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday))))
+    parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
   }
 
   test("and") {
-    parser.parse("[[(h8){h8}]*[(t2){d5}]]") should be(Seq(Right(ProhibitionValidityPeriod(8, 16, ValidityPeriodDayOfWeek.Weekday))))
-  }
-
-  test("or") {
+    parser.parse("[[(h8){h8}]*[(t2){d5}]]") should be(Right(Seq(ProhibitionValidityPeriod(8, 16, ValidityPeriodDayOfWeek.Weekday))))
   }
 
   test("* distributes over its operands") {
@@ -34,6 +31,10 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
       Right(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Saturday)),
       Right(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday))
     ))
+    parser.parse("[[(t2){d5}]*[[(h7){h2}]+[(h15){h3}]]]") should be(Right(Seq(
+      ProhibitionValidityPeriod(7, 9, ValidityPeriodDayOfWeek.Weekday),
+      ProhibitionValidityPeriod(15, 18, ValidityPeriodDayOfWeek.Weekday)
+    )))
   }
 
   test("doesn't crash") {
@@ -43,12 +44,11 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
     val results = lines.map { line =>
       (line, parser.parse(line))
     }
-    println(s"Amount of successfully parsed time domain strings: ${results.count { x => x._2.forall(_.isRight) }}")
-    println(s"Amount of failed parsed time domain strings: ${results.count { x => x._2.exists(_.isLeft) }}")
+    println(s"Amount of successfully parsed time domain strings: ${results.count { x => x._2.isRight }}")
+    println(s"Amount of failed parsed time domain strings: ${results.count { x => x._2.isLeft }}")
     println(s"Failed time domain strings: ")
-    results.filter { x => x._2.exists(_.isLeft) }.foreach { case(input, r) =>
-      println(s"\tParsing failed on input: $input. Failures: ")
-      r.filter(_.isLeft).map(_.left).foreach { msg => println(s"\t\t${msg.get}") }
+    results.filter { x => x._2.isLeft }.foreach { case (input, r) =>
+      println(s"\tParsing failed on input: $input due to ${r.left.get}")
     }
   }
 }
