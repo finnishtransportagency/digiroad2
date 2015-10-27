@@ -45,7 +45,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(1), 0.0, 15.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
