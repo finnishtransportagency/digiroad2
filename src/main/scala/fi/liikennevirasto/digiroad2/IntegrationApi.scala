@@ -185,14 +185,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     val dayOfWeek = validityPeriod.days match {
       case Saturday => "t7"
       case Sunday => "t1"
-      case _ => ""
+      case _ => "t2"
     }
-    val everyWeekday = validityPeriod.days == Weekday && validityPeriod.startHour == 0 && validityPeriod.endHour == 24
-    if(everyWeekday) {
-      s"[(t2){d5}]"
-    } else {
-      s"[(${dayOfWeek}h${validityPeriod.startHour}){h${validityPeriod.duration()}}]"
+    val durationString = validityPeriod.days match {
+      case ValidityPeriodDayOfWeek.Weekday => s"d5h${validityPeriod.duration()}"
+      case _ => s"h${validityPeriod.duration()}"
     }
+    s"[(${dayOfWeek}h${validityPeriod.startHour}){$durationString}]"
   }
 
   def valueToApi(value: Option[Value]) = {
