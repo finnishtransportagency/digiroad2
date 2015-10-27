@@ -22,6 +22,8 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
   }
 
   test("* distributes over its operands") {
+    parser.parse("[(t2){d5}]*[(h6){h4}]") should be(Seq(Right(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday))))
+    parser.parse("[(t2){d5}]*[(h23){h1}]") should be(Seq(Right(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday))))
     parser.parse("[(t7){d1}]*[(h5){h4}]") should be(Seq(Right(ProhibitionValidityPeriod(5, 9, ValidityPeriodDayOfWeek.Saturday))))
     parser.parse("[[(t2){d5}]+[(t1){d1}]]*[(h5){h4}]") should be(Seq(
       Right(ProhibitionValidityPeriod(5, 9, ValidityPeriodDayOfWeek.Weekday)),
