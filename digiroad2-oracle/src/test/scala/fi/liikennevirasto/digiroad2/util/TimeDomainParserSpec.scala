@@ -7,11 +7,20 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
   val parser = new TimeDomainParser
 
   test("simple") {
-    parser.parse("[(h6){h4}]") should be(Right(Seq(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday))))
-    parser.parse("[(h23){h1}]") should be(Right(Seq(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday))))
     parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
     parser.parse("[(t2){d5}]") should be(Right(Seq(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday))))
     parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
+  }
+
+  test("validity period without date specification spans over all dates") {
+    parser.parse("[(h6){h4}]") should be(Right(Seq(
+      ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday),
+      ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Saturday),
+      ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Sunday))))
+    parser.parse("[(h23){h1}]") should be(Right(Seq(
+      ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday),
+      ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Saturday),
+      ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Sunday))))
   }
 
   test("and") {

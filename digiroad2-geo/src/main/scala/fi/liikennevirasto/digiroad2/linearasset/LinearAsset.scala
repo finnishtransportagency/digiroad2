@@ -22,8 +22,12 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
 }
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ProhibitionValidityPeriod], exceptions: Set[Int])
 case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
-  def and(b: ProhibitionValidityPeriod): ProhibitionValidityPeriod = {
-    ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days))
+  def and(b: ProhibitionValidityPeriod): Option[ProhibitionValidityPeriod] = {
+    if (overlaps(b)) {
+      Some(ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
+    } else {
+      None
+    }
   }
   def duration(): Int = {
     if (endHour > startHour) {
@@ -31,6 +35,16 @@ case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: Validit
     } else {
       24 - startHour + endHour
     }
+  }
+  private def overlaps(b: ProhibitionValidityPeriod): Boolean = {
+    ValidityPeriodDayOfWeek.overlap(days, b.days) && hoursOverlap(b)
+  }
+  private def hoursOverlap(b: ProhibitionValidityPeriod): Boolean = {
+    liesInBetween(startHour, (b.startHour, b.endHour)) ||
+    liesInBetween(b.startHour, (startHour, endHour))
+  }
+  private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
+    hour >= interval._1 && hour <= interval._2
   }
 }
 
@@ -50,6 +64,11 @@ object ValidityPeriodDayOfWeek {
     case (Weekday, d) => d
     case (a, b) if a == b => a
     case (_, _) => Unknown
+  }
+  def overlap: PartialFunction[(ValidityPeriodDayOfWeek, ValidityPeriodDayOfWeek), Boolean] = {
+    case (Unknown, _) => true
+    case (_, Unknown) => true
+    case (a, b) => a == b
   }
 
   case object Weekday extends ValidityPeriodDayOfWeek { val value = 1 }

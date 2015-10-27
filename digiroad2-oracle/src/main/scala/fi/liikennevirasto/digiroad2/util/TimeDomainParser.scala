@@ -46,7 +46,10 @@ class TimeDomainParser {
       time match {
         case (None, Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
-          Right(Seq(ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday)))
+          Right(Seq(
+            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday),
+            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Saturday),
+            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Sunday)))
         case (None, Time(TimeUnit.DayOfWeek, day)) =>
           val days = durationToDays(day, duration)
           days.fold(err => Left(err), ds => Right(ds.map { day => ProhibitionValidityPeriod(0, 24, day) }))
@@ -74,9 +77,8 @@ class TimeDomainParser {
       }
     }
 
-    def expr: Parser[Expr] = term ~ rep(or) ^^ { case a~b => (a /: b)((acc,f) => f(acc)) }
-    def or: Parser[Expr => Expr] = '+' ~ term ^^ { case '+' ~ b => Or(_, b) }
-    def term: Parser[Expr] = factor ~ rep(and) ^^ { case a~b => (a /: b)((acc,f) => f(acc)) }
+    def expr: Parser[Expr] = factor ~ rep(or | and) ^^ { case a~b => (a /: b)((acc,f) => f(acc)) }
+    def or: Parser[Expr => Expr] = '+' ~ factor ^^ { case '+' ~ b => Or(_, b) }
     def and: Parser[Expr => Expr] = '*' ~ factor ^^ { case '*' ~ b => And(_, b) }
     def factor: Parser[Expr] = spec ^^ Scalar | '[' ~> expr <~ ']'
 
@@ -98,7 +100,7 @@ class TimeDomainParser {
 
     private def distribute(left: Either[String, Seq[ProhibitionValidityPeriod]], right: Either[String, Seq[ProhibitionValidityPeriod]]): Either[String, Seq[ProhibitionValidityPeriod]] = {
       (left, right) match {
-        case (Right(ls), Right(rs)) => Right(ls.flatMap { l => rs.map { r => l.and(r) } })
+        case (Right(ls), Right(rs)) => Right(ls.flatMap { l => rs.flatMap { r => l.and(r) } })
         case (Left(errLeft), Left(errRight)) => Left(errLeft ++ errRight)
         case (Left(err), _) => Left(err)
         case (_, Left(err)) => Left(err)
