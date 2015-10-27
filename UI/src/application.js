@@ -367,25 +367,24 @@ var URLRouter = function(map, backend, models) {
       },
       elementType: 'dropdown',
       possibleValues: [100, 80, 70, 60]
-    },
-    {
-      typeId: assetType.prohibition,
-      singleElementEventCategory: 'prohibition',
-      multiElementEventCategory: 'prohibitions',
-      layerName: 'prohibition',
-      title: 'Ajoneuvokohtaiset rajoitukset',
-      newTitle: 'Uusi ajoneuvokohtainen rajoitus',
-      className: 'prohibition',
-      isSeparable: true,
-      editControlLabels: {
-        title: 'Rajoitus',
-        enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta'
-      }
     }
   ];
 
-  var experimentalAssetSpecs = [];
+  var experimentalAssetSpecs = [{
+    typeId: assetType.prohibition,
+    singleElementEventCategory: 'prohibition',
+    multiElementEventCategory: 'prohibitions',
+    layerName: 'prohibition',
+    title: 'Ajoneuvokohtaiset rajoitukset',
+    newTitle: 'Uusi ajoneuvokohtainen rajoitus',
+    className: 'prohibition',
+    isSeparable: true,
+    editControlLabels: {
+      title: 'Rajoitus',
+      enabled: 'Rajoitus',
+      disabled: 'Ei rajoitusta'
+    }
+  }];
 
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
