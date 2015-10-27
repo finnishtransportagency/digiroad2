@@ -7,14 +7,14 @@
         formElem = dropDownFormElement(unit);
         break;
       case 'prohibition':
-        formElem = prohibitionFormElement(unit);
+        return prohibitionFormElements(editControlLabels, className, defaultValue, elementType, possibleValues);
         break;
       default:
         formElem = inputFormElement(unit);
     }
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
-      bindEvents: _.partial(bindEvents, formElem.inputElementValue)
+      bindEvents: _.partial(bindEvents, formElem.inputElementValue, formElem.bindEvents)
     };
 
     function generateClassName(sideCode) {
@@ -55,7 +55,7 @@
         '</div>';
     }
 
-    function bindEvents(inputElementValue, rootElement, selectedLinearAsset, sideCode) {
+    function bindEvents(inputElementValue, childBindEvents, rootElement, selectedLinearAsset, sideCode) {
       var inputElement = rootElement.find('.input-unit-combination .' + generateClassName(sideCode));
       var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
       var valueSetters = {
@@ -83,6 +83,7 @@
           setValue(value);
         }
       });
+      childBindEvents(rootElement, generateClassName(sideCode), possibleValues);
     }
 
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
@@ -99,7 +100,8 @@
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
-      measureInput: measureInput
+      measureInput: measureInput,
+      bindEvents: function(){}
     };
 
     function inputElementValue(input) {
@@ -145,7 +147,8 @@
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
-      measureInput: measureInput
+      measureInput: measureInput,
+      bindEvents: function(){}
     };
 
     function valueString(currentValue) {
@@ -168,35 +171,25 @@
     }
   }
 
-  function prohibitionFormElement() {
-    var template =  _.template(
-      '<div class="input-unit-combination">' +
-      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
-      '</div>');
-
+  function prohibitionFormElements(editControlLabels, className) {
     return {
-      inputElementValue: inputElementValue,
-      valueString: valueString,
-      measureInput: measureInput
+      singleValueElement: singleValueElement,
+      bindEvents: function() {}
     };
 
-    function valueString(currentValue) {
-      return currentValue ? currentValue : '-';
+    function singleValueElement(currentValue) {
+      return '' +
+        '<div class="form-group editable">' +
+        '  <label class="control-label">' + editControlLabels.title + '</label>' +
+        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueElement(currentValue) + '</p>' +
+        '</div>';
     }
 
-    function measureInput(currentValue, className, possibleValues) {
-      var optionTags = _.map(possibleValues, function(value, key) {
-        var selected = value === currentValue ? " selected" : "";
-        return '<option value="' + key + '"' + selected + '>' + value + '</option>';
-      }).join('');
-      var value = currentValue ? currentValue : '';
-      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
-
-      return template({className: className, optionTags: optionTags, disabled: disabled});
-    }
-
-    function inputElementValue(input) {
-      return parseInt(input.val(), 10);
+    function valueElement(currentValue) {
+      var items = _.map(currentValue, function(x) {
+        return '<li>' + x.typeId + '</li>';
+      });
+      return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
     }
 
   }
