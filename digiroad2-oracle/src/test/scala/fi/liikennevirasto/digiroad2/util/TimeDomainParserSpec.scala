@@ -9,7 +9,7 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
   test("simple") {
     parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
     parser.parse("[(t2){d5}]") should be(Right(Seq(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday))))
-    parser.parse("[(t7h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday))))
+    parser.parse("[(t1h21){h10}]") should be(Right(Seq(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Sunday))))
   }
 
   test("validity period without date specification spans over all dates") {
