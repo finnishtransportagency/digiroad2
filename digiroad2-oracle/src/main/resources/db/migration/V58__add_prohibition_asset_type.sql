@@ -2,8 +2,8 @@ insert into asset_type (id, name, geometry_type) values(190, 'Ajokielto', 'linea
 
 create table prohibition_value(
   id number primary key,
-	asset_id number references asset not null,
-	type integer not null
+  asset_id number references asset not null,
+  type integer not null
 );
 
 create table prohibition_exception(
