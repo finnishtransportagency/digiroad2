@@ -198,7 +198,8 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def fetchProhibitionsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    val prohibitionAssetTypeId = 190
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.mml_id, pos.side_code,
@@ -215,7 +216,7 @@ trait OracleLinearAssetDao {
           join #$idTableName i on i.id = pos.mml_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
-          where a.asset_type_id = $assetTypeId
+          where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
