@@ -38,21 +38,21 @@ trait LinearAssetOperations {
   }
 
   private def getByRoadLinks(typeId: Int, roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[PieceWiseLinearAsset] = {
-    val existingAssets = fetchLinearAssets(typeId, roadLinks.map(_.mmlId))
+    val persistedAssets = fetchPersistedLinearAssets(typeId, roadLinks.map(_.mmlId))
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, persistedAssets.groupBy(_.mmlId), typeId)
     eventBus.publish("linearAssets:update", changeSet)
     filledTopology
   }
 
-  private def fetchLinearAssets(typeId: Int, mmlIds: Seq[Long]): Map[Long, Seq[PersistedLinearAsset]] = {
+  private def fetchPersistedLinearAssets(typeId: Int, mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       if (typeId == 190) {
         dao.fetchProhibitionsByMmlIds(mmlIds)
       } else {
         dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
       }
-    }.filterNot(_.expired).groupBy(_.mmlId)
+    }.filterNot(_.expired)
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
