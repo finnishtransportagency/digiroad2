@@ -27,9 +27,8 @@ trait LinearAssetOperations {
 
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    val filledTopology = getByRoadLinks(typeId, roadLinks)
-
-    LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.mmlId).mapValues(_.head))
+    val linearAssets = getByRoadLinks(typeId, roadLinks)
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.mmlId).mapValues(_.head))
   }
 
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
@@ -38,21 +37,19 @@ trait LinearAssetOperations {
   }
 
   private def getByRoadLinks(typeId: Int, roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[PieceWiseLinearAsset] = {
-    val persistedAssets = getPersistedAssetsByMmlIds(typeId, roadLinks.map(_.mmlId))
+    val mmlIds = roadLinks.map(_.mmlId)
+    val existingAssets =
+      withDynTransaction {
+        if (typeId == 190) {
+          dao.fetchProhibitionsByMmlIds(mmlIds)
+        } else {
+          dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+        }
+      }.filterNot(_.expired).groupBy(_.mmlId)
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, persistedAssets.groupBy(_.mmlId), typeId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
     filledTopology
-  }
-
-  private def getPersistedAssetsByMmlIds(typeId: Int, mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      if (typeId == 190) {
-        dao.fetchProhibitionsByMmlIds(mmlIds)
-      } else {
-        dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
-      }
-    }.filterNot(_.expired)
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
