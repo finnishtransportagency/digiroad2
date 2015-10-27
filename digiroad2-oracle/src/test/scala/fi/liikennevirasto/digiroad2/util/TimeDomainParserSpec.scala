@@ -34,6 +34,9 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
     parser.parse("[[(t2){d5}]+[(t1){d1}]]*[(h5){h4}]") should be(Right(Seq(
       ProhibitionValidityPeriod(5, 9, ValidityPeriodDayOfWeek.Weekday),
       ProhibitionValidityPeriod(5, 9, ValidityPeriodDayOfWeek.Sunday))))
+  }
+
+  test("operators evaluate left to right") {
     parser.parse("[[[(h18){h13}]+[(h9){h6}]*[(t2){d5}]]+[(t7){d2}]]") should be(Right(Seq(
       ProhibitionValidityPeriod(18, 7, ValidityPeriodDayOfWeek.Weekday),
       ProhibitionValidityPeriod(9, 15, ValidityPeriodDayOfWeek.Weekday),
