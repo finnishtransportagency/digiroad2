@@ -52,7 +52,7 @@ trait LinearAssetOperations {
   private def fetchLinearAssets(typeId: Int, mmlIds: Seq[Long]): Map[Long, Seq[PersistedLinearAsset]] = {
     withDynTransaction {
       if (typeId == 190) {
-        dao.fetchProhibitionsByMmlIds(mmlIds, valuePropertyId)
+        dao.fetchProhibitionsByMmlIds(mmlIds)
       } else {
         dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
       }

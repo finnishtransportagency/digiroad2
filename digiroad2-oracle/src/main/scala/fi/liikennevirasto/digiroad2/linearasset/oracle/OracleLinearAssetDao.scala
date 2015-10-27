@@ -198,7 +198,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val prohibitionAssetTypeId = 190
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
