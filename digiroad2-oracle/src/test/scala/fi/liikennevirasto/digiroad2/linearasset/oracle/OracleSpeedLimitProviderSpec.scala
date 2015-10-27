@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -50,7 +50,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
       val createdLimit = provider.find(id.head).get
-      createdLimit.value should equal(Some(30))
+      createdLimit.value should equal(Some(NumericValue(30)))
       createdLimit.createdBy should equal(Some("test"))
     }
   }
@@ -64,8 +64,8 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
       val existing = speedLimits.find(_.id == 200097).get
       val created = speedLimits.find(_.id != 200097).get
-      existing.value should be(Some(50))
-      created.value should be(Some(60))
+      existing.value should be(Some(NumericValue(50)))
+      created.value should be(Some(NumericValue(60)))
     }
   }
 
@@ -103,12 +103,12 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing)
-      oldLimit.value should be (Some(50))
+      oldLimit.value should be (Some(NumericValue(50)))
       oldLimit.modifiedBy should be (Some("test"))
 
       createdLimit.mmlId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
-      createdLimit.value should be (Some(40))
+      createdLimit.value should be (Some(NumericValue(40)))
       createdLimit.createdBy should be (Some("test"))
     }
   }

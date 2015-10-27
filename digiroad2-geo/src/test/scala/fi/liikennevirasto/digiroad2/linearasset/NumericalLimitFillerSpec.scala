@@ -26,7 +26,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(1), 10.0, 15.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
@@ -68,11 +68,11 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
     )
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(1), 0.0, 10.0, None, None, None, None, false, 110)),
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110)),
       2l -> Seq(
-        PersistedLinearAsset(2l, 2l, 2, Some(1), 0.0, 5.0, None, None, None, None, false, 110),
-        PersistedLinearAsset(3l, 2l, 3, Some(1), 7.0, 10.0, None, None, None, None, false, 110),
-        PersistedLinearAsset(4l, 2l, SideCode.BothDirections.value, Some(1), 5.0, 7.0, None, None, None, None, false, 110)
+        PersistedLinearAsset(2l, 2l, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110),
+        PersistedLinearAsset(3l, 2l, 3, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110),
+        PersistedLinearAsset(4l, 2l, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110)
       )
     )
 
@@ -103,13 +103,13 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(1), 0.0, 10.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
-    filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(1)))
+    filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))

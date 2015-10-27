@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NewLimit, PersistedLinearAsset, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -21,7 +21,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(30, Seq(1), "mittarajoitus"))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false, 30)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30)))
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao {
@@ -48,7 +48,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       ServiceWithDao.update(Seq(11111l), None, true, "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(4000))
+      limit.value should be (Some(NumericValue(4000)))
       limit.expired should be (true)
     }
   }
@@ -57,7 +57,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       ServiceWithDao.update(Seq(11111l), Some(2000), false, "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(2000))
+      limit.value should be (Some(NumericValue(2000)))
       limit.expired should be (false)
     }
   }
@@ -67,7 +67,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, Some(1000), 1)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head.id), "mittarajoitus").head
-      asset.value should be (Some(1000))
+      asset.value should be (Some(NumericValue(1000)))
       asset.expired should be (false)
     }
   }
@@ -77,9 +77,24 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     linearAssets should have size 1
     linearAssets.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     linearAssets.map(_.mmlId) should be(Seq(1))
-    linearAssets.map(_.value) should be(Seq(Some(40000)))
+    linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
     verify(mockEventBus, times(1))
       .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
+  }
+
+  test("Municipality fetch dispatches to dao based on asset type id") {
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadLinkWithProperties(
+        1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None)))
+
+    when(mockLinearAssetDao.fetchProhibitionsByMmlIds(Seq(1l))).thenReturn(Nil)
+    PassThroughService.getByMunicipality(190, 235)
+    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l))
+
+    when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")).thenReturn(Nil)
+    PassThroughService.getByMunicipality(100, 235)
+    verify(mockLinearAssetDao).fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")
   }
 
   test("Separate linear asset") {
@@ -92,12 +107,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(2))
+      oldLimit.value should be (Some(NumericValue(2)))
       oldLimit.modifiedBy should be (Some("unittest"))
 
       createdLimit.mmlId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(3))
+      createdLimit.value should be (Some(NumericValue(3)))
       createdLimit.createdBy should be (Some("unittest"))
     }
   }
@@ -117,7 +132,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       createdLimit.mmlId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.value should be (Some(3))
+      createdLimit.value should be (Some(NumericValue(3)))
       createdLimit.expired should be (false)
       createdLimit.createdBy should be (Some("unittest"))
     }
@@ -133,7 +148,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
-      oldLimit.value should be (Some(2))
+      oldLimit.value should be (Some(NumericValue(2)))
       oldLimit.expired should be (false)
       oldLimit.modifiedBy should be (Some("unittest"))
 

@@ -119,7 +119,8 @@ var URLRouter = function(map, backend, models) {
     congestionTendency: 150,
     massTransitLane: 160,
     trafficVolume: 170,
-    winterSpeedLimit: 180
+    winterSpeedLimit: 180,
+    prohibition: 190
   };
 
   var linearAssetSpecs = [
@@ -368,6 +369,21 @@ var URLRouter = function(map, backend, models) {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Linkin mukainen tyypillinen kaistamäärä'
+      }
+    },
+    {
+      typeId: assetType.prohibition,
+      singleElementEventCategory: 'prohibition',
+      multiElementEventCategory: 'prohibitions',
+      layerName: 'prohibition',
+      title: 'Ajoneuvokohtaiset rajoitukset',
+      newTitle: 'Uusi ajoneuvokohtainen rajoitus',
+      className: 'prohibition',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta'
       }
     }
   ];
@@ -622,6 +638,7 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.congestionTendency))
         .concat(getLinearAsset(assetType.damagedByThaw)),
       [manoeuvreBox]
+        .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.totalWeightLimit))
         .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
         .concat(getLinearAsset(assetType.axleWeightLimit))

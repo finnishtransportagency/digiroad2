@@ -6,6 +6,7 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, Prohibitions, ProhibitionValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
@@ -323,6 +324,174 @@ class AssetDataImporter {
 
   def importWinterSpeedLimits(conversionDatabase: DatabaseDef) = {
     importLinearAssetsFromConversion(conversionDatabase, 31, 180)
+  }
+
+  def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
+    val conversionTypeId = 29
+    val exceptionTypeId = 1
+    val typeId = 190
+    val vvhClient = new VVHClient(vvhServiceHost)
+
+    println("*** Fetching prohibitions from conversion database")
+    val startTime = DateTime.now()
+
+    val prohibitions = conversionDatabase.withDynSession {
+      sql"""
+          select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli, s.aika
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $conversionTypeId
+       """.as[(Long, Long, Double, Double, Int, Int, Int, Option[String])].list
+    }
+
+    val exceptions = conversionDatabase.withDynSession {
+      sql"""
+          select s.segm_id, t.mml_id, s.arvo, s.puoli
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = $exceptionTypeId
+       """.as[(Long, Long, Int, Int)].list
+    }
+
+    println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
+
+    val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._2).toSet)
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
+      val exceptionPS = dynamicSession.prepareStatement("insert into prohibition_exception (id, prohibition_value_id, type) values (?, ?, ?)")
+      val validityPeriodPS = dynamicSession.prepareStatement("insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (?, ?, ?, ?, ?)")
+
+      println(s"*** Importing ${prohibitions.length} prohibitions")
+
+      val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
+      conversionResults.foreach {
+        case Right(asset) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, typeId)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, asset.mmlId)
+          lrmPositionPS.setDouble(3, asset.startMeasure)
+          lrmPositionPS.setDouble(4, asset.endMeasure)
+          lrmPositionPS.setInt(5, asset.sideCode)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          val value: Prohibitions = asset.value.get.asInstanceOf[Prohibitions]
+          value.prohibitions.foreach { prohibitionValue =>
+            val valueId = Sequences.nextPrimaryKeySeqValue
+            valuePS.setLong(1, valueId)
+            valuePS.setLong(2, assetId)
+            valuePS.setLong(3, prohibitionValue.typeId)
+            valuePS.addBatch()
+            prohibitionValue.exceptions.foreach { exceptionType =>
+              val exceptionId = Sequences.nextPrimaryKeySeqValue
+              exceptionPS.setLong(1, exceptionId)
+              exceptionPS.setLong(2, valueId)
+              exceptionPS.setInt(3, exceptionType)
+              exceptionPS.addBatch()
+            }
+            prohibitionValue.validityPeriods.foreach { validityPeriod =>
+              val validityPeriodId = Sequences.nextPrimaryKeySeqValue
+              validityPeriodPS.setLong(1, validityPeriodId)
+              validityPeriodPS.setLong(2, valueId)
+              validityPeriodPS.setInt(3, validityPeriod.days.value)
+              validityPeriodPS.setInt(4, validityPeriod.startHour)
+              validityPeriodPS.setInt(5, validityPeriod.endHour)
+              validityPeriodPS.addBatch()
+            }
+          }
+        case Left(validationError) => println(s"*** $validationError")
+      }
+
+      val executedAssetInserts = assetPS.executeBatch().length
+      lrmPositionPS.executeBatch()
+      assetLinkPS.executeBatch()
+      valuePS.executeBatch()
+      exceptionPS.executeBatch()
+      validityPeriodPS.executeBatch()
+
+      println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)}")
+
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      valuePS.close()
+      exceptionPS.close()
+      validityPeriodPS.close()
+    }
+  }
+
+  private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])] = {
+    if (segments.forall(_._7 == 1) && exceptionSideCodes.forall(_ == 1)) segments
+    else {
+      val (bothSided, oneSided) = segments.partition(_._7 == 1)
+      val splitSegments = bothSided.flatMap { x => Seq(x.copy(_7 = 2), x.copy(_7 = 3)) }
+      splitSegments ++ oneSided
+    }
+  }
+
+  def expandExceptions(exceptions: Seq[(Long, Long, Int, Int)], prohibitionSideCodes: Seq[(Int)]) = {
+    if (exceptions.forall(_._4 == 1) && prohibitionSideCodes.forall(_ == 1)) exceptions
+    else {
+      val (bothSided, oneSided) = exceptions.partition(_._4 == 1)
+      val splitExceptions = bothSided.flatMap { x => Seq(x.copy(_4 = 2), x.copy(_4 = 3)) }
+      splitExceptions ++ oneSided
+    }
+  }
+
+  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], mmlId: Long, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
+    val timeDomainParser = new TimeDomainParser
+    segments.map { segment =>
+      val exceptionsForProhibition = exceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
+
+      segment._8 match {
+        case None => Right(ProhibitionValue(segment._6, Set.empty, exceptionsForProhibition))
+        case Some(timeDomainString) =>
+          timeDomainParser.parse(timeDomainString) match {
+            case Left(err) => Left(s"${err}. Dropped prohibition ${segment._1}.")
+            case Right(periods) => Right(ProhibitionValue(segment._6, periods.toSet, exceptionsForProhibition))
+          }
+      }
+    }
+  }
+
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
+    val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._6) }
+    val segmentsByMmlId = validSegments.groupBy(_._2)
+    val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
+    val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
+
+    segmentsByMmlId.flatMap { case (mmlId, segments) =>
+      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
+      val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
+      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._7))
+
+      expandedSegments.groupBy(_._7).flatMap { case (sideCode, segmentsPerSide) =>
+        val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, mmlId, sideCode)
+        val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
+          case Nil => Nil
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190)))
+        }
+        val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
+        linearAssets ++ parseErrors
+      }
+    }.toSeq ++
+      segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._2}. ${s._1} dropped.") } ++
+      segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") } ++
+      exceptionsWithoutProhibition.map { ex => Left(s"No prohibition found on mml id ${ex._2}. Dropped exception ${ex._1}.")} ++
+      exceptionAllowingAll.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ProhibitionValidityPeriod}
 import org.json4s.{Formats, DefaultFormats}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -17,7 +18,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   }
   val mockMasstTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMasstTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithMmlId(123L), stopWithMmlId(321L)))
-  addServlet(new IntegrationApi(mockMasstTransitStopService), "/*")
+  private val integrationApi = new IntegrationApi(mockMasstTransitStopService)
+  addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
     val credentials = username + ":" + password
@@ -49,5 +51,25 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       val mmlIds = (((parse(body) \ "features") \ "properties") \ "mml_id").extract[Seq[Long]]
       mmlIds should be(Seq(123L, 321L))
     }
+  }
+
+  test("encode validity period to time domain") {
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]*[(h6){h4}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]*[(h23){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]*[(h21){h10}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 1, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]*[(h0){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Weekday)) should be("[(t2){d5}]*[(h0){h24}]")
+
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7){d1}]*[(h6){h4}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7){d1}]*[(h23){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7){d1}]*[(h21){h10}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 1, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7){d1}]*[(h0){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Saturday)) should be("[(t7){d1}]*[(h0){h24}]")
+
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(6, 10, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1){d1}]*[(h6){h4}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(23, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1){d1}]*[(h23){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(21, 7, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1){d1}]*[(h21){h10}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 1, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1){d1}]*[(h0){h1}]")
+    integrationApi.toTimeDomain(ProhibitionValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[(t1){d1}]*[(h0){h24}]")
   }
 }
