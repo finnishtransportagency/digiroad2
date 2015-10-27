@@ -327,7 +327,6 @@ class AssetDataImporter {
   }
 
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
-    val municipality = 91
     val conversionTypeId = 29
     val exceptionTypeId = 1
     val typeId = 190
@@ -342,7 +341,6 @@ class AssetDataImporter {
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId
-          and kunta_nro = $municipality
        """.as[(Long, Long, Double, Double, Int, Int, Int, Option[String])].list
     }
 
@@ -352,7 +350,6 @@ class AssetDataImporter {
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $exceptionTypeId
-          and kunta_nro = $municipality
        """.as[(Long, Long, Int, Int)].list
     }
 
