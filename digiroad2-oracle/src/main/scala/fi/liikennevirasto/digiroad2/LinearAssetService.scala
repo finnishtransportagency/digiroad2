@@ -27,25 +27,21 @@ trait LinearAssetOperations {
 
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    val mmlIds = roadLinks.map(_.mmlId)
-
-    val existingAssets = fetchLinearAssets(typeId, mmlIds)
-
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
-    eventBus.publish("linearAssets:update", changeSet)
+    val filledTopology = getByRoadLinks(typeId, roadLinks)
 
     LinearAssetPartitioner.partition(filledTopology, roadLinks.groupBy(_.mmlId).mapValues(_.head))
   }
 
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
-    val mmlIds = roadLinks.map(_.mmlId)
+    getByRoadLinks(typeId, roadLinks)
+  }
 
-    val linearAssets = fetchLinearAssets(typeId, mmlIds)
+  private def getByRoadLinks(typeId: Int, roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[PieceWiseLinearAsset] = {
+    val existingAssets = fetchLinearAssets(typeId, roadLinks.map(_.mmlId))
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, linearAssets, typeId)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
-
     filledTopology
   }
 
