@@ -187,7 +187,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       case Sunday => "(t1){d1}"
       case _ => "(t2){d5}"
     }
-    s"[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]"
+    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
   }
 
   def valueToApi(value: Option[Value]) = {
