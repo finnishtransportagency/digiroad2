@@ -38,10 +38,14 @@ object NumericalLimitFiller {
   private def dropSegmentsOutsideGeometry(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
     val droppedAssetIds = segmentsOutsideGeometry.map(_.id).toSet
-    val (validSegments, overflowingSegments) = segmentsWithinGeometry.partition(_.endMeasure <= roadLink.length)
+    (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+  }
+
+  private def capSegmentsThatOverflowGeometry(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length)
     val cappedSegments = overflowingSegments.map { x => x.copy(endMeasure = roadLink.length)}
     val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.mmlId, x.startMeasure, x.endMeasure) }
-    (validSegments ++ cappedSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds, adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+    (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
   private def adjustSegmentSideCodes(roadLink: VVHRoadLinkWithProperties, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -97,6 +101,7 @@ object NumericalLimitFiller {
   def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
+      capSegmentsThatOverflowGeometry,
       adjustTwoWaySegments,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
