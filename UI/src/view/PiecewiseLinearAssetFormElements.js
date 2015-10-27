@@ -1,7 +1,17 @@
 (function(root) {
 
   root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
-    var formElem = (elementType === 'dropdown') ? dropDownFormElement(unit) : inputFormElement(unit);
+    var formElem;
+    switch(elementType) {
+      case 'dropdown':
+        formElem = dropDownFormElement(unit);
+        break;
+      case 'prohibition':
+        formElem = prohibitionFormElement(unit);
+        break;
+      default:
+        formElem = inputFormElement(unit);
+    }
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -146,6 +156,38 @@
       var optionTags = _.map(possibleValues, function(value) {
         var selected = value === currentValue ? " selected" : "";
         return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
+      }).join('');
+      var value = currentValue ? currentValue : '';
+      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+
+      return template({className: className, optionTags: optionTags, disabled: disabled});
+    }
+
+    function inputElementValue(input) {
+      return parseInt(input.val(), 10);
+    }
+  }
+
+  function prohibitionFormElement() {
+    var template =  _.template(
+      '<div class="input-unit-combination">' +
+      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
+      '</div>');
+
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
+
+    function valueString(currentValue) {
+      return currentValue ? currentValue : '-';
+    }
+
+    function measureInput(currentValue, className, possibleValues) {
+      var optionTags = _.map(possibleValues, function(value, key) {
+        var selected = value === currentValue ? " selected" : "";
+        return '<option value="' + key + '"' + selected + '>' + value + '</option>';
       }).join('');
       var value = currentValue ? currentValue : '';
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
