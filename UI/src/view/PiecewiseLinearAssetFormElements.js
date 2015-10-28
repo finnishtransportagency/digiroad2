@@ -229,24 +229,31 @@
     }
 
     function prohibitionElement(prohibition) {
-      var exceptionElements = _.map(prohibition.exceptions, function(exceptionId) {
-        return '<li>' + exceptionValues[exceptionId] + '</li>';
-      }).join('');
-      var exceptions = '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
       var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
-      var validityPeriodItems = _.map(prohibition.validityPeriods, function(period) {
-        var dayName;
-        if (period.days === "Saturday") {
-          dayName = "La ";
-        } else if (period.days === "Sunday") {
-          dayName = "Su ";
-        } else {
-          dayName = "Ma - Pe ";
-        }
-        return '<li>' + dayName + period.startHour + ' - ' + period.endHour + '</li>';
-      }).join('');
-      var validityPeriodElement = '<ul>' + validityPeriodItems + '</ul>';
-      return typeElement + validityPeriodElement + exceptions;
+
+      function exceptionElement() {
+        var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
+          return '<li>' + exceptionValues[exceptionId] + '</li>';
+        }).join('');
+        return _.isEmpty(prohibition.exceptions) ? '' : '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
+      }
+
+      function validityPeriodElement() {
+        var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
+          var dayName;
+          if (period.days === "Saturday") {
+            dayName = "La ";
+          } else if (period.days === "Sunday") {
+            dayName = "Su ";
+          } else {
+            dayName = "Ma - Pe ";
+          }
+          return '<li>' + dayName + period.startHour + ' - ' + period.endHour + '</li>';
+        }).join('');
+        return '<ul>' + validityPeriodItems + '</ul>';
+      }
+
+      return typeElement + validityPeriodElement() + exceptionElement();
     }
   }
 })(this);
