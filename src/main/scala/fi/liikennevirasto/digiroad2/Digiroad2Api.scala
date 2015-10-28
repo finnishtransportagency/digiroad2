@@ -32,8 +32,9 @@ with GZipSupport {
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
+  case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ({ null }, { case d: ValidityPeriodDayOfWeek => JString(d.toString)}))
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
