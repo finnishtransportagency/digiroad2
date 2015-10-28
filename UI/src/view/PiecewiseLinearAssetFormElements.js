@@ -221,6 +221,13 @@
         '</div>';
     }
 
+    function valueElement(currentValue) {
+      var items = _.map(currentValue, function(x) {
+        return '<li>' + prohibitionElement(x) + '</li>';
+      });
+      return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
+    }
+
     function prohibitionElement(prohibition) {
       var exceptionElements = _.map(prohibition.exceptions, function(exceptionId) {
         return '<li>' + exceptionValues[exceptionId] + '</li>';
@@ -241,13 +248,5 @@
       var validityPeriodElement = '<ul>' + validityPeriodItems + '</ul>';
       return typeElement + validityPeriodElement + exceptions;
     }
-
-    function valueElement(currentValue) {
-      var items = _.map(currentValue, function(x) {
-        return '<li>' + prohibitionElement(x) + '</li>';
-      });
-      return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
-    }
-
   }
 })(this);
