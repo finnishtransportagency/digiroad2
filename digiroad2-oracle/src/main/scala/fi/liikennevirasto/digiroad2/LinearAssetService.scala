@@ -64,6 +64,12 @@ trait LinearAssetOperations {
     }
   }
 
+  def updateProhibitions(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
+    withDynTransaction {
+      updateProhibitionsWithoutTransaction(ids, value, expired, username)
+    }
+  }
+
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
     withDynTransaction {
       adjustments.foreach { adjustment =>
@@ -147,6 +153,29 @@ trait LinearAssetOperations {
 
     ids.map { id =>
       val valueUpdate: Option[Long] = value.flatMap(updateValue(id, _, username))
+      val expirationUpdate: Option[Long] = updateExpiration(id, expired, username)
+      val updatedId = valueUpdate.orElse(expirationUpdate)
+      updatedId.getOrElse(throw new scala.NoSuchElementException)
+    }
+  }
+
+  private def updateProhibitionsWithoutTransaction(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
+    def updateExpiration(id: Long, expired: Boolean, username: String) = {
+      val assetsUpdated = Queries.updateAssetModified(id, username).first
+      val propertiesUpdated = if (expired) {
+        sqlu"update asset set valid_to = sysdate where id = $id".first
+      } else {
+        sqlu"update asset set valid_to = null where id = $id".first
+      }
+      if (assetsUpdated == 1 && propertiesUpdated == 1) {
+        Some(id)
+      } else {
+        None
+      }
+    }
+
+    ids.map { id =>
+      val valueUpdate = value.flatMap(dao.updateProhibitionValue(id, _, username))
       val expirationUpdate: Option[Long] = updateExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)

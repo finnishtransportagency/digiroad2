@@ -473,6 +473,39 @@ trait OracleLinearAssetDao {
       }
     }
   }
+
+  def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+
+    val prohibitionIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
+    sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
+    sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
+    sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+
+    value.prohibitions.foreach { prohibition =>
+      val prohibitionId = Sequences.nextPrimaryKeySeqValue
+      val prohibitionType = prohibition.typeId
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $id, $prohibitionType)""".first
+
+      prohibition.validityPeriods.foreach { validityPeriod =>
+        val validityId = Sequences.nextPrimaryKeySeqValue
+        val startHour = validityPeriod.startHour
+        val endHour = validityPeriod.endHour
+        val daysOfWeek = validityPeriod.days.value
+        sqlu"""insert into PROHIBITION_VALIDITY_PERIOD (ID, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR)
+               values ($validityId, $prohibitionId, $daysOfWeek, $startHour, $endHour)""".execute
+      }
+      prohibition.exceptions.foreach { exceptionType =>
+        val exceptionId = Sequences.nextPrimaryKeySeqValue
+        sqlu""" insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values ($exceptionId, $prohibitionId, $exceptionType)""".execute
+      }
+    }
+    if (assetsUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
 }
 
 object OracleLinearAssetDao extends OracleLinearAssetDao {
