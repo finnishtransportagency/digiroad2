@@ -7,7 +7,7 @@
         formElem = dropDownFormElement(unit);
         break;
       case 'prohibition':
-        return prohibitionFormElements(editControlLabels, className);
+        return prohibitionFormElements();
       default:
         formElem = inputFormElement(unit);
     }
@@ -167,7 +167,7 @@
     }
   }
 
-  function prohibitionFormElements(editControlLabels, className) {
+  function prohibitionFormElements() {
     var prohibitionValues = {
       3: 'Ajoneuvo',
       2: 'Moottoriajoneuvo',
@@ -217,8 +217,7 @@
     function singleValueElement(currentValue) {
       return '' +
         '<div class="form-group editable">' +
-        '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueElement(currentValue) + '</p>' +
+          valueElement(currentValue) +
         '</div>';
     }
 
