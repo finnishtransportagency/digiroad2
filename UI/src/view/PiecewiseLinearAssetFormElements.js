@@ -231,7 +231,7 @@
     function prohibitionElement(prohibition) {
       var exceptionElements = _.map(prohibition.exceptions, function(exceptionId) {
         return '<li>' + exceptionValues[exceptionId] + '</li>';
-      });
+      }).join('');
       var exceptions = '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
       var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
       var validityPeriodItems = _.map(prohibition.validityPeriods, function(period) {
@@ -244,7 +244,7 @@
           dayName = "Ma - Pe ";
         }
         return '<li>' + dayName + period.startHour + ' - ' + period.endHour + '</li>';
-      });
+      }).join('');
       var validityPeriodElement = '<ul>' + validityPeriodItems + '</ul>';
       return typeElement + validityPeriodElement + exceptions;
     }
