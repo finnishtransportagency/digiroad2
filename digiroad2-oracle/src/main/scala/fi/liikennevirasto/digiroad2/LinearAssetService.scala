@@ -65,8 +65,9 @@ trait LinearAssetOperations {
   }
 
   def updateProhibitions(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
+    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateProhibitionValue(id, _, username))
     withDynTransaction {
-      updateProhibitionsWithoutTransaction(ids, value, expired, username)
+      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
     }
   }
 
@@ -122,17 +123,13 @@ trait LinearAssetOperations {
   }
 
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
-    ids.map { id =>
-      val valueUpdate: Option[Long] = value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
-      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
-      val updatedId = valueUpdate.orElse(expirationUpdate)
-      updatedId.getOrElse(throw new scala.NoSuchElementException)
-    }
+    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
+    updateWithoutTransaction(ids, valueUpdateFn, expired, username)
   }
 
-  private def updateProhibitionsWithoutTransaction(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
+  private def updateWithoutTransaction(ids: Seq[Long], valueUpdateFn: Long => Option[Long], expired: Boolean, username: String): Seq[Long] = {
     ids.map { id =>
-      val valueUpdate = value.flatMap(dao.updateProhibitionValue(id, _, username))
+      val valueUpdate: Option[Long] = valueUpdateFn(id)
       val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)
