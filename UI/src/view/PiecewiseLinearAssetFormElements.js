@@ -228,7 +228,19 @@
       });
       var exceptions = '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
       var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
-      return typeElement + exceptions;
+      var validityPeriodItems = _.map(prohibition.validityPeriods, function(period) {
+        var dayName;
+        if (period.days === "Saturday") {
+          dayName = "La ";
+        } else if (period.days === "Sunday") {
+          dayName = "Su ";
+        } else {
+          dayName = "Ma - Pe ";
+        }
+        return '<li>' + dayName + period.startHour + ' - ' + period.endHour + '</li>';
+      });
+      var validityPeriodElement = '<ul>' + validityPeriodItems + '</ul>';
+      return typeElement + validityPeriodElement + exceptions;
     }
 
     function valueElement(currentValue) {
