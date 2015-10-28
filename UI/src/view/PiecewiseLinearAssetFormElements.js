@@ -7,7 +7,7 @@
         formElem = dropDownFormElement(unit);
         break;
       case 'prohibition':
-        return prohibitionFormElements(editControlLabels, className, defaultValue, elementType, possibleValues);
+        return prohibitionFormElements(editControlLabels, className);
       default:
         formElem = inputFormElement(unit);
     }
@@ -168,6 +168,47 @@
   }
 
   function prohibitionFormElements(editControlLabels, className) {
+    var prohibitionValues = {
+      3: 'Ajoneuvo',
+      2: 'Moottoriajoneuvo',
+      23: 'Läpiajo',
+      12: 'Jalankulku',
+      11: 'Polkupyörä',
+      26: 'Ratsastus',
+      10: 'Mopo',
+      9: 'Moottoripyörä',
+      27: 'Moottorikelkka',
+      5: 'Linja-auto',
+      8: 'Taksi',
+      7: 'Henkilöauto',
+      6: 'Pakettiauto',
+      4: 'Kuorma-auto',
+      15: 'Matkailuajoneuvo',
+      19: 'Sotilasajoneuvo',
+      13: 'Ajoneuvoyhdistelmä',
+      14: 'Traktori tai maatalousajoneuvo',
+      24: 'Ryhmän A vaarallisten aineiden kuljetus',
+      25: 'Ryhmän B vaarallisten aineiden kuljetus'
+    };
+    var exceptionValues = {
+      21: 'Huoltoajo',
+      22: 'Tontille ajo',
+      10: 'Mopo',
+      9: 'Moottoripyörä',
+      27: 'Moottorikelkka',
+      5: 'Linja-auto',
+      8: 'Taksi',
+      7: 'Henkilöauto',
+      6: 'Pakettiauto',
+      4: 'Kuorma-auto',
+      15: 'Matkailuajoneuvo',
+      19: 'Sotilasajoneuvo',
+      13: 'Ajoneuvoyhdistelmä',
+      14: 'Traktori tai maatalousajoneuvo',
+      24: 'Ryhmän A vaarallisten aineiden kuljetus',
+      25: 'Ryhmän B vaarallisten aineiden kuljetus'
+    };
+
     return {
       singleValueElement: singleValueElement,
       bindEvents: function() {}
@@ -182,12 +223,12 @@
     }
 
     function prohibitionElement(prohibition) {
-      var exceptionElements = _.map(prohibition.exceptions, function(exception) {
-        return '<li>' + exception + '</li>';
+      var exceptionElements = _.map(prohibition.exceptions, function(exceptionId) {
+        return '<li>' + exceptionValues[exceptionId] + '</li>';
       });
-      var exceptions = '<ul>' + exceptionElements + '</ul>';
-      var typeElement = '<span>' + prohibition.typeId + '</span>';
-      return '<div>' + typeElement + exceptions + '</div>';
+      var exceptions = '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
+      var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
+      return typeElement + exceptions;
     }
 
     function valueElement(currentValue) {

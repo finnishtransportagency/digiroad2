@@ -385,32 +385,7 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
       },
-      elementType: 'prohibition',
-      possibleValues: {
-        2: 'Moottoriajoneuvo',
-        3: 'Ajoneuvo',
-        4: 'Kuorma-auto',
-        5: 'Linja-auto',
-        6: 'Pakettiauto',
-        7: 'Henkilöauto',
-        8: 'Taksi',
-        9: 'Moottoripyörä',
-        10: 'Mopo',
-        11: 'Polkupyörä',
-        12: 'Jalankulkija',
-        13: 'Ajoneuvoyhdistelmä',
-        14: 'Traktori tai maatalousajoneuvo',
-        15: 'Matkailuajoneuvo',
-        16: 'Jakeluauto',
-        17: 'Hälytysajoneuvo',
-        18: 'Kimppakyytiajoneuvo',
-        19: 'Sotilasajoneuvo',
-        21: 'Huoltoajo',
-        22: 'Tontille ajo',
-        23: 'Läpiajo',
-        24: 'A-VAK (lisäkilpi vaaralliselle lastille)',
-        25: 'B-VAK (lisäkilpi vaaralliselle lastille)'
-      }
+      elementType: 'prohibition'
     }
   ];
 
