@@ -13,7 +13,7 @@
     }
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
-      bindEvents: _.partial(bindEvents, formElem.inputElementValue, formElem.bindEvents)
+      bindEvents: _.partial(bindEvents, formElem.inputElementValue)
     };
 
     function generateClassName(sideCode) {
@@ -54,7 +54,7 @@
         '</div>';
     }
 
-    function bindEvents(inputElementValue, childBindEvents, rootElement, selectedLinearAsset, sideCode) {
+    function bindEvents(inputElementValue, rootElement, selectedLinearAsset, sideCode) {
       var inputElement = rootElement.find('.input-unit-combination .' + generateClassName(sideCode));
       var toggleElement = rootElement.find('.radio input.' + generateClassName(sideCode));
       var valueSetters = {
@@ -82,7 +82,6 @@
           setValue(value);
         }
       });
-      childBindEvents(rootElement, generateClassName(sideCode), possibleValues);
     }
 
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
@@ -99,8 +98,7 @@
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
-      measureInput: measureInput,
-      bindEvents: function(){}
+      measureInput: measureInput
     };
 
     function inputElementValue(input) {
@@ -146,8 +144,7 @@
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
-      measureInput: measureInput,
-      bindEvents: function(){}
+      measureInput: measureInput
     };
 
     function valueString(currentValue) {
