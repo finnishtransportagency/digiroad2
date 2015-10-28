@@ -8,7 +8,6 @@
         break;
       case 'prohibition':
         return prohibitionFormElements(editControlLabels, className, defaultValue, elementType, possibleValues);
-        break;
       default:
         formElem = inputFormElement(unit);
     }
@@ -185,9 +184,18 @@
         '</div>';
     }
 
+    function prohibitionElement(prohibition) {
+      var exceptionElements = _.map(prohibition.exceptions, function(exception) {
+        return '<li>' + exception + '</li>';
+      });
+      var exceptions = '<ul>' + exceptionElements + '</ul>';
+      var typeElement = '<span>' + prohibition.typeId + '</span>';
+      return '<div>' + typeElement + exceptions + '</div>';
+    }
+
     function valueElement(currentValue) {
       var items = _.map(currentValue, function(x) {
-        return '<li>' + x.typeId + '</li>';
+        return '<li>' + prohibitionElement(x) + '</li>';
       });
       return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
     }
