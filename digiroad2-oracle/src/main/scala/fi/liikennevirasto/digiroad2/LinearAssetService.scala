@@ -122,61 +122,18 @@ trait LinearAssetOperations {
   }
 
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
-    def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int = {
-      sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
-    }
-
-    def updateValue(id: Long, value: Int, username: String): Option[Long] = {
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = updateNumberProperty(id, propertyId, value)
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        None
-      }
-    }
-
-    def updateExpiration(id: Long, expired: Boolean, username: String) = {
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = if (expired) {
-        sqlu"update asset set valid_to = sysdate where id = $id".first
-      } else {
-        sqlu"update asset set valid_to = null where id = $id".first
-      }
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        None
-      }
-    }
-
     ids.map { id =>
-      val valueUpdate: Option[Long] = value.flatMap(updateValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateExpiration(id, expired, username)
+      val valueUpdate: Option[Long] = value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
+      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)
     }
   }
 
   private def updateProhibitionsWithoutTransaction(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
-    def updateExpiration(id: Long, expired: Boolean, username: String) = {
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = if (expired) {
-        sqlu"update asset set valid_to = sysdate where id = $id".first
-      } else {
-        sqlu"update asset set valid_to = null where id = $id".first
-      }
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        None
-      }
-    }
-
     ids.map { id =>
       val valueUpdate = value.flatMap(dao.updateProhibitionValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateExpiration(id, expired, username)
+      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)
     }

@@ -474,6 +474,32 @@ trait OracleLinearAssetDao {
     }
   }
 
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = if (expired) {
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+    } else {
+      sqlu"update asset set valid_to = null where id = $id".first
+    }
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated =
+      sqlu"update number_property_value set value = $value where asset_id = $id and property_id = $propertyId".first
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
   def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
 
