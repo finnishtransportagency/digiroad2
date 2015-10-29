@@ -91,7 +91,15 @@ trait LinearAssetOperations {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
         val expired = false
-        createWithoutTransaction(typeId, newAsset.mmlId, newAsset.value, expired, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.mmlId, Some(newAsset.value), expired, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+      }
+    }
+  }
+
+  def createProhibitions(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      newProhibitions.map { newProhibition =>
+        createProhibitionWithoutTransaction(typeId = 190, newProhibition.mmlId, newProhibition.value, expired = false, newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
       }
     }
   }
@@ -154,6 +162,28 @@ trait LinearAssetOperations {
     """.execute
 
     value.foreach(dao.insertValue(id, valuePropertyId))
+
+    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+  }
+
+  private def createProhibitionWithoutTransaction(typeId: Int, mmlId: Long, value: Seq[ProhibitionValue], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val validTo = if(expired) "sysdate" else "null"
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to)
+        values ($id, $typeId, $username, sysdate, #$validTo)
+
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+
+    dao.updateProhibitionValue(id, Prohibitions(value), username)
 
     dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
   }

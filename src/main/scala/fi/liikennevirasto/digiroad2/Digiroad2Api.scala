@@ -411,7 +411,8 @@ with GZipSupport {
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     val prohibitionValueOption = (parsedBody \ "value").extractOpt[Seq[ProhibitionValue]]
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLinearAsset]]
+    val newLimits = (parsedBody \ "newLimits").extractOpt[Seq[NewLinearAsset]].getOrElse(Nil)
+    val newProhibitions = (parsedBody \ "newLimits").extractOpt[Seq[NewProhibition]].getOrElse(Nil)
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
     val mmlIds = newLimits.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
@@ -426,7 +427,9 @@ with GZipSupport {
         val created = linearAssetService.create(newLimits, typeId, user.username)
         updatedIds ++ created.map(_.id)
       case (expired, None, prohibitionValue) =>
-        linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
+        val updatedIds = linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
+        val createdIds = linearAssetService.createProhibitions(newProhibitions, user.username).map(_.id)
+        updatedIds ++ createdIds
     }
   }
 

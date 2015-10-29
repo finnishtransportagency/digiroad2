@@ -504,9 +504,11 @@ trait OracleLinearAssetDao {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
 
     val prohibitionIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
-    sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
-    sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
-    sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+    if (prohibitionIds.nonEmpty) {
+      sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
+      sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
+      sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+    }
 
     value.prohibitions.foreach { prohibition =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
