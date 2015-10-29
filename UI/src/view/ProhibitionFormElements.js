@@ -96,6 +96,10 @@
         return typeElement + validityPeriodElement() + exceptionElement();
       }
 
+      function deleteButton() {
+        return '<button class="delete btn-delete">x</button>';
+      }
+
       function prohibitionEditElement(prohibition) {
         var optionTags = _.map(prohibitionValues, function(name, key) {
           var selected = prohibition.typeId.toString() === key ? 'selected' : '';
@@ -103,6 +107,7 @@
         });
         return '' +
           '<div class="form-group edit-control-group">' +
+          deleteButton() +
           '  <select class="form-control select existing-prohibition">' +
           optionTags +
           '  </select>' +
@@ -123,13 +128,19 @@
       }
 
       function bindEvents(rootElement, selectedLinearAsset) {
-        $(rootElement).on('change', '.existing-prohibition', function(evt) {
+        $(rootElement).on('change', 'select.existing-prohibition', function() {
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
 
-        $(rootElement).on('change', '.new-prohibition', function(evt) {
+        $(rootElement).on('change', 'select.new-prohibition', function(evt) {
           $(evt.target).removeClass('new-prohibition').addClass('existing-prohibition');
+          $(evt.target).before(deleteButton());
           $(rootElement).find('.form-group.' + className).append(editElement());
+          selectedLinearAsset.setValue(extractValue(rootElement));
+        });
+
+        $(rootElement).on('click', 'button.delete', function(evt) {
+          $(evt.target).parent().remove();
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
       }
