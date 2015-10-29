@@ -51,7 +51,7 @@
 
       function singleValueElement(currentValue) {
         return '' +
-          '<div class="form-group editable">' +
+          '<div class="form-group editable ' + className + '">' +
             valueElement(currentValue) +
             editElement() +
           '</div>';
@@ -128,8 +128,9 @@
         });
 
         $(rootElement).on('change', '.new-prohibition', function(evt) {
-          var value = parseInt($(evt.target).val(), 10);
-          selectedLinearAsset.setValue([{typeId: value, exceptions: [], validityPeriods: []}]);
+          $(evt.target).removeClass('new-prohibition').addClass('existing-prohibition');
+          $(rootElement).find('.form-group.' + className).append(editElement());
+          selectedLinearAsset.setValue(extractValue(rootElement));
         });
       }
 
