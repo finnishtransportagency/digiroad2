@@ -5,12 +5,13 @@
 
   function assetFormElementConstructor(className) {
     var assetFormElementConstructors = {
-      prohibition: ProhibitionFormElements
+      prohibition: ProhibitionFormElements,
+      winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements
     };
-    return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements;
+    return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }
 
-  function construct(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
-    return assetFormElementConstructor(className)(unit, editControlLabels, className, defaultValue, elementType, possibleValues);
+  function construct(asset) {
+    return assetFormElementConstructor(asset.layerName)(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType, asset.possibleValues);
   }
 })(this);

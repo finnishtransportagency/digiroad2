@@ -1,14 +1,20 @@
 (function(root) {
+  root.PiecewiseLinearAssetFormElements = {
+    WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
+    DefaultFormElements: DefaultFormElements
+  };
 
-  root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
-    var formElem;
-    switch(elementType) {
-      case 'dropdown':
-        formElem = dropDownFormElement(unit);
-        break;
-      default:
-        formElem = inputFormElement(unit);
-    }
+  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+    var formElem = dropDownFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+  }
+
+  function DefaultFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+    var formElem = inputFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+  }
+
+  function formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -90,7 +96,7 @@
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
-  };
+  }
 
   function inputFormElement(unit) {
     return {
@@ -139,29 +145,29 @@
       '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
       '</div>');
 
-    return {
-      inputElementValue: inputElementValue,
-      valueString: valueString,
-      measureInput: measureInput
-    };
+      return {
+        inputElementValue: inputElementValue,
+        valueString: valueString,
+        measureInput: measureInput
+      };
 
-    function valueString(currentValue) {
-      return currentValue ? currentValue + ' ' + unit : '-';
-    }
+      function valueString(currentValue) {
+        return currentValue ? currentValue + ' ' + unit : '-';
+      }
 
-    function measureInput(currentValue, className, possibleValues) {
-      var optionTags = _.map(possibleValues, function(value) {
-        var selected = value === currentValue ? " selected" : "";
-        return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
-      }).join('');
-      var value = currentValue ? currentValue : '';
-      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+      function measureInput(currentValue, className, possibleValues) {
+        var optionTags = _.map(possibleValues, function(value) {
+          var selected = value === currentValue ? " selected" : "";
+          return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
+        }).join('');
+        var value = currentValue ? currentValue : '';
+        var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
-      return template({className: className, optionTags: optionTags, disabled: disabled});
-    }
+        return template({className: className, optionTags: optionTags, disabled: disabled});
+      }
 
-    function inputElementValue(input) {
-      return parseInt(input.val(), 10);
-    }
+      function inputElementValue(input) {
+        return parseInt(input.val(), 10);
+      }
   }
 })(this);

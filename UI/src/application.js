@@ -349,7 +349,6 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Talvinopeusrajoitus',
         disabled: 'Ei talvinopeusrajoitusta'
       },
-      elementType: 'dropdown',
       possibleValues: [100, 80, 70, 60]
     }
   ];
@@ -384,8 +383,7 @@ var URLRouter = function(map, backend, models) {
         title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
-      },
-      elementType: 'prohibition'
+      }
     }
   ];
 
@@ -470,13 +468,7 @@ var URLRouter = function(map, backend, models) {
       LinearAssetForm.initialize(
         linearAsset.selectedLinearAsset,
         linearAsset.singleElementEventCategory,
-        AssetFormElementsFactory.construct(
-          linearAsset.unit,
-          linearAsset.editControlLabels,
-          linearAsset.className,
-          linearAsset.defaultValue,
-          linearAsset.elementType,
-          linearAsset.possibleValues),
+        AssetFormElementsFactory.construct(linearAsset),
         linearAsset.newTitle,
         linearAsset.title);
     });
@@ -494,13 +486,7 @@ var URLRouter = function(map, backend, models) {
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
         style: PiecewiseLinearAssetStyle(applicationModel),
-        formElements: AssetFormElementsFactory.construct(
-          asset.unit,
-          asset.editControlLabels,
-          asset.className,
-          asset.defaultValue,
-          asset.elementType,
-          asset.possibleValues)
+        formElements: AssetFormElementsFactory.construct(asset)
       });
       return acc;
     }, {});
