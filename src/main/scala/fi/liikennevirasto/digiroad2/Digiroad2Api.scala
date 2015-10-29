@@ -419,18 +419,22 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    (expiredOption, valueOption, prohibitionValueOption) match {
-      case (None, None, None) => BadRequest("Numerical limit value or expiration not provided")
+    val updatedIds = (expiredOption, valueOption, prohibitionValueOption) match {
+      case (None, None, None) => Nil
       case (expired, value, None) =>
         value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
-        val created = linearAssetService.create(newLimits, typeId, user.username)
-        updatedIds ++ created.map(_.id)
+        linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
       case (expired, None, prohibitionValue) =>
-        val updatedIds = linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
-        val createdIds = linearAssetService.createProhibitions(newProhibitions, user.username).map(_.id)
-        updatedIds ++ createdIds
+        linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
     }
+
+    val createdIds = (newLimits, newProhibitions) match {
+      case (Nil, Nil) => Nil
+      case (newLimits, Nil) => linearAssetService.create(newLimits, typeId, user.username).map(_.id)
+      case (Nil, newProhibitions) => linearAssetService.createProhibitions(newProhibitions, user.username).map(_.id)
+    }
+
+    updatedIds ++ createdIds
   }
 
   delete("/linearassets") {
