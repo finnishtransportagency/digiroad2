@@ -145,21 +145,7 @@ trait LinearAssetOperations {
   }
 
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val id = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if(expired) "sysdate" else "null"
-    sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-        values ($id, $typeId, $username, sysdate, #$validTo)
-
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
+    val id = dao.createLinearAsset(typeId, mmlId, expired, sideCode, startMeasure, endMeasure, username)
 
     value.foreach(dao.insertValue(id, valuePropertyId))
 
@@ -167,21 +153,7 @@ trait LinearAssetOperations {
   }
 
   private def createProhibitionWithoutTransaction(typeId: Int, mmlId: Long, value: Seq[ProhibitionValue], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val id = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if(expired) "sysdate" else "null"
-    sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-        values ($id, $typeId, $username, sysdate, #$validTo)
-
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
+    val id = dao.createLinearAsset(typeId, mmlId, expired, sideCode, startMeasure, endMeasure, username)
 
     dao.updateProhibitionValue(id, Prohibitions(value), username)
 

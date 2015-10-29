@@ -487,6 +487,25 @@ trait OracleLinearAssetDao {
       None
     }
   }
+  def createLinearAsset(typeId: Int, mmlId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long  = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val validTo = if(expired) "sysdate" else "null"
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to)
+        values ($id, $typeId, $username, sysdate, #$validTo)
+
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+
+    id
+  }
 
   def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
