@@ -40,7 +40,7 @@
 
     function toggleMode(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
-      rootElement.find('.editable .choice-group').toggle(!readOnly);
+      rootElement.find('.editable .edit-control-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.read-only-title').toggle(readOnly);

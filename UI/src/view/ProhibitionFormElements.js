@@ -52,7 +52,8 @@
       function singleValueElement(currentValue) {
         return '' +
           '<div class="form-group editable">' +
-          valueElement(currentValue) +
+            valueElement(currentValue) +
+            editElement() +
           '</div>';
       }
 
@@ -89,6 +90,18 @@
         }
 
         return typeElement + validityPeriodElement() + exceptionElement();
+      }
+
+      function editElement() {
+        var optionTags = _.map(prohibitionValues, function(name, key) {
+          return '<option value="' + key + '">' + name + '</option>';
+        });
+        return '<div class="form-group edit-control-group">' +
+          '<select class="form-control select new-prohibition">' +
+          '<option class="empty" disabled selected>Lisää kielto</option>' +
+          optionTags +
+          '</select>' +
+          '</div>';
       }
     }
   };

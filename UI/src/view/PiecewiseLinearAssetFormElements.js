@@ -37,7 +37,7 @@
       var withValue = _.isUndefined(currentValue) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
-        '<div class="choice-group">' +
+        '<div class="edit-control-group choice-group">' +
         '  <div class="radio">' +
         '    <label>' + editControlLabels.disabled +
         '      <input ' +
