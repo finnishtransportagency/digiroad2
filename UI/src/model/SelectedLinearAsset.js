@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedLinearAsset = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
+  root.SelectedLinearAsset = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType, validator) {
     var selection = [];
     var self = this;
     var dirty = false;
@@ -275,17 +275,12 @@
 
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
-      var isValidValue = function(val) {
-        if(_.isUndefined(val)) { return true; }
-        else if(val > 0) { return true; }
-      };
-
       if (this.isDirty()) {
         if (this.isSplitOrSeparated() && valuesDiffer()) {
-          return isValidValue(selection[0].value) && isValidValue(selection[1].value);
+          return validator(selection[0].value) && validator(selection[1].value);
         }
         else if (!this.isSplitOrSeparated()) {
-          return isValidValue(selection[0].value);
+          return validator(selection[0].value);
         }
       }
       return false;

@@ -46,7 +46,7 @@
 
       return {
         singleValueElement: singleValueElement,
-        bindEvents: function() {}
+        bindEvents: bindEvents
       };
 
       function singleValueElement(currentValue) {
@@ -102,6 +102,13 @@
           optionTags +
           '</select>' +
           '</div>';
+      }
+
+      function bindEvents(rootElement, selectedLinearAsset) {
+        $(rootElement).on('change', '.new-prohibition', function(evt) {
+          var value = parseInt($(evt.target).val(), 10);
+          selectedLinearAsset.setValue([{typeId: value, exceptions: [], validityPeriods: []}]);
+        });
       }
     }
   };

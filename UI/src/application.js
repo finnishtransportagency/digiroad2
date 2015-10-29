@@ -549,8 +549,7 @@ var URLRouter = function(map, backend, models) {
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedLinearAsset = new SelectedLinearAsset(backend, collection, spec.typeId,
-                                                         spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
+      var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
       return _.merge({}, spec, {
         collection: collection,
         selectedLinearAsset: selectedLinearAsset
