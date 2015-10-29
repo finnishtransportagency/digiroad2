@@ -99,7 +99,8 @@ trait LinearAssetOperations {
   def createProhibitions(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       newProhibitions.map { newProhibition =>
-        createProhibitionWithoutTransaction(typeId = 190, newProhibition.mmlId, newProhibition.value, expired = false, newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
+        val setValueFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(newProhibition.value), username)
+        createWithoutTransaction(typeId = 190, newProhibition.mmlId, setValueFn, expired = false, newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
       }
     }
   }
@@ -145,18 +146,13 @@ trait LinearAssetOperations {
   }
 
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val id = dao.createLinearAsset(typeId, mmlId, expired, sideCode, startMeasure, endMeasure, username)
-
-    value.foreach(dao.insertValue(id, valuePropertyId))
-
-    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+    val setValueFn = (id: Long) => value.foreach(dao.insertValue(id, valuePropertyId))
+    createWithoutTransaction(typeId, mmlId, setValueFn, expired, sideCode, startMeasure, endMeasure, username)
   }
 
-  private def createProhibitionWithoutTransaction(typeId: Int, mmlId: Long, value: Seq[ProhibitionValue], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, setValueFn: Long => Any, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
     val id = dao.createLinearAsset(typeId, mmlId, expired, sideCode, startMeasure, endMeasure, username)
-
-    dao.updateProhibitionValue(id, Prohibitions(value), username)
-
+    setValueFn(id)
     dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
   }
 
