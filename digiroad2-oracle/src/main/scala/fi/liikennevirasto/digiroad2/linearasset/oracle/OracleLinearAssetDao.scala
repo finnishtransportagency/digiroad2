@@ -473,6 +473,65 @@ trait OracleLinearAssetDao {
       }
     }
   }
+
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = if (expired) {
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+    } else {
+      sqlu"update asset set valid_to = null where id = $id".first
+    }
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated =
+      sqlu"update number_property_value set value = $value where asset_id = $id and property_id = $propertyId".first
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+
+    val prohibitionIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
+    sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
+    sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
+    sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+
+    value.prohibitions.foreach { prohibition =>
+      val prohibitionId = Sequences.nextPrimaryKeySeqValue
+      val prohibitionType = prohibition.typeId
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $id, $prohibitionType)""".first
+
+      prohibition.validityPeriods.foreach { validityPeriod =>
+        val validityId = Sequences.nextPrimaryKeySeqValue
+        val startHour = validityPeriod.startHour
+        val endHour = validityPeriod.endHour
+        val daysOfWeek = validityPeriod.days.value
+        sqlu"""insert into PROHIBITION_VALIDITY_PERIOD (ID, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR)
+               values ($validityId, $prohibitionId, $daysOfWeek, $startHour, $endHour)""".execute
+      }
+      prohibition.exceptions.foreach { exceptionType =>
+        val exceptionId = Sequences.nextPrimaryKeySeqValue
+        sqlu""" insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values ($exceptionId, $prohibitionId, $exceptionType)""".execute
+      }
+    }
+    if (assetsUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
 }
 
 object OracleLinearAssetDao extends OracleLinearAssetDao {

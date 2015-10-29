@@ -51,6 +51,12 @@ case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: Validit
 sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }
 object ValidityPeriodDayOfWeek {
   def apply(value: Int) = Seq(Weekday, Saturday, Sunday).find(_.value == value).getOrElse(Unknown)
+  def apply(value: String) = value match {
+    case "Sunday" => Sunday
+    case "Weekday" => Weekday
+    case "Saturday" => Saturday
+    case _ => Unknown
+  }
   def fromTimeDomainValue(value: Int) = value match {
     case 1 => Sunday
     case 2 => Weekday

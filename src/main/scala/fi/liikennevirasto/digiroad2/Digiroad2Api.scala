@@ -32,8 +32,9 @@ with GZipSupport {
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
+  case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ({ case JString(dayOfWeek) =>  ValidityPeriodDayOfWeek(dayOfWeek)}, { case d: ValidityPeriodDayOfWeek => JString(d.toString)}))
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -406,8 +407,9 @@ with GZipSupport {
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
-    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
+    val prohibitionValueOption = (parsedBody \ "value").extractOpt[Seq[ProhibitionValue]]
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLinearAsset]]
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
@@ -416,13 +418,15 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    (expiredOption, valueOption) match {
-      case (None, None) => BadRequest("Numerical limit value or expiration not provided")
-      case (expired, value) =>
+    (expiredOption, valueOption, prohibitionValueOption) match {
+      case (None, None, None) => BadRequest("Numerical limit value or expiration not provided")
+      case (expired, value, None) =>
         value.foreach(validateNumericalLimitValue)
         val updatedIds = linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
         val created = linearAssetService.create(newLimits, typeId, user.username)
         updatedIds ++ created.map(_.id)
+      case (expired, None, prohibitionValue) =>
+        linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
     }
   }
 

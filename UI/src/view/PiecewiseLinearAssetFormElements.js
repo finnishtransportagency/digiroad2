@@ -1,7 +1,20 @@
 (function(root) {
+  root.PiecewiseLinearAssetFormElements = {
+    WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
+    DefaultFormElements: DefaultFormElements
+  };
 
-  root.PiecewiseLinearAssetFormElements = function PiecewiseLinearAssetFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
-    var formElem = (elementType === 'dropdown') ? dropDownFormElement(unit) : inputFormElement(unit);
+  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+    var formElem = dropDownFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+  }
+
+  function DefaultFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+    var formElem = inputFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+  }
+
+  function formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -83,7 +96,7 @@
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
-  };
+  }
 
   function inputFormElement(unit) {
     return {
@@ -156,6 +169,5 @@
     function inputElementValue(input) {
       return parseInt(input.val(), 10);
     }
-
   }
 })(this);

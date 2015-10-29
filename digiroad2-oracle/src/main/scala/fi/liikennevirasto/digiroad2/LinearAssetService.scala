@@ -64,6 +64,13 @@ trait LinearAssetOperations {
     }
   }
 
+  def updateProhibitions(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
+    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateProhibitionValue(id, _, username))
+    withDynTransaction {
+      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+    }
+  }
+
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
     withDynTransaction {
       adjustments.foreach { adjustment =>
@@ -116,38 +123,14 @@ trait LinearAssetOperations {
   }
 
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
-    def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int = {
-      sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
-    }
+    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
+    updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+  }
 
-    def updateValue(id: Long, value: Int, username: String): Option[Long] = {
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = updateNumberProperty(id, propertyId, value)
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        None
-      }
-    }
-
-    def updateExpiration(id: Long, expired: Boolean, username: String) = {
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = if (expired) {
-        sqlu"update asset set valid_to = sysdate where id = $id".first
-      } else {
-        sqlu"update asset set valid_to = null where id = $id".first
-      }
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        None
-      }
-    }
-
+  private def updateWithoutTransaction(ids: Seq[Long], valueUpdateFn: Long => Option[Long], expired: Boolean, username: String): Seq[Long] = {
     ids.map { id =>
-      val valueUpdate: Option[Long] = value.flatMap(updateValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateExpiration(id, expired, username)
+      val valueUpdate: Option[Long] = valueUpdateFn(id)
+      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)
     }

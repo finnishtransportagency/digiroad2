@@ -6,12 +6,13 @@ import org.scalatest._
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
   case class TestLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point]) extends LinearAsset
+  case class TestProhibitionAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point]) extends LinearAsset
 
   private def linearAsset(mmlId: Long, value: Int, geometry: Seq[Point]) = {
     TestLinearAsset(0, mmlId, SideCode.BothDirections, Some(NumericValue(value)), geometry)
   }
 
-  private def roadLinkForSpeedLimit(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
+  private def roadLinkForAsset(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     val ri = roadIdentifier match {
       case Left(number) => "ROADNUMBER" -> BigInt(number)
@@ -22,11 +23,44 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
       1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode, ri))
   }
 
+  test("doesn't group assets with different prohibition validity periods") {
+    val prohibitionAssets = Seq(
+      TestProhibitionAsset(1, 1, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ProhibitionValidityPeriod(1, 2, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Seq(Point(0, 0), Point(10, 0))),
+      TestProhibitionAsset(2, 2, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ProhibitionValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Seq(Point(10, 0), Point(20, 0))))
+    val links = Map(
+      1l -> roadLinkForAsset(Left(1)),
+      2l -> roadLinkForAsset(Left(1)))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
+    groupedLinks should have size 2
+    groupedLinks(0) should have size 1
+    groupedLinks(1) should have size 1
+  }
+
+  test("groups assets with equal prohibition validity periods") {
+    val prohibitionAssets = Seq(
+      TestProhibitionAsset(1, 1, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ProhibitionValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Seq(Point(0, 0), Point(10, 0))),
+      TestProhibitionAsset(2, 2, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ProhibitionValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Seq(Point(10, 0), Point(20, 0))))
+    val links = Map(
+      1l -> roadLinkForAsset(Left(1)),
+      2l -> roadLinkForAsset(Left(1)))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
+    groupedLinks should have size 1
+    groupedLinks(0) should have size 2
+  }
+
   test("group speed limits with same limit value and road number") {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)), 2l -> roadLinkForSpeedLimit(Left(1)))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1)), 2l -> roadLinkForAsset(Left(1)))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 1
@@ -38,7 +72,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 60, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)), 2l -> roadLinkForSpeedLimit(Left(1)))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1)), 2l -> roadLinkForAsset(Left(1)))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
@@ -48,7 +82,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1)))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
@@ -58,7 +92,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(11.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)), 2l -> roadLinkForSpeedLimit(Left(1)))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1)), 2l -> roadLinkForAsset(Left(1)))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
@@ -68,7 +102,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1), Municipality), 2l -> roadLinkForSpeedLimit(Left(1), State))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1), Municipality), 2l -> roadLinkForAsset(Left(1), State))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
@@ -88,7 +122,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Right("Opastinsilta")), 2l -> roadLinkForSpeedLimit(Right("Opastinsilta")))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Right("Opastinsilta")), 2l -> roadLinkForAsset(Right("Opastinsilta")))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 1
@@ -100,7 +134,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Right("Opastinsilta")), 2l -> roadLinkForSpeedLimit(Right("Ratamestarinkatu")))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Right("Opastinsilta")), 2l -> roadLinkForAsset(Right("Ratamestarinkatu")))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
@@ -110,7 +144,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val linearAssets = Seq(
       TestLinearAsset(0, 1, SideCode.BothDirections, None, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       TestLinearAsset(1, 2, SideCode.BothDirections, None, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map(1l -> roadLinkForSpeedLimit(Left(1)), 2l -> roadLinkForSpeedLimit(Left(1)))
+    val roadLinksForSpeedLimits = Map(1l -> roadLinkForAsset(Left(1)), 2l -> roadLinkForAsset(Left(1)))
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2
