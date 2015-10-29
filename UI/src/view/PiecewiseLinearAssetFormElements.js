@@ -145,29 +145,29 @@
       '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
       '</div>');
 
-      return {
-        inputElementValue: inputElementValue,
-        valueString: valueString,
-        measureInput: measureInput
-      };
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
 
-      function valueString(currentValue) {
-        return currentValue ? currentValue + ' ' + unit : '-';
-      }
+    function valueString(currentValue) {
+      return currentValue ? currentValue + ' ' + unit : '-';
+    }
 
-      function measureInput(currentValue, className, possibleValues) {
-        var optionTags = _.map(possibleValues, function(value) {
-          var selected = value === currentValue ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
-        }).join('');
-        var value = currentValue ? currentValue : '';
-        var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+    function measureInput(currentValue, className, possibleValues) {
+      var optionTags = _.map(possibleValues, function(value) {
+        var selected = value === currentValue ? " selected" : "";
+        return '<option value="' + value + '"' + selected + '>' + value + ' ' + unit + '</option>';
+      }).join('');
+      var value = currentValue ? currentValue : '';
+      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
-        return template({className: className, optionTags: optionTags, disabled: disabled});
-      }
+      return template({className: className, optionTags: optionTags, disabled: disabled});
+    }
 
-      function inputElementValue(input) {
-        return parseInt(input.val(), 10);
-      }
+    function inputElementValue(input) {
+      return parseInt(input.val(), 10);
+    }
   }
 })(this);
