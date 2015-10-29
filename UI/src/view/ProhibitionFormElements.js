@@ -59,12 +59,16 @@
 
       function valueElement(currentValue) {
         var items = _.map(currentValue, function(x) {
-          return '<li>' + prohibitionElement(x) + '</li>';
+          return '' +
+            '<li>' +
+              prohibitionDisplayElement(x) +
+              prohibitionEditElement(x) +
+            '</li>';
         });
         return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
       }
 
-      function prohibitionElement(prohibition) {
+      function prohibitionDisplayElement(prohibition) {
         var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
 
         function exceptionElement() {
@@ -92,22 +96,51 @@
         return typeElement + validityPeriodElement() + exceptionElement();
       }
 
+      function prohibitionEditElement(prohibition) {
+        var optionTags = _.map(prohibitionValues, function(name, key) {
+          var selected = prohibition.typeId.toString() === key ? 'selected' : '';
+          return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
+        });
+        return '' +
+          '<div class="form-group edit-control-group">' +
+          '  <select class="form-control select existing-prohibition">' +
+          optionTags +
+          '  </select>' +
+          '</div>';
+      }
+
       function editElement() {
         var optionTags = _.map(prohibitionValues, function(name, key) {
           return '<option value="' + key + '">' + name + '</option>';
         });
-        return '<div class="form-group edit-control-group">' +
-          '<select class="form-control select new-prohibition">' +
-          '<option class="empty" disabled selected>Lisää kielto</option>' +
+        return '' +
+          '<div class="form-group edit-control-group">' +
+          '  <select class="form-control select new-prohibition">' +
+          '    <option class="empty" disabled selected>Lisää kielto</option>' +
           optionTags +
-          '</select>' +
+          '  </select>' +
           '</div>';
       }
 
       function bindEvents(rootElement, selectedLinearAsset) {
+        $(rootElement).on('change', '.existing-prohibition', function(evt) {
+          selectedLinearAsset.setValue(extractValue(rootElement));
+        });
+
         $(rootElement).on('change', '.new-prohibition', function(evt) {
           var value = parseInt($(evt.target).val(), 10);
           selectedLinearAsset.setValue([{typeId: value, exceptions: [], validityPeriods: []}]);
+        });
+      }
+
+      function extractValue(rootElement) {
+        var prohibitionElements = $(rootElement).find('.existing-prohibition');
+        return _(prohibitionElements).map(function(element) {
+          return {
+            typeId: parseInt($(element).val(), 10),
+            exceptions: [],
+            validityPeriods: []
+          };
         });
       }
     }
