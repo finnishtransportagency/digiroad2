@@ -176,6 +176,10 @@
       }
 
       function bindEvents(rootElement, selectedLinearAsset) {
+        $(rootElement).on('change', '.exception select', function() {
+          selectedLinearAsset.setValue(extractValue(rootElement));
+        });
+
         $(rootElement).on('change', 'select.existing-prohibition', function() {
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
@@ -194,11 +198,18 @@
       }
 
       function extractValue(rootElement) {
+        function extractExceptions(element) {
+          var exceptionElements = $(element).find('.exception select');
+          return _.map(exceptionElements, function(exception) {
+            return parseInt($(exception).val(), 10);
+          });
+        }
+
         var prohibitionElements = $(rootElement).find('.existing-prohibition');
-        return _(prohibitionElements).map(function(element) {
+        return _.map(prohibitionElements, function(element) {
           return {
             typeId: parseInt($(element).val(), 10),
-            exceptions: [],
+            exceptions: extractExceptions($(element).parent()),
             validityPeriods: []
           };
         });
