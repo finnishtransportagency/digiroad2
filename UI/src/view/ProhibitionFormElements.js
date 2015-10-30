@@ -40,6 +40,11 @@
       24: 'Ryhmän A vaarallisten aineiden kuljetus',
       25: 'Ryhmän B vaarallisten aineiden kuljetus'
     };
+    var dayLabels = {
+      Weekday: "Ma–Pe",
+      Saturday: "La",
+      Sunday: "Su"
+    };
 
     return {
       singleValueElement: singleValueElement,
@@ -143,44 +148,7 @@
       }
 
       function validityPeriodsElement() {
-        var dayLabels = {
-          Weekday: "Ma–Pe",
-          Saturday: "La",
-          Sunday: "Su"
-        };
-
-        function label(period) {
-          return '' +
-            '<label class="control-label">' +
-            dayLabels[period.days] +
-            '</label>';
-        }
-
-        function hourOptions(selectedOption, type) {
-          var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
-          return _.map(range, function(hour) {
-            var selected = hour === selectedOption ? 'selected' : '';
-            return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
-          });
-        }
-
-        function hourElement(selectedHour, type) {
-          var className = type + '-hour';
-          return '' +
-            '<select class="form-control select ' + className + '">' +
-            hourOptions(selectedHour, type) +
-            '</select>';
-        }
-
-        var existingValidityPeriodElements = _(prohibition.validityPeriods).map(function(period) {
-          return '' +
-            '<div class="form-group existing-validity-period" data-days="' + period.days + '">' +
-            deleteButton() +
-            label(period) +
-            hourElement(period.startHour, 'start') +
-            hourElement(period.endHour, 'end') +
-            '</div>';
-        }).join('');
+        var existingValidityPeriodElements = _(prohibition.validityPeriods).map(validityPeriodElement).join('');
 
         return '' +
           '<div class="validity-period-group">' +
@@ -195,6 +163,39 @@
         typeElement() +
         validityPeriodsElement() +
         exceptionsElement() +
+        '</div>';
+    }
+
+    function validityPeriodLabel(period) {
+      return '' +
+        '<label class="control-label">' +
+        dayLabels[period.days] +
+        '</label>';
+    }
+
+    function hourOptions(selectedOption, type) {
+      var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
+      return _.map(range, function(hour) {
+        var selected = hour === selectedOption ? 'selected' : '';
+        return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+      });
+    }
+
+    function hourElement(selectedHour, type) {
+      var className = type + '-hour';
+      return '' +
+        '<select class="form-control select ' + className + '">' +
+        hourOptions(selectedHour, type) +
+        '</select>';
+    }
+
+    function validityPeriodElement(period) {
+      return '' +
+        '<div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+        deleteButton() +
+        validityPeriodLabel(period) +
+        hourElement(period.startHour, 'start') +
+        hourElement(period.endHour, 'end') +
         '</div>';
     }
 
@@ -262,6 +263,17 @@
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
         $(evt.target).before(deleteButton());
         $(evt.target).closest('.exception-group').append(newExceptionElement());
+        selectedLinearAsset.setValue(extractValue(rootElement));
+      });
+
+      $(rootElement).on('change', '.new-validity-period select', function(evt) {
+        $(evt.target).parent().replaceWith(validityPeriodElement({
+          days: $(evt.target).val(),
+          startHour: 0,
+          endHour: 24
+        }));
+        $(evt.target).before(deleteButton());
+        $(evt.target).closest('.validity-period-group').append(newValidityPeriodElement());
         selectedLinearAsset.setValue(extractValue(rootElement));
       });
 
