@@ -142,10 +142,27 @@
           '</div>';
       }
 
+      function validityPeriodsElement() {
+        var dayLabels = {
+          Weekday: "Ma–Pe",
+          Saturday: "La",
+          Sunday: "Su"
+        };
+        var items = _(prohibition.validityPeriods).map(function(period) {
+          return '' +
+            '<div class="form-group existing-exception">' +
+            deleteButton() +
+            dayLabels[period.days] +
+            '</div>';
+        });
+        return items.join('');
+      }
+
       return '' +
         '<div class="form-group edit-control-group">' +
         deleteButton() +
         typeElement() +
+        validityPeriodsElement() +
         exceptionsElement() +
         '</div>';
     }
