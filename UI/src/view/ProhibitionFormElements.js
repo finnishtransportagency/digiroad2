@@ -174,7 +174,7 @@
 
         var items = _(prohibition.validityPeriods).map(function(period) {
           return '' +
-            '<div class="form-group existing-validity-period">' +
+            '<div class="form-group existing-validity-period" data-days="' + period.days + '">' +
             deleteButton() +
             label(period) +
             hourElement(period.startHour, 'start') +
@@ -269,7 +269,15 @@
       }
 
       function extractValidityPeriods(element) {
+        var periodElements = $(element).find('.existing-validity-period');
 
+        return _.map(periodElements, function(element) {
+          return {
+            startHour: parseInt($(element).find('.start-hour').val(), 10),
+            endHour: parseInt($(element).find('.end-hour').val(), 10),
+            days: $(element).data('days')
+          };
+        });
       }
 
       var prohibitionElements = $(rootElement).find('.existing-prohibition');
