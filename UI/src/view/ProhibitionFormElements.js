@@ -75,7 +75,11 @@
           var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
             return '<li>' + exceptionValues[exceptionId] + '</li>';
           }).join('');
-          return _.isEmpty(prohibition.exceptions) ? '' : '<div>Rajoitus ei koske seuraavia ajoneuvoja: <ul>' + exceptionElements + '</ul></div>';
+          var element = '' +
+            '<div>Rajoitus ei koske seuraavia ajoneuvoja: ' +
+            '  <ul>' + exceptionElements + '</ul>' +
+            '</div>';
+          return _.isEmpty(prohibition.exceptions) ?  '' : element;
         }
 
         function validityPeriodElement() {
