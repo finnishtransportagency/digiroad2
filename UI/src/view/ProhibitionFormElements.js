@@ -45,6 +45,7 @@
       Saturday: "La",
       Sunday: "Su"
     };
+    var exceptionLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
 
     return {
       singleValueElement: singleValueElement,
@@ -78,7 +79,8 @@
           return '<li>' + exceptionValues[exceptionId] + '</li>';
         }).join('');
         var element = '' +
-          '<div>Rajoitus ei koske seuraavia ajoneuvoja: ' +
+          '<div>' +
+          exceptionLabel +
           '  <ul>' + exceptionElements + '</ul>' +
           '</div>';
         return _.isEmpty(prohibition.exceptions) ?  '' : element;
@@ -86,15 +88,8 @@
 
       function validityPeriodElement() {
         var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
-          var dayName;
-          if (period.days === "Saturday") {
-            dayName = "La ";
-          } else if (period.days === "Sunday") {
-            dayName = "Su ";
-          } else {
-            dayName = "Ma - Pe ";
-          }
-          return '<li>' + dayName + period.startHour + ' - ' + period.endHour + '</li>';
+          var dayName = dayLabels[period.days];
+          return '<li>' + dayName + period.startHour + '–' + period.endHour + '</li>';
         }).join('');
         return '<ul>' + validityPeriodItems + '</ul>';
       }
@@ -124,8 +119,6 @@
       }
 
       function exceptionsElement() {
-        var elementLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
-
         function existingExceptionElements() {
           var items = _(prohibition.exceptions).map(function(exception) {
             return '' +
@@ -141,7 +134,7 @@
 
         return '' +
           '<div class="exception-group">' +
-          elementLabel +
+          exceptionLabel +
           existingExceptionElements() +
           newExceptionElement() +
           '</div>';
