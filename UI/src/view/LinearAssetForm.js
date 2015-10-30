@@ -10,10 +10,10 @@
       rootElement.html(template(selectedLinearAsset, formElements, newTitle, title));
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        formElements.bindEvents(rootElement, selectedLinearAsset, 'a');
-        formElements.bindEvents(rootElement, selectedLinearAsset, 'b');
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset, 'a');
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset, 'b');
       } else {
-        formElements.bindEvents(rootElement, selectedLinearAsset);
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset);
       }
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
@@ -85,8 +85,16 @@
     };
 
     var limitValueButtons = function() {
-      var separateValueElement = formElements.singleValueElement(selectedLinearAsset.getValue(), "a") + formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
-      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue());
+      var separateValueElement =
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "a") +
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
+      var valueElements = selectedLinearAsset.isSplitOrSeparated() ?
+        separateValueElement :
+        formElements.singleValueElement(selectedLinearAsset.getValue());
+      return '' +
+        '<div class="form-elements-container">' +
+        valueElements +
+        '</div>';
     };
 
     var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';
