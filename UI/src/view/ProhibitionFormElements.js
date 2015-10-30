@@ -111,16 +111,21 @@
       }
 
       function prohibitionEditElement(prohibition) {
-        var optionTags = _.map(prohibitionValues, function(name, key) {
-          var selected = prohibition.typeId.toString() === key ? 'selected' : '';
-          return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
-        });
+        function typeElement() {
+          var optionTags = _.map(prohibitionValues, function(name, key) {
+            var selected = prohibition.typeId.toString() === key ? 'selected' : '';
+            return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
+          });
+          return '' +
+            '<select class="form-control select existing-prohibition">' +
+            optionTags +
+            '</select>';
+        }
+
         return '' +
           '<div class="form-group edit-control-group">' +
           deleteButton() +
-          '  <select class="form-control select existing-prohibition">' +
-          optionTags +
-          '  </select>' +
+          typeElement() +
           '</div>';
       }
 
