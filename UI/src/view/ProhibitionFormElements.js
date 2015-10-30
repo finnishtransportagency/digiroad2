@@ -267,13 +267,12 @@
       });
 
       $(rootElement).on('change', '.new-validity-period select', function(evt) {
+        $(evt.target).closest('.validity-period-group').append(newValidityPeriodElement());
         $(evt.target).parent().replaceWith(validityPeriodElement({
           days: $(evt.target).val(),
           startHour: 0,
           endHour: 24
         }));
-        $(evt.target).before(deleteButton());
-        $(evt.target).closest('.validity-period-group').append(newValidityPeriodElement());
         selectedLinearAsset.setValue(extractValue(rootElement));
       });
 
