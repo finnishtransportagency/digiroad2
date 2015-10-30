@@ -122,9 +122,11 @@
           return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
         });
         return '' +
-          '<select class="form-control select existing-prohibition">' +
+          '<div class="form-group existing-prohibition">' +
+          '<select class="form-control select">' +
           optionTags +
-          '</select>';
+          '</select>' +
+          '</div>';
       }
 
       function exceptionsElement() {
@@ -221,7 +223,7 @@
 
     function newExceptionElement() {
       return '' +
-        '<div class="form-group new-exception">' +
+        '<div class="form-group edit-control-group new-exception">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
         exceptionOptions() +
@@ -231,7 +233,7 @@
 
     function newValidityPeriodElement() {
       return '' +
-        '<div class="form-group new-validity-period">' +
+        '<div class="form-group edit-control-group new-validity-period">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää aikarajoitus</option>' +
         validityPeriodOptions() +
@@ -244,8 +246,8 @@
         return '<option value="' + key + '">' + name + '</option>';
       });
       return '' +
-        '<div class="form-group edit-control-group">' +
-        '  <select class="form-control select new-prohibition">' +
+        '<div class="form-group edit-control-group new-prohibition">' +
+        '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää kielto</option>' +
         optionTags +
         '  </select>' +
@@ -255,7 +257,7 @@
     function bindEvents(rootElement, selectedLinearAsset) {
       $(rootElement).on(
         'change',
-        '.existing-exception select, .existing-validity-period select, select.existing-prohibition',
+        '.existing-exception select, .existing-validity-period select, existing-prohibition select',
         function() {
           selectedLinearAsset.setValue(extractValue(rootElement));
         }
@@ -278,8 +280,8 @@
         selectedLinearAsset.setValue(extractValue(rootElement));
       });
 
-      $(rootElement).on('change', 'select.new-prohibition', function(evt) {
-        $(evt.target).removeClass('new-prohibition').addClass('existing-prohibition');
+      $(rootElement).on('change', '.new-prohibition select', function(evt) {
+        $(evt.target).parent().removeClass('new-prohibition').addClass('existing-prohibition');
         $(evt.target).before(deleteButton());
         $(rootElement).find('.form-group.' + className).append(newProhibitionElement());
         selectedLinearAsset.setValue(extractValue(rootElement));
@@ -293,15 +295,14 @@
 
     function extractValue(rootElement) {
       function extractExceptions(element) {
-        var exceptionElements = $(element).find('.existing-exception select');
+        var exceptionElements = element.find('.existing-exception select');
         return _.map(exceptionElements, function(exception) {
           return parseInt($(exception).val(), 10);
         });
       }
 
       function extractValidityPeriods(element) {
-        var periodElements = $(element).find('.existing-validity-period');
-
+        var periodElements = element.find('.existing-validity-period');
         return _.map(periodElements, function(element) {
           return {
             startHour: parseInt($(element).find('.start-hour').val(), 10),
@@ -311,13 +312,14 @@
         });
       }
 
-      var prohibitionElements = $(rootElement).find('.existing-prohibition');
+      var prohibitionElements = $(rootElement).find('.prohibition');
 
       return _.map(prohibitionElements, function(element) {
+        var $element = $(element);
         return {
-          typeId: parseInt($(element).val(), 10),
-          exceptions: extractExceptions($(element).parent()),
-          validityPeriods: extractValidityPeriods($(element).parent())
+          typeId: parseInt($element.find('.existing-prohibition select').val(), 10),
+          exceptions: extractExceptions($element),
+          validityPeriods: extractValidityPeriods($element)
         };
       });
     }
