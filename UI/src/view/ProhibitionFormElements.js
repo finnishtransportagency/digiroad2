@@ -124,33 +124,44 @@
         function exceptionsElement() {
           var elementLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
 
-          function exceptionItems() {
-            function options(exception) {
-              var elements = _.map(exceptionValues, function(name, key) {
-                var selected = exception.toString() === key ? 'selected' : '';
-                return '' +
-                  '<option value="' + key + '" ' + selected + '>' +
-                  name +
-                  '</option>';
-              });
-              return elements.join('');
-            }
+          function exceptionOptions(exception) {
+            var elements = _.map(exceptionValues, function(name, key) {
+              var selected = exception && (exception.toString() === key) ? 'selected' : '';
+              return '' +
+                '<option value="' + key + '" ' + selected + '>' +
+                name +
+                '</option>';
+            });
+            return elements.join('');
+          }
 
+          function exceptionItems() {
             var items = _(prohibition.exceptions).map(function(exception) {
               return '' +
                 '<div class="form-group exception">' +
-                '<select class="form-control select">' +
-                options(exception) +
-                '</select>' +
+                '  <select class="form-control select">' +
+                exceptionOptions(exception) +
+                '  </select>' +
                 '</div>';
             });
             return items.join('');
+          }
+
+          function newExceptionElement() {
+            return '' +
+              '<div class="form-group exception">' +
+              '  <select class="form-control select new-exception">' +
+              '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
+              exceptionOptions() +
+              '  </select>' +
+              '</div>';
           }
 
           return '' +
             '<div class="exception-group">' +
             elementLabel +
             exceptionItems() +
+            newExceptionElement() +
             '</div>';
         }
 
