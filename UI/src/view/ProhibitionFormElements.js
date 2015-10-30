@@ -97,13 +97,12 @@
           return '<ul>' + validityPeriodItems + '</ul>';
         }
 
-        var displayElement = '' +
+        return '' +
           '<div class="form-control-static">' +
           typeElement +
           validityPeriodElement() +
           exceptionElement() +
           '</div>';
-        return displayElement;
       }
 
       function deleteButton() {
