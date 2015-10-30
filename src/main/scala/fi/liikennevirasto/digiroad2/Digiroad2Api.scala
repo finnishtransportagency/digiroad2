@@ -421,11 +421,11 @@ with GZipSupport {
 
     val updatedIds = (expiredOption, valueOption, prohibitionValueOption) match {
       case (None, None, None) => Nil
-      case (expired, value, None) =>
-        value.foreach(validateNumericalLimitValue)
-        linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
-      case (expired, None, prohibitionValue) =>
-        linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
+      case (expired, Some(value), None) =>
+        validateNumericalLimitValue(value)
+        linearAssetService.update(existingAssets.toSeq, value.intValue(), expired.getOrElse(false), user.username)
+      case (expired, None, Some(prohibitionValue)) =>
+        linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), expired.getOrElse(false), user.username)
     }
 
     val createdIds = (newLimits, newProhibitions) match {
@@ -445,7 +445,7 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    linearAssetService.update(ids.toSeq, None, true, user.username)
+    linearAssetService.expire(ids.toSeq, user.username)
   }
 
   post("/linearassets/:id") {

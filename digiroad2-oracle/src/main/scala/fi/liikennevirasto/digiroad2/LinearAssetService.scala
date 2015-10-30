@@ -58,14 +58,21 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+  def expire(ids: Seq[Long], username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, expired, username)
+      updateWithoutTransaction(ids, None, expired = true, username)
     }
   }
 
-  def updateProhibitions(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateProhibitionValue(id, _, username))
+  def update(ids: Seq[Long], value: Int, expired: Boolean, username: String): Seq[Long] = {
+    val valueUpdateFn = (id: Long) => dao.updateValue(id, value, valuePropertyId, username)
+    withDynTransaction {
+      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+    }
+  }
+
+  def update(ids: Seq[Long], value: Prohibitions, expired: Boolean, username: String): Seq[Long] = {
+    val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, value, username)
     withDynTransaction {
       updateWithoutTransaction(ids, valueUpdateFn, expired, username)
     }
