@@ -232,18 +232,18 @@
     }
 
     function bindEvents(rootElement, selectedLinearAsset) {
-      $(rootElement).on('change', '.existing-exception select', function() {
-        selectedLinearAsset.setValue(extractValue(rootElement));
-      });
+      $(rootElement).on(
+        'change',
+        '.existing-exception select, .existing-validity-period select, select.existing-prohibition',
+        function() {
+          selectedLinearAsset.setValue(extractValue(rootElement));
+        }
+      );
 
       $(rootElement).on('change', '.new-exception select', function(evt) {
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
         $(evt.target).before(deleteButton());
         $(evt.target).closest('.exception-group').append(newExceptionElement());
-        selectedLinearAsset.setValue(extractValue(rootElement));
-      });
-
-      $(rootElement).on('change', 'select.existing-prohibition', function() {
         selectedLinearAsset.setValue(extractValue(rootElement));
       });
 
