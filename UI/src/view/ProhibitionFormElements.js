@@ -124,17 +124,6 @@
         function exceptionsElement() {
           var elementLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
 
-          function exceptionOptions(exception) {
-            var elements = _.map(exceptionValues, function(name, key) {
-              var selected = exception && (exception.toString() === key) ? 'selected' : '';
-              return '' +
-                '<option value="' + key + '" ' + selected + '>' +
-                name +
-                '</option>';
-            });
-            return elements.join('');
-          }
-
           function existingExceptionElements() {
             var items = _(prohibition.exceptions).map(function(exception) {
               return '' +
@@ -145,16 +134,6 @@
                 '</div>';
             });
             return items.join('');
-          }
-
-          function newExceptionElement() {
-            return '' +
-              '<div class="form-group new-exception">' +
-              '  <select class="form-control select new-exception">' +
-              '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
-              exceptionOptions() +
-              '  </select>' +
-              '</div>';
           }
 
           return '' +
@@ -173,6 +152,27 @@
           '</div>';
       }
 
+      function exceptionOptions(exception) {
+        var elements = _.map(exceptionValues, function(name, key) {
+          var selected = exception && (exception.toString() === key) ? 'selected' : '';
+          return '' +
+            '<option value="' + key + '" ' + selected + '>' +
+            name +
+            '</option>';
+        });
+        return elements.join('');
+      }
+
+      function newExceptionElement() {
+        return '' +
+          '<div class="form-group new-exception">' +
+          '  <select class="form-control select">' +
+          '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
+          exceptionOptions() +
+          '  </select>' +
+          '</div>';
+      }
+
       function editElement() {
         var optionTags = _.map(prohibitionValues, function(name, key) {
           return '<option value="' + key + '">' + name + '</option>';
@@ -188,6 +188,12 @@
 
       function bindEvents(rootElement, selectedLinearAsset) {
         $(rootElement).on('change', '.existing-exception select', function() {
+          selectedLinearAsset.setValue(extractValue(rootElement));
+        });
+
+        $(rootElement).on('change', '.new-exception select', function(evt) {
+          $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
+          $(evt.target).closest('.exception-group').append(newExceptionElement());
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
 
