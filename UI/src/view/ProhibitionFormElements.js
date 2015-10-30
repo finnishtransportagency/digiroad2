@@ -148,13 +148,22 @@
           Saturday: "La",
           Sunday: "Su"
         };
+
+        function label(period) {
+          return '' +
+            '<label class="control-label">' +
+            dayLabels[period.days] +
+            '</label>';
+        }
+
         var items = _(prohibition.validityPeriods).map(function(period) {
           return '' +
             '<div class="form-group existing-exception">' +
             deleteButton() +
-            dayLabels[period.days] +
+            label(period) +
             '</div>';
         });
+
         return items.join('');
       }
 
