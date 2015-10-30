@@ -418,22 +418,20 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedIds = (valueOption, prohibitionValueOption) match {
-      case (None, None) => Nil
-      case (Some(value), None) =>
-        validateNumericalLimitValue(value)
-        linearAssetService.update(existingAssets.toSeq, value.intValue(), user.username)
-      case (None, Some(prohibitionValue)) =>
-        linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), user.username)
-    }
+    val updatedNumericalIds = valueOption.map { value =>
+      validateNumericalLimitValue(value)
+      linearAssetService.update(existingAssets.toSeq, value.intValue(), user.username)
+    }.getOrElse(Nil)
 
-    val createdIds = (newLimits, newProhibitions) match {
-      case (Nil, Nil) => Nil
-      case (newLimits, Nil) => linearAssetService.create(newLimits, typeId, user.username).map(_.id)
-      case (Nil, newProhibitions) => linearAssetService.createProhibitions(newProhibitions, user.username).map(_.id)
-    }
+    val updatedProhibitionIds = prohibitionValueOption.map { prohibitionValue =>
+      linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), user.username)
+    }.getOrElse(Nil)
 
-    updatedIds ++ createdIds
+    val createdIds =
+      linearAssetService.create(newLimits, typeId, user.username).map(_.id) ++
+      linearAssetService.create(newProhibitions, user.username).map(_.id)
+
+    updatedNumericalIds ++ updatedProhibitionIds ++ createdIds
   }
 
   delete("/linearassets") {

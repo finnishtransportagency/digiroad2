@@ -103,7 +103,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def createProhibitions(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
+  def create(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       newProhibitions.map { newProhibition =>
         val setValueFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(newProhibition.value), username)
