@@ -145,6 +145,31 @@ trait LinearAssetOperations {
     }
   }
 
+  def separateProhibition(id: Long, valueTowardsDigitization: Option[Seq[ProhibitionValue]], valueAgainstDigitization: Option[Seq[ProhibitionValue]], username: String, municipalityValidation: (Int) => Unit):  Seq[Long] = {
+    withDynTransaction {
+      val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+      val roadLink = roadLinkService.fetchVVHRoadlink(existing.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode)
+
+      valueTowardsDigitization match {
+        case None => expire(Seq(id), username)
+        case Some(value) =>
+          val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(value), username)
+          updateWithoutTransaction(Seq(id), valueUpdateFn, expired = false, username)
+      }
+
+      dao.updateSideCode(id, SideCode.TowardsDigitizing)
+
+      val created = valueAgainstDigitization.map { value =>
+        val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(value))
+        val created = createWithoutTransaction(existing.typeId, existing.mmlId, setValueFn, expired = false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
+        Seq(created.id)
+      }.getOrElse(Nil)
+
+      Seq(existing.id) ++ created
+    }
+  }
+
   private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     val valueUpdateFn = (id: Long) => value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
     updateWithoutTransaction(ids, valueUpdateFn, expired, username)

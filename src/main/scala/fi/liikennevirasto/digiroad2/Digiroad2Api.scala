@@ -459,11 +459,31 @@ with GZipSupport {
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
 
-    linearAssetService.separate(params("id").toLong,
-      (parsedBody \ "valueTowardsDigitization").extractOpt[Int],
-      (parsedBody \ "valueAgainstDigitization").extractOpt[Int],
-      user.username,
-      validateUserMunicipalityAccess(user))
+    val valueTowardsDigitization = (parsedBody \ "valueTowardsDigitization").extractOpt[Int]
+    val valueAgainstDigitization = (parsedBody \ "valueAgainstDigitization").extractOpt[Int]
+
+    val prohibitionValueTowardsDigitization = (parsedBody \ "valueTowardsDigitization").extractOpt[Seq[ProhibitionValue]]
+    val prohibitionValueAgainstDigitization = (parsedBody \ "valueAgainstDigitization").extractOpt[Seq[ProhibitionValue]]
+
+    val intValueIds = (valueTowardsDigitization, valueAgainstDigitization) match {
+      case (None, None) =>  Nil
+      case _ => linearAssetService.separate(params("id").toLong,
+        valueTowardsDigitization,
+        valueAgainstDigitization,
+        user.username,
+        validateUserMunicipalityAccess(user))
+    }
+
+    val prohibitionValueIds = (prohibitionValueTowardsDigitization, prohibitionValueAgainstDigitization) match {
+      case (None, None) =>  Nil
+      case _ => linearAssetService.separateProhibition(params("id").toLong,
+        prohibitionValueTowardsDigitization,
+        prohibitionValueAgainstDigitization,
+        user.username,
+        validateUserMunicipalityAccess(user))
+    }
+
+    intValueIds ++ prohibitionValueIds
   }
 
   post("/linearassets/separate") {
