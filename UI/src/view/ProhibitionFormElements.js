@@ -156,17 +156,19 @@
             '</label>';
         }
 
-        function hourOptions(selectedOption) {
-          return _.map(_.range(0, 24), function(hour) {
+        function hourOptions(selectedOption, type) {
+          var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
+          return _.map(range, function(hour) {
             var selected = hour === selectedOption ? 'selected' : '';
             return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
           });
         }
 
-        function hourElement(selectedHour, className) {
+        function hourElement(selectedHour, type) {
+          var className = type + '-hour';
           return '' +
             '<select class="form-control select ' + className + '">' +
-            hourOptions(selectedHour) +
+            hourOptions(selectedHour, type) +
             '</select>';
         }
 
@@ -175,8 +177,8 @@
             '<div class="form-group existing-exception">' +
             deleteButton() +
             label(period) +
-            hourElement(period.startHour, 'start-hour') +
-            hourElement(period.endHour, 'end-hour') +
+            hourElement(period.startHour, 'start') +
+            hourElement(period.endHour, 'end') +
             '</div>';
         });
 
