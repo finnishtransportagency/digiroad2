@@ -123,9 +123,34 @@
 
         function exceptionsElement() {
           var elementLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
+
+          function exceptionItems() {
+            function options(exception) {
+              var elements = _.map(exceptionValues, function(name, key) {
+                var selected = exception.toString() === key ? 'selected' : '';
+                return '' +
+                  '<option value="' + key + '" ' + selected + '>' +
+                  name +
+                  '</option>';
+              });
+              return elements.join('');
+            }
+
+            var items = _(prohibition.exceptions).map(function(exception) {
+              return '' +
+                '<div class="form-group exception">' +
+                '<select class="form-control select">' +
+                options(exception) +
+                '</select>' +
+                '</div>';
+            });
+            return items.join('');
+          }
+
           return '' +
             '<div class="exception-group">' +
             elementLabel +
+            exceptionItems() +
             '</div>';
         }
 
