@@ -174,7 +174,7 @@
 
         var items = _(prohibition.validityPeriods).map(function(period) {
           return '' +
-            '<div class="form-group existing-exception">' +
+            '<div class="form-group existing-validity-period">' +
             deleteButton() +
             label(period) +
             hourElement(period.startHour, 'start') +
@@ -182,7 +182,10 @@
             '</div>';
         });
 
-        return items.join('');
+        return '' +
+          '<div class="validity-period-group">' +
+          items.join('') +
+          '</div>';
       }
 
       return '' +
@@ -265,12 +268,17 @@
         });
       }
 
+      function extractValidityPeriods(element) {
+
+      }
+
       var prohibitionElements = $(rootElement).find('.existing-prohibition');
+
       return _.map(prohibitionElements, function(element) {
         return {
           typeId: parseInt($(element).val(), 10),
           exceptions: extractExceptions($(element).parent()),
-          validityPeriods: []
+          validityPeriods: extractValidityPeriods($(element).parent())
         };
       });
     }
