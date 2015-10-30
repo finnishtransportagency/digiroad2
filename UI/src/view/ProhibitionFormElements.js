@@ -121,10 +121,19 @@
             '</select>';
         }
 
+        function exceptionsElement() {
+          var elementLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
+          return '' +
+            '<div class="exception-group">' +
+            elementLabel +
+            '</div>';
+        }
+
         return '' +
           '<div class="form-group edit-control-group">' +
           deleteButton() +
           typeElement() +
+          exceptionsElement() +
           '</div>';
       }
 
