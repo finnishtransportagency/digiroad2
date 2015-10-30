@@ -406,7 +406,6 @@ with GZipSupport {
 
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     val prohibitionValueOption = (parsedBody \ "value").extractOpt[Seq[ProhibitionValue]]
@@ -419,13 +418,13 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedIds = (expiredOption, valueOption, prohibitionValueOption) match {
-      case (None, None, None) => Nil
-      case (expired, Some(value), None) =>
+    val updatedIds = (valueOption, prohibitionValueOption) match {
+      case (None, None) => Nil
+      case (Some(value), None) =>
         validateNumericalLimitValue(value)
-        linearAssetService.update(existingAssets.toSeq, value.intValue(), expired.getOrElse(false), user.username)
-      case (expired, None, Some(prohibitionValue)) =>
-        linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), expired.getOrElse(false), user.username)
+        linearAssetService.update(existingAssets.toSeq, value.intValue(), user.username)
+      case (None, Some(prohibitionValue)) =>
+        linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), user.username)
     }
 
     val createdIds = (newLimits, newProhibitions) match {

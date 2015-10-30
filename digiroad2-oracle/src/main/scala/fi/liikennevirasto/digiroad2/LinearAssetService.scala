@@ -64,17 +64,17 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(ids: Seq[Long], value: Int, expired: Boolean, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Int, username: String): Seq[Long] = {
     val valueUpdateFn = (id: Long) => dao.updateValue(id, value, valuePropertyId, username)
     withDynTransaction {
-      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+      updateWithoutTransaction(ids, valueUpdateFn, expired = false, username)
     }
   }
 
-  def update(ids: Seq[Long], value: Prohibitions, expired: Boolean, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Prohibitions, username: String): Seq[Long] = {
     val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, value, username)
     withDynTransaction {
-      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+      updateWithoutTransaction(ids, valueUpdateFn, expired = false, username)
     }
   }
 
