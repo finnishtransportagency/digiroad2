@@ -135,10 +135,10 @@
             return elements.join('');
           }
 
-          function exceptionItems() {
+          function existingExceptionElements() {
             var items = _(prohibition.exceptions).map(function(exception) {
               return '' +
-                '<div class="form-group exception">' +
+                '<div class="form-group existing-exception">' +
                 '  <select class="form-control select">' +
                 exceptionOptions(exception) +
                 '  </select>' +
@@ -149,7 +149,7 @@
 
           function newExceptionElement() {
             return '' +
-              '<div class="form-group exception">' +
+              '<div class="form-group new-exception">' +
               '  <select class="form-control select new-exception">' +
               '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
               exceptionOptions() +
@@ -160,7 +160,7 @@
           return '' +
             '<div class="exception-group">' +
             elementLabel +
-            exceptionItems() +
+            existingExceptionElements() +
             newExceptionElement() +
             '</div>';
         }
@@ -187,7 +187,7 @@
       }
 
       function bindEvents(rootElement, selectedLinearAsset) {
-        $(rootElement).on('change', '.exception select', function() {
+        $(rootElement).on('change', '.existing-exception select', function() {
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
 
@@ -210,7 +210,7 @@
 
       function extractValue(rootElement) {
         function extractExceptions(element) {
-          var exceptionElements = $(element).find('.exception select');
+          var exceptionElements = $(element).find('.existing-exception select');
           return _.map(exceptionElements, function(exception) {
             return parseInt($(exception).val(), 10);
           });
