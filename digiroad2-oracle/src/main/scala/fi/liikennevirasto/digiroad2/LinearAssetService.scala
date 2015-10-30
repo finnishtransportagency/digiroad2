@@ -131,10 +131,17 @@ trait LinearAssetOperations {
       val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
       val roadLink = roadLinkService.fetchVVHRoadlink(existing.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
+
       updateWithoutTransaction(Seq(id), valueTowardsDigitization, valueTowardsDigitization.isEmpty, username)
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val created = createWithoutTransaction(existing.typeId, existing.mmlId, valueAgainstDigitization, valueAgainstDigitization.isEmpty, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-      Seq(existing.id, created.id)
+
+      val created = valueAgainstDigitization.map { value =>
+        val setValueFn = (id: Long) => dao.insertValue(id, valuePropertyId)(value)
+        val created = createWithoutTransaction(existing.typeId, existing.mmlId, setValueFn, expired = false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
+        Seq(created.id)
+      }.getOrElse(Nil)
+
+      Seq(existing.id) ++ created
     }
   }
 
