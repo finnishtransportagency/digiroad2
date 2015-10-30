@@ -163,14 +163,20 @@
           });
         }
 
+        function hourElement(selectedHour, className) {
+          return '' +
+            '<select class="form-control select ' + className + '">' +
+            hourOptions(selectedHour) +
+            '</select>';
+        }
+
         var items = _(prohibition.validityPeriods).map(function(period) {
           return '' +
             '<div class="form-group existing-exception">' +
             deleteButton() +
             label(period) +
-            '<select class="form-control select start-hour">' +
-            hourOptions(period.startHour) +
-            '</select>' +
+            hourElement(period.startHour, 'start-hour') +
+            hourElement(period.endHour, 'end-hour') +
             '</div>';
         });
 
