@@ -172,7 +172,7 @@
             '</select>';
         }
 
-        var items = _(prohibition.validityPeriods).map(function(period) {
+        var existingValidityPeriodElements = _(prohibition.validityPeriods).map(function(period) {
           return '' +
             '<div class="form-group existing-validity-period" data-days="' + period.days + '">' +
             deleteButton() +
@@ -180,11 +180,12 @@
             hourElement(period.startHour, 'start') +
             hourElement(period.endHour, 'end') +
             '</div>';
-        });
+        }).join('');
 
         return '' +
           '<div class="validity-period-group">' +
-          items.join('') +
+          existingValidityPeriodElements +
+          newValidityPeriodElement() +
           '</div>';
       }
 
@@ -208,12 +209,29 @@
       return elements.join('');
     }
 
+    function validityPeriodOptions() {
+      return '' +
+          '<option value="Weekday">Ma–Pe</option>' +
+          '<option value="Saturday">La</option>' +
+          '<option value="Sunday">Su</option>';
+    }
+
     function newExceptionElement() {
       return '' +
         '<div class="form-group new-exception">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
         exceptionOptions() +
+        '  </select>' +
+        '</div>';
+    }
+
+    function newValidityPeriodElement() {
+      return '' +
+        '<div class="form-group new-validity-period">' +
+        '  <select class="form-control select">' +
+        '    <option class="empty" disabled selected>Lisää aikarajoitus</option>' +
+        validityPeriodOptions() +
         '  </select>' +
         '</div>';
     }
