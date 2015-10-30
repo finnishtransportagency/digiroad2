@@ -46,7 +46,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Expire numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), None, true, "lol")
+      ServiceWithDao.expire(Seq(11111l), "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
       limit.value should be (Some(NumericValue(4000)))
       limit.expired should be (true)
@@ -55,7 +55,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), Some(2000), false, "lol")
+      ServiceWithDao.update(Seq(11111l), 2000, "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
       limit.value should be (Some(NumericValue(2000)))
       limit.expired should be (false)
