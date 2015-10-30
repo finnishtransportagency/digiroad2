@@ -128,6 +128,7 @@
             var items = _(prohibition.exceptions).map(function(exception) {
               return '' +
                 '<div class="form-group existing-exception">' +
+                deleteButton() +
                 '  <select class="form-control select">' +
                 exceptionOptions(exception) +
                 '  </select>' +
@@ -193,6 +194,7 @@
 
         $(rootElement).on('change', '.new-exception select', function(evt) {
           $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
+          $(evt.target).before(deleteButton());
           $(evt.target).closest('.exception-group').append(newExceptionElement());
           selectedLinearAsset.setValue(extractValue(rootElement));
         });
