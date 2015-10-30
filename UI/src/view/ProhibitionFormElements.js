@@ -156,11 +156,21 @@
             '</label>';
         }
 
+        function hourOptions(selectedOption) {
+          return _.map(_.range(0, 24), function(hour) {
+            var selected = hour === selectedOption ? 'selected' : '';
+            return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+          });
+        }
+
         var items = _(prohibition.validityPeriods).map(function(period) {
           return '' +
             '<div class="form-group existing-exception">' +
             deleteButton() +
             label(period) +
+            '<select class="form-control select start-hour">' +
+            hourOptions(period.startHour) +
+            '</select>' +
             '</div>';
         });
 
