@@ -52,23 +52,32 @@
       bindEvents: bindEvents
     };
 
-    function singleValueElement(currentValue) {
+    function singleValueElement(asset) {
       return '' +
         '<div class="form-group editable ' + className + '">' +
-          valueElement(currentValue) +
-          editElement() +
+          assetDisplayElement(asset) +
+          assetEditElement(asset) +
         '</div>';
     }
 
-    function valueElement(currentValue) {
-      var items = _.map(currentValue, function(x) {
-        return '' +
-          '<li>' +
-            prohibitionDisplayElement(x) +
-            prohibitionEditElement(x) +
-          '</li>';
-      });
-      return currentValue ? '<ul>' + items.join('') + '</ul>' : '-';
+    function assetDisplayElement(prohibitions) {
+      var items = _.map(prohibitions, function(prohibition) {
+        return '<li>' + prohibitionDisplayElement(prohibition) + '</li>';
+      }).join('');
+      return '<ul>' + items + '</ul>';
+    }
+
+    function assetEditElement(prohibitions) {
+      var items = _.map(prohibitions, function(prohibition) {
+        return '<li>' + prohibitionEditElement(prohibition) + '</li>';
+      }).join('');
+      return '' +
+        '<ul>' +
+        items +
+        '<li>' +
+        newProhibitionElement() +
+        '</li>' +
+        '</ul>';
     }
 
     function prohibitionDisplayElement(prohibition) {
@@ -89,7 +98,7 @@
       function validityPeriodElement() {
         var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
           var dayName = dayLabels[period.days];
-          return '<li>' + dayName + period.startHour + '–' + period.endHour + '</li>';
+          return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
         }).join('');
         return '<ul>' + validityPeriodItems + '</ul>';
       }
@@ -230,7 +239,7 @@
         '</div>';
     }
 
-    function editElement() {
+    function newProhibitionElement() {
       var optionTags = _.map(prohibitionValues, function(name, key) {
         return '<option value="' + key + '">' + name + '</option>';
       });
@@ -272,7 +281,7 @@
       $(rootElement).on('change', 'select.new-prohibition', function(evt) {
         $(evt.target).removeClass('new-prohibition').addClass('existing-prohibition');
         $(evt.target).before(deleteButton());
-        $(rootElement).find('.form-group.' + className).append(editElement());
+        $(rootElement).find('.form-group.' + className).append(newProhibitionElement());
         selectedLinearAsset.setValue(extractValue(rootElement));
       });
 
