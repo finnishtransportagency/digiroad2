@@ -3,6 +3,11 @@
     return prohibitionFormElements();
 
     function prohibitionFormElements() {
+      return {
+        singleValueElement: singleValueElement,
+        bindEvents: bindEvents
+      };
+
       var prohibitionValues = {
         3: 'Ajoneuvo',
         2: 'Moottoriajoneuvo',
@@ -42,11 +47,6 @@
         14: 'Traktori tai maatalousajoneuvo',
         24: 'Ryhmän A vaarallisten aineiden kuljetus',
         25: 'Ryhmän B vaarallisten aineiden kuljetus'
-      };
-
-      return {
-        singleValueElement: singleValueElement,
-        bindEvents: bindEvents
       };
 
       function singleValueElement(currentValue) {
