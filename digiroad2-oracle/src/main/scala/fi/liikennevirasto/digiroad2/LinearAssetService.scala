@@ -106,7 +106,7 @@ trait LinearAssetOperations {
   def create(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       newProhibitions.map { newProhibition =>
-        val setValueFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(newProhibition.value), username)
+        val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(newProhibition.value))
         createWithoutTransaction(typeId = 190, newProhibition.mmlId, setValueFn, expired = false, newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
       }
     }

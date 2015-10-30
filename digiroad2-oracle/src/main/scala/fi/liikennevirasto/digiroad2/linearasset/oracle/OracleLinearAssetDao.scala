@@ -520,19 +520,24 @@ trait OracleLinearAssetDao {
   }
 
   def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
-    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    Queries.updateAssetModified(id, username).first
 
-    val prohibitionIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
-    if (prohibitionIds.nonEmpty) {
-      sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
-      sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
+    val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
+    if (prohibitionValueIds.nonEmpty) {
+      sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionValueIds)""".execute
+      sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionValueIds)""".execute
       sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
     }
 
-    value.prohibitions.foreach { prohibition =>
+    insertProhibitionValue(id, value)
+    Some(id)
+  }
+
+  def insertProhibitionValue(assetId: Long, value: Prohibitions): Unit = {
+    value.prohibitions.foreach { (prohibition: ProhibitionValue) =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
       val prohibitionType = prohibition.typeId
-      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $id, $prohibitionType)""".first
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $assetId, $prohibitionType)""".first
 
       prohibition.validityPeriods.foreach { validityPeriod =>
         val validityId = Sequences.nextPrimaryKeySeqValue
@@ -546,11 +551,6 @@ trait OracleLinearAssetDao {
         val exceptionId = Sequences.nextPrimaryKeySeqValue
         sqlu""" insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values ($exceptionId, $prohibitionId, $exceptionType)""".execute
       }
-    }
-    if (assetsUpdated == 1) {
-      Some(id)
-    } else {
-      None
     }
   }
 }
