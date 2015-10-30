@@ -142,8 +142,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, 1, 1)
       val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(asset.id, Some(2), None, "unittest", (i) => Unit).filter(_ != asset.id).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
+
+      ServiceWithDao.separate(asset.id, Some(2), None, "unittest", (i) => Unit).filter(_ != asset.id) shouldBe empty
+
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
 
       oldLimit.mmlId should be (388562360)
@@ -152,10 +153,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.expired should be (false)
       oldLimit.modifiedBy should be (Some("unittest"))
 
-      createdLimit.mmlId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.expired should be (true)
-      createdLimit.createdBy should be (Some("unittest"))
     }
   }
 
