@@ -486,14 +486,6 @@ with GZipSupport {
     intValueIds ++ prohibitionValueIds
   }
 
-  post("/linearassets/separate") {
-    val user = userProvider.getCurrentUser()
-    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val newLinearAssets = (parsedBody \ "newLinearAssets").extract[Seq[NewLinearAsset]]
-
-    linearAssetService.create(newLinearAssets, typeId, user.username)
-  }
-
   get("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
