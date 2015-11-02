@@ -1,27 +1,27 @@
 (function(root) {
   root.ProhibitionFormElements = function(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
-    var prohibitionValues = {
-      3: 'Ajoneuvo',
-      2: 'Moottoriajoneuvo',
-      23: 'Läpiajo',
-      12: 'Jalankulku',
-      11: 'Polkupyörä',
-      26: 'Ratsastus',
-      10: 'Mopo',
-      9: 'Moottoripyörä',
-      27: 'Moottorikelkka',
-      5: 'Linja-auto',
-      8: 'Taksi',
-      7: 'Henkilöauto',
-      6: 'Pakettiauto',
-      4: 'Kuorma-auto',
-      15: 'Matkailuajoneuvo',
-      19: 'Sotilasajoneuvo',
-      13: 'Ajoneuvoyhdistelmä',
-      14: 'Traktori tai maatalousajoneuvo',
-      24: 'Ryhmän A vaarallisten aineiden kuljetus',
-      25: 'Ryhmän B vaarallisten aineiden kuljetus'
-    };
+    var prohibitionValues = [
+      { typeId: 3, title: 'Ajoneuvo' },
+      { typeId: 2, title: 'Moottoriajoneuvo' },
+      { typeId: 23, title: 'Läpiajo' },
+      { typeId: 12, title: 'Jalankulku' },
+      { typeId: 11, title: 'Polkupyörä' },
+      { typeId: 26, title: 'Ratsastus' },
+      { typeId: 10, title: 'Mopo' },
+      { typeId: 9, title: 'Moottoripyörä' },
+      { typeId: 27, title: 'Moottorikelkka' },
+      { typeId: 5, title: 'Linja-auto' },
+      { typeId: 8, title: 'Taksi' },
+      { typeId: 7, title: 'Henkilöauto' },
+      { typeId: 6, title: 'Pakettiauto' },
+      { typeId: 4, title: 'Kuorma-auto' },
+      { typeId: 15, title: 'Matkailuajoneuvo' },
+      { typeId: 19, title: 'Sotilasajoneuvo' },
+      { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
+      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' },
+      { typeId: 24, title: 'Ryhmän A vaarallisten aineiden kuljetus' },
+      { typeId: 25, title: 'Ryhmän B vaarallisten aineiden kuljetus' }
+    ];
     var exceptionValues = {
       21: 'Huoltoajo',
       22: 'Tontille ajo',
@@ -85,7 +85,7 @@
     }
 
     function prohibitionDisplayElement(prohibition) {
-      var typeElement = '<span>' + prohibitionValues[prohibition.typeId] + '</span>';
+      var typeElement = '<span>' + _.find(prohibitionValues, { typeId: prohibition.typeId }).title + '</span>';
 
       function exceptionElement() {
         var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
@@ -121,9 +121,9 @@
 
     function prohibitionEditElement(prohibition) {
       function typeElement() {
-        var optionTags = _.map(prohibitionValues, function(name, key) {
-          var selected = prohibition.typeId.toString() === key ? 'selected' : '';
-          return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
+        var optionTags = _.map(prohibitionValues, function(prohibitionValue) {
+          var selected = prohibition.typeId === prohibitionValue.typeId ? 'selected' : '';
+          return '<option value="' + prohibitionValue.typeId + '"' + ' ' + selected + '>' + prohibitionValue.title + '</option>';
         });
         return '' +
           '<div class="form-group prohibition-type">' +
@@ -246,8 +246,8 @@
     }
 
     function newProhibitionElement() {
-      var optionTags = _.map(prohibitionValues, function(name, key) {
-        return '<option value="' + key + '">' + name + '</option>';
+      var optionTags = _.map(prohibitionValues, function(prohibitionValue) {
+        return '<option value="' + prohibitionValue.typeId + '">' + prohibitionValue.title + '</option>';
       });
       return '' +
         '<div class="form-group edit-control-group new-prohibition">' +
