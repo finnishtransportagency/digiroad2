@@ -176,6 +176,7 @@
 
         return '' +
           '<div class="validity-period-group">' +
+          '<label>Rajoitus pätee aikana:</label>' +
           existingValidityPeriodElements +
           newValidityPeriodElement() +
           '</div>';
