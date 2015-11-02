@@ -126,7 +126,7 @@
           return '<option value="' + key + '"' + ' ' + selected + '>' + name + '</option>';
         });
         return '' +
-          '<div class="form-group existing-prohibition">' +
+          '<div class="form-group prohibition-type">' +
           '<select class="form-control select">' +
           optionTags +
           '</select>' +
@@ -166,7 +166,7 @@
       }
 
       return '' +
-        '<div class="form-group edit-control-group">' +
+        '<div class="form-group edit-control-group existing-prohibition">' +
         deleteButton() +
         typeElement() +
         validityPeriodsElement() +
@@ -263,7 +263,7 @@
       var inputElements = [
         className + ' .existing-exception select',
         className + ' .existing-validity-period select',
-        className + ' .existing-prohibition select'
+        className + ' .existing-prohibition .prohibition-type select'
       ].join(', ');
       var valueSetters = {
         a: selectedLinearAsset.setAValue,
@@ -293,8 +293,11 @@
       });
 
       $(rootElement).on('change', className + ' .new-prohibition select', function(evt) {
-        $(evt.target).parent().removeClass('new-prohibition').addClass('existing-prohibition');
-        $(evt.target).before(deleteButton());
+        $(evt.target).parent().replaceWith(prohibitionEditElement({
+          typeId: parseInt($(evt.target).val(), 10),
+          exceptions: [],
+          validityPeriods: []
+        }));
         $(rootElement).find('.form-group' + className).append(newProhibitionElement());
         setValue(extractValue(rootElement, className));
       });
@@ -324,12 +327,12 @@
         });
       }
 
-      var prohibitionElements = $(rootElement).find(className);
+      var prohibitionElements = $(rootElement).find(className).find('.existing-prohibition');
 
       return _.map(prohibitionElements, function(element) {
         var $element = $(element);
         return {
-          typeId: parseInt($element.find('.existing-prohibition select').val(), 10),
+          typeId: parseInt($element.find('.prohibition-type select').val(), 10),
           exceptions: extractExceptions($element),
           validityPeriods: extractValidityPeriods($element)
         };
