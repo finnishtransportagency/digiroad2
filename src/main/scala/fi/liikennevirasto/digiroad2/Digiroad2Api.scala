@@ -467,14 +467,11 @@ with GZipSupport {
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
 
-    val valueTowardsDigitization = extractLinearAssetValue((parsedBody \ "valueTowardsDigitization"))
-    val valueAgainstDigitization = extractLinearAssetValue((parsedBody \ "valueAgainstDigitization"))
-
     linearAssetService.separate(params("id").toLong,
-        valueTowardsDigitization,
-        valueAgainstDigitization,
-        user.username,
-        validateUserMunicipalityAccess(user))
+      extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
+      extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
+      user.username,
+      validateUserMunicipalityAccess(user))
   }
 
   get("/speedlimits") {
