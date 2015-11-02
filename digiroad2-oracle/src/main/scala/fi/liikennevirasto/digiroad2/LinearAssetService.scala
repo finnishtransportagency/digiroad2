@@ -112,11 +112,39 @@ trait LinearAssetOperations {
     }
   }
 
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)
-      updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      (Seq(dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption.map(_.id)) ++ Seq(createdIdOption)).flatten
+      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+      val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode)
+
+      Queries.updateAssetModified(id, username).execute
+
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+      dao.updateMValues(id, existingLinkMeasures)
+
+      existingValue match {
+        case Some(NumericValue(existing)) =>
+          updateWithoutTransaction(Seq(id), Some(existing), existingValue.isEmpty, username)
+        case Some(Prohibitions(existing)) =>
+          val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(existing), username)
+          updateWithoutTransaction(Seq(id), valueUpdateFn, expired = false, username)
+      }
+
+      val createdIdOption = createdValue match {
+        case None => None
+        case Some(NumericValue(created)) =>
+          createdValue.map { value =>
+            createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(created), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+          }
+        case Some(Prohibitions(created)) =>
+          createdValue.map { value =>
+            val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(created))
+            createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, setValueFn, false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+          }
+      }
+
+      Seq(id) ++ Seq(createdIdOption).flatten
     }
   }
 
@@ -184,19 +212,7 @@ trait LinearAssetOperations {
     dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
   }
 
-  private def splitWithoutTransaction(id: Long, splitMeasure: Double, optionalValue: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
-    val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-    val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    municipalityValidation(roadLink.municipalityCode)
 
-    Queries.updateAssetModified(id, username).execute
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
-
-    dao.updateMValues(id, existingLinkMeasures)
-    optionalValue.map { value =>
-      createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
-    }
-  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

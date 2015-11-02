@@ -450,8 +450,8 @@ with GZipSupport {
 
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
-      (parsedBody \ "existingValue").extract[Option[Int]],
-      (parsedBody \ "createdValue").extract[Option[Int]],
+      extractLinearAssetValue(parsedBody \ "existingValue"),
+      extractLinearAssetValue(parsedBody \ "createdValue"),
       user.username,
       validateUserMunicipalityAccess(user))
   }
