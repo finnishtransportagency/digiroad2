@@ -133,7 +133,7 @@
           '</div>';
       }
 
-      function exceptionsElement() {
+      function exceptionsElement(prohibition) {
         function existingExceptionElements() {
           var items = _(prohibition.exceptions).map(function(exception) {
             return '' +
@@ -147,12 +147,14 @@
           return items.join('');
         }
 
-        return '' +
+        var exceptionGroupElement = '' +
           '<div class="exception-group">' +
           exceptionLabel +
           existingExceptionElements() +
           newExceptionElement() +
           '</div>';
+
+        return _.contains([2,3,23], prohibition.typeId) ? exceptionGroupElement : '';
       }
 
       function validityPeriodsElement() {
@@ -170,7 +172,7 @@
         deleteButton() +
         typeElement() +
         validityPeriodsElement() +
-        exceptionsElement() +
+        exceptionsElement(prohibition) +
         '</div>';
     }
 
