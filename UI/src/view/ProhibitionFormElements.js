@@ -22,24 +22,24 @@
       { typeId: 24, title: 'Ryhmän A vaarallisten aineiden kuljetus' },
       { typeId: 25, title: 'Ryhmän B vaarallisten aineiden kuljetus' }
     ];
-    var exceptionValues = {
-      21: 'Huoltoajo',
-      22: 'Tontille ajo',
-      10: 'Mopo',
-      9: 'Moottoripyörä',
-      27: 'Moottorikelkka',
-      5: 'Linja-auto',
-      8: 'Taksi',
-      7: 'Henkilöauto',
-      6: 'Pakettiauto',
-      4: 'Kuorma-auto',
-      15: 'Matkailuajoneuvo',
-      19: 'Sotilasajoneuvo',
-      13: 'Ajoneuvoyhdistelmä',
-      14: 'Traktori tai maatalousajoneuvo',
-      24: 'Ryhmän A vaarallisten aineiden kuljetus',
-      25: 'Ryhmän B vaarallisten aineiden kuljetus'
-    };
+    var exceptionValues = [
+      { typeId: 21, title: 'Huoltoajo' },
+      { typeId: 22, title: 'Tontille ajo' },
+      { typeId: 10, title: 'Mopo' },
+      { typeId: 9, title: 'Moottoripyörä' },
+      { typeId: 27, title: 'Moottorikelkka' },
+      { typeId: 5, title: 'Linja-auto' },
+      { typeId: 8, title: 'Taksi' },
+      { typeId: 7, title: 'Henkilöauto' },
+      { typeId: 6, title: 'Pakettiauto' },
+      { typeId: 4, title: 'Kuorma-auto' },
+      { typeId: 15, title: 'Matkailuajoneuvo' },
+      { typeId: 19, title: 'Sotilasajoneuvo' },
+      { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
+      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' },
+      { typeId: 24, title: 'Ryhmän A vaarallisten aineiden kuljetus' },
+      { typeId: 25, title: 'Ryhmän B vaarallisten aineiden kuljetus' }
+    ];
     var dayLabels = {
       Weekday: "Ma–Pe",
       Saturday: "La",
@@ -89,7 +89,7 @@
 
       function exceptionElement() {
         var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
-          return '<li>' + exceptionValues[exceptionId] + '</li>';
+          return '<li>' + _.find(exceptionValues, { typeId: exceptionId }).title + '</li>';
         }).join('');
         var element = '' +
           '<div>' +
@@ -208,11 +208,11 @@
     }
 
     function exceptionOptions(exception) {
-      var elements = _.map(exceptionValues, function(name, key) {
-        var selected = exception && (exception.toString() === key) ? 'selected' : '';
+      var elements = _.map(exceptionValues, function(exceptionValue) {
+        var selected = exception && (exception === exceptionValue.typeId) ? 'selected' : '';
         return '' +
-          '<option value="' + key + '" ' + selected + '>' +
-          name +
+          '<option value="' + exceptionValue.typeId + '" ' + selected + '>' +
+          exceptionValue.title +
           '</option>';
       });
       return elements.join('');
