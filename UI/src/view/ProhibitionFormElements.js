@@ -258,10 +258,10 @@
         '</div>';
     }
 
-    function bindEvents(rootElement, selectedLinearAsset) {
+    function bindEvents(rootElement, selectedLinearAsset, sideCode) {
       $(rootElement).on(
         'change',
-        '.existing-exception select, .existing-validity-period select, existing-prohibition select',
+        '.existing-exception select, .existing-validity-period select, .existing-prohibition select',
         function() {
           selectedLinearAsset.setValue(extractValue(rootElement));
         }
