@@ -180,6 +180,61 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Split linear asset") {
+    runWithRollback {
+      val newLimit = NewLinearAsset(388562360, 0, 10, 1, 1)
+      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+
+      val ids = ServiceWithDao.split(asset.id, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+
+      val createdId = ids.filter(_ != asset.id).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
+
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
+      oldLimit.value should be (Some(NumericValue(2)))
+      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.startMeasure should be (2.0)
+      oldLimit.endMeasure should be (10.0)
+
+      createdLimit.mmlId should be (388562360)
+      createdLimit.sideCode should be (SideCode.BothDirections.value)
+      createdLimit.value should be (Some(NumericValue(3)))
+      createdLimit.createdBy should be (Some("unittest"))
+      createdLimit.startMeasure should be (0.0)
+      createdLimit.endMeasure should be (2.0)
+    }
+  }
+
+  test("Split prohibition") {
+    runWithRollback {
+      val newProhibition = NewProhibition(388562360, 0, 10, Seq(ProhibitionValue(3, Set.empty, Set.empty)), 1)
+      val asset = ServiceWithDao.create(Seq(newProhibition), "test").head
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
+
+      ServiceWithDao.split(asset.id, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+
+      val prohibitions = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360))
+      val oldProhibition = prohibitions.find(_.id == asset.id).get
+      oldProhibition.mmlId should be (388562360)
+      oldProhibition.sideCode should be (SideCode.BothDirections.value)
+      oldProhibition.value should be (Some(prohibitionA))
+      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.startMeasure should be (0.0)
+      oldProhibition.endMeasure should be (6.0)
+
+      val createdProhibition = prohibitions.find(_.id != asset.id).get
+      createdProhibition.mmlId should be (388562360)
+      createdProhibition.sideCode should be (SideCode.BothDirections.value)
+      createdProhibition.value should be (Some(prohibitionB))
+      createdProhibition.createdBy should be (Some("unittest"))
+      createdProhibition.startMeasure should be (6.0)
+      createdProhibition.endMeasure should be (10.0)
+    }
+  }
+
   test("Separation should call municipalityValidation") {
     def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
     runWithRollback {
