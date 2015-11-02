@@ -72,6 +72,8 @@
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
+        '<label>Ajoneuvokohtainen kielto</label>' +
+        '<span class="marker">' + sideCode + '</span>' +
         '<ul class="edit-control-group">' +
         items +
         '<li>' +
