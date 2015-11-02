@@ -407,8 +407,7 @@ with GZipSupport {
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
-    val prohibitionValueOption = (parsedBody \ "value").extractOpt[Seq[ProhibitionValue]]
+    val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLimits = (parsedBody \ "newLimits").extractOpt[Seq[NewLinearAsset]].getOrElse(Nil)
     val newProhibitions = (parsedBody \ "newLimits").extractOpt[Seq[NewProhibition]].getOrElse(Nil)
@@ -419,19 +418,15 @@ with GZipSupport {
       .foreach(validateUserMunicipalityAccess(user))
 
     val updatedNumericalIds = valueOption.map { value =>
-      validateNumericalLimitValue(value)
-      linearAssetService.update(existingAssets.toSeq, value.intValue(), user.username)
-    }.getOrElse(Nil)
-
-    val updatedProhibitionIds = prohibitionValueOption.map { prohibitionValue =>
-      linearAssetService.update(existingAssets.toSeq, Prohibitions(prohibitionValue), user.username)
+//  TODO:    validateNumericalLimitValue(value)
+      linearAssetService.update(existingAssets.toSeq, value, user.username)
     }.getOrElse(Nil)
 
     val createdIds =
       linearAssetService.create(newLimits, typeId, user.username).map(_.id) ++
       linearAssetService.create(newProhibitions, user.username).map(_.id)
 
-    updatedNumericalIds ++ updatedProhibitionIds ++ createdIds
+    updatedNumericalIds ++ createdIds
   }
 
   delete("/linearassets") {

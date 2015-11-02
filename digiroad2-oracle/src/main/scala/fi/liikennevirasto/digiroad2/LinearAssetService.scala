@@ -60,21 +60,13 @@ trait LinearAssetOperations {
 
   def expire(ids: Seq[Long], username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, None, expired = true, username)
+      updateWithoutTransaction(ids, NumericValue(0), expired = true, username)
     }
   }
 
-  def update(ids: Seq[Long], value: Int, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => dao.updateValue(id, value, valuePropertyId, username)
+  def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, valueUpdateFn, expired = false, username)
-    }
-  }
-
-  def update(ids: Seq[Long], value: Prohibitions, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, value, username)
-    withDynTransaction {
-      updateWithoutTransaction(ids, valueUpdateFn, expired = false, username)
+      updateWithoutTransaction(ids, value, expired = false, username)
     }
   }
 
@@ -124,11 +116,8 @@ trait LinearAssetOperations {
       dao.updateMValues(id, existingLinkMeasures)
 
       existingValue match {
-        case Some(NumericValue(existing)) =>
-          updateWithoutTransaction(Seq(id), Some(existing), existingValue.isEmpty, username)
-        case Some(Prohibitions(existing)) =>
-          val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(existing), username)
-          updateWithoutTransaction(Seq(id), valueUpdateFn, expired = false, username)
+        case None => updateWithoutTransaction(Seq(id), NumericValue(0), expired = true, username)
+        case Some(value) => updateWithoutTransaction(Seq(id), value, expired = false, username)
       }
 
       val createdIdOption = createdValue match {
@@ -161,12 +150,8 @@ trait LinearAssetOperations {
       municipalityValidation(roadLink.municipalityCode)
 
       valueTowardsDigitization match {
-        case None => updateWithoutTransaction(Seq(id), None, expired = true, username)
-        case Some(NumericValue(intValue)) =>
-          updateWithoutTransaction(Seq(id), Some(intValue), expired = false, username)
-        case Some(Prohibitions(prohibitionValues)) =>
-          val valueUpdateFn = (id: Long) => dao.updateProhibitionValue(id, Prohibitions(prohibitionValues), username)
-          updateWithoutTransaction(Seq(id), valueUpdateFn, expired = false, username)
+        case None => updateWithoutTransaction(Seq(id), NumericValue(0), expired = true, username)
+        case Some(value) => updateWithoutTransaction(Seq(id), value, expired = false, username)
       }
 
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
@@ -187,16 +172,15 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
-    updateWithoutTransaction(ids, valueUpdateFn, expired, username)
-  }
+  private def updateWithoutTransaction(ids: Seq[Long], value: Value, expired: Boolean, username: String): Seq[Long] = {
+    val valueUpdate = value match {
+      case Prohibitions(prohibitionValues) => dao.updateProhibitionValue(_: Long, Prohibitions(prohibitionValues), username)
+      case NumericValue(intValue) => dao.updateValue(_: Long, intValue, valuePropertyId, username)
+    }
 
-  private def updateWithoutTransaction(ids: Seq[Long], valueUpdateFn: Long => Option[Long], expired: Boolean, username: String): Seq[Long] = {
     ids.map { id =>
-      val valueUpdate: Option[Long] = valueUpdateFn(id)
-      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
-      val updatedId = valueUpdate.orElse(expirationUpdate)
+      val expirationUpdate = dao.updateExpiration(id, expired, username)
+      val updatedId = valueUpdate(id).orElse(expirationUpdate)
       updatedId.getOrElse(throw new scala.NoSuchElementException)
     }
   }

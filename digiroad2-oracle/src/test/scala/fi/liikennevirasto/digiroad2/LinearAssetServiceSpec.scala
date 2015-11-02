@@ -48,16 +48,27 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       ServiceWithDao.expire(Seq(11111l), "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(NumericValue(4000)))
       limit.expired should be (true)
     }
   }
 
   test("Update numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), 2000, "lol")
+      ServiceWithDao.update(Seq(11111l), NumericValue(2000), "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
       limit.value should be (Some(NumericValue(2000)))
+      limit.expired should be (false)
+    }
+  }
+
+  test("Update prohibition") {
+    when(mockRoadLinkService.fetchVVHRoadlink(1621077551l)).thenReturn(Some(VVHRoadlink(1621077551l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
+      val limit = linearAssetDao.fetchProhibitionsByMmlIds(Seq(1621077551l)).head
+
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))))
       limit.expired should be (false)
     }
   }
