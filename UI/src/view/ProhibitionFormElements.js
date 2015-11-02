@@ -72,7 +72,7 @@
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
-        '<ul>' +
+        '<ul class="edit-control-group">' +
         items +
         '<li>' +
         newProhibitionElement() +
@@ -151,10 +151,14 @@
           '<div class="exception-group">' +
           exceptionLabel +
           existingExceptionElements() +
-          newExceptionElement() +
+          newExceptionElement(prohibition.typeId) +
           '</div>';
 
-        return _.contains([2,3,23], prohibition.typeId) ? exceptionGroupElement : '';
+        if (_.contains([2,3,23], prohibition.typeId) || !_.isEmpty(prohibition.exceptions)) {
+          return exceptionGroupElement;
+        } else {
+          return '';
+        }
       }
 
       function validityPeriodsElement() {
@@ -168,7 +172,7 @@
       }
 
       return '' +
-        '<div class="form-group edit-control-group existing-prohibition">' +
+        '<div class="form-group existing-prohibition">' +
         deleteButton() +
         typeElement() +
         validityPeriodsElement() +
@@ -227,9 +231,10 @@
           '<option value="Sunday">Su</option>';
     }
 
-    function newExceptionElement() {
+    function newExceptionElement(prohibitionType) {
+      var style = supportsExceptions(prohibitionType) ? '' : ' style="display: none;"';
       return '' +
-        '<div class="form-group edit-control-group new-exception">' +
+        '<div class="form-group new-exception"' + style + '>' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
         exceptionOptions() +
@@ -237,9 +242,13 @@
         '</div>';
     }
 
+    function supportsExceptions(prohibitionType) {
+      return _.contains([2,3,23], prohibitionType);
+    }
+
     function newValidityPeriodElement() {
       return '' +
-        '<div class="form-group edit-control-group new-validity-period">' +
+        '<div class="form-group new-validity-period">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää aikarajoitus</option>' +
         validityPeriodOptions() +
@@ -252,7 +261,7 @@
         return '<option value="' + prohibitionValue.typeId + '">' + prohibitionValue.title + '</option>';
       });
       return '' +
-        '<div class="form-group edit-control-group new-prohibition">' +
+        '<div class="form-group new-prohibition">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää kielto</option>' +
         optionTags +
@@ -264,9 +273,9 @@
       var className = '.' + generateClassName(sideCode);
       var inputElements = [
         className + ' .existing-exception select',
-        className + ' .existing-validity-period select',
-        className + ' .existing-prohibition .prohibition-type select'
+        className + ' .existing-validity-period select'
       ].join(', ');
+      var prohibitionTypeElements = className + ' .existing-prohibition .prohibition-type select';
       var valueSetters = {
         a: selectedLinearAsset.setAValue,
         b: selectedLinearAsset.setBValue
@@ -277,10 +286,18 @@
         setValue(extractValue(rootElement, className));
       });
 
+      $(rootElement).on('change', prohibitionTypeElements, function(evt) {
+        var newExceptionElement = $(evt.target).closest('.existing-prohibition').find('.new-exception');
+        newExceptionElement.toggle(supportsExceptions(parseInt($(evt.target).val(), 10)));
+        setValue(extractValue(rootElement, className));
+      });
+
       $(rootElement).on('change', className + ' .new-exception select', function(evt) {
+        var prohibitionTypeElement = $(evt.target).closest('.existing-prohibition').find('.prohibition-type select');
+        var prohibitionType = parseInt(prohibitionTypeElement.val(), 10);
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
         $(evt.target).before(deleteButton());
-        $(evt.target).closest('.exception-group').append(newExceptionElement());
+        $(evt.target).closest('.exception-group').append(newExceptionElement(prohibitionType));
         setValue(extractValue(rootElement, className));
       });
 
