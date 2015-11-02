@@ -54,7 +54,7 @@
 
     function singleValueElement(asset, sideCode) {
       return '' +
-        '<div class="form-group editable ' + className + '">' +
+        '<div class="form-group editable ' + generateClassName(sideCode) + '">' +
           assetDisplayElement(asset) +
           assetEditElement(asset, sideCode) +
         '</div>';
@@ -72,7 +72,7 @@
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
-        '<ul class="' + generateClassName(sideCode) + '">' +
+        '<ul>' +
         items +
         '<li>' +
         newProhibitionElement() +
@@ -81,7 +81,7 @@
     }
 
     function generateClassName(sideCode) {
-      return sideCode ? 'prohibition' + '-' + sideCode : 'prohibition';
+      return sideCode ? className + '-' + sideCode : className;
     }
 
     function prohibitionDisplayElement(prohibition) {
@@ -272,40 +272,40 @@
       var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
 
       $(rootElement).on('change', inputElements, function() {
-        setValue(extractValue(rootElement));
+        setValue(extractValue(rootElement, className));
       });
 
-      $(rootElement).on('change', '.new-exception select', function(evt) {
+      $(rootElement).on('change', className + ' .new-exception select', function(evt) {
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
         $(evt.target).before(deleteButton());
         $(evt.target).closest('.exception-group').append(newExceptionElement());
-        selectedLinearAsset.setValue(extractValue(rootElement));
+        setValue(extractValue(rootElement, className));
       });
 
-      $(rootElement).on('change', '.new-validity-period select', function(evt) {
+      $(rootElement).on('change', className + ' .new-validity-period select', function(evt) {
         $(evt.target).closest('.validity-period-group').append(newValidityPeriodElement());
         $(evt.target).parent().replaceWith(validityPeriodElement({
           days: $(evt.target).val(),
           startHour: 0,
           endHour: 24
         }));
-        selectedLinearAsset.setValue(extractValue(rootElement));
+        setValue(extractValue(rootElement, className));
       });
 
-      $(rootElement).on('change', '.new-prohibition select', function(evt) {
+      $(rootElement).on('change', className + ' .new-prohibition select', function(evt) {
         $(evt.target).parent().removeClass('new-prohibition').addClass('existing-prohibition');
         $(evt.target).before(deleteButton());
-        $(rootElement).find('.form-group.' + className).append(newProhibitionElement());
-        selectedLinearAsset.setValue(extractValue(rootElement));
+        $(rootElement).find('.form-group' + className).append(newProhibitionElement());
+        setValue(extractValue(rootElement, className));
       });
 
-      $(rootElement).on('click', 'button.delete', function(evt) {
+      $(rootElement).on('click', className + ' button.delete', function(evt) {
         $(evt.target).parent().remove();
-        selectedLinearAsset.setValue(extractValue(rootElement));
+        setValue(extractValue(rootElement, className));
       });
     }
 
-    function extractValue(rootElement) {
+    function extractValue(rootElement, className) {
       function extractExceptions(element) {
         var exceptionElements = element.find('.existing-exception select');
         return _.map(exceptionElements, function(exception) {
@@ -324,7 +324,7 @@
         });
       }
 
-      var prohibitionElements = $(rootElement).find('.prohibition');
+      var prohibitionElements = $(rootElement).find(className);
 
       return _.map(prohibitionElements, function(element) {
         var $element = $(element);
