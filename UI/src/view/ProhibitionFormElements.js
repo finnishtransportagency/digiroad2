@@ -259,13 +259,21 @@
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
-      $(rootElement).on(
-        'change',
-        '.existing-exception select, .existing-validity-period select, .existing-prohibition select',
-        function() {
-          selectedLinearAsset.setValue(extractValue(rootElement));
-        }
-      );
+      var className = '.' + generateClassName(sideCode);
+      var inputElements = [
+        className + ' .existing-exception select',
+        className + ' .existing-validity-period select',
+        className + ' .existing-prohibition select'
+      ].join(', ');
+      var valueSetters = {
+        a: selectedLinearAsset.setAValue,
+        b: selectedLinearAsset.setBValue
+      };
+      var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
+
+      $(rootElement).on('change', inputElements, function() {
+        setValue(extractValue(rootElement));
+      });
 
       $(rootElement).on('change', '.new-exception select', function(evt) {
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
