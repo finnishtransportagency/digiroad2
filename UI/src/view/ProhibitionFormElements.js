@@ -73,13 +73,21 @@
       }).join('');
       return '' +
         '<label>Ajoneuvokohtainen kielto</label>' +
-        '<span class="marker">' + sideCode + '</span>' +
+        sideCodeMarker(sideCode) +
         '<ul class="edit-control-group">' +
         items +
         '<li>' +
         newProhibitionElement() +
         '</li>' +
         '</ul>';
+    }
+
+    function sideCodeMarker(sideCode) {
+      if (_.isUndefined(sideCode)) {
+        return '';
+      } else {
+        return '<span class="marker">' + sideCode + '</span>';
+      }
     }
 
     function generateClassName(sideCode) {
