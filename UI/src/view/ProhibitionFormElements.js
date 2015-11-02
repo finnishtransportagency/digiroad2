@@ -52,11 +52,11 @@
       bindEvents: bindEvents
     };
 
-    function singleValueElement(asset) {
+    function singleValueElement(asset, sideCode) {
       return '' +
         '<div class="form-group editable ' + className + '">' +
           assetDisplayElement(asset) +
-          assetEditElement(asset) +
+          assetEditElement(asset, sideCode) +
         '</div>';
     }
 
@@ -67,17 +67,21 @@
       return '<ul>' + items + '</ul>';
     }
 
-    function assetEditElement(prohibitions) {
+    function assetEditElement(prohibitions, sideCode) {
       var items = _.map(prohibitions, function(prohibition) {
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
-        '<ul>' +
+        '<ul class="' + generateClassName(sideCode) + '">' +
         items +
         '<li>' +
         newProhibitionElement() +
         '</li>' +
         '</ul>';
+    }
+
+    function generateClassName(sideCode) {
+      return sideCode ? 'prohibition' + '-' + sideCode : 'prohibition';
     }
 
     function prohibitionDisplayElement(prohibition) {
