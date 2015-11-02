@@ -456,34 +456,25 @@ with GZipSupport {
       validateUserMunicipalityAccess(user))
   }
 
+  def extractLinearAssetValue(value: JValue): Option[Value] = {
+    val numericValue = value.extractOpt[Int]
+    val prohibition = value.extractOpt[Seq[ProhibitionValue]]
+
+    numericValue.map(NumericValue)
+      .orElse(prohibition.map(Prohibitions))
+  }
+
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
 
-    val valueTowardsDigitization = (parsedBody \ "valueTowardsDigitization").extractOpt[Int]
-    val valueAgainstDigitization = (parsedBody \ "valueAgainstDigitization").extractOpt[Int]
+    val valueTowardsDigitization = extractLinearAssetValue((parsedBody \ "valueTowardsDigitization"))
+    val valueAgainstDigitization = extractLinearAssetValue((parsedBody \ "valueAgainstDigitization"))
 
-    val prohibitionValueTowardsDigitization = (parsedBody \ "valueTowardsDigitization").extractOpt[Seq[ProhibitionValue]]
-    val prohibitionValueAgainstDigitization = (parsedBody \ "valueAgainstDigitization").extractOpt[Seq[ProhibitionValue]]
-
-    val intValueIds = (valueTowardsDigitization, valueAgainstDigitization) match {
-      case (None, None) =>  Nil
-      case _ => linearAssetService.separate(params("id").toLong,
+    linearAssetService.separate(params("id").toLong,
         valueTowardsDigitization,
         valueAgainstDigitization,
         user.username,
         validateUserMunicipalityAccess(user))
-    }
-
-    val prohibitionValueIds = (prohibitionValueTowardsDigitization, prohibitionValueAgainstDigitization) match {
-      case (None, None) =>  Nil
-      case _ => linearAssetService.separateProhibition(params("id").toLong,
-        prohibitionValueTowardsDigitization,
-        prohibitionValueAgainstDigitization,
-        user.username,
-        validateUserMunicipalityAccess(user))
-    }
-
-    intValueIds ++ prohibitionValueIds
   }
 
   get("/speedlimits") {
