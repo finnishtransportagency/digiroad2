@@ -396,14 +396,6 @@ with GZipSupport {
     }
   }
 
-  private def validateNumericalLimitValue(value: BigInt): Unit = {
-    if (value > Integer.MAX_VALUE) {
-      halt(BadRequest("Numerical limit value too big"))
-    } else if (value < 0) {
-      halt(BadRequest("Numerical limit value cannot be negative"))
-    }
-  }
-
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibition = value.extractOpt[Seq[ProhibitionValue]]
@@ -430,7 +422,6 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-//  TODO: validateNumericalLimitValue(value)
     val updatedNumericalIds = valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
     val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
 
