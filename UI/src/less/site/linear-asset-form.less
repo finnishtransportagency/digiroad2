@@ -5,6 +5,15 @@
   .input-group-addon.lane-count {
     width: 60px;
   }
+  .modal-dialog& .prohibition .form-group {
+    border-bottom: none;
+    border-top: none;
+    padding: 0;
+    &.existing-prohibition {
+      padding: 10px;
+      border-bottom: 1px solid @gray-light-2;
+    }
+  }
   .prohibition .validity-period-group {
     .form-control.select.start-hour, .form-control.select.end-hour {
       width: auto !important;
