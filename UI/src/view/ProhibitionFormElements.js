@@ -164,11 +164,7 @@
           newExceptionElement(prohibition.typeId) +
           '</div>';
 
-        if (_.contains([2,3,23], prohibition.typeId) || !_.isEmpty(prohibition.exceptions)) {
-          return exceptionGroupElement;
-        } else {
-          return '';
-        }
+        return exceptionGroupElement;
       }
 
       function validityPeriodsElement() {
