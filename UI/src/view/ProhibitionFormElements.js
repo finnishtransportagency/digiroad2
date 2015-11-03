@@ -106,7 +106,7 @@
           return '<li>' + _.find(exceptionValues, { typeId: exceptionId }).title + '</li>';
         }).join('');
         var element = '' +
-          '<div>' +
+          '<div class="exception-group">' +
           exceptionLabel(prohibition) +
           '  <ul>' + exceptionElements + '</ul>' +
           '</div>';
@@ -120,7 +120,7 @@
         }).join('');
 
         var element = '' +
-          '<div>' +
+          '<div class="validity-period-group">' +
           '<label>Rajoitus pätee aikana:</label>' +
           '<ul>' + validityPeriodItems + '</ul>' +
           '</div>';
