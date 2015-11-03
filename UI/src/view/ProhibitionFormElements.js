@@ -275,7 +275,7 @@
       return '' +
         '<div class="form-group new-prohibition">' +
         '  <select class="form-control select">' +
-        '    <option class="empty" disabled selected>Lisää kielto</option>' +
+        '    <option class="empty" disabled selected>Lisää rajoitus</option>' +
         optionTags +
         '  </select>' +
         '</div>';
