@@ -404,27 +404,35 @@ with GZipSupport {
     }
   }
 
+  private def extractLinearAssetValue(value: JValue): Option[Value] = {
+    val numericValue = value.extractOpt[Int]
+    val prohibition = value.extractOpt[Seq[ProhibitionValue]]
+
+    numericValue.map(NumericValue)
+      .orElse(prohibition.map(Prohibitions))
+  }
+
+  private def extractNewLinearAssets(value: JValue) = {
+    val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map( x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+    numerical ++ prohibitions
+  }
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLimits = (parsedBody \ "newLimits").extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil)
-    val newProhibitions = (parsedBody \ "newLimits").extractOpt[Seq[NewProhibition]].getOrElse(Nil)
+    val newLinearAssets = extractNewLinearAssets(parsedBody \ "newLimits")
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
-    val mmlIds = newLimits.map(_.mmlId) ++ newProhibitions.map(_.mmlId) ++ existingMmlIds
+    val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedNumericalIds = valueOption.map { value =>
-//  TODO:    validateNumericalLimitValue(value)
-      linearAssetService.update(existingAssets.toSeq, value, user.username)
-    }.getOrElse(Nil)
-
-    val createdIds =
-      linearAssetService.create(newLimits.map { x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode) }, typeId, user.username) ++
-      linearAssetService.create(newProhibitions.map { x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode) }, 190, user.username)
+//  TODO: validateNumericalLimitValue(value)
+    val updatedNumericalIds = valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+    val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
 
     updatedNumericalIds ++ createdIds
   }
@@ -449,14 +457,6 @@ with GZipSupport {
       extractLinearAssetValue(parsedBody \ "createdValue"),
       user.username,
       validateUserMunicipalityAccess(user))
-  }
-
-  def extractLinearAssetValue(value: JValue): Option[Value] = {
-    val numericValue = value.extractOpt[Int]
-    val prohibition = value.extractOpt[Seq[ProhibitionValue]]
-
-    numericValue.map(NumericValue)
-      .orElse(prohibition.map(Prohibitions))
   }
 
   post("/linearassets/:id/separate") {
