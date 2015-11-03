@@ -296,7 +296,7 @@
         className + ' .existing-exception select',
         className + ' .existing-validity-period select'
       ].join(', ');
-      var prohibitionTypeElements = className + ' .existing-prohibition .prohibition-type select';
+      var prohibitionTypeElements = className + ' .edit-control-group .existing-prohibition .prohibition-type select';
       var valueSetters = {
         a: selectedLinearAsset.setAValue,
         b: selectedLinearAsset.setBValue
@@ -359,7 +359,7 @@
     }
 
     function extractValue(rootElement, className) {
-      var prohibitionElements = $(rootElement).find(className).find('.existing-prohibition');
+      var prohibitionElements = $(rootElement).find(className).find('.edit-control-group .existing-prohibition');
       return _.map(prohibitionElements, extractExistingProhibition);
     }
 
