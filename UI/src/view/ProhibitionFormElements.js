@@ -118,7 +118,14 @@
           var dayName = dayLabels[period.days];
           return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
         }).join('');
-        return '<ul>' + validityPeriodItems + '</ul>';
+
+        var element = '' +
+          '<div>' +
+          '<label>Rajoitus pätee aikana:</label>' +
+          '<ul>' + validityPeriodItems + '</ul>' +
+          '</div>';
+
+        return _.isEmpty(prohibition.validityPeriods) ? '' : element;
       }
 
       return '' +
