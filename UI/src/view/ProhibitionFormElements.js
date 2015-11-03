@@ -72,7 +72,7 @@
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
-        '<label>Ajoneuvokohtaiset rajoitukset</label>' +
+        '<label class="asset-label">Ajoneuvokohtaiset rajoitukset</label>' +
         sideCodeMarker(sideCode) +
         '<ul class="edit-control-group">' +
         items +
