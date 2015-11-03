@@ -83,6 +83,17 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Create new prohibition") {
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1)), 190, "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360l)).head
+      asset.value should be (Some(prohibition))
+      asset.expired should be (false)
+    }
+  }
+
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
     val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
     linearAssets should have size 1
