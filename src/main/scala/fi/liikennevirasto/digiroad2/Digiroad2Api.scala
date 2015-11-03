@@ -423,8 +423,8 @@ with GZipSupport {
     }.getOrElse(Nil)
 
     val createdIds =
-      linearAssetService.create(newLimits, typeId, user.username).map(_.id) ++
-      linearAssetService.create(newProhibitions, user.username).map(_.id)
+      linearAssetService.create(newLimits, typeId, user.username) ++
+      linearAssetService.create(newProhibitions, user.username)
 
     updatedNumericalIds ++ createdIds
   }

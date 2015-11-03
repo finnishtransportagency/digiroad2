@@ -86,20 +86,18 @@ trait LinearAssetOperations {
     }
   }
 
-  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[PersistedLinearAsset] = {
+  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        val expired = false
-        createWithoutTransaction(typeId, newAsset.mmlId, Some(newAsset.value), expired, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.mmlId, NumericValue(newAsset.value), newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
       }
     }
   }
 
-  def create(newProhibitions: Seq[NewProhibition], username: String): Seq[PersistedLinearAsset] = {
+  def create(newProhibitions: Seq[NewProhibition], username: String): Seq[Long] = {
     withDynTransaction {
       newProhibitions.map { newProhibition =>
-        val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(newProhibition.value))
-        createWithoutTransaction(typeId = 190, newProhibition.mmlId, setValueFn, expired = false, newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
+        createWithoutTransaction(typeId = 190, newProhibition.mmlId, Prohibitions(newProhibition.value), newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
       }
     }
   }
@@ -120,18 +118,7 @@ trait LinearAssetOperations {
         case Some(value) => updateWithoutTransaction(Seq(id), value, username)
       }
 
-      val createdIdOption = createdValue match {
-        case None => None
-        case Some(NumericValue(created)) =>
-          createdValue.map { value =>
-            createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(created), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
-          }
-        case Some(Prohibitions(created)) =>
-          createdValue.map { value =>
-            val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(created))
-            createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, setValueFn, false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
-          }
-      }
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username))
 
       Seq(id) ++ Seq(createdIdOption).flatten
     }
@@ -156,17 +143,7 @@ trait LinearAssetOperations {
 
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
 
-      val created = valueAgainstDigitization match {
-        case None => Nil
-        case Some(NumericValue(numeric)) =>
-          val setValueFn = (id: Long) => dao.insertValue(id, valuePropertyId)(numeric)
-          val created = createWithoutTransaction(existing.typeId, existing.mmlId, setValueFn, expired = false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-          Seq(created.id)
-        case Some(Prohibitions(prohibitions)) =>
-          val setValueFn = (id: Long) => dao.insertProhibitionValue(id, Prohibitions(prohibitions))
-          val created = createWithoutTransaction(existing.typeId, existing.mmlId, setValueFn, expired = false, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-          Seq(created.id)
-      }
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.mmlId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username))
 
       Seq(existing.id) ++ created
     }
@@ -181,18 +158,15 @@ trait LinearAssetOperations {
     ids.map(valueUpdate).flatten
   }
 
-  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val setValueFn = (id: Long) => value.foreach(dao.insertValue(id, valuePropertyId))
-    createWithoutTransaction(typeId, mmlId, setValueFn, expired, sideCode, startMeasure, endMeasure, username)
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long = {
+    val id = dao.createLinearAsset(typeId, mmlId, expired = false, sideCode, startMeasure, endMeasure, username)
+    val insertValueFor = value match {
+      case Prohibitions(prohibitionValues) => dao.insertProhibitionValue(_: Long, Prohibitions(prohibitionValues))
+      case NumericValue(intValue) => dao.insertValue(_: Long, valuePropertyId)(intValue)
+    }
+    insertValueFor(id)
+    id
   }
-
-  private def createWithoutTransaction(typeId: Int, mmlId: Long, setValueFn: Long => Any, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val id = dao.createLinearAsset(typeId, mmlId, expired, sideCode, startMeasure, endMeasure, username)
-    setValueFn(id)
-    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-  }
-
-
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
