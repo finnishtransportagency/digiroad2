@@ -161,14 +161,12 @@
           return items.join('');
         }
 
-        var exceptionGroupElement = '' +
+        return '' +
           '<div class="exception-group">' +
           exceptionLabel(prohibition) +
           existingExceptionElements() +
           newExceptionElement(prohibition.typeId) +
           '</div>';
-
-        return exceptionGroupElement;
       }
 
       function validityPeriodsElement() {
@@ -347,7 +345,7 @@
 
     function toggleExceptionElements(prohibitionElement) {
       var newExceptionElement = prohibitionElement.find('.new-exception');
-      var exceptionGroupLabel = prohibitionElement.find('.exception-group label')
+      var exceptionGroupLabel = prohibitionElement.find('.exception-group label');
       var prohibition = extractExistingProhibition(prohibitionElement);
       newExceptionElement.toggle(supportsExceptions(prohibition.typeId));
       exceptionGroupLabel.toggle(hasOrSupportsExceptions(prohibition));
