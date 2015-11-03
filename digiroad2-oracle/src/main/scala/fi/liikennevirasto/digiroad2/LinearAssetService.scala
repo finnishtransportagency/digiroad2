@@ -89,15 +89,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.mmlId, NumericValue(newAsset.value), newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
-      }
-    }
-  }
-
-  def create(newProhibitions: Seq[NewProhibition], username: String): Seq[Long] = {
-    withDynTransaction {
-      newProhibitions.map { newProhibition =>
-        createWithoutTransaction(typeId = 190, newProhibition.mmlId, Prohibitions(newProhibition.value), newProhibition.sideCode, newProhibition.startMeasure, newProhibition.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.mmlId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
       }
     }
   }

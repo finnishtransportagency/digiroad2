@@ -92,7 +92,8 @@ case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Opt
                          startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                          modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int)
 
-case class NewLinearAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewLinearAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int)
+case class NewNumericValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
 case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
 

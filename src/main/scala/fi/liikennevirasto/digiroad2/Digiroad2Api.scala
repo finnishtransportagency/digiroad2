@@ -409,10 +409,10 @@ with GZipSupport {
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLimits = (parsedBody \ "newLimits").extractOpt[Seq[NewLinearAsset]].getOrElse(Nil)
+    val newLimits = (parsedBody \ "newLimits").extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil)
     val newProhibitions = (parsedBody \ "newLimits").extractOpt[Seq[NewProhibition]].getOrElse(Nil)
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
-    val mmlIds = newLimits.map(_.mmlId) ++ existingMmlIds
+    val mmlIds = newLimits.map(_.mmlId) ++ newProhibitions.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
@@ -423,8 +423,8 @@ with GZipSupport {
     }.getOrElse(Nil)
 
     val createdIds =
-      linearAssetService.create(newLimits, typeId, user.username) ++
-      linearAssetService.create(newProhibitions, user.username)
+      linearAssetService.create(newLimits.map { x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode) }, typeId, user.username) ++
+      linearAssetService.create(newProhibitions.map { x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode) }, 190, user.username)
 
     updatedNumericalIds ++ createdIds
   }
