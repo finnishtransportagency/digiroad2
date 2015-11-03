@@ -45,12 +45,16 @@
       Saturday: "La",
       Sunday: "Su"
     };
-    var exceptionLabel = '<label>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
 
     return {
       singleValueElement: singleValueElement,
       bindEvents: bindEvents
     };
+
+    function exceptionLabel(prohibition) {
+      var style = hasOrSupportsExceptions(prohibition) ? '' : ' style="display:none"';
+      return '<label' + style + '>Rajoitus ei koske seuraavia ajoneuvoja:</label>';
+    }
 
     function singleValueElement(asset, sideCode) {
       return '' +
@@ -103,7 +107,7 @@
         }).join('');
         var element = '' +
           '<div>' +
-          exceptionLabel +
+          exceptionLabel(prohibition) +
           '  <ul>' + exceptionElements + '</ul>' +
           '</div>';
         return _.isEmpty(prohibition.exceptions) ?  '' : element;
@@ -159,7 +163,7 @@
 
         var exceptionGroupElement = '' +
           '<div class="exception-group">' +
-          exceptionLabel +
+          exceptionLabel(prohibition) +
           existingExceptionElements() +
           newExceptionElement(prohibition.typeId) +
           '</div>';
@@ -254,6 +258,10 @@
       return _.contains([2,3,23], prohibitionType);
     }
 
+    function hasOrSupportsExceptions(prohibition) {
+      return supportsExceptions(prohibition.typeId) || !_.isEmpty(prohibition.exceptions);
+    }
+
     function newValidityPeriodElement() {
       return '' +
         '<div class="form-group new-validity-period">' +
@@ -295,8 +303,8 @@
       });
 
       $(rootElement).on('change', prohibitionTypeElements, function(evt) {
-        var newExceptionElement = $(evt.target).closest('.existing-prohibition').find('.new-exception');
-        newExceptionElement.toggle(supportsExceptions(parseInt($(evt.target).val(), 10)));
+        var existingProhibitionElement = $(evt.target).closest('.existing-prohibition');
+        toggleExceptionElements(existingProhibitionElement);
         setValue(extractValue(rootElement, className));
       });
 
@@ -330,38 +338,49 @@
       });
 
       $(rootElement).on('click', className + ' button.delete', function(evt) {
+        var existingProhibitionElement = $(evt.target).closest('.existing-prohibition');
         $(evt.target).parent().remove();
+        toggleExceptionElements(existingProhibitionElement);
         setValue(extractValue(rootElement, className));
       });
     }
 
+    function toggleExceptionElements(prohibitionElement) {
+      var newExceptionElement = prohibitionElement.find('.new-exception');
+      var exceptionGroupLabel = prohibitionElement.find('.exception-group label')
+      var prohibition = extractExistingProhibition(prohibitionElement);
+      newExceptionElement.toggle(supportsExceptions(prohibition.typeId));
+      exceptionGroupLabel.toggle(hasOrSupportsExceptions(prohibition));
+    }
+
     function extractValue(rootElement, className) {
-      function extractExceptions(element) {
-        var exceptionElements = element.find('.existing-exception select');
-        return _.map(exceptionElements, function(exception) {
-          return parseInt($(exception).val(), 10);
-        });
-      }
-
-      function extractValidityPeriods(element) {
-        var periodElements = element.find('.existing-validity-period');
-        return _.map(periodElements, function(element) {
-          return {
-            startHour: parseInt($(element).find('.start-hour').val(), 10),
-            endHour: parseInt($(element).find('.end-hour').val(), 10),
-            days: $(element).data('days')
-          };
-        });
-      }
-
       var prohibitionElements = $(rootElement).find(className).find('.existing-prohibition');
+      return _.map(prohibitionElements, extractExistingProhibition);
+    }
 
-      return _.map(prohibitionElements, function(element) {
-        var $element = $(element);
+    function extractExistingProhibition(element) {
+      var $element = $(element);
+      return {
+        typeId: parseInt($element.find('.prohibition-type select').val(), 10),
+        exceptions: extractExceptions($element),
+        validityPeriods: extractValidityPeriods($element)
+      };
+    }
+
+    function extractExceptions(element) {
+      var exceptionElements = element.find('.existing-exception select');
+      return _.map(exceptionElements, function(exception) {
+        return parseInt($(exception).val(), 10);
+      });
+    }
+
+    function extractValidityPeriods(element) {
+      var periodElements = element.find('.existing-validity-period');
+      return _.map(periodElements, function(element) {
         return {
-          typeId: parseInt($element.find('.prohibition-type select').val(), 10),
-          exceptions: extractExceptions($element),
-          validityPeriods: extractValidityPeriods($element)
+          startHour: parseInt($(element).find('.start-hour').val(), 10),
+          endHour: parseInt($(element).find('.end-hour').val(), 10),
+          days: $(element).data('days')
         };
       });
     }
