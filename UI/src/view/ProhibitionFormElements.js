@@ -220,6 +220,7 @@
         deleteButton() +
         validityPeriodLabel(period) +
         hourElement(period.startHour, 'start') +
+        '<label class="hour-separator"> - </label>' +
         hourElement(period.endHour, 'end') +
         '</div>';
     }
