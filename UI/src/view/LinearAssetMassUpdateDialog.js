@@ -17,7 +17,9 @@
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
-          '<%= editElement %>'+
+          '<div class="form-elements-container">' +
+            '<%= editElement %>'+
+          '</div>'+
           '<div class="actions">' +
             '<button class="btn btn-primary save">Tallenna</button>' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
@@ -44,7 +46,7 @@
         count: count,
         editElement: formElements.singleValueElement(undefined)
       }));
-      formElements.bindEvents(container, {
+      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), {
         setValue: setValue,
         removeValue: removeValue
       });
