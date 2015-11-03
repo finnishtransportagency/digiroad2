@@ -13,7 +13,7 @@
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-        '<div class="modal-dialog form">' +
+        '<div class="modal-dialog form form-horizontal">' +
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
