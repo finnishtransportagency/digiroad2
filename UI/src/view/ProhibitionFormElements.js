@@ -59,6 +59,8 @@
     function singleValueElement(asset, sideCode) {
       return '' +
         '<div class="form-group editable ' + generateClassName(sideCode) + '">' +
+          '<label class="asset-label">Ajoneuvokohtaiset rajoitukset</label>' +
+          sideCodeMarker(sideCode) +
           assetDisplayElement(asset) +
           assetEditElement(asset, sideCode) +
         '</div>';
@@ -76,8 +78,6 @@
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
       return '' +
-        '<label class="asset-label">Ajoneuvokohtaiset rajoitukset</label>' +
-        sideCodeMarker(sideCode) +
         '<ul class="edit-control-group">' +
         items +
         '<li>' +
