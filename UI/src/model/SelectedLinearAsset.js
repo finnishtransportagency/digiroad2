@@ -286,6 +286,8 @@
       return false;
     };
 
+    this.validator = validator;
+
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));

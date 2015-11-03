@@ -7,6 +7,8 @@
     var count = options.count,
       onCancel = options.onCancel,
       onSave = options.onSave,
+      validator = options.validator,
+      formElements = options.formElements,
       currentValue;
 
     var confirmDiv =
@@ -24,7 +26,7 @@
       '</div>';
 
     function setValue(value) {
-      if (value > 0){
+      if (validator(value)) {
         currentValue = value;
         $('button.save').prop('disabled', '');
       } else {
@@ -40,9 +42,9 @@
     var renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({
         count: count,
-        editElement: options.formElements.singleValueElement(undefined)
+        editElement: formElements.singleValueElement(undefined)
       }));
-      options.formElements.bindEvents(container, {
+      formElements.bindEvents(container, {
         setValue: setValue,
         removeValue: removeValue
       });
