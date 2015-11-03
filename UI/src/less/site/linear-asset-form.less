@@ -58,7 +58,7 @@
       margin-left: 20px;
     }
     .existing-validity-period .control-label {
-      width: 35px;
+      width: 45px !important;
       text-align: left;
     }
     .existing-validity-period .hour-separator {
@@ -68,6 +68,9 @@
       margin-top: @line-height-modifier * 2;
       margin-bottom: 0;
       height: 21px;
+      .modal-dialog& {
+        margin-top: @line-height-modifier;
+      }
     }
   }
 }
