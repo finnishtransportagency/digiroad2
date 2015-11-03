@@ -99,7 +99,7 @@
     }
 
     function prohibitionDisplayElement(prohibition) {
-      var typeElement = '<span>Rajoitus: ' + _.find(prohibitionValues, { typeId: prohibition.typeId }).title + '</span>';
+      var typeElement = '<h4>Rajoitus: ' + _.find(prohibitionValues, { typeId: prohibition.typeId }).title + '</h4>';
 
       function exceptionElement() {
         var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
