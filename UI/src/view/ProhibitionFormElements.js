@@ -122,7 +122,7 @@
       }
 
       return '' +
-        '<div class="form-control-static">' +
+        '<div class="form-control-static existing-prohibition">' +
         typeElement +
         validityPeriodElement() +
         exceptionElement() +
