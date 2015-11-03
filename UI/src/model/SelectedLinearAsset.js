@@ -73,7 +73,7 @@
         value: value,
         typeId: typeId
       };
-      var backendOperation = _.isNumber(value) ? backend.createLinearAssets : backend.deleteLinearAssets;
+      var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
         eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
