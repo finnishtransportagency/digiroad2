@@ -278,7 +278,7 @@
     function newProhibitionElement() {
       var optionTags = _.map(prohibitionValues, function(prohibitionValue) {
         return '<option value="' + prohibitionValue.typeId + '">' + prohibitionValue.title + '</option>';
-      });
+      }).join('');
       return '' +
         '<li><div class="form-group new-prohibition">' +
         '  <select class="form-control select">' +
