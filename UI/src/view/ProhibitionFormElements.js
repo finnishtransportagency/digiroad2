@@ -80,9 +80,7 @@
       return '' +
         '<ul class="edit-control-group">' +
         items +
-        '<li>' +
         newProhibitionElement() +
-        '</li>' +
         '</ul>';
     }
 
@@ -282,12 +280,12 @@
         return '<option value="' + prohibitionValue.typeId + '">' + prohibitionValue.title + '</option>';
       });
       return '' +
-        '<div class="form-group new-prohibition">' +
+        '<li><div class="form-group new-prohibition">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää rajoitus</option>' +
         optionTags +
         '  </select>' +
-        '</div>';
+        '</div></li>';
     }
 
     function bindEvents(rootElement, selectedLinearAsset, sideCode) {
@@ -338,7 +336,7 @@
           exceptions: [],
           validityPeriods: []
         }));
-        $(rootElement).find('.form-group' + className).append(newProhibitionElement());
+        $(rootElement).find('.form-group' + className + ' .edit-control-group').append(newProhibitionElement());
         setValue(extractValue(rootElement, className));
       });
 
