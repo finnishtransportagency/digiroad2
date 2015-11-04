@@ -85,32 +85,6 @@
     }
   }
 
-  .form-horizontal {
-    .control-label {
-      width: @control-label-width;
-      margin-right: @control-label-margin;
-      font-size: @font-size-xs;
-      margin-top: 5px;
-    }
-
-    .form-control,
-    .checkbox,
-    .select,
-    .form-control-static,
-    .choice-group,
-    .btn-block {
-      width: 210px;
-      margin-top: 6px;
-    }
-
-    .asset-log-info {
-      float: none;
-      width: 100%;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-  }
-
   .form-manoeuvre {
     .control-label {
       width: 100%;
@@ -210,6 +184,36 @@
       padding-bottom: @line-height-modifier + 1;
       line-height: @line-height-modifier * 3;
     }
+  }
+}
+
+.form-horizontal {
+  .control-label {
+    width: @control-label-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xs;
+    margin-top: 5px;
+  }
+
+  .form-control.sub-control {
+    width: auto;
+  }
+
+  .form-control,
+  .checkbox,
+  .select,
+  .form-control-static,
+  .choice-group,
+  .btn-block {
+    width: 210px;
+    margin-top: 6px;
+  }
+
+  .asset-log-info {
+    float: none;
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 

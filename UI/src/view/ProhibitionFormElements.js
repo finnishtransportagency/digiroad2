@@ -214,7 +214,7 @@
     function hourElement(selectedHour, type) {
       var className = type + '-hour';
       return '' +
-        '<select class="form-control select ' + className + '">' +
+        '<select class="form-control sub-control select ' + className + '">' +
         hourOptions(selectedHour, type) +
         '</select>';
     }
