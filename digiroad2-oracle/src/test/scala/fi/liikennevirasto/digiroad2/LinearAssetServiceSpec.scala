@@ -112,7 +112,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     when(mockLinearAssetDao.fetchProhibitionsByMmlIds(Seq(1l))).thenReturn(Nil)
     PassThroughService.getByMunicipality(190, 235)
-    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l))
+    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l), includeFloating = false)
 
     when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")).thenReturn(Nil)
     PassThroughService.getByMunicipality(100, 235)

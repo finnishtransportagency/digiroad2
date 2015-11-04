@@ -198,8 +198,10 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val prohibitionAssetTypeId = 190
+    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.mml_id, pos.side_code,
@@ -218,7 +220,7 @@ trait OracleLinearAssetDao {
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
-          and a.floating = 0"""
+          #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 

@@ -228,7 +228,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Double, Double, Int, Int, Boolean)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Int, Int, Boolean)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -302,7 +302,6 @@ class AssetDataImporter {
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Double, Double, Boolean)].list
     }
-
     println(s"*** fetched all vehicle prohibitions from DB in $elapsedTime seconds")
 
     val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
@@ -312,10 +311,15 @@ class AssetDataImporter {
     println(s"*** calculated dropped links in $elapsedTime seconds")
 
     val floatingLimits = limits.filter(_._5)
+    val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
-    val allDropped = nonExistingLimits ++ floatingLimits
+    val droppedProhibitions =  OracleDatabase.withDynTransaction {
+      OracleLinearAssetDao.fetchProhibitionsByMmlIds(droppedMmlIds, includeFloating = true)
+    }
 
-    exportCsv("vehicle_prohibitions", allDropped.map(value => (value._1, value._2, value._3, value._4, 0, 190, value._5 )))
+    exportCsv("vehicle_prohibitions", droppedProhibitions.map { value =>
+      (value.mmlId, 0l, value.startMeasure, value.endMeasure, 0, 190, false)
+    })
 
     println(s"*** exported CSV file in $elapsedTime seconds")
   }
