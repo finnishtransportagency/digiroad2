@@ -287,6 +287,39 @@ class AssetDataImporter {
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
 
+  def generateDroppedProhibitions(vvhServiceHost: String): Unit = {
+    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+    val startTime = DateTime.now()
+    def elapsedTime = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
+
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, a.floating
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           where a.asset_type_id = 190
+           and (valid_to is null or valid_to >= sysdate)
+         """.as[(Long, Long, Double, Double, Boolean)].list
+    }
+
+    println(s"*** fetched all vehicle prohibitions from DB in $elapsedTime seconds")
+
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
+    println(s"*** fetched all road links from VVH in $elapsedTime seconds")
+
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println(s"*** calculated dropped links in $elapsedTime seconds")
+
+    val floatingLimits = limits.filter(_._5)
+
+    val allDropped = nonExistingLimits ++ floatingLimits
+
+    exportCsv("vehicle_prohibitions", allDropped.map(value => (value._1, value._2, value._3, value._4, 0, 190, value._5 )))
+
+    println(s"*** exported CSV file in $elapsedTime seconds")
+  }
+
   def expireSplitAssetsWithoutMml(typeId: Int) = {
     val chunkSize = 1000
     val splitAssetsWithoutMmlIdFilter = """
