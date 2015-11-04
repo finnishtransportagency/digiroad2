@@ -318,9 +318,17 @@ class AssetDataImporter {
       1 -> "Su"
     )
 
-    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " +
-    "Poikkeukset: " + prohibitionValue.exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ") + " " +
-    "Voimassa: " + prohibitionValue.validityPeriods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+    val exceptions = prohibitionValue.exceptions.toSeq match {
+      case Nil => ""
+      case exceptions => "Poikkeukset: " + exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+    }
+
+    val validityPeriods = prohibitionValue.validityPeriods.toSeq match {
+      case Nil => ""
+      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+    }
+
+    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
   }
 
   def generateDroppedProhibitions(vvhServiceHost: String): Unit = {
