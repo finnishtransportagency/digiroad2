@@ -54,7 +54,7 @@
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
-             '<div class="form form-horizontal form-dark speed-limit">' +
+             '<div class="form form-horizontal form-dark linear-asset">' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
                '</div>' +
