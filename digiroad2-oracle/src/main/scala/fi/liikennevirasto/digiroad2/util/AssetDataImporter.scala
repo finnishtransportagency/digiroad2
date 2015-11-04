@@ -6,7 +6,8 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, Prohibitions, ProhibitionValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Sunday, Saturday, Weekday}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
 
@@ -228,7 +229,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Int, Int, Boolean)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Any, Int, Boolean)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -287,6 +288,43 @@ class AssetDataImporter {
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
 
+  def generateValueString(prohibitionValue: ProhibitionValue): String = {
+    val prohibitionType = Map(
+      3 -> "Ajoneuvo",
+      2 -> "Moottoriajoneuvo",
+      23 -> "Läpiajo",
+      12 -> "Jalankulku",
+      11 -> "Polkupyörä",
+      26 -> "Ratsastus",
+      10 -> "Mopo",
+      9 -> "Moottoripyörä",
+      27 -> "Moottorikelkka",
+      5 -> "Linja-auto",
+      8 -> "Taksi",
+      7 -> "Henkilöauto",
+      6 -> "Pakettiauto",
+      4 -> "Kuorma-auto",
+      15 -> "Matkailuajoneuvo",
+      19 -> "Sotilasajoneuvo",
+      13 -> "Ajoneuvoyhdistelmä",
+      14 -> "Traktori tai maatalousajoneuvo",
+      21 -> "Huoltoajo",
+      22 -> "Tontille ajo",
+      24 -> "Ryhmän A vaarallisten aineiden kuljetus",
+      25 -> "Ryhmän B vaarallisten aineiden kuljetus"
+    )
+
+    val daysMap = Map(
+      2 -> "Ma - Pe",
+      7 -> "La",
+      1 -> "Su"
+    )
+
+    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " +
+    "Poikkeukset: " + prohibitionValue.exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ") + " " +
+    "Voimassa: " + prohibitionValue.validityPeriods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+  }
+
   def generateDroppedProhibitions(vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
@@ -317,9 +355,16 @@ class AssetDataImporter {
       OracleLinearAssetDao.fetchProhibitionsByMmlIds(droppedMmlIds, includeFloating = true)
     }
 
-    exportCsv("vehicle_prohibitions", droppedProhibitions.map { value =>
-      (value.mmlId, 0l, value.startMeasure, value.endMeasure, 0, 190, false)
-    })
+    val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
+      droppedProhibition.value.get match {
+        case Prohibitions(prohibitionValues) =>
+          prohibitionValues.map { prohibitionValue =>
+            val value = generateValueString(prohibitionValue)
+            (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, 190, false)
+          }
+      }
+    }
+    exportCsv("vehicle_prohibitions", prohibitionLines.flatten)
 
     println(s"*** exported CSV file in $elapsedTime seconds")
   }
