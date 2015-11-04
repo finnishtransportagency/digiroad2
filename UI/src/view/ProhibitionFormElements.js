@@ -206,7 +206,7 @@
       return _.map(range, function(hour) {
         var selected = hour === selectedOption ? 'selected' : '';
         return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
-      });
+      }).join('');
     }
 
     function hourElement(selectedHour, type) {
