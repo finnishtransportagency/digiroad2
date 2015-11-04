@@ -62,7 +62,7 @@
           '<label class="asset-label">Ajoneuvokohtaiset rajoitukset</label>' +
           sideCodeMarker(sideCode) +
           assetDisplayElement(asset) +
-          assetEditElement(asset, sideCode) +
+          assetEditElement(asset) +
         '</div>';
     }
 
@@ -73,7 +73,7 @@
       return '<ul>' + items + '</ul>';
     }
 
-    function assetEditElement(prohibitions, sideCode) {
+    function assetEditElement(prohibitions) {
       var items = _.map(prohibitions, function(prohibition) {
         return '<li>' + prohibitionEditElement(prohibition) + '</li>';
       }).join('');
