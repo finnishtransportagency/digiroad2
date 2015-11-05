@@ -300,6 +300,11 @@
         b: selectedLinearAsset.setBValue
       };
       var setValue = valueSetters[sideCode] || selectedLinearAsset.setValue;
+      var valueRemovers = {
+        a: selectedLinearAsset.removeAValue,
+        b: selectedLinearAsset.removeBValue
+      };
+      var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
       $(rootElement).on('change', inputElements, function() {
         setValue(extractValue(rootElement, className));
@@ -344,7 +349,12 @@
         var existingProhibitionElement = $(evt.target).closest('.existing-prohibition');
         $(evt.target).parent().remove();
         toggleExceptionElements(existingProhibitionElement);
-        setValue(extractValue(rootElement, className));
+        var value = extractValue(rootElement, className);
+        if (_.isEmpty(value)) {
+          removeValue();
+        } else {
+          setValue(value);
+        }
       });
     }
 
