@@ -398,10 +398,17 @@ with GZipSupport {
 
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
-    val prohibition = value.extractOpt[Seq[ProhibitionValue]]
+    val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
 
-    numericValue.map(NumericValue)
-      .orElse(prohibition.map(Prohibitions))
+    val prohibition = prohibitionParameter match {
+      case Some(Nil) => None
+      case None => None
+      case Some(x) => Some(Prohibitions(x))
+    }
+
+    numericValue
+      .map(NumericValue)
+      .orElse(prohibition)
   }
 
   private def extractNewLinearAssets(value: JValue) = {
