@@ -111,19 +111,6 @@ with GZipSupport {
     assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
-  // TODO: Remove obsolete entry point
-  put("/assets/:id") {
-    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) =
-      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
-        (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
-      case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
-      case _ => None
-    }
-    assetProvider.updateAsset(params("id").toLong, position, props)
-  }
-
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
