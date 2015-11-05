@@ -1,5 +1,5 @@
 (function(root) {
-  root.ProhibitionFormElements = function(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+  root.ProhibitionFormElements = function(unit, editControlLabels, className) {
     var prohibitionValues = [
       { typeId: 3, title: 'Ajoneuvo' },
       { typeId: 2, title: 'Moottoriajoneuvo' },
