@@ -100,30 +100,34 @@
       var typeElement = '<h4>Rajoitus: ' + _.find(prohibitionValues, { typeId: prohibition.typeId }).title + '</h4>';
 
       function exceptionElement() {
-        var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
-          return '<li>' + _.find(exceptionValues, { typeId: exceptionId }).title + '</li>';
-        }).join('');
-        var element = '' +
-          '<div class="exception-group">' +
-          exceptionLabel(prohibition) +
-          '  <ul>' + exceptionElements + '</ul>' +
-          '</div>';
-        return _.isEmpty(prohibition.exceptions) ?  '' : element;
+        return _.isEmpty(prohibition.exceptions) ?  '' : createExceptionElement();
+
+        function createExceptionElement(){
+          var exceptionElements = _.map(prohibition.exceptions, function (exceptionId) {
+            return '<li>' + _.find(exceptionValues, { typeId: exceptionId }).title + '</li>';
+          }).join('');
+          return '' +
+            '<div class="exception-group">' +
+            exceptionLabel(prohibition) +
+            '  <ul>' + exceptionElements + '</ul>' +
+            '</div>';
+        }
       }
 
       function validityPeriodElement() {
-        var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
-          var dayName = dayLabels[period.days];
-          return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
-        }).join('');
+        return _.isEmpty(prohibition.validityPeriods) ? '' : createValidityPeriodElement();
 
-        var element = '' +
-          '<div class="validity-period-group">' +
-          '<label>Rajoitus pätee aikana:</label>' +
-          '<ul>' + validityPeriodItems + '</ul>' +
-          '</div>';
-
-        return _.isEmpty(prohibition.validityPeriods) ? '' : element;
+        function createValidityPeriodElement() {
+          var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
+            var dayName = dayLabels[period.days];
+            return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
+          }).join('');
+          return '' +
+            '<div class="validity-period-group">' +
+            '<label>Rajoitus pätee aikana:</label>' +
+            '<ul>' + validityPeriodItems + '</ul>' +
+            '</div>';
+        }
       }
 
       return '' +
