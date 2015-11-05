@@ -14,6 +14,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
@@ -773,6 +774,24 @@ class AssetDataImporter {
         numericalLimitPS.close()
       }
     }
+  }
+
+  def importPedestrianCrossings(database: DatabaseDef): Unit = {
+    // do we need segment id? Is one of alkum/loppum enough?
+    val query = sql"""
+         select s.segm_id, t.mml_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
+           from segments s
+           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+           where s.tyyppi = 17
+        """
+
+    val pedestrianCrossings = database.withDynSession {
+      query.as[(Long, Long, Seq[Point], Double, Double)].list
+    }
+
+    println(s"Read ${pedestrianCrossings.length} pedestrian crossings from conversion DB")
+
+    // TODO: import to OTH db
   }
 
   def importManoeuvres(database: DatabaseDef): Unit = {
