@@ -15,7 +15,7 @@
           '<div class="form-group">' +
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %> </p>' +
           '</div>' +
-          '<label class="control-label">Kääntyminen kielletty linkeille</label>' +
+          '<label>Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +
         '</div>' +
       '</div>' +

@@ -12,6 +12,6 @@
   }
 
   function construct(asset) {
-    return assetFormElementConstructor(asset.layerName)(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.elementType, asset.possibleValues);
+    return assetFormElementConstructor(asset.layerName)(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.possibleValues);
   }
 })(this);

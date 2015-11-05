@@ -15,6 +15,8 @@ import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
 case class ExistingLinearAsset(id: Long, mmlId: Long)
+case class NewNumericValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
@@ -396,38 +398,43 @@ with GZipSupport {
     }
   }
 
-  private def validateNumericalLimitValue(value: BigInt): Unit = {
-    if (value > Integer.MAX_VALUE) {
-      halt(BadRequest("Numerical limit value too big"))
-    } else if (value < 0) {
-      halt(BadRequest("Numerical limit value cannot be negative"))
+  private def extractLinearAssetValue(value: JValue): Option[Value] = {
+    val numericValue = value.extractOpt[Int]
+    val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+
+    val prohibition = prohibitionParameter match {
+      case Some(Nil) => None
+      case None => None
+      case Some(x) => Some(Prohibitions(x))
     }
+
+    numericValue
+      .map(NumericValue)
+      .orElse(prohibition)
+  }
+
+  private def extractNewLinearAssets(value: JValue) = {
+    val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map( x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+    numerical ++ prohibitions
   }
 
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
-    val prohibitionValueOption = (parsedBody \ "value").extractOpt[Seq[ProhibitionValue]]
+    val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLinearAsset]]
+    val newLinearAssets = extractNewLinearAssets(parsedBody \ "newLimits")
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
-    val mmlIds = newLimits.map(_.mmlId) ++ existingMmlIds
+    val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    (expiredOption, valueOption, prohibitionValueOption) match {
-      case (None, None, None) => BadRequest("Numerical limit value or expiration not provided")
-      case (expired, value, None) =>
-        value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(existingAssets.toSeq, value.map(_.intValue()), expired.getOrElse(false), user.username)
-        val created = linearAssetService.create(newLimits, typeId, user.username)
-        updatedIds ++ created.map(_.id)
-      case (expired, None, prohibitionValue) =>
-        linearAssetService.updateProhibitions(existingAssets.toSeq, prohibitionValue.map(Prohibitions), expired.getOrElse(false), user.username)
-    }
+    val updatedNumericalIds = valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+    val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
+
+    updatedNumericalIds ++ createdIds
   }
 
   delete("/linearassets") {
@@ -438,7 +445,7 @@ with GZipSupport {
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    linearAssetService.update(ids.toSeq, None, true, user.username)
+    linearAssetService.expire(ids.toSeq, user.username)
   }
 
   post("/linearassets/:id") {
@@ -446,8 +453,8 @@ with GZipSupport {
 
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
-      (parsedBody \ "existingValue").extract[Option[Int]],
-      (parsedBody \ "createdValue").extract[Option[Int]],
+      extractLinearAssetValue(parsedBody \ "existingValue"),
+      extractLinearAssetValue(parsedBody \ "createdValue"),
       user.username,
       validateUserMunicipalityAccess(user))
   }
@@ -456,18 +463,10 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
 
     linearAssetService.separate(params("id").toLong,
-      (parsedBody \ "valueTowardsDigitization").extractOpt[Int],
-      (parsedBody \ "valueAgainstDigitization").extractOpt[Int],
+      extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
+      extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
       user.username,
       validateUserMunicipalityAccess(user))
-  }
-
-  post("/linearassets/separate") {
-    val user = userProvider.getCurrentUser()
-    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val newLinearAssets = (parsedBody \ "newLinearAssets").extract[Seq[NewLinearAsset]]
-
-    linearAssetService.create(newLinearAssets, typeId, user.username)
   }
 
   get("/speedlimits") {

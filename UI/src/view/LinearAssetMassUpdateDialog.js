@@ -7,15 +7,19 @@
     var count = options.count,
       onCancel = options.onCancel,
       onSave = options.onSave,
+      validator = options.validator,
+      formElements = options.formElements,
       currentValue;
 
     var confirmDiv =
       '<div class="modal-overlay mass-update-modal">' +
-        '<div class="modal-dialog">' +
+        '<div class="modal-dialog form form-horizontal linear-asset">' +
           '<div class="content">' +
             'Olet valinnut <%- count %> tielinkkiä' +
           '</div>' +
-          '<%= editElement %>'+
+          '<div class="form-elements-container">' +
+            '<%= editElement %>'+
+          '</div>'+
           '<div class="actions">' +
             '<button class="btn btn-primary save">Tallenna</button>' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
@@ -24,7 +28,7 @@
       '</div>';
 
     function setValue(value) {
-      if (value > 0){
+      if (validator(value)) {
         currentValue = value;
         $('button.save').prop('disabled', '');
       } else {
@@ -40,9 +44,9 @@
     var renderDialog = function() {
       var container = $('.container').append(_.template(confirmDiv)({
         count: count,
-        editElement: options.formElements.singleValueElement(undefined)
+        editElement: formElements.singleValueElement(undefined)
       }));
-      options.formElements.bindEvents(container, {
+      formElements.bindEvents(container.find('.mass-update-modal .form-elements-container'), {
         setValue: setValue,
         removeValue: removeValue
       });

@@ -1,10 +1,115 @@
-#feature-attributes {
-  .linear-asset.form {
-    .input-group-addon.traffic-volume {
-      width: 115px;
+.linear-asset.form {
+  .input-unit-combination {
+    float: left;
+    margin-top: 6px;
+
+    input {
+      margin-top: 0;
     }
-    .input-group-addon.lane-count {
-      width: 60px;
+
+    .form-control {
+      width: 110px;
     }
+
+    .input-group-addon {
+      float: left;
+      width: 15px;
+      height: 15px;
+    }
+  }
+  .input-group-addon.traffic-volume {
+    width: 115px;
+  }
+  .input-group-addon.lane-count {
+    width: 60px;
+  }
+  .modal-dialog& .prohibition .form-group {
+    border-bottom: none;
+    border-top: none;
+    padding: 0;
+    &.existing-prohibition {
+      padding: 10px 0;
+      border-bottom: 1px solid @gray-light-2;
+    }
+    &.new-prohibition {
+      padding: 10px 0;
+    }
+    .exception-group, .validity-period-group {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+  }
+  .prohibition-a, .prohibition-b {
+    label.asset-label {
+      margin: 3px;
+      padding: 7px 0;
+    }
+  }
+  .prohibition-type select {
+    width: 202px;
+  }
+  .new-prohibition select {
+    width: 214px;
+  }
+  .existing-prohibition.form-control-static {
+    min-width: 210px;
+    width: auto;
+  }
+  .existing-prohibition {
+    h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    label {
+      text-transform: none;
+      font-weight: normal;
+      .form-dark& {
+        color: @gray-light;
+      }
+    }
+    .delete {
+      margin-left: -5px;
+      line-height: 25px;
+      margin-top: 6px;
+      padding-top: 0;
+    }
+    .new-validity-period select {
+      width: 195px;
+    }
+    .existing-exception select {
+      width: 181px;
+    }
+    .new-exception select {
+      width: 194px;
+    }
+    .validity-period-group, .exception-group {
+      margin-left: 20px;
+    }
+    .existing-validity-period .control-label {
+      width: 40px;
+      text-align: left;
+    }
+    .existing-validity-period .hour-separator {
+      float: left;
+      padding: 0 8px;
+      font-size: 21px;
+      margin-top: @line-height-modifier * 2;
+      margin-bottom: 0;
+      height: 21px;
+    }
+  }
+
+  .marker {
+    float: left;
+  }
+  .control-label {
+    width: 65px;
+    margin-top: 7px;
+  }
+  .form-group.editable {
+    margin-left: 10px;
+  }
+  .choice-group {
+    width: 270px;
   }
 }

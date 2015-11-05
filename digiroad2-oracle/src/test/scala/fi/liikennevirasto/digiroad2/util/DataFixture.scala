@@ -262,6 +262,7 @@ object DataFixture {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
     dataImporter.generateDroppedNumericalLimits(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    dataImporter.generateDroppedProhibitions(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println("complete at time: ")
     println(DateTime.now())
     println("\n")

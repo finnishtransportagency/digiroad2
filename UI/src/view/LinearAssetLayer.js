@@ -190,8 +190,8 @@ window.LinearAssetLayer = function(params) {
         activateBrowseStyle();
         selectedLinearAsset.closeMultiple();
       },
-      formElements: params.formElements,
-      selectedAsset: selectedLinearAsset
+      validator: selectedLinearAsset.validator,
+      formElements: params.formElements
     });
   });
 

@@ -1,19 +1,18 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.{FileWriter, BufferedWriter, File}
+import java.io.{BufferedWriter, File, FileWriter}
 import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, Prohibitions, ProhibitionValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import org.joda.time.format.{PeriodFormatterBuilder, ISOPeriodFormat, DateTimeFormatter}
-
+import org.joda.time.format.PeriodFormatterBuilder
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
@@ -228,7 +227,7 @@ class AssetDataImporter {
     }
   }
 
-  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int, Boolean)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Any, Int, Boolean)]): Unit = {
     val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
@@ -269,7 +268,7 @@ class AssetDataImporter {
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in (#${asset_name.keys.mkString(",")})
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Int, Int, Int, Int, Boolean)].list
+         """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
     }
     println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
@@ -285,6 +284,95 @@ class AssetDataImporter {
       exportCsv(asset_name(key), values)
     }
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+  }
+
+  def generateValueString(prohibitionValue: ProhibitionValue): String = {
+    val prohibitionType = Map(
+      3 -> "Ajoneuvo",
+      2 -> "Moottoriajoneuvo",
+      23 -> "Läpiajo",
+      12 -> "Jalankulku",
+      11 -> "Polkupyörä",
+      26 -> "Ratsastus",
+      10 -> "Mopo",
+      9 -> "Moottoripyörä",
+      27 -> "Moottorikelkka",
+      5 -> "Linja-auto",
+      8 -> "Taksi",
+      7 -> "Henkilöauto",
+      6 -> "Pakettiauto",
+      4 -> "Kuorma-auto",
+      15 -> "Matkailuajoneuvo",
+      19 -> "Sotilasajoneuvo",
+      13 -> "Ajoneuvoyhdistelmä",
+      14 -> "Traktori tai maatalousajoneuvo",
+      21 -> "Huoltoajo",
+      22 -> "Tontille ajo",
+      24 -> "Ryhmän A vaarallisten aineiden kuljetus",
+      25 -> "Ryhmän B vaarallisten aineiden kuljetus"
+    )
+
+    val daysMap = Map(
+      2 -> "Ma - Pe",
+      7 -> "La",
+      1 -> "Su"
+    )
+
+    val exceptions = prohibitionValue.exceptions.toSeq match {
+      case Nil => ""
+      case exceptions => "Poikkeukset: " + exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+    }
+
+    val validityPeriods = prohibitionValue.validityPeriods.toSeq match {
+      case Nil => ""
+      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+    }
+
+    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
+  }
+
+  def generateDroppedProhibitions(vvhServiceHost: String): Unit = {
+    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+    val startTime = DateTime.now()
+    def elapsedTime = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
+
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, a.floating
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           where a.asset_type_id = 190
+           and (valid_to is null or valid_to >= sysdate)
+         """.as[(Long, Long, Double, Double, Boolean)].list
+    }
+    println(s"*** fetched all vehicle prohibitions from DB in $elapsedTime seconds")
+
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
+    println(s"*** fetched all road links from VVH in $elapsedTime seconds")
+
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println(s"*** calculated dropped links in $elapsedTime seconds")
+
+    val floatingLimits = limits.filter(_._5)
+    val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
+
+    val droppedProhibitions =  OracleDatabase.withDynTransaction {
+      OracleLinearAssetDao.fetchProhibitionsByMmlIds(droppedMmlIds, includeFloating = true)
+    }
+
+    val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
+      droppedProhibition.value.get match {
+        case Prohibitions(prohibitionValues) =>
+          prohibitionValues.map { prohibitionValue =>
+            val value = generateValueString(prohibitionValue)
+            (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, 190, false)
+          }
+      }
+    }
+    exportCsv("vehicle_prohibitions", prohibitionLines.flatten)
+
+    println(s"*** exported CSV file in $elapsedTime seconds")
   }
 
   def expireSplitAssetsWithoutMml(typeId: Int) = {

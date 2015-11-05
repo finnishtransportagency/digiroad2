@@ -198,8 +198,10 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val prohibitionAssetTypeId = 190
+    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.mml_id, pos.side_code,
@@ -218,7 +220,7 @@ trait OracleLinearAssetDao {
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
-          and a.floating = 0"""
+          #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
@@ -227,14 +229,15 @@ trait OracleLinearAssetDao {
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
       val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.map { case (_, rows) =>
+      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
+        val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
           ProhibitionValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
-      }.toSeq
+      }
       PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
     }.toSeq
   }
@@ -487,6 +490,25 @@ trait OracleLinearAssetDao {
       None
     }
   }
+  def createLinearAsset(typeId: Int, mmlId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long  = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val validTo = if(expired) "sysdate" else "null"
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to)
+        values ($id, $typeId, $username, sysdate, #$validTo)
+
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+
+    id
+  }
 
   def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
@@ -501,17 +523,24 @@ trait OracleLinearAssetDao {
   }
 
   def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
-    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    Queries.updateAssetModified(id, username).first
 
-    val prohibitionIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
-    sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionIds)""".execute
-    sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionIds)""".execute
-    sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+    val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
+    if (prohibitionValueIds.nonEmpty) {
+      sqlu"""delete from PROHIBITION_EXCEPTION where prohibition_value_id in (#$prohibitionValueIds)""".execute
+      sqlu"""delete from PROHIBITION_VALIDITY_PERIOD where prohibition_value_id in (#$prohibitionValueIds)""".execute
+      sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
+    }
 
-    value.prohibitions.foreach { prohibition =>
+    insertProhibitionValue(id, value)
+    Some(id)
+  }
+
+  def insertProhibitionValue(assetId: Long, value: Prohibitions): Unit = {
+    value.prohibitions.foreach { (prohibition: ProhibitionValue) =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
       val prohibitionType = prohibition.typeId
-      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $id, $prohibitionType)""".first
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $assetId, $prohibitionType)""".first
 
       prohibition.validityPeriods.foreach { validityPeriod =>
         val validityId = Sequences.nextPrimaryKeySeqValue
@@ -525,11 +554,6 @@ trait OracleLinearAssetDao {
         val exceptionId = Sequences.nextPrimaryKeySeqValue
         sqlu""" insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values ($exceptionId, $prohibitionId, $exceptionType)""".execute
       }
-    }
-    if (assetsUpdated == 1) {
-      Some(id)
-    } else {
-      None
     }
   }
 }

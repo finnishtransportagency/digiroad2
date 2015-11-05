@@ -10,10 +10,10 @@
       rootElement.html(template(selectedLinearAsset, formElements, newTitle, title));
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        formElements.bindEvents(rootElement, selectedLinearAsset, 'a');
-        formElements.bindEvents(rootElement, selectedLinearAsset, 'b');
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset, 'a');
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset, 'b');
       } else {
-        formElements.bindEvents(rootElement, selectedLinearAsset);
+        formElements.bindEvents(rootElement.find('.form-elements-container'), selectedLinearAsset);
       }
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
@@ -40,7 +40,7 @@
 
     function toggleMode(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
-      rootElement.find('.editable .choice-group').toggle(!readOnly);
+      rootElement.find('.editable .edit-control-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.read-only-title').toggle(readOnly);
@@ -85,8 +85,16 @@
     };
 
     var limitValueButtons = function() {
-      var separateValueElement = formElements.singleValueElement(selectedLinearAsset.getValue(), "a") + formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
-      return selectedLinearAsset.isSplitOrSeparated() ? separateValueElement : formElements.singleValueElement(selectedLinearAsset.getValue());
+      var separateValueElement =
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "a") +
+        formElements.singleValueElement(selectedLinearAsset.getValue(), "b");
+      var valueElements = selectedLinearAsset.isSplitOrSeparated() ?
+        separateValueElement :
+        formElements.singleValueElement(selectedLinearAsset.getValue());
+      return '' +
+        '<div class="form-elements-container">' +
+        valueElements +
+        '</div>';
     };
 
     var header = '<header>' + generateTitle() + '<div class="linear-asset form-controls">' + buttons + '</div></header>';

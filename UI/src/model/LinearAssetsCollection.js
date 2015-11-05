@@ -173,7 +173,7 @@
         backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
       } else {
         var separatedLimits = _.filter([separatedLimit.A, separatedLimit.B], function(limit) { return !_.isUndefined(limit.value); });
-        backend.createSeparatedLinearAssets(typeId, separatedLimits, success, failure);
+        backend.createLinearAssets({typeId: typeId, newLimits: separatedLimits}, success, failure);
       }
     };
 

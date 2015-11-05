@@ -4,17 +4,17 @@
     DefaultFormElements: DefaultFormElements
   };
 
-  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = dropDownFormElement(unit);
-    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function DefaultFormElements(unit, editControlLabels, className, defaultValue, elementType, possibleValues) {
+  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = inputFormElement(unit);
-    return formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function formElementFunctions(unit, editControlLabels, className, defaultValue, elementType, possibleValues, formElem) {
+  function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -37,7 +37,7 @@
       var withValue = _.isUndefined(currentValue) ? '' : 'checked';
       return '' +
         sideCodeMarker(sideCode) +
-        '<div class="choice-group">' +
+        '<div class="edit-control-group choice-group">' +
         '  <div class="radio">' +
         '    <label>' + editControlLabels.disabled +
         '      <input ' +

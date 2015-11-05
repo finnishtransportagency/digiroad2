@@ -85,70 +85,6 @@
     }
   }
 
-  .form {
-    width: 360px;
-
-    .asset-log-info {
-      font-size: @font-size-small;
-      line-height: @line-height-modifier * 3;
-      color: @input-color-placeholder-dark;
-    }
-
-    a {
-      color: @input-color-placeholder-dark;
-      text-decoration: underline;
-    }
-
-    a.incomplete-links, .unknown-speed-limits, .floating-stops {
-      position:absolute;
-      right: 10px;
-      bottom: 130px;
-    }
-
-    .undefined {
-      font-style: italic;
-      color: @gray-dark;
-    }
-
-    ul {
-      margin: 0;
-      padding: 0;
-      color: #fff;
-      list-style: none;
-
-      li {
-        padding-top: @line-height-modifier + 1;
-        line-height: @line-height-modifier * 3;
-      }
-    }
-  }
-
-  .form-horizontal {
-    .control-label {
-      width: @control-label-width;
-      margin-right: @control-label-margin;
-      font-size: @font-size-xs;
-      margin-top: 5px;
-    }
-
-    .form-control,
-    .checkbox,
-    .select,
-    .form-control-static,
-    .choice-group,
-    .btn-block {
-      width: 210px;
-      margin-top: 6px;
-    }
-
-    .asset-log-info {
-      float: none;
-      width: 100%;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-  }
-
   .form-manoeuvre {
     .control-label {
       width: 100%;
@@ -212,6 +148,75 @@
     font-size: @font-size-small;
   }
 }
+
+.form {
+  width: 360px;
+
+  .asset-log-info {
+    font-size: @font-size-small;
+    line-height: @line-height-modifier * 3;
+    color: @input-color-placeholder-dark;
+  }
+
+  a {
+    color: @input-color-placeholder-dark;
+    text-decoration: underline;
+  }
+
+  a.incomplete-links, .unknown-speed-limits, .floating-stops {
+    position:absolute;
+    right: 10px;
+    bottom: 130px;
+  }
+
+  .undefined {
+    font-style: italic;
+    color: @gray-dark;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    list-style: none;
+
+    li {
+      padding-bottom: @line-height-modifier + 1;
+      line-height: @line-height-modifier * 3;
+    }
+  }
+}
+
+.form-horizontal {
+  .control-label {
+    width: @control-label-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xs;
+    margin-top: 5px;
+  }
+
+  .form-control.sub-control {
+    width: auto;
+  }
+
+  .form-control,
+  .checkbox,
+  .select,
+  .form-control-static,
+  .choice-group,
+  .btn-block {
+    width: 210px;
+    margin-top: 6px;
+  }
+
+  .asset-log-info {
+    float: none;
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
 
 #information-content {
   a {

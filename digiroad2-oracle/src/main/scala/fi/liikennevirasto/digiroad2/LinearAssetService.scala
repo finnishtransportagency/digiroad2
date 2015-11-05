@@ -58,16 +58,15 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+  def expire(ids: Seq[Long], username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, expired, username)
+      ids.map(dao.updateExpiration(_, expired = true, username)).flatten
     }
   }
 
-  def updateProhibitions(ids: Seq[Long], value: Option[Prohibitions], expired: Boolean, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateProhibitionValue(id, _, username))
+  def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, valueUpdateFn, expired, username)
+      updateWithoutTransaction(ids, value, username)
     }
   }
 
@@ -87,20 +86,33 @@ trait LinearAssetOperations {
     }
   }
 
-  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[PersistedLinearAsset] = {
+  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        val expired = false
-        createWithoutTransaction(typeId, newAsset.mmlId, newAsset.value, expired, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.mmlId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
       }
     }
   }
 
-  def split(id: Long, splitMeasure: Double, existingValue: Option[Int], createdValue: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      val createdIdOption = splitWithoutTransaction(id, splitMeasure, createdValue, username, municipalityValidation)
-      updateWithoutTransaction(Seq(id), existingValue, existingValue.isEmpty, username)
-      (Seq(dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).headOption.map(_.id)) ++ Seq(createdIdOption)).flatten
+      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
+      val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      municipalityValidation(roadLink.municipalityCode)
+
+      Queries.updateAssetModified(id, username).execute
+
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
+      dao.updateMValues(id, existingLinkMeasures)
+
+      existingValue match {
+        case None => dao.updateExpiration(id, expired = true, username)
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
+      }
+
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username))
+
+      Seq(id) ++ Seq(createdIdOption).flatten
     }
   }
 
@@ -110,66 +122,42 @@ trait LinearAssetOperations {
     }
   }
 
-  def separate(id: Long, valueTowardsDigitization: Option[Int], valueAgainstDigitization: Option[Int], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
       val roadLink = roadLinkService.fetchVVHRoadlink(existing.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
-      updateWithoutTransaction(Seq(id), valueTowardsDigitization, valueTowardsDigitization.isEmpty, username)
+
+      valueTowardsDigitization match {
+        case None => dao.updateExpiration(id, expired = true, username)
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
+      }
+
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val created = createWithoutTransaction(existing.typeId, existing.mmlId, valueAgainstDigitization, valueAgainstDigitization.isEmpty, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username)
-      Seq(existing.id, created.id)
+
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.mmlId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username))
+
+      Seq(existing.id) ++ created
     }
   }
 
-  private def updateWithoutTransaction(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
-    val valueUpdateFn = (id: Long) => value.flatMap(dao.updateValue(id, _, valuePropertyId, username))
-    updateWithoutTransaction(ids, valueUpdateFn, expired, username)
-  }
-
-  private def updateWithoutTransaction(ids: Seq[Long], valueUpdateFn: Long => Option[Long], expired: Boolean, username: String): Seq[Long] = {
-    ids.map { id =>
-      val valueUpdate: Option[Long] = valueUpdateFn(id)
-      val expirationUpdate: Option[Long] = dao.updateExpiration(id, expired, username)
-      val updatedId = valueUpdate.orElse(expirationUpdate)
-      updatedId.getOrElse(throw new scala.NoSuchElementException)
+  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+    val valueUpdate = value match {
+      case Prohibitions(prohibitionValues) => dao.updateProhibitionValue(_: Long, Prohibitions(prohibitionValues), username)
+      case NumericValue(intValue) => dao.updateValue(_: Long, intValue, valuePropertyId, username)
     }
+
+    ids.map(valueUpdate).flatten
   }
 
-  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): PersistedLinearAsset = {
-    val id = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if(expired) "sysdate" else "null"
-    sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-        values ($id, $typeId, $username, sysdate, #$validTo)
-
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
-
-    value.foreach(dao.insertValue(id, valuePropertyId))
-
-    dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-  }
-
-  private def splitWithoutTransaction(id: Long, splitMeasure: Double, optionalValue: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
-    val linearAsset = dao.fetchLinearAssetsByIds(Set(id), valuePropertyId).head
-    val roadLink = roadLinkService.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    municipalityValidation(roadLink.municipalityCode)
-
-    Queries.updateAssetModified(id, username).execute
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
-
-    dao.updateMValues(id, existingLinkMeasures)
-    optionalValue.map { value =>
-      createWithoutTransaction(linearAsset.typeId, linearAsset.mmlId, Some(value), false, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long = {
+    val id = dao.createLinearAsset(typeId, mmlId, expired = false, sideCode, startMeasure, endMeasure, username)
+    val insertValueFor = value match {
+      case Prohibitions(prohibitionValues) => dao.insertProhibitionValue(_: Long, Prohibitions(prohibitionValues))
+      case NumericValue(intValue) => dao.insertValue(_: Long, valuePropertyId)(intValue)
     }
+    insertValueFor(id)
+    id
   }
 }
 

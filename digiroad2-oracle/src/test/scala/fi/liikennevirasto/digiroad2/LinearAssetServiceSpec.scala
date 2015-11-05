@@ -46,28 +46,50 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Expire numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), None, true, "lol")
+      ServiceWithDao.expire(Seq(11111l), "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(NumericValue(4000)))
       limit.expired should be (true)
     }
   }
 
   test("Update numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), Some(2000), false, "lol")
+      ServiceWithDao.update(Seq(11111l), NumericValue(2000), "lol")
       val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
       limit.value should be (Some(NumericValue(2000)))
       limit.expired should be (false)
     }
   }
 
+  test("Update prohibition") {
+    when(mockRoadLinkService.fetchVVHRoadlink(1621077551l)).thenReturn(Some(VVHRoadlink(1621077551l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
+      val limit = linearAssetDao.fetchProhibitionsByMmlIds(Seq(1621077551l)).head
+
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))))
+      limit.expired should be (false)
+    }
+  }
+
   test("Create new linear asset") {
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, Some(1000), 1)), 30, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1)), 30, "testuser")
       newAssets.length should be(1)
-      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head.id), "mittarajoitus").head
+      val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
+      asset.expired should be (false)
+    }
+  }
+
+  test("Create new prohibition") {
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1)), 190, "testuser")
+      newAssets.length should be(1)
+      val asset = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360l)).head
+      asset.value should be (Some(prohibition))
       asset.expired should be (false)
     }
   }
@@ -90,7 +112,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     when(mockLinearAssetDao.fetchProhibitionsByMmlIds(Seq(1l))).thenReturn(Nil)
     PassThroughService.getByMunicipality(190, 235)
-    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l))
+    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l), includeFloating = false)
 
     when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")).thenReturn(Nil)
     PassThroughService.getByMunicipality(100, 235)
@@ -99,11 +121,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate linear asset") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(asset.id, Some(2), Some(3), "unittest", (i) => Unit).filter(_ != asset.id).head
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -117,13 +139,37 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Separate prohibition asset") {
+    runWithRollback {
+      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 190, "test").head
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
+
+      ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+
+      val limits = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360))
+      val oldLimit = limits.find(_.id == assetId).get
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
+      oldLimit.value should be (Some(prohibitionA))
+      oldLimit.modifiedBy should be (Some("unittest"))
+
+      val createdLimit = limits.find(_.id != assetId).get
+      createdLimit.mmlId should be (388562360)
+      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
+      createdLimit.value should be (Some(prohibitionB))
+      createdLimit.createdBy should be (Some("unittest"))
+    }
+  }
+
   test("Separate with empty value towards digitization") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(asset.id, None, Some(3), "unittest", (i) => Unit).filter(_ != asset.id).head
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -140,11 +186,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate with empty value against digitization") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(asset.id, Some(2), None, "unittest", (i) => Unit).filter(_ != asset.id).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(asset.id)).head
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+
+      ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit).filter(_ != assetId) shouldBe empty
+
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -152,20 +199,71 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       oldLimit.expired should be (false)
       oldLimit.modifiedBy should be (Some("unittest"))
 
+    }
+  }
+
+  test("Split linear asset") {
+    runWithRollback {
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+
+      val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+
+      val createdId = ids.filter(_ != assetId).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
+
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (SideCode.BothDirections.value)
+      oldLimit.value should be (Some(NumericValue(2)))
+      oldLimit.modifiedBy should be (Some("unittest"))
+      oldLimit.startMeasure should be (2.0)
+      oldLimit.endMeasure should be (10.0)
+
       createdLimit.mmlId should be (388562360)
-      createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
-      createdLimit.expired should be (true)
+      createdLimit.sideCode should be (SideCode.BothDirections.value)
+      createdLimit.value should be (Some(NumericValue(3)))
       createdLimit.createdBy should be (Some("unittest"))
+      createdLimit.startMeasure should be (0.0)
+      createdLimit.endMeasure should be (2.0)
+    }
+  }
+
+  test("Split prohibition") {
+    runWithRollback {
+      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1)
+      val assetId = ServiceWithDao.create(Seq(newProhibition), 190, "test").head
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
+
+      ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
+
+      val prohibitions = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360))
+      val oldProhibition = prohibitions.find(_.id == assetId).get
+      oldProhibition.mmlId should be (388562360)
+      oldProhibition.sideCode should be (SideCode.BothDirections.value)
+      oldProhibition.value should be (Some(prohibitionA))
+      oldProhibition.modifiedBy should be (Some("unittest"))
+      oldProhibition.startMeasure should be (0.0)
+      oldProhibition.endMeasure should be (6.0)
+
+      val createdProhibition = prohibitions.find(_.id != assetId).get
+      createdProhibition.mmlId should be (388562360)
+      createdProhibition.sideCode should be (SideCode.BothDirections.value)
+      createdProhibition.value should be (Some(prohibitionB))
+      createdProhibition.createdBy should be (Some("unittest"))
+      createdProhibition.startMeasure should be (6.0)
+      createdProhibition.endMeasure should be (10.0)
     }
   }
 
   test("Separation should call municipalityValidation") {
     def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Some(1), 1)
-      val asset = ServiceWithDao.create(Seq(newLimit), 140, "test").head
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       intercept[IllegalArgumentException] {
-        ServiceWithDao.separate(asset.id, Some(1), Some(2), "unittest", failingMunicipalityValidation)
+        ServiceWithDao.separate(assetId, Some(NumericValue(1)), Some(NumericValue(2)), "unittest", failingMunicipalityValidation)
       }
     }
   }
