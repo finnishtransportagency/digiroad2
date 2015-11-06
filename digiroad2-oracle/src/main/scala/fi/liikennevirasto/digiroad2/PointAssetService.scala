@@ -31,4 +31,4 @@ class PointAssetService(roadLinkServiceImpl: RoadLinkService) extends PointAsset
   override def dao: OraclePointAssetDao = OraclePointAssetDao
 }
 
-case class PointAsset(id:Long, mmlId: Long)
+case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)

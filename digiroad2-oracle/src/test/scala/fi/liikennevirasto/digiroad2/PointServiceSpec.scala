@@ -29,6 +29,9 @@ class PointServiceSpec extends FunSuite with Matchers {
 
       result.id should equal(600029)
       result.mmlId should equal(388553074)
+      result.lon should equal(374467)
+      result.lat should equal(6677347)
+      result.mValue should equal(103)
     }
 
   }
