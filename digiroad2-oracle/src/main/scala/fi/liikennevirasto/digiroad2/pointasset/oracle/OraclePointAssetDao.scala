@@ -20,7 +20,6 @@ trait OraclePointAssetDao {
     }
     assets.map { a => PointAsset(a._1, a._2) }
   }
-
 }
 
 object OraclePointAssetDao extends OraclePointAssetDao

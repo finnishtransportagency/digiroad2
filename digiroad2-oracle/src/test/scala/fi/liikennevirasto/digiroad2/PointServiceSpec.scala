@@ -16,7 +16,7 @@ class PointServiceSpec extends FunSuite with Matchers {
       388553074, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None)))
 
-  object Service extends PointAssetService {
+  object Service extends PointAssetOperations {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OraclePointAssetDao = OraclePointAssetDao
     override def withDynTransaction[T](f: => T): T = f
