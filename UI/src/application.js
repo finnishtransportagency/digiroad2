@@ -494,7 +494,9 @@ var URLRouter = function(map, backend, models) {
     var layers = _.merge({
       road: roadLayer,
       pedestrianCrossing: new PointAssetLayer({
-        roadLayer: roadLayer
+        roadLayer: roadLayer,
+        collection: models.pedestrianCrossingCollection,
+        map: map
       }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
@@ -569,7 +571,8 @@ var URLRouter = function(map, backend, models) {
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection
+      manoeuvresCollection: manoeuvresCollection,
+      pedestrianCrossingCollection: PointAssetsCollection(backend)
     };
 
     bindEvents(enabledLinearAssetSpecs);

@@ -142,6 +142,12 @@
       });
     };
 
+    this.getPointAssets = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/pointassets?bbox=' + boundingBox
+      };  
+    });
+
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
