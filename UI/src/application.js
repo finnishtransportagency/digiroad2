@@ -493,6 +493,9 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
+      pedestrianCrossing: new PointAssetLayer({
+        roadLayer: roadLayer
+      }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
@@ -621,6 +624,13 @@ var URLRouter = function(map, backend, models) {
     var massTransitBox = new ActionPanelBoxes.AssetBox();
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
+    var pedestrianCrossingBox = {
+      title: 'Suojatie',
+      layerName: 'pedestrianCrossing',
+      element: undefined,
+      show: function() {},
+      hide: function() {}
+    };
 
     return [
       [roadLinkBox],
@@ -631,7 +641,7 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.massTransitLane)),
       [speedLimitBox]
         .concat(getLinearAsset(assetType.winterSpeedLimit)),
-      [massTransitBox],
+      [massTransitBox, pedestrianCrossingBox],
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))
         .concat(getLinearAsset(assetType.damagedByThaw)),
