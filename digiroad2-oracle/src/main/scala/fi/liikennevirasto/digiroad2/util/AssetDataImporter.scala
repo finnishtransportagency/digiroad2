@@ -777,9 +777,8 @@ class AssetDataImporter {
   }
 
   def importPedestrianCrossings(database: DatabaseDef): Unit = {
-    // do we need segment id? Is one of alkum/loppum enough?
     val query = sql"""
-         select s.segm_id, t.mml_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
+         select s.tielinkki_id, t.mml_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
            from segments s
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where s.tyyppi = 17
@@ -789,9 +788,54 @@ class AssetDataImporter {
       query.as[(Long, Long, Seq[Point], Double, Double)].list
     }
 
-    println(s"Read ${pedestrianCrossings.length} pedestrian crossings from conversion DB")
+    val groupSize = 3000
+    val groupedCrossings = pedestrianCrossings.grouped(groupSize).toList
+    val totalGroupCount = groupedCrossings.length
 
-    // TODO: import to OTH db
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+      println(s"*** Importing ${pedestrianCrossings.length} pedestrian crossings in $totalGroupCount groups of $groupSize each")
+
+      groupedCrossings.zipWithIndex.foreach { case (crossings, i) =>
+        val startTime = DateTime.now()
+
+        val assetGeometries = crossings.map { case (roadLinkId, mmlId, point, startMeasure, endMeasure) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 200)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, 1)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          (assetId, point.head)
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+
+        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
+
+        println(s"*** Imported ${crossings.length} pedestrian crossings in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+    }
   }
 
   def importManoeuvres(database: DatabaseDef): Unit = {
