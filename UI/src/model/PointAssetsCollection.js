@@ -5,8 +5,7 @@
     };
 
     function fetch(boundingBox) {
-      return backend.getPointAssets(boundingBox).then(function(assets) {
-      });
+      return backend.getPointAssets(boundingBox);
     }
   };
 })(this);
