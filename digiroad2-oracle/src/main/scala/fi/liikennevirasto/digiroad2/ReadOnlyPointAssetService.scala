@@ -6,7 +6,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-object PointAssetService {
+object ReadOnlyPointAssetService {
   def getServicePoints(): Seq[Map[String, Any]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
