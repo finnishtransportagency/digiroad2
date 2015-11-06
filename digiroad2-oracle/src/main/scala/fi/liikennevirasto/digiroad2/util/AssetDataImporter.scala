@@ -776,7 +776,7 @@ class AssetDataImporter {
     }
   }
 
-  def importPedestrianCrossings(database: DatabaseDef): Unit = {
+  def importPedestrianCrossings(database: DatabaseDef, vvhServiceHost: String): Unit = {
     val query = sql"""
          select s.tielinkki_id, t.mml_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
            from segments s
@@ -788,12 +788,13 @@ class AssetDataImporter {
       query.as[(Long, Long, Seq[Point], Double, Double)].list
     }
 
+    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(pedestrianCrossings.map(_._2).toSet)
     val groupSize = 3000
     val groupedCrossings = pedestrianCrossings.grouped(groupSize).toList
     val totalGroupCount = groupedCrossings.length
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
@@ -802,10 +803,12 @@ class AssetDataImporter {
       groupedCrossings.zipWithIndex.foreach { case (crossings, i) =>
         val startTime = DateTime.now()
 
-        val assetGeometries = crossings.map { case (roadLinkId, mmlId, point, startMeasure, endMeasure) =>
+        val assetGeometries = crossings.map { case (roadLinkId, mmlId, points, startMeasure, endMeasure) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 200)
+          val pointAsset = PointAsset(assetId, mmlId, points.head.x, points.head.y, startMeasure)
+          assetPS.setBoolean(3, PointAssetOperations.isFloating(pointAsset, roadLinks.find(_.mmlId == mmlId)))
           assetPS.addBatch()
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -821,7 +824,7 @@ class AssetDataImporter {
           assetLinkPS.setLong(2, lrmPositionId)
           assetLinkPS.addBatch()
 
-          (assetId, point.head)
+          (assetId, points.head)
         }
 
         assetPS.executeBatch()

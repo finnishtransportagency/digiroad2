@@ -32,3 +32,25 @@ class PointAssetService(roadLinkServiceImpl: RoadLinkService) extends PointAsset
 }
 
 case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)
+
+
+object PointAssetOperations {
+  def isFloating(pointAsset: PointAsset, roadLink: Option[VVHRoadlink]): Boolean = {
+    val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(_: Seq[Point], pointAsset.mValue)
+    val persistedPoint = Point(pointAsset.lon, pointAsset.lat)
+
+    roadLink match {
+      case Some(roadLink) => !coordinatesWithinThreshold(persistedPoint, calculatedPoint(roadLink.geometry))
+      case None           => true
+    }
+  }
+
+  private val FLOAT_THRESHOLD_IN_METERS = 3
+
+  private def coordinatesWithinThreshold(pt1: Point, pt2: Option[Point]): Boolean = {
+    (pt1, pt2) match {
+      case (point1, Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
+      case _ => false
+    }
+  }
+}

@@ -261,7 +261,7 @@ object DataFixture {
 
   def importPedestrianCrossings(): Unit = {
     println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
-    dataImporter.importPedestrianCrossings(Conversion.database())
+    dataImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Pedestrian crossings import complete at time: ${DateTime.now()}")
     println()
   }
