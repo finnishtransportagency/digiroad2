@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-trait PointAssetOperations[B <: RoadLinkAssociatedPointAsset] {
+trait PointAssetOperations[A <: FloatingStop, B <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
   def dao: OraclePointAssetDao
   lazy val dataSource = {
@@ -19,6 +19,7 @@ trait PointAssetOperations[B <: RoadLinkAssociatedPointAsset] {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[B]
+  def persistedAssetToAsset(persistedAsset: B, floating: Boolean): A
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PointAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
@@ -31,10 +32,8 @@ trait PointAssetOperations[B <: RoadLinkAssociatedPointAsset] {
     dao.getByMmldIds(mmlIds)
   }
 
-  protected def getByBoundingBox2[T <: FloatingStop](user: User,
-                                                     bounds: BoundingRectangle,
-                                                     persistedAssetToAsset: (B, Boolean) => T): Seq[T] = {
-    case class MassTransitStopBeforeUpdate(stop: T, persistedFloating: Boolean)
+  protected def getByBoundingBox2(user: User, bounds: BoundingRectangle): Seq[A] = {
+    case class MassTransitStopBeforeUpdate(stop: A, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
@@ -84,17 +83,20 @@ trait PointAssetOperations[B <: RoadLinkAssociatedPointAsset] {
   }
 }
 
-case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)
+case class PointAsset(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingStop
 case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        lon: Double, lat: Double,
                                        mValue: Double, floating: Boolean,
                                        municipalityCode: Int) extends RoadLinkAssociatedPointAsset
 
-class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PersistedPedestrianCrossing] {
+class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PointAsset, PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OraclePointAssetDao = OraclePointAssetDao
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = { Nil }
+  override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
+    PointAsset(0, 0, 0, 0, 0, false)
+  }
 }
 
 object PointAssetOperations {

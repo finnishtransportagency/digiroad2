@@ -28,7 +28,7 @@ trait OraclePointAssetDao {
       val mmlId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
-      PointAsset(id, mmlId, point.x, point.y, mValue)
+      PointAsset(id, mmlId, point.x, point.y, mValue, false)
     }
   }
 }

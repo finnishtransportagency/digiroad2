@@ -51,7 +51,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations[PersistedMassTransitStop] {
+trait MassTransitStopService extends PointAssetOperations[MassTransitStop, PersistedMassTransitStop] {
   override def typeId: Int = 10
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -148,6 +148,12 @@ trait MassTransitStopService extends PointAssetOperations[PersistedMassTransitSt
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
       """
     queryToPersistedMassTransitStops(queryFilter(query))
+  }
+
+  override def persistedAssetToAsset(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStop = {
+    MassTransitStop(persistedStop.id, persistedStop.nationalId,
+      persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
+      persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
@@ -267,7 +273,7 @@ trait MassTransitStopService extends PointAssetOperations[PersistedMassTransitSt
         persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
         persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
     }
-    getByBoundingBox2(user, bounds, persistedMassTransitStopToMassTransitStop)
+    getByBoundingBox2(user, bounds)
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
