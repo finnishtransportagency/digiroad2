@@ -275,7 +275,7 @@
       return '' +
         '<div class="form-group new-validity-period">' +
         '  <select class="form-control select">' +
-        '    <option class="empty" disabled selected>Lisää aikarajoitus</option>' +
+        '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
         validityPeriodOptions() +
         '  </select>' +
         '</div>';
@@ -288,7 +288,7 @@
       return '' +
         '<li><div class="form-group new-prohibition">' +
         '  <select class="form-control select">' +
-        '    <option class="empty" disabled selected>Lisää rajoitus</option>' +
+        '    <option class="empty" disabled selected>Lisää uusi rajoitus</option>' +
         optionTags +
         '  </select>' +
         '</div></li>';
