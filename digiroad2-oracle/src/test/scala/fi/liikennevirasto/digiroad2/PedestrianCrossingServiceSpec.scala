@@ -9,7 +9,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
 
-class PointServiceSpec extends FunSuite with Matchers {
+class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadLinkWithProperties(
