@@ -28,7 +28,6 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
 
 trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
-  def dao: OraclePointAssetDao
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
@@ -38,17 +37,6 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[B]
   def persistedAssetToAsset(persistedAsset: B, floating: Boolean): A
-
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PedestrianCrossing] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    withDynTransaction {
-      getByMmlIds(roadLinks.map(_.mmlId))
-    }
-  }
-
-  private def getByMmlIds(mmlIds: Seq[Long]): Seq[PedestrianCrossing] = {
-    dao.getByMmldIds(mmlIds)
-  }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[A] = {
     case class MassTransitStopBeforeUpdate(stop: A, persistedFloating: Boolean)
@@ -105,7 +93,6 @@ case class PedestrianCrossing(id: Long, mmlId: Long, lon: Double, lat: Double, m
 
 class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OraclePointAssetDao = OraclePointAssetDao
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = { Nil }
   override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
