@@ -428,7 +428,7 @@ class AssetDataImporter {
           select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli, s.aika
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-          where s.tyyppi = $conversionTypeId
+          where s.tyyppi = $conversionTypeId and s.kaista is null
        """.as[(Long, Long, Double, Double, Int, Int, Int, Option[String])].list
     }
 
@@ -437,7 +437,7 @@ class AssetDataImporter {
           select s.segm_id, t.mml_id, s.arvo, s.puoli
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-          where s.tyyppi = $exceptionTypeId
+          where s.tyyppi = $exceptionTypeId and s.kaista is null
        """.as[(Long, Long, Int, Int)].list
     }
 
