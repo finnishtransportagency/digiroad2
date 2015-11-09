@@ -148,7 +148,7 @@ trait CsvImporter {
   }
 
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
-    class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingStop {}
+    class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): CsvImportMassTransitStop = {
       val roadLink = roadLinkService.fetchVVHRoadlink(stop.mmlId)
       val floating = massTransitStopService.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })

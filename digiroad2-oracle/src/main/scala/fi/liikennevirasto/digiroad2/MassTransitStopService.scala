@@ -10,18 +10,18 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
-                           validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingStop
+                           validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
 
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                               validityDirection: Option[Int], bearing: Option[Int],
                               validityPeriod: Option[String], floating: Boolean,
-                              propertyData: Seq[Property]) extends FloatingStop
+                              propertyData: Seq[Property]) extends FloatingAsset
 
 case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
                               bearing: Option[Int], floating: Boolean,
                               created: Modification, modified: Modification,
                               mmlId: Option[Long], mValue: Option[Double],
-                              propertyData: Seq[Property]) extends FloatingStop with RoadLinkStop with TimeStamps
+                              propertyData: Seq[Property]) extends FloatingAsset with RoadLinkStop with TimeStamps
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -69,7 +69,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     }
   }
 
-  def getByNationalId[T <: FloatingStop](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {
+  def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
@@ -81,7 +81,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
-  private def withFloatingUpdate[T <: FloatingStop](toMassTransitStop: PersistedMassTransitStop => T)
+  private def withFloatingUpdate[T <: FloatingAsset](toMassTransitStop: PersistedMassTransitStop => T)
                                 (persistedStop: PersistedMassTransitStop): T = {
     val massTransitStop = toMassTransitStop(persistedStop)
     if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-trait FloatingStop {
+trait FloatingAsset {
   val id: Long
   val floating: Boolean
 }
@@ -26,7 +26,7 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val floating: Boolean
 }
 
-trait PointAssetOperations[A <: FloatingStop, B <: RoadLinkAssociatedPointAsset] {
+trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
   def dao: OraclePointAssetDao
   lazy val dataSource = {
@@ -101,7 +101,7 @@ trait PointAssetOperations[A <: FloatingStop, B <: RoadLinkAssociatedPointAsset]
   }
 }
 
-case class PointAsset(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingStop
+case class PointAsset(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingAsset
 case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        lon: Double, lat: Double,
                                        mValue: Double, floating: Boolean,
