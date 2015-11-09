@@ -151,7 +151,7 @@ trait CsvImporter {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): CsvImportMassTransitStop = {
       val roadLink = roadLinkService.fetchVVHRoadlink(stop.mmlId)
-      val floating = massTransitStopService.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })
+      val floating = PointAssetOperations.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })
       new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown))
     }
 

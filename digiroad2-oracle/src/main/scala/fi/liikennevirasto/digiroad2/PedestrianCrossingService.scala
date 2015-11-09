@@ -50,7 +50,7 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { persistedAsset =>
-        val floating = isFloating(persistedAsset, roadLinks.find(_.mmlId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
+        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.mmlId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
         AssetBeforeUpdate(persistedAssetToAsset(persistedAsset, floating), persistedAsset.floating)
       }
 
@@ -64,29 +64,11 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
-  def isFloating(persistedAsset: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
-    val point = Point(persistedAsset.lon, persistedAsset.lat)
-    roadLink match {
-      case None => true
-      case Some((municipalityCode, geometry)) => municipalityCode != persistedAsset.municipalityCode ||
-        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue))
-    }
-  }
-
   protected def withFilter(filter: String)(query: String): String = {
     query + " " + filter
   }
 
   protected def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
-
-  private val FLOAT_THRESHOLD_IN_METERS = 3
-
-  protected def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
-    (pt1, pt2) match {
-      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
-      case _ => false
-    }
-  }
 }
 
 case class PedestrianCrossing(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingAsset
@@ -102,21 +84,20 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
 }
 
 object PointAssetOperations {
-  def isFloating(pointAsset: PedestrianCrossing, roadLink: Option[VVHRoadlink]): Boolean = {
-    val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(_: Seq[Point], pointAsset.mValue)
-    val persistedPoint = Point(pointAsset.lon, pointAsset.lat)
-
+  def isFloating(persistedAsset: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+    val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {
-      case Some(roadLink) => !coordinatesWithinThreshold(persistedPoint, calculatedPoint(roadLink.geometry))
-      case None           => true
+      case None => true
+      case Some((municipalityCode, geometry)) => municipalityCode != persistedAsset.municipalityCode ||
+        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue))
     }
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
 
-  private def coordinatesWithinThreshold(pt1: Point, pt2: Option[Point]): Boolean = {
+  def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
     (pt1, pt2) match {
-      case (point1, Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
+      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
       case _ => false
     }
   }

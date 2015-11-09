@@ -90,7 +90,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
 
   private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                                           (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
-    val floating = isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
+    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
     MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
@@ -100,7 +100,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
   private def convertPersistedStop[T](conversion: (PersistedMassTransitStop, Boolean) => T,
                                       roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                      (persistedStop: PersistedMassTransitStop): T = {
-    val floating = isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
+    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
     conversion(persistedStop, floating)
   }
 
@@ -225,7 +225,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
-      val floating = !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
+      val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
