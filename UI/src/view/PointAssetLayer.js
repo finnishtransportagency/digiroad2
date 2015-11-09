@@ -18,9 +18,9 @@
         .css('overflow', 'visible !important')
         .css('background-image', 'url(./images/center-marker.svg)');
       box.events.register('click', box, function (e) {
-        selectedAsset.open(e.object.id);
+        selectedAsset.open(e.object.asset);
       });
-      box.id = asset.id;
+      box.asset = asset;
       return box;
     }
 

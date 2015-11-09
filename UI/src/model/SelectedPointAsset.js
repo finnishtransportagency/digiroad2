@@ -7,13 +7,13 @@
       getId: getId
     };
 
-    function open(id) {
-      current = id;
+    function open(asset) {
+      current = asset;
       eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function getId() {
-      return current;
+      return current.id;
     }
   };
 })(this);
