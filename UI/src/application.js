@@ -472,6 +472,7 @@ var URLRouter = function(map, backend, models) {
         linearAsset.newTitle,
         linearAsset.title);
     });
+    PointAssetForm.initialize();
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       acc[asset.layerName] = new LinearAssetLayer({
@@ -497,7 +498,8 @@ var URLRouter = function(map, backend, models) {
         roadLayer: roadLayer,
         roadCollection: models.roadCollection,
         collection: models.pedestrianCrossingCollection,
-        map: map
+        map: map,
+        selectedAsset: models.selectedPedestrianCrossing
       }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
@@ -561,9 +563,10 @@ var URLRouter = function(map, backend, models) {
         selectedLinearAsset: selectedLinearAsset
       });
     });
+    var pedestrianCrossingCollection = PointAssetsCollection(backend);
+    var selectedPedestrianCrossing = new SelectedPointAsset();
 
     var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
-
     var models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
@@ -573,7 +576,8 @@ var URLRouter = function(map, backend, models) {
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
       manoeuvresCollection: manoeuvresCollection,
-      pedestrianCrossingCollection: PointAssetsCollection(backend)
+      pedestrianCrossingCollection: pedestrianCrossingCollection,
+      selectedPedestrianCrossing: selectedPedestrianCrossing
     };
 
     bindEvents(enabledLinearAssetSpecs);
