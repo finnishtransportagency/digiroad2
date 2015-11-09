@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePointAssetDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
@@ -37,7 +38,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    val roadLinkService: RoadLinkService = mockRoadLinkService
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OraclePointAssetDao = OraclePointAssetDao
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)

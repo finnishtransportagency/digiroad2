@@ -121,6 +121,7 @@ object Digiroad2Context {
       override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def dao: OraclePointAssetDao = OraclePointAssetDao
     }
     new ProductionMassTransitStopService(eventbus)
   }

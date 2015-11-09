@@ -51,9 +51,8 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService {
+trait MassTransitStopService extends PointAssetOperations {
   def withDynSession[T](f: => T): T
-  def roadLinkService: RoadLinkService
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
 
@@ -107,15 +106,6 @@ trait MassTransitStopService {
     val massTransitStop = toMassTransitStop(persistedStop)
     if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
     massTransitStop
-  }
-
-  def isFloating(persistedStop: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
-    val point = Point(persistedStop.lon, persistedStop.lat)
-    roadLink match {
-      case None => true
-      case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
-        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedStop.mValue))
-    }
   }
 
   private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
@@ -185,10 +175,6 @@ trait MassTransitStopService {
 
   private def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
-  }
-
-  private def withFilter(filter: String)(query: String): String = {
-    query + " " + filter
   }
 
   private def withMunicipality(municipalityCode: Int)(query: String): String = {
@@ -272,36 +258,6 @@ trait MassTransitStopService {
     persistedStop
       .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})))
       .get
-  }
-
-  private def getByBoundingBox2[T <: FloatingStop, M <: RoadLinkAssociatedPointAsset](user: User,
-                                                                                      bounds: BoundingRectangle,
-                                                                                      typeId: Int,
-                                                                                      pointAssetFetcher: (String => String) => Seq[M],
-                                                                                      persistedAssetToAsset: (M, Boolean) => T): Seq[T] = {
-    case class MassTransitStopBeforeUpdate(stop: T, persistedFloating: Boolean)
-
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
-    withDynSession {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val persistedMassTransitStops: Seq[M] = pointAssetFetcher(withFilter(filter))
-
-      val stopsBeforeUpdate: Seq[MassTransitStopBeforeUpdate] = persistedMassTransitStops.filter { persistedStop =>
-        user.isAuthorizedToRead(persistedStop.municipalityCode)
-      }.map { persistedStop =>
-        val floating = isFloating(persistedStop, roadLinks.find(_.mmlId == persistedStop.mmlId).map(link => (link.municipalityCode, link.geometry)))
-        MassTransitStopBeforeUpdate(persistedAssetToAsset(persistedStop, floating), persistedStop.floating)
-      }
-
-      stopsBeforeUpdate.foreach { stop =>
-        if (stop.stop.floating != stop.persistedFloating) {
-          updateFloating(stop.stop.id, stop.stop.floating)
-        }
-      }
-
-      stopsBeforeUpdate.map(_.stop)
-    }
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
@@ -419,15 +375,6 @@ trait MassTransitStopService {
     }
   }
 
-  private val FLOAT_THRESHOLD_IN_METERS = 3
-
-  private def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
-    (pt1, pt2) match {
-      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
-      case _ => false
-    }
-  }
-
   private def updateLrmPosition(id: Long, mValue: Double, mmlId: Long) {
     sqlu"""
            update lrm_position
@@ -482,7 +429,5 @@ trait MassTransitStopService {
            where id = $id
       """.execute
   }
-
-  private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
 }
 
