@@ -26,6 +26,8 @@
 
     this.activateSelection = function() {
     };
+    this.deactivateSelection = function() {
+    };
 
     function show(map) {
       eventbus.once('roadLinks:fetched', function() {
@@ -35,7 +37,8 @@
       me.show(map);
     }
     function hide() {
-      //TODO: clear layer
+      map.removeLayer(assetLayer);
+      roadLayer.clear();
     }
     return {
       show: show,
