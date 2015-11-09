@@ -9,9 +9,9 @@
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var assetLayer = new OpenLayers.Layer.Boxes('pedestrianCrossing');
-    map.addLayer(assetLayer);
 
     this.refreshView = function() {
+      redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
         _.each(assets, function(asset) {
           var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
@@ -29,11 +29,16 @@
     this.deactivateSelection = function() {
     };
 
-    function show(map) {
-      eventbus.once('roadLinks:fetched', function() {
+    function redrawLinks(map) {
+      eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
       });
       roadCollection.fetchFromVVH(map.getExtent());
+    }
+
+    function show(map) {
+      redrawLinks(map);
+      map.addLayer(assetLayer);
       me.show(map);
     }
     function hide() {
