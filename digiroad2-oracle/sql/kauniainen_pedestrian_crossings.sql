@@ -11,7 +11,7 @@ UPDATE asset
   WHERE id = 600029;
 
 
-insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values (600030,200,'dr2_test_data');
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600030,200,'dr2_test_data',235);
 insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000004,69,69,388553080);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600030, 70000004);
 UPDATE asset
@@ -24,7 +24,7 @@ UPDATE asset
   WHERE id = 600030;
 
 
-insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values (600031,200,'dr2_test_data');
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600031,200,'dr2_test_data',235);
 insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000005,109,109,1140018963);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600031, 70000005);
 UPDATE asset
@@ -37,7 +37,7 @@ UPDATE asset
   WHERE id = 600031;
 
 
-insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values (600032,200,'dr2_test_data');
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600032,200,'dr2_test_data',235);
 insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000006,113,113,388554364);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600032, 70000006);
 UPDATE asset
