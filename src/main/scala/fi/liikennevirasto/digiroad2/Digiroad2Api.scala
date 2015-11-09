@@ -603,8 +603,10 @@ with GZipSupport {
   }
 
   get("/pointassets") {
+    val user = userProvider.getCurrentUser()
+
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    pedestrianCrossingService.getByBoundingBox(bbox)
+    pedestrianCrossingService.getByBoundingBox(user, bbox)
   }
 }
