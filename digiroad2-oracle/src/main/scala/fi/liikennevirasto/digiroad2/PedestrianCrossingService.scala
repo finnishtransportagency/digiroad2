@@ -39,37 +39,37 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   def persistedAssetToAsset(persistedAsset: B, floating: Boolean): A
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[A] = {
-    case class MassTransitStopBeforeUpdate(stop: A, persistedFloating: Boolean)
+    case class AssetBeforeUpdate(asset: A, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val persistedMassTransitStops: Seq[B] = fetchPointAssets(withFilter(filter))
+      val persistedAssets: Seq[B] = fetchPointAssets(withFilter(filter))
 
-      val stopsBeforeUpdate: Seq[MassTransitStopBeforeUpdate] = persistedMassTransitStops.filter { persistedStop =>
-        user.isAuthorizedToRead(persistedStop.municipalityCode)
-      }.map { persistedStop =>
-        val floating = isFloating(persistedStop, roadLinks.find(_.mmlId == persistedStop.mmlId).map(link => (link.municipalityCode, link.geometry)))
-        MassTransitStopBeforeUpdate(persistedAssetToAsset(persistedStop, floating), persistedStop.floating)
+      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
+        user.isAuthorizedToRead(persistedAsset.municipalityCode)
+      }.map { persistedAsset =>
+        val floating = isFloating(persistedAsset, roadLinks.find(_.mmlId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
+        AssetBeforeUpdate(persistedAssetToAsset(persistedAsset, floating), persistedAsset.floating)
       }
 
-      stopsBeforeUpdate.foreach { stop =>
-        if (stop.stop.floating != stop.persistedFloating) {
-          updateFloating(stop.stop.id, stop.stop.floating)
+      assetsBeforeUpdate.foreach { asset =>
+        if (asset.asset.floating != asset.persistedFloating) {
+          updateFloating(asset.asset.id, asset.asset.floating)
         }
       }
 
-      stopsBeforeUpdate.map(_.stop)
+      assetsBeforeUpdate.map(_.asset)
     }
   }
 
-  def isFloating(persistedStop: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
-    val point = Point(persistedStop.lon, persistedStop.lat)
+  def isFloating(persistedAsset: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+    val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {
       case None => true
-      case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
-        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedStop.mValue))
+      case Some((municipalityCode, geometry)) => municipalityCode != persistedAsset.municipalityCode ||
+        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue))
     }
   }
 
