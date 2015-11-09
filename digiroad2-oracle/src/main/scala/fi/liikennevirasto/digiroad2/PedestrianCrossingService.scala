@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePointAssetDao
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedPedestrianCrossing, OraclePointAssetDao}
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -102,10 +102,6 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
 }
 
 case class PedestrianCrossing(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingAsset
-case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
-                                       lon: Double, lat: Double,
-                                       mValue: Double, floating: Boolean,
-                                       municipalityCode: Int) extends RoadLinkAssociatedPointAsset
 
 class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl

@@ -1,12 +1,17 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{Point, PedestrianCrossing}
+import fi.liikennevirasto.digiroad2.{RoadLinkAssociatedPointAsset, Point, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import slick.jdbc.{PositionedResult, GetResult}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+
+case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
+                                       lon: Double, lat: Double,
+                                       mValue: Double, floating: Boolean,
+                                       municipalityCode: Int) extends RoadLinkAssociatedPointAsset
 
 trait OraclePointAssetDao {
   def getByMmldIds(mmlIds: Seq[Long]): Seq[PedestrianCrossing] = {
