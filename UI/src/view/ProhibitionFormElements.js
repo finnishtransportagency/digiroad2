@@ -124,7 +124,7 @@
           }).join('');
           return '' +
             '<div class="validity-period-group">' +
-            '<label>Rajoitus pätee aikana:</label>' +
+            '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
             '<ul>' + validityPeriodItems + '</ul>' +
             '</div>';
         }
@@ -183,9 +183,11 @@
 
         return '' +
           '<div class="validity-period-group">' +
-          '<label>Rajoitus pätee aikana:</label>' +
+          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+          '<ul>' +
           existingValidityPeriodElements +
           newValidityPeriodElement() +
+          '</ul>' +
           '</div>';
       }
 
