@@ -16,6 +16,18 @@ trait FloatingStop {
   val floating: Boolean
 }
 
+trait PersistedPointAsset {
+  val id: Long
+  val lon: Double
+  val lat: Double
+  val municipalityCode: Int
+}
+
+trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
+  val mmlId: Long
+  val mValue: Double
+}
+
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
@@ -36,7 +48,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property])
+                                    propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
@@ -96,7 +108,7 @@ trait MassTransitStopService {
     massTransitStop
   }
 
-  def isFloating(persistedStop: PersistedMassTransitStop, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+  def isFloating(persistedStop: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedStop.lon, persistedStop.lat)
     roadLink match {
       case None => true
