@@ -100,10 +100,6 @@ object SpeedLimitFiller {
     }
   }
 
-  private def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimit]]): Set[Long] = {
-    speedLimits.filter { case (id, segments) => segments.exists(_.geometry.isEmpty) }.keySet
-  }
-
   private def dropShortLimits(roadLinks: VVHRoadLinkWithProperties, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MaxAllowedMValueError }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
@@ -136,7 +132,8 @@ object SpeedLimitFiller {
       dropShortLimits
     )
 
-    val initialChangeSet = ChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil)
+    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil)
+
     roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
       val segments = speedLimits.getOrElse(roadLink.mmlId, Nil)
