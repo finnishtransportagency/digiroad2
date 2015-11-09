@@ -13,7 +13,7 @@ case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        mValue: Double, floating: Boolean,
                                        municipalityCode: Int) extends RoadLinkAssociatedPointAsset
 
-trait OraclePointAssetDao {
+trait OraclePedestrianCrossingDao {
   def getByMmldIds(mmlIds: Seq[Long]): Seq[PedestrianCrossing] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
@@ -38,4 +38,4 @@ trait OraclePointAssetDao {
   }
 }
 
-object OraclePointAssetDao extends OraclePointAssetDao
+object OraclePedestrianCrossingDao extends OraclePedestrianCrossingDao

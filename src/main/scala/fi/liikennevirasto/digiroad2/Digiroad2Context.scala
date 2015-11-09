@@ -6,13 +6,11 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, SpeedLimitProvider}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePointAssetDao
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import slick.driver.JdbcDriver.backend.Database
 
 class ValluActor extends Actor {
   def receive = {
@@ -121,7 +119,6 @@ object Digiroad2Context {
       override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override def dao: OraclePointAssetDao = OraclePointAssetDao
     }
     new ProductionMassTransitStopService(eventbus)
   }

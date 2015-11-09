@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedPedestrianCrossing, OraclePointAssetDao}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.PersistedPedestrianCrossing
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation

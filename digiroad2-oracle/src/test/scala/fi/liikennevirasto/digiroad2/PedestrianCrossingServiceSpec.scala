@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Motorway, TrafficDirection, Municipality, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Motorway, Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePointAssetDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   val testUser = User(
