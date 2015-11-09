@@ -13,9 +13,11 @@
     this.refreshView = function() {
       collection.fetch(map.getExtent()).then(function(assets) {
         _.each(assets, function(asset) {
-          var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 10, asset.lat + 10]);
+          var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
           var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
-          $(box.div).css('overflow', 'visible !important').css('background', 'red');
+          $(box.div)
+            .css('overflow', 'visible !important')
+            .css('background-image', 'url(./images/center-marker.svg)');
           assetLayer.addMarker(box);
         });
       });
