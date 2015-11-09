@@ -15,20 +15,20 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadLinkWithProperties(
-      388553074, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-      1, TrafficDirection.BothDirections, Motorway, None, None)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
   val service = new PedestrianCrossingService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
     runWithRollback {
-      val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
+      val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600029)
       result.mmlId should equal(388553074)
       result.lon should equal(374467)

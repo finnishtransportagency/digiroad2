@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.PersistedPedestrianCrossing
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -94,9 +94,10 @@ case class PedestrianCrossing(id: Long, mmlId: Long, lon: Double, lat: Double, m
 class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def typeId: Int = 200
-  override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = { Nil }
+  override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
   override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
-    PedestrianCrossing(0, 0, 0, 0, 0, false)
+    PedestrianCrossing(persistedAsset.id, persistedAsset.mmlId,
+      persistedAsset.lon, persistedAsset.lat, persistedAsset.mValue, floating)
   }
 }
 
