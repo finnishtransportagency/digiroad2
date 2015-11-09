@@ -472,7 +472,7 @@ var URLRouter = function(map, backend, models) {
         linearAsset.newTitle,
         linearAsset.title);
     });
-    PointAssetForm.initialize();
+    PointAssetForm.initialize(models.selectedPedestrianCrossing);
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       acc[asset.layerName] = new LinearAssetLayer({
