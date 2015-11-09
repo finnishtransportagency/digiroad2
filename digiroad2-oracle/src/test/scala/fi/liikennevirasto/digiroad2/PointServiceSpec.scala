@@ -20,6 +20,7 @@ class PointServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OraclePointAssetDao = OraclePointAssetDao
     override def withDynTransaction[T](f: => T): T = f
+    override def typeId: Int = 200
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(Service.dataSource)(test)
 

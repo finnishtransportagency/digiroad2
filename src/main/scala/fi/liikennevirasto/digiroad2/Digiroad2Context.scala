@@ -130,8 +130,8 @@ object Digiroad2Context {
     new LinearAssetService(roadLinkService, eventbus)
   }
 
-  lazy val pointAssetService: PointAssetOperations = {
-    new PointAssetService(roadLinkService)
+  lazy val pedestrianCrossingService: PointAssetOperations = {
+    new PedestrianCrossingService(roadLinkService)
   }
 
 

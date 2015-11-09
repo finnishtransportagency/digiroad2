@@ -605,6 +605,6 @@ with GZipSupport {
   get("/pointassets") {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    pointAssetService.getByBoundingBox(bbox)
+    pedestrianCrossingService.getByBoundingBox(bbox)
   }
 }

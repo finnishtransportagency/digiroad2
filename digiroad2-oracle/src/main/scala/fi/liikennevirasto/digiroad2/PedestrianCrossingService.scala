@@ -17,6 +17,7 @@ trait PointAssetOperations {
   }
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def typeId: Int
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PointAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
@@ -31,7 +32,6 @@ trait PointAssetOperations {
 
   protected def getByBoundingBox2[T <: FloatingStop, M <: RoadLinkAssociatedPointAsset](user: User,
                                                                                       bounds: BoundingRectangle,
-                                                                                      typeId: Int,
                                                                                       pointAssetFetcher: (String => String) => Seq[M],
                                                                                       persistedAssetToAsset: (M, Boolean) => T): Seq[T] = {
     case class MassTransitStopBeforeUpdate(stop: T, persistedFloating: Boolean)
@@ -84,9 +84,10 @@ trait PointAssetOperations {
   }
 }
 
-class PointAssetService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations {
+class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OraclePointAssetDao = OraclePointAssetDao
+  override def typeId: Int = 200
 }
 
 case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)
