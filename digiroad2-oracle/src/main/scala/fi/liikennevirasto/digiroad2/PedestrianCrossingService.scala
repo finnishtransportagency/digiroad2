@@ -32,7 +32,7 @@ trait PointAssetOperations[A <: FloatingStop, B <: RoadLinkAssociatedPointAsset]
     dao.getByMmldIds(mmlIds)
   }
 
-  protected def getByBoundingBox2(user: User, bounds: BoundingRectangle): Seq[A] = {
+  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[A] = {
     case class MassTransitStopBeforeUpdate(stop: A, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)

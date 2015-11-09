@@ -267,15 +267,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
       .get
   }
 
-  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
-    def persistedMassTransitStopToMassTransitStop(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStop = {
-      MassTransitStop(persistedStop.id, persistedStop.nationalId,
-        persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
-        persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
-    }
-    getByBoundingBox2(user, bounds)
-  }
-
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
     def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
       MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
