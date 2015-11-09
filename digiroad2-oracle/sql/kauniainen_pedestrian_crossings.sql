@@ -1,4 +1,4 @@
-insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values (600029,200,'dr2_test_data');
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600029,200,'dr2_test_data',235);
 insert into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000003, 388553074, 103, 103, 1);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600029, 70000003);
 UPDATE asset

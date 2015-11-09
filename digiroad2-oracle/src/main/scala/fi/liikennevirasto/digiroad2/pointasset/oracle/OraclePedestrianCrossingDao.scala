@@ -15,7 +15,7 @@ object OraclePedestrianCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = {
     val query =
       """
-        select a.id, pos.mml_id, a.geometry, pos.start_measure
+        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -30,7 +30,9 @@ object OraclePedestrianCrossingDao {
       val mmlId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
-      PersistedPedestrianCrossing(id, mmlId, point.x, point.y, mValue, false, 235)
+      val floating = r.nextBoolean()
+      val municipalityCode = r.nextInt()
+      PersistedPedestrianCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode)
     }
   }
 }
