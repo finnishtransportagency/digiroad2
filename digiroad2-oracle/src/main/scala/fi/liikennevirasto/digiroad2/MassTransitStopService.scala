@@ -2,32 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao, Sequences}
 import org.joda.time.{DateTime, Interval, LocalDate}
-
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
-trait FloatingStop {
-  val id: Long
-  val floating: Boolean
-}
-
-trait PersistedPointAsset {
-  val id: Long
-  val lon: Double
-  val lat: Double
-  val municipalityCode: Int
-}
-
-trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
-  val mmlId: Long
-  val mValue: Double
-  val floating: Boolean
-}
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,

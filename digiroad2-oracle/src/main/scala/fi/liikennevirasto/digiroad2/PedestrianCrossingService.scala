@@ -8,6 +8,24 @@ import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+trait FloatingStop {
+  val id: Long
+  val floating: Boolean
+}
+
+trait PersistedPointAsset {
+  val id: Long
+  val lon: Double
+  val lat: Double
+  val municipalityCode: Int
+}
+
+trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
+  val mmlId: Long
+  val mValue: Double
+  val floating: Boolean
+}
+
 trait PointAssetOperations[A <: FloatingStop, B <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
   def dao: OraclePointAssetDao
