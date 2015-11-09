@@ -160,12 +160,12 @@
         function existingExceptionElements() {
           var items = _(prohibition.exceptions).map(function(exception) {
             return '' +
-              '<div class="form-group existing-exception">' +
+              '<li><div class="form-group existing-exception">' +
               deleteButton() +
               '  <select class="form-control select">' +
               exceptionOptions(exception) +
               '  </select>' +
-              '</div>';
+              '</div></li>';
           });
           return items.join('');
         }
@@ -173,8 +173,10 @@
         return '' +
           '<div class="exception-group">' +
           exceptionLabel(prohibition) +
+          '<ul>' +
           existingExceptionElements() +
           newExceptionElement(prohibition.typeId) +
+          '</ul>' +
           '</div>';
       }
 
@@ -225,13 +227,13 @@
 
     function validityPeriodElement(period) {
       return '' +
-        '<div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+        '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
         deleteButton() +
         validityPeriodLabel(period) +
         hourElement(period.startHour, 'start') +
         '<label class="hour-separator"> - </label>' +
         hourElement(period.endHour, 'end') +
-        '</div>';
+        '</div></li>';
     }
 
     function exceptionOptions(exception) {
@@ -255,12 +257,12 @@
     function newExceptionElement(prohibitionType) {
       var style = supportsExceptions(prohibitionType) ? '' : ' style="display: none;"';
       return '' +
-        '<div class="form-group new-exception"' + style + '>' +
+        '<li><div class="form-group new-exception"' + style + '>' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää poikkeus</option>' +
         exceptionOptions() +
         '  </select>' +
-        '</div>';
+        '</div></li>';
     }
 
     function supportsExceptions(prohibitionType) {
@@ -273,12 +275,12 @@
 
     function newValidityPeriodElement() {
       return '' +
-        '<div class="form-group new-validity-period">' +
+        '<li><div class="form-group new-validity-period">' +
         '  <select class="form-control select">' +
         '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
         validityPeriodOptions() +
         '  </select>' +
-        '</div>';
+        '</div></li>';
     }
 
     function newProhibitionElement() {
@@ -327,13 +329,13 @@
         var prohibitionType = parseInt(prohibitionTypeElement.val(), 10);
         $(evt.target).parent().removeClass('new-exception').addClass('existing-exception');
         $(evt.target).before(deleteButton());
-        $(evt.target).closest('.exception-group').append(newExceptionElement(prohibitionType));
+        $(evt.target).closest('.exception-group ul').append(newExceptionElement(prohibitionType));
         setValue(extractValue(rootElement, className));
       });
 
       $(rootElement).on('change', className + ' .new-validity-period select', function(evt) {
-        $(evt.target).closest('.validity-period-group').append(newValidityPeriodElement());
-        $(evt.target).parent().replaceWith(validityPeriodElement({
+        $(evt.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
+        $(evt.target).parent().parent().replaceWith(validityPeriodElement({
           days: $(evt.target).val(),
           startHour: 0,
           endHour: 24
@@ -353,7 +355,7 @@
 
       $(rootElement).on('click', className + ' button.delete', function(evt) {
         var existingProhibitionElement = $(evt.target).closest('.existing-prohibition');
-        $(evt.target).parent().remove();
+        $(evt.target).parent().parent().remove();
         toggleExceptionElements(existingProhibitionElement);
         var value = extractValue(rootElement, className);
         if (_.isEmpty(value)) {
