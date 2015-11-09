@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-trait PointAssetOperations {
+trait PointAssetOperations[B <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
   def dao: OraclePointAssetDao
   lazy val dataSource = {
@@ -18,6 +18,7 @@ trait PointAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def typeId: Int
+  def fetchPointAssets: (String => String) => Seq[B]
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PointAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
@@ -30,17 +31,16 @@ trait PointAssetOperations {
     dao.getByMmldIds(mmlIds)
   }
 
-  protected def getByBoundingBox2[T <: FloatingStop, M <: RoadLinkAssociatedPointAsset](user: User,
-                                                                                      bounds: BoundingRectangle,
-                                                                                      pointAssetFetcher: (String => String) => Seq[M],
-                                                                                      persistedAssetToAsset: (M, Boolean) => T): Seq[T] = {
+  protected def getByBoundingBox2[T <: FloatingStop](user: User,
+                                                     bounds: BoundingRectangle,
+                                                     persistedAssetToAsset: (B, Boolean) => T): Seq[T] = {
     case class MassTransitStopBeforeUpdate(stop: T, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val persistedMassTransitStops: Seq[M] = pointAssetFetcher(withFilter(filter))
+      val persistedMassTransitStops: Seq[B] = fetchPointAssets(withFilter(filter))
 
       val stopsBeforeUpdate: Seq[MassTransitStopBeforeUpdate] = persistedMassTransitStops.filter { persistedStop =>
         user.isAuthorizedToRead(persistedStop.municipalityCode)
@@ -84,14 +84,18 @@ trait PointAssetOperations {
   }
 }
 
-class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations {
+case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)
+case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
+                                       lon: Double, lat: Double,
+                                       mValue: Double, floating: Boolean,
+                                       municipalityCode: Int) extends RoadLinkAssociatedPointAsset
+
+class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OraclePointAssetDao = OraclePointAssetDao
   override def typeId: Int = 200
+  override def fetchPointAssets: (String => String) => Seq[PersistedPedestrianCrossing] = { f => Nil }
 }
-
-case class PointAsset(id:Long, mmlId: Long, lon: Double, lat: Double, mValue: Double)
-
 
 object PointAssetOperations {
   def isFloating(pointAsset: PointAsset, roadLink: Option[VVHRoadlink]): Boolean = {

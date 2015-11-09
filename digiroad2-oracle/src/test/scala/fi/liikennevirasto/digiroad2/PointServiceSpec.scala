@@ -16,17 +16,15 @@ class PointServiceSpec extends FunSuite with Matchers {
       388553074, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None)))
 
-  object Service extends PointAssetOperations {
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OraclePointAssetDao = OraclePointAssetDao
+  val service = new PedestrianCrossingService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
-    override def typeId: Int = 200
   }
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(Service.dataSource)(test)
+
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
     runWithRollback {
-      val result = Service.getByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
+      val result = service.getByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
 
       result.id should equal(600029)
       result.mmlId should equal(388553074)

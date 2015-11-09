@@ -51,8 +51,9 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations {
+trait MassTransitStopService extends PointAssetOperations[PersistedMassTransitStop] {
   override def typeId: Int = 10
+  override def fetchPointAssets: (String => String) => Seq[PersistedMassTransitStop] = getPersistedMassTransitStops
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
@@ -267,7 +268,7 @@ trait MassTransitStopService extends PointAssetOperations {
         persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
         persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
     }
-    getByBoundingBox2(user, bounds, getPersistedMassTransitStops, persistedMassTransitStopToMassTransitStop)
+    getByBoundingBox2(user, bounds, persistedMassTransitStopToMassTransitStop)
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
