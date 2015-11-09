@@ -32,6 +32,5 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       result.lat should equal(6677347)
       result.mValue should equal(103)
     }
-
   }
 }
