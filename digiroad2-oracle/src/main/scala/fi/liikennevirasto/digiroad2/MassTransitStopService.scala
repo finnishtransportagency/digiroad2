@@ -26,11 +26,12 @@ trait PersistedPointAsset {
 trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val mmlId: Long
   val mValue: Double
+  val floating: Boolean
 }
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
-                           validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
+                           validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingStop
 
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                               validityDirection: Option[Int], bearing: Option[Int],
@@ -273,22 +274,24 @@ trait MassTransitStopService {
       .get
   }
 
-  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
-    case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
+  private def getByBoundingBox2[T <: FloatingStop, M <: RoadLinkAssociatedPointAsset](user: User,
+                                                                                      bounds: BoundingRectangle,
+                                                                                      typeId: Int,
+                                                                                      pointAssetFetcher: (String => String) => Seq[M],
+                                                                                      persistedAssetToAsset: (M, Boolean) => T): Seq[T] = {
+    case class MassTransitStopBeforeUpdate(stop: T, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"where a.asset_type_id = 10 and $boundingBoxFilter"
-      val persistedMassTransitStops: Seq[PersistedMassTransitStop] = getPersistedMassTransitStops(withFilter(filter))
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      val persistedMassTransitStops: Seq[M] = pointAssetFetcher(withFilter(filter))
 
-      val stopsBeforeUpdate = persistedMassTransitStops.filter { persistedStop =>
+      val stopsBeforeUpdate: Seq[MassTransitStopBeforeUpdate] = persistedMassTransitStops.filter { persistedStop =>
         user.isAuthorizedToRead(persistedStop.municipalityCode)
       }.map { persistedStop =>
         val floating = isFloating(persistedStop, roadLinks.find(_.mmlId == persistedStop.mmlId).map(link => (link.municipalityCode, link.geometry)))
-        MassTransitStopBeforeUpdate(MassTransitStop(persistedStop.id, persistedStop.nationalId,
-          persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
-          persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes), persistedStop.floating)
+        MassTransitStopBeforeUpdate(persistedAssetToAsset(persistedStop, floating), persistedStop.floating)
       }
 
       stopsBeforeUpdate.foreach { stop =>
@@ -299,6 +302,15 @@ trait MassTransitStopService {
 
       stopsBeforeUpdate.map(_.stop)
     }
+  }
+
+  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
+    def persistedMassTransitStopToMassTransitStop(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStop = {
+      MassTransitStop(persistedStop.id, persistedStop.nationalId,
+        persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
+        persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
+    }
+    getByBoundingBox2(user, bounds, 10, getPersistedMassTransitStops, persistedMassTransitStopToMassTransitStop)
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
