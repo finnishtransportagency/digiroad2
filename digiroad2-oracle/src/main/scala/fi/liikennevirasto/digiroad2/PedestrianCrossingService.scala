@@ -39,14 +39,14 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   def fetchPointAssets(queryFilter: String => String): Seq[B]
   def persistedAssetToAsset(persistedAsset: B, floating: Boolean): A
 
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PointAsset] = {
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PedestrianCrossing] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       getByMmlIds(roadLinks.map(_.mmlId))
     }
   }
 
-  private def getByMmlIds(mmlIds: Seq[Long]): Seq[PointAsset] = {
+  private def getByMmlIds(mmlIds: Seq[Long]): Seq[PedestrianCrossing] = {
     dao.getByMmldIds(mmlIds)
   }
 
@@ -101,24 +101,24 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   }
 }
 
-case class PointAsset(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingAsset
+case class PedestrianCrossing(id: Long, mmlId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean) extends FloatingAsset
 case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        lon: Double, lat: Double,
                                        mValue: Double, floating: Boolean,
                                        municipalityCode: Int) extends RoadLinkAssociatedPointAsset
 
-class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PointAsset, PersistedPedestrianCrossing] {
+class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OraclePointAssetDao = OraclePointAssetDao
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = { Nil }
   override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
-    PointAsset(0, 0, 0, 0, 0, false)
+    PedestrianCrossing(0, 0, 0, 0, 0, false)
   }
 }
 
 object PointAssetOperations {
-  def isFloating(pointAsset: PointAsset, roadLink: Option[VVHRoadlink]): Boolean = {
+  def isFloating(pointAsset: PedestrianCrossing, roadLink: Option[VVHRoadlink]): Boolean = {
     val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(_: Seq[Point], pointAsset.mValue)
     val persistedPoint = Point(pointAsset.lon, pointAsset.lat)
 

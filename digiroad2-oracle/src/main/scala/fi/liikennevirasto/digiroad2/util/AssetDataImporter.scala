@@ -807,7 +807,7 @@ class AssetDataImporter {
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 200)
-          val pointAsset = PointAsset(assetId, mmlId, points.head.x, points.head.y, startMeasure, false)
+          val pointAsset = PedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false)
           assetPS.setBoolean(3, PointAssetOperations.isFloating(pointAsset, roadLinks.find(_.mmlId == mmlId)))
           assetPS.addBatch()
 
