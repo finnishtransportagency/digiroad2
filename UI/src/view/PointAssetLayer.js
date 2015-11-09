@@ -2,7 +2,8 @@
   root.PointAssetLayer = function(params) {
     var roadLayer = params.roadLayer,
       collection = params.collection,
-      map = params.map;
+      map = params.map,
+      roadCollection = params.roadCollection;
 
     Layer.call(this, 'pedestrianCrossing', roadLayer);
     var me = this;
@@ -24,6 +25,21 @@
     };
 
     this.activateSelection = function() {
+    };
+
+    function show(map) {
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+      });
+      roadCollection.fetchFromVVH(map.getExtent());
+      me.show(map);
+    }
+    function hide() {
+      //TODO: clear layer
+    }
+    return {
+      show: show,
+      hide: hide
     };
   };
 })(this);

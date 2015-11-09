@@ -495,6 +495,7 @@ var URLRouter = function(map, backend, models) {
       road: roadLayer,
       pedestrianCrossing: new PointAssetLayer({
         roadLayer: roadLayer,
+        roadCollection: models.roadCollection,
         collection: models.pedestrianCrossingCollection,
         map: map
       }),
