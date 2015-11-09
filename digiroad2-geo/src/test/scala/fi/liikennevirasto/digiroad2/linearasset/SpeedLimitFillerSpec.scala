@@ -10,7 +10,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   private def roadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     VVHRoadLinkWithProperties(
-      1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
+      mmlId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
   }
 
@@ -21,8 +21,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("drop segment outside of link geometry") {
     val topology = Seq(
       roadLink(2, Seq(Point(1.0, 0.0), Point(2.0, 0.0))))
-    val speedLimits = Map(1l -> Seq(
-      SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, None, Nil, 0.0, 0.2, None, None, None, None)))
+    val speedLimits = Map(2l -> Seq(
+      SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 2.15, 2.35, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     changeSet.droppedAssetIds should be(Set(1))
   }

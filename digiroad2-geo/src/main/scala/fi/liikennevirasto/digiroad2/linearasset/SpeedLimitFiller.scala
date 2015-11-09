@@ -7,16 +7,16 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.5
 
-  private def adjustSegment(link: SpeedLimit, roadLink: VVHRoadLinkWithProperties): (SpeedLimit, Seq[MValueAdjustment]) = {
-    val startError = link.startMeasure
+  private def adjustSegment(segment: SpeedLimit, roadLink: VVHRoadLinkWithProperties): (SpeedLimit, Seq[MValueAdjustment]) = {
+    val startError = segment.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val endError = roadLinkLength - link.endMeasure
+    val endError = roadLinkLength - segment.endMeasure
     val mAdjustment =
       if (startError > MaxAllowedMValueError || endError > MaxAllowedMValueError)
-        Seq(MValueAdjustment(link.id, link.mmlId, 0, roadLinkLength))
+        Seq(MValueAdjustment(segment.id, segment.mmlId, 0, roadLinkLength))
       else
         Nil
-    val modifiedSegment = link.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
+    val modifiedSegment = segment.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
     (modifiedSegment, mAdjustment)
   }
 
@@ -119,8 +119,15 @@ object SpeedLimitFiller {
     }
   }
 
+  private def dropSegmentsOutsideGeometry(roadLink: VVHRoadLinkWithProperties, assets: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
+    val droppedAssetIds = segmentsOutsideGeometry.map(_.id).toSet
+    (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+  }
+
   def fillTopology(roadLinks: Seq[VVHRoadLinkWithProperties], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
     val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      dropSegmentsOutsideGeometry,
       dropRedundantSegments,
       adjustSegmentMValues,
       capToGeometry,
