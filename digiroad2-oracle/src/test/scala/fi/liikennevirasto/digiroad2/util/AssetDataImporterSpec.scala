@@ -295,6 +295,20 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     result should be(Set(conversionResult1, conversionResult2))
   }
 
+  test("Filter out exceptions with exception codes not supported") {
+    val segment1 = prohibitionSegment()
+    val prohibitionSegments = Seq(segment1)
+    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val exceptions = Seq((1l, 1l, 20, 1))
+
+    val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
+
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
+    result should be(Set(conversionResult1, conversionResult2))
+  }
+
   test("Exception affects prohibition with same side code") {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)

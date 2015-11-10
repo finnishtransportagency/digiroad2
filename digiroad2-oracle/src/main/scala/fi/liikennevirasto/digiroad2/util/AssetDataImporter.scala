@@ -554,12 +554,17 @@ class AssetDataImporter {
     }
   }
 
+  def hasIncorrectCode(exception: (Long, Long, Int, Int)): Boolean = {
+    val value = exception._3
+    !List(21, 22, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(value)
+  }
+
   def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => Set(21, 22).contains(s._6) }
     val segmentsByMmlId = validSegments.groupBy(_._2)
     val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
-    val (exceptionAllowingAll, validExceptions) = exceptionsWithProhibition.partition { x => x._3 == 1 }
+    val (exceptionWithInvalidCode, validExceptions) = exceptionsWithProhibition.partition { x => hasIncorrectCode(x) }
 
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
@@ -579,7 +584,7 @@ class AssetDataImporter {
       segmentsWithoutRoadLink.map { s => Left(s"No VVH road link found for mml id ${s._2}. ${s._1} dropped.") } ++
       segmentsOfInvalidType.map { s => Left(s"Invalid type for prohibition. ${s._1} dropped.") } ++
       exceptionsWithoutProhibition.map { ex => Left(s"No prohibition found on mml id ${ex._2}. Dropped exception ${ex._1}.")} ++
-      exceptionAllowingAll.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
+      exceptionWithInvalidCode.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
   }
 
   def importLinearAssetsFromConversion(conversionDatabase: DatabaseDef, conversionTypeId: Int, typeId: Int) = {
