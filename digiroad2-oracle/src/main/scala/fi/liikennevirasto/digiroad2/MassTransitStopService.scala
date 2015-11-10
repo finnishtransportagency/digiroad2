@@ -90,13 +90,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
       propertyData = persistedStop.propertyData)
   }
 
-  private def convertPersistedStop[T](conversion: (PersistedMassTransitStop, Boolean) => T,
-                                      roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
-                                     (persistedStop: PersistedMassTransitStop): T = {
-    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
-    conversion(persistedStop, floating)
-  }
-
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedMassTransitStop] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
@@ -235,22 +228,23 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
       .get
   }
 
+  def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
+    MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
+      lon = persistedStop.lon, lat = persistedStop.lat,
+      bearing = persistedStop.bearing, floating = floating,
+      created = persistedStop.created, modified = persistedStop.modified,
+      mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
+      propertyData = persistedStop.propertyData)
+  }
+
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
-    def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
-      MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
-        lon = persistedStop.lon, lat = persistedStop.lat,
-        bearing = persistedStop.bearing, floating = floating,
-        created = persistedStop.created, modified = persistedStop.modified,
-        mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
-        propertyData = persistedStop.propertyData)
-    }
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedStop(toMassTransitStopWithTimeStamps, findRoadlink)))
+        .map(withFloatingUpdate(convertPersistedAsset(toMassTransitStopWithTimeStamps, findRoadlink)))
         .toList
     }
   }

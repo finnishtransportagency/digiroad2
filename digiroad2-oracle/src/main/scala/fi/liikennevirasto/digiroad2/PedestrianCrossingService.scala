@@ -65,6 +65,13 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
+  protected def convertPersistedAsset[T](conversion: (B, Boolean) => T,
+                                      roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
+                                     (persistedStop: B): T = {
+    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
+    conversion(persistedStop, floating)
+  }
+
   protected def withFilter(filter: String)(query: String): String = {
     query + " " + filter
   }
