@@ -632,13 +632,7 @@ var URLRouter = function(map, backend, models) {
     var massTransitBox = new ActionPanelBoxes.AssetBox();
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var pedestrianCrossingBox = {
-      title: 'Suojatie',
-      layerName: 'pedestrianCrossing',
-      element: undefined,
-      show: function() {},
-      hide: function() {}
-    };
+    var pedestrianCrossingBox = PointAssetBox();
 
     return [
       [roadLinkBox],
