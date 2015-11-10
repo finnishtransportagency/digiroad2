@@ -65,6 +65,20 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
+  def persistedAssetToAssetWithTimeStamps(persistedStop: B, floating: Boolean): MassTransitStopWithTimeStamps
+
+  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
+    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
+      roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
+
+    withDynSession {
+      fetchPointAssets(withMunicipality(municipalityCode))
+        .map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAssetWithTimeStamps, findRoadlink)))
+        .toList
+    }
+  }
+
   protected def convertPersistedAsset[T](conversion: (B, Boolean) => T,
                                       roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                      (persistedStop: B): T = {
@@ -118,6 +132,7 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
       modifiedBy = persistedAsset.modifiedBy,
       modifiedAt = persistedAsset.modifiedDateTime)
   }
+  override def persistedAssetToAssetWithTimeStamps(persistedPedestrianCrossing: PersistedPedestrianCrossing, floating: Boolean) = null
 }
 
 object PointAssetOperations {

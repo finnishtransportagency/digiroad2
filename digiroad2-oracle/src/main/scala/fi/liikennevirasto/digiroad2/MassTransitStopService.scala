@@ -121,6 +121,15 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
       persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
   }
 
+  override def persistedAssetToAssetWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
+    MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
+      lon = persistedStop.lon, lat = persistedStop.lat,
+      bearing = persistedStop.bearing, floating = floating,
+      created = persistedStop.created, modified = persistedStop.modified,
+      mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
+      propertyData = persistedStop.propertyData)
+  }
+
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
     val rows = StaticQuery.queryNA[MassTransitStopRow](query).iterator.toSeq
 
@@ -226,27 +235,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     persistedStop
       .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})))
       .get
-  }
-
-  def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
-    MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
-      lon = persistedStop.lon, lat = persistedStop.lat,
-      bearing = persistedStop.bearing, floating = floating,
-      created = persistedStop.created, modified = persistedStop.modified,
-      mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
-      propertyData = persistedStop.propertyData)
-  }
-
-  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
-    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
-
-    withDynSession {
-      fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedAsset(toMassTransitStopWithTimeStamps, findRoadlink)))
-        .toList
-    }
   }
 
   def mandatoryProperties(): Map[String, String] = {
