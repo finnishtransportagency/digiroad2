@@ -163,10 +163,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     query + s" where a.id = $id"
   }
 
-  private def withMunicipality(municipalityCode: Int)(query: String): String = {
-    withFilter(s"where a.asset_type_id = 10 and a.municipality_code = $municipalityCode")(query)
-  }
-
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals("pysakin_tyyppi") }

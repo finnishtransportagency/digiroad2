@@ -69,6 +69,10 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     query + " " + filter
   }
 
+  protected def withMunicipality(municipalityCode: Int)(query: String): String = {
+    withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
+  }
+
   protected def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
 }
 
