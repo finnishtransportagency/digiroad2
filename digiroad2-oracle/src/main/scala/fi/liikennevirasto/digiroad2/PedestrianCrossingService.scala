@@ -73,6 +73,13 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
   }
 
+  protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: B => T)
+                                                    (persistedAsset: B): T = {
+    val pointAsset = toPointAsset(persistedAsset)
+    if (persistedAsset.floating != pointAsset.floating) updateFloating(pointAsset.id, pointAsset.floating)
+    pointAsset
+  }
+
   protected def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
 }
 

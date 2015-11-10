@@ -81,13 +81,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
-  private def withFloatingUpdate[T <: FloatingAsset](toMassTransitStop: PersistedMassTransitStop => T)
-                                (persistedStop: PersistedMassTransitStop): T = {
-    val massTransitStop = toMassTransitStop(persistedStop)
-    if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
-    massTransitStop
-  }
-
   private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                                           (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
     val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
