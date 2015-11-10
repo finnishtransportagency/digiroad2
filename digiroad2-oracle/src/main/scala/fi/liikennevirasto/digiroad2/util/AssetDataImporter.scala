@@ -779,14 +779,14 @@ class AssetDataImporter {
 
   def importPedestrianCrossings(database: DatabaseDef, vvhServiceHost: String): Unit = {
     val query = sql"""
-         select s.tielinkki_id, t.mml_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
+         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
            from segments s
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where s.tyyppi = 17
         """
 
     val pedestrianCrossings = database.withDynSession {
-      query.as[(Long, Long, Seq[Point], Double, Double)].list
+      query.as[(Long, Long, Int, Seq[Point], Double, Double)].list
     }
 
     val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(pedestrianCrossings.map(_._2).toSet)
@@ -795,7 +795,7 @@ class AssetDataImporter {
     val totalGroupCount = groupedCrossings.length
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
@@ -804,13 +804,13 @@ class AssetDataImporter {
       groupedCrossings.zipWithIndex.foreach { case (crossings, i) =>
         val startTime = DateTime.now()
 
-        val assetGeometries = crossings.map { case (roadLinkId, mmlId, points, startMeasure, endMeasure) =>
+        val assetGeometries = crossings.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 200)
-          // TODO: Read municipality code from conversion db
-          val pointAsset = PersistedPedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, 235)
-          assetPS.setBoolean(3, PointAssetOperations.isFloating(
+          assetPS.setInt(3, municipalityCode)
+          val pointAsset = PersistedPedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, municipalityCode)
+          assetPS.setBoolean(4, PointAssetOperations.isFloating(
             pointAsset,
             roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
           ))
