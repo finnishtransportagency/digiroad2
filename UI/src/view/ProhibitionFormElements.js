@@ -118,10 +118,13 @@
         return _.isEmpty(prohibition.validityPeriods) ? '' : createValidityPeriodElement();
 
         function createValidityPeriodElement() {
-          var validityPeriodItems = _.map(prohibition.validityPeriods, function (period) {
-            var dayName = dayLabels[period.days];
-            return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
-          }).join('');
+          var validityPeriodItems = _(prohibition.validityPeriods)
+            .sortBy(dayOrder)
+            .map(function (period) {
+              var dayName = dayLabels[period.days];
+              return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
+            })
+            .join('');
           return '' +
             '<div class="validity-period-group">' +
             '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
@@ -181,7 +184,11 @@
       }
 
       function validityPeriodsElement() {
-        var existingValidityPeriodElements = _(prohibition.validityPeriods).map(validityPeriodElement).join('');
+        var existingValidityPeriodElements =
+          _(prohibition.validityPeriods)
+            .sortBy(dayOrder)
+            .map(validityPeriodElement)
+            .join('');
 
         return '' +
           '<div class="validity-period-group">' +
@@ -406,4 +413,14 @@
       });
     }
   };
+
+  function dayOrder(period) {
+    var days = {
+      Weekday: 0,
+      Saturday: 1,
+      Sunday: 2
+    };
+
+    return days[period.days] + '-' + period.startHour;
+  }
 })(this);
