@@ -30,7 +30,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations[MassTransitStop, PersistedMassTransitStop] {
+trait MassTransitStopService extends PointAssetOperations[MassTransitStop, PersistedMassTransitStop, MassTransitStopWithTimeStamps] {
   override def typeId: Int = 10
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T

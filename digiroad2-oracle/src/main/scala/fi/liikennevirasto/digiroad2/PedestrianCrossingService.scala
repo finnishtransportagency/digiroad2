@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{TimeStamps, RoadLinkStop, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.User
@@ -27,7 +27,7 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val floating: Boolean
 }
 
-trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset] {
+trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset, C <: FloatingAsset] {
   def roadLinkService: RoadLinkService
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -38,6 +38,7 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[B]
   def persistedAssetToAsset(persistedAsset: B, floating: Boolean): A
+  def persistedAssetToAssetWithTimeStamps(persistedStop: B, floating: Boolean): C
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[A] = {
     case class AssetBeforeUpdate(asset: A, persistedFloating: Boolean)
@@ -65,9 +66,7 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
-  def persistedAssetToAssetWithTimeStamps(persistedStop: B, floating: Boolean): MassTransitStopWithTimeStamps
-
-  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
+  def getByMunicipality(municipalityCode: Int): Seq[C] = {
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
@@ -115,7 +114,7 @@ case class PedestrianCrossing(id: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
+class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing, PedestrianCrossing] {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
@@ -132,7 +131,8 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
       modifiedBy = persistedAsset.modifiedBy,
       modifiedAt = persistedAsset.modifiedDateTime)
   }
-  override def persistedAssetToAssetWithTimeStamps(persistedPedestrianCrossing: PersistedPedestrianCrossing, floating: Boolean) = null
+  override def persistedAssetToAssetWithTimeStamps(persistedPedestrianCrossing: PersistedPedestrianCrossing, floating: Boolean) =
+    persistedAssetToAsset(persistedPedestrianCrossing, floating)
 }
 
 object PointAssetOperations {

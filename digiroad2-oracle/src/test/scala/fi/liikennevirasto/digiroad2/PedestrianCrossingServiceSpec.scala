@@ -35,4 +35,19 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       result.mValue should equal(103)
     }
   }
+
+  test("Can fetch by municipality") {
+    when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      val result = service.getByMunicipality(235).find(_.id == 600029).get
+
+      result.id should equal(600029)
+      result.mmlId should equal(388553074)
+      result.lon should equal(374467)
+      result.lat should equal(6677347)
+      result.mValue should equal(103)
+    }
+  }
 }
