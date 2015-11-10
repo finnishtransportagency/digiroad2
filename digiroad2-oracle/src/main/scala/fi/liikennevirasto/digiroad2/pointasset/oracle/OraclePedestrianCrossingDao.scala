@@ -38,9 +38,9 @@ object OraclePedestrianCrossingDao {
       val floating = r.nextBoolean()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
-      val createdDateTime = r.nextDateOption().map(date => new DateTime(date))
+      val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
-      val modifiedDateTime = r.nextDateOption().map(date => new DateTime(date))
+      val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
       PersistedPedestrianCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }

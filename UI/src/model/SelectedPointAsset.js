@@ -1,10 +1,11 @@
 (function(root) {
   root.SelectedPointAsset = function() {
-    var self = this;
     var current = null;
+
     return {
       open: open,
-      getId: getId
+      getId: getId,
+      asset: asset
     };
 
     function open(asset) {
@@ -14,6 +15,10 @@
 
     function getId() {
       return current.id;
+    }
+
+    function asset() {
+      return current;
     }
   };
 })(this);
