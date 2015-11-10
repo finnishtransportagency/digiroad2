@@ -779,7 +779,7 @@ class AssetDataImporter {
 
   def importPedestrianCrossings(database: DatabaseDef, vvhServiceHost: String): Unit = {
     val query = sql"""
-         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum
+         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.alkum, s.loppum
            from segments s
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where s.tyyppi = 17
