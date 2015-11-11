@@ -7,7 +7,10 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, undefined)]);
+      [
+        new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, undefined),
+        new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, undefined)
+      ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
     var panel = $('<div class="panel"><header class="panel-header expanded">Suojatie</header></div>');
