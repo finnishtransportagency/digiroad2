@@ -4,7 +4,16 @@
     var layerName = 'pedestrianCrossing';
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group simple-limit ' + className + 's"></div>').hide();
-    element.append('<div class="panel"><header class="panel-header expanded">Suojatie</header></div>');
+
+    var toolSelection = new ActionPanelBoxes.ToolSelection(
+      null,
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, undefined)]);
+
+    var editModeToggle = new EditModeToggleButton(toolSelection);
+    var panel = $('<div class="panel"><header class="panel-header expanded">Suojatie</header></div>');
+    panel.append(editModeToggle.element);
+
+    element.append(panel);
 
     return {
       title: title,
