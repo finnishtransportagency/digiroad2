@@ -11,6 +11,7 @@
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
     var panel = $('<div class="panel"><header class="panel-header expanded">Suojatie</header></div>');
+    panel.append(toolSelection.element);
     panel.append(editModeToggle.element);
 
     element.append(panel);
