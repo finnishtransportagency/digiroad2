@@ -1,11 +1,13 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
 import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.jdbc.StaticQuery.interpolation
 
 case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        lon: Double, lat: Double,
@@ -17,6 +19,11 @@ case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
 
 object OraclePedestrianCrossingDao {
+  def expire(id: Long, username: String) {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    sqlu"update asset set valid_to = sysdate where id = $id".first
+  }
+
   def fetchByFilter(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = {
     val query =
       """
@@ -25,7 +32,7 @@ object OraclePedestrianCrossingDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
       """
-    val queryWithFilter = queryFilter(query)
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
     StaticQuery.queryNA[PersistedPedestrianCrossing](queryWithFilter).iterator.toSeq
   }
 

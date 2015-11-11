@@ -78,6 +78,23 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
+  def getPersistedAssetsByIds(ids: Set[Long]): Seq[B] = {
+    withDynSession {
+      val idsStr = ids.toSeq.mkString(",")
+      val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
+      fetchPointAssets(withFilter(filter))
+    }
+  }
+
+  def expire(ids: Seq[Long], username: String): Seq[Long] = {
+    withDynSession {
+      ids.foreach {
+        OraclePedestrianCrossingDao.expire(_, username)
+      }
+      ids
+    }
+  }
+
   protected def convertPersistedAsset[T](conversion: (B, Boolean) => T,
                                       roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                      (persistedStop: B): T = {

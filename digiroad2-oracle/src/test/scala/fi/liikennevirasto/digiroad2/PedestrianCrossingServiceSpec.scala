@@ -50,4 +50,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       result.mValue should equal(103)
     }
   }
+
+  test("Expire pedestrian crossing")  {
+    runWithRollback {
+      service.getPersistedAssetsByIds(Set(600029, 600030)).length should be(2)
+      service.expire(Seq(600029, 600030), testUser.username)
+      service.getPersistedAssetsByIds(Set(600029, 600030)) should be(Nil)
+    }
+  }
 }
