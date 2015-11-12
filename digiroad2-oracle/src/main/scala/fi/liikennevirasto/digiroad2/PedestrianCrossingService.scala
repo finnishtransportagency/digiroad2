@@ -86,15 +86,6 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
-  def expire(ids: Seq[Long], username: String): Seq[Long] = {
-    withDynSession {
-      ids.foreach {
-        OraclePedestrianCrossingDao.expire(_, username)
-      }
-      ids
-    }
-  }
-
   protected def convertPersistedAsset[T](conversion: (B, Boolean) => T,
                                       roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                      (persistedStop: B): T = {
@@ -150,6 +141,15 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
   }
   override def persistedAssetToAssetWithTimeStamps(persistedPedestrianCrossing: PersistedPedestrianCrossing, floating: Boolean) =
     persistedAssetToAsset(persistedPedestrianCrossing, floating)
+
+  def expire(ids: Seq[Long], username: String): Seq[Long] = {
+    withDynSession {
+      ids.foreach {
+        OraclePedestrianCrossingDao.expire(_, username)
+      }
+      ids
+    }
+  }
 }
 
 object PointAssetOperations {
