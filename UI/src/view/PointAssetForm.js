@@ -6,6 +6,12 @@
   function bindEvents(selectedAsset) {
     var rootElement = $('#feature-attributes');
 
+    function toggleMode(readOnly) {
+      rootElement.find('.delete').toggle(!readOnly);
+      rootElement.find('.form-controls').toggle(!readOnly);
+    }
+    eventbus.on('application:readOnly', toggleMode);
+
     rootElement.on('change', 'input[type="checkbox"]', function(event) {
       var eventTarget = $(event.currentTarget);
       if (eventTarget.attr('checked') === 'checked') {
@@ -22,6 +28,7 @@
     
     eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
       renderForm(rootElement, selectedAsset);
+      toggleMode(applicationModel.isReadOnly());
     });
 
     eventbus.on('pedestrianCrossing:changed', function() {
@@ -55,7 +62,7 @@
 
   function renderMeta(asset) {
     return '' +
-      '<div class="wrapper read-only">' +
+      '<div class="wrapper">' +
       '  <div class="form form-horizontal form-dark form-pointasset">' +
       '    <div class="form-group">' +
       '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
