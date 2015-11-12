@@ -3,14 +3,21 @@
     initialize: bindEvents
   };
 
+  var buttons = '' +
+    '<div class="pointasset form-controls">' +
+    '  <button class="save btn btn-primary" disabled>Tallenna</button>' +
+    '  <button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+    '</div>';
+
   function bindEvents(selectedAsset) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
-      var header = '<header><span>ID: ' + selectedAsset.getId() + '</span><div class="linear-asset form-controls"></div></header>';
+      var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + buttons + '</header>';
       var form = renderMeta(selectedAsset.asset());
+      var footer = '<footer>' + buttons + '</footer>';
 
-      rootElement.html(header + form);
+      rootElement.html(header + form + footer);
     });
   }
 
