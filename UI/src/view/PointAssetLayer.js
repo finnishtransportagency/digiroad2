@@ -24,9 +24,14 @@
       return box;
     }
 
+    this.removeLayerFeatures = function() {
+      assetLayer.clearMarkers();
+    };
+
     this.refreshView = function() {
       redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
+        me.removeLayerFeatures();
         _.each(assets, function(asset) {
           var box = createFeature(asset);
           assetLayer.addMarker(box);
@@ -45,6 +50,7 @@
 
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
     }
 
     function handleMapClick(coordinates) {
