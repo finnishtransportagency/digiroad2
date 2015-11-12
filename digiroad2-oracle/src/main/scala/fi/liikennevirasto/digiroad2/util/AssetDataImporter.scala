@@ -239,10 +239,39 @@ class AssetDataImporter {
     bw.close()
   }
 
+  private def generateCsvForDroppedAssets(assetTypeId: Int,
+                                          assetName: String,
+                                          roadLinkService: VVHRoadLinkService,
+                                          startTime: DateTime) = {
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           left join number_property_value s on s.asset_id = a.id
+           where a.asset_type_id in ($assetTypeId)
+           and (valid_to is null or valid_to >= sysdate)
+         """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
+    }
+    println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId).toSet
+    println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+
+    val floatingLimits = limits.filter(_._7)
+
+    exportCsv(assetName, nonExistingLimits ++ floatingLimits)
+    println("*** exported CSV files " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+  }
+
   def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
-    val asset_name = Map(
+    val assetNames = Map(
       30 -> "total_weight_limits",
       40 -> "trailer_truck_weight_limits",
       50 -> "axle_weight_limits",
@@ -259,31 +288,9 @@ class AssetDataImporter {
       140 -> "number_of_lanes",
       160 -> "mass_transit_lanes")
 
-    val limits = OracleDatabase.withDynSession {
-      sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
-           from asset a
-           join ASSET_LINK al on a.id = al.asset_id
-           join LRM_POSITION pos on al.position_id = pos.id
-           left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (#${asset_name.keys.mkString(",")})
-           and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
+    assetNames.foreach { case(assetTypeId, assetName) =>
+      generateCsvForDroppedAssets(assetTypeId, assetName, roadLinkService, startTime)
     }
-    println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
-    println("*** fetched all road links from VVH "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
-    println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
-
-    val floatingLimits = limits.filter(_._7)
-
-    (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
-      exportCsv(asset_name(key), values)
-    }
-    println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
 
   def generateValueString(prohibitionValue: ProhibitionValue): String = {
