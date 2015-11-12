@@ -28,6 +28,10 @@
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
+    eventbus.on('pedestrianCrossing:unselected', function() {
+      rootElement.empty();
+    });
+
     rootElement.on('click', '.pointasset button.save', function() {
       selectedAsset.save();
     });

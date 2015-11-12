@@ -48,10 +48,16 @@
       collection.save(current)
         .done(function() {
           eventbus.trigger('pedestrianCrossing:saved');
+          close();
         })
         .fail(function() {
           eventbus.trigger('asset:updateFailed');
         });
+    }
+
+    function close() {
+      current = null;
+      eventbus.trigger('pedestrianCrossing:unselected');
     }
   };
 })(this);
