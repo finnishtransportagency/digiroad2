@@ -17,14 +17,14 @@
   function renderMeta(asset) {
     return '' +
       '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark linear-asset">' +
-          '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
-          '</div>' +
-        '</div>' +
+      '  <div class="form form-horizontal form-dark linear-asset">' +
+      '    <div class="form-group">' +
+      '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+      '    </div>' +
+      '    <div class="form-group">' +
+      '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+      '    </div>' +
+      '  </div>' +
       '</div>';
   }
 })(this);
