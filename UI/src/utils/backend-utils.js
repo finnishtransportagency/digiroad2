@@ -148,16 +148,6 @@
       };  
     });
 
-    this.deletePointAsset = _.throttle(function(data) {
-      return $.ajax({
-        contentType: "application/json",
-        type: "DELETE",
-        url: "api/pointassets",
-        data: JSON.stringify(data),
-        dataType: "json"
-      });
-    }, 1000);
-
     this.createPointAsset = function(asset) {
       return $.ajax({
         contentType: "application/json",
@@ -167,6 +157,15 @@
         dataType: "json"
       });
     };
+
+    this.removePointAsset = _.throttle(function(id) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/pointassets/" + id,
+        dataType: "json"
+      });
+    }, 1000);
 
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {

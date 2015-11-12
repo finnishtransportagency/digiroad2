@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{TimeStamps, RoadLinkStop, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossingToBePersisted, OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -27,7 +27,7 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val floating: Boolean
 }
 
-case class NewPointAsset(lat: Double, lon: Double, mmlId: Long)
+case class NewPointAsset(lon: Double, lat: Double, mmlId: Long)
 
 trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset, C <: FloatingAsset] {
   def roadLinkService: RoadLinkService
@@ -148,6 +148,13 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
     withDynSession {
         OraclePedestrianCrossingDao.expire(id, username)
       id
+    }
+  }
+
+  def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+    withDynTransaction {
+      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username), username)
     }
   }
 }

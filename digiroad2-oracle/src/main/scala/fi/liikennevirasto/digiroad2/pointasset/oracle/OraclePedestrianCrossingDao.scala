@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.{NewPointAsset, RoadLinkAssociatedPointAsset}
+import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -18,7 +18,32 @@ case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        modifiedBy: Option[String] = None,
                                        modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
 
+case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
+
 object OraclePedestrianCrossingDao {
+  def create(crossing: PedestrianCrossingToBePersisted, username: String): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, geometry)
+        values ($id, 200, $username, sysdate, ${crossing.municipalityCode}, MDSYS.SDO_GEOMETRY(4401,
+                                                 3067,
+                                                 NULL,
+                                                 MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                                 MDSYS.SDO_ORDINATE_ARRAY(${crossing.lon}, ${crossing.lat}, 0, 0)
+                                                ))
+
+        into lrm_position(id, start_measure, mml_id)
+        values ($lrmPositionId, ${crossing.mValue}, ${crossing.mmlId})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+    id
+  }
+
   def expire(id: Long, username: String) {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first

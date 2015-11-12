@@ -610,19 +610,19 @@ with GZipSupport {
     pedestrianCrossingService.getByBoundingBox(user, bbox)
   }
 
-  delete("/pointassets") {
+  delete("/pointassets/:id") {
     val user = userProvider.getCurrentUser()
-    val id = (parsedBody \ "id").extract[Long]
-    val mmlIds = pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).map(_.mmlId)
-    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
-      .map(_.municipalityCode)
-      .foreach(validateUserMunicipalityAccess(user))
-
-    pedestrianCrossingService.expire(id, user.username)
+    val id = params("id").toLong
+    pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
+    pedestrianCrossingService.expire(Seq(id), user.username)
   }
 
   post("/pointassets") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[NewPointAsset]
+    for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
+      validateUserMunicipalityAccess(user)(link.municipalityCode)
+      pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
+    }
   }
 }

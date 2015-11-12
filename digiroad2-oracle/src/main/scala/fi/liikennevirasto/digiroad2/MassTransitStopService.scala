@@ -246,27 +246,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
   }
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
-    case class Projection(distance: Double, segmentIndex: Int, segmentLength: Double, mValue: Double)
-    val lineSegments: Seq[((Point, Point), Int)] = points.zip(points.tail).zipWithIndex
-    val projections: Seq[Projection] = lineSegments.map { case((p1: Point, p2: Point), segmentIndex: Int) =>
-      val segmentLength = (p2 - p1).length()
-      val directionVector = (p2 - p1).normalize()
-      val negativeMValue = (p1 - point).dot(directionVector)
-      val clampedNegativeMValue =
-        if (negativeMValue > 0) 0
-        else if (negativeMValue < (-1 * segmentLength)) -1 * segmentLength
-        else negativeMValue
-      val projectionVectorOnLineSegment: Vector3d = directionVector.scale(clampedNegativeMValue)
-      val pointToLineSegment: Vector3d = (p1 - point) - projectionVectorOnLineSegment
-      Projection(
-        distance = pointToLineSegment.length(),
-        segmentIndex = segmentIndex,
-        segmentLength = segmentLength,
-        mValue = -1 * clampedNegativeMValue)
-    }
-    val targetIndex = projections.sortBy(_.distance).head.segmentIndex
-    val distanceBeforeTarget = projections.take(targetIndex).map(_.segmentLength).sum
-    distanceBeforeTarget + projections(targetIndex).mValue
+    return GeometryUtils.calculateLinearReferenceFromPoint(point, points)
   }
 
   implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {

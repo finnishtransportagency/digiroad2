@@ -6,9 +6,9 @@
       open: open,
       getId: getId,
       asset: asset,
-      setToBeDeleted: setToBeDeleted,
       place: place,
-      save: save
+      save: save,
+      setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
       cancel: cancel
     };
@@ -35,8 +35,8 @@
       return current;
     }
 
-    function setToBeDeleted(deleted) {
-      current.toBeDeleted = deleted;
+    function setToBeRemoved(expired) {
+      current.expired = expired;
       eventbus.trigger('pedestrianCrossing:changed');
     }
 
@@ -45,14 +45,18 @@
     }
 
     function save() {
-      collection.save(current)
-        .done(function() {
-          eventbus.trigger('pedestrianCrossing:saved');
-          close();
-        })
-        .fail(function() {
-          eventbus.trigger('asset:updateFailed');
-        });
+      if (isDirty()) {
+        backend.removePointAsset(current.id)
+          .done(function() {
+            eventbus.trigger('pedestrianCrossing:saved');
+            close();
+          })
+          .fail(function() {
+            eventbus.trigger('asset:updateFailed');
+          });
+      } else {
+        backend.createPointAsset(current);
+      }
     }
 
     function close() {
