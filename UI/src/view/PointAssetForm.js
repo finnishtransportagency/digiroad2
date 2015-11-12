@@ -3,12 +3,6 @@
     initialize: bindEvents
   };
 
-  var buttons = '' +
-    '<div class="pointasset form-controls">' +
-    '  <button class="save btn btn-primary" disabled>Tallenna</button>' +
-    '  <button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
-    '</div>';
-
   function bindEvents(selectedAsset) {
     var rootElement = $('#feature-attributes');
 
@@ -27,9 +21,9 @@
   }
 
   function renderForm(rootElement, selectedAsset) {
-    var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + buttons + '</header>';
+    var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + renderButtons() + '</header>';
     var form = renderMeta(selectedAsset.asset());
-    var footer = '<footer>' + buttons + '</footer>';
+    var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
   }
@@ -51,6 +45,14 @@
       '      <p class="form-control-static">Poista</p>' +
       '    </div>' +
       '  </div>' +
+      '</div>';
+  }
+
+  function renderButtons() {
+    return '' +
+      '<div class="pointasset form-controls">' +
+      '  <button class="save btn btn-primary" disabled>Tallenna</button>' +
+      '  <button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
   }
 })(this);
