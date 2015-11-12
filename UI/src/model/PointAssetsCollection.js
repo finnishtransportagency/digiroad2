@@ -1,11 +1,16 @@
 (function(root) {
   root.PointAssetsCollection = function(backend) {
     return {
-      fetch: fetch
+      fetch: fetch,
+      save: save
     };
 
     function fetch(boundingBox) {
       return backend.getPointAssets(boundingBox);
+    }
+
+    function save(current) {
+      return backend.deletePointAssets({ids: [current.id]});
     }
   };
 })(this);

@@ -564,7 +564,7 @@ var URLRouter = function(map, backend, models) {
       });
     });
     var pedestrianCrossingCollection = PointAssetsCollection(backend);
-    var selectedPedestrianCrossing = new SelectedPointAsset();
+    var selectedPedestrianCrossing = new SelectedPointAsset(pedestrianCrossingCollection);
 
     var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
     var models = {

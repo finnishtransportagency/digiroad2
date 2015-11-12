@@ -148,6 +148,16 @@
       };  
     });
 
+    this.deletePointAssets = _.throttle(function(data) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/pointassets",
+        data: JSON.stringify(data),
+        dataType: "json",
+      });
+    }, 1000);
+
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId

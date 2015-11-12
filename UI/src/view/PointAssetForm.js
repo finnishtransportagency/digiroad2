@@ -27,6 +27,10 @@
     eventbus.on('pedestrianCrossing:changed', function() {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
+
+    rootElement.on('click', '.pointasset button.save', function() {
+      selectedAsset.save();
+    });
   }
 
   function enableSaving(rootElement) {
