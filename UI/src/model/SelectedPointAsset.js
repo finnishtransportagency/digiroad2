@@ -5,8 +5,13 @@
     return {
       open: open,
       getId: getId,
-      asset: asset
+      asset: asset,
+      place: place
     };
+
+    function place(asset) {
+      current = asset;
+    }
 
     function open(asset) {
       current = asset;

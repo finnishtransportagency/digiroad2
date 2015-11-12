@@ -39,6 +39,38 @@
     this.deactivateSelection = function() {
     };
 
+    this.layerStarted = function(eventListener) {
+      bindEvents(eventListener);
+    };
+
+    function bindEvents(eventListener) {
+      eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+    }
+
+    function handleMapClick(coordinates) {
+      if (applicationModel.getSelectedTool() === 'Add') {
+        var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
+        createNewAsset(map.getLonLatFromPixel(pixel));
+      }
+    }
+
+    function createNewAsset(coordinates) {
+      var selectedLon = coordinates.lon;
+      var selectedLat = coordinates.lat;
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
+      var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+
+      var crossing = {
+        lon: projectionOnNearestLine.x,
+        lat: projectionOnNearestLine.y,
+        mmlId: nearestLine.mmlId
+      };
+
+      selectedAsset.place(crossing);
+      assetLayer.addMarker(createFeature(crossing));
+      eventbus.trigger('pedestrianCrossing:selected')
+    }
+
     function redrawLinks(map) {
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
