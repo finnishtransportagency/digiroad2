@@ -6,7 +6,7 @@
       open: open,
       getId: getId,
       asset: asset,
-      setExpired: setExpired,
+      setToBeDeleted: setToBeDeleted,
       place: place,
       save: save,
       isDirty: isDirty,
@@ -23,7 +23,7 @@
     }
 
     function cancel() {
-      current.expired = false;
+      current.toBeDeleted = false;
       eventbus.trigger('pedestrianCrossing:cancelled');
     }
 
@@ -35,13 +35,13 @@
       return current;
     }
 
-    function setExpired(expired) {
-      current.expired = expired;
+    function setToBeDeleted(deleted) {
+      current.toBeDeleted = deleted;
       eventbus.trigger('pedestrianCrossing:changed');
     }
 
     function isDirty() {
-      return current.expired;
+      return current.toBeDeleted;
     }
 
     function save() {

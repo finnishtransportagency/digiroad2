@@ -15,9 +15,9 @@
     rootElement.on('change', 'input[type="checkbox"]', function(event) {
       var eventTarget = $(event.currentTarget);
       if (eventTarget.attr('checked') === 'checked') {
-        selectedAsset.setExpired(true);
+        selectedAsset.setToBeDeleted(true);
       } else {
-        selectedAsset.setExpired(false);
+        selectedAsset.setToBeDeleted(false);
       }
     });
 
