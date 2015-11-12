@@ -17,12 +17,18 @@
   function renderMeta(asset) {
     return '' +
       '<div class="wrapper read-only">' +
-      '  <div class="form form-horizontal form-dark linear-asset">' +
+      '  <div class="form form-horizontal form-dark form-pointasset">' +
       '    <div class="form-group">' +
       '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
       '    </div>' +
       '    <div class="form-group">' +
       '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+      '    </div>' +
+      '    <div class="form-group form-group delete">' +
+      '      <div class="checkbox" >' +
+      '        <input type="checkbox">' +
+      '      </div>' +
+      '      <p class="form-control-static">Poista</p>' +
       '    </div>' +
       '  </div>' +
       '</div>';
