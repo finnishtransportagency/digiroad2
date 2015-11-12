@@ -6,13 +6,26 @@
   function bindEvents(selectedAsset) {
     var rootElement = $('#feature-attributes');
 
+    rootElement.on('change', 'input[type="checkbox"]', function(event) {
+      var eventTarget = $(event.currentTarget);
+      if (eventTarget.attr('checked') === 'checked') {
+        selectedAsset.setExpired(true);
+      } else {
+        selectedAsset.setExpired(false);
+      }
+    });
+
     eventbus.on('pedestrianCrossing:opened', function() {
       renderForm(rootElement, selectedAsset);
       enableSaving(rootElement);
     });
-
+    
     eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
       renderForm(rootElement, selectedAsset);
+    });
+
+    eventbus.on('pedestrianCrossing:changed', function() {
+      rootElement.find('.form-controls button').attr('disabled', false);
     });
   }
 

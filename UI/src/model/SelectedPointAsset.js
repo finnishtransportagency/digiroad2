@@ -6,6 +6,7 @@
       open: open,
       getId: getId,
       asset: asset,
+      setExpired: setExpired,
       place: place
     };
 
@@ -24,6 +25,11 @@
 
     function asset() {
       return current;
+    }
+
+    function setExpired(expired) {
+      current.expired = true;
+      eventbus.trigger('pedestrianCrossing:changed');
     }
   };
 })(this);
