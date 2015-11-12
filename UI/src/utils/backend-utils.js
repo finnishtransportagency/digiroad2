@@ -154,7 +154,7 @@
         type: "DELETE",
         url: "api/pointassets",
         data: JSON.stringify(data),
-        dataType: "json",
+        dataType: "json"
       });
     }, 1000);
 
