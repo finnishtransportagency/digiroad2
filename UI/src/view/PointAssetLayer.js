@@ -68,7 +68,7 @@
 
       selectedAsset.place(crossing);
       assetLayer.addMarker(createFeature(crossing));
-      eventbus.trigger('pedestrianCrossing:selected')
+      eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function redrawLinks(map) {
