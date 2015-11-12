@@ -614,7 +614,7 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
-    pedestrianCrossingService.expire(Seq(id), user.username)
+    pedestrianCrossingService.expire(id, user.username)
   }
 
   post("/pointassets") {
