@@ -148,7 +148,7 @@
       };  
     });
 
-    this.deletePointAssets = _.throttle(function(data) {
+    this.deletePointAsset = _.throttle(function(data) {
       return $.ajax({
         contentType: "application/json",
         type: "DELETE",

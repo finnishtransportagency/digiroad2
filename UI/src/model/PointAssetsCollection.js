@@ -10,7 +10,7 @@
     }
 
     function save(current) {
-      return backend.deletePointAssets({ids: [current.id]});
+      return backend.deletePointAsset(current);
     }
   };
 })(this);

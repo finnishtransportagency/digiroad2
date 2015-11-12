@@ -142,12 +142,10 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
   override def persistedAssetToAssetWithTimeStamps(persistedPedestrianCrossing: PersistedPedestrianCrossing, floating: Boolean) =
     persistedAssetToAsset(persistedPedestrianCrossing, floating)
 
-  def expire(ids: Seq[Long], username: String): Seq[Long] = {
+  def expire(id: Long, username: String): Long = {
     withDynSession {
-      ids.foreach {
-        OraclePedestrianCrossingDao.expire(_, username)
-      }
-      ids
+        OraclePedestrianCrossingDao.expire(id, username)
+      id
     }
   }
 }

@@ -612,12 +612,12 @@ with GZipSupport {
 
   delete("/pointassets") {
     val user = userProvider.getCurrentUser()
-    val ids = (parsedBody \ "ids").extract[Set[Long]]
-    val mmlIds = pedestrianCrossingService.getPersistedAssetsByIds(ids).map(_.mmlId)
+    val id = (parsedBody \ "id").extract[Long]
+    val mmlIds = pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).map(_.mmlId)
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    pedestrianCrossingService.expire(ids.toSeq, user.username)
+    pedestrianCrossingService.expire(id, user.username)
   }
 }
