@@ -8,7 +8,9 @@
       asset: asset,
       setExpired: setExpired,
       place: place,
-      save: save
+      save: save,
+      isDirty: isDirty,
+      cancel: cancel
     };
 
     function place(asset) {
@@ -20,6 +22,11 @@
       eventbus.trigger('pedestrianCrossing:selected');
     }
 
+    function cancel() {
+      current.expired = false;
+      eventbus.trigger('pedestrianCrossing:cancelled');
+    }
+
     function getId() {
       return current.id;
     }
@@ -29,8 +36,12 @@
     }
 
     function setExpired(expired) {
-      current.expired = true;
+      current.expired = expired;
       eventbus.trigger('pedestrianCrossing:changed');
+    }
+
+    function isDirty() {
+      return current.expired;
     }
 
     function save() {

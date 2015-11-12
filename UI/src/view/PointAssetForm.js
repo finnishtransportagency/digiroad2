@@ -25,11 +25,15 @@
     });
 
     eventbus.on('pedestrianCrossing:changed', function() {
-      rootElement.find('.form-controls button').attr('disabled', false);
+      rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
     rootElement.on('click', '.pointasset button.save', function() {
       selectedAsset.save();
+    });
+
+    rootElement.on('click', '.pointasset button.cancel', function() {
+      selectedAsset.cancel();
     });
   }
 
