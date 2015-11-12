@@ -70,9 +70,9 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 2. Yleist&auml;
 ----------
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pysäkkejä ja nopeusrajoituksia. 
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; ja nopeusrajoituksia. 
 
-Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan sivun vasemman yläkulman tietolajit-paletista(1).
+Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan sivun vasemman yl&auml;kulman tietolajit-paletista(1).
 
 ![Tietolajivalikko](k120.jpg)
 
@@ -1242,3 +1242,102 @@ Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valits
 
 _Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
 
+17. Ajoneuvokohtainen rajoitus (n&auml;kyy vain operaattorik&auml;ytt&auml;jille)
+----------------------
+
+Ajoneuvokohtaiset rajoutukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. N&auml;it&auml; ovat esimerkiksi moottoriajoneuvokiellot. My&ouml;s l&auml;piajokiellot ovat ajoneuvokohtaisia rajoituksia. Ajoneuvokohtaisessa rajoituksessa voi olla my&ouml;s poikkeus, esimerkiksi huoltoajo sallittu. Karttan&auml;kym&auml;&auml;n voi valita ajoneuvokohtaiset rajoitukset valitsemalla tietolajit-paletista (1) Ajoneuvokohtaiset rajoitukset. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on ajoneuvokohtainen rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
+
+![Valinta.](k121.jpg)
+
+_Ajoneuvokohtaisen rajoituksen valinta._
+
+##Ajoneuvokohtaisen rajoituksen katselu##
+
+Yksitt&auml;isen ajoneuvokohtaisen rajoituksen voi valita klikkaamalla kartalta sen geometriaa (1).
+Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli osuus, jossa ajoneuvokohtaisella rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu ajoneuvokohtaisen rajoituksen ominaisuustieton&auml;kym&auml; (2). Ominaisuustieton&auml;kym&auml;ss&auml; on ajoneuvokohtaisen rajoituksen tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](k122.jpg)
+
+_Ajoneuvokohtaisen rajoituksen tietojen katselu._
+
+Ajoneuvokohtaiset rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
+
+![Visualisointi.](k123.jpg)
+
+_Ajoneuvokohtaisen rajoituksen vaikutussuunnan visualisointi._
+
+##Ajoneuvokohtaisen rajoituksen muokkaus##
+
+Ajoneuvokohtaisille rajoituksille voi antaa muokkaustilassa tietoja. Muutokset tallennetaan tallenna-painikkeesta ja ennen tallennusta ne voi peruuttaa peruuta-painikkeesta.
+
+Ajoneuvokohtaisia rajoituksia voi muokata kolmella tavalla:
+1.	Koko ajoneuvorajoitusketjulle (esim. koko kadulle).
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+3.	Monivalinnan avulla kokonaiselle alueelle.
+
+###Ajoneuvokohtaisen rajoituksen muokkaus ja lis&auml;ys###
+
+Muokattava rajoitus valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). 
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla ajoneuvokohtaista rajoitusta.
+
+Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; olevien alasvetovalikkojen avulla (5). Ajoneuvokohtaisella rajoituksella voi olla my&ouml;s poikkeuksia (ajoneuvoja, joita rajoitus ei koske) (6) sek&auml; voimassaolokellonaika ma-pe, la, su (7). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
+
+![Muokkaus.](k124.jpg)
+
+_Ajoneuvokohtaisen rajoituksen muokkaus._
+
+Tielinkit, joilla ei ole ajoneuvokohtaista rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi ajoneuvokohtainen rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (8). Valitsemalla alasvetovalikosta rajoituksen tyyppi (9), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja poikkeuksille.
+
+![Lisays.](k125.jpg)
+
+_Ajoneuvokohtaisen rajoituksen lis&auml;ys._
+
+###Ajoneuvokohtaisen rajoituksen poistaminen###
+
+Ajoneuvokohtaisia rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustieton&auml;kym&auml;st&auml; rajoituksen pois (1). My&ouml;s rajoituksen ominaisuuksia eli voimassaoloaikaa ja poikkeuksia voi poistaa ominaisuustieton&auml;kym&auml;n rukseista. (2) 
+
+![Poisto.](k126.jpg)
+
+_Ajoneuvokohtaisen rajoituksen poistaminen._
+
+###Useamman ajoneuvokohtaisen rajoituksen muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin ajoneuvokohtaiset rajoitustiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (1), jossa valitaan ajoneuvokohtaisenrajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (2). Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat ajoneuvokohtaisten rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
+
+![Muokkaus useita.](k127.jpg)
+
+_Useamman ajoneuvokohtaisen rajoituksen tietojen muokkaus kerralla._
+
+###Ajoneuvokohtaisen rajoituksen katkaiseminen###
+
+Ajoneuvokohtaisen rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
+
+Ajoneuvokohtaisen rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5).
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](k128.jpg)
+
+_Ajoneuvokohtaisen rajoituksen katkaiseminen._
+
+###Ajoneuvokohtaisen rajoituksen muuttaminen yksisuuntaiseksi###
+
+Molempiin suuntiin voimassa olevan ajoneuvokohtaisen rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti.
+
+Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; ajoneuvokohtaista rajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (2).
+
+![Yksisuuntaisuus.](k129.jpg)
+
+_Ajoneuvokohtaisen rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi uusille ajoneuvokohtaisille rajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat kohteita kartalla (4). 
+
+![Arvot.](k130.jpg)
+
+_Uusien yksisuuntaisten ajoneuvokohtaisen rajoitusten arvojen valinta._
+
+Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
