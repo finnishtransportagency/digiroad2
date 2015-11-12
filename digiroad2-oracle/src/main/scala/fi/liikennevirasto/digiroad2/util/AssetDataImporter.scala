@@ -242,7 +242,7 @@ class AssetDataImporter {
   def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
-    val asset_name = Map(
+    val assetNames = Map(
       30 -> "total_weight_limits",
       40 -> "trailer_truck_weight_limits",
       50 -> "axle_weight_limits",
@@ -266,7 +266,7 @@ class AssetDataImporter {
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
-           where a.asset_type_id in (#${asset_name.keys.mkString(",")})
+           where a.asset_type_id in (#${assetNames.keys.mkString(",")})
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
     }
@@ -281,7 +281,7 @@ class AssetDataImporter {
     val floatingLimits = limits.filter(_._7)
 
     (nonExistingLimits ++ floatingLimits).groupBy(_._6).foreach { case (key, values) =>
-      exportCsv(asset_name(key), values)
+      exportCsv(assetNames(key), values)
     }
     println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
