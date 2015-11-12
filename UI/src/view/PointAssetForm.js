@@ -12,13 +12,26 @@
   function bindEvents(selectedAsset) {
     var rootElement = $('#feature-attributes');
 
-    eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
-      var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + buttons + '</header>';
-      var form = renderMeta(selectedAsset.asset());
-      var footer = '<footer>' + buttons + '</footer>';
-
-      rootElement.html(header + form + footer);
+    eventbus.on('pedestrianCrossing:opened', function() {
+      renderForm(rootElement, selectedAsset);
+      enableSaving(rootElement);
     });
+
+    eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
+      renderForm(rootElement, selectedAsset);
+    });
+  }
+
+  function enableSaving(rootElement) {
+    rootElement.find('.save.btn').prop('disabled', false);
+  }
+
+  function renderForm(rootElement, selectedAsset) {
+    var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + buttons + '</header>';
+    var form = renderMeta(selectedAsset.asset());
+    var footer = '<footer>' + buttons + '</footer>';
+
+    rootElement.html(header + form + footer);
   }
 
   function renderMeta(asset) {
