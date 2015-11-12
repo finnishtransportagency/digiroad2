@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedPointAsset = function(collection) {
+  root.SelectedPointAsset = function(backend, collection) {
     var current = null;
 
     return {
@@ -8,7 +8,7 @@
       asset: asset,
       setToBeDeleted: setToBeDeleted,
       place: place,
-      save: save,
+      save: save
       isDirty: isDirty,
       cancel: cancel
     };

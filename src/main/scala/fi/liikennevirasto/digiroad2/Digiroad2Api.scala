@@ -620,4 +620,9 @@ with GZipSupport {
 
     pedestrianCrossingService.expire(id, user.username)
   }
+
+  post("/pointassets") {
+    val user = userProvider.getCurrentUser()
+    val asset = (parsedBody \ "asset").extract[NewPointAsset]
+  }
 }

@@ -158,6 +158,16 @@
       });
     }, 1000);
 
+    this.createPointAsset = function(asset) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/pointassets",
+        data: JSON.stringify({asset: asset}),
+        dataType: "json"
+      });
+    };
+
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId

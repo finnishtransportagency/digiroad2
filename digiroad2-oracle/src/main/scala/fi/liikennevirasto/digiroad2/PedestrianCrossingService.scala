@@ -27,6 +27,8 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val floating: Boolean
 }
 
+case class NewPointAsset(lat: Double, lon: Double, mmlId: Long)
+
 trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset, C <: FloatingAsset] {
   def roadLinkService: RoadLinkService
   lazy val dataSource = {

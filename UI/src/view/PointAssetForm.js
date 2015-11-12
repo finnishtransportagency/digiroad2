@@ -58,6 +58,10 @@
     var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
+
+    rootElement.on('click', '.btn.save', function() {
+      selectedAsset.save();
+    });
   }
 
   function renderMeta(asset) {
