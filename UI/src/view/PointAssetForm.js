@@ -15,7 +15,6 @@
   }
 
   function renderMeta(asset) {
-    console.log('renderMeta', asset);
     return '' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark linear-asset">' +
