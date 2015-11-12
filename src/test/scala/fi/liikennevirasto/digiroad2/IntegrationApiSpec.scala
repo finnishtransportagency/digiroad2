@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.Modification
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ProhibitionValidityPeriod}
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode, Modification}
+import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{Formats, DefaultFormats}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -51,6 +51,19 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       val mmlIds = (((parse(body) \ "features") \ "properties") \ "mml_id").extract[Seq[Long]]
       mmlIds should be(Seq(123L, 321L))
     }
+  }
+
+  test("encode speed limit") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "mmlId" -> 2,
+      "muokattu_viimeksi" -> ""
+    )))
   }
 
   test("encode validity period to time domain") {

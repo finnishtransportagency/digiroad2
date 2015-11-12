@@ -156,12 +156,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  private def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
+  def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
-        "value" -> speedLimit.value.getOrElse(0),
+        "value" -> speedLimit.value.fold(0)(_.value),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "mmlId" -> speedLimit.mmlId,
