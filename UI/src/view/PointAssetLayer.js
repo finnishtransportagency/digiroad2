@@ -11,15 +11,27 @@
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var assetLayer = new OpenLayers.Layer.Boxes('pedestrianCrossing');
 
+    function mouseUpHandler(event) {
+      console.log('mouseup');
+      event.object.events.unregister('mouseup', assetLayer, mouseUpHandler);
+    }
+    function mouseDownHandler(event) {
+      console.log('mousedown');
+      event.object.events.register('mouseup', assetLayer, mouseUpHandler);
+    }
+    function clickHandler(e) {
+      var feature = e.object;
+      selectedAsset.open(feature.asset);
+      feature.events.unregister('click', feature, clickHandler);
+      feature.events.register('mousedown', assetLayer, mouseDownHandler);
+    }
     function createFeature(asset) {
       var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
       var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
       $(box.div)
         .css('overflow', 'visible !important')
         .css('background-image', 'url(./images/center-marker.svg)');
-      box.events.register('click', box, function (e) {
-        selectedAsset.open(e.object.asset);
-      });
+      box.events.register('click', box, clickHandler);
       box.asset = asset;
       return box;
     }
