@@ -14,7 +14,11 @@
     function mouseMoveHandler(marker, event) {
       var pixel = new OpenLayers.Pixel(event.xy.x, event.xy.y);
       var lonlat = map.getLonLatFromPixel(pixel);
-      marker.bounds = OpenLayers.Bounds.fromArray([lonlat.lon, lonlat.lat, lonlat.lon + 15, lonlat.lat + 15]);
+
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), lonlat.lon, lonlat.lat);
+      var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: lonlat.lon, y: lonlat.lat});
+
+      marker.bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x + 15, position.y + 15]);
       assetLayer.redraw();
     }
     function mouseUpHandler(event) {
