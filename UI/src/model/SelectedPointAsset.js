@@ -29,7 +29,7 @@
     }
 
     function getId() {
-      return current.id;
+      return current && current.id;
     }
 
     function asset() {

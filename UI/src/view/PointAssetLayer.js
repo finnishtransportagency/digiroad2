@@ -51,6 +51,8 @@
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handlePedestrianCrossingSelected);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handlePedestrianCrossingUnselected);
     }
 
     function handleMapClick(coordinates) {
@@ -62,6 +64,24 @@
       } else {
         selectedAsset.close();
       }
+    }
+
+    function isSelectedAsset(asset) {
+      return selectedAsset.getId() === asset.id;
+    }
+
+    function handlePedestrianCrossingSelected() {
+      _.each(assetLayer.markers, function(marker) {
+        if (!isSelectedAsset(marker.asset)) {
+          $(marker.div).css("opacity", "0.3");
+        }
+      });
+    }
+
+    function handlePedestrianCrossingUnselected() {
+      _.each(assetLayer.markers, function(marker) {
+        $(marker.div).css("opacity", "1.0");
+      });
     }
 
     function createNewAsset(coordinates) {
