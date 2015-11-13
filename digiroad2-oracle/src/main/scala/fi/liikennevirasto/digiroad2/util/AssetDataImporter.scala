@@ -239,10 +239,19 @@ class AssetDataImporter {
     bw.close()
   }
 
+  private def logMemoryStatistics(runtime: Runtime) = {
+    val mb = 1024 * 1024
+    println("Used Memory: " + (runtime.totalMemory() - runtime.freeMemory()) / mb + " MB")
+    println("Free Memory: " + runtime.freeMemory() / mb + " MB")
+    println("Total Memory: " + runtime.totalMemory() / mb + " MB")
+    println("Max Memory: " + runtime.maxMemory() / mb + " MB")
+  }
+
   private def generateCsvForDroppedAssets(assetTypeId: Int,
                                           assetName: String,
                                           roadLinkService: VVHRoadLinkService,
                                           startTime: DateTime) = {
+    val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
            select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
@@ -255,17 +264,20 @@ class AssetDataImporter {
          """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
     }
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
 
     val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId).toSet
     println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
 
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
     println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
 
     val floatingLimits = limits.filter(_._7)
-
     exportCsv(assetName, nonExistingLimits ++ floatingLimits)
     println("*** exported CSV files " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
   }
 
   def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
