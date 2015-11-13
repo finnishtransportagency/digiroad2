@@ -36,21 +36,42 @@
           var box = createFeature(asset);
           assetLayer.addMarker(box);
         });
-        if (selectedAsset.asset()) {
-          highlightSelected();
-        }
+        decorateMarkers();
       });
     };
 
+    function decorateMarkers() {
+      if (selectedAsset.asset()) {
+        highlightSelected();
+      } else {
+        unhighlightAll();
+      }
+    }
+
     function highlightSelected() {
-      _.each(assetLayer.markers, function (marker) {
-        if (isSelectedAsset(marker.asset)) {
-          $(marker.div).css("opacity", "1.0");
-        } else {
-          $(marker.div).css("opacity", "0.3");
-        }
+      var partitioned = _.groupBy(assetLayer.markers, function(marker) {
+        return isSelectedAsset(marker.asset);
+      });
+      var selected = partitioned[true];
+      var unSelected = partitioned[false];
+      setOpacityForMarkers(selected, '1.0');
+      setOpacityForMarkers(unSelected, '0.3');
+    }
+
+    function unhighlightAll() {
+      setOpacityForMarkers(assetLayer.markers, '1.0');
+    }
+
+    function setOpacityForMarkers(markers, opacity) {
+      _.each(markers, function(marker) {
+        $(marker.div).css('opacity', opacity);
       });
     }
+
+    function isSelectedAsset(asset) {
+      return selectedAsset.getId() === asset.id;
+    }
+
 
     this.activateSelection = function() {
     };
@@ -64,8 +85,8 @@
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', highlightSelected);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handlePedestrianCrossingUnselected);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateMarkers);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', decorateMarkers);
     }
 
     function handleMapClick(coordinates) {
@@ -77,16 +98,6 @@
       } else {
         selectedAsset.close();
       }
-    }
-
-    function isSelectedAsset(asset) {
-      return selectedAsset.getId() === asset.id;
-    }
-
-    function handlePedestrianCrossingUnselected() {
-      _.each(assetLayer.markers, function(marker) {
-        $(marker.div).css("opacity", "1.0");
-      });
     }
 
     function createNewAsset(coordinates) {
