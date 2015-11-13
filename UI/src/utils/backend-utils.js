@@ -158,11 +158,11 @@
       });
     };
 
-    this.updatePointAsset = function(id, asset) {
+    this.updatePointAsset = function(asset) {
       return $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/pointassets" + id,
+        url: "api/pointassets/" + asset.id,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
