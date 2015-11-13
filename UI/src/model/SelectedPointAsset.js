@@ -35,8 +35,8 @@
       return current;
     }
 
-    function setToBeRemoved(expired) {
-      current.expired = expired;
+    function setToBeRemoved(toBeDeleted) {
+      current.toBeDeleted = toBeDeleted;
       eventbus.trigger('pedestrianCrossing:changed');
     }
 
