@@ -281,7 +281,8 @@ class AssetDataImporter {
       90 -> "width_limits",
       100 -> "lit_roads",
       110 -> "paved_roads",
-      120 -> "road_widths",
+    // TODO: Re-enable road width export when performance and memory consumption is improved
+//      120 -> "road_widths",
       130 -> "roads_affected_by_thawing",
       150 -> "congestion_tendency",
       170 -> "traffic_volumes",
