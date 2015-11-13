@@ -21,17 +21,17 @@
       marker.bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x + 15, position.y + 15]);
       assetLayer.redraw();
     }
-    function mouseUpHandler(event) {
-      console.log('mouseup');
+
+    function mouseUpHandler(mouseMoveHandler, event) {
       map.events.unregister('mousemove', map, mouseMoveHandler);
-      event.object.events.unregister('mouseup', assetLayer, mouseUpHandler);
+      map.events.unregister('mouseup', assetLayer, mouseUpHandler);
     }
     function mouseDownHandler(event) {
-      console.log('mousedown');
       OpenLayers.Event.stop(event);
 
-      map.events.register('mousemove', map, _.partial(mouseMoveHandler, event.object));
-      event.object.events.register('mouseup', assetLayer, mouseUpHandler);
+      var mouseMoveFn =  _.partial(mouseMoveHandler, event.object);
+      map.events.register('mousemove', map, mouseMoveFn);
+      map.events.register('mouseup', assetLayer, _.partial(mouseUpHandler, mouseMoveFn));
     }
     function clickHandler(e) {
       var feature = e.object;
