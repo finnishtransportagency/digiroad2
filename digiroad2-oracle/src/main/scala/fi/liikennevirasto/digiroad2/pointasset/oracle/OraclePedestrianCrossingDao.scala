@@ -21,6 +21,31 @@ case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
 case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
+  def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
+    sqlu"""
+      update asset
+        set
+        modified_by = ${persisted.createdBy},
+        modified_date = sysdate,
+        municipality_code = ${persisted.municipalityCode},
+        geometry = MDSYS.SDO_GEOMETRY(4401,
+                    3067,
+                    NULL,
+                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                    MDSYS.SDO_ORDINATE_ARRAY(${persisted.lon}, ${persisted.lat}, 0, 0))
+    where id = $id
+    """.execute
+
+    sqlu"""
+      update lrm_position
+       set
+       start_measure = ${persisted.mValue},
+       mml_id = ${persisted.mmlId}
+       where id = (select position_id from asset_link where asset_id = $id)
+    """.execute
+    id
+  }
+
   def create(crossing: PedestrianCrossingToBePersisted, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue

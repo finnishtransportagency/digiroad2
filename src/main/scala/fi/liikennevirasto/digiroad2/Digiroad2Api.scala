@@ -617,6 +617,15 @@ with GZipSupport {
     pedestrianCrossingService.expire(id, user.username)
   }
 
+  put("/pointassets/:id") {
+    val user = userProvider.getCurrentUser()
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[NewPointAsset]
+    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
+      pedestrianCrossingService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+    }
+  }
+
   post("/pointassets") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[NewPointAsset]
