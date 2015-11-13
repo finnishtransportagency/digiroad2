@@ -588,6 +588,7 @@ var URLRouter = function(map, backend, models) {
       selectedAssetModel,
       selectedSpeedLimit,
       selectedLinkProperty,
+      selectedPedestrianCrossing,
       selectedManoeuvreSource].concat(selectedLinearAssetModels));
 
     EditModeDisclaimer.initialize(instructionsPopup);

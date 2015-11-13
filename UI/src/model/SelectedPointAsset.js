@@ -41,7 +41,7 @@
     }
 
     function isDirty() {
-      return current.toBeDeleted;
+      return current ? current.toBeDeleted : false;
     }
 
     function save() {
