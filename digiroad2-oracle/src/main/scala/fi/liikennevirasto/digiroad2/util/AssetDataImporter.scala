@@ -266,7 +266,11 @@ class AssetDataImporter {
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId).toSet
+    def mmlIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
+      attributes("MTKID").asInstanceOf[BigInt].longValue()
+    }
+    val assetMmlIds = limits.map(_._1).toSet
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(assetMmlIds, Some("MTKID"), false, mmlIdFromFeature).toSet
     println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
