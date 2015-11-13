@@ -11,7 +11,8 @@
       setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
       cancel: cancel,
-      close: close
+      close: close,
+      exists: exists
     };
 
     function place(asset) {
@@ -34,6 +35,10 @@
 
     function asset() {
       return current;
+    }
+
+    function exists() {
+      return !_.isNull(current);
     }
 
     function setToBeRemoved(toBeDeleted) {

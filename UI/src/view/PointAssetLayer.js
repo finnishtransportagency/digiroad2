@@ -41,7 +41,7 @@
     };
 
     function decorateMarkers() {
-      if (selectedAsset.asset()) {
+      if (selectedAsset.exists()) {
         highlightSelected();
       } else {
         unhighlightAll();
