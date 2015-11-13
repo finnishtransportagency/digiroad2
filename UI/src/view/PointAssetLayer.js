@@ -57,6 +57,8 @@
       if (applicationModel.getSelectedTool() === 'Add') {
         var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
         createNewAsset(map.getLonLatFromPixel(pixel));
+      } else {
+        selectedAsset.close();
       }
     }
 

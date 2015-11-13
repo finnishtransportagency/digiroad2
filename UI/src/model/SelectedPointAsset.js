@@ -10,7 +10,8 @@
       save: save,
       setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
-      cancel: cancel
+      cancel: cancel,
+      close: close
     };
 
     function place(asset) {
