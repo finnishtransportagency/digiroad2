@@ -158,6 +158,16 @@
       });
     };
 
+    this.updatePointAsset = function(id, asset) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/pointassets" + id,
+        data: JSON.stringify({asset: asset}),
+        dataType: "json"
+      });
+    };
+
     this.removePointAsset = _.throttle(function(id) {
       return $.ajax({
         contentType: "application/json",
