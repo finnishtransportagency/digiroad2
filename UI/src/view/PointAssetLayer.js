@@ -20,6 +20,8 @@
 
       marker.bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x + 15, position.y + 15]);
       assetLayer.redraw();
+
+      selectedAsset.place({ id: selectedAsset.getId(), lon: position.x, lat: position.y, mmlId: nearestLine.mmlId });
     }
 
     function mouseUpHandler(mouseMoveHandler, event) {
@@ -39,6 +41,7 @@
       feature.events.unregister('click', feature, clickHandler);
       feature.events.register('mousedown', assetLayer, mouseDownHandler);
     }
+
     function createFeature(asset) {
       var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
       var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
