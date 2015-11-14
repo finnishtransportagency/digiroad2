@@ -47,7 +47,7 @@
       var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
       $(box.div)
         .css('overflow', 'visible !important')
-        .css('background-image', 'url(./images/center-marker.svg)');
+        .css('background-image', 'url(./images/point-assets/point_blue.svg)');
       box.events.register('click', box, clickHandler);
       box.asset = asset;
       return box;
