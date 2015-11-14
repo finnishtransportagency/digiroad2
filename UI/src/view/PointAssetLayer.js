@@ -45,9 +45,10 @@
     function createFeature(asset) {
       var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
       var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
+      var image = asset.floating ? 'point_red.svg' : 'point_blue.svg';
       $(box.div)
         .css('overflow', 'visible !important')
-        .css('background-image', 'url(./images/point-assets/point_blue.svg)');
+        .css('background-image', 'url(./images/point-assets/' + image + ')');
       box.events.register('click', box, clickHandler);
       box.asset = asset;
       return box;
