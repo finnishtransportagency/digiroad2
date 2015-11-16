@@ -102,7 +102,7 @@
       var selected = [];
       var unselected = [];
       setOpacityForMarkers(selected, '1.0');
-      setOpacityForMarkers(unSelected, '0.3');
+      setOpacityForMarkers(unselected, '0.3');
     }
 
     function unhighlightAll() {
