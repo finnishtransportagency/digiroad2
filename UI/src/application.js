@@ -22,7 +22,8 @@ var URLRouter = function(map, backend, models) {
       'speedLimit/:mmlId': 'speedLimit',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
-      'work-list/massTransitStop': 'massTransitStopWorkList'
+      'work-list/massTransitStop': 'massTransitStopWorkList',
+      'work-list/pedestrianCrossing': 'pedestrianCrossingWorkList'
     },
 
     massTransitStop: function(id) {
@@ -71,6 +72,11 @@ var URLRouter = function(map, backend, models) {
 
     massTransitStopWorkList: function() {
       eventbus.trigger('workList:select', 'massTransitStop', backend.getFloatingMassTransitStops());
+    },
+
+    pedestrianCrossingWorkList: function() {
+      eventbus.trigger('workList:select', 'pedestrianCrossing', backend.getFloatinPedestrianCrossings());
+
     }
   });
 

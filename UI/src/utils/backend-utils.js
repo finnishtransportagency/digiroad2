@@ -266,6 +266,10 @@
       return $.getJSON('api/speedlimits/unknown');
     };
 
+    this.getFloatinPedestrianCrossings = function() {
+      return $.getJSON('api/pedestrianCrossings/floating');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

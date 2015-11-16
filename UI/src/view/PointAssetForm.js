@@ -42,6 +42,15 @@
     rootElement.on('click', '.pointasset button.cancel', function() {
       selectedAsset.cancel();
     });
+
+    eventbus.on('layer:selected', function(layer) {
+      if(layer === 'pedestrianCrossing') {
+        renderLinktoWorkList();
+      }
+      else {
+        $('#work-list-link').parent().remove();
+      }
+    });
   }
 
   function enableSaving(rootElement) {
@@ -97,6 +106,16 @@
         '</div>';
     } else {
       return '';
+    }
+  }
+
+  function renderLinktoWorkList() {
+    var notRendered = !$('#work-list-link').length;
+    if(notRendered) {
+      $('#information-content').append('' +
+        '<div class="form form-horizontal">' +
+        '<a id="work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
+        '</div>');
     }
   }
 })(this);

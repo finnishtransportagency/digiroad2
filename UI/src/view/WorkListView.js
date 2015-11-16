@@ -34,7 +34,8 @@
     var title = {
       speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
       linkProperty: 'Korjattavien linkkien lista',
-      massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit'
+      massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
+      pedestrianCrossing: 'Geometrian ulkopuolelle jääneet suojatiet'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
