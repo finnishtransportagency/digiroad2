@@ -20,6 +20,7 @@ var URLRouter = function(map, backend, models) {
       'asset/:id': 'massTransitStop',
       'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
+      'pedestrianCrossing/:id': 'pedestrianCrossing',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -62,6 +63,14 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
+    pedestrianCrossing: function(id) {
+      applicationModel.selectLayer('pedestrianCrossing');
+      backend.getPointAssetById(id).then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedPedestrianCrossing.open(result);
+      });
+    },
+
     speedLimitWorkList: function() {
       eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
     },
@@ -76,7 +85,6 @@ var URLRouter = function(map, backend, models) {
 
     pedestrianCrossingWorkList: function() {
       eventbus.trigger('workList:select', 'pedestrianCrossing', backend.getFloatinPedestrianCrossings());
-
     }
   });
 

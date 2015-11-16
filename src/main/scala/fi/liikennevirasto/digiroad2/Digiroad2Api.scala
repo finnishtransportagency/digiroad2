@@ -610,6 +610,10 @@ with GZipSupport {
     pedestrianCrossingService.getByBoundingBox(user, bbox)
   }
 
+  get("/pointassets/:id") {
+    pedestrianCrossingService.getPersistedAssetsByIds(Set(params("id").toLong)).head
+  }
+
   get("/pointassets/floating") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {

@@ -148,6 +148,12 @@
       };  
     });
 
+    this.getPointAssetById = latestResponseRequestor(function(id) {
+      return {
+        url: 'api/pointassets/' + id
+      };
+    });
+
     this.createPointAsset = function(asset) {
       return $.ajax({
         contentType: "application/json",
