@@ -20,6 +20,7 @@
 
     function pointAssetOnSelect(feature) {
       console.log('Selecting feature: ', feature);
+      selectedAsset.open(feature.attributes);
     };
 
     function pointAssetOnUnselect() {
@@ -68,7 +69,7 @@
         graphicYOffset: -7
       };
 
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), null, graphics);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset, graphics);
     }
 
     this.removeLayerFeatures = function() {
