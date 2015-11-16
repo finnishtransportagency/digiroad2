@@ -45,7 +45,10 @@
   }
 
   function renderForm(rootElement, selectedAsset) {
-    var header = '<header><span>ID: ' + selectedAsset.getId() + '</span>' + renderButtons() + '</header>';
+    var id = selectedAsset.getId();
+
+    var title = id === undefined ? "Uusi suojatie" : 'ID: ' + id;
+    var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
     var form = renderMeta(selectedAsset.asset());
     var footer = '<footer>' + renderButtons() + '</footer>';
 
@@ -66,6 +69,8 @@
   }
 
   function renderMeta(asset) {
+    if (asset.id === undefined) return '';
+
     return '' +
       '<div class="wrapper">' +
       '  <div class="form form-horizontal form-dark form-pointasset">' +
