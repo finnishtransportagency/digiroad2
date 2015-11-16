@@ -174,7 +174,8 @@
     function hide() {
       map.removeLayer(assetLayer);
       map.removeLayer(vectorLayer);
-      roadLayer.clear();
+      me.stop();
+      me.hide();
     }
 
     return {
