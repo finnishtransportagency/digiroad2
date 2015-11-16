@@ -12,11 +12,6 @@
     }
     eventbus.on('application:readOnly', toggleMode);
 
-    rootElement.on('change', 'input[type="checkbox"]', function(event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.setToBeRemoved(eventTarget.attr('checked') === 'checked');
-    });
-
     eventbus.on('pedestrianCrossing:opened', function() {
       renderForm(rootElement, selectedAsset);
       enableSaving(rootElement);
@@ -33,14 +28,6 @@
 
     eventbus.on('pedestrianCrossing:unselected', function() {
       rootElement.empty();
-    });
-
-    rootElement.on('click', '.pointasset button.save', function() {
-      selectedAsset.save();
-    });
-
-    rootElement.on('click', '.pointasset button.cancel', function() {
-      selectedAsset.cancel();
     });
 
     eventbus.on('layer:selected', function(layer) {
@@ -64,8 +51,17 @@
 
     rootElement.html(header + form + footer);
 
-    rootElement.on('click', '.btn.save', function() {
+    rootElement.find('input[type="checkbox"]').on('change', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.setToBeRemoved(eventTarget.attr('checked') === 'checked');
+    });
+
+    rootElement.find('.pointasset button.save').on('click', function() {
       selectedAsset.save();
+    });
+
+    rootElement.find('.pointasset button.cancel').on('click', function() {
+      selectedAsset.cancel();
     });
   }
 
