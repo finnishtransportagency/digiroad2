@@ -11,6 +11,8 @@
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var assetLayer = new OpenLayers.Layer.Boxes('pedestrianCrossing');
 
+    var vectorLayer = new OpenLayers.Layer.Vector('pedestrian');
+
     function mouseMoveHandler(marker, event) {
       var pixel = new OpenLayers.Pixel(event.xy.x, event.xy.y);
       var lonlat = map.getLonLatFromPixel(pixel);
@@ -45,15 +47,15 @@
     }
 
     function createFeature(asset) {
-      var bounds = OpenLayers.Bounds.fromArray([asset.lon, asset.lat, asset.lon + 15, asset.lat + 15]);
-      var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
-      var image = asset.floating ? 'point_red.svg' : 'point_blue.svg';
-      $(box.div)
-        .css('overflow', 'visible !important')
-        .css('background-image', 'url(./images/point-assets/' + image + ')');
-      box.events.register('click', box, clickHandler);
-      box.asset = asset;
-      return box;
+      var graphics = {
+        externalGraphic: 'images/point-assets/point_blue.svg',
+        graphicWidth: 14,
+        graphicHeight: 14,
+        graphicXOffset: -7,
+        graphicYOffset: -7
+      };
+
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), null, graphics);
     }
 
     this.removeLayerFeatures = function() {
@@ -65,8 +67,7 @@
       collection.fetch(map.getExtent()).then(function(assets) {
         me.removeLayerFeatures();
         _.each(assets, function(asset) {
-          var box = createFeature(asset);
-          assetLayer.addMarker(box);
+          vectorLayer.addFeatures(createFeature(asset));
         });
         decorateMarkers();
       });
@@ -145,7 +146,7 @@
       };
 
       selectedAsset.place(crossing);
-      assetLayer.addMarker(createFeature(crossing));
+      vectorLayer.addFeatures(createFeature(crossing));
       eventbus.trigger('pedestrianCrossing:opened');
     }
 
@@ -159,11 +160,13 @@
     function show(map) {
       redrawLinks(map);
       map.addLayer(assetLayer);
+      map.addLayer(vectorLayer);
       me.show(map);
     }
 
     function hide() {
       map.removeLayer(assetLayer);
+      map.removeLayer(vectorLayer);
       roadLayer.clear();
     }
 
