@@ -64,6 +64,7 @@
     return '' +
       '<div class="wrapper">' +
       '  <div class="form form-horizontal form-dark form-pointasset">' +
+          renderFloatingNotification(asset.floating) +
       '    <div class="form-group">' +
       '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
       '    </div>' +
@@ -86,5 +87,16 @@
       '  <button class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+  }
+
+  function renderFloatingNotification(floating) {
+    if (floating) {
+      return '' +
+        '<div class="form-group form-notification">' +
+        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa suojatien sijainti</p>> ' +
+        '</div>';
+    } else {
+      return '';
+    }
   }
 })(this);
