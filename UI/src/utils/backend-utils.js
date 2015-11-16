@@ -267,7 +267,7 @@
     };
 
     this.getFloatinPedestrianCrossings = function() {
-      return $.getJSON('api/pedestrianCrossings/floating');
+      return $.getJSON('api/pointassets/floating');
     };
 
     this.createAsset = function (data, errorCallback) {

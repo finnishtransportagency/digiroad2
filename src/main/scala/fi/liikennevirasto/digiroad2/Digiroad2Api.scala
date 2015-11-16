@@ -610,6 +610,15 @@ with GZipSupport {
     pedestrianCrossingService.getByBoundingBox(user, bbox)
   }
 
+  get("/pointassets/floating") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
+  }
+
   delete("/pointassets/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong

@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{TimeStamps, RoadLinkStop, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{Unknown, TimeStamps, RoadLinkStop, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossingToBePersisted, OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 trait FloatingAsset {
@@ -65,6 +66,33 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
       }
 
       assetsBeforeUpdate.map(_.asset)
+    }
+  }
+
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
+
+    withDynSession {
+      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
+      val allFloatingAssetsQuery = s"""
+        select a.id, m.name_fi, lrm.mml_id
+        from asset a
+        join municipality m on a.municipality_code = m.id
+        join asset_link al on a.id = al.asset_id
+        join lrm_position lrm on al.position_id = lrm.id
+        where asset_type_id = $typeId and floating = '1'"""
+
+      val sql = optionalMunicipalities match {
+        case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
+        case _ => allFloatingAssetsQuery
+      }
+
+      val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
+      val administrativeClasses = roadLinkService.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
+      result.map { x => FloatingAsset(x._1, x._2, administrativeClasses.getOrElse(x._3, Unknown).toString) }
+        .groupBy(_.municipality)
+        .mapValues { _.groupBy(_.administrativeClass)
+        .mapValues(_.map(_.id)) }
     }
   }
 
