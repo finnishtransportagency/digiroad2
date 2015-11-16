@@ -28,6 +28,7 @@
       map.events.unregister('mousemove', map, mouseMoveHandler);
       map.events.unregister('mouseup', assetLayer, mouseUpHandler);
     }
+
     function mouseDownHandler(event) {
       OpenLayers.Event.stop(event);
 
@@ -35,6 +36,7 @@
       map.events.register('mousemove', map, mouseMoveFn);
       map.events.register('mouseup', assetLayer, _.partial(mouseUpHandler, mouseMoveFn));
     }
+
     function clickHandler(e) {
       var feature = e.object;
       selectedAsset.open(feature.asset);
@@ -102,9 +104,9 @@
       return selectedAsset.getId() === asset.id;
     }
 
-
     this.activateSelection = function() {
     };
+
     this.deactivateSelection = function() {
     };
 
@@ -159,10 +161,12 @@
       map.addLayer(assetLayer);
       me.show(map);
     }
+
     function hide() {
       map.removeLayer(assetLayer);
       roadLayer.clear();
     }
+
     return {
       show: show,
       hide: hide
