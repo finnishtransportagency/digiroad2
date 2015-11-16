@@ -505,7 +505,8 @@ var URLRouter = function(map, backend, models) {
         roadCollection: models.roadCollection,
         collection: models.pedestrianCrossingCollection,
         map: map,
-        selectedAsset: models.selectedPedestrianCrossing
+        selectedAsset: models.selectedPedestrianCrossing,
+        style: PointAssetStyle()
       }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),

@@ -4,12 +4,13 @@
       collection = params.collection,
       map = params.map,
       roadCollection = params.roadCollection,
+      style = params.style,
       selectedAsset = params.selectedAsset;
 
     Layer.call(this, 'pedestrianCrossing', roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-    var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing');
+    var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing', { styleMap: style.browsing });
 
     defineOpenLayersSelectControl();
 
@@ -63,15 +64,7 @@
     }
 
     function createFeature(asset) {
-      var graphics = {
-        externalGraphic: 'images/point-assets/point_blue.svg',
-        graphicWidth: 14,
-        graphicHeight: 14,
-        graphicXOffset: -7,
-        graphicYOffset: -7
-      };
-
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset, graphics);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset);
     }
 
     this.refreshView = function() {
