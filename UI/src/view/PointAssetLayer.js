@@ -12,20 +12,24 @@
     var assetLayer = new OpenLayers.Layer.Boxes('pedestrianCrossing');
     var vectorLayer = new OpenLayers.Layer.Vector('pedestrian');
 
-    me.selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-      onSelect: pointAssetOnSelect,
-      onUnselect: pointAssetOnUnselect
-    });
-    map.addControl(me.selectControl);
+    defineOpenLayersSelectControl();
+
+    function defineOpenLayersSelectControl() {
+      me.selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+        onSelect: pointAssetOnSelect,
+        onUnselect: pointAssetOnUnselect
+      });
+      map.addControl(me.selectControl);
+    }
 
     function pointAssetOnSelect(feature) {
       console.log('Selecting feature: ', feature);
       selectedAsset.open(feature.attributes);
-    };
+    }
 
     function pointAssetOnUnselect() {
       console.log('Feature unselected');
-    };
+    }
 
     function mouseMoveHandler(marker, event) {
       var pixel = new OpenLayers.Pixel(event.xy.x, event.xy.y);
