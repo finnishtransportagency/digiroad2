@@ -61,7 +61,14 @@
             eventbus.trigger('asset:updateFailed');
           });
       } else {
-        backend.createPointAsset(current);
+        backend.createPointAsset(current)
+          .done(function() {
+            eventbus.trigger('pedestrianCrossing:saved');
+            close();
+          })
+          .fail(function() {
+            eventbus.trigger('asset:creationFailed');
+          });
       }
     }
 
