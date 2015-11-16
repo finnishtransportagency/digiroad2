@@ -80,7 +80,7 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
         join municipality m on a.municipality_code = m.id
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
-        where asset_type_id = $typeId and floating = '1'"""
+        where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
 
       val sql = optionalMunicipalities match {
         case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
