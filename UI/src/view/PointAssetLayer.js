@@ -78,6 +78,10 @@
       });
     };
 
+    this.removeLayerFeatures = function() {
+      vectorLayer.removeAllFeatures();
+    };
+
     function decorateMarkers() {
       if (selectedAsset.exists()) {
         highlightSelected();
