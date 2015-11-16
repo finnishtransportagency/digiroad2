@@ -257,7 +257,7 @@ trait OracleLinearAssetDao {
 
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[VVHRoadLinkWithProperties]) = {
     val topology = filterSupportedLinks(roadLinks)
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createSpeedLimit(topology))
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
@@ -272,10 +272,11 @@ trait OracleLinearAssetDao {
     roadLinks.filter(isCarTrafficRoad)
   }
 
-  private def createSpeedLimit(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+  private def createGeometryForSegment(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.find(_.mmlId == mmlId).get
-    SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), Nil, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
+    SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
