@@ -9,8 +9,7 @@
     Layer.call(this, 'pedestrianCrossing', roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-    var assetLayer = new OpenLayers.Layer.Boxes('pedestrianCrossing');
-    var vectorLayer = new OpenLayers.Layer.Vector('pedestrian');
+    var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing');
 
     defineOpenLayersSelectControl();
 
@@ -39,14 +38,13 @@
       var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: lonlat.lon, y: lonlat.lat});
 
       marker.bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x + 15, position.y + 15]);
-      assetLayer.redraw();
 
       selectedAsset.place({ id: selectedAsset.getId(), lon: position.x, lat: position.y, mmlId: nearestLine.mmlId });
     }
 
     function mouseUpHandler(mouseMoveHandler, event) {
       map.events.unregister('mousemove', map, mouseMoveHandler);
-      map.events.unregister('mouseup', assetLayer, mouseUpHandler);
+      // map.events.unregister('mouseup', assetLayer, mouseUpHandler);
     }
 
     function mouseDownHandler(event) {
@@ -54,14 +52,14 @@
 
       var mouseMoveFn =  _.partial(mouseMoveHandler, event.object);
       map.events.register('mousemove', map, mouseMoveFn);
-      map.events.register('mouseup', assetLayer, _.partial(mouseUpHandler, mouseMoveFn));
+      // map.events.register('mouseup', assetLayer, _.partial(mouseUpHandler, mouseMoveFn));
     }
 
     function clickHandler(e) {
       var feature = e.object;
       selectedAsset.open(feature.asset);
       feature.events.unregister('click', feature, clickHandler);
-      feature.events.register('mousedown', assetLayer, mouseDownHandler);
+      // feature.events.register('mousedown', assetLayer, mouseDownHandler);
     }
 
     function createFeature(asset) {
@@ -75,10 +73,6 @@
 
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset, graphics);
     }
-
-    this.removeLayerFeatures = function() {
-      assetLayer.clearMarkers();
-    };
 
     this.refreshView = function() {
       redrawLinks(map);
@@ -100,23 +94,23 @@
     }
 
     function highlightSelected() {
-      var partitioned = _.groupBy(assetLayer.markers, function(marker) {
-        return isSelectedAsset(marker.asset);
-      });
-      var selected = partitioned[true];
-      var unSelected = partitioned[false];
+      // var partitioned = _.groupBy(assetLayer.markers, function(marker) {
+      //   return isSelectedAsset(marker.asset);
+      // });
+      // var selected = partitioned[true];
+      // var unSelected = partitioned[false];
+      var selected = [];
+      var unselected = [];
       setOpacityForMarkers(selected, '1.0');
       setOpacityForMarkers(unSelected, '0.3');
     }
 
     function unhighlightAll() {
-      setOpacityForMarkers(assetLayer.markers, '1.0');
+      // TODO: Implement using OpenLayers style maps or set feature opacities explicitly
     }
 
     function setOpacityForMarkers(markers, opacity) {
-      _.each(markers, function(marker) {
-        $(marker.div).css('opacity', opacity);
-      });
+      // TODO: Implement using OpenLayers style maps or set feature opacities explicitly
     }
 
     function isSelectedAsset(asset) {
@@ -171,13 +165,11 @@
 
     function show(map) {
       redrawLinks(map);
-      map.addLayer(assetLayer);
       map.addLayer(vectorLayer);
       me.show(map);
     }
 
     function hide() {
-      map.removeLayer(assetLayer);
       map.removeLayer(vectorLayer);
       me.stop();
       me.hide();
