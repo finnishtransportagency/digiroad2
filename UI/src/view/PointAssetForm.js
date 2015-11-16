@@ -48,7 +48,7 @@
         renderLinktoWorkList();
       }
       else {
-        $('#work-list-link').parent().remove();
+        $('#point-asset-work-list-link').parent().remove();
       }
     });
   }
@@ -110,11 +110,11 @@
   }
 
   function renderLinktoWorkList() {
-    var notRendered = !$('#work-list-link').length;
+    var notRendered = !$('#point-asset-work-list-link').length;
     if(notRendered) {
       $('#information-content').append('' +
         '<div class="form form-horizontal">' +
-        '<a id="work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
+        '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
         '</div>');
     }
   }
