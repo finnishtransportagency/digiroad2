@@ -170,6 +170,7 @@ class VVHClient(hostname: String) {
       "ROADNAME_SM",
       "ROADNAME_SE",
       "ROADNUMBER",
+      "ROADPARTNUMBER",
       "MINANLEFT",
       "MAXANLEFT",
       "MINANRIGHT",
