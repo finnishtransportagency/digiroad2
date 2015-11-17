@@ -19,9 +19,7 @@
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults(
       _.merge({}, defaultStyleParameters, { graphicOpacity: 0.3 })
     ));
-    var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults(
-      _.merge({}, defaultStyleParameters, { graphicOpacity: 0.9 })
-    ));
+    var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({ graphicOpacity: 0.9 }));
     selectionDefaultStyle.addRules(featureTypeRules);
     var selectionStyle = new OpenLayers.StyleMap({
       default: selectionDefaultStyle,
