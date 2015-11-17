@@ -75,9 +75,10 @@
       redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
         me.removeLayerFeatures();
-        _.each(assets, function(asset) {
-          vectorLayer.addFeatures(createFeature(asset));
+        var features = _.map(assets, function(asset) {
+          return createFeature(asset);
         });
+        vectorLayer.addFeatures(features);
         decorateMarkers();
       });
     };
