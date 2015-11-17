@@ -103,7 +103,7 @@
     if (floating) {
       return '' +
         '<div class="form-group form-notification">' +
-        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa suojatien sijainti</p>> ' +
+        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa suojatien sijainti</p>' +
         '</div>';
     } else {
       return '';
