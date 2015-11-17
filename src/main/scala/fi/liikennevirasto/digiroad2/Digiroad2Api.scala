@@ -611,7 +611,7 @@ with GZipSupport {
   }
 
   get("/pointassets/:id") {
-    pedestrianCrossingService.getPersistedAssetsByIds(Set(params("id").toLong)).head
+    pedestrianCrossingService.getById(params("id").toLong)
   }
 
   get("/pointassets/floating") {
