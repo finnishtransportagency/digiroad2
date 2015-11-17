@@ -153,6 +153,7 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
 
 case class PedestrianCrossing(id: Long,
                               mmlId: Long,
+                              municipalityCode: Int,
                               lon: Double,
                               lat: Double,
                               mValue: Double,
@@ -178,6 +179,7 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
     PedestrianCrossing(
       id = persistedAsset.id,
       mmlId = persistedAsset.mmlId,
+      municipalityCode = persistedAsset.municipalityCode,
       lon = persistedAsset.lon,
       lat = persistedAsset.lat,
       mValue = persistedAsset.mValue,

@@ -611,7 +611,10 @@ with GZipSupport {
   }
 
   get("/pointassets/:id") {
-    pedestrianCrossingService.getById(params("id").toLong)
+    val user = userProvider.getCurrentUser()
+    val asset = pedestrianCrossingService.getById(params("id").toLong)
+    validateUserMunicipalityAccess(user)(asset.municipalityCode)
+    asset
   }
 
   get("/pointassets/floating") {
