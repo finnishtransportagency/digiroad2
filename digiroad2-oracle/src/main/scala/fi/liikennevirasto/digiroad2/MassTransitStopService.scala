@@ -42,31 +42,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
   def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
-    case class FloatingStop(externalId: Long, municipality: String, administrativeClass: String)
-
-    withDynSession {
-      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-      val allFloatingAssetsQuery = """
-        select a.external_id, m.name_fi, lrm.mml_id
-        from asset a
-        join municipality m on a.municipality_code = m.id
-        join asset_link al on a.id = al.asset_id
-        join lrm_position lrm on al.position_id = lrm.id
-        where asset_type_id = 10 and floating = '1'
-      """
-
-      val sql = optionalMunicipalities match {
-        case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
-        case _ => allFloatingAssetsQuery
-      }
-
-      val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
-      val administrativeClasses = roadLinkService.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
-      result.map { x => FloatingStop(x._1, x._2, administrativeClasses.getOrElse(x._3, Unknown).toString) }
-        .groupBy(_.municipality)
-        .mapValues { _.groupBy(_.administrativeClass)
-                      .mapValues(_.map(_.externalId)) }
-    }
+    getFloatingAssets("external_id", includedMunicipalities)
   }
 
   def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {

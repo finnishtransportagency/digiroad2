@@ -69,13 +69,13 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
     }
   }
 
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  protected def getFloatingAssets(idField: String, includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
     case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
 
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val allFloatingAssetsQuery = s"""
-        select a.id, m.name_fi, lrm.mml_id
+        select a.$idField, m.name_fi, lrm.mml_id
         from asset a
         join municipality m on a.municipality_code = m.id
         join asset_link al on a.id = al.asset_id
@@ -197,6 +197,10 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
         OraclePedestrianCrossingDao.expire(id, username)
       id
     }
+  }
+
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    getFloatingAssets("id", includedMunicipalities)
   }
 
   def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
