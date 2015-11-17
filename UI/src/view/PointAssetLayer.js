@@ -25,10 +25,14 @@
     function pointAssetOnSelect(feature) {
       console.log('Selecting feature: ', feature);
       selectedAsset.open(feature.attributes);
+      vectorLayer.styleMap = style.selection;
+      vectorLayer.redraw();
     }
 
     function pointAssetOnUnselect() {
       console.log('Feature unselected');
+      vectorLayer.styleMap = style.browsing;
+      vectorLayer.redraw();
     }
 
     function mouseMoveHandler(marker, event) {
