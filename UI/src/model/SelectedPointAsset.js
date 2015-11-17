@@ -12,7 +12,8 @@
       isDirty: isDirty,
       cancel: cancel,
       close: close,
-      exists: exists
+      exists: exists,
+      isSelected: isSelected
     };
 
     function place(asset) {
@@ -75,6 +76,10 @@
     function close() {
       current = null;
       eventbus.trigger('pedestrianCrossing:unselected');
+    }
+
+    function isSelected(asset) {
+      return getId() === asset.id;
     }
   };
 })(this);

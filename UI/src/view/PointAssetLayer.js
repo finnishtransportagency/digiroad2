@@ -74,12 +74,14 @@
     this.refreshView = function() {
       redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
-        me.removeLayerFeatures();
+        withDeactivatedSelectControl(function() {
+          me.removeLayerFeatures();
+        });
         var features = _.map(assets, function(asset) {
           return createFeature(asset);
         });
         vectorLayer.addFeatures(features);
-        decorateMarkers();
+        applySelection();
       });
     };
 
@@ -87,12 +89,32 @@
       vectorLayer.removeAllFeatures();
     };
 
-    function decorateMarkers() {
+    function applySelection() {
       if (selectedAsset.exists()) {
-        highlightSelected();
-      } else {
-        unhighlightAll();
+        withoutOnSelect(function() {
+          var feature = _.find(vectorLayer.features, function(feature) { return selectedAsset.isSelected(feature.attributes); });
+          if (feature) {
+            me.selectControl.select(feature);
+          }
+        });
       }
+    }
+
+    function withDeactivatedSelectControl(f) {
+      var isActive = me.selectControl.active;
+      if (isActive) {
+        me.selectControl.deactivate();
+        f();
+        me.selectControl.activate();
+      } else {
+        f();
+      }
+    }
+
+    function withoutOnSelect(f) {
+      me.selectControl.onSelect = function() {};
+      f();
+      me.selectControl.onSelect = pointAssetOnSelect;
     }
 
     function highlightSelected() {
@@ -115,10 +137,6 @@
       // TODO: Implement using OpenLayers style maps or set feature opacities explicitly
     }
 
-    function isSelectedAsset(asset) {
-      return selectedAsset.getId() === asset.id;
-    }
-
     this.layerStarted = function(eventListener) {
       bindEvents(eventListener);
     };
@@ -126,8 +144,8 @@
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateMarkers);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', decorateMarkers);
+      // eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateFeatures);
+      // eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', decorateFeatures);
     }
 
     function handleMapClick(coordinates) {
