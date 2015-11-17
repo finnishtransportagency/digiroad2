@@ -190,6 +190,8 @@
     }
 
     function hide() {
+      me.selectControl.unselectAll();
+      vectorLayer.styleMap = style.browsing;
       map.removeLayer(vectorLayer);
       me.stop();
       me.hide();
