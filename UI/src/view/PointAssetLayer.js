@@ -29,8 +29,7 @@
 
     function pointAssetOnUnselect() {
       console.log('Feature unselected');
-      vectorLayer.styleMap = style.browsing;
-      vectorLayer.redraw();
+      selectedAsset.close();
     }
 
     function mouseMoveHandler(marker, event) {
@@ -144,7 +143,7 @@
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       // eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateFeatures);
-      // eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', decorateFeatures);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
     }
 
     function handleSelected() {
@@ -162,6 +161,14 @@
       } else {
         selectedAsset.close();
       }
+    }
+
+    function handleUnSelected() {
+      withoutOnSelect(function() {
+        me.selectControl.unselectAll();
+      });
+      vectorLayer.styleMap = style.browsing;
+      vectorLayer.redraw();
     }
 
     function createNewAsset(coordinates) {
@@ -195,8 +202,7 @@
     }
 
     function hide() {
-      me.selectControl.unselectAll();
-      vectorLayer.styleMap = style.browsing;
+      selectedAsset.close();
       map.removeLayer(vectorLayer);
       me.stop();
       me.hide();
