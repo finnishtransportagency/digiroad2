@@ -1,13 +1,13 @@
 (function(root) {
-  root.PointAssetBox = function() {
+  root.PointAssetBox = function(selectedPedestrianCrossing) {
     var title = 'Suojatie';
     var layerName = 'pedestrianCrossing';
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group simple-limit ' + className + 's"></div>').hide();
 
     var toolSelection = new ActionPanelBoxes.ToolSelection([
-      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, undefined),
-      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, undefined)
+      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPedestrianCrossing),
+      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, selectedPedestrianCrossing)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
