@@ -119,7 +119,7 @@
 
         function createValidityPeriodElement() {
           var validityPeriodItems = _(prohibition.validityPeriods)
-            .sortBy(dayOrder)
+            .sortByAll(dayOrder, 'startHour', 'endHour')
             .map(function (period) {
               var dayName = dayLabels[period.days];
               return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
@@ -186,7 +186,7 @@
       function validityPeriodsElement() {
         var existingValidityPeriodElements =
           _(prohibition.validityPeriods)
-            .sortBy(dayOrder)
+            .sortByAll(dayOrder, 'startHour', 'endHour')
             .map(validityPeriodElement)
             .join('');
 
@@ -420,7 +420,6 @@
       Saturday: 1,
       Sunday: 2
     };
-
-    return days[period.days] + '-' + period.startHour;
+    return days[period.days];
   }
 })(this);
