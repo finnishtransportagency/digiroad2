@@ -25,8 +25,6 @@
     function pointAssetOnSelect(feature) {
       console.log('Selecting feature: ', feature);
       selectedAsset.open(feature.attributes);
-      vectorLayer.styleMap = style.selection;
-      vectorLayer.redraw();
     }
 
     function pointAssetOnUnselect() {
@@ -151,7 +149,8 @@
 
     function handleSelected() {
       vectorLayer.styleMap = style.selection;
-      me.refreshView();
+      applySelection();
+      vectorLayer.redraw();
     }
 
     function handleMapClick(coordinates) {
