@@ -13,7 +13,7 @@
     var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing', { styleMap: style.browsing });
 
     defineOpenLayersSelectControl();
-
+    defineOpenLayersDragControl();
     function defineOpenLayersSelectControl() {
       me.selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
         onSelect: pointAssetOnSelect,
@@ -30,6 +30,12 @@
     function pointAssetOnUnselect() {
       console.log('Feature unselected');
       selectedAsset.close();
+    }
+
+    function defineOpenLayersDragControl() {
+      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer);
+      map.addControl(dragControl);
+      dragControl.activate();
     }
 
     function mouseMoveHandler(marker, event) {
