@@ -26,7 +26,7 @@
     };
   };
 
-  var ToolSelection = function(selectedSpeedLimit, tools) {
+  var ToolSelection = function(tools) {
     var element = $('<div class="panel-section panel-actions" />');
     _.each(tools, function(tool) {
       element.append(tool.element);
@@ -95,7 +95,7 @@
       expanded: $(expandedTemplate)
     };
 
-    var toolSelection = new ToolSelection(selectedSpeedLimit, [new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
+    var toolSelection = new ToolSelection([new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindExternalEventHandlers = function() {
