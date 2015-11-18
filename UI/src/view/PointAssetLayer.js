@@ -33,9 +33,15 @@
     }
 
     function defineOpenLayersDragControl() {
-      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer);
+      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: handleDragging });
       map.addControl(dragControl);
       dragControl.activate();
+      function handleDragging(feature){
+        var currentPosition = feature.geometry;
+        var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentPosition.x, currentPosition.y);
+        var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentPosition.x, y: currentPosition.y});
+        feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
+      }
     }
 
     function mouseMoveHandler(marker, event) {
