@@ -35,17 +35,17 @@
       map.addControl(dragControl);
 
       function allowClickEventBubbling() {
-        dragControl.handlers['feature'].stopClick = false;
+        dragControl.handlers.feature.stopClick = false;
       }
 
-      function enableDragging(feature){
+      function enableDragging(feature) {
         var isSelected = selectedAsset.getId() === feature.attributes.id;
         if (!isSelected) {
           this.cancel();
         }
       }
 
-      function handleDragging(feature, mousePosition){
+      function handleDragging(feature, mousePosition) {
         var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
         var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
         var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
