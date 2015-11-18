@@ -23,12 +23,10 @@
     }
 
     function pointAssetOnSelect(feature) {
-      console.log('Selecting feature: ', feature);
       selectedAsset.open(feature.attributes);
     }
 
     function pointAssetOnUnselect() {
-      console.log('Feature unselected');
       selectedAsset.close();
     }
 
