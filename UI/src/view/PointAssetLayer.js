@@ -44,38 +44,6 @@
       }
     }
 
-    function mouseMoveHandler(marker, event) {
-      var pixel = new OpenLayers.Pixel(event.xy.x, event.xy.y);
-      var lonlat = map.getLonLatFromPixel(pixel);
-
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), lonlat.lon, lonlat.lat);
-      var position = geometrycalculator.nearestPointOnLine(nearestLine, { x: lonlat.lon, y: lonlat.lat});
-
-      marker.bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x + 15, position.y + 15]);
-
-      selectedAsset.place({ id: selectedAsset.getId(), lon: position.x, lat: position.y, mmlId: nearestLine.mmlId });
-    }
-
-    function mouseUpHandler(mouseMoveHandler, event) {
-      map.events.unregister('mousemove', map, mouseMoveHandler);
-      // map.events.unregister('mouseup', assetLayer, mouseUpHandler);
-    }
-
-    function mouseDownHandler(event) {
-      OpenLayers.Event.stop(event);
-
-      var mouseMoveFn =  _.partial(mouseMoveHandler, event.object);
-      map.events.register('mousemove', map, mouseMoveFn);
-      // map.events.register('mouseup', assetLayer, _.partial(mouseUpHandler, mouseMoveFn));
-    }
-
-    function clickHandler(e) {
-      var feature = e.object;
-      selectedAsset.open(feature.asset);
-      feature.events.unregister('click', feature, clickHandler);
-      // feature.events.register('mousedown', assetLayer, mouseDownHandler);
-    }
-
     function createFeature(asset) {
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset);
     }
