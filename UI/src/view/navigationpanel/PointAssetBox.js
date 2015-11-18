@@ -31,6 +31,7 @@
 
     function hide() {
       element.hide();
+      editModeToggle.reset();
     }
   };
 })(this);
