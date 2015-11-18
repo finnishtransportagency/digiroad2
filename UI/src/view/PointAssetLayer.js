@@ -29,24 +29,12 @@
       selectedAsset.close();
     }
 
-    function defineOpenLayersMousePositionControl() {
-      var mapMousePosition = new OpenLayers.Control.MousePosition({
-        displayProjection: new OpenLayers.Projection("EPSG:4326")
-      });
-      map.addControl(mapMousePosition);
-      return mapMousePosition;
-    }
-
-    var mapMousePosition = defineOpenLayersMousePositionControl();
-
     function defineOpenLayersDragControl() {
       var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: handleDragging });
       map.addControl(dragControl);
       dragControl.activate();
-      function handleDragging(feature){
-        var last_x = mapMousePosition.lastXy.x;
-        var last_y = mapMousePosition.lastXy.y;
-        var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(last_x, last_y));
+      function handleDragging(feature, mousePosition){
+        var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
         var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
         var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
         feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
