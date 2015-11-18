@@ -146,10 +146,10 @@
     }
   };
 
-  ActionPanelBoxes.AssetBox = function() {
+  ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
-      new Tool('Select', selectToolIcon, undefined),
-      new Tool('Add', addToolIcon, undefined)
+      new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
+      new Tool('Add', addToolIcon, selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);

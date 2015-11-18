@@ -608,7 +608,7 @@ var URLRouter = function(map, backend, models) {
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
-    var assetGroups = groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit);
+    var assetGroups = groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit, selectedMassTransitStopModel);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
       onSelect: function(layerName) {
@@ -643,9 +643,9 @@ var URLRouter = function(map, backend, models) {
     });
   };
 
-  function groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit) {
+  function groupAssets(linearAssets, linkPropertiesModel, selectedSpeedLimit, selectedMassTransitStopModel) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
-    var massTransitBox = new ActionPanelBoxes.AssetBox();
+    var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var pedestrianCrossingBox = PointAssetBox();
