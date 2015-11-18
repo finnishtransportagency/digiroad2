@@ -12,7 +12,6 @@
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing', { styleMap: style.browsing });
     defineOpenLayersSelectControl();
-    defineOpenLayersDragControl();
     function defineOpenLayersSelectControl() {
       me.selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
         onSelect: pointAssetOnSelect,
@@ -29,16 +28,30 @@
       selectedAsset.close();
     }
 
+    var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
-      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: handleDragging });
+      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onStart: enableDragging, onDrag: handleDragging });
+      allowClickEventBubbling();
       map.addControl(dragControl);
-      dragControl.activate();
+
+      function allowClickEventBubbling() {
+        dragControl.handlers['feature'].stopClick = false;
+      }
+
+      function enableDragging(feature){
+        var isSelected = selectedAsset.getId() === feature.attributes.id;
+        if (!isSelected) {
+          this.cancel();
+        }
+      }
+
       function handleDragging(feature, mousePosition){
         var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
         var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
         var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
         feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
       }
+      return dragControl;
     }
 
     function createFeature(asset) {
@@ -115,12 +128,21 @@
       bindEvents(eventListener);
     };
 
+    function toggleMode(readOnly) {
+      if(readOnly){
+        dragControl.deactivate();
+      } else {
+        dragControl.activate();
+      }
+    }
+
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       // eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateFeatures);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
+      eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
 
     function handleSelected() {
