@@ -95,7 +95,10 @@
       expanded: $(expandedTemplate)
     };
 
-    var toolSelection = new ToolSelection([new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon, selectedSpeedLimit),
+      new Tool('Cut', cutToolIcon, selectedSpeedLimit)
+    ]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindExternalEventHandlers = function() {
@@ -144,6 +147,12 @@
   };
 
   ActionPanelBoxes.AssetBox = function() {
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon, undefined),
+      new Tool('Add', addToolIcon, undefined)
+    ]);
+
+    var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var roadTypeLegend = [
         '  <div class="panel-section panel-legend road-link-legend">',
@@ -194,87 +203,13 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
-      '  <div class="panel-section">',
-      '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
-      '  </div>',
-      '</div>'].join('');
-
-    var editModeTemplate = [
-      '<div class="panel">',
-      '  <header class="panel-header edit">',
-      '    Joukkoliikenteen pysäkki',
-      '  </header>',
-      '  <div class="panel-section">',
-      '    <div class="checkbox">',
-      '      <label>',
-      '        <input name="current" type="checkbox" checked> Voimassaolevat',
-      '      </label>',
-      '    </div>',
-      '    <div class="checkbox">',
-      '      <label>',
-      '        <input name="future" type="checkbox"> Tulevat',
-      '      </label>',
-      '    </div>',
-      '    <div class="checkbox">',
-      '      <label>',
-      '        <input name="past" type="checkbox"> K&auml;yt&ouml;st&auml; poistuneet',
-      '      </label>',
-      '    </div>',
-      '    <div class="checkbox road-type-checkbox">',
-      '      <label>',
-      '        <input name="road-types" type="checkbox"> Hallinnollinen luokka',
-      '      </label>',
-      '    </div>',
-      '  </div>',
-      roadTypeLegend,
-      '  <div class="panel-section panel-actions">',
-      '    <div data-action="Select" class="action select active">',
-      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>',
-      '    </div>',
-      '    <div data-action="Add" class="action add">',
-      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-add" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><polygon class="shape" points="19,12 14,12 14,7 12,7 12,12 7,12 7,14 12,14 12,19 14,19 14,14 19,14 "/></svg>',
-      '    </div>',
-      '  </div>',
-      '  <div class="panel-section">',
-      '    <button class="action-mode-btn read-only-btn btn btn-secondary btn-block" style="display: none;">Siirry katselutilaan</button>',
-      '  </div>',
       '</div>'].join('');
 
     var elements = {
-      expanded: $(expandedTemplate),
-      editMode: $(editModeTemplate).hide()
+      expanded: $(expandedTemplate).append(toolSelection.element).append(editModeToggle.element)
     };
-    var actionButtons = elements.editMode.find('.panel-actions .action');
 
     var bindDOMEventHandlers = function() {
-      elements.expanded.find('button.edit-mode-btn').click(function() {
-        elements.expanded.hide();
-        elements.editMode.show();
-        applicationModel.setReadOnly(false);
-      });
-
-      elements.editMode.find('button.read-only-btn').click(function() {
-        executeOrShowConfirmDialog(function() {
-          elements.editMode.hide();
-          elements.expanded.show();
-          actionButtons.removeClass('active');
-          actionButtons.filter('.select').addClass('active');
-          applicationModel.setReadOnly(true);
-        });
-      });
-
-      actionButtons.on('click', function(event) {
-        executeOrShowConfirmDialog(function() {
-          var el = $(event.currentTarget);
-          var action = el.attr('data-action');
-
-          actionButtons.removeClass('active');
-          el.addClass('active');
-
-          applicationModel.setSelectedTool(action);
-        });
-      });
-
       var validityPeriodChangeHandler = function(event) {
         executeOrShowConfirmDialog(function() {
           var el = $(event.currentTarget);
@@ -284,20 +219,13 @@
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
-      elements.editMode.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
       elements.expanded.find('.checkbox').find('input[type=checkbox]').click(function(event) {
-        if (applicationModel.isDirty()) {
-          event.preventDefault();
-        }
-      });
-      elements.editMode.find('.checkbox').find('input[type=checkbox]').click(function(event) {
         if (applicationModel.isDirty()) {
           event.preventDefault();
         }
       });
 
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
-      var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
 
       var roadTypeSelected = function(e) {
         var checked = e.currentTarget.checked;
@@ -305,17 +233,13 @@
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
-      editModeRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
     var toggleRoadType = function(bool) {
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
-      var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
 
       elements.expanded.find('.road-link-legend').toggle(bool);
-      elements.editMode.find('.road-link-legend').toggle(bool);
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
-      editModeRoadTypeCheckboxSelector.prop("checked", bool);
     };
 
     var bindExternalEventHandlers = function() {
@@ -324,8 +248,7 @@
           $(el).prop('checked', validityPeriods[el.name]);
         };
 
-        var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'))
-                           .concat($.makeArray(elements.editMode.find('input[type=checkbox]')));
+        var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'));
         _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, assetsModel.getValidityPeriods()));
       });
 
@@ -336,7 +259,6 @@
       eventbus.on('roles:fetched', function(roles) {
         if (!_.contains(roles, 'viewer')) {
           elements.expanded.find('.action-mode-btn').show();
-          elements.editMode.find('.action-mode-btn').show();
         }
       });
 
@@ -351,7 +273,6 @@
 
     var element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.expanded)
-      .append(elements.editMode)
       .hide();
 
     function show() {
@@ -359,11 +280,7 @@
     }
 
     function hide() {
-      elements.editMode.hide();
-      elements.expanded.show();
-      actionButtons.removeClass('active');
-      actionButtons.filter('.select').addClass('active');
-      applicationModel.setReadOnly(true);
+      editModeToggle.reset();
       element.hide();
     }
 

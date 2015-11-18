@@ -144,6 +144,7 @@
       data.group.moved = true;
     };
 
+    // TODO: Can we remove this? Deselect should occur after model close...
     eventbus.on('tool:changed', deselect);
 
     var finalizeMove = function(asset) {
