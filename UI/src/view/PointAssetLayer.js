@@ -144,8 +144,14 @@
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       // eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateFeatures);
       // eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', decorateFeatures);
+    }
+
+    function handleSelected() {
+      vectorLayer.styleMap = style.selection;
+      me.refreshView();
     }
 
     function handleMapClick(coordinates) {
