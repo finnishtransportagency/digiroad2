@@ -107,26 +107,6 @@
       me.selectControl.onSelect = pointAssetOnSelect;
     }
 
-    function highlightSelected() {
-      // var partitioned = _.groupBy(assetLayer.markers, function(marker) {
-      //   return isSelectedAsset(marker.asset);
-      // });
-      // var selected = partitioned[true];
-      // var unSelected = partitioned[false];
-      var selected = [];
-      var unselected = [];
-      setOpacityForMarkers(selected, '1.0');
-      setOpacityForMarkers(unselected, '0.3');
-    }
-
-    function unhighlightAll() {
-      // TODO: Implement using OpenLayers style maps or set feature opacities explicitly
-    }
-
-    function setOpacityForMarkers(markers, opacity) {
-      // TODO: Implement using OpenLayers style maps or set feature opacities explicitly
-    }
-
     this.layerStarted = function(eventListener) {
       bindEvents(eventListener);
     };
@@ -144,7 +124,6 @@
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:cancelled', me.refreshView);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
-      // eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', decorateFeatures);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
