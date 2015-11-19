@@ -64,15 +64,22 @@
     }
 
     this.refreshView = function() {
-      redrawLinks(map);
-      collection.fetch(map.getExtent()).then(function(assets) {
+      console.log("PointAssetLayer.refreshView()")
+      if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+        redrawLinks(map);
+        collection.fetch(map.getExtent()).then(function(assets) {
+          withDeactivatedSelectControl(function() {
+            me.removeLayerFeatures();
+          });
+          var features = _.map(assets, createFeature);
+          vectorLayer.addFeatures(features);
+          applySelection();
+        });
+      } else {
         withDeactivatedSelectControl(function() {
           me.removeLayerFeatures();
         });
-        var features = _.map(assets, createFeature);
-        vectorLayer.addFeatures(features);
-        applySelection();
-      });
+      }
     };
 
     this.removeLayerFeatures = function() {
@@ -219,7 +226,8 @@
 
     return {
       show: show,
-      hide: hide
+      hide: hide,
+      minZoomForContent: me.minZoomForContent
     };
   };
 })(this);
