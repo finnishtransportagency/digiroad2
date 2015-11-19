@@ -161,7 +161,7 @@
     }
 
     function handleMapClick(coordinates) {
-      if (applicationModel.getSelectedTool() === 'Add') {
+      if (applicationModel.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
         createNewAsset(map.getLonLatFromPixel(pixel));
       } else if (selectedAsset.isDirty()) {
