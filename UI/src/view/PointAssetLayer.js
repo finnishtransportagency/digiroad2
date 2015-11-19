@@ -121,10 +121,11 @@
 
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', me.refreshView);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:cancelled', me.refreshView);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', handleSavedOrCancelled);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
 
@@ -132,6 +133,15 @@
       vectorLayer.styleMap = style.selection;
       applySelection();
       vectorLayer.redraw();
+    }
+
+    function handleSavedOrCancelled() {
+      me.activateSelection();
+      me.refreshView();
+    }
+
+    function handleChanged() {
+      me.deactivateSelection();
     }
 
     function handleMapClick(coordinates) {
