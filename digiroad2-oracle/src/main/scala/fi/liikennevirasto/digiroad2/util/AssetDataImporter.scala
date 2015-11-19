@@ -302,6 +302,7 @@ class AssetDataImporter {
       150 -> "congestion_tendency",
       170 -> "traffic_volumes",
       140 -> "number_of_lanes",
+      180 -> "speed_limits_during_winter",
       160 -> "mass_transit_lanes")
 
     assetNames.foreach { case(assetTypeId, assetName) =>
