@@ -150,9 +150,7 @@
         createNewAsset(map.getLonLatFromPixel(pixel));
       } else if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
-      } else {
-        selectedAsset.close();
-      }
+      } 
     }
 
     function handleUnSelected() {
