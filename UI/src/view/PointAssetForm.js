@@ -22,7 +22,7 @@
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
-    eventbus.on('pedestrianCrossing:unselected', function() {
+    eventbus.on('pedestrianCrossing:unselected pedestrianCrossing:creationCancelled', function() {
       rootElement.empty();
     });
 

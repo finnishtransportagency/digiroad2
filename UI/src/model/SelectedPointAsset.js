@@ -38,9 +38,19 @@
     }
 
     function cancel() {
+      if (isNew()) {
+        reset();
+        eventbus.trigger('pedestrianCrossing:creationCancelled');
+      } else {
+        dirty = false;
+        current = originalAsset;
+        eventbus.trigger('pedestrianCrossing:cancelled');
+      }
+    }
+
+    function reset() {
       dirty = false;
-      current = originalAsset;
-      eventbus.trigger('pedestrianCrossing:cancelled');
+      current = null;
     }
 
     function getId() {
@@ -89,8 +99,7 @@
     }
 
     function close() {
-      current = null;
-      dirty = false;
+      reset();
       eventbus.trigger('pedestrianCrossing:unselected');
     }
 

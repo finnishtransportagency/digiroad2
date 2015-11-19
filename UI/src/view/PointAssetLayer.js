@@ -107,6 +107,12 @@
       me.selectControl.onSelect = pointAssetOnSelect;
     }
 
+    function withoutOnUnselect(f) {
+      me.selectControl.onUnselect = function() {};
+      f();
+      me.selectControl.onUnselect = pointAssetOnUnselect;
+    }
+
     this.layerStarted = function(eventListener) {
       bindEvents(eventListener);
     };
@@ -122,10 +128,20 @@
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:saved pedestrianCrossing:cancelled', handleSavedOrCancelled);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:creationCancelled', handleCreationCancelled);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+    }
+
+    function handleCreationCancelled() {
+      withoutOnUnselect(function() {
+        me.selectControl.unselectAll();
+      });
+      mapOverlay.hide();
+      vectorLayer.styleMap = style.browsing;
+      me.refreshView();
     }
 
     function handleSelected() {
