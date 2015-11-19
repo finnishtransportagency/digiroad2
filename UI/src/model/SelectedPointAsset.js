@@ -2,6 +2,7 @@
   root.SelectedPointAsset = function(backend, collection) {
     var current = null;
     var dirty = false;
+    var originalAsset;
     return {
       open: open,
       getId: getId,
@@ -23,13 +24,14 @@
     }
 
     function open(asset) {
+      originalAsset = asset;
       current = asset;
       eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function cancel() {
       dirty = false;
-      current.toBeDeleted = false;
+      current = originalAsset;
       eventbus.trigger('pedestrianCrossing:cancelled');
     }
 
