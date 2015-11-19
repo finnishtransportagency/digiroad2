@@ -64,7 +64,6 @@
     }
 
     this.refreshView = function() {
-      console.log("PointAssetLayer.refreshView()")
       if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         redrawLinks(map);
         collection.fetch(map.getExtent()).then(function(assets) {
