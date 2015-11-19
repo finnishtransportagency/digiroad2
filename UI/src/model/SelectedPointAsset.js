@@ -11,6 +11,7 @@
       save: save,
       setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
+      isNew: isNew,
       cancel: cancel,
       close: close,
       exists: exists,
@@ -20,7 +21,7 @@
     function place(asset) {
       dirty = true;
       current = asset;
-      eventbus.trigger('pedestrianCrossing:changed');
+      eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function open(asset) {
@@ -55,6 +56,10 @@
 
     function isDirty() {
       return dirty;
+    }
+
+    function isNew() {
+      return getId() === 0;
     }
 
     function save() {

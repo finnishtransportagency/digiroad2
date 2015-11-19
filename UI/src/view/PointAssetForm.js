@@ -12,14 +12,10 @@
     }
     eventbus.on('application:readOnly', toggleMode);
 
-    eventbus.on('pedestrianCrossing:opened', function() {
-      renderForm(rootElement, selectedAsset);
-      enableSaving(rootElement);
-    });
-    
     eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
       renderForm(rootElement, selectedAsset);
       toggleMode(applicationModel.isReadOnly());
+      rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
     eventbus.on('pedestrianCrossing:changed', function() {
@@ -47,9 +43,9 @@
   function renderForm(rootElement, selectedAsset) {
     var id = selectedAsset.getId();
 
-    var title = id === undefined ? "Uusi suojatie" : 'ID: ' + id;
+    var title = selectedAsset.isNew() ? "Uusi suojatie" : 'ID: ' + id;
     var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-    var form = renderMeta(selectedAsset.asset());
+    var form = renderMeta(selectedAsset);
     var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
@@ -68,8 +64,9 @@
     });
   }
 
-  function renderMeta(asset) {
-    if (asset.id === undefined) return '';
+  function renderMeta(selectedAsset) {
+    var asset = selectedAsset.asset();
+    if (selectedAsset.isNew()) return '';
 
     return '' +
       '<div class="wrapper">' +

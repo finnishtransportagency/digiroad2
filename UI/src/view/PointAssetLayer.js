@@ -170,12 +170,12 @@
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
         floating: false,
-        mmlId: nearestLine.mmlId
+        mmlId: nearestLine.mmlId,
+        id: 0
       };
 
-      selectedAsset.place(crossing);
       vectorLayer.addFeatures(createFeature(crossing));
-      eventbus.trigger('pedestrianCrossing:opened');
+      selectedAsset.place(crossing);
     }
 
     function redrawLinks(map) {
