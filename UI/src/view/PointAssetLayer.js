@@ -64,21 +64,17 @@
     }
 
     this.refreshView = function() {
-      if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-        redrawLinks(map);
-        collection.fetch(map.getExtent()).then(function(assets) {
+      redrawLinks(map);
+      collection.fetch(map.getExtent()).then(function(assets) {
+        if (me.isStarted()) {
           withDeactivatedSelectControl(function() {
             me.removeLayerFeatures();
           });
           var features = _.map(assets, createFeature);
           vectorLayer.addFeatures(features);
           applySelection();
-        });
-      } else {
-        withDeactivatedSelectControl(function() {
-          me.removeLayerFeatures();
-        });
-      }
+        }
+      });
     };
 
     this.removeLayerFeatures = function() {
