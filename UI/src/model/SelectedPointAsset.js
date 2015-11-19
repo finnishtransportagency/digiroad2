@@ -8,6 +8,7 @@
       getId: getId,
       asset: asset,
       place: place,
+      move: move,
       save: save,
       setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
@@ -22,6 +23,12 @@
       dirty = true;
       current = asset;
       eventbus.trigger('pedestrianCrossing:selected');
+    }
+
+    function move(asset) {
+      dirty = true;
+      current = asset;
+      eventbus.trigger('pedestrianCrossing:changed');
     }
 
     function open(asset) {

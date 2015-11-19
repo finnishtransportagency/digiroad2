@@ -50,11 +50,12 @@
           feature.attributes.lon = feature.geometry.x;
           feature.attributes.lat = feature.geometry.y;
           feature.attributes.mmlId = nearestLine.mmlId;
-          selectedAsset.place(feature.attributes);
+          selectedAsset.move(feature.attributes);
         } else {
           this.cancel();
         }
       }
+
       return dragControl;
     }
 
