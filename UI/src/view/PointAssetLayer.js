@@ -5,7 +5,8 @@
       map = params.map,
       roadCollection = params.roadCollection,
       style = params.style,
-      selectedAsset = params.selectedAsset;
+      selectedAsset = params.selectedAsset,
+      mapOverlay = params.mapOverlay;
 
     Layer.call(this, 'pedestrianCrossing', roadLayer);
     var me = this;
@@ -67,9 +68,7 @@
         withDeactivatedSelectControl(function() {
           me.removeLayerFeatures();
         });
-        var features = _.map(assets, function(asset) {
-          return createFeature(asset);
-        });
+        var features = _.map(assets, createFeature);
         vectorLayer.addFeatures(features);
         applySelection();
       });
@@ -176,6 +175,8 @@
 
       vectorLayer.addFeatures(createFeature(crossing));
       selectedAsset.place(crossing);
+
+      mapOverlay.show();
     }
 
     function redrawLinks(map) {
