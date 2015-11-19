@@ -121,8 +121,7 @@
 
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved', handleSavedOrCancelled);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:cancelled', handleSavedOrCancelled);
+      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved pedestrianCrossing:cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
       eventListener.listenTo(eventbus, 'pedestrianCrossing:changed', handleChanged);
@@ -150,7 +149,7 @@
         createNewAsset(map.getLonLatFromPixel(pixel));
       } else if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
-      } 
+      }
     }
 
     function handleUnSelected() {

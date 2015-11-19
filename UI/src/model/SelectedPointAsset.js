@@ -90,6 +90,7 @@
 
     function close() {
       current = null;
+      dirty = false;
       eventbus.trigger('pedestrianCrossing:unselected');
     }
 
