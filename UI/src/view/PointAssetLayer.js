@@ -134,6 +134,7 @@
     }
 
     function handleSavedOrCancelled() {
+      mapOverlay.hide();
       me.activateSelection();
       me.refreshView();
     }
