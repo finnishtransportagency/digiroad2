@@ -50,6 +50,11 @@
         var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
         var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
         feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
+
+        feature.attributes.lon = feature.geometry.x;
+        feature.attributes.lat = feature.geometry.y;
+        feature.attributes.mmlId = nearestLine.mmlId;
+        selectedAsset.place(feature.attributes);
       }
       return dragControl;
     }

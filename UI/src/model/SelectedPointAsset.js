@@ -1,7 +1,7 @@
 (function(root) {
   root.SelectedPointAsset = function(backend, collection) {
     var current = null;
-
+    var dirty = false;
     return {
       open: open,
       getId: getId,
@@ -17,7 +17,9 @@
     };
 
     function place(asset) {
+      dirty = true;
       current = asset;
+      eventbus.trigger('pedestrianCrossing:changed');
     }
 
     function open(asset) {
@@ -26,6 +28,7 @@
     }
 
     function cancel() {
+      dirty = false;
       current.toBeDeleted = false;
       eventbus.trigger('pedestrianCrossing:cancelled');
     }
@@ -43,17 +46,27 @@
     }
 
     function setToBeRemoved(toBeDeleted) {
+      dirty = true;
       current.toBeDeleted = toBeDeleted;
       eventbus.trigger('pedestrianCrossing:changed');
     }
 
     function isDirty() {
-      return current ? current.toBeDeleted : false;
+      return dirty;
     }
 
     function save() {
-      if (isDirty()) {
+      if (current.toBeDeleted) {
         backend.removePointAsset(current.id)
+          .done(function() {
+            eventbus.trigger('pedestrianCrossing:saved');
+            close();
+          })
+          .fail(function() {
+            eventbus.trigger('asset:updateFailed');
+          });
+      } else if (isDirty()) {
+        backend.updatePointAsset(current)
           .done(function() {
             eventbus.trigger('pedestrianCrossing:saved');
             close();
