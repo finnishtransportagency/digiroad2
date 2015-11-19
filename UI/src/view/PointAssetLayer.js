@@ -162,6 +162,7 @@
       var crossing = {
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
+        floating: false,
         mmlId: nearestLine.mmlId
       };
 
