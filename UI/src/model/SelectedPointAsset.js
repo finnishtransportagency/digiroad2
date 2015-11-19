@@ -64,32 +64,20 @@
 
     function save() {
       if (current.toBeDeleted) {
-        backend.removePointAsset(current.id)
-          .done(function() {
-            eventbus.trigger('pedestrianCrossing:saved');
-            close();
-          })
-          .fail(function() {
-            eventbus.trigger('asset:updateFailed');
-          });
+        backend.removePointAsset(current.id).done(done).fail(fail);
       } else if (isNew()) {
-        backend.createPointAsset(current)
-          .done(function() {
-            eventbus.trigger('pedestrianCrossing:saved');
-            close();
-          })
-          .fail(function() {
-            eventbus.trigger('asset:creationFailed');
-          });
+        backend.createPointAsset(current).done(done).fail(fail);
       } else {
-        backend.updatePointAsset(current)
-          .done(function() {
-            eventbus.trigger('pedestrianCrossing:saved');
-            close();
-          })
-          .fail(function() {
-            eventbus.trigger('asset:updateFailed');
-          });
+        backend.updatePointAsset(current).done(done).fail(fail);
+      }
+
+      function done() {
+        eventbus.trigger('pedestrianCrossing:saved');
+        close();
+      }
+
+      function fail() {
+        eventbus.trigger('asset:updateFailed');
       }
     }
 
