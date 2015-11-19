@@ -72,16 +72,7 @@
           .fail(function() {
             eventbus.trigger('asset:updateFailed');
           });
-      } else if (isDirty()) {
-        backend.updatePointAsset(current)
-          .done(function() {
-            eventbus.trigger('pedestrianCrossing:saved');
-            close();
-          })
-          .fail(function() {
-            eventbus.trigger('asset:updateFailed');
-          });
-      } else {
+      } else if (isNew()) {
         backend.createPointAsset(current)
           .done(function() {
             eventbus.trigger('pedestrianCrossing:saved');
@@ -89,6 +80,15 @@
           })
           .fail(function() {
             eventbus.trigger('asset:creationFailed');
+          });
+      } else {
+        backend.updatePointAsset(current)
+          .done(function() {
+            eventbus.trigger('pedestrianCrossing:saved');
+            close();
+          })
+          .fail(function() {
+            eventbus.trigger('asset:updateFailed');
           });
       }
     }
