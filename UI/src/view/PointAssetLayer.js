@@ -175,7 +175,7 @@
     }
 
     function handleUnSelected() {
-      withoutOnSelect(function() {
+      withoutOnUnselect(function() {
         me.selectControl.unselectAll();
       });
       vectorLayer.styleMap = style.browsing;
