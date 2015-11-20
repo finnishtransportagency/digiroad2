@@ -105,12 +105,9 @@
   }
 
   function renderLinktoWorkList() {
-    var notRendered = !$('#point-asset-work-list-link').length;
-    if(notRendered) {
-      $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
-        '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
-        '</div>');
-    }
+    $('#information-content').append('' +
+      '<div class="form form-horizontal">' +
+      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
+      '</div>');
   }
 })(this);
