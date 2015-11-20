@@ -615,7 +615,8 @@ with GZipSupport {
     val asset = pedestrianCrossingService.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
-      case Some(foundAsset) => validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
+      case Some(foundAsset) =>
+        validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
         foundAsset
     }
   }
