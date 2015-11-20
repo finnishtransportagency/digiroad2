@@ -207,7 +207,6 @@
     }
 
     function show(map) {
-      redrawLinks(map);
       map.addLayer(vectorLayer);
       me.show(map);
     }
