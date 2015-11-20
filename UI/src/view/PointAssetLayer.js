@@ -12,13 +12,16 @@
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing', { styleMap: style.browsing });
-    defineOpenLayersSelectControl();
+
+    me.selectControl = defineOpenLayersSelectControl();
     function defineOpenLayersSelectControl() {
-      me.selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+      var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
         onSelect: pointAssetOnSelect,
         onUnselect: pointAssetOnUnselect
       });
-      map.addControl(me.selectControl);
+      map.addControl(selectControl);
+
+      return selectControl;
     }
 
     function pointAssetOnSelect(feature) {
