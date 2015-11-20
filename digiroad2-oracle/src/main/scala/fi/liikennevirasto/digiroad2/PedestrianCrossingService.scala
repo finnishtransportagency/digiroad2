@@ -109,13 +109,13 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
   }
 
   def getById(id: Long) = {
-    val persistedAsset: B = getPersistedAssetsByIds(Set(id)).head
-    val roadLinks = roadLinkService.fetchVVHRoadlink(persistedAsset.mmlId)
+    val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
+    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => roadLinkService.fetchVVHRoadlink(x.mmlId) }
 
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
-    withFloatingUpdate(convertPersistedAsset(persistedAssetToAssetWithTimeStamps, findRoadlink))(persistedAsset)
+    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAssetWithTimeStamps, findRoadlink)))
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[B] = {

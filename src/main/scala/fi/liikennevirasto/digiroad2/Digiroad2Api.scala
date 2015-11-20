@@ -613,8 +613,11 @@ with GZipSupport {
   get("/pointassets/:id") {
     val user = userProvider.getCurrentUser()
     val asset = pedestrianCrossingService.getById(params("id").toLong)
-    validateUserMunicipalityAccess(user)(asset.municipalityCode)
-    asset
+    asset match {
+      case None => halt(NotFound("Asset with given id not found"))
+      case Some(foundAsset) => validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
+        foundAsset
+    }
   }
 
   get("/pointassets/floating") {
