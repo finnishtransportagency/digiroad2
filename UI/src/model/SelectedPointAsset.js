@@ -6,7 +6,7 @@
     return {
       open: open,
       getId: getId,
-      asset: asset,
+      get: get,
       place: place,
       move: move,
       save: save,
@@ -57,7 +57,7 @@
       return current && current.id;
     }
 
-    function asset() {
+    function get() {
       return current;
     }
 

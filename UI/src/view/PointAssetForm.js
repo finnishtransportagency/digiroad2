@@ -62,7 +62,7 @@
   }
 
   function renderAssetFormElements(selectedAsset) {
-    var asset = selectedAsset.asset();
+    var asset = selectedAsset.get();
     if (selectedAsset.isNew()) return '';
 
     return '' +
