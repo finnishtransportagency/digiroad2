@@ -42,7 +42,7 @@
 
     var title = selectedAsset.isNew() ? "Uusi suojatie" : 'ID: ' + id;
     var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-    var form = renderMeta(selectedAsset);
+    var form = renderAssetFormElements(selectedAsset);
     var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
@@ -61,7 +61,7 @@
     });
   }
 
-  function renderMeta(selectedAsset) {
+  function renderAssetFormElements(selectedAsset) {
     var asset = selectedAsset.asset();
     if (selectedAsset.isNew()) return '';
 
