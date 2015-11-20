@@ -47,8 +47,7 @@
       }
 
       function handleDragging(feature, mousePosition) {
-        var isSelected = selectedAsset.getId() === feature.attributes.id;
-        if (isSelected) {
+        if (selectedAsset.isSelected(feature.attributes)) {
           var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
           var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
           var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
