@@ -21,19 +21,19 @@
       });
       map.addControl(selectControl);
 
+      function pointAssetOnSelect(feature) {
+        if (!selectedAsset.isSelected(feature.attributes)) {
+          selectedAsset.open(feature.attributes);
+        }
+      }
+
+      function pointAssetOnUnselect() {
+        if (selectedAsset.exists()) {
+          selectedAsset.close();
+        }
+      }
+
       return selectControl;
-    }
-
-    function pointAssetOnSelect(feature) {
-      if (!selectedAsset.isSelected(feature.attributes)) {
-        selectedAsset.open(feature.attributes);
-      }
-    }
-
-    function pointAssetOnUnselect() {
-      if (selectedAsset.exists()) {
-        selectedAsset.close();
-      }
     }
 
     var dragControl = defineOpenLayersDragControl();
