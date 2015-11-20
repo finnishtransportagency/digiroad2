@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{Unknown, TimeStamps, RoadLinkStop, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossingToBePersisted, OraclePedestrianCrossingDao, PersistedPedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.User
@@ -89,10 +89,17 @@ trait PointAssetOperations[A <: FloatingAsset, B <: RoadLinkAssociatedPointAsset
 
       val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
       val administrativeClasses = roadLinkService.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
-      result.map { x => FloatingAsset(x._1, x._2, administrativeClasses.getOrElse(x._3, Unknown).toString) }
+
+      result
+        .map { case (id, municipality, administrativeClass) =>
+          FloatingAsset(id, municipality, administrativeClasses.getOrElse(administrativeClass, Unknown).toString)
+        }
         .groupBy(_.municipality)
-        .mapValues { _.groupBy(_.administrativeClass)
-        .mapValues(_.map(_.id)) }
+        .mapValues { municipalityAssets =>
+          municipalityAssets
+            .groupBy(_.administrativeClass)
+            .mapValues(_.map(_.id))
+        }
     }
   }
 
