@@ -1,7 +1,7 @@
 (function(ActionPanelBoxes) {
-  var selectToolIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>';
-  var cutToolIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-cut" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" d="M12.5 17c1.1 0 2 0.9 2 2 0 1.1-0.9 2-2 2s-2-0.9-2-2C10.5 17.9 11.4 17 12.5 17M12.5 16c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3S14.2 16 12.5 16L12.5 16z"/><path class="shape" d="M18.1 13.8c0.3 0 0.7 0.1 1 0.3 1 0.6 1.3 1.8 0.7 2.7 -0.4 0.6-1 1-1.7 1 -0.3 0-0.7-0.1-1-0.3 -1-0.6-1.3-1.8-0.7-2.7C16.8 14.1 17.4 13.8 18.1 13.8M18.1 12.8c-1.1 0-2.1 0.6-2.6 1.5 -0.8 1.4-0.3 3.3 1.1 4.1 0.5 0.3 1 0.4 1.5 0.4 1.1 0 2.1-0.6 2.6-1.5 0.4-0.7 0.5-1.5 0.3-2.3 -0.2-0.8-0.7-1.4-1.4-1.8C19.2 12.9 18.7 12.8 18.1 12.8L18.1 12.8z"/><path class="shape" d="M14 7c0-1.6-1.3-3-3-3h0v4.7l3 1.7V7zM17.1 13.5L15.6 16 7 11C5.5 10.2 5.1 8.4 5.9 7l0 0L17.1 13.5zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6zM11 9.9l3 1.7V17h-3V9.9zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6z"/></svg>';
-  var addToolIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-add" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><polygon class="shape" points="19,12 14,12 14,7 12,7 12,12 7,12 7,14 12,14 12,19 14,19 14,14 19,14 "/></svg>';
+  var selectToolIcon = '<image src="images/select-tool.svg"/>';
+  var cutToolIcon = '<image src="images/cut-tool.svg"/>';
+  var addToolIcon = '<image src="images/add-tool.svg"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
