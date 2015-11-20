@@ -25,11 +25,15 @@
     }
 
     function pointAssetOnSelect(feature) {
-      selectedAsset.open(feature.attributes);
+      if (!selectedAsset.isSelected(feature.attributes)) {
+        selectedAsset.open(feature.attributes);
+      }
     }
 
     function pointAssetOnUnselect() {
-      selectedAsset.close();
+      if (selectedAsset.exists()) {
+        selectedAsset.close();
+      }
     }
 
     var dragControl = defineOpenLayersDragControl();
@@ -86,12 +90,10 @@
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        withoutOnSelect(function() {
-          var feature = _.find(vectorLayer.features, function(feature) { return selectedAsset.isSelected(feature.attributes); });
-          if (feature) {
-            me.selectControl.select(feature);
-          }
-        });
+        var feature = _.find(vectorLayer.features, function(feature) { return selectedAsset.isSelected(feature.attributes); });
+        if (feature) {
+          me.selectControl.select(feature);
+        }
       }
     }
 
@@ -104,18 +106,6 @@
       } else {
         f();
       }
-    }
-
-    function withoutOnSelect(f) {
-      me.selectControl.onSelect = function() {};
-      f();
-      me.selectControl.onSelect = pointAssetOnSelect;
-    }
-
-    function withoutOnUnselect(f) {
-      me.selectControl.onUnselect = function() {};
-      f();
-      me.selectControl.onUnselect = pointAssetOnUnselect;
     }
 
     this.layerStarted = function(eventListener) {
@@ -141,9 +131,7 @@
     }
 
     function handleCreationCancelled() {
-      withoutOnUnselect(function() {
-        me.selectControl.unselectAll();
-      });
+      me.selectControl.unselectAll();
       mapOverlay.hide();
       vectorLayer.styleMap = style.browsing;
       me.refreshView();
@@ -175,9 +163,7 @@
     }
 
     function handleUnSelected() {
-      withoutOnUnselect(function() {
-        me.selectControl.unselectAll();
-      });
+      me.selectControl.unselectAll();
       vectorLayer.styleMap = style.browsing;
       vectorLayer.redraw();
     }
