@@ -65,7 +65,18 @@ with GZipSupport {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     useVVHGeometry match {
-      case true => massTransitStopService.getByBoundingBox(user, bbox)
+      case true => massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "municipalityNumber" -> stop.municipalityNumber,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating)
+      }
       case false => throw new NotImplementedError()
     }
   }

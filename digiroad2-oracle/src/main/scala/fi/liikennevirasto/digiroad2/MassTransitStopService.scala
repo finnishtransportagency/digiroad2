@@ -18,10 +18,12 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
                               propertyData: Seq[Property]) extends FloatingAsset
 
 case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
-                              bearing: Option[Int], floating: Boolean,
-                              created: Modification, modified: Modification,
-                              mmlId: Option[Long], mValue: Option[Double],
-                              propertyData: Seq[Property]) extends FloatingAsset with RoadLinkStop with TimeStamps
+                                         bearing: Option[Int], validityDirection: Int, municipalityNumber: Int,
+                                         validityPeriod: String, stopTypes: Seq[Int],
+                                         floating: Boolean,
+                                         created: Modification, modified: Modification,
+                                         mmlId: Option[Long], mValue: Option[Double],
+                                         propertyData: Seq[Property]) extends FloatingAsset with RoadLinkStop with TimeStamps
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -30,7 +32,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations[MassTransitStop, PersistedMassTransitStop, MassTransitStopWithTimeStamps] {
+trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
   override def typeId: Int = 10
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -91,16 +93,12 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStop, Persi
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
-  override def persistedAssetToAsset(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStop = {
-    MassTransitStop(persistedStop.id, persistedStop.nationalId,
-      persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
-      persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes)
-  }
-
-  override def persistedAssetToAssetWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
+  override def persistedAssetToAsset(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
     MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
       lon = persistedStop.lon, lat = persistedStop.lat,
-      bearing = persistedStop.bearing, floating = floating,
+      bearing = persistedStop.bearing, validityDirection = persistedStop.validityDirection.get,
+      municipalityNumber = persistedStop.municipalityCode, validityPeriod = persistedStop.validityPeriod.get,
+      stopTypes = persistedStop.stopTypes, floating = floating,
       created = persistedStop.created, modified = persistedStop.modified,
       mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
       propertyData = persistedStop.propertyData)

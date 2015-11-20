@@ -9,7 +9,7 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 
-trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset, AssetWithTimeStamps <: FloatingAsset] {
+trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -20,7 +20,6 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
   def persistedAssetToAsset(persistedAsset: PersistedAsset, floating: Boolean): Asset
-  def persistedAssetToAssetWithTimeStamps(persistedStop: PersistedAsset, floating: Boolean): AssetWithTimeStamps
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
     case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)
@@ -82,26 +81,26 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
     }
   }
 
-  def getByMunicipality(municipalityCode: Int): Seq[AssetWithTimeStamps] = {
+  def getByMunicipality(municipalityCode: Int): Seq[Asset] = {
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAssetWithTimeStamps, findRoadlink)))
+        .map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAsset, findRoadlink)))
         .toList
     }
   }
 
-  def getById(id: Long): Option[AssetWithTimeStamps] = {
+  def getById(id: Long): Option[Asset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => roadLinkService.fetchVVHRoadlink(x.mmlId) }
 
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
-    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAssetWithTimeStamps, findRoadlink)))
+    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAsset, findRoadlink)))
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
