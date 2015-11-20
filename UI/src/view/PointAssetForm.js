@@ -10,6 +10,7 @@
       rootElement.find('.delete').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     }
+
     eventbus.on('application:readOnly', toggleMode);
 
     eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
@@ -34,10 +35,6 @@
         $('#point-asset-work-list-link').parent().remove();
       }
     });
-  }
-
-  function enableSaving(rootElement) {
-    rootElement.find('.save.btn').prop('disabled', false);
   }
 
   function renderForm(rootElement, selectedAsset) {
