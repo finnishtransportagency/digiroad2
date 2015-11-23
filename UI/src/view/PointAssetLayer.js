@@ -72,6 +72,10 @@
     this.refreshView = function() {
       redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
+        if (selectedAsset.exists()) {
+          assets = [selectedAsset.get()].concat(_.reject(assets, {id: selectedAsset.getId()}));
+        }
+
         if (me.isStarted()) {
           withDeactivatedSelectControl(function() {
             me.removeLayerFeatures();
