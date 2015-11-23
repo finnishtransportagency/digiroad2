@@ -144,8 +144,6 @@
       data.group.moved = true;
     };
 
-    eventbus.on('tool:changed', deselect);
-
     var finalizeMove = function(asset) {
       _.merge(data, asset);
       if (data.group.moved) {

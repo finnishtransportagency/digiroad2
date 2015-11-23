@@ -6,12 +6,11 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, SpeedLimitProvider}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import slick.driver.JdbcDriver.backend.Database
 
 class ValluActor extends Actor {
   def receive = {
@@ -127,6 +126,11 @@ object Digiroad2Context {
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, eventbus)
   }
+
+  lazy val pedestrianCrossingService: PedestrianCrossingService = {
+    new PedestrianCrossingService(roadLinkService)
+  }
+
 
   lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
 

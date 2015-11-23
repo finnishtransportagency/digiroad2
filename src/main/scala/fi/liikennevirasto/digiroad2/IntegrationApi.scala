@@ -227,6 +227,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
+    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
+    crossings.filterNot(_.floating).map { pedestrianCrossing =>
+      val timeStamps: AssetTimeStamps = AssetTimeStamps(
+        Modification(pedestrianCrossing.createdAt, None),
+        Modification(pedestrianCrossing.modifiedAt, None))
+
+      Map("id" -> pedestrianCrossing.id,
+        "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        "mmlId" -> pedestrianCrossing.mmlId,
+        "m_value" -> pedestrianCrossing.mValue,
+        extractModificationTime(timeStamps))
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -242,12 +258,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "height_limits" => linearAssetsToApi(70, municipalityNumber)
         case "length_limits" => linearAssetsToApi(80, municipalityNumber)
         case "width_limits" => linearAssetsToApi(90, municipalityNumber)
-        case "blocked_passages" => PointAssetService.getByMunicipality(16, municipalityNumber)
-        case "barrier_gates" => PointAssetService.getByMunicipality(3, municipalityNumber)
-        case "traffic_lights" => PointAssetService.getByMunicipality(9, municipalityNumber)
-        case "pedestrian_crossings" => PointAssetService.getByMunicipality(17, municipalityNumber)
-        case "directional_traffic_signs" => PointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
-        case "railway_crossings" => PointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
+        case "blocked_passages" => ReadOnlyPointAssetService.getByMunicipality(16, municipalityNumber)
+        case "barrier_gates" => ReadOnlyPointAssetService.getByMunicipality(3, municipalityNumber)
+        case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
+        case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
+        case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
+        case "railway_crossings" => ReadOnlyPointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
@@ -273,6 +289,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   get("/service_points") {
     contentType = formats("json")
-    PointAssetService.getServicePoints()
+    ReadOnlyPointAssetService.getServicePoints()
   }
 }

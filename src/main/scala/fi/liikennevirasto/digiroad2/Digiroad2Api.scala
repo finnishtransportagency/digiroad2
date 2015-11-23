@@ -65,7 +65,18 @@ with GZipSupport {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     useVVHGeometry match {
-      case true => massTransitStopService.getByBoundingBox(user, bbox)
+      case true => massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "municipalityNumber" -> stop.municipalityNumber,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating)
+      }
       case false => throw new NotImplementedError()
     }
   }
@@ -599,6 +610,59 @@ with GZipSupport {
       val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(id)
       validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
       ManoeuvreService.updateManoeuvre(user.username, id, updates)
+    }
+  }
+
+  get("/pointassets") {
+    val user = userProvider.getCurrentUser()
+
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    pedestrianCrossingService.getByBoundingBox(user, bbox)
+  }
+
+  get("/pointassets/:id") {
+    val user = userProvider.getCurrentUser()
+    val asset = pedestrianCrossingService.getById(params("id").toLong)
+    asset match {
+      case None => halt(NotFound("Asset with given id not found"))
+      case Some(foundAsset) =>
+        validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
+        foundAsset
+    }
+  }
+
+  get("/pointassets/floating") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
+  }
+
+  delete("/pointassets/:id") {
+    val user = userProvider.getCurrentUser()
+    val id = params("id").toLong
+    pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
+    pedestrianCrossingService.expire(id, user.username)
+  }
+
+  put("/pointassets/:id") {
+    val user = userProvider.getCurrentUser()
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[NewPointAsset]
+    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
+      pedestrianCrossingService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+    }
+  }
+
+  post("/pointassets") {
+    val user = userProvider.getCurrentUser()
+    val asset = (parsedBody \ "asset").extract[NewPointAsset]
+    for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
+      validateUserMunicipalityAccess(user)(link.municipalityCode)
+      pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
 }

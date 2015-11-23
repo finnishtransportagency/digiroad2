@@ -4,7 +4,7 @@ import org.scalatest.{Matchers, FunSuite}
 
 class PointAssetServiceSpec extends FunSuite with Matchers {
   test("Get traffic light point data") {
-    val data = PointAssetService.getByMunicipality(9, 235)
+    val data = ReadOnlyPointAssetService.getByMunicipality(9, 235)
     val trafficLight = data.find { light =>
       light.get("id").get.asInstanceOf[Long] == 24189944
     }
@@ -14,7 +14,7 @@ class PointAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Get Service point data") {
-    val element = PointAssetService.getServicePoints()(0)
+    val element = ReadOnlyPointAssetService.getServicePoints()(0)
 
     val id = element.get("id").get.asInstanceOf[Long]
     id should equal(1283)

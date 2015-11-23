@@ -14,7 +14,7 @@ import org.json4s.jackson.JsonMethods._
 class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
   def stopWithMmlId(mmlId: Long): MassTransitStopWithTimeStamps = {
-    MassTransitStopWithTimeStamps(1L, 2L, 1.0, 2.0, None, false, Modification(None, None), Modification(None, None), Some(mmlId), None, Seq())
+    MassTransitStopWithTimeStamps(1L, 2L, 1.0, 2.0, None, 1, 235, "current", Seq(2,3), false, Modification(None, None), Modification(None, None), Some(mmlId), None, Seq())
   }
   val mockMasstTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMasstTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithMmlId(123L), stopWithMmlId(321L)))

@@ -142,6 +142,47 @@
       });
     };
 
+    this.getPointAssets = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/pointassets?bbox=' + boundingBox
+      };  
+    });
+
+    this.getPointAssetById = latestResponseRequestor(function(id) {
+      return {
+        url: 'api/pointassets/' + id
+      };
+    });
+
+    this.createPointAsset = function(asset) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/pointassets",
+        data: JSON.stringify({asset: asset}),
+        dataType: "json"
+      });
+    };
+
+    this.updatePointAsset = function(asset) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/pointassets/" + asset.id,
+        data: JSON.stringify({asset: asset}),
+        dataType: "json"
+      });
+    };
+
+    this.removePointAsset = _.throttle(function(id) {
+      return $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/pointassets/" + id,
+        dataType: "json"
+      });
+    }, 1000);
+
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
@@ -229,6 +270,10 @@
 
     this.getUnknownLimits = function() {
       return $.getJSON('api/speedlimits/unknown');
+    };
+
+    this.getFloatinPedestrianCrossings = function() {
+      return $.getJSON('api/pointassets/floating');
     };
 
     this.createAsset = function (data, errorCallback) {

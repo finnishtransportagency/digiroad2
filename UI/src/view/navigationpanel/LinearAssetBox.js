@@ -21,10 +21,10 @@
       expanded: $(expandedTemplate)
     };
 
-    var toolSelection = new ActionPanelBoxes.ToolSelection(
-      null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedLinearAsset),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)]);
+    var toolSelection = new ActionPanelBoxes.ToolSelection([
+      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedLinearAsset),
+      new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)
+    ]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindExternalEventHandlers = function() {

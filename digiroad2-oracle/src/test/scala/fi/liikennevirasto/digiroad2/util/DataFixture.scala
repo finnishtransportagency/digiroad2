@@ -66,7 +66,8 @@ object DataFixture {
       "test_fixture_sequences.sql",
       "kauniainen_lit_roads.sql",
       "kauniainen_vehicle_prohibitions.sql",
-      "kauniainen_paved_roads.sql"))
+      "kauniainen_paved_roads.sql",
+      "kauniainen_pedestrian_crossings.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
@@ -258,6 +259,13 @@ object DataFixture {
     println()
   }
 
+  def importPedestrianCrossings(): Unit = {
+    println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
+    dataImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println(s"Pedestrian crossings import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
@@ -372,12 +380,14 @@ object DataFixture {
         importWinterSpeedLimits()
       case Some("prohibitions") =>
         importProhibitions()
+      case Some("pedestrian_crossings") =>
+        importPedestrianCrossings()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions |" +
+        " prohibitions | pedestrian_crossings | " +
         " repair")
     }
   }
