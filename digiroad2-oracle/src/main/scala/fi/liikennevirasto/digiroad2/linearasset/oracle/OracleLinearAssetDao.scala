@@ -198,8 +198,10 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val prohibitionAssetTypeId = 190
+  def fetchProhibitionsByMmlIds(mmlIds: Seq[Long]): Seq[PersistedLinearAsset] =
+    fetchProhibitionsByMmlIds(190, mmlIds, false)
+
+  def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, mmlIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>

@@ -40,8 +40,8 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId)
     val existingAssets =
       withDynTransaction {
-        if (typeId == 190) {
-          dao.fetchProhibitionsByMmlIds(mmlIds)
+        if (typeId == 190 || typeId == 210) {
+          dao.fetchProhibitionsByMmlIds(typeId, mmlIds)
         } else {
           dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
         }

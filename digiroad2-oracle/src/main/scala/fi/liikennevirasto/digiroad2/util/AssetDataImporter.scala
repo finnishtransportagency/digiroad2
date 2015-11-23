@@ -384,7 +384,8 @@ class AssetDataImporter {
     val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
-      OracleLinearAssetDao.fetchProhibitionsByMmlIds(droppedMmlIds, includeFloating = true)
+      OracleLinearAssetDao.fetchProhibitionsByMmlIds(190, droppedMmlIds, includeFloating = true) ++
+      OracleLinearAssetDao.fetchProhibitionsByMmlIds(210, droppedMmlIds, includeFloating = true)
     }
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
