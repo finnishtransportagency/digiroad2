@@ -1,24 +1,11 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = {
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
-    DefaultFormElements: DefaultFormElements,
-    HazardousMaterialTransportProhibitionFormElements: HazardousMaterialTransportProhibitionFormElements
+    DefaultFormElements: DefaultFormElements
   };
 
   function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-    return DropdownFormElements(unit, editControlLabels, className, defaultValue, possibleValues, function(input) {
-      return parseInt(input.val(), 10);
-    });
-  }
-
-  function HazardousMaterialTransportProhibitionFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-    return DropdownFormElements(unit, editControlLabels, className, defaultValue, possibleValues, function(input) {
-      return _.trim(input.val());
-    });
-  }
-
-  function DropdownFormElements(unit, editControlLabels, className, defaultValue, possibleValues, valueParser) {
-    var formElem = dropDownFormElement(unit, valueParser);
+    var formElem = dropDownFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -152,14 +139,14 @@
     }
   }
 
-  function dropDownFormElement(unit, inputParser) {
+  function dropDownFormElement(unit) {
     var template =  _.template(
       '<div class="input-unit-combination">' +
       '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
       '</div>');
 
     return {
-      inputElementValue: inputParser,
+      inputElementValue: inputElementValue,
       valueString: valueString,
       measureInput: measureInput
     };
@@ -177,6 +164,10 @@
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
       return template({className: className, optionTags: optionTags, disabled: disabled});
+    }
+
+    function inputElementValue(input) {
+      return parseInt(input.val(), 10);
     }
   }
 })(this);

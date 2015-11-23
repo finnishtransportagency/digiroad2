@@ -6,8 +6,7 @@
   function assetFormElementConstructor(className) {
     var assetFormElementConstructors = {
       prohibition: ProhibitionFormElements,
-      winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements,
-      hazardousMaterialTransportProhibition: PiecewiseLinearAssetFormElements.HazardousMaterialTransportProhibitionFormElements
+      winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements
     };
     return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }
