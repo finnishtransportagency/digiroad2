@@ -41,7 +41,7 @@ trait LinearAssetOperations {
     val existingAssets =
       withDynTransaction {
         if (typeId == 190 || typeId == 210) {
-          dao.fetchProhibitionsByMmlIds(typeId, mmlIds)
+          dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
         } else {
           dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
         }

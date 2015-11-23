@@ -286,7 +286,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
 
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
@@ -304,7 +304,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
 
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
@@ -323,7 +323,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
 
       persistedAssets.size should be(1)
       persistedAssets.head.mmlId should be(mmlId)
@@ -353,7 +353,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       setupTestProhibition(mmlId3, fixtureProhibitionValues3)
       setupTestProhibition(mmlId4, fixtureProhibitionValues4)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(Seq(mmlId1, mmlId2, mmlId3, mmlId4))
+      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId1, mmlId2, mmlId3, mmlId4))
 
       val sortedPersistedAssets = persistedAssets.sortBy(_.mmlId)
       sortedPersistedAssets.size should be(4)

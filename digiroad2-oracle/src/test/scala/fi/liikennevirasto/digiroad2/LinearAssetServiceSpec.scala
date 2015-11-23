@@ -66,7 +66,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
-      val limit = linearAssetDao.fetchProhibitionsByMmlIds(Seq(1621077551l)).head
+      val limit = linearAssetDao.fetchProhibitionsByMmlIds(190, Seq(1621077551l)).head
 
       limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))))
       limit.expired should be (false)
@@ -88,7 +88,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1)), 190, "testuser")
       newAssets.length should be(1)
-      val asset = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360l)).head
+      val asset = linearAssetDao.fetchProhibitionsByMmlIds(190, Seq(388562360l)).head
       asset.value should be (Some(prohibition))
       asset.expired should be (false)
     }
@@ -110,9 +110,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None)))
 
-    when(mockLinearAssetDao.fetchProhibitionsByMmlIds(Seq(1l))).thenReturn(Nil)
+    when(mockLinearAssetDao.fetchProhibitionsByMmlIds(190, Seq(1l), includeFloating = false)).thenReturn(Nil)
     PassThroughService.getByMunicipality(190, 235)
-    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(Seq(1l))
+    verify(mockLinearAssetDao).fetchProhibitionsByMmlIds(190, Seq(1l), includeFloating = false)
 
     when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(100, Seq(1l), "mittarajoitus")).thenReturn(Nil)
     PassThroughService.getByMunicipality(100, 235)
@@ -148,7 +148,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
 
-      val limits = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360))
+      val limits = linearAssetDao.fetchProhibitionsByMmlIds(190, Seq(388562360))
       val oldLimit = limits.find(_.id == assetId).get
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -238,7 +238,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
 
-      val prohibitions = linearAssetDao.fetchProhibitionsByMmlIds(Seq(388562360))
+      val prohibitions = linearAssetDao.fetchProhibitionsByMmlIds(190, Seq(388562360))
       val oldProhibition = prohibitions.find(_.id == assetId).get
       oldProhibition.mmlId should be (388562360)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
