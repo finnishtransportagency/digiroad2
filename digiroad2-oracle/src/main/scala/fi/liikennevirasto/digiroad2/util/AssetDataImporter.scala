@@ -878,6 +878,14 @@ class AssetDataImporter {
     }
   }
 
+  def importHazmatProhibitions() = {
+    OracleDatabase.withDynTransaction {
+      sqlu"""
+        update asset set asset_type_id=210 where id in (select asset_id from prohibition_value where type in (24, 25))
+      """.execute
+    }
+  }
+
   def importManoeuvres(database: DatabaseDef): Unit = {
     throw new NotImplementedError("TODO: Fix importManoeuvres to fetch manoeuvre ids from manoeuvre sequence. Current implementation imports manoeuvres with clashing ids")
     val query =
