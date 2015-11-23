@@ -74,7 +74,7 @@
       collection.fetch(map.getExtent()).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
-          assets = [selectedAsset.get()].concat(assetsWithoutSelectedAsset);
+          assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
         }
 
         if (me.isStarted()) {
