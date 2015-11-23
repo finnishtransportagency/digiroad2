@@ -73,7 +73,8 @@
       redrawLinks(map);
       collection.fetch(map.getExtent()).then(function(assets) {
         if (selectedAsset.exists()) {
-          assets = [selectedAsset.get()].concat(_.reject(assets, {id: selectedAsset.getId()}));
+          var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
+          assets = [selectedAsset.get()].concat(assetsWithoutSelectedAsset);
         }
 
         if (me.isStarted()) {
