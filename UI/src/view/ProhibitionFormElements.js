@@ -22,7 +22,7 @@
       function singleValueElement(asset, sideCode) {
         return '' +
           '<div class="form-group editable ' + generateClassName(sideCode) + '">' +
-          '<label class="asset-label">Ajoneuvokohtaiset rajoitukset</label>' +
+          '<label class="asset-label">' + editControlLabels.title + '</label>' +
           sideCodeMarker(sideCode) +
           assetDisplayElement(asset) +
           assetEditElement(asset) +
