@@ -22,22 +22,26 @@
     function place(asset) {
       dirty = true;
       current = asset;
+      console.log("place", current, originalAsset);
       eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function move(asset) {
       dirty = true;
       current = asset;
+      console.log("move", current, originalAsset);
       eventbus.trigger('pedestrianCrossing:changed');
     }
 
     function open(asset) {
-      originalAsset = asset;
+      originalAsset = _.cloneDeep(asset);
       current = asset;
+      console.log("open", current, originalAsset);
       eventbus.trigger('pedestrianCrossing:selected');
     }
 
     function cancel() {
+      console.log("cancel", current, originalAsset);
       if (isNew()) {
         reset();
         eventbus.trigger('pedestrianCrossing:creationCancelled');
@@ -51,6 +55,7 @@
     function reset() {
       dirty = false;
       current = null;
+      console.log("reset", current, originalAsset);
     }
 
     function getId() {
