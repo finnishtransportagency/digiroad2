@@ -14,7 +14,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
@@ -444,8 +444,8 @@ class AssetDataImporter {
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
-    val typeId = 190
     val vvhClient = new VVHClient(vvhServiceHost)
+    val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
     val startTime = DateTime.now()
@@ -472,7 +472,16 @@ class AssetDataImporter {
 
     val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._2).toSet)
 
-    OracleDatabase.withDynTransaction {
+    val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
+    println(s"*** Importing ${prohibitions.length} prohibitions")
+
+    val insertCount = OracleDatabase.withDynTransaction {
+      insertProhibitions(typeId, conversionResults)
+    }
+    println(s"*** Persisted $insertCount linear assets in ${humanReadableDurationSince(startTime)}")
+  }
+
+  def insertProhibitions(typeId: Int, conversionResults: Seq[Either[String, PersistedLinearAsset]]): Int = {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
@@ -480,9 +489,6 @@ class AssetDataImporter {
       val exceptionPS = dynamicSession.prepareStatement("insert into prohibition_exception (id, prohibition_value_id, type) values (?, ?, ?)")
       val validityPeriodPS = dynamicSession.prepareStatement("insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (?, ?, ?, ?, ?)")
 
-      println(s"*** Importing ${prohibitions.length} prohibitions")
-
-      val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
       conversionResults.foreach {
         case Right(asset) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
@@ -536,7 +542,6 @@ class AssetDataImporter {
       exceptionPS.executeBatch()
       validityPeriodPS.executeBatch()
 
-      println(s"*** Persisted $executedAssetInserts linear assets in ${humanReadableDurationSince(startTime)}")
 
       assetPS.close()
       lrmPositionPS.close()
@@ -544,7 +549,7 @@ class AssetDataImporter {
       valuePS.close()
       exceptionPS.close()
       validityPeriodPS.close()
-    }
+      executedAssetInserts
   }
 
   private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])] = {
@@ -878,11 +883,60 @@ class AssetDataImporter {
     }
   }
 
+  def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+
+    val assets = MassQuery.withIds(ids.toSet) { idTableName =>
+      sql"""
+        select a.id, pos.mml_id, pos.side_code,
+               pv.id, pv.type,
+               pvp.type, pvp.start_hour, pvp.end_hour,
+               pe.type,
+               pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join prohibition_value pv on pv.asset_id = a.id
+          join #$idTableName i on i.id = a.id
+          left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
+          left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+          where a.asset_type_id = $prohibitionAssetTypeId
+          and (a.valid_to >= sysdate or a.valid_to is null)
+          #$floatingFilter"""
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
+    }
+
+    val groupedByAssetId = assets.groupBy(_._1)
+    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
+
+    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
+      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
+        val rows = rowsByProhibitionId(prohibitionId)
+        val prohibitionType = rows.head._5
+        val exceptions = rows.flatMap(_._9).toSet
+        val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
+          ProhibitionValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+        }.toSet
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions)
+      }
+      PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
+    }.toSeq
+  }
+
   def importHazmatProhibitions() = {
     OracleDatabase.withDynTransaction {
-      sqlu"""
-        update asset set asset_type_id=210 where id in (select asset_id from prohibition_value where type in (24, 25))
-      """.execute
+      val assetIds = sql"""select asset_id from prohibition_value where type in (24, 25)""".as[Long].list
+      val linearAssets: Seq[PersistedLinearAsset] = fetchProhibitionsByMmlIds(190, assetIds, true)
+      val hazmatAssets = linearAssets.map { x => x.copy(value = x.value.map { case Prohibitions(prohibitions) => Prohibitions(prohibitions.filter { p => Set(24, 25).contains(p.typeId) }) }) }
+      insertProhibitions(210, hazmatAssets.map(Right(_)))
+
+      val prohibitionValueIds = sql"""select id from prohibition_value where asset_id in (${assetIds.mkString(",")}) and type in (24, 25)""".as[Long].list
+      sqlu"""delete from prohibition_validity_period where prohibition_value_id in (${prohibitionValueIds.mkString(",")})""".execute
+      sqlu"""delete from prohibition_value where asset_id in (${assetIds.mkString(",")}) and type in (24, 25)""".execute
+      sqlu"""delete from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value)""".execute
     }
   }
 
