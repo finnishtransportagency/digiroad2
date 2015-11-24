@@ -365,25 +365,6 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei talvinopeusrajoitusta'
       },
       possibleValues: [100, 80, 70, 60]
-    }
-  ];
-
-  var experimentalAssetSpecs = [
-    {
-      typeId: assetType.numberOfLanes,
-      singleElementEventCategory: 'laneCount',
-      multiElementEventCategory: 'laneCounts',
-      layerName: 'numberOfLanes',
-      title: 'Kaistojen lukumäärä',
-      newTitle: 'Uusi kaistojen lukumäärä',
-      className: 'lane-count',
-      unit: 'kpl / suunta',
-      isSeparable: true,
-      editControlLabels: {
-        title: 'Lukumäärä',
-        enabled: 'Kaistojen lukumäärä / suunta',
-        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
-      }
     },
     {
       typeId: assetType.prohibition,
@@ -415,7 +396,25 @@ var URLRouter = function(map, backend, models) {
         disabled: 'Ei rajoitusta'
       }
     }
+  ];
 
+  var experimentalAssetSpecs = [
+    {
+      typeId: assetType.numberOfLanes,
+      singleElementEventCategory: 'laneCount',
+      multiElementEventCategory: 'laneCounts',
+      layerName: 'numberOfLanes',
+      title: 'Kaistojen lukumäärä',
+      newTitle: 'Uusi kaistojen lukumäärä',
+      className: 'lane-count',
+      unit: 'kpl / suunta',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'Lukumäärä',
+        enabled: 'Kaistojen lukumäärä / suunta',
+        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
+      }
+    }
   ];
 
   var localizedStrings;
