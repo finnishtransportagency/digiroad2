@@ -265,6 +265,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
         case "railway_crossings" => ReadOnlyPointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
+        case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
         case "mass_transit_lanes" => linearAssetsToApi(160, municipalityNumber)
         case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)

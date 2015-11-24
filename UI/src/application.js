@@ -134,7 +134,8 @@ var URLRouter = function(map, backend, models) {
     massTransitLane: 160,
     trafficVolume: 170,
     winterSpeedLimit: 180,
-    prohibition: 190
+    prohibition: 190,
+    hazardousMaterialTransportProhibition: 210
   };
 
   var linearAssetSpecs = [
@@ -398,7 +399,23 @@ var URLRouter = function(map, backend, models) {
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
       }
+    },
+    {
+      typeId: assetType.hazardousMaterialTransportProhibition,
+      singleElementEventCategory: 'hazardousMaterialTransportProhibition',
+      multiElementEventCategory: 'hazardousMaterialTransportProhibitions',
+      layerName: 'hazardousMaterialTransportProhibition',
+      title: 'VAK-rajoitus',
+      newTitle: 'Uusi VAK-rajoitus',
+      className: 'hazardousMaterialTransportProhibition',
+      isSeparable: true,
+      editControlLabels: {
+        title: 'VAK-rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta'
+      }
     }
+
   ];
 
   var localizedStrings;
@@ -674,6 +691,7 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.damagedByThaw)),
       [manoeuvreBox]
         .concat(getLinearAsset(assetType.prohibition))
+        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
         .concat(getLinearAsset(assetType.totalWeightLimit))
         .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
         .concat(getLinearAsset(assetType.axleWeightLimit))

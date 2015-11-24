@@ -357,7 +357,7 @@ class AssetDataImporter {
     prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
   }
 
-  def generateDroppedProhibitions(vvhServiceHost: String): Unit = {
+  def generateDroppedProhibitions(assetTypeId: Int, csvName: String, vvhServiceHost: String): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
     val startTime = DateTime.now()
     def elapsedTime = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
@@ -368,11 +368,11 @@ class AssetDataImporter {
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
-           where a.asset_type_id = 190
+           where a.asset_type_id = $assetTypeId
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Double, Double, Boolean)].list
     }
-    println(s"*** fetched all vehicle prohibitions from DB in $elapsedTime seconds")
+    println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
     val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
     println(s"*** fetched all road links from VVH in $elapsedTime seconds")
@@ -384,7 +384,7 @@ class AssetDataImporter {
     val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
-      OracleLinearAssetDao.fetchProhibitionsByMmlIds(droppedMmlIds, includeFloating = true)
+      OracleLinearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
     }
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
@@ -392,13 +392,14 @@ class AssetDataImporter {
         case Prohibitions(prohibitionValues) =>
           prohibitionValues.map { prohibitionValue =>
             val value = generateValueString(prohibitionValue)
-            (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, 190, false)
+            (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
           }
       }
     }
-    exportCsv("vehicle_prohibitions", prohibitionLines.flatten)
+    exportCsv(csvName, prohibitionLines.flatten)
 
-    println(s"*** exported CSV file in $elapsedTime seconds")
+    println(s"*** exported CSV file $csvName in $elapsedTime seconds")
+
   }
 
   def expireSplitAssetsWithoutMml(typeId: Int) = {
@@ -874,6 +875,14 @@ class AssetDataImporter {
       assetPS.close()
       lrmPositionPS.close()
       assetLinkPS.close()
+    }
+  }
+
+  def importHazmatProhibitions() = {
+    OracleDatabase.withDynTransaction {
+      sqlu"""
+        update asset set asset_type_id=210 where id in (select asset_id from prohibition_value where type in (24, 25))
+      """.execute
     }
   }
 
