@@ -929,14 +929,30 @@ class AssetDataImporter {
   def importHazmatProhibitions() = {
     OracleDatabase.withDynTransaction {
       val assetIds = sql"""select asset_id from prohibition_value where type in (24, 25)""".as[Long].list
-      val linearAssets: Seq[PersistedLinearAsset] = fetchProhibitionsByMmlIds(190, assetIds, true)
-      val hazmatAssets = linearAssets.map { x => x.copy(value = x.value.map { case Prohibitions(prohibitions) => Prohibitions(prohibitions.filter { p => Set(24, 25).contains(p.typeId) }) }) }
-      insertProhibitions(210, hazmatAssets.map(Right(_)))
+      if (assetIds.nonEmpty) {
+        val linearAssets = fetchProhibitionsByMmlIds(190, assetIds, true)
+        val hazmatAssets = linearAssets.map { linearAsset =>
+          val newValue = linearAsset.value.map { case Prohibitions(prohibitionValues) =>
+            val hazMatProhibitions = prohibitionValues.filter { p => Set(24, 25).contains(p.typeId) }
+            Prohibitions(hazMatProhibitions.map(_.copy(exceptions = Set.empty)))
+          }
+          linearAsset.copy(value = newValue)
+        }
 
-      val prohibitionValueIds = sql"""select id from prohibition_value where asset_id in (${assetIds.mkString(",")}) and type in (24, 25)""".as[Long].list
-      sqlu"""delete from prohibition_validity_period where prohibition_value_id in (${prohibitionValueIds.mkString(",")})""".execute
-      sqlu"""delete from prohibition_value where asset_id in (${assetIds.mkString(",")}) and type in (24, 25)""".execute
-      sqlu"""delete from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value)""".execute
+        insertProhibitions(210, hazmatAssets.map(Right(_)))
+
+        val assetIdsStr = assetIds.mkString(",")
+        val prohibitionValueIds = sql"""select id from prohibition_value where asset_id in (#$assetIdsStr) and type in (24, 25)""".as[Long].list
+        val prohibitionValueIdsStr = prohibitionValueIds.mkString(",")
+        sqlu"""delete from prohibition_validity_period where prohibition_value_id in (#$prohibitionValueIdsStr)""".execute
+        sqlu"""delete from prohibition_exception where prohibition_value_id in (#$prohibitionValueIdsStr)""".execute
+        sqlu"""delete from prohibition_value where asset_id in (#$assetIdsStr) and type in (24, 25)""".execute
+        sqlu"""delete from asset_link where asset_id in (select id from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value))""".execute
+        sqlu"""delete from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value)""".execute
+        sqlu"""delete from lrm_position pos where NOT EXISTS (select position_id from asset_link where position_id = pos.id)""".execute
+      } else {
+        println("No hazardous material prohibitions with old type id found for import")
+      }
     }
   }
 
