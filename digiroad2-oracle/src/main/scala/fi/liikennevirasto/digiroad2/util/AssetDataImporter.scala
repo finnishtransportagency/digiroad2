@@ -948,12 +948,23 @@ class AssetDataImporter {
 
         insertProhibitions(210, hazmatAssets.map(Right(_)))
 
-        val assetIdsStr = assetIds.mkString(",")
-        val prohibitionValueIds = sql"""select id from prohibition_value where asset_id in (#$assetIdsStr) and type in (24, 25)""".as[Long].list
-        val prohibitionValueIdsStr = prohibitionValueIds.mkString(",")
-        sqlu"""delete from prohibition_validity_period where prohibition_value_id in (#$prohibitionValueIdsStr)""".execute
-        sqlu"""delete from prohibition_exception where prohibition_value_id in (#$prohibitionValueIdsStr)""".execute
-        sqlu"""delete from prohibition_value where asset_id in (#$assetIdsStr) and type in (24, 25)""".execute
+        val prohibitionValueIds = MassQuery.withIds(assetIds.toSet) { idTableName =>
+           sql"""
+              select pv.id from prohibition_value pv
+              join #$idTableName i on i.id = pv.asset_id
+              where type in (24, 25)""".as[Long].list
+        }
+
+        MassQuery.withIds(prohibitionValueIds.toSet) { idTableName =>
+          sqlu"""delete from prohibition_validity_period
+                 where prohibition_value_id in (select id from #$idTableName)""".execute
+          sqlu"""delete from prohibition_exception where prohibition_value_id in (select id from #$idTableName)""".execute
+        }
+
+        MassQuery.withIds(assetIds.toSet) { idTableName =>
+          sqlu"""delete from prohibition_value where asset_id in (select id from #$idTableName) and type in (24, 25)""".execute
+        }
+
         sqlu"""delete from asset_link where asset_id in (select id from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value))""".execute
         sqlu"""delete from asset where asset_type_id=190 and id not in (select asset_id from prohibition_value)""".execute
         sqlu"""delete from lrm_position pos where NOT EXISTS (select position_id from asset_link where position_id = pos.id)""".execute
