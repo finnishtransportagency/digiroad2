@@ -928,7 +928,14 @@ class AssetDataImporter {
 
   def importHazmatProhibitions() = {
     OracleDatabase.withDynTransaction {
-      val assetIds = sql"""select asset_id from prohibition_value where type in (24, 25)""".as[Long].list
+      val assetIds =
+        sql"""
+          select a.id from asset a
+             join prohibition_value pv on a.id = pv.ASSET_ID
+             where pv.type in (24, 25)
+             and a.asset_type_id = 190
+        """.as[Long].list
+
       if (assetIds.nonEmpty) {
         val linearAssets = fetchProhibitionsByMmlIds(190, assetIds, true)
         val hazmatAssets = linearAssets.map { linearAsset =>
