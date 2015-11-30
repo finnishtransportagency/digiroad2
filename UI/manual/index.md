@@ -1242,7 +1242,7 @@ Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valits
 
 _Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
 
-17. Ajoneuvokohtainen rajoitus (n&auml;kyy vain operaattorik&auml;ytt&auml;jille)
+17. Ajoneuvokohtainen rajoitus 
 ----------------------
 
 Ajoneuvokohtaiset rajoutukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. N&auml;it&auml; ovat esimerkiksi moottoriajoneuvokiellot. My&ouml;s l&auml;piajokiellot ovat ajoneuvokohtaisia rajoituksia. Ajoneuvokohtaisessa rajoituksessa voi olla my&ouml;s poikkeus, esimerkiksi huoltoajo sallittu. Karttan&auml;kym&auml;&auml;n voi valita ajoneuvokohtaiset rajoitukset valitsemalla tietolajit-paletista (1) Ajoneuvokohtaiset rajoitukset. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on ajoneuvokohtainen rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
@@ -1341,3 +1341,141 @@ Painikkeen painamisen j&auml;lkeen voi uusille ajoneuvokohtaisille rajoituksille
 _Uusien yksisuuntaisten ajoneuvokohtaisen rajoitusten arvojen valinta._
 
 Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+18. Vaarallisten aineiden kuljetus (VAK)
+----------------------------------------
+
+Vaarallisten aineiden kuljetus –rajoitus eli VAK-rajoitukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. VAK-rajoituksessa voi olla my&ouml;s poikkeus, kuten kellonaika, jolloin rajoitus on voimassa. Karttan&auml;kym&auml;&auml;n voi valita VAK-rajoitukset valitsemalla tietolajit-paletista (1) VAK-rajoitus. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on VAK-rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
+
+![Valinta.](Kuva1_VAK-rajoituksen valinta.JPG)
+
+_VAK-rajoituksen valinta._
+
+##VAK-rajoituksen tietojen katselu##
+
+Yksitt&auml;isen VAK-rajoituksen voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli osuus, jossa VAK-rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu VAK-rajoituksen ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; on VAK-rajoituksen tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](Kuva2_VAK_katselu.JPG)
+
+_VAK-rajoituksen tietojen katselu._
+
+VAK-rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
+
+![Visuaali.](Kuva3_VAK_visuaali.JPG)
+
+_VAK-rajoituksen vaikutussuunnan visualisointi._
+
+##VAK-rajoituksen muokkaus##
+
+VAK-rajoituksille voi antaa muokkaustilassa tietoja. VAK-rajoituksia voi muokata kolmella tavalla:
+
+1.	Koko VAK-rajoitusketjulle (esim. koko kadulle).
+1.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+1.	Monivalinnan avulla kokonaiselle alueelle.
+
+###VAK-rajoituksen muokkaus ja lis&auml;ys###
+
+Muokattava rajoitus valitaan klikkaamalla sen geometriaa (1). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla VAK-rajoitusta.
+
+Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; olevien alasvetovalikkojen avulla (2). VAK-rajoituksella voi olla my&ouml;s voimassaolokellonaika (3). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
+
+![Muokkaus.](Kuva4_VAK_muokkaus.JPG)
+
+_VAK-rajoituksen muokkaus._
+
+Tielinkit, joilla ei ole VAK-rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi VAK-rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (4). Valitsemalla alasvetovalikosta rajoituksen tyyppi (5), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja toiselle rajoitukselle.
+
+![Lis&auml;ys.](Kuva5_VAK_lis&auml;ys.JPG)
+
+_VAK-rajoituksen lis&auml;ys_
+
+###VAK-rajoituksen poistaminen###
+
+VAK-rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustieton&auml;kym&auml;st&auml; rajoituksen pois (1). My&ouml;s rajoituksen voimassaoloajan voi poistaa ominaisuustieton&auml;kym&auml;n rukseista (2). Muutokset tallentuu tallenna-napista.
+
+![Poisto.](Kuva6_VAK_poisto.JPG)
+
+_VAK-rajoituksen poistaminen._
+
+###Useamman VAK-rajoituksen muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin VAK-rajoitustiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (1), jossa valitaan VAK-rajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (2). Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat VAK-rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
+
+![Monivalinta.](Kuva7_VAK_monivalinta.JPG)
+
+_Useamman VAK-rajoituksen tietojen muokkaus kerralla._
+
+###VAK-rajoituksen katkaiseminen###
+
+VAK-rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
+
+VAK-rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (2). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (3). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](Kuva8_VAK_Katkaisu.JPG)
+
+_VAK-rajoituksen katkaiseminen._
+
+##VAK-rajoituksen muuttaminen yksisuuntaiseksi##
+
+Molempiin suuntiin voimassa olevan VAK-rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti. Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; VAK-rajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (2).
+
+![Yksisuuntaiseksi.](Kuva9_VAK_uksisuuntaiseksi.JPG)
+
+_VAK-rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi uusille VAK-rajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat kohteita kartalla (4).
+
+![Yksisuuntaisen arvo.](Kuva10_VAK_ykssuunt_arv.JPG)
+
+_Uusien yksisuuntaisten VAK-rajoitusten arvojen valinta._
+
+Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+19. Suojatiet
+----------------------
+
+Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttan&auml;kym&auml;&auml;n voi valita suojatiet tietolajit-paletista (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;.
+
+![Valinta.](Kuva1_tietolajin valinta.JPG)
+
+_Suojatiemerkinn&auml;n valinta._
+
+##Suojatiemerkinn&auml;n tietojen katselu##
+
+Yksitt&auml;isen suojatiemerkinn&auml;n voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu suojatiemerkinn&auml;n ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
+
+![Valinta.](Kuva2_suojatiemerkinn&auml;n valinta.JPG)
+
+_Suojatien katselu._
+
+###Geometrian ulkopuolelle j&auml;&auml;neet suojatiet###
+
+Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Suojatiemerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+![Merkinta.](Kuva4_punainen suojatiemerkinta.JPG)
+
+_Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punainen._
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (2). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Ulkopuoliset suojatiet.](Kuva5_ulkopuoliset suojatiet.JPG)
+
+##Suojatiemerkinn&auml;n muokkaus##
+
+Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys###
+
+Muokattava rajoitus valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla.
+
+Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla.
+
+![Muokkaustila.](Kuva3_muokkaustilassa.JPG)
+
+Suojatiemerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (6). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (7).
