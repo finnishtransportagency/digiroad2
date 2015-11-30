@@ -1,7 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
+import java.util.logging.Logger
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+
+import org.eclipse.jetty.client.{HttpClient, HttpProxy, ProxyConfiguration}
 
 import scala.collection.JavaConversions._
 import org.eclipse.jetty.http.{MimeTypes, HttpURI}
@@ -9,6 +12,7 @@ import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.client.api.Request
+
 
 trait DigiroadServer {
   val contextPath : String
@@ -45,6 +49,18 @@ class NLSProxyServlet extends ProxyServlet {
     proxyRequest.header("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
     proxyRequest.header("Host", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+  }
+
+  override def getHttpClient: HttpClient = {
+    val client = super.getHttpClient
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    if (properties.getProperty("http.proxySet", "false").toBoolean) {
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
+      proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
+      client.getProxyConfiguration.getProxies.add(proxy)
+    }
+    client
   }
 }
 
