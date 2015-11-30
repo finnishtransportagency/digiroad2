@@ -176,6 +176,17 @@ object DataFixture {
     println("\n")
   }
 
+
+  def importMMLIdsOnManoeuvres(): Unit = {
+    println("\nCommencing MML ID import on manoeuvres at time: ")
+    println(DateTime.now())
+    println("import mml ids for manoeuvres")
+    dataImporter.importMMLIdsOnManoeuvres(Conversion.database())
+    println("MML ID import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def splitSpeedLimitChains(): Unit = {
     println("\nCommencing Speed limit splitting at time: ")
     println(DateTime.now())
@@ -392,12 +403,14 @@ object DataFixture {
         importPedestrianCrossings()
       case Some("hazmat_prohibitions") =>
         importHazmatProhibitions()
+      case Some("mml_manoeuvres") =>
+        importMMLIdsOnManoeuvres()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions |" +
+        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres |" +
         " repair")
     }
   }
