@@ -388,6 +388,7 @@ object Queries {
     updateMeasure.setLong(4, roadLinkId)
     updateMeasure.setLong(5, lrmPositionId)
     updateMeasure.executeUpdate()
+    updateMeasure.close()
   }
 
   def deleteLRMPosition(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
@@ -399,7 +400,9 @@ object Queries {
     insertPosition.setBigDecimal(3, lrMeasure.bigDecimal)
     insertPosition.setLong(4, testId)
     insertPosition.setLong(5, roadLinkId)
-    insertPosition.executeUpdate()
+    val ret = insertPosition.executeUpdate()
+    insertPosition.close()
+    ret
   }
 
   def storeGeometry(geometry: JGeometry, conn: Connection): STRUCT = {

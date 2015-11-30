@@ -13,6 +13,7 @@ object MassQuery {
     insertMmlIdPS.executeBatch()
     val ret = f("temp_id")
     sqlu"""delete from temp_id""".execute
+    insertMmlIdPS.close()
     ret
   }
 }
