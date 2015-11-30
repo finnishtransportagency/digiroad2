@@ -92,8 +92,8 @@ common: &default_settings
   # settings will be used to authenticate to Basic Auth challenges
   # from a proxy server.
   #
-  # proxy_host: hostname
-  # proxy_port: 8080
+  proxy_host: 10.129.64.101
+  proxy_port: 80
   # proxy_user: username
   # proxy_password: password
 
