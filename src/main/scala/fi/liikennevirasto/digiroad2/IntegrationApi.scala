@@ -280,7 +280,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_addresses" => ReadOnlyLinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
         case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
-        case "manoeuvres" =>  ManoeuvreService.getByMunicipality(municipalityNumber)
+        case "manoeuvres" =>  manoeuvreService.getByMunicipality(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

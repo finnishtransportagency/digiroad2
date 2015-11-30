@@ -16,7 +16,7 @@ case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sou
 case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
-object ManoeuvreService {
+class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   val FirstElement = 1
   val LastElement = 3
@@ -32,19 +32,16 @@ object ManoeuvreService {
   }
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
+    val mmlIds = roadLinkService.fetchVVHRoadlinks(municipalityNumber).map(_.mmlId)
     OracleDatabase.withDynTransaction {
-      val roadLinks = RoadLinkService.getIdsAndMmlIdsByMunicipality(municipalityNumber).toMap
-      getByRoadlinks(roadLinks)
+      getByMmlIds(mmlIds)
     }
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-      .map(link => (link.id, link.mmlId))
-      .toMap
-
+    val mmlIds = roadLinkService.fetchVVHRoadlinks(bounds, municipalities).map(_.mmlId)
     OracleDatabase.withDynTransaction {
-      getByRoadlinks(roadLinks)
+      getByMmlIds(mmlIds)
     }
   }
 
@@ -101,27 +98,24 @@ object ManoeuvreService {
     }
   }
 
-  private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toSeq)
+  private def getByMmlIds(mmlIds: Seq[Long]): Seq[Manoeuvre] = {
+    val manoeuvresById = fetchManoeuvresByMmlIds(mmlIds)
     val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
 
     manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
+      links.size == 2 && links.exists(_._5 == FirstElement) && links.exists(_._5 == LastElement)
     }.map { case (id, links) =>
-      val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
-      val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
-      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLinkMmlId(sourceRoadLinkId))
-      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLinkMmlId(destRoadLinkId))
+      val (_, _, sourceRoadLinkId, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._5 == FirstElement).get
+      val (_, _, destRoadLinkId, destMmlId, _, _, _, _) = links.find(_._5 == LastElement).get
       val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
 
       Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
     }.toSeq
   }
 
-  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
-    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
-    val manoeuvresById = manoeuvres.toList.groupBy(_._1)
-    manoeuvresById
+  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Long, Int, DateTime, String, String)]] = {
+    val manoeuvres = OracleArray.fetchManoeuvresByMmlIds(mmlIds, bonecpToInternalConnection(dynamicSession.conn))
+    manoeuvres.toList.groupBy(_._1)
   }
 
   private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {

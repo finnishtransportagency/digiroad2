@@ -131,6 +131,9 @@ object Digiroad2Context {
     new PedestrianCrossingService(roadLinkService)
   }
 
+  lazy val manoeuvreService = {
+    new ManoeuvreService(roadLinkService)
+  }
 
   lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
 

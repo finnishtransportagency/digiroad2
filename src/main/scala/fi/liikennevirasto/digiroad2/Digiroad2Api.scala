@@ -569,7 +569,7 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      ManoeuvreService.getByBoundingBox(boundingRectangle, municipalities)
+      manoeuvreService.getByBoundingBox(boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -583,7 +583,7 @@ with GZipSupport {
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
       validateUserMunicipalityAccess(user)(municipality.get)
-      ManoeuvreService.createManoeuvre(user.username, manoeuvre)
+      manoeuvreService.createManoeuvre(user.username, manoeuvre)
     }
     Created(manoeuvreIds)
   }
@@ -594,9 +594,9 @@ with GZipSupport {
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
     manoeuvreIds.foreach { manoeuvreId =>
-      val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
+      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
       validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
-      ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
+      manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
 
@@ -607,9 +607,9 @@ with GZipSupport {
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
       .map{case(id, updates) => (id.toLong, updates)}
     manoeuvreUpdates.foreach{ case(id, updates) =>
-      val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(id)
+      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
       validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
-      ManoeuvreService.updateManoeuvre(user.username, id, updates)
+      manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
 
