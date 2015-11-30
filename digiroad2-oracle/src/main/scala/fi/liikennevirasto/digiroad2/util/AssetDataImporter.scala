@@ -1098,17 +1098,17 @@ class AssetDataImporter {
   def importMMLIdsOnManoeuvres(conversionDB: DatabaseDef) = {
     OracleDatabase.withDynSession {
       conversionDB.withSession { conversionSession =>
-        val roadLinkIds: CloseableIterator[(Long, Option[Long])] =
-          sql"""select manoeuvre_id, road_link_id from manoeuvre_element""".as[(Long, Option[Long])].iterator
-        val mmlIds = roadLinkIds.map { case (manoeuvreId, roadLinkId)  =>
+        val roadLinkIds: CloseableIterator[Option[Long]] =
+          sql"""select road_link_id from manoeuvre_element""".as[Option[Long]].iterator
+        val mmlIds = roadLinkIds.map { roadLinkId  =>
           val mmlId: Option[Long] = roadLinkId match {
             case Some(dr1Id) => sql"""select mml_id from tielinkki_ctas where dr1_id = $dr1Id""".as[Long].firstOption(conversionSession)
             case _ => None
           }
-          (manoeuvreId, mmlId)
+          (roadLinkId, mmlId)
         }
-        mmlIds.foreach { case (manoeuvreId, mmlId) =>
-          sqlu"""update manoeuvre_element set mml_id = $mmlId where manoeuvre_id = $manoeuvreId""".execute
+        mmlIds.foreach { case (roadLinkId, mmlId) =>
+          sqlu"""update manoeuvre_element set mml_id = $mmlId where road_link_id = $roadLinkId""".execute
         }
       }
     }
