@@ -243,6 +243,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
+    manoeuvres.map { manoeuvre =>
+      Map("id" -> manoeuvre.id,
+      "sourceMmlId" -> manoeuvre.sourceMmlId,
+      "destMmlId" -> manoeuvre.destMmlId,
+      "exceptions" -> manoeuvre.exceptions,
+      "additionalInfo" -> manoeuvre.additionalInfo,
+      "modifiedDateTime" -> manoeuvre.modifiedDateTime)
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -280,7 +291,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_addresses" => ReadOnlyLinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
         case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
-        case "manoeuvres" =>  manoeuvreService.getByMunicipality(municipalityNumber)
+        case "manoeuvres" =>  manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
