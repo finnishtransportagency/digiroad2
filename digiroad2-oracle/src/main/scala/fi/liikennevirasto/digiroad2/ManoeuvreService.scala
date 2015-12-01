@@ -1,19 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
-import com.github.tototoshi.slick.MySQLJodaSupport._
+
 import scala.collection.JavaConversions._
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
-case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
+case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
@@ -65,15 +66,17 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
           """.execute
 
       val sourceRoadLinkId = manoeuvre.sourceRoadLinkId
+      val sourceMmlId = manoeuvre.sourceMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
-             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
+             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement, $sourceMmlId)
           """.execute
 
       val destRoadLinkId = manoeuvre.destRoadLinkId
+      val destMmlId = manoeuvre.destMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
-             values ($manoeuvreId, $destRoadLinkId, $LastElement)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
+             values ($manoeuvreId, $destRoadLinkId, $LastElement, $destMmlId)
           """.execute
 
       addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)

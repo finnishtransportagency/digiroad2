@@ -144,11 +144,13 @@
 
         var manoeuvreData = function(formGroupElement) {
           var destRoadLinkId = parseInt(formGroupElement.attr('roadLinkId'), 10);
+          var destMmlId = parseInt(formGroupElement.attr('mmlId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           return {
-            manoeuvreId: manoeuvreId,
             destRoadLinkId: destRoadLinkId,
+            manoeuvreId: manoeuvreId,
+            destMmlId: destMmlId,
             exceptions: manoeuvreExceptions(formGroupElement),
             additionalInfo: additionalInfo
           };

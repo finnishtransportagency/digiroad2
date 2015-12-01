@@ -42,7 +42,7 @@
     };
 
     var addManoeuvre = function(manoeuvre) {
-      var newManoeuvre = _.merge({}, { sourceRoadLinkId: current.roadLinkId }, manoeuvre);
+      var newManoeuvre = _.merge({}, { sourceRoadLinkId: current.roadLinkId, sourceMmlId: current.mmlId }, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
