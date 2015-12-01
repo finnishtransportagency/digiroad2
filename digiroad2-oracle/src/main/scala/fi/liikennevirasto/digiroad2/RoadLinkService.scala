@@ -392,16 +392,6 @@ trait RoadLinkService {
       LinkType(link.linkType), link.modifiedAt, link.modifiedBy, attributes = vvhRoadLinks.find(_.mmlId==link.mmlId).get.attributes) }
   }
 
-  def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      sql"""
-        select dr1_id, mml_id
-          from tielinkki_ctas
-          where kunta_nro = $municipality
-        """.as[(Long, Long)].list
-    }
-  }
-
   def getAdjacent(mmlId: Long): Seq[VVHRoadLinkWithProperties] = {
     val endpoints = getRoadLinkGeometry(mmlId).map(GeometryUtils.geometryEndpoints)
     endpoints.map(endpoint => {

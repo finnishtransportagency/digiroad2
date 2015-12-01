@@ -5,17 +5,42 @@ import java.io.{FileWriter, BufferedWriter, File}
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{VVHClient, VVHRoadLinkService}
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.{Seconds, DateTime}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import slick.util.CloseableIterator
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
 
   def generateDroppedManoeuvres() = {
+    val manoeuvreService = new ManoeuvreService(roadLinkService)
 
+    val manoeuvres = OracleDatabase.withDynSession {
+      sql"""
+           select m.id, m.ADDITIONAL_INFO, m.TYPE, me.MML_ID, me.ROAD_LINK_ID, me.ELEMENT_TYPE
+           from manoeuvre m
+           join MANOEUVRE_ELEMENT me on me.MANOEUVRE_ID = m.id
+        """.as[(Long, Option[String], Int, Long, Long, Int)].list
+    }
+
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet).toSet
+    val droppedManoeuvres = manoeuvres.filterNot(m => roadLinks.exists(link => link.mmlId == m._4))
+    val groupedManoeuvres = droppedManoeuvres.groupBy(_._1)
+
+    exportManoeuvreCsv("dropped_manoeuvres", groupedManoeuvres)
+  }
+
+  def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
+      sql"""
+        select dr1_id, mml_id
+          from tielinkki_ctas
+          where kunta_nro = $municipality
+        """.as[(Long, Long)].list
+    }
   }
 
   def generateDroppedNumericalLimits(): Unit = {
@@ -173,6 +198,23 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Free Memory: " + runtime.freeMemory() / mb + " MB")
     println("Total Memory: " + runtime.totalMemory() / mb + " MB")
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
+  }
+
+  val Source = 1
+  val Destination = 3
+
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int)]]): Unit = {
+    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions\n"
+    val data = droppedManoeuvres.map { case (key, value) =>
+      val source = value.find(_._6 == Source).get
+      val destination = value.find(_._6 == Destination).get
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; ${destination._4}; ${destination._5}; """
+    }.mkString("\n")
+
+    val file = new File(fileName + ".csv")
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(headerLine + data + "\n")
+    bw.close()
   }
 
   def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Any, Int, Boolean)]): Unit = {
