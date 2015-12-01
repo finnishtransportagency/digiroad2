@@ -287,9 +287,9 @@ object DataFixture {
   def generateDroppedNumericalLimits(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
-    dataImporter.generateDroppedNumericalLimits(dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    dataImporter.generateDroppedProhibitions(190, "vehicle_prohibitions", dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    dataImporter.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions", dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    CsvGenerator.generateDroppedNumericalLimits(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    CsvGenerator.generateDroppedProhibitions(190, "vehicle_prohibitions", dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    CsvGenerator.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions", dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
