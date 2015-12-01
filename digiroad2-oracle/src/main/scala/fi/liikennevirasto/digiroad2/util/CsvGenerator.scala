@@ -23,11 +23,11 @@ class CsvGenerator(vvhServiceHost: String) {
         """.as[(Long, Option[String], Int, Long, Long, Int)].list
     }
 
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet).toSet
-    val droppedManoeuvres = manoeuvres.filterNot(m => roadLinks.exists(link => link.mmlId == m._4))
-    val groupedManoeuvres = droppedManoeuvres.groupBy(_._1)
+    val groupedManoeuvres = manoeuvres.groupBy(_._1)
+    val roadLinkMmlIds = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet).map(_.mmlId).toSet
+    val droppedManoeuvres = groupedManoeuvres.filterNot { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
 
-    exportManoeuvreCsv("dropped_manoeuvres", groupedManoeuvres)
+    exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvres)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
@@ -202,6 +202,7 @@ class CsvGenerator(vvhServiceHost: String) {
 
   def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int)]]): Unit = {
     val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions\n"
+
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._6 == Source).get
       val destination = value.find(_._6 == Destination).get
