@@ -10,14 +10,11 @@ import org.joda.time.{Seconds, DateTime}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import slick.util.CloseableIterator
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
 
   def generateDroppedManoeuvres() = {
-    val manoeuvreService = new ManoeuvreService(roadLinkService)
-
     val manoeuvres = OracleDatabase.withDynSession {
       sql"""
            select m.id, m.ADDITIONAL_INFO, m.TYPE, me.MML_ID, me.ROAD_LINK_ID, me.ELEMENT_TYPE
