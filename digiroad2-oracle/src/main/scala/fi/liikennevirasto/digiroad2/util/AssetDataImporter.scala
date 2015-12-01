@@ -339,19 +339,19 @@ class AssetDataImporter {
     )
 
     val daysMap = Map(
-      2 -> "Ma - Pe",
-      7 -> "La",
-      1 -> "Su"
+      1 -> "Ma - Pe",
+      2 -> "La",
+      3 -> "Su"
     )
 
     val exceptions = prohibitionValue.exceptions.toSeq match {
       case Nil => ""
-      case exceptions => "Poikkeukset: " + exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
     }
 
     val validityPeriods = prohibitionValue.validityPeriods.toSeq match {
       case Nil => ""
-      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap.getOrElse(validityPeriod.days.value, validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
     }
 
     prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
