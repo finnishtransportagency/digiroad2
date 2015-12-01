@@ -70,14 +70,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select to_2d(shape)
-          from tielinkki_ctas
-          where dr1_id = $id
-        """
-      query.as[Seq[Point]].firstOption
-    }
+    fetchVVHRoadlink(id).map(_.geometry)
   }
 
   def getRoadLinkGeometryByTestId(testId: Long): Option[Seq[Point]] = {
@@ -409,32 +402,22 @@ trait RoadLinkService {
     }
   }
 
-  def getAdjacent(id: Long): Seq[Map[String, Any]] = {
-    val endpoints = getRoadLinkGeometry(id).map(GeometryUtils.geometryEndpoints)
+  def getAdjacent(mmlId: Long): Seq[VVHRoadLinkWithProperties] = {
+    val endpoints = getRoadLinkGeometry(mmlId).map(GeometryUtils.geometryEndpoints)
     endpoints.map(endpoint => {
-      val roadLinks = Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-        val delta: Vector3d = Vector3d(0.1, 0.1, 0)
-        val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
-        val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
-
-        val bounds2 = BoundingRectangle(endpoint._2 - delta, endpoint._2 + delta)
-        val boundingBoxFilter2 = OracleDatabase.boundingBoxFilter(bounds2, "shape")
-
-        sql"""
-        select dr1_id, mml_id, to_2d(shape)
-        from tielinkki_ctas
-        where (#$boundingBoxFilter or #$boundingBoxFilter2) and linkkityyppi not in (8, 9, 21)
-      """.as[(Long, Long, Seq[Point])].iterator.toSeq
-      }
-      roadLinks.filterNot(_._1 == id).filter(roadLink => {
-        val (_, _, geometry) = roadLink
+      val delta: Vector3d = Vector3d(0.1, 0.1, 0)
+      val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
+      val bounds2 = BoundingRectangle(endpoint._2 - delta, endpoint._2 + delta)
+      val roadLinks = getRoadLinksFromVVH(bounds) ++ getRoadLinksFromVVH(bounds2)
+      roadLinks.filterNot(_.mmlId == mmlId).filter(roadLink => {
+        val geometry = roadLink.geometry
         val epsilon = 0.01
         val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
         rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
           rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
           rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
           rlEndpoints._2.distanceTo(endpoint._2) < epsilon
-      }).map(roadLink => Map("id" -> roadLink._1, "mmlId" -> roadLink._2))
+      })
     }).getOrElse(Nil)
   }
 }

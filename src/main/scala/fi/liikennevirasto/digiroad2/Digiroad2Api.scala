@@ -238,26 +238,28 @@ with GZipSupport {
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map { group => group.map { roadLink =>
-      Map(
-        "mmlId" -> roadLink.mmlId,
-        "points" -> roadLink.geometry,
-        "administrativeClass" -> roadLink.administrativeClass.toString,
-        "linkType" -> roadLink.linkType.value,
-        "functionalClass" -> roadLink.functionalClass,
-        "trafficDirection" -> roadLink.trafficDirection.toString,
-        "modifiedAt" -> roadLink.modifiedAt,
-        "modifiedBy" -> roadLink.modifiedBy,
-        "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
-        "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
-        "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
-        "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
-        "minAddressNumberRight" -> roadLink.attributes.get("MINANRIGHT"),
-        "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
-        "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
-        "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"),
-        "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
-    } }
+    partitionedRoadLinks.map { _.map(roadLinkToApi) }
+  }
+
+  def roadLinkToApi(roadLink: VVHRoadLinkWithProperties): Map[String, Any] = {
+    Map(
+      "mmlId" -> roadLink.mmlId,
+      "points" -> roadLink.geometry,
+      "administrativeClass" -> roadLink.administrativeClass.toString,
+      "linkType" -> roadLink.linkType.value,
+      "functionalClass" -> roadLink.functionalClass,
+      "trafficDirection" -> roadLink.trafficDirection.toString,
+      "modifiedAt" -> roadLink.modifiedAt,
+      "modifiedBy" -> roadLink.modifiedBy,
+      "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+      "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
+      "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
+      "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
+      "minAddressNumberRight" -> roadLink.attributes.get("MINANRIGHT"),
+      "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
+      "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
+      "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"),
+      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
   }
 
   get("/roadlinks") {
@@ -296,7 +298,7 @@ with GZipSupport {
 
   get("/roadlinks/adjacent/:id"){
     val id = params("id").toLong
-    RoadLinkService.getAdjacent(id)
+    roadLinkService.getAdjacent(id).map(roadLinkToApi)
   }
 
   get("/roadLinks/incomplete") {

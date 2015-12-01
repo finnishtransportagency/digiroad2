@@ -34,7 +34,7 @@
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
-      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
+      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" mmlId="<%= mmlId %>" style="display: none">' +
         '<div class="form-group">' +
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
@@ -122,7 +122,7 @@
           rootElement.find('.form').append(_.template(manouvreTemplate)(attributes));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
-          var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.id === manoeuvre.destRoadLinkId; });
+          var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.mmlId === manoeuvre.destMmlId; });
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = manoeuvre ? _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); }) : [];
@@ -143,12 +143,10 @@
         toggleMode(applicationModel.isReadOnly());
 
         var manoeuvreData = function(formGroupElement) {
-          var destRoadLinkId = parseInt(formGroupElement.attr('roadLinkId'), 10);
           var destMmlId = parseInt(formGroupElement.attr('mmlId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           return {
-            destRoadLinkId: destRoadLinkId,
             manoeuvreId: manoeuvreId,
             destMmlId: destMmlId,
             exceptions: manoeuvreExceptions(formGroupElement),
