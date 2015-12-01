@@ -11,9 +11,14 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 
-object CsvGenerator {
-  def generateDroppedNumericalLimits(vvhServiceHost: String): Unit = {
-    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+class CsvGenerator(vvhServiceHost: String) {
+  val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+
+  def generateDroppedManoeuvres() = {
+
+  }
+
+  def generateDroppedNumericalLimits(): Unit = {
     val startTime = DateTime.now()
     val assetNames = Map(
       30 -> "total_weight_limits",
@@ -34,12 +39,11 @@ object CsvGenerator {
       160 -> "mass_transit_lanes")
 
     assetNames.foreach { case(assetTypeId, assetName) =>
-      generateCsvForDroppedAssets(assetTypeId, assetName, roadLinkService, startTime)
+      generateCsvForDroppedAssets(assetTypeId, assetName, startTime)
     }
   }
 
-  def generateDroppedProhibitions(assetTypeId: Int, csvName: String, vvhServiceHost: String): Unit = {
-    val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+  def generateDroppedProhibitions(assetTypeId: Int, csvName: String): Unit = {
     val startTime = DateTime.now()
     def elapsedTime = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
 
@@ -129,7 +133,6 @@ object CsvGenerator {
 
   private def generateCsvForDroppedAssets(assetTypeId: Int,
                                           assetName: String,
-                                          roadLinkService: VVHRoadLinkService,
                                           startTime: DateTime) = {
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
