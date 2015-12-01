@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{FileWriter, BufferedWriter, File}
 
+import fi.liikennevirasto.digiroad2.FeatureClass.{CycleOrPedestrianPath, DrivePath}
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -24,10 +25,13 @@ class CsvGenerator(vvhServiceHost: String) {
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
-    val roadLinkMmlIds = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet).map(_.mmlId).toSet
-    val droppedManoeuvres = groupedManoeuvres.filterNot { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet)
+    val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
+    val roadLinkMmlIds = roadLinks.map(_.mmlId).toSet
+    val (manoeuvresOk, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
+    val manoeuvresWithCycleOrPedestrianLink = manoeuvresOk.filter { case (id, rows) => rows.exists { row => roadLinksByMmlId(row._4).featureClass == CycleOrPedestrianPath } }
 
-    exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvres)
+    exportManoeuvreCsv("dropped_manoeuvres", manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
