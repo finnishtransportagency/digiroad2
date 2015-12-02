@@ -69,39 +69,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private val FLOAT_THRESHOLD_IN_METERS = 3
-
-  private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
-    pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
-  }
-
-  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]; val municipalityCode: Int}, optionalRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)]): Boolean = {
-    optionalRoadLink.flatMap { case (_, roadLinkMunicipalityCode, pointOnRoadLinkOption, _) =>
-      val optionalCoordinateMismatch: Option[Boolean] = pointOnRoadLinkOption.map { pointOnRoadLink =>
-        !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
-      }
-      optionalCoordinateMismatch.map { coordinateMismatch =>
-        coordinateMismatch || (asset.municipalityCode != roadLinkMunicipalityCode)
-      }
-    }.getOrElse(true)
-  }
-
-  def removeAsset(assetId: Long): Unit = {
-    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(assetId).firstOption
-    optionalLrmPositionId match {
-      case Some(lrmPositionId) =>
-        deleteAssetProperties(assetId)
-        deleteAssetLink(assetId).execute
-        deleteAsset(assetId).execute
-        try {
-          deleteLRMPosition(lrmPositionId).execute
-        } catch {
-          case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
-        }
-      case None => ()
-    }
-  }
-
   def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute
   }
@@ -209,22 +176,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def deleteAssetProperty(assetId: Long, propertyPublicId: String) {
-    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found, cannot delete"))
-    Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first match {
-      case Text | LongText => deleteTextProperty(assetId, propertyId).execute
-      case SingleChoice => deleteSingleChoiceProperty(assetId, propertyId).execute
-      case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute
-      case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
-    }
-  }
-
-  def deleteAssetProperties(assetId: Long) {
-    deleteAssetTextProperties(assetId).execute
-    deleteAssetSingleChoiceProperties(assetId).execute
-    deleteAssetMultipleChoiceProperties(assetId).execute
-  }
-
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(_.propertyValue)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
@@ -292,9 +243,4 @@ object OracleSpatialAssetDao {
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
   }
 
-  def getAssetGeometryById(id: Long): Point = {
-    sql"""
-      select geometry from asset where id = $id
-    """.as[Point].first
-  }
 }
