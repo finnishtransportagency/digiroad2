@@ -399,7 +399,9 @@ trait RoadLinkService {
       val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
       val bounds2 = BoundingRectangle(endpoint._2 - delta, endpoint._2 + delta)
       val roadLinks = getRoadLinksFromVVH(bounds) ++ getRoadLinksFromVVH(bounds2)
-      roadLinks.filterNot(_.mmlId == mmlId).filter(roadLink => {
+      roadLinks.filterNot(_.mmlId == mmlId)
+        .filter(roadLink => roadLink.isCarTrafficRoad)
+        .filter(roadLink => {
         val geometry = roadLink.geometry
         val epsilon = 0.01
         val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
