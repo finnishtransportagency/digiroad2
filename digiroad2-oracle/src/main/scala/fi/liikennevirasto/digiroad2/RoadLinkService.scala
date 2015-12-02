@@ -139,17 +139,6 @@ trait RoadLinkService {
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
-  def getRoadLinkLength(id: Long): Option[Double] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select sdo_lrs.geom_segment_length(shape) as length
-          from tielinkki_ctas
-          where dr1_id = $id
-        """
-      query.as[Double].firstOption
-    }
-  }
-
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -255,12 +244,6 @@ trait RoadLinkService {
       } :+ basicRoadLink.modifiedAt.map(at => (at, "vvh"))
 
       basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
-    }
-  }
-
-  def getRoadLinkMmlId(id: Long): Long = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      sql"""select mml_id from tielinkki_ctas where dr1_id = $id""".as[Long].first
     }
   }
 

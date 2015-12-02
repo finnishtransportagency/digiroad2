@@ -288,22 +288,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     }
   }
 
-  def deleteAssetProperty(assetId: Long, propertyPublicId: String) {
-    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found, cannot delete"))
-    Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first match {
-      case Text | LongText => deleteTextProperty(assetId, propertyId).execute
-      case SingleChoice => deleteSingleChoiceProperty(assetId, propertyId).execute
-      case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute
-      case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
-    }
-  }
-
-  def deleteAssetProperties(assetId: Long) {
-    deleteAssetTextProperties(assetId).execute
-    deleteAssetSingleChoiceProperties(assetId).execute
-    deleteAssetMultipleChoiceProperties(assetId).execute
-  }
-
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(_.propertyValue)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
