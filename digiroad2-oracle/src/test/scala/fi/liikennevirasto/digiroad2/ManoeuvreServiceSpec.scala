@@ -72,7 +72,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   ignore("Get source road link id with manoeuvre id") {
     val manoeuvre: Manoeuvre = createManouvre
 
-    val roadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvre.id)
+    val roadLinkId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvre.id)
 
     roadLinkId should equal(7482)
   }

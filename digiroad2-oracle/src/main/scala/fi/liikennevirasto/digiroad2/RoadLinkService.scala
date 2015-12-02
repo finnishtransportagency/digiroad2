@@ -288,6 +288,13 @@ trait RoadLinkService {
     }
   }
 
+  def getRoadLinksFromVVH(mmlIds: Set[Long]): Seq[VVHRoadLinkWithProperties] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(mmlIds)
+    withDynTransaction {
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+    }
+  }
+
   def getRoadLinksFromVVH(municipality: Int): Seq[VVHRoadLinkWithProperties] = {
     val vvhRoadLinks = fetchVVHRoadlinks(municipality)
     withDynTransaction {
