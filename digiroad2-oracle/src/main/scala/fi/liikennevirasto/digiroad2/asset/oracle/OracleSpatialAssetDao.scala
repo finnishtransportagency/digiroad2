@@ -66,24 +66,6 @@ object OracleSpatialAssetDao {
       .map { row => row.propertyValue.toInt }
   }
 
-  private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): (AssetWithProperties, Boolean) = {
-    val row = param._2.head
-    val point = row.point.get
-    val wgsPoint = row.wgsPoint.get
-    val roadLinkOption = getOptionalProductionRoadLink(row)
-    val floating = isFloating(row, roadLinkOption)
-    (AssetWithProperties(
-        id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = row.municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
-        stopTypes = extractStopTypes(param._2.map(_.property)),
-        floating = floating), row.persistedFloating)
-  }
-
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
     if (validityDirection != 3) {
       bearing
@@ -99,19 +81,6 @@ object OracleSpatialAssetDao {
       case x if 226 to 315 contains x => "Länsi"
       case _ => "Pohjoinen"
     }
-  }
-
-  private def updateAssetFloatingStatus(assetWithFloating: ({val id: Long; val floating: Boolean;}, Boolean)) = {
-    val (asset, persistedFloating) = assetWithFloating
-    if (persistedFloating != asset.floating) {
-      sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute
-    }
-  }
-
-  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).apply(assetId).list.groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
-    assetWithProperties.map(updateAssetFloatingStatus)
-    assetWithProperties.map(_._1)
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
