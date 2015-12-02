@@ -146,12 +146,7 @@ with GZipSupport {
     }
     try {
       val id = params("id").toLong
-      useVVHGeometry match {
-        case true =>
-          massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
-        case false =>
-          assetProvider.updateAsset(id, position, properties)
-      }
+      massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
     }

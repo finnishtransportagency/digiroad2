@@ -6,7 +6,6 @@ import org.joda.time.LocalDate
 
 trait AssetProvider {
   def getAssetById(assetId: Long): Option[AssetWithProperties]
-  def updateAsset(assetId: Long, position: Option[Position] = None, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def availableProperties(assetTypeId: Long): Seq[Property]
   def assetPropertyNames(language: String): Map[String, String]
