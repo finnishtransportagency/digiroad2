@@ -13,7 +13,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.JavaConversions._
 
-case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
@@ -106,25 +106,25 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
 
     manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._5 == FirstElement) && links.exists(_._5 == LastElement)
+      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
     }.map { case (id, links) =>
-      val (_, _, sourceRoadLinkId, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._5 == FirstElement).get
-      val (_, _, destRoadLinkId, destMmlId, _, _, _, _) = links.find(_._5 == LastElement).get
+      val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
+      val (_, _, destMmlId, _, _, _, _) = links.find(_._4 == LastElement).get
       val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
 
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
+      Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
     }.toSeq
   }
 
-  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Long, Int, DateTime, String, String)]] = {
+  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
     val manoeuvres = MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      sql"""SELECT m.id, m.type, e.road_link_id, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, m.type, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE m.id in (SELECT distinct(k.manoeuvre_id)
                             FROM MANOEUVRE_ELEMENT k
                             join #$idTableName i on i.id = k.mml_id
-                            where valid_to is null)""".as[(Long, Int, Long, Long, Int, DateTime, String, String)].list
+                            where valid_to is null)""".as[(Long, Int, Long, Int, DateTime, String, String)].list
     }
     manoeuvres.groupBy(_._1)
   }
