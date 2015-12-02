@@ -583,12 +583,17 @@ with GZipSupport {
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
-      val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
-      validateUserMunicipalityAccess(user)(municipality.get)
+
+      val mmlIds = manoeuvres.map(_.sourceMmlId)
+      roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+        .map(_.municipalityCode)
+        .foreach(validateUserMunicipalityAccess(user))
+
       manoeuvreService.createManoeuvre(user.username, manoeuvre)
     }
     Created(manoeuvreIds)
   }
+
 
   delete("/manoeuvres") {
     val user = userProvider.getCurrentUser()

@@ -14,7 +14,7 @@ import slick.jdbc.{StaticQuery => Q}
 import scala.collection.JavaConversions._
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
-case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
+case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
@@ -65,14 +65,14 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
              values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
           """.execute
 
-      val sourceRoadLinkId = manoeuvre.sourceRoadLinkId
+      val sourceRoadLinkId = 0
       val sourceMmlId = manoeuvre.sourceMmlId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
              values ($manoeuvreId, $sourceRoadLinkId, $FirstElement, $sourceMmlId)
           """.execute
 
-      val destRoadLinkId = manoeuvre.destRoadLinkId
+      val destRoadLinkId = 0
       val destMmlId = manoeuvre.destMmlId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)

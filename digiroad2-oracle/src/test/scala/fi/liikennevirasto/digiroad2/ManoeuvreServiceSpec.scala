@@ -1,17 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
-
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -46,7 +43,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(7482, 6677, Nil, None, 123, 124))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
 
     val manoeuvre = manoeuvreService.getByMunicipality(235).find { manoeuvre =>
       manoeuvre.id == manoeuvreId
