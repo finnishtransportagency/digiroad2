@@ -39,12 +39,12 @@ class CsvGenerator(vvhServiceHost: String) {
       adjacents.exists(_.mmlId == destination._4)
     }
     val droppedManoeuvres = manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres
-    val lol =
+    val droppedManoeuvresWithExceptions =
       droppedManoeuvres.mapValues { rows =>
         val exceptions = OracleDatabase.withDynSession { sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list }
         rows.map { x => (x._1, x._2, x._3, x._4, x._5, x._6, exceptions) }
       }
-    exportManoeuvreCsv("dropped_manoeuvres", lol)
+    exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptions)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
