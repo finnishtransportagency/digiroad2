@@ -52,20 +52,6 @@ object OracleSpatialAssetDao {
     else None
   }
 
-  private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
-    productionRoadLinkId.map { roadLinkId =>
-      RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
-    }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
-  }
-
-  private def extractStopTypes(rows: Seq[PropertyRow]): Seq[Int] = {
-    rows
-      .filter { row => row.publicId.equals("pysakin_tyyppi") }
-      .filterNot { row => row.propertyValue.isEmpty }
-      .map { row => row.propertyValue.toInt }
-  }
-
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
     if (validityDirection != 3) {
       bearing
@@ -98,23 +84,6 @@ object OracleSpatialAssetDao {
         coordinateMismatch || (asset.municipalityCode != roadLinkMunicipalityCode)
       }
     }.getOrElse(true)
-  }
-
-  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
-    val beginningOfTime = new LocalDate(0, 1, 1)
-    val endOfTime = new LocalDate(9999, 1, 1)
-    val from = validFrom.getOrElse(beginningOfTime)
-    val to = validTo.getOrElse(endOfTime)
-    val interval = new Interval(from.toDateMidnight(), to.toDateMidnight)
-    val now = DateTime.now
-    val status = if (interval.isBefore(now)) {
-      ValidityPeriod.Past
-    } else if (interval.contains(now)) {
-      ValidityPeriod.Current
-    } else {
-      ValidityPeriod.Future
-    }
-    Some(status)
   }
 
   def removeAsset(assetId: Long): Unit = {
