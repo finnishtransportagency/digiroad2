@@ -22,10 +22,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   val FirstElement = 1
   val LastElement = 3
 
-  def getSourceRoadLinkIdById(id: Long): Long = {
+  def getSourceRoadLinkMmlIdById(id: Long): Long = {
     OracleDatabase.withDynTransaction {
       sql"""
-             select road_link_id
+             select mml_id
              from manoeuvre_element
              where manoeuvre_id = $id and element_type = 1
           """.as[Long].first

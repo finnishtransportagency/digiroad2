@@ -601,8 +601,8 @@ with GZipSupport {
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
     manoeuvreIds.foreach { manoeuvreId =>
-      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvreId)
+      validateUserMunicipalityAccess(user)(roadLinkService.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -612,10 +612,11 @@ with GZipSupport {
 
     val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
-      .map{case(id, updates) => (id.toLong, updates)}
-    manoeuvreUpdates.foreach{ case(id, updates) =>
-      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
-      validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      .map { case(id, updates) => (id.toLong, updates) }
+
+    manoeuvreUpdates.foreach { case(id, updates) =>
+      val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(id)
+      validateUserMunicipalityAccess(user)(roadLinkService.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
