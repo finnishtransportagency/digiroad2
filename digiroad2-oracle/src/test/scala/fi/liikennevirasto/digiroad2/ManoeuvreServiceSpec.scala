@@ -12,13 +12,15 @@ import slick.jdbc.{StaticQuery => Q}
 
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(
-    Seq(VVHRoadlink(388562342, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(388569406, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(388569430, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(388569418, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  private def vvhRoadLink(mmlId: Long, municipalityCode: Int) = {
+    VVHRoadlink(mmlId, municipalityCode, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+  }
 
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
+    .thenReturn(Seq(vvhRoadLink(388562342, 235), vvhRoadLink(388569406, 235), vvhRoadLink(388569430, 235), vvhRoadLink(388569418, 235)) )
+  when(mockRoadLinkService.fetchVVHRoadlinks(municipalityCode = 235))
+    .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235)))
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService)
 
@@ -45,20 +47,19 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   def createManouvre: Manoeuvre = {
     val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
 
-    val manoeuvre = manoeuvreService.getByMunicipality(235).find { manoeuvre =>
-      manoeuvre.id == manoeuvreId
-    }.get
-    manoeuvre
+    manoeuvreService.getByMunicipality(235)
+      .find(_.id == manoeuvreId)
+      .get
   }
 
-  ignore("Create manoeuvre") {
+  test("Create manoeuvre") {
     val manoeuvre: Manoeuvre = createManouvre
 
-    manoeuvre.sourceRoadLinkId should equal(7482)
-    manoeuvre.destRoadLinkId should equal(6677)
+    manoeuvre.sourceMmlId should equal(123)
+    manoeuvre.destMmlId should equal(124)
   }
 
-  ignore("Delete manoeuvre") {
+  test("Delete manoeuvre") {
     val manoeuvre: Manoeuvre = createManouvre
 
     manoeuvreService.deleteManoeuvre("unittest", manoeuvre.id)
@@ -69,12 +70,12 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     deletedManouver should equal(None)
   }
 
-  ignore("Get source road link id with manoeuvre id") {
+  test("Get source road link id with manoeuvre id") {
     val manoeuvre: Manoeuvre = createManouvre
 
     val roadLinkId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvre.id)
 
-    roadLinkId should equal(7482)
+    roadLinkId should equal(123)
   }
 
 }
