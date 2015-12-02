@@ -33,6 +33,8 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
 trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
+  val spatialAssetDao: OracleSpatialAssetDao
+
   override def typeId: Int = 10
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -110,7 +112,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
       val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
-      val properties: Seq[Property] = commonProperties ++ OracleSpatialAssetDao.assetRowToProperty(stopRows)
+      val properties: Seq[Property] = commonProperties ++ spatialAssetDao.assetRowToProperty(stopRows)
       val point = row.point.get
       val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
       val stopTypes = extractStopTypes(stopRows)
@@ -156,9 +158,9 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
       }
       val (municipalityCode, geometry) = fetchRoadLink(mmlId).getOrElse(throw new NoSuchElementException)
       val id = persistedStop.get.id
-      OracleSpatialAssetDao.updateAssetLastModified(id, username)
+      spatialAssetDao.updateAssetLastModified(id, username)
       if (properties.nonEmpty) {
-        OracleSpatialAssetDao.updateAssetProperties(id, properties.toSeq)
+        spatialAssetDao.updateAssetProperties(id, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -189,13 +191,13 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
     withDynTransaction {
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-      val nationalId = OracleSpatialAssetDao.getNationalBusStopId
+      val nationalId = spatialAssetDao.getNationalBusStopId
       val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
-      val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-      OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+      val defaultValues = spatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+      spatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
       getPersistedStopWithPropertiesAndPublishEvent(assetId, municipalityCode, geometry)
     }
   }
@@ -203,7 +205,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, municipalityCode: Int, geometry: Seq[Point]) = {
     val persistedStop = fetchPointAssets(withId(assetId)).headOption
     persistedStop.foreach { stop =>
-      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(stop.municipalityCode)
+      val municipalityName = spatialAssetDao.getMunicipalityNameByCode(stop.municipalityCode)
       eventbus.publish("asset:saved", eventBusMassTransitStop(stop, municipalityName))
     }
     persistedStop

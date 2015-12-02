@@ -15,7 +15,7 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 
 // FIXME:
 // - move common asset functionality to asset service
-class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
+class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
@@ -28,7 +28,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.getAssetById(assetId)
+      spatialAssetDao.getAssetById(assetId)
     }
   }
 
@@ -40,10 +40,10 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
     databaseTransaction.withDynTransaction {
-      val asset = OracleSpatialAssetDao.getAssetById(assetId).get
+      val asset = spatialAssetDao.getAssetById(assetId).get
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-      val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
+      val updatedAsset = spatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
+      val municipalityName = spatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
       eventbus.publish("asset:saved", eventBusMassTransitStop(updatedAsset, municipalityName))
       updatedAsset
     }
@@ -52,25 +52,25 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {
-        OracleSpatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
+        spatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
       }
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.availableProperties(assetTypeId)
+      spatialAssetDao.availableProperties(assetTypeId)
     }).sortBy(_.propertyUiIndex)
   }
 
   def getMunicipalities: Seq[Int] = {
     OracleDatabase.withDynSession {
-      OracleSpatialAssetDao.getMunicipalities
+      spatialAssetDao.getMunicipalities
     }
   }
 
   def assetPropertyNames(language: String): Map[String, String] = {
     AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.assetPropertyNames(language)
+      spatialAssetDao.assetPropertyNames(language)
     }
   }
 }

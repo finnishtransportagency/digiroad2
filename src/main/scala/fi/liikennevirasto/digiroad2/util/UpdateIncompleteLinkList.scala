@@ -21,7 +21,7 @@ object UpdateIncompleteLinkList {
     clearIncompleteLinks()
     println("*** Get municipalities")
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
-      OracleSpatialAssetDao.getMunicipalities
+      new OracleSpatialAssetDao(Digiroad2Context.roadLinkService).getMunicipalities
     }
     municipalities.foreach { municipality =>
       println("*** Processing municipality: " + municipality)

@@ -19,7 +19,7 @@ import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-object OracleSpatialAssetDao {
+class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit val SetStringSeq: SetParameter[IndexedSeq[Any]] = new SetParameter[IndexedSeq[Any]] {
@@ -55,8 +55,8 @@ object OracleSpatialAssetDao {
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
     productionRoadLinkId.map { roadLinkId =>
-      RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
-    }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
+      roadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
+    }.getOrElse(roadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
   }
 
   private def extractStopTypes(rows: Seq[PropertyRow]): Seq[Int] = {
@@ -225,9 +225,9 @@ object OracleSpatialAssetDao {
   def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
-        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       } else {
-        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       }
     }
   }

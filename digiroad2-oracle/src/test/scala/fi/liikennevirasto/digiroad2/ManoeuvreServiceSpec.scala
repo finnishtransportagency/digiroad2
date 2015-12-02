@@ -43,7 +43,6 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     completelyContainedManoeuvre.destMmlId should equal(388569418)
   }
 
-
   def createManouvre: Manoeuvre = {
     val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
 
