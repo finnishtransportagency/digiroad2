@@ -64,20 +64,17 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    useVVHGeometry match {
-      case true => massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "municipalityNumber" -> stop.municipalityNumber,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating)
-      }
-      case false => throw new NotImplementedError()
+    massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "municipalityNumber" -> stop.municipalityNumber,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating)
     }
   }
 
@@ -91,8 +88,8 @@ with GZipSupport {
         halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
     val nationalId = params("nationalId").toLong
-    val massTransitStop = useVVHGeometry match {
-      case true => massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+    val massTransitStop =
+      massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
          Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
@@ -104,8 +101,7 @@ with GZipSupport {
           "floating" -> stop.floating,
           "propertyData" -> stop.propertyData)
       }
-      case false => throw new NotImplementedError()
-    }
+
     massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
   }
 
@@ -125,10 +121,7 @@ with GZipSupport {
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
-    val roadLinkId = useVVHGeometry match {
-      case true => (parsedBody \ "mmlId").extractOpt[Long]
-      case false => (parsedBody \ "roadLinkId").extractOpt[Long]
-    }
+    val roadLinkId =  (parsedBody \ "mmlId").extractOpt[Long]
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
     (lon, lat, roadLinkId, bearing)
   }
@@ -153,8 +146,6 @@ with GZipSupport {
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
-     useVVHGeometry match {
-      case true =>
         val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
         Map("id" -> massTransitStop.id,
           "nationalId" -> massTransitStop.nationalId,
@@ -166,17 +157,12 @@ with GZipSupport {
           "validityPeriod" -> massTransitStop.validityPeriod,
           "floating" -> massTransitStop.floating,
           "propertyData" -> massTransitStop.propertyData)
-      case false => throw new NotImplementedError()
-     }
   }
   private def validateUserRights(roadLinkId: Long) = {
-    if(useVVHGeometry) {
       val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
       if (!authorized) halt(Unauthorized("User not authorized"))
-    }
   }
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
-    if(useVVHGeometry) {
       val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
       val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
         mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
@@ -194,7 +180,6 @@ with GZipSupport {
       }
       if (propertiesWithInvalidValues.nonEmpty)
         halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
-    }
   }
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
