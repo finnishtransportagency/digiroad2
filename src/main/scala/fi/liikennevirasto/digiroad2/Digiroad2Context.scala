@@ -40,13 +40,6 @@ class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitProvider) extends Ac
   }
 }
 
-class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
-  def receive = {
-    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
-    case _                    => println("linkPropertyUpdater: Received unknown message")
-  }
-}
-
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -66,9 +59,6 @@ object Digiroad2Context {
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
-
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
-  eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
