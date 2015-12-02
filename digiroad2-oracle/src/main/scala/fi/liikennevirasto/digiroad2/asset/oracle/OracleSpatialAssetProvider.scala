@@ -18,34 +18,9 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
-    val user = userProvider.getCurrentUser()
-    user.isOperator() || user.isAuthorizedToWrite(municipalityNumber)
-  }
-
-  private def userCanModifyAsset(asset: AssetWithProperties): Boolean =
-    userCanModifyMunicipality(asset.municipalityNumber)
-
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     databaseTransaction.withDynTransaction {
       spatialAssetDao.getAssetById(assetId)
-    }
-  }
-
-  private def eventBusMassTransitStop(asset: AssetWithProperties, municipalityName: String): EventBusMassTransitStop = {
-    EventBusMassTransitStop(municipalityNumber = asset.municipalityNumber, municipalityName = municipalityName,
-      nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
-      created = asset.created, modified = asset.modified, propertyData = asset.propertyData)
-  }
-
-  def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
-    databaseTransaction.withDynTransaction {
-      val asset = spatialAssetDao.getAssetById(assetId).get
-      if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-      val updatedAsset = spatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      val municipalityName = spatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
-      eventbus.publish("asset:saved", eventBusMassTransitStop(updatedAsset, municipalityName))
-      updatedAsset
     }
   }
 
