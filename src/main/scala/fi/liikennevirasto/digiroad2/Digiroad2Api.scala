@@ -213,26 +213,6 @@ with GZipSupport {
     createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }
 
-
-  private def getRoadLinks(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]] = {
-    val boundingRectangle = constructBoundingRectangle(bbox)
-    validateBoundingBox(boundingRectangle)
-    RoadLinkService.getRoadLinks(
-      bounds = boundingRectangle,
-      municipalities = municipalities).map { roadLink =>
-      Map("roadLinkId" -> roadLink.id,
-        "mmlId" -> roadLink.mmlId,
-        "points" -> roadLink.geometry,
-        "length" -> roadLink.length,
-        "administrativeClass" -> roadLink.administrativeClass.toString,
-        "functionalClass" -> roadLink.functionalClass,
-        "trafficDirection" -> roadLink.trafficDirection.toString,
-        "modifiedAt" -> roadLink.modifiedAt,
-        "modifiedBy" -> roadLink.modifiedBy,
-        "linkType" -> roadLink.linkType)
-    }
-  }
-
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]]  = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
@@ -262,30 +242,14 @@ with GZipSupport {
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
   }
 
-  get("/roadlinks") {
-    response.setHeader("Access-Control-Allow-Headers", "*")
-
-    val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-
-    params.get("bbox")
-      .map (getRoadLinks(municipalities))
-      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
-  }
-
   get("/roadlinks2") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-    val getRoadLinksFn = useVVHGeometry match {
-      case true => getRoadLinksFromVVH(municipalities) _
-      case false => getRoadLinks(municipalities) _
-    }
-
     params.get("bbox")
-      .map (getRoadLinksFn)
+      .map (getRoadLinksFromVVH(municipalities))
       .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
   }
 

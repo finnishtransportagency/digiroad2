@@ -105,9 +105,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    if (useVVHGeometry) {
-      new VVHRoadLinkService(vvhClient, eventbus)
-    } else RoadLinkService
+    new VVHRoadLinkService(vvhClient, eventbus)
   }
 
   lazy val assetService: AssetService = {

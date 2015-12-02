@@ -264,23 +264,6 @@ trait RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
-    val roadLinks = Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
-      val query =
-        s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape), omistaja, liikennevirran_suunta
-              from tielinkki_ctas
-              where $municipalityFilter $boundingBoxFilter
-      """
-      Q.queryNA[BasicRoadLink](query).iterator.toSeq
-    }
-    withDynTransaction {
-      adjustedRoadLinks(roadLinks)
-    }
-  }
-
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLinkWithProperties] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
     withDynTransaction {

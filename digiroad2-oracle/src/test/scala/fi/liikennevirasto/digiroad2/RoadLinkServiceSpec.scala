@@ -41,17 +41,30 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Override road link traffic direction with adjusted value") {
-    val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
-    val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { _.id == 7886262 }.map(_.trafficDirection) should be (Some(TrafficDirection.TowardsDigitizing))
-    roadLinks.find { _.mmlId == 391203482 }.map(_.trafficDirection) should be (Some(TrafficDirection.AgainstDigitizing))
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
+        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      roadLinks.find {
+        _.mmlId == 391203482
+      }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
+      dynamicSession.rollback()
+    }
   }
 
-  test("Override road link functional class with adjusted value") {
-    val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
-    val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { _.id == 7886262}.map(_.functionalClass) should be(Some(5))
-    roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
+  test("Include road link functional class with adjusted value") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
+        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      println(roadLinks)
+      roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
+      dynamicSession.rollback()
+    }
   }
 
   test("Overriden road link adjustments return latest modification") {
