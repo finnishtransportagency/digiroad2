@@ -148,38 +148,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val externalId = getNationalBusStopId
-    val lrMeasure = roadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
-    val testId = roadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
-    val municipalityCode = roadLinkService.getMunicipalityCode(roadLinkId).get
-    insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
-    insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
-    insertAssetPosition(assetId, lrmPositionId).execute
-    updateAssetGeometry(assetId, Point(lon, lat))
-    val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    updateAssetProperties(assetId, properties ++ defaultValues)
-    getAssetById(assetId).get
-  }
-
-  def removeAsset(assetId: Long): Unit = {
-    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(assetId).firstOption
-    optionalLrmPositionId match {
-      case Some(lrmPositionId) =>
-        deleteAssetProperties(assetId)
-        deleteAssetLink(assetId).execute
-        deleteAsset(assetId).execute
-        try {
-          deleteLRMPosition(lrmPositionId).execute
-        } catch {
-          case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
-        }
-      case None => ()
-    }
-  }
-
   private def updateAssetMunicipality(id: Long, roadLinkId: Long): Unit = {
     val municipalityCode = roadLinkService.getMunicipalityCode(roadLinkId).get
     sqlu"update asset set municipality_code = $municipalityCode where id = $id".execute
