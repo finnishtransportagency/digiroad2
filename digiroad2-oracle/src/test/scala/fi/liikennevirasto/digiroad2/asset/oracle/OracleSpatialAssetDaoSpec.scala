@@ -95,17 +95,6 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
     OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 999), testRoadLink) must equal(true)
   }
 
-  test("update the position of an asset to a new road link") {
-    Database.forDataSource(ds).withDynTransaction {
-      val assetId = 300000l
-      val newPosition = Some(Position(lon = 374675.043988335, lat = 6677274.14596169, roadLinkId = 8620946, bearing = None))
-      val asset = OracleSpatialAssetDao.updateAsset(assetId, newPosition, "OracleSpatialAssetDaoSpec", Nil)
-      Math.abs(asset.lon - 374675.043988335) must (be < 0.05)
-      Math.abs(asset.lat - 6677274.14596169) must (be < 0.05)
-      dynamicSession.rollback()
-    }
-  }
-
   private def createAssetRow(propertyRow: PropertyRow) = {
     AssetRow(1, 1, 1, Some(Point(1, 1)), Some(1), 1, Some(180), 2, None, None, propertyRow,
       Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, 235, false)

@@ -164,27 +164,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private def updateAssetMunicipality(id: Long, roadLinkId: Long): Unit = {
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
-    sqlu"update asset set municipality_code = $municipalityCode where id = $id".execute
-  }
-
-  def updateAsset(assetId: Long, position: Option[Position], modifier: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    updateAssetLastModified(assetId, modifier)
-    if (!properties.isEmpty) {
-      updateAssetProperties(assetId, properties)
-    }
-    position match {
-      case None => logger.debug("not updating position")
-      case Some(pos) => {
-        updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
-        updateAssetGeometry(assetId, Point(pos.lon, pos.lat))
-        updateAssetMunicipality(assetId, pos.roadLinkId)
-      }
-    }
-    getAssetById(assetId).get
-  }
-
   def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute
   }
@@ -221,18 +200,6 @@ object OracleSpatialAssetDao {
       val row = v(0)
       EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value.toString, Some(r.displayValue))).toSeq)
     }.toSeq
-  }
-
-  private def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
-    val point = Point(lon, lat)
-    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, point)
-    val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(id).first
-    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
-    updateLRMeasure(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
-    bearing match {
-      case Some(b) => updateAssetBearing(id, b).execute
-      case None => // do nothing
-    }
   }
 
   private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
