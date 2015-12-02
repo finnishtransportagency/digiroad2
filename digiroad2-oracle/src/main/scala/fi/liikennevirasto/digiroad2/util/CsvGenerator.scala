@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{FileWriter, BufferedWriter, File}
 
-import fi.liikennevirasto.digiroad2.FeatureClass.{CycleOrPedestrianPath, DrivePath}
 import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, ProhibitionValue, Prohibitions}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -39,7 +38,13 @@ class CsvGenerator(vvhServiceHost: String) {
       val destination = rows.find(_._6 == Destination).get
       adjacents.exists(_.mmlId == destination._4)
     }
-    exportManoeuvreCsv("dropped_manoeuvres", manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres)
+    val droppedManoeuvres = manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres
+    val lol =
+      droppedManoeuvres.mapValues { rows =>
+        val exceptions = OracleDatabase.withDynSession { sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list }
+        rows.map { x => (x._1, x._2, x._3, x._4, x._5, x._6, exceptions) }
+      }
+    exportManoeuvreCsv("dropped_manoeuvres", lol)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
@@ -210,13 +215,13 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
 
-  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int)]]): Unit = {
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int, Seq[Int])]]): Unit = {
     val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._6 == Source).get
       val destination = value.find(_._6 == Destination).get
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; ${destination._4}; ${destination._5}; """
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; ${destination._4}; ${destination._5}; ${source._7.mkString(",")}"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")
