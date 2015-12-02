@@ -15,7 +15,9 @@ import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
 case class ExistingLinearAsset(id: Long, mmlId: Long)
+
 case class NewNumericValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+
 case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
@@ -31,18 +33,44 @@ with GZipSupport {
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
-  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(DateTimePropertyFormat))}))
-  case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
-  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
-  case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ({ case JString(dayOfWeek) =>  ValidityPeriodDayOfWeek(dayOfWeek)}, { case d: ValidityPeriodDayOfWeek => JString(d.toString)}))
-  case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))
+
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    null
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
+    null
+  }, {
+    case s: SideCode => JInt(s.value)
+  }))
+
+  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
+    case JString(direction) => TrafficDirection(direction)
+  }, {
+    case t: TrafficDirection => JString(t.toString)
+  }))
+
+  case object DayofWeekSerializer extends CustomSerializer[ValidityPeriodDayOfWeek](format => ( {
+    case JString(dayOfWeek) => ValidityPeriodDayOfWeek(dayOfWeek)
+  }, {
+    case d: ValidityPeriodDayOfWeek => JString(d.toString)
+  }))
+
+  case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ( {
+    case JInt(linkType) => LinkType(linkType.toInt)
+  }, {
+    case lt: LinkType => JInt(BigInt(lt.value))
+  }))
+
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
     try {
       authenticateForApi(request)(userProvider)
-      if(request.isWrite && !userProvider.getCurrentUser().hasWriteAccess()){
+      if (request.isWrite && !userProvider.getCurrentUser().hasWriteAccess()) {
         halt(Unauthorized("No write permissions"))
       }
     } catch {
@@ -52,6 +80,7 @@ with GZipSupport {
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int)
+
   get("/startupParameters") {
     val (east, north, zoom) = {
       val config = userProvider.getCurrentUser().configuration
@@ -90,7 +119,7 @@ with GZipSupport {
     val nationalId = params("nationalId").toLong
     val massTransitStop =
       massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
-         Map("id" -> stop.id,
+        Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
           "lat" -> stop.lat,
@@ -121,7 +150,7 @@ with GZipSupport {
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
-    val roadLinkId =  (parsedBody \ "mmlId").extractOpt[Long]
+    val roadLinkId = (parsedBody \ "mmlId").extractOpt[Long]
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
     (lon, lat, roadLinkId, bearing)
   }
@@ -146,41 +175,44 @@ with GZipSupport {
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
-        val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
-        Map("id" -> massTransitStop.id,
-          "nationalId" -> massTransitStop.nationalId,
-          "stopTypes" -> massTransitStop.stopTypes,
-          "lat" -> massTransitStop.lat,
-          "lon" -> massTransitStop.lon,
-          "validityDirection" -> massTransitStop.validityDirection,
-          "bearing" -> massTransitStop.bearing,
-          "validityPeriod" -> massTransitStop.validityPeriod,
-          "floating" -> massTransitStop.floating,
-          "propertyData" -> massTransitStop.propertyData)
+    val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+    Map("id" -> massTransitStop.id,
+      "nationalId" -> massTransitStop.nationalId,
+      "stopTypes" -> massTransitStop.stopTypes,
+      "lat" -> massTransitStop.lat,
+      "lon" -> massTransitStop.lon,
+      "validityDirection" -> massTransitStop.validityDirection,
+      "bearing" -> massTransitStop.bearing,
+      "validityPeriod" -> massTransitStop.validityPeriod,
+      "floating" -> massTransitStop.floating,
+      "propertyData" -> massTransitStop.propertyData)
   }
+
   private def validateUserRights(roadLinkId: Long) = {
-      val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
-      if (!authorized) halt(Unauthorized("User not authorized"))
+    val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+    if (!authorized) halt(Unauthorized("User not authorized"))
   }
+
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
-      val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
-      val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
-        mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
+    val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
+    val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
+      mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
+    }
+    val missingProperties: Set[String] = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
+    if (missingProperties.nonEmpty) halt(BadRequest("Missing mandatory properties: " + missingProperties.mkString(", ")))
+    val propertiesWithInvalidValues = nonEmptyMandatoryProperties.filter { property =>
+      val propertyType = mandatoryProperties(property.publicId)
+      propertyType match {
+        case PropertyTypes.MultipleChoice =>
+          property.values.forall { value => isBlank(value.propertyValue) || value.propertyValue.toInt == 99 }
+        case _ =>
+          property.values.forall { value => isBlank(value.propertyValue) }
       }
-      val missingProperties: Set[String] = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
-      if (missingProperties.nonEmpty) halt(BadRequest("Missing mandatory properties: " + missingProperties.mkString(", ")))
-      val propertiesWithInvalidValues = nonEmptyMandatoryProperties.filter { property =>
-        val propertyType = mandatoryProperties(property.publicId)
-        propertyType match {
-          case PropertyTypes.MultipleChoice =>
-            property.values.forall { value => isBlank(value.propertyValue) || value.propertyValue.toInt == 99 }
-          case _ =>
-            property.values.forall { value => isBlank(value.propertyValue) }
-        }
-      }
-      if (propertiesWithInvalidValues.nonEmpty)
-        halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
+    }
+    if (propertiesWithInvalidValues.nonEmpty)
+      halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
+
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
@@ -193,12 +225,14 @@ with GZipSupport {
     createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]]  = {
+  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map { _.map(roadLinkToApi) }
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
   }
 
   def roadLinkToApi(roadLink: VVHRoadLinkWithProperties): Map[String, Any] = {
@@ -229,8 +263,8 @@ with GZipSupport {
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
     params.get("bbox")
-      .map (getRoadLinksFromVVH(municipalities))
-      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
+      .map(getRoadLinksFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   get("/roadlinks/:mmlId") {
@@ -240,7 +274,7 @@ with GZipSupport {
     }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
   }
 
-  get("/roadlinks/adjacent/:id"){
+  get("/roadlinks/adjacent/:id") {
     val id = params("id").toLong
     roadLinkService.getAdjacent(id).map(roadLinkToApi)
   }
@@ -359,7 +393,7 @@ with GZipSupport {
 
   private def extractNewLinearAssets(value: JValue) = {
     val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
-    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map( x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
     numerical ++ prohibitions
   }
 
@@ -491,13 +525,13 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
 
     val newLimit = NewLimit((parsedBody \ "mmlId").extract[Long],
-                            (parsedBody \ "startMeasure").extract[Double],
-                            (parsedBody \ "endMeasure").extract[Double])
+      (parsedBody \ "startMeasure").extract[Double],
+      (parsedBody \ "endMeasure").extract[Double])
 
     speedLimitProvider.create(Seq(newLimit),
-                                         (parsedBody \ "value").extract[Int],
-                                         user.username,
-                                         validateUserMunicipalityAccess(user)).headOption match {
+      (parsedBody \ "value").extract[Int],
+      user.username,
+      validateUserMunicipalityAccess(user)).headOption match {
       case Some(id) => speedLimitProvider.find(id)
       case _ => BadRequest("Speed limit creation failed")
     }
@@ -556,9 +590,9 @@ with GZipSupport {
 
     val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
-      .map { case(id, updates) => (id.toLong, updates) }
+      .map { case (id, updates) => (id.toLong, updates) }
 
-    manoeuvreUpdates.foreach { case(id, updates) =>
+    manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(id)
       validateUserMunicipalityAccess(user)(roadLinkService.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
