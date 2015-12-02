@@ -110,10 +110,6 @@ object Digiroad2Context {
     new VVHRoadLinkService(vvhClient, eventbus)
   }
 
-  lazy val assetService: AssetService = {
-    new AssetService(roadLinkService)
-  }
-
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
       override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
