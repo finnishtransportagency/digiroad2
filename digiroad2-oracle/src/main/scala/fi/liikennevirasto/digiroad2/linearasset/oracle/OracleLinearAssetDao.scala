@@ -255,20 +255,9 @@ trait OracleLinearAssetDao {
   }
 
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[VVHRoadLinkWithProperties]) = {
-    val topology = filterSupportedLinks(roadLinks)
+    val topology = roadLinks.filter(_.isCarTrafficRoad)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
-  }
-
-  private def filterSupportedLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[VVHRoadLinkWithProperties] = {
-    def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = {
-      val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
-      val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)
-
-      allowedFunctionalClasses.contains(link.functionalClass % 10) && !disallowedLinkTypes.contains(link.linkType.value)
-    }
-
-    roadLinks.filter(isCarTrafficRoad)
   }
 
   private def createGeometryForSegment(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {

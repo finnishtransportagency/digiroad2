@@ -13,7 +13,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
-  val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), null)
+  val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
 
   def generateDroppedManoeuvres() = {
     val manoeuvres = OracleDatabase.withDynSession {
@@ -25,12 +25,11 @@ class CsvGenerator(vvhServiceHost: String) {
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(manoeuvres.map(_._4).toSet)
-    val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
-    val roadLinkMmlIds = roadLinks.map(_.mmlId).toSet
+    val roadLinksWithProperties = roadLinkService.getRoadLinksFromVVH(manoeuvres.map(_._4).toSet)
+    val roadLinksByMmlId = roadLinksWithProperties.groupBy(_.mmlId).mapValues(_.head)
+    val roadLinkMmlIds = roadLinksWithProperties.map(_.mmlId).toSet
     val (manoeuvresOk, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
-    val manoeuvresWithCycleOrPedestrianLink = manoeuvresOk.filter { case (id, rows) => rows.exists { row => roadLinksByMmlId(row._4).featureClass == CycleOrPedestrianPath } }
-
+    val manoeuvresWithCycleOrPedestrianLink = manoeuvresOk.filterNot { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
     exportManoeuvreCsv("dropped_manoeuvres", manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink)
   }
 
