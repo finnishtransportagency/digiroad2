@@ -17,7 +17,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 case class PersistedSpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime])
 
-trait OracleLinearAssetDao {
+class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
@@ -100,7 +100,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  val roadLinkService: RoadLinkService
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -546,6 +545,3 @@ trait OracleLinearAssetDao {
   }
 }
 
-object OracleLinearAssetDao extends OracleLinearAssetDao {
-  override val roadLinkService: RoadLinkService = RoadLinkService
-}

@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
-  val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
-  }
+  val dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImplementation)
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)

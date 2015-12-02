@@ -152,9 +152,9 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val externalId = getNationalBusStopId
-    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
-    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
+    val lrMeasure = roadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
+    val testId = roadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
+    val municipalityCode = roadLinkService.getMunicipalityCode(roadLinkId).get
     insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
     insertAssetPosition(assetId, lrmPositionId).execute
@@ -181,7 +181,7 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
   }
 
   private def updateAssetMunicipality(id: Long, roadLinkId: Long): Unit = {
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
+    val municipalityCode = roadLinkService.getMunicipalityCode(roadLinkId).get
     sqlu"update asset set municipality_code = $municipalityCode where id = $id".execute
   }
 
@@ -241,9 +241,9 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
 
   private def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
     val point = Point(lon, lat)
-    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, point)
+    val lrMeasure = roadLinkService.getPointLRMeasure(roadLinkId, point)
     val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(id).first
-    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
+    val testId = roadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
     updateLRMeasure(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     bearing match {
       case Some(b) => updateAssetBearing(id, b).execute

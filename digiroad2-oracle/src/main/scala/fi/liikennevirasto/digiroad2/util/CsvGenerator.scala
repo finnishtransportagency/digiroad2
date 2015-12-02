@@ -13,6 +13,7 @@ import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
+  val linearAssetDao = new OracleLinearAssetDao(roadLinkService)
 
   val Source = 1
   val Destination = 3
@@ -108,7 +109,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
-      OracleLinearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
+      linearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
     }
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>

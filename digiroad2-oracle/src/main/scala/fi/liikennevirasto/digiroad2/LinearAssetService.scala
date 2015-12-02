@@ -163,8 +163,6 @@ trait LinearAssetOperations {
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = roadLinkServiceImpl
-  }
+  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl)
   override def eventBus: DigiroadEventBus = eventBusImpl
 }

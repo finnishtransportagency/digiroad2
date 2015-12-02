@@ -24,9 +24,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30)))
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = mockRoadLinkService
-  }
+  val linearAssetDao = new OracleLinearAssetDao(mockRoadLinkService)
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
