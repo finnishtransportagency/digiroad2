@@ -148,22 +148,6 @@ object OracleSpatialAssetDao {
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val externalId = getNationalBusStopId
-    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
-    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
-    insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
-    insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
-    insertAssetPosition(assetId, lrmPositionId).execute
-    updateAssetGeometry(assetId, Point(lon, lat))
-    val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    updateAssetProperties(assetId, properties ++ defaultValues)
-    getAssetById(assetId).get
-  }
-
   def removeAsset(assetId: Long): Unit = {
     val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(assetId).firstOption
     optionalLrmPositionId match {
