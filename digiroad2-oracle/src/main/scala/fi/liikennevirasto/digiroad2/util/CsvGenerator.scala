@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.io.{FileWriter, BufferedWriter, File}
 
 import fi.liikennevirasto.digiroad2.FeatureClass.{CycleOrPedestrianPath, DrivePath}
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions}
+import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, ProhibitionValue, Prohibitions}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
@@ -14,6 +14,9 @@ import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
+
+  val Source = 1
+  val Destination = 3
 
   def generateDroppedManoeuvres() = {
     val manoeuvres = OracleDatabase.withDynSession {
@@ -28,9 +31,15 @@ class CsvGenerator(vvhServiceHost: String) {
     val roadLinksWithProperties = roadLinkService.getRoadLinksFromVVH(manoeuvres.map(_._4).toSet)
     val roadLinksByMmlId = roadLinksWithProperties.groupBy(_.mmlId).mapValues(_.head)
     val roadLinkMmlIds = roadLinksWithProperties.map(_.mmlId).toSet
-    val (manoeuvresOk, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
-    val manoeuvresWithCycleOrPedestrianLink = manoeuvresOk.filterNot { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
-    exportManoeuvreCsv("dropped_manoeuvres", manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink)
+    val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
+    val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
+    val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
+      val source = rows.find(_._6 == Source).get
+      val adjacents: Seq[VVHRoadLinkWithProperties] = roadLinkService.getAdjacent(source._4)
+      val destination = rows.find(_._6 == Destination).get
+      adjacents.exists(_.mmlId == destination._4)
+    }
+    exportManoeuvreCsv("dropped_manoeuvres", manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
@@ -200,8 +209,6 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
   }
 
-  val Source = 1
-  val Destination = 3
 
   def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int)]]): Unit = {
     val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions\n"
