@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
+class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) extends SpeedLimitProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImplementation)
   val logger = LoggerFactory.getLogger(getClass)
 
