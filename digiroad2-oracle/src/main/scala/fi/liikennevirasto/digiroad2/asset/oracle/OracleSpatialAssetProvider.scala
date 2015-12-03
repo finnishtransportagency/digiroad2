@@ -18,12 +18,6 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    databaseTransaction.withDynTransaction {
-      spatialAssetDao.getAssetById(assetId)
-    }
-  }
-
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {

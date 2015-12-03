@@ -52,38 +52,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     else None
   }
 
-  private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
-    productionRoadLinkId.map { roadLinkId =>
-      roadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
-    }.getOrElse(roadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
-  }
-
-  private def extractStopTypes(rows: Seq[PropertyRow]): Seq[Int] = {
-    rows
-      .filter { row => row.publicId.equals("pysakin_tyyppi") }
-      .filterNot { row => row.propertyValue.isEmpty }
-      .map { row => row.propertyValue.toInt }
-  }
-
-  private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): (AssetWithProperties, Boolean) = {
-    val row = param._2.head
-    val point = row.point.get
-    val wgsPoint = row.wgsPoint.get
-    val roadLinkOption = getOptionalProductionRoadLink(row)
-    val floating = isFloating(row, roadLinkOption)
-    (AssetWithProperties(
-        id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = row.municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
-        stopTypes = extractStopTypes(param._2.map(_.property)),
-        floating = floating), row.persistedFloating)
-  }
-
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
     if (validityDirection != 3) {
       bearing
@@ -101,19 +69,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def updateAssetFloatingStatus(assetWithFloating: ({val id: Long; val floating: Boolean;}, Boolean)) = {
-    val (asset, persistedFloating) = assetWithFloating
-    if (persistedFloating != asset.floating) {
-      sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute
-    }
-  }
-
-  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).apply(assetId).list.groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
-    assetWithProperties.map(updateAssetFloatingStatus)
-    assetWithProperties.map(_._1)
-  }
-
   private val FLOAT_THRESHOLD_IN_METERS = 3
 
   private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
@@ -129,23 +84,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
         coordinateMismatch || (asset.municipalityCode != roadLinkMunicipalityCode)
       }
     }.getOrElse(true)
-  }
-
-  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
-    val beginningOfTime = new LocalDate(0, 1, 1)
-    val endOfTime = new LocalDate(9999, 1, 1)
-    val from = validFrom.getOrElse(beginningOfTime)
-    val to = validTo.getOrElse(endOfTime)
-    val interval = new Interval(from.toDateMidnight(), to.toDateMidnight)
-    val now = DateTime.now
-    val status = if (interval.isBefore(now)) {
-      ValidityPeriod.Past
-    } else if (interval.contains(now)) {
-      ValidityPeriod.Current
-    } else {
-      ValidityPeriod.Future
-    }
-    Some(status)
   }
 
   def updateAssetLastModified(assetId: Long, modifier: String) {

@@ -21,35 +21,6 @@ trait RoadLinkService {
 
   def eventbus: DigiroadEventBus
 
-  def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), omistaja
-           from tielinkki_ctas
-           where dr1_id = $id
-        """
-      query.as[(Long, Int, Seq[Point], AdministrativeClass)].firstOption.map {
-        case (roadLinkId, municipalityNumber, geometry, roadLinkType) => (roadLinkId, municipalityNumber, geometry.headOption, roadLinkType)
-      }
-    }
-  }
-
-  def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-       val query = sql"""
-         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.omistaja
-           from tielinkki_ctas prod
-           join tielinkki test
-           on prod.mml_id = test.mml_id
-           where test.objectid = $testId
-        """
-      query.as[(Long, Int, Seq[Point], AdministrativeClass)].list match {
-        case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption, productionLink._4))
-        case _ => None
-      }
-    }
-  }
-
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     fetchVVHRoadlink(id).map(_.geometry)
   }

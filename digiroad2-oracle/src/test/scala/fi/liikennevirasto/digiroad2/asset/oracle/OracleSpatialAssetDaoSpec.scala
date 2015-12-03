@@ -50,16 +50,6 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
     properties.head.values.head.propertyValue must equal("123")
   }
 
-  ignore("asset geometry matches lrm position") {
-    Database.forDataSource(ds).withDynTransaction {
-      val id = 300000
-      val asset = spatialAssetDao.getAssetById(id).get
-      val assetGeometry = spatialAssetDao.getAssetGeometryById(id)
-      asset.lon must equal(assetGeometry.x)
-      asset.lat must equal(assetGeometry.y)
-    }
-  }
-
   test("asset where lrm position and geometry match should not float") {
     case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
     val testRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), State)
