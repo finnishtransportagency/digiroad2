@@ -17,12 +17,6 @@ case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClas
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[VVHRoadLinkWithProperties], incompleteLinks: Seq[IncompleteLink])
 case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
 
-@deprecated("Use VVHRoadLinkWithProperties instead", "")
-case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],
-                            length: Double, administrativeClass: AdministrativeClass,
-                            functionalClass: Int, trafficDirection: TrafficDirection,
-                            modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
-
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[DateTime])
   val logger = LoggerFactory.getLogger(getClass)
@@ -125,12 +119,6 @@ trait RoadLinkService {
   def updateProperties(id: Long, functionalClass: Int, linkType: LinkType,
                        direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLinkWithProperties]
 
-  private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int, trafficDirection: TrafficDirection): AdjustedRoadLink = {
-    val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
-    AdjustedRoadLink(basic.id, basic.mmlId, basic.geometry, basic.length,
-      basic.administrativeClass, functionalClass, trafficDirection, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, linkType)
-  }
-
   implicit val getDateTime = new GetResult[DateTime] {
     def apply(r: PositionedResult) = {
       new DateTime(r.nextTimestamp())
@@ -155,17 +143,17 @@ trait RoadLinkService {
             join #$idTableName i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list
   }
 
-  private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
+  private def adjustedRoadLinks(vvhRoadlinks: Seq[VVHRoadlink]): Seq[VVHRoadLinkWithProperties] = {
     val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
-      MassQuery.withIds(basicRoadLinks.map(_.mmlId).toSet) { idTableName =>
+      MassQuery.withIds(vvhRoadlinks.map(_.mmlId).toSet) { idTableName =>
         val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
         val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
         val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(idTableName).groupBy(_._1)
         (trafficDirections, functionalClasses, linkTypes)
       }
 
-    basicRoadLinks.map { basicRoadLink =>
-      val mmlId = basicRoadLink.mmlId
+    vvhRoadlinks.map { link =>
+      val mmlId = link.mmlId
       val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
       val adjustedLinkType = adjustedLinkTypes.get(mmlId).flatMap(_.headOption)
       val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
@@ -174,7 +162,7 @@ trait RoadLinkService {
       val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
       val trafficDirectionValue = trafficDirection.map(trafficDirection =>
         TrafficDirection(trafficDirection._2)
-      ).getOrElse(basicRoadLink.trafficDirection)
+      ).getOrElse(link.trafficDirection)
 
       def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
         (a, b) match {
@@ -191,9 +179,14 @@ trait RoadLinkService {
       val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
         case Some((_, _, at, by)) => Some((at, by))
         case _ => None
-      } :+ basicRoadLink.modifiedAt.map(at => (at, "vvh"))
+      } :+ link.modifiedAt.map(at => (at, "vvh"))
 
-      basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
+      val modifics: Option[(DateTime, String)] = modifications.reduce(latestModifications)
+      val (modifiedAt, modifiedBy) = (modifics.map(_._1), modifics.map(_._2))
+
+      VVHRoadLinkWithProperties(link.mmlId, link.geometry,
+        GeometryUtils.geometryLength(link.geometry), link.administrativeClass, functionalClassValue, trafficDirectionValue,
+        LinkType(adjustedLinkTypeValue), modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, attributes = link.attributes)
     }
   }
 
@@ -306,13 +299,7 @@ trait RoadLinkService {
   def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[VVHRoadLinkWithProperties] = {
-    val basicRoadLinks = vvhRoadLinks.map { roadLink =>
-      BasicRoadLink(0, roadLink.mmlId, roadLink.geometry, GeometryUtils.geometryLength(roadLink.geometry), roadLink.administrativeClass, roadLink.trafficDirection, roadLink.modifiedAt)
-    }
-    val adjustedLinks = adjustedRoadLinks(basicRoadLinks)
-    adjustedLinks.map{ link => VVHRoadLinkWithProperties(link.mmlId, link.geometry,
-      link.length, link.administrativeClass, link.functionalClass, link.trafficDirection,
-      LinkType(link.linkType), link.modifiedAt, link.modifiedBy, attributes = vvhRoadLinks.find(_.mmlId==link.mmlId).get.attributes) }
+    adjustedRoadLinks(vvhRoadLinks)
   }
 
   def getAdjacent(mmlId: Long): Seq[VVHRoadLinkWithProperties] = {
