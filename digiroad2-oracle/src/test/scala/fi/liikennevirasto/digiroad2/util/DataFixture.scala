@@ -284,13 +284,13 @@ object DataFixture {
     println()
   }
 
-  def generateDroppedNumericalLimits(): Unit = {
+  def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of numerical limits outside geometry")
     println(DateTime.now())
     val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
-//    csvGenerator.generateDroppedNumericalLimits()
-//    csvGenerator.generateDroppedProhibitions(190, "vehicle_prohibitions")
-//    csvGenerator.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions")
+    csvGenerator.generateDroppedNumericalLimits()
+    csvGenerator.generateDroppedProhibitions(190, "vehicle_prohibitions")
+    csvGenerator.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions")
     csvGenerator.generateDroppedManoeuvres()
     println("complete at time: ")
     println(DateTime.now())
@@ -379,8 +379,8 @@ object DataFixture {
         splitLinearAssets()
       case Some("litroads") =>
         importLitRoadsFromConversion()
-      case Some("dropped_numericallimits") =>
-        generateDroppedNumericalLimits()
+      case Some("dropped_assets_csv") =>
+        generateDroppedAssetsCsv()
       case Some("generate_values_for_lit_roads") =>
         generateValuesForLitRoads()
       case Some("unfloat_linear_assets") =>
@@ -409,7 +409,7 @@ object DataFixture {
         importMMLIdsOnManoeuvres()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits |" +
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
         " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres |" +
