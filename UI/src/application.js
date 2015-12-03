@@ -428,11 +428,11 @@ var URLRouter = function(map, backend, models) {
     var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
     var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
     var savingEventNames = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
-    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving ' + savingEventNames, function() {
+    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + savingEventNames, function() {
       indicatorOverlay();
     });
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available ' + fetchedEventNames, function() {
+    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 

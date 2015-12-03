@@ -60,6 +60,7 @@
     };
 
     var save = function() {
+      eventbus.trigger('manoeuvres:saving');
       collection.save(function() {
         eventbus.trigger('manoeuvres:saved', current);
       });
