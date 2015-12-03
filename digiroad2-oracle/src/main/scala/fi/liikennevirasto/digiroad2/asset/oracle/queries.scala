@@ -161,27 +161,6 @@ object Queries {
     }
   }
 
-  implicit val getRoadLink = new GetResult[RoadLink] {
-    def apply(r: PositionedResult) = {
-      val (id, geomBytes, endDate, municipalityNumber, linkType) = (r.nextLong, r.nextBytes, r.nextDateOption, r.nextInt, r.nextInt)
-      val geom = JGeometry.load(geomBytes)
-      val decimalPattern = "#.###"
-      val newFormat = NumberFormat.getNumberInstance(Locale.US).asInstanceOf[DecimalFormat]
-      newFormat.applyPattern(decimalPattern)
-      val points: Array[Double] = geom.getOrdinatesArray
-      val coords = for (i <- 0 to points.size / geom.getDimensions - 1) yield {
-        (newFormat.format(points(geom.getDimensions * i)).toDouble,
-         newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
-      }
-      val administrativeClass = AdministrativeClass(linkType / 10)
-      RoadLink(id = id,
-               lonLat = coords,
-               endDate = endDate.map(new LocalDate(_)),
-               municipalityNumber = municipalityNumber,
-               roadLinkType = administrativeClass)
-    }
-  }
-
   implicit val getAssetType = new GetResult[AssetType] {
     def apply(r: PositionedResult) = {
       AssetType(r.nextLong, r.nextString, r.nextString)
