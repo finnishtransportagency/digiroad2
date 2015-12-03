@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class SpeedLimitFillerSpec extends FunSuite with Matchers {
-  private def roadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
+  private def roadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
-    VVHRoadLinkWithProperties(
+    RoadLink(
       mmlId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
   }

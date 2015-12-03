@@ -29,7 +29,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
-  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, VVHRoadLinkWithProperties]): Seq[UnknownSpeedLimit] = {
+  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(_.id == 0)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByMmlId(limit.mmlId)

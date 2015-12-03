@@ -199,7 +199,7 @@ with GZipSupport {
     partitionedRoadLinks.map { _.map(roadLinkToApi) }
   }
 
-  def roadLinkToApi(roadLink: VVHRoadLinkWithProperties): Map[String, Any] = {
+  def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "mmlId" -> roadLink.mmlId,
       "points" -> roadLink.geometry,

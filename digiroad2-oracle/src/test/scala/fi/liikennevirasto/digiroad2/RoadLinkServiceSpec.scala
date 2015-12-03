@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.mockito.Matchers._
@@ -164,7 +164,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
+      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
 
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 

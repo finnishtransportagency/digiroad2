@@ -5,11 +5,11 @@ import fi.liikennevirasto.digiroad2.asset._
 
 import scala.util.Try
 
-case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point],
-                                     length: Double, administrativeClass: AdministrativeClass,
-                                     functionalClass: Int, trafficDirection: TrafficDirection,
-                                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
-                                     attributes: Map[String, Any] = Map()) extends PolyLine {
+case class RoadLink(mmlId: Long, geometry: Seq[Point],
+                    length: Double, administrativeClass: AdministrativeClass,
+                    functionalClass: Int, trafficDirection: TrafficDirection,
+                    linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
+                    attributes: Map[String, Any] = Map()) extends PolyLine {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
 

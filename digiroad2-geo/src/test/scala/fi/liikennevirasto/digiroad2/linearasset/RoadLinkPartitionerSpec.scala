@@ -6,7 +6,7 @@ import org.scalatest._
 
 class RoadLinkPartitionerSpec extends FunSuite with Matchers {
   private def roadLink(mmlId: Long, geometry: Seq[Point]) = {
-    VVHRoadLinkWithProperties(mmlId, geometry, 0.0, Municipality, 0,
+    RoadLink(mmlId, geometry, 0.0, Municipality, 0,
       TrafficDirection.BothDirections, Motorway, None, None,
       Map("ROADNUMBER" -> BigInt(123)))
   }

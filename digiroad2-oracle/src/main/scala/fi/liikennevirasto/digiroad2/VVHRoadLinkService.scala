@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -65,7 +65,7 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
   }
 
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
-                                direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLinkWithProperties] = {
+                                direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[RoadLink] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)

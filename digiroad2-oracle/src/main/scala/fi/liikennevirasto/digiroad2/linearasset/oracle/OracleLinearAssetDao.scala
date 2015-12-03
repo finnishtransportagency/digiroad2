@@ -253,13 +253,13 @@ class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[VVHRoadLinkWithProperties]) = {
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink]): (Seq[SpeedLimit],  Seq[RoadLink]) = {
     val topology = roadLinks.filter(_.isCarTrafficRoad)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
-  private def createGeometryForSegment(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+  private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.find(_.mmlId == mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)

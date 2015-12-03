@@ -167,7 +167,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  private def roadLinkPropertiesToApi(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Map[String, Any]] = {
+  private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
       Map("mmlId" -> roadLink.mmlId,
         "administrativeClass" -> roadLink.administrativeClass.value,

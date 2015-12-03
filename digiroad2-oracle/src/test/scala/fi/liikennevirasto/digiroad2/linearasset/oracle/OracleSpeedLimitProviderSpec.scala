@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, UnknownSpeedLimit, NewLimit, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -22,7 +22,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val roadLink = VVHRoadLinkWithProperties(
+  val roadLink = RoadLink(
     1l, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
@@ -38,7 +38,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   def passingMunicipalityValidation(code: Int): Unit = {}
   def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
 
-  val roadLinkForSeparation = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+  val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
 
   test("create new speed limit") {
@@ -130,7 +130,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("speed limit separation fails if speed limit is one way") {
-    val roadLink = VVHRoadLinkWithProperties(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+    val roadLink = RoadLink(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkFromVVH(388551862l)).thenReturn(Some(roadLink))
 
     runWithRollback {
@@ -141,7 +141,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("speed limit separation fails if road link is one way") {
-    val roadLink = VVHRoadLinkWithProperties(1068804929, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
+    val roadLink = RoadLink(1068804929, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkFromVVH(1068804929l)).thenReturn(Some(roadLink))
 
     runWithRollback {

@@ -36,7 +36,7 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks)
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[PieceWiseLinearAsset] = {
+  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val mmlIds = roadLinks.map(_.mmlId)
     val existingAssets =
       withDynTransaction {
