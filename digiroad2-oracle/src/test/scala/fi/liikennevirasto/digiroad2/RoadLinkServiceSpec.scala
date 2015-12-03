@@ -153,6 +153,31 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Changes should cause event") {
+    OracleDatabase.withDynTransaction {
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
+        .thenReturn(List(
+        VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
+
+      val service = new TestService(mockVVHClient, mockEventBus)
+      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
+
+      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
+
+      service.getRoadLinksFromVVH(boundingBox)
+
+      verify(mockEventBus).publish(
+        org.mockito.Matchers.eq("linkProperties:changed"),
+        org.mockito.Matchers.eq(changeSet))
+
+      dynamicSession.rollback()
+    }
+  }
+
   test("Remove road link from incomplete link list once functional class and link type are specified") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
