@@ -52,17 +52,6 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkData implements RowToElement<Tuple3<Long, Long, Int>>  {
-        @Override
-        public Tuple3<Long, Long, Int> convert(ResultSet row) throws SQLException {
-            long id = row.getLong(1);
-            long mmlId = row.getLong(2);
-            int administrativeClass = row.getInt(3);
-            if(row.wasNull()) { administrativeClass = 99; }
-            return new Tuple3(id, mmlId, administrativeClass);
-        }
-    }
-
     public static List<Tuple2<Long, Int>> fetchManoeuvreExceptionsByIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT m.manoeuvre_id, m.exception_type " +
                 "FROM MANOEUVRE_EXCEPTIONS m " +
@@ -71,8 +60,4 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
     }
 
-    public static List<Tuple3<Long, Long, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
-        String query = "select dr1_id, mml_id, omistaja from tielinkki_ctas  WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToRoadLinkData());
-    }
 }
