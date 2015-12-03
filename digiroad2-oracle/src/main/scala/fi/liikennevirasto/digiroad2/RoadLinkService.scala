@@ -73,19 +73,6 @@ trait RoadLinkService {
     fetchVVHRoadlink(id).map(_.geometry)
   }
 
-  def getRoadLinkGeometryByTestId(testId: Long): Option[Seq[Point]] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select to_2d(prod.shape)
-           from tielinkki_ctas prod
-           join tielinkki test
-           on prod.mml_id = test.mml_id
-           where test.objectid = $testId
-        """
-      query.as[Seq[Point]].firstOption
-    }
-  }
-
   def getTestId(id: Long): Option[Long] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
