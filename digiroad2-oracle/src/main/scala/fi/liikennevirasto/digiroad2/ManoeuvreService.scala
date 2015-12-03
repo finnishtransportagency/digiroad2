@@ -113,22 +113,18 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
 
       Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
-    }.filter { manouvreSourceAndDestAreAdjacent(_, roadLinks) }.toSeq
+    }.filter { validManoeuvre(_, roadLinks) }.toSeq
   }
 
-  private def manouvreSourceAndDestAreAdjacent(manoeuvre: Manoeuvre, roadLinks: Seq[VVHRoadLinkWithProperties]): Boolean = {
+  private def validManoeuvre(manoeuvre: Manoeuvre, roadLinks: Seq[VVHRoadLinkWithProperties]): Boolean = {
     val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
     val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
 
     (sourceRoadLinkOption, destRoadLinkOption) match {
       case (Some(sourceRoadLink), Some(destRoadLink)) => {
-        val epsilon = 0.01
-        val sourceEndPoints = GeometryUtils.geometryEndpoints(sourceRoadLink.geometry)
-        val destEndpoints = GeometryUtils.geometryEndpoints(destRoadLink.geometry)
-        destEndpoints._1.distanceTo(sourceEndPoints._1) < epsilon ||
-          destEndpoints._2.distanceTo(sourceEndPoints._1) < epsilon ||
-          destEndpoints._1.distanceTo(sourceEndPoints._2) < epsilon ||
-          destEndpoints._2.distanceTo(sourceEndPoints._2) < epsilon
+        GeometryUtils.areAdjacent(sourceRoadLink.geometry, destRoadLink.geometry) &&
+          sourceRoadLink.isCarTrafficRoad &&
+          destRoadLink.isCarTrafficRoad
       }
       case _ => false
     }

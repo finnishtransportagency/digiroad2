@@ -383,22 +383,18 @@ trait RoadLinkService {
   }
 
   def getAdjacent(mmlId: Long): Seq[VVHRoadLinkWithProperties] = {
-    val endpoints = getRoadLinkGeometry(mmlId).map(GeometryUtils.geometryEndpoints)
-    endpoints.map(endpoint => {
+    val sourceLinkGeometryOption = getRoadLinkGeometry(mmlId)
+    sourceLinkGeometryOption.map(sourceLinkGeometry => {
+      val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
-      val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
-      val bounds2 = BoundingRectangle(endpoint._2 - delta, endpoint._2 + delta)
+      val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
+      val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
       val roadLinks = getRoadLinksFromVVH(bounds) ++ getRoadLinksFromVVH(bounds2)
       roadLinks.filterNot(_.mmlId == mmlId)
         .filter(roadLink => roadLink.isCarTrafficRoad)
         .filter(roadLink => {
-        val geometry = roadLink.geometry
-        val epsilon = 0.01
-        val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
-        rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
-          rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
-          rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
-          rlEndpoints._2.distanceTo(endpoint._2) < epsilon
+        val targetLinkGeometry = roadLink.geometry
+        GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
       })
     }).getOrElse(Nil)
   }

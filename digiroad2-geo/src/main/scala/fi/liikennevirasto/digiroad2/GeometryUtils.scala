@@ -125,4 +125,14 @@ object GeometryUtils {
     val distanceBeforeTarget = projections.take(targetIndex).map(_.segmentLength).sum
     distanceBeforeTarget + projections(targetIndex).mValue
   }
+
+  def areAdjacent(geometry1: Seq[Point], geometry2: Seq[Point]): Boolean = {
+    val epsilon = 0.01
+    val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
+    val geometry2Endpoints = GeometryUtils.geometryEndpoints(geometry2)
+    geometry2Endpoints._1.distanceTo(geometry1EndPoints._1) < epsilon ||
+      geometry2Endpoints._2.distanceTo(geometry1EndPoints._1) < epsilon ||
+      geometry2Endpoints._1.distanceTo(geometry1EndPoints._2) < epsilon ||
+      geometry2Endpoints._2.distanceTo(geometry1EndPoints._2) < epsilon
+  }
 }
