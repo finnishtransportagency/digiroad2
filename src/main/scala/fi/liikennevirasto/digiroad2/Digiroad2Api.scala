@@ -256,7 +256,7 @@ with GZipSupport {
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
   }
 
-  get("/roadlinks2") {
+  get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()

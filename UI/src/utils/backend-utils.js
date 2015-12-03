@@ -12,7 +12,7 @@
 
     this.getRoadLinksFromVVH = createCallbackRequestor(function(boundingBox) {
       return {
-        url: 'api/roadlinks2?bbox=' + boundingBox
+        url: 'api/roadlinks?bbox=' + boundingBox
       };
     });
 
