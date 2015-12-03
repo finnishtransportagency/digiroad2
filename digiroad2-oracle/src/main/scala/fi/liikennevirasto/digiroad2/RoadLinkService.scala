@@ -73,43 +73,6 @@ trait RoadLinkService {
     fetchVVHRoadlink(id).map(_.geometry)
   }
 
-  def getTestId(id: Long): Option[Long] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select test.objectid
-           from tielinkki_ctas prod
-           join tielinkki test
-           on prod.mml_id = test.mml_id
-           where prod.dr1_id = $id
-        """
-      query.as[Long].firstOption
-    }
-  }
-
-  def getPointLRMeasure(roadLinkId: Long, point: Point): BigDecimal = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val x = point.x
-      val y = point.y
-      val query =
-        s"""
-          SELECT
-            SDO_LRS.GET_MEASURE(
-              SDO_LRS.PROJECT_PT(
-                tl.shape,
-                MDSYS.SDO_GEOMETRY(2001,
-                                   3067,
-                                   NULL,
-                                   MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                   MDSYS.SDO_ORDINATE_ARRAY($x, $y)
-                                  )
-                ))
-            FROM tielinkki_ctas tl
-            WHERE tl.dr1_id = $roadLinkId
-        """
-      Q.queryNA[BigDecimal](query).first
-    }
-  }
-
   implicit val getAdministrativeClass = new GetResult[AdministrativeClass] {
     def apply(r: PositionedResult) = {
       AdministrativeClass(r.nextInt())
