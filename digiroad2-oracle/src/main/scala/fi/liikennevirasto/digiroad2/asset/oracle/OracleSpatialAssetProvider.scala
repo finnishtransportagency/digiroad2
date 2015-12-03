@@ -16,8 +16,6 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 // FIXME:
 // - move common asset functionality to asset service
 class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
-  val logger = LoggerFactory.getLogger(getClass)
-
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {
@@ -29,12 +27,6 @@ class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbu
     (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
       spatialAssetDao.availableProperties(assetTypeId)
     }).sortBy(_.propertyUiIndex)
-  }
-
-  def getMunicipalities: Seq[Int] = {
-    OracleDatabase.withDynSession {
-      spatialAssetDao.getMunicipalities
-    }
   }
 
   def assetPropertyNames(language: String): Map[String, String] = {
