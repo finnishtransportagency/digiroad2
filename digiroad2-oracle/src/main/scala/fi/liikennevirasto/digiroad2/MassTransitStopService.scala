@@ -153,7 +153,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
       val persistedStop = fetchPointAssets(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       val mmlId = optionalPosition match {
-        case Some(position) => position.roadLinkId
+        case Some(position) => position.mmlId
         case _ => persistedStop.get.mmlId
       }
       val (municipalityCode, geometry) = fetchRoadLink(mmlId).getOrElse(throw new NoSuchElementException)
