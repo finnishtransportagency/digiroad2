@@ -50,17 +50,6 @@ trait RoadLinkService {
     }
   }
 
-  def getMunicipalityCode(roadLinkId: Long): Option[Int] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-       val query = sql"""
-         select prod.kunta_nro
-           from tielinkki_ctas prod
-           where prod.dr1_id = $roadLinkId
-        """
-      query.as[Int].firstOption
-    }
-  }
-
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     fetchVVHRoadlink(id).map(_.geometry)
   }

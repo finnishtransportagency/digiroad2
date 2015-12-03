@@ -148,11 +148,6 @@ class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
     Some(status)
   }
 
-  private def updateAssetMunicipality(id: Long, roadLinkId: Long): Unit = {
-    val municipalityCode = roadLinkService.getMunicipalityCode(roadLinkId).get
-    sqlu"update asset set municipality_code = $municipalityCode where id = $id".execute
-  }
-
   def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute
   }
