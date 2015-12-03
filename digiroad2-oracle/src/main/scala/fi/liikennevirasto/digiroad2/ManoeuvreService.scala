@@ -3,16 +3,12 @@ package fi.liikennevirasto.digiroad2
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
-
-import scala.collection.JavaConversions._
 
 case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
@@ -144,7 +140,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
-    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvreExceptions = MassQuery.withIds(manoeuvreIds.toSet) { idTableName =>
+      sql"""SELECT m.manoeuvre_id, m.exception_type
+            FROM MANOEUVRE_EXCEPTIONS m
+            JOIN #$idTableName i on m.manoeuvre_id = i.id""".as[(Long, Int)].list
+    }
     val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
     manoeuvreExceptionsById
   }
