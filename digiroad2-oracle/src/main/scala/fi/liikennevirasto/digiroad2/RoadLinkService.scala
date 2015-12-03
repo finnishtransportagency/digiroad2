@@ -12,13 +12,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-
 case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[VVHRoadLinkWithProperties], incompleteLinks: Seq[IncompleteLink])
 case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
 
 trait RoadLinkService {
-  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[DateTime])
   val logger = LoggerFactory.getLogger(getClass)
 
   def eventbus: DigiroadEventBus
@@ -78,8 +76,6 @@ trait RoadLinkService {
       TrafficDirection(r.nextIntOption())
     }
   }
-
-  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, None) )
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
