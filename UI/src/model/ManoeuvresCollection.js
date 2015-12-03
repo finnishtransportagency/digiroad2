@@ -36,6 +36,7 @@
         fetchManoeuvres(extent, function(ms) {
           manoeuvres = ms;
           callback();
+          eventbus.trigger('manoeuvres:fetched');
         });
       });
       roadCollection.fetchFromVVH(extent);
