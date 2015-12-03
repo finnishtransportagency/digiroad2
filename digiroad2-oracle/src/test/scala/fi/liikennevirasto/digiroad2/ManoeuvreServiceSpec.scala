@@ -13,15 +13,20 @@ import slick.jdbc.{StaticQuery => Q}
 
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  private def vvhRoadLink(mmlId: Long, municipalityCode: Int) = {
-    VVHRoadLinkWithProperties(mmlId, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
+  private def vvhRoadLink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
+    VVHRoadLinkWithProperties(mmlId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
-    .thenReturn(Seq(vvhRoadLink(388562342, 235), vvhRoadLink(388569406, 235), vvhRoadLink(388569430, 235), vvhRoadLink(388569418, 235)) )
+    .thenReturn(Seq(vvhRoadLink(388562342, 235), vvhRoadLink(388569430, 235), vvhRoadLink(388569418, 235)) )
   when(mockRoadLinkService.getRoadLinksFromVVH(municipality = 235))
-    .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235)))
+    .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235), vvhRoadLink(233, 235), vvhRoadLink(234, 235,  Seq(Point(15, 0), Point(20, 0)))))
+  when(mockRoadLinkService.getRoadLinkFromVVH(mmlId = 388569406))
+    .thenReturn(Some(vvhRoadLink(388569406, 235)))
+  when(mockRoadLinkService.getRoadLinkFromVVH(mmlId = 388570174))
+    .thenReturn(Some(vvhRoadLink(388570174, 235)))
+
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService)
 
@@ -32,8 +37,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  ignore("Get all manoeuvres partially or completely in bounding box") {
-    //todo: fixme, when filtering manoeuvres with non adjacent source and dest
+  test("Get all manoeuvres partially or completely in bounding box") {
     val bounds = BoundingRectangle(Point(373880.25, 6677085), Point(374133, 6677382))
     val manoeuvres = manoeuvreService.getByBoundingBox(bounds, Set(235))
     manoeuvres.length should equal(3)
@@ -45,6 +49,15 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     completelyContainedManoeuvre.destMmlId should equal(388569418)
   }
 
+  test("Filters out manoeuvres with non-adjacent source and destination links") {
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
+    val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 233, 234))
+
+    val manoeuvres = manoeuvreService.getByMunicipality(235)
+
+    manoeuvres.exists(_.id == manoeuvreId) should be(true)
+    manoeuvres.exists(_.id == manoeuvreId2) should be(false)
+  }
 
   def createManouvre: Manoeuvre = {
     val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
@@ -79,6 +92,4 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     roadLinkId should equal(123)
   }
-
-  //todo: add test to check that manoeuvres with non-adjacent source and dest are filtered out
 }

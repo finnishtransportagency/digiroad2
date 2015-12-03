@@ -99,41 +99,39 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def getByMmlIds(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Manoeuvre] = {
-    OracleDatabase.withDynTransaction {
+    val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
       val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
       val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
-
-      manoeuvresById.filter { case (id, links) =>
-        links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
-      }.map { case (id, links) =>
-        val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
-        val (_, _, destMmlId, _, _, _, _) = links.find(_._4 == LastElement).get
-        val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
-
-        Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
-      }.filter { isAdjacent(_, roadLinks) }.toSeq
+      (manoeuvresById, manoeuvreExceptionsById)
     }
+
+    manoeuvresById.filter { case (id, links) =>
+      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
+    }.map { case (id, links) =>
+      val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
+      val (_, _, destMmlId, _, _, _, _) = links.find(_._4 == LastElement).get
+      val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
+
+      Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
+    }.filter { manouvreSourceAndDestAreAdjacent(_, roadLinks) }.toSeq
   }
 
-  private def isAdjacent(manoeuvre: Manoeuvre, roadLinks: Seq[VVHRoadLinkWithProperties]): Boolean = {
-    val sourceEndPoints = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId)
-      .map(link => GeometryUtils.geometryEndpoints(link.geometry))
+  private def manouvreSourceAndDestAreAdjacent(manoeuvre: Manoeuvre, roadLinks: Seq[VVHRoadLinkWithProperties]): Boolean = {
+    val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
+    val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
 
-    val adjacentLinks = sourceEndPoints.map { endpoint =>
-      roadLinks.filterNot(_.mmlId == manoeuvre.sourceMmlId)
-        .filter(roadLink => roadLink.isCarTrafficRoad)
-        .filter { roadLink =>
-        val geometry = roadLink.geometry
+    (sourceRoadLinkOption, destRoadLinkOption) match {
+      case (Some(sourceRoadLink), Some(destRoadLink)) => {
         val epsilon = 0.01
-        val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
-        rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
-          rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
-          rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
-          rlEndpoints._2.distanceTo(endpoint._2) < epsilon
+        val sourceEndPoints = GeometryUtils.geometryEndpoints(sourceRoadLink.geometry)
+        val destEndpoints = GeometryUtils.geometryEndpoints(destRoadLink.geometry)
+        destEndpoints._1.distanceTo(sourceEndPoints._1) < epsilon ||
+          destEndpoints._2.distanceTo(sourceEndPoints._1) < epsilon ||
+          destEndpoints._1.distanceTo(sourceEndPoints._2) < epsilon ||
+          destEndpoints._2.distanceTo(sourceEndPoints._2) < epsilon
       }
-    }.getOrElse(Nil)
-
-    adjacentLinks.exists(_.mmlId == manoeuvre.destMmlId)
+      case _ => false
+    }
   }
 
   private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
