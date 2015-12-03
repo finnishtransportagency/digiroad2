@@ -150,10 +150,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
-    useVVHGeometry match {
-      case true => massTransitStopService.getByMunicipality(municipalityNumber)
-      case false => throw new NotImplementedError()
-    }
+    massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
   def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
@@ -170,7 +167,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  private def roadLinkPropertiesToApi(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Map[String, Any]] = {
+  private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
       Map("mmlId" -> roadLink.mmlId,
         "administrativeClass" -> roadLink.administrativeClass.value,

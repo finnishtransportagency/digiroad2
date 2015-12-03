@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -14,7 +14,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def vvhRoadLink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
-    VVHRoadLinkWithProperties(mmlId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
+    RoadLink(mmlId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]

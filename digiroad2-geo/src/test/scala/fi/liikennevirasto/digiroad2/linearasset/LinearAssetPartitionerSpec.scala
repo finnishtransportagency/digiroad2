@@ -12,13 +12,13 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     TestLinearAsset(0, mmlId, SideCode.BothDirections, Some(NumericValue(value)), geometry)
   }
 
-  private def roadLinkForAsset(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): VVHRoadLinkWithProperties = {
+  private def roadLinkForAsset(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     val ri = roadIdentifier match {
       case Left(number) => "ROADNUMBER" -> BigInt(number)
       case Right(name) => "ROADNAME_FI" -> name
     }
-    VVHRoadLinkWithProperties(
+    RoadLink(
       2, Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, administrativeClass,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode, ri))
   }
@@ -112,7 +112,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
      val linearAssets = Seq(
       linearAsset(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       linearAsset(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
-    val roadLinksForSpeedLimits = Map.empty[Long, VVHRoadLinkWithProperties]
+    val roadLinksForSpeedLimits = Map.empty[Long, RoadLink]
 
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 2

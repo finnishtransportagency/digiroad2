@@ -30,9 +30,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       when(mockedRoadLinkService.fetchVVHRoadlink(roadLink.mmlId)).thenReturn(Some(roadLink))
     }
 
-    new OracleLinearAssetDao {
-      override val roadLinkService: RoadLinkService = mockedRoadLinkService
-    }
+    new OracleLinearAssetDao(mockedRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -117,11 +115,9 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("filter out floating speed limits") {
     runWithRollback {
       val roadLinks = Seq(
-        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-      val dao = new OracleLinearAssetDao {
-        override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-      }
+        RoadLink(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[RoadLinkService])
       dao.floatLinearAssets(Set(300100, 300101))
       val (speedLimits, _) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       speedLimits.map(_.id) should equal(Seq(200352))
@@ -131,15 +127,13 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("filter out disallowed link types") {
     runWithRollback {
       val roadLinks = Seq(
-        VVHRoadLinkWithProperties(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        RoadLink(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleLinearAssetDao {
-        override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-      }
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
 
@@ -150,13 +144,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("filter out disallowed functional classes") {
     runWithRollback {
       val roadLinks = Seq(
-        VVHRoadLinkWithProperties(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+        RoadLink(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        RoadLink(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleLinearAssetDao {
-        override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-      }
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
 
@@ -279,7 +271,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch simple prohibition without validity periods or exceptions") {
-    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val dao = new OracleLinearAssetDao(null)
     val mmlId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty))
 
@@ -297,7 +289,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period") {
-    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val dao = new OracleLinearAssetDao(null)
     val mmlId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
@@ -315,7 +307,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period and exceptions") {
-    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val dao = new OracleLinearAssetDao(null)
     val mmlId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
@@ -334,7 +326,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch multiple prohibitions") {
-    val dao = new OracleLinearAssetDao { override val roadLinkService: RoadLinkService = null }
+    val dao = new OracleLinearAssetDao(null)
     val mmlId1 = 1l
     val mmlId2 = 2l
     val mmlId3 = 3l

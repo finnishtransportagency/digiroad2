@@ -9,7 +9,7 @@ import org.scalatest._
 class NumericalLimitFillerSpec extends FunSuite with Matchers {
   test("create non-existent linear assets on empty road links") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
     val (filledTopology, _) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
@@ -23,7 +23,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
   test("drop assets that fall completely outside topology") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110)))
@@ -42,7 +42,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
   test("cap assets that go over roadlink geometry") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110)))
@@ -62,9 +62,9 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
   test("transform one-sided asset to two-sided when its defined on one-way road link") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None),
-      VVHRoadLinkWithProperties(2, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, Municipality,
+      RoadLink(2, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
     )
     val linearAssets = Map(
@@ -100,7 +100,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
   test("generate one-sided asset when two-way road link is half-covered") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110)))

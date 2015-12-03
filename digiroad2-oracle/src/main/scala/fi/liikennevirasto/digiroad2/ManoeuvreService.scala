@@ -4,7 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
@@ -98,7 +98,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def getByMmlIds(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Manoeuvre] = {
+  private def getByMmlIds(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
       val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
       val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
@@ -116,7 +116,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }.filter { validManoeuvre(_, roadLinks) }.toSeq
   }
 
-  private def validManoeuvre(manoeuvre: Manoeuvre, roadLinks: Seq[VVHRoadLinkWithProperties]): Boolean = {
+  private def validManoeuvre(manoeuvre: Manoeuvre, roadLinks: Seq[RoadLink]): Boolean = {
     val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
     val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
 

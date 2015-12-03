@@ -4,7 +4,7 @@ import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -74,10 +74,12 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
+  lazy val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao(roadLinkService)
+
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
-         .newInstance(eventbus, userProvider, DefaultDatabaseTransaction)
+         .getDeclaredConstructor(classOf[OracleSpatialAssetDao], classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
+         .newInstance(spatialAssetDao, eventbus, userProvider, DefaultDatabaseTransaction)
          .asInstanceOf[AssetProvider]
   }
 
@@ -113,6 +115,7 @@ object Digiroad2Context {
       override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override val spatialAssetDao: OracleSpatialAssetDao = Digiroad2Context.spatialAssetDao
     }
     new ProductionMassTransitStopService(eventbus)
   }
@@ -128,8 +131,6 @@ object Digiroad2Context {
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService)
   }
-
-  lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

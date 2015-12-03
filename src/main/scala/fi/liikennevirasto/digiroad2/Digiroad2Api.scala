@@ -94,16 +94,16 @@ with GZipSupport {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
-      Map("id" -> stop.id,
-        "nationalId" -> stop.nationalId,
-        "stopTypes" -> stop.stopTypes,
-        "municipalityNumber" -> stop.municipalityNumber,
-        "lat" -> stop.lat,
-        "lon" -> stop.lon,
-        "validityDirection" -> stop.validityDirection,
-        "bearing" -> stop.bearing,
-        "validityPeriod" -> stop.validityPeriod,
-        "floating" -> stop.floating)
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "municipalityNumber" -> stop.municipalityNumber,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating)
     }
   }
 
@@ -117,20 +117,18 @@ with GZipSupport {
         halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
     val nationalId = params("nationalId").toLong
-    val massTransitStop =
-      massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating,
-          "propertyData" -> stop.propertyData)
-      }
-
+    val massTransitStop = massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating,
+        "propertyData" -> stop.propertyData)
+    }
     massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
   }
 
@@ -235,7 +233,7 @@ with GZipSupport {
     }
   }
 
-  def roadLinkToApi(roadLink: VVHRoadLinkWithProperties): Map[String, Any] = {
+  def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "mmlId" -> roadLink.mmlId,
       "points" -> roadLink.geometry,

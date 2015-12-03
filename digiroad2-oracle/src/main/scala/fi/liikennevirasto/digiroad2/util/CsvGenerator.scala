@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{FileWriter, BufferedWriter, File}
 
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, ProhibitionValue, Prohibitions}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ProhibitionValue, Prohibitions}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
@@ -13,6 +13,7 @@ import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
+  val linearAssetDao = new OracleLinearAssetDao(roadLinkService)
 
   val Source = 1
   val Destination = 3
@@ -34,7 +35,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
       val source = rows.find(_._6 == Source).get
-      val adjacents: Seq[VVHRoadLinkWithProperties] = roadLinkService.getAdjacent(source._4)
+      val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
       val destination = rows.find(_._6 == Destination).get
       adjacents.exists(_.mmlId == destination._4)
     }
@@ -108,7 +109,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
-      OracleLinearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
+      linearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
     }
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>

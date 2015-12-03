@@ -36,7 +36,7 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks)
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[PieceWiseLinearAsset] = {
+  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val mmlIds = roadLinks.map(_.mmlId)
     val existingAssets =
       withDynTransaction {
@@ -163,8 +163,6 @@ trait LinearAssetOperations {
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = roadLinkServiceImpl
-  }
+  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl)
   override def eventBus: DigiroadEventBus = eventBusImpl
 }

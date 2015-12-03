@@ -15,7 +15,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-      VVHRoadLinkWithProperties(
+      RoadLink(
         1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None)))
 
@@ -24,9 +24,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30)))
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = mockRoadLinkService
-  }
+  val linearAssetDao = new OracleLinearAssetDao(mockRoadLinkService)
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -106,7 +104,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Municipality fetch dispatches to dao based on asset type id") {
     when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadLinkWithProperties(
+      RoadLink(
         1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None)))
 

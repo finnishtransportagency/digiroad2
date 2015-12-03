@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.mockito.Matchers._
@@ -25,19 +25,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val result = f
     sqlu"""delete from temp_id""".execute
     result
-  }
-
-  test("Get production road link with test id that maps to one production road link") {
-    RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
-    RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
-  }
-
-  test("Get production road link with test id that doesn't map to production") {
-    RoadLinkService.getByTestIdAndMeasure(1414l, 50.0) should be (None)
-  }
-
-  test("Get production road link with test id that maps to several links in production") {
-    RoadLinkService.getByTestIdAndMeasure(147298l, 50.0) should be (None)
   }
 
   test("Override road link traffic direction with adjusted value") {
@@ -65,11 +52,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
       dynamicSession.rollback()
     }
-  }
-
-  test("Overriden road link adjustments return latest modification") {
-    val mmlId = RoadLinkService.getRoadLinkMmlId(7886262)
-    mmlId should be (1068804929)
   }
 
   test("Adjust link type") {
@@ -182,7 +164,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
+      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
 
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 
