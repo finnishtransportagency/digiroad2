@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -43,13 +44,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l)))
     .thenReturn(List(VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
-  val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, testRoadLinkService)
+  val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+  val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
-    override def roadLinkService: RoadLinkService = testRoadLinkService
     override def eventbus: DigiroadEventBus = new DummyEventBus
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+    override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao
+    override def vvhClient: VVHClient = mockVVHClient
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 

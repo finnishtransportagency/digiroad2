@@ -1,30 +1,28 @@
 package fi.liikennevirasto.digiroad2
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-import scala.collection.JavaConversions._
-
-case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
-case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
+case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
-object ManoeuvreService {
+class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   val FirstElement = 1
   val LastElement = 3
 
-  def getSourceRoadLinkIdById(id: Long): Long = {
+  def getSourceRoadLinkMmlIdById(id: Long): Long = {
     OracleDatabase.withDynTransaction {
       sql"""
-             select road_link_id
+             select mml_id
              from manoeuvre_element
              where manoeuvre_id = $id and element_type = 1
           """.as[Long].first
@@ -32,20 +30,13 @@ object ManoeuvreService {
   }
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
-    OracleDatabase.withDynTransaction {
-      val roadLinks = RoadLinkService.getIdsAndMmlIdsByMunicipality(municipalityNumber).toMap
-      getByRoadlinks(roadLinks)
-    }
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    getByRoadLinks(roadLinks)
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-      .map(link => (link.id, link.mmlId))
-      .toMap
-
-    OracleDatabase.withDynTransaction {
-      getByRoadlinks(roadLinks)
-    }
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    getByRoadLinks(roadLinks)
   }
 
   def deleteManoeuvre(username: String, id: Long) = {
@@ -67,16 +58,18 @@ object ManoeuvreService {
              values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
           """.execute
 
-      val sourceRoadLinkId = manoeuvre.sourceRoadLinkId
+      val sourceRoadLinkId = 0
+      val sourceMmlId = manoeuvre.sourceMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
-             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
+             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement, $sourceMmlId)
           """.execute
 
-      val destRoadLinkId = manoeuvre.destRoadLinkId
+      val destRoadLinkId = 0
+      val destMmlId = manoeuvre.destMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
-             values ($manoeuvreId, $destRoadLinkId, $LastElement)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
+             values ($manoeuvreId, $destRoadLinkId, $LastElement, $destMmlId)
           """.execute
 
       addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)
@@ -86,8 +79,8 @@ object ManoeuvreService {
 
   def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
     OracleDatabase.withDynTransaction {
-      manoeuvreUpdates.additionalInfo.map(setManoeuvreAdditionalInfo(manoeuvreId))
-      manoeuvreUpdates.exceptions.map(setManoeuvreExceptions(manoeuvreId))
+      manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
+      manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
       updateModifiedData(userName, manoeuvreId)
     }
   }
@@ -101,31 +94,72 @@ object ManoeuvreService {
     }
   }
 
-  private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toSeq)
-    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
+  private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
+    val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
+      val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
+      val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
+      (manoeuvresById, manoeuvreExceptionsById)
+    }
 
-    manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
-    }.map { case (id, links) =>
-      val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
-      val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
-      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLinkMmlId(sourceRoadLinkId))
-      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLinkMmlId(destRoadLinkId))
-      val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
-
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
-    }.toSeq
+    manoeuvresById
+      .filter(hasOnlyOneSourceAndDestination)
+      .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById))
+      .filter(isValidManoeuvre(roadLinks))
+      .toSeq
   }
 
-  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
-    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
-    val manoeuvresById = manoeuvres.toList.groupBy(_._1)
-    manoeuvresById
+  private def hasOnlyOneSourceAndDestination(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Boolean = {
+    val (_, manoeuvreRows) = manoeuvreRowsForId
+    manoeuvreRows.size == 2 && manoeuvreRows.exists(_.elementType == FirstElement) && manoeuvreRows.exists(_.elementType == LastElement)
+  }
+
+  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]])(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
+    val (id, manoeuvreRows) = manoeuvreRowsForId
+    val manoeuvreSource = manoeuvreRows.find(_.elementType == FirstElement).get
+    val manoeuvreDestination = manoeuvreRows.find(_.elementType == LastElement).get
+    val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreSource.modifiedDate)
+
+    Manoeuvre(id, manoeuvreSource.mmlId, manoeuvreDestination.mmlId, manoeuvreExceptionsById.getOrElse(id, Seq()),
+      modifiedTimeStamp, manoeuvreSource.modifiedBy, manoeuvreSource.additionalInfo)
+  }
+
+  private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
+    val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
+    val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
+
+    (sourceRoadLinkOption, destRoadLinkOption) match {
+      case (Some(sourceRoadLink), Some(destRoadLink)) => {
+        GeometryUtils.areAdjacent(sourceRoadLink.geometry, destRoadLink.geometry) &&
+          sourceRoadLink.isCarTrafficRoad &&
+          destRoadLink.isCarTrafficRoad
+      }
+      case _ => false
+    }
+  }
+
+  case class PersistedManoeuvreRow(id: Long, mmlId: Long, elementType: Int, modifiedDate: DateTime, modifiedBy: String, additionalInfo: String)
+
+  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
+    val manoeuvres = MassQuery.withIds(mmlIds.toSet) { idTableName =>
+      sql"""SELECT m.id, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+            FROM MANOEUVRE m
+            JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
+            WHERE m.id in (SELECT distinct(k.manoeuvre_id)
+                            FROM MANOEUVRE_ELEMENT k
+                            join #$idTableName i on i.id = k.mml_id
+                            where valid_to is null)""".as[(Long, Long, Int, DateTime, String, String)].list
+    }
+    manoeuvres.map { manoeuvreRow =>
+      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6)
+    }.groupBy(_.id)
   }
 
   private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
-    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvreExceptions = MassQuery.withIds(manoeuvreIds.toSet) { idTableName =>
+      sql"""SELECT m.manoeuvre_id, m.exception_type
+            FROM MANOEUVRE_EXCEPTIONS m
+            JOIN #$idTableName i on m.manoeuvre_id = i.id""".as[(Long, Int)].list
+    }
     val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
     manoeuvreExceptionsById
   }

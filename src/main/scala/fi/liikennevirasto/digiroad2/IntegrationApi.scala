@@ -150,10 +150,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
-    useVVHGeometry match {
-      case true => massTransitStopService.getByMunicipality(municipalityNumber)
-      case false => throw new NotImplementedError()
-    }
+    massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
   def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
@@ -170,7 +167,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  private def roadLinkPropertiesToApi(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Map[String, Any]] = {
+  private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
       Map("mmlId" -> roadLink.mmlId,
         "administrativeClass" -> roadLink.administrativeClass.value,
@@ -243,6 +240,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
+    manoeuvres.map { manoeuvre =>
+      Map("id" -> manoeuvre.id,
+      "sourceMmlId" -> manoeuvre.sourceMmlId,
+      "destMmlId" -> manoeuvre.destMmlId,
+      "exceptions" -> manoeuvre.exceptions,
+      "additionalInfo" -> manoeuvre.additionalInfo,
+      "modifiedDateTime" -> manoeuvre.modifiedDateTime)
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -280,7 +288,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_addresses" => ReadOnlyLinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
         case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
-        case "manoeuvres" =>  ManoeuvreService.getByMunicipality(municipalityNumber)
+        case "manoeuvres" =>  manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

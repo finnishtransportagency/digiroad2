@@ -196,7 +196,7 @@
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
       });
-      roadCollection.fetchFromVVH(map.getExtent());
+      roadCollection.fetch(map.getExtent());
     }
 
     function show(map) {

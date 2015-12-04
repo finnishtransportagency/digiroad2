@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.mockito.Matchers._
@@ -16,7 +16,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends VVHRoadLinkService(vvhClient, eventBus) {
+  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(vvhClient, eventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -27,36 +27,31 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     result
   }
 
-  test("Get production road link with test id that maps to one production road link") {
-    RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
-    RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
-  }
-
-  test("Get production road link with test id that doesn't map to production") {
-    RoadLinkService.getByTestIdAndMeasure(1414l, 50.0) should be (None)
-  }
-
-  test("Get production road link with test id that maps to several links in production") {
-    RoadLinkService.getByTestIdAndMeasure(147298l, 50.0) should be (None)
-  }
-
   test("Override road link traffic direction with adjusted value") {
-    val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
-    val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { _.id == 7886262 }.map(_.trafficDirection) should be (Some(TrafficDirection.TowardsDigitizing))
-    roadLinks.find { _.mmlId == 391203482 }.map(_.trafficDirection) should be (Some(TrafficDirection.AgainstDigitizing))
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
+        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      roadLinks.find {
+        _.mmlId == 391203482
+      }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
+      dynamicSession.rollback()
+    }
   }
 
-  test("Override road link functional class with adjusted value") {
-    val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
-    val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { _.id == 7886262}.map(_.functionalClass) should be(Some(5))
-    roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
-  }
-
-  test("Overriden road link adjustments return latest modification") {
-    val mmlId = RoadLinkService.getRoadLinkMmlId(7886262)
-    mmlId should be (1068804929)
+  test("Include road link functional class with adjusted value") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
+        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      println(roadLinks)
+      roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
+      dynamicSession.rollback()
+    }
   }
 
   test("Adjust link type") {
@@ -105,7 +100,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
-    val service = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
+    val service = new RoadLinkService(mockVVHClient, new DummyEventBus)
     val roadLink = service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { _ => })
     roadLink.map(_.linkType) should be(None)
   }
@@ -169,7 +164,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
+      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
 
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 

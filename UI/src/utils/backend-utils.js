@@ -16,12 +16,6 @@
       };
     });
 
-    this.getRoadLinksFromVVH = createCallbackRequestor(function(boundingBox) {
-      return {
-        url: 'api/roadlinks2?bbox=' + boundingBox
-      };
-    });
-
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/manoeuvres?bbox=' + boundingBox
@@ -336,11 +330,7 @@
     }
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function (boundingBox, callback) {
-        callback(roadLinkData);
-        eventbus.trigger('roadLinks:fetched');
-      };
-      self.getRoadLinksFromVVH = function(boundingBox, callback) {
+      self.getRoadLinks = function(boundingBox, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };

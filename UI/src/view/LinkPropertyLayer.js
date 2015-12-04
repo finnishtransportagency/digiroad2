@@ -93,7 +93,7 @@
     };
 
     this.refreshView = function() {
-      roadCollection.fetchFromVVH(map.getExtent());
+      roadCollection.fetch(map.getExtent());
     };
 
     this.isDirty = function() {

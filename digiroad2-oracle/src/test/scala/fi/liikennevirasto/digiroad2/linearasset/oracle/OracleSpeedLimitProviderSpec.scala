@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, UnknownSpeedLimit, NewLimit, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -18,17 +18,18 @@ import scala.language.implicitConversions
 
 class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val provider = new OracleSpeedLimitProvider(new DummyEventBus, mockRoadLinkService) {
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val provider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val roadLink = VVHRoadLinkWithProperties(
+  val roadLink = RoadLink(
     1l, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(List(roadLink))
 
-  when(mockRoadLinkService.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
+  when(mockVVHClient.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -38,14 +39,14 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   def passingMunicipalityValidation(code: Int): Unit = {}
   def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
 
-  val roadLinkForSeparation = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+  val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
 
   test("create new speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
+      when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
 
       val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
@@ -58,8 +59,8 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   test("split existing speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
+      when(mockVVHClient.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_) => Unit)
 
       val existing = speedLimits.find(_.id == 200097).get
@@ -72,7 +73,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in bounding box fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new OracleSpeedLimitProvider(eventBus, mockRoadLinkService) {
+      val provider = new OracleSpeedLimitProvider(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -85,7 +86,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in municipality fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new OracleSpeedLimitProvider(eventBus, mockRoadLinkService) {
+      val provider = new OracleSpeedLimitProvider(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -130,7 +131,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("speed limit separation fails if speed limit is one way") {
-    val roadLink = VVHRoadLinkWithProperties(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+    val roadLink = RoadLink(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkFromVVH(388551862l)).thenReturn(Some(roadLink))
 
     runWithRollback {
@@ -141,7 +142,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("speed limit separation fails if road link is one way") {
-    val roadLink = VVHRoadLinkWithProperties(1068804929, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
+    val roadLink = RoadLink(1068804929, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkFromVVH(1068804929l)).thenReturn(Some(roadLink))
 
     runWithRollback {

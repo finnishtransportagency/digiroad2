@@ -42,7 +42,7 @@ case class PedestrianCrossing(id: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
+class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
   def update(id:Long, updatedAsset: NewPointAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
@@ -51,7 +51,6 @@ class PedestrianCrossingService(roadLinkServiceImpl: RoadLinkService) extends Po
     id
   }
 
-  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
   override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {

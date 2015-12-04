@@ -10,10 +10,10 @@
       }
     };
 
-    var open = function(roadLinkId) {
-      if (!current || current.roadLinkId !== roadLinkId) {
+    var open = function(mmlId) {
+      if (!current || current.mmlId !== mmlId) {
         close();
-        collection.get(roadLinkId, function(roadLink){
+        collection.get(mmlId, function(roadLink){
           current = roadLink;
           current.select();
           eventbus.trigger('manoeuvres:selected', roadLink);
@@ -27,14 +27,14 @@
 
     var refresh = function() {
       if (current) {
-        var roadLinkId = current.roadLinkId;
+        var mmlId = current.mmlId;
         current = null;
-        open(roadLinkId);
+        open(mmlId);
       }
     };
 
-    var getRoadLinkId = function() {
-      return current.roadLinkId;
+    var getMmlId = function() {
+      return current.mmlId;
     };
 
     var exists = function() {
@@ -42,12 +42,12 @@
     };
 
     var addManoeuvre = function(manoeuvre) {
-      var newManoeuvre = _.merge({}, { sourceRoadLinkId: current.roadLinkId }, manoeuvre);
+      var newManoeuvre = _.merge({}, { sourceMmlId: current.mmlId }, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
     var removeManoeuvre = function(manoeuvre) {
-      var manoeuvreToBeRemoved = _.merge({}, { sourceRoadLinkId: current.roadLinkId }, manoeuvre);
+      var manoeuvreToBeRemoved = _.merge({}, { sourceMmlId: current.mmlId }, manoeuvre);
       collection.removeManoeuvre(manoeuvreToBeRemoved);
     };
 
@@ -60,6 +60,7 @@
     };
 
     var save = function() {
+      eventbus.trigger('manoeuvres:saving');
       collection.save(function() {
         eventbus.trigger('manoeuvres:saved', current);
       });
@@ -78,7 +79,7 @@
       close: close,
       open: open,
       get: get,
-      getRoadLinkId: getRoadLinkId,
+      getMmlId: getMmlId,
       exists: exists,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
