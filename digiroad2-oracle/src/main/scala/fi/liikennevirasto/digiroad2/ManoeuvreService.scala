@@ -31,12 +31,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
-    getByMmlIds(roadLinks)
+    getByRoadLinks(roadLinks)
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    getByMmlIds(roadLinks)
+    getByRoadLinks(roadLinks)
   }
 
   def deleteManoeuvre(username: String, id: Long) = {
@@ -94,7 +94,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def getByMmlIds(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
+  private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
       val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
       val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
