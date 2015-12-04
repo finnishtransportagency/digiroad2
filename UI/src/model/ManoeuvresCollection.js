@@ -39,7 +39,7 @@
           eventbus.trigger('manoeuvres:fetched');
         });
       });
-      roadCollection.fetchFromVVH(extent);
+      roadCollection.fetch(extent);
     };
 
     var manoeuvresWithModifications = function() {
