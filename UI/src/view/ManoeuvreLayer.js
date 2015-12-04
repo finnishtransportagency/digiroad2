@@ -175,7 +175,7 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
-        var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getMmlId());
+        var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceMmlId(selectedManoeuvreSource.getMmlId());
         markAdjacentFeatures(application.isReadOnly() ? destinationMmlIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'mmlId'));
         redrawRoadLayer();
         var feature = _.find(roadLayer.layer.features, function(feature) {
@@ -281,7 +281,7 @@
       var aLinks = adjacentLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'mmlId');
       highlightFeatures(roadLink.mmlId);
-      var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(roadLink.mmlId);
+      var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceMmlId(roadLink.mmlId);
       highlightOneWaySigns([roadLink.mmlId]);
       highlightOverlayFeatures(destinationMmlIds);
       markAdjacentFeatures(application.isReadOnly() ? destinationMmlIds : adjacentLinkIds);

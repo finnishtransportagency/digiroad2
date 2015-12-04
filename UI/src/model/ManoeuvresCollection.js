@@ -54,7 +54,7 @@
       return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvresWithModifications());
     };
 
-    var getDestinationRoadLinksBySourceRoadLink = function(mmlId) {
+    var getDestinationRoadLinksBySourceMmlId = function(mmlId) {
       return _.chain(manoeuvresWithModifications())
         .filter(function(manoeuvre) {
           return manoeuvre.sourceMmlId === mmlId;
@@ -212,7 +212,7 @@
     return {
       fetch: fetch,
       getAll: getAll,
-      getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
+      getDestinationRoadLinksBySourceMmlId: getDestinationRoadLinksBySourceMmlId,
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
