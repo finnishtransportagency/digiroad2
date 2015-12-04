@@ -27,7 +27,7 @@
         '<div class="form-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
           '<ul>' +
-            '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e %></li> <% }) %>' +
+            '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e.title %></li> <% }) %>' +
           '</ul>' +
         '</div>' +
         '<% } %>' +
@@ -48,8 +48,8 @@
             '<div class="form-group exception">' +
               '<%= deleteButtonTemplate %>' +
               '<select class="form-control select">' +
-                '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
-                  '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
+                '<% _.forEach(exceptionOptions, function(exception) { %> ' +
+                  '<option value="<%- exception.typeId %>" <% if(selectedException.typeId === exception.typeId) { print(selected="selected")} %> ><%- exception.title %></option> ' +
                 '<% }) %>' +
               '</select>' +
             '</div>' +
@@ -66,29 +66,29 @@
       '<div class="form-group exception">' +
         '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
           '<option class="empty" disabled selected>Valitse tyyppi</option>' +
-          '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
+          '<% _.forEach(exceptionOptions, function(exception) { %> <option value="<%- exception.typeId %>"><%- exception.title %></option> <% }) %>' +
         '</select>' +
       '</div>';
     var deleteButtonTemplate = '<button class="btn-delete delete">x</button>';
 
-    var exceptions = {
-      4: 'Kuorma-auto',
-      5: 'Linja-auto',
-      6: 'Pakettiauto',
-      7: 'Henkilöauto',
-      8: 'Taksi',
-      13: 'Ajoneuvoyhdistelmä',
-      14: 'Traktori tai maatalousajoneuvo',
-      15: 'Matkailuajoneuvo',
-      16: 'Jakeluauto',
-      18: 'Kimppakyytiajoneuvo',
-      19: 'Sotilasajoneuvo',
-      20: 'Vaarallista lastia kuljettava ajoneuvo',
-      21: 'Huoltoajo',
-      22: 'Tontille ajo'
-    };
-    var localizeException = function(e) {
-      return exceptions[e];
+    var exceptions = [
+      {typeId: 7,  title: 'Henkilöauto'},
+      {typeId: 4,  title: 'Kuorma-auto'},
+      {typeId: 5,  title: 'Linja-auto'},
+      {typeId: 6,  title: 'Pakettiauto'},
+      {typeId: 8,  title: 'Taksi'},
+      {typeId: 13, title: 'Ajoneuvoyhdistelmä'},
+      {typeId: 14, title: 'Traktori tai maatalousajoneuvo'},
+      {typeId: 15, title: 'Matkailuajoneuvo'},
+      {typeId: 16, title: 'Jakeluauto'},
+      {typeId: 18, title: 'Kimppakyytiajoneuvo'},
+      {typeId: 19, title: 'Sotilasajoneuvo'},
+      {typeId: 20, title: 'Vaarallista lastia kuljettava ajoneuvo'},
+      {typeId: 21, title: 'Huoltoajo'},
+      {typeId: 22, title: 'Tontille ajo'}
+    ];
+    var localizeException = function(typeId) {
+      return _.find(exceptions, {typeId: typeId});
     };
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
@@ -105,19 +105,13 @@
       }
       eventbus.on('application:readOnly', toggleMode);
 
-      var sortExceptions = function(exceptions) {
-        return exceptions ? exceptions.sort(function (x, y) {
-          return x - y;
-        }) : [];
-      };
-
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(template)(roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           var attributes = _.merge({}, manoeuvre, {
-            localizedExceptions: _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); })
+            localizedExceptions: _.map(manoeuvre.exceptions, localizeException)
           });
           rootElement.find('.form').append(_.template(manouvreTemplate)(attributes));
         });
@@ -125,7 +119,7 @@
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.mmlId === manoeuvre.destMmlId; });
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
-          var localizedExceptions = manoeuvre ? _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); }) : [];
+          var localizedExceptions = manoeuvre ? _.map(manoeuvre.exceptions, localizeException) : [];
           var additionalInfo = (manoeuvre && !_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
