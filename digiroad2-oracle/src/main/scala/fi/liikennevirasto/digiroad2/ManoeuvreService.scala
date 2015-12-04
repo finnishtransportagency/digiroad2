@@ -79,8 +79,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
     OracleDatabase.withDynTransaction {
-      manoeuvreUpdates.additionalInfo.map(setManoeuvreAdditionalInfo(manoeuvreId))
-      manoeuvreUpdates.exceptions.map(setManoeuvreExceptions(manoeuvreId))
+      manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
+      manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
       updateModifiedData(userName, manoeuvreId)
     }
   }
