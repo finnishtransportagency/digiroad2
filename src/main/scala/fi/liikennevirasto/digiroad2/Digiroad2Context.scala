@@ -74,7 +74,7 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
-  lazy val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao(roadLinkService)
+  lazy val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao
 
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
@@ -85,8 +85,8 @@ object Digiroad2Context {
 
   lazy val speedLimitProvider: SpeedLimitProvider = {
     Class.forName(properties.getProperty("digiroad2.speedLimitProvider"))
-      .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[RoadLinkService])
-      .newInstance(eventbus, roadLinkService)
+      .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[VVHClient], classOf[RoadLinkService])
+      .newInstance(eventbus, vvhClient, roadLinkService)
       .asInstanceOf[SpeedLimitProvider]
   }
 
@@ -112,7 +112,6 @@ object Digiroad2Context {
 
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
-      override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val spatialAssetDao: OracleSpatialAssetDao = Digiroad2Context.spatialAssetDao
@@ -126,7 +125,7 @@ object Digiroad2Context {
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
-    new PedestrianCrossingService(roadLinkService)
+    new PedestrianCrossingService(vvhClient)
   }
 
   lazy val manoeuvreService = {

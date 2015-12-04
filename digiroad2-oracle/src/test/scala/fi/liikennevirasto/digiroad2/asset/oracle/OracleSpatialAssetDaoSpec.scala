@@ -10,8 +10,7 @@ import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import Database.dynamicSession
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val spatialAssetDao = new OracleSpatialAssetDao(mockRoadLinkService)
+  val spatialAssetDao = new OracleSpatialAssetDao
 
   test("bearing description is correct") {
     spatialAssetDao.getBearingDescription(2, Some(316)) must equal("Pohjoinen")

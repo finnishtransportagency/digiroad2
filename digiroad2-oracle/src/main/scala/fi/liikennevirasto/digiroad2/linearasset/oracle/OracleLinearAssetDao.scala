@@ -17,7 +17,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 case class PersistedSpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime])
 
-class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
+class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
@@ -131,7 +131,7 @@ class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(links.map(_._1).toSet)
+    val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(links.map(_._1).toSet)
 
     links.map { case (mmlId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
@@ -278,7 +278,7 @@ class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
 
-    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
+    val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
@@ -324,9 +324,9 @@ class OracleLinearAssetDao(val roadLinkService: RoadLinkService) {
         where a.id = $id
     """.as[(Double, Double, SideCode)].first
   }
-  
+
   def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(roadLinkService.fetchVVHRoadlink(mmlId).get.municipalityCode)
+    municipalityValidation(vvhClient.fetchVVHRoadlink(mmlId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
   }
 

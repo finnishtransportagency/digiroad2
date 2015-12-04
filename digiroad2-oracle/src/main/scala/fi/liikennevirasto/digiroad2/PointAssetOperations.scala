@@ -10,7 +10,6 @@ import slick.jdbc.StaticQuery.interpolation
 
 
 trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
-  def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
 
   lazy val dataSource = {
@@ -97,7 +96,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
 
   def getById(id: Long): Option[Asset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => roadLinkService.fetchVVHRoadlink(x.mmlId) }
+    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.mmlId) }
 
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))

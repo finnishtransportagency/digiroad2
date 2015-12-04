@@ -16,7 +16,7 @@ case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClas
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
 
-class RoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
+class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = {

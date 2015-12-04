@@ -19,7 +19,7 @@ import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-class OracleSpatialAssetDao(roadLinkService: RoadLinkService) {
+class OracleSpatialAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit val SetStringSeq: SetParameter[IndexedSeq[Any]] = new SetParameter[IndexedSeq[Any]] {

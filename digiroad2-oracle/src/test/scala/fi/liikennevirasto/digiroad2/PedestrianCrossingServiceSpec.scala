@@ -20,7 +20,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
-  val service = new PedestrianCrossingService(new RoadLinkService(mockVVHClient, new DummyEventBus)) {
+  val service = new PedestrianCrossingService(mockVVHClient) {
     override def withDynTransaction[T](f: => T): T = f
 
     override def withDynSession[T](f: => T): T = f

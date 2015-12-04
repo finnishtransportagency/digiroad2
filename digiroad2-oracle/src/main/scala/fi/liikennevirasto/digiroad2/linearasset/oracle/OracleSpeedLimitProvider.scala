@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) extends SpeedLimitProvider {
-  val dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImplementation)
+class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) extends SpeedLimitProvider {
+  val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient)
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -21,7 +21,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
   }
 
   override def purgeUnknown(mmlIds: Set[Long]): Unit = {
-    val roadLinks = roadLinkServiceImplementation.fetchVVHRoadlinks(mmlIds)
+    val roadLinks = vvhClient.fetchVVHRoadlinks(mmlIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.mmlId, GeometryUtils.geometryLength(rl.geometry))
