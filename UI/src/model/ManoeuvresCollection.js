@@ -84,9 +84,7 @@
     };
 
     var get = function(mmlId, callback) {
-      var roadLink = _.find(getAll(), function(manoeuvre) {
-        return manoeuvre.mmlId === mmlId;
-      });
+      var roadLink = _.find(getAll(), {mmlId: mmlId});
       backend.getAdjacent(roadLink.mmlId, function(adjacent) {
         var modificationData = getLatestModificationDataBySourceRoadLink(mmlId);
         var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
