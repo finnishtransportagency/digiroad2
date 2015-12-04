@@ -96,23 +96,37 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
-      val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
-      val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
-      (manoeuvresById, manoeuvreExceptionsById)
+      fetchManoeuvresAndExceptions(roadLinks.map(_.mmlId))
     }
 
-    manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
-    }.map { case (id, links) =>
-      val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
-      val (_, _, destMmlId, _, _, _, _) = links.find(_._4 == LastElement).get
-      val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
-
-      Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
-    }.filter { validManoeuvre(_, roadLinks) }.toSeq
+    manoeuvresById
+      .filter(hasOnlyOneSourceAndDestination)
+      .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById))
+      .filter(isValidManoeuvre(roadLinks))
+      .toSeq
   }
 
-  private def validManoeuvre(manoeuvre: Manoeuvre, roadLinks: Seq[RoadLink]): Boolean = {
+  private def fetchManoeuvresAndExceptions(mmlIds: Seq[Long]): (Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]], Map[Long, Seq[Int]]) = {
+    val manoeuvresById = fetchManoeuvresByMmlIds(mmlIds)
+    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
+    (manoeuvresById, manoeuvreExceptionsById)
+  }
+
+  private def hasOnlyOneSourceAndDestination(manoeuvreRowsForId: (Long, Seq[(Long, Int, Long, Int, DateTime, String, String)])): Boolean = {
+    val (_, manoeuvreRows) = manoeuvreRowsForId
+    manoeuvreRows.size == 2 && manoeuvreRows.exists(_._4 == FirstElement) && manoeuvreRows.exists(_._4 == LastElement)
+  }
+
+  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]])(manoeuvreRowsForId: (Long, Seq[(Long, Int, Long, Int, DateTime, String, String)])): Manoeuvre = {
+    val (id, manoeuvreRows) = manoeuvreRowsForId
+    val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = manoeuvreRows.find(_._4 == FirstElement).get
+    val (_, _, destMmlId, _, _, _, _) = manoeuvreRows.find(_._4 == LastElement).get
+    val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
+
+    Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
+  }
+
+  private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
     val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
     val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
 
