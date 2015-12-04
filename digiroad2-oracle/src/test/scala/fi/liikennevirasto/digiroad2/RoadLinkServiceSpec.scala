@@ -16,7 +16,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends VVHRoadLinkService(vvhClient, eventBus) {
+  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(vvhClient, eventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -100,7 +100,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
-    val service = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
+    val service = new RoadLinkService(mockVVHClient, new DummyEventBus)
     val roadLink = service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { _ => })
     roadLink.map(_.linkType) should be(None)
   }

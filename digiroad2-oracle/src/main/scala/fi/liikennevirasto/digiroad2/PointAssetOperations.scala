@@ -11,6 +11,8 @@ import slick.jdbc.StaticQuery.interpolation
 
 trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
   def roadLinkService: RoadLinkService
+  def vvhClient: VVHClient
+
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
@@ -24,7 +26,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
     case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)
 
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
+    val roadLinks = vvhClient.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
@@ -66,7 +68,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
       }
 
       val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
-      val administrativeClasses = roadLinkService.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass) =>
@@ -82,7 +84,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[Asset] = {
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
+    val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 

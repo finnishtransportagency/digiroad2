@@ -12,7 +12,7 @@ import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
-  val roadLinkService = new VVHRoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
+  val roadLinkService = new RoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus)
   val linearAssetDao = new OracleLinearAssetDao(roadLinkService)
 
   val Source = 1

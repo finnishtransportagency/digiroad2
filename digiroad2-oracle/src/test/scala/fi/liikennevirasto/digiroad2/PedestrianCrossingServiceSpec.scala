@@ -15,12 +15,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
-  val service = new PedestrianCrossingService(mockRoadLinkService) {
+  val service = new PedestrianCrossingService(new RoadLinkService(mockVVHClient, new DummyEventBus)) {
     override def withDynTransaction[T](f: => T): T = f
 
     override def withDynSession[T](f: => T): T = f
@@ -40,7 +40,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(
+    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {

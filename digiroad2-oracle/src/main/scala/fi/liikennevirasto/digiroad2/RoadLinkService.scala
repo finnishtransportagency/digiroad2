@@ -16,11 +16,79 @@ case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClas
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
 
-trait RoadLinkService {
+class RoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def eventbus: DigiroadEventBus
+  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = {
+    vvhClient.fetchVVHRoadlink(mmlId)
+  }
 
+  def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
+    if (mmlIds.nonEmpty) vvhClient.fetchVVHRoadlinks(mmlIds)
+    else Seq.empty[VVHRoadlink]
+  }
+  def fetchVVHRoadlinks[T](mmlIds: Set[Long],
+                                    fieldSelection: Option[String],
+                                    fetchGeometry: Boolean,
+                                    resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
+    if (mmlIds.nonEmpty) vvhClient.fetchVVHRoadlinks(mmlIds, fieldSelection, fetchGeometry, resultTransition)
+    else Seq.empty[T]
+  }
+  def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink] = {
+    vvhClient.fetchByMunicipality(municipalityCode)
+  }
+
+  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class IncompleteLink(mmlId: Long, municipality: String, administrativeClass: String)
+    def toIncompleteLink(x: (Long, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
+
+    withDynSession {
+      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
+      val incompleteLinksQuery = """
+        select l.mml_id, m.name_fi, l.administrative_class
+        from incomplete_link l
+        join municipality m on l.municipality_code = m.id
+                                 """
+
+      val sql = optionalMunicipalities match {
+        case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
+        case _ => incompleteLinksQuery
+      }
+
+      Q.queryNA[(Long, String, Int)](sql).list
+        .map(toIncompleteLink)
+        .groupBy(_.municipality)
+        .mapValues { _.groupBy(_.administrativeClass)
+          .mapValues(_.map(_.mmlId)) }
+    }
+  }
+
+  def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = {
+    val middlePoint: Option[Point] = vvhClient.fetchVVHRoadlink(mmlId)
+      .flatMap { vvhRoadLink =>
+        GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
+      }
+    middlePoint.map((mmlId, _))
+  }
+
+  def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
+                                direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[RoadLink] = {
+    val vvhRoadLink = fetchVVHRoadlink(mmlId)
+    vvhRoadLink.map { vvhRoadLink =>
+      municipalityValidation(vvhRoadLink.municipalityCode)
+      withDynTransaction {
+        setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
+        if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
+        if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
+        val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
+        if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
+          removeIncompleteness(mmlId)
+        }
+        enrichedLink
+      }
+    }
+  }
+  
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     fetchVVHRoadlink(id).map(_.geometry)
   }
@@ -36,8 +104,6 @@ trait RoadLinkService {
       TrafficDirection(r.nextIntOption())
     }
   }
-
-  def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -71,9 +137,6 @@ trait RoadLinkService {
                    where not exists (select * from #$table where mml_id = $mmlId)""".execute
     }
   }
-
-  def updateProperties(id: Long, functionalClass: Int, linkType: LinkType,
-                       direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[RoadLink]
 
   implicit val getDateTime = new GetResult[DateTime] {
     def apply(r: PositionedResult) = {
@@ -147,7 +210,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
+    val vvhRoadLinks = vvhClient.fetchVVHRoadlinks(bounds, municipalities)
     withDynTransaction {
       enrichRoadLinksFromVVH(vvhRoadLinks)
     }
@@ -240,19 +303,6 @@ trait RoadLinkService {
 
     completeLinks ++ autoGeneratedLinks ++ incompleteOtherLinks
   }
-
-  def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink]
-
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink]
-
-  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink]
-  def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink]
-  def fetchVVHRoadlinks[T](mmlIds: Set[Long],
-                           fieldSelection: Option[String],
-                           fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T]
-
-  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
     adjustedRoadLinks(vvhRoadLinks)

@@ -18,25 +18,26 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
     VVHRoadlink(1140018963l, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(388554364l))
+  when(mockVVHClient.fetchVVHRoadlink(388554364l))
     .thenReturn(Some(VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(123l))
+  when(mockVVHClient.fetchVVHRoadlink(123l))
     .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(388553080l))
+  when(mockVVHClient.fetchVVHRoadlink(388553080l))
     .thenReturn(Some(VVHRoadlink(388553080l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(1l))
+  when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
     TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao(mockRoadLinkService)
+    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, new DummyEventBus)
+    override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao(roadLinkService)
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)

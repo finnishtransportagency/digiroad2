@@ -180,7 +180,7 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
   }
 
   private def fetchRoadLink(mmlId: Long): Option[(Int, Seq[Point])] = {
-    roadLinkService.fetchVVHRoadlink(mmlId).map{ x => (x.municipalityCode, x.geometry) }
+    vvhClient.fetchVVHRoadlink(mmlId).map{ x => (x.municipalityCode, x.geometry) }
   }
 
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {

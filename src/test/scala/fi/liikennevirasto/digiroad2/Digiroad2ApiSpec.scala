@@ -44,7 +44,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l)))
     .thenReturn(List(VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
+  val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
   val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def roadLinkService: RoadLinkService = testRoadLinkService
@@ -52,6 +52,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao(testRoadLinkService)
+    override def vvhClient: VVHClient = mockVVHClient
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 

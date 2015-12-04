@@ -107,7 +107,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new VVHRoadLinkService(vvhClient, eventbus)
+    new RoadLinkService(vvhClient, eventbus)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -116,6 +116,7 @@ object Digiroad2Context {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val spatialAssetDao: OracleSpatialAssetDao = Digiroad2Context.spatialAssetDao
+      override def vvhClient: VVHClient = Digiroad2Context.vvhClient
     }
     new ProductionMassTransitStopService(eventbus)
   }
