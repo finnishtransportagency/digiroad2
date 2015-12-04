@@ -96,7 +96,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
-      fetchManoeuvresAndExceptions(roadLinks.map(_.mmlId))
+      val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
+      val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
+      (manoeuvresById, manoeuvreExceptionsById)
     }
 
     manoeuvresById
@@ -106,24 +108,19 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       .toSeq
   }
 
-  private def fetchManoeuvresAndExceptions(mmlIds: Seq[Long]): (Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]], Map[Long, Seq[Int]]) = {
-    val manoeuvresById = fetchManoeuvresByMmlIds(mmlIds)
-    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
-    (manoeuvresById, manoeuvreExceptionsById)
-  }
-
-  private def hasOnlyOneSourceAndDestination(manoeuvreRowsForId: (Long, Seq[(Long, Int, Long, Int, DateTime, String, String)])): Boolean = {
+  private def hasOnlyOneSourceAndDestination(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Boolean = {
     val (_, manoeuvreRows) = manoeuvreRowsForId
-    manoeuvreRows.size == 2 && manoeuvreRows.exists(_._4 == FirstElement) && manoeuvreRows.exists(_._4 == LastElement)
+    manoeuvreRows.size == 2 && manoeuvreRows.exists(_.elementType == FirstElement) && manoeuvreRows.exists(_.elementType == LastElement)
   }
 
-  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]])(manoeuvreRowsForId: (Long, Seq[(Long, Int, Long, Int, DateTime, String, String)])): Manoeuvre = {
+  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]])(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
     val (id, manoeuvreRows) = manoeuvreRowsForId
-    val (_, _, sourceMmlId, _, modifiedDate, modifiedBy, additionalInfo) = manoeuvreRows.find(_._4 == FirstElement).get
-    val (_, _, destMmlId, _, _, _, _) = manoeuvreRows.find(_._4 == LastElement).get
-    val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
+    val manoeuvreSource = manoeuvreRows.find(_.elementType == FirstElement).get
+    val manoeuvreDestination = manoeuvreRows.find(_.elementType == LastElement).get
+    val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreSource.modifiedDate)
 
-    Manoeuvre(id, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
+    Manoeuvre(id, manoeuvreSource.mmlId, manoeuvreDestination.mmlId, manoeuvreExceptionsById.getOrElse(id, Seq()),
+      modifiedTimeStamp, manoeuvreSource.modifiedBy, manoeuvreSource.additionalInfo)
   }
 
   private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
@@ -140,17 +137,21 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
+  case class PersistedManoeuvreRow(id: Long, mmlId: Long, elementType: Int, modifiedDate: DateTime, modifiedBy: String, additionalInfo: String)
+
+  private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      sql"""SELECT m.id, m.type, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE m.id in (SELECT distinct(k.manoeuvre_id)
                             FROM MANOEUVRE_ELEMENT k
                             join #$idTableName i on i.id = k.mml_id
-                            where valid_to is null)""".as[(Long, Int, Long, Int, DateTime, String, String)].list
+                            where valid_to is null)""".as[(Long, Long, Int, DateTime, String, String)].list
     }
-    manoeuvres.groupBy(_._1)
+    manoeuvres.map { manoeuvreRow =>
+      PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6)
+    }.groupBy(_.id)
   }
 
   private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
