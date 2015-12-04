@@ -55,7 +55,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testMassTransitStopService, testLinearAssetService), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {

@@ -2,11 +2,10 @@ package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.user.{UserProvider, User}
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.json4s._
@@ -22,8 +21,13 @@ case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double,
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
+                   val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
-                   val linearAssetService: LinearAssetService) extends ScalatraServlet
+                   val linearAssetService: LinearAssetService,
+                   val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
+                   val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
+                   val userProvider: UserProvider = Digiroad2Context.userProvider,
+                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider) extends ScalatraServlet
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
@@ -76,7 +80,7 @@ with GZipSupport {
     } catch {
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
-    response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
+    response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int)
@@ -187,7 +191,7 @@ with GZipSupport {
   }
 
   private def validateUserRights(roadLinkId: Long) = {
-    val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+    val authorized: Boolean = vvhClient.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -578,7 +582,7 @@ with GZipSupport {
 
     manoeuvreIds.foreach { manoeuvreId =>
       val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(roadLinkService.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -592,7 +596,7 @@ with GZipSupport {
 
     manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(id)
-      validateUserMunicipalityAccess(user)(roadLinkService.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }

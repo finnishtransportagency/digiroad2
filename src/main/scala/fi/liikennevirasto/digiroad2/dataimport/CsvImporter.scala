@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{InputStreamReader, InputStream}
 import com.github.tototoshi.csv._
+import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2._
@@ -22,8 +23,8 @@ object CsvImporter {
 
 trait CsvImporter {
   val massTransitStopService: MassTransitStopService
+  val vvhClient: VVHClient
   val userProvider: UserProvider
-  val roadLinkService: RoadLinkService
 
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
@@ -150,7 +151,7 @@ trait CsvImporter {
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): CsvImportMassTransitStop = {
-      val roadLink = roadLinkService.fetchVVHRoadlink(stop.mmlId)
+      val roadLink = vvhClient.fetchVVHRoadlink(stop.mmlId)
       val floating = PointAssetOperations.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })
       new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown))
     }

@@ -63,7 +63,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update prohibition") {
-    when(mockRoadLinkService.fetchVVHRoadlink(1621077551l)).thenReturn(Some(VVHRoadlink(1621077551l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockVVHClient.fetchVVHRoadlink(1621077551l)).thenReturn(Some(VVHRoadlink(1621077551l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     runWithRollback {
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")

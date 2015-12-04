@@ -19,14 +19,11 @@ case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = {
-    vvhClient.fetchVVHRoadlink(mmlId)
-  }
-
   def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     if (mmlIds.nonEmpty) vvhClient.fetchVVHRoadlinks(mmlIds)
     else Seq.empty[VVHRoadlink]
   }
+
   def fetchVVHRoadlinks[T](mmlIds: Set[Long],
                                     fieldSelection: Option[String],
                                     fetchGeometry: Boolean,
@@ -34,6 +31,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     if (mmlIds.nonEmpty) vvhClient.fetchVVHRoadlinks(mmlIds, fieldSelection, fetchGeometry, resultTransition)
     else Seq.empty[T]
   }
+
   def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink] = {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
@@ -73,7 +71,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
 
   def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[RoadLink] = {
-    val vvhRoadLink = fetchVVHRoadlink(mmlId)
+    val vvhRoadLink = vvhClient.fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)
       withDynTransaction {
@@ -90,7 +88,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
   
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
-    fetchVVHRoadlink(id).map(_.geometry)
+    vvhClient.fetchVVHRoadlink(id).map(_.geometry)
   }
 
   implicit val getAdministrativeClass = new GetResult[AdministrativeClass] {
