@@ -203,7 +203,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   private def setManoeuvreValidityPeriods(manoeuvreId: Long)(validityPeriods: Set[ValidityPeriod]) = {
     sqlu"""
-           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+           delete from manoeuvre_validity_period where manoeuvre_id = $manoeuvreId
         """.execute
     addManoeuvreValidityPeriods(manoeuvreId, validityPeriods)
   }
