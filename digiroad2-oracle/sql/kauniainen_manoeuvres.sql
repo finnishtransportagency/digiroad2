@@ -56,3 +56,10 @@ Insert into MANOEUVRE_EXCEPTIONS (MANOEUVRE_ID, EXCEPTION_TYPE) values (39561, 1
 Insert into MANOEUVRE_EXCEPTIONS (MANOEUVRE_ID, EXCEPTION_TYPE) values (39561, 21);
 Insert into MANOEUVRE_EXCEPTIONS (MANOEUVRE_ID, EXCEPTION_TYPE) values (39561, 22);
 
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600034, 97666, 1, 12, 16);
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600035, 97666, 2, 12, 16);
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600036, 97666, 3, 12, 16);
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600037, 97665, 1, 14, 20);
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600038, 39564, 1, 10, 16);
+insert into MANOEUVRE_VALIDITY_PERIOD (id, manoeuvre_id, type, START_HOUR, END_HOUR) values (600039, 39561, 3, 22, 8);
+
