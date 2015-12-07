@@ -31,19 +31,6 @@
           '</ul>' +
         '</div>' +
         '<% } %>' +
-        '<div class="validity-period-group">' +
-          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
-          '<ul>' +
-            '<li><div class="form-group new-validity-period">' +
-            '  <select class="form-control select">' +
-            '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-            '    <option value="Weekday">Ma–Pe</option>' +
-            '    <option value="Saturday">La</option>' +
-            '    <option value="Sunday">Su</option>' +
-            '  </select>' +
-            '</div></li>' +
-          '</ul>' +
-        '</div>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
@@ -53,6 +40,20 @@
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
           '<p class="form-control-static">MML ID <%= mmlId %> <span class="marker"><%= marker %></span></p>' +
+        '</div>' +
+        '<div class="validity-period-group">' +
+        ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+        ' <ul>' +
+        '   <%= existingValidityPeriodElements %>' +
+        '   <li><div class="form-group new-validity-period">' +
+        '     <select class="form-control select">' +
+        '       <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+        '       <option value="Weekday">Ma–Pe</option>' +
+        '       <option value="Saturday">La</option>' +
+        '       <option value="Sunday">Su</option>' +
+        '     </select>' +
+        '   </div></li>' +
+        ' </ul>' +
         '</div>' +
         '<div class="exception-group <% print(checked ? "" : "exception-hidden") %>">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -84,25 +85,6 @@
       '</div>';
     var deleteButtonTemplate = '<button class="btn-delete delete">x</button>';
 
-    var exceptions = [
-      { typeId: 21, title: 'Huoltoajo' },
-      { typeId: 22, title: 'Tontille ajo' },
-      { typeId: 10, title: 'Mopo' },
-      { typeId: 9, title: 'Moottoripyörä' },
-      { typeId: 27, title: 'Moottorikelkka' },
-      { typeId: 5, title: 'Linja-auto' },
-      { typeId: 8, title: 'Taksi' },
-      { typeId: 7, title: 'Henkilöauto' },
-      { typeId: 6, title: 'Pakettiauto' },
-      { typeId: 4, title: 'Kuorma-auto' },
-      { typeId: 15, title: 'Matkailuajoneuvo' },
-      { typeId: 19, title: 'Sotilasajoneuvo' },
-      { typeId: 13, title: 'Ajoneuvoyhdistelmä' },
-      { typeId: 14, title: 'Traktori tai maatalousajoneuvo' }
-    ];
-    var localizeException = function(typeId) {
-      return _.find(exceptions, {typeId: typeId});
-    };
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
 
@@ -123,28 +105,34 @@
         roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(template)(roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
-          var attributes = _.merge({}, manoeuvre, {
-            localizedExceptions: _.map(manoeuvre.exceptions, localizeException)
-          });
-          rootElement.find('.form').append(_.template(manouvreTemplate)(attributes));
+          rootElement.find('.form').append(_.template(manouvreTemplate)(_.merge({}, manoeuvre, {
+            localizedExceptions: localizeExceptions(manoeuvre.exceptions)
+          })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.mmlId === manoeuvre.destMmlId; });
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
-          var localizedExceptions = manoeuvre ? _.map(manoeuvre.exceptions, localizeException) : [];
+          var localizedExceptions = manoeuvre ? localizeExceptions(manoeuvre.exceptions) : '';
           var additionalInfo = (manoeuvre && !_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
-          var attributes = _.merge({}, adjacentLink, {
+          var existingValidityPeriodElements =
+            manoeuvre ?
+              _(manoeuvre.validityPeriods)
+                .sortByAll(dayOrder, 'startHour', 'endHour')
+                .map(validityPeriodElement)
+                .join('') :
+              '';
+
+          rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
-            exceptionOptions: exceptions,
+            exceptionOptions: exceptionOptions(),
             localizedExceptions: localizedExceptions,
             additionalInfo: additionalInfo,
-            newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptions, checked: checked }),
-            deleteButtonTemplate: deleteButtonTemplate
-          });
-
-          rootElement.find('.form').append(_.template(adjacentLinkTemplate)(attributes));
+            newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
+            deleteButtonTemplate: deleteButtonTemplate,
+            existingValidityPeriodElements: existingValidityPeriodElements
+          })));
         });
 
         toggleMode(applicationModel.isReadOnly());
@@ -201,7 +189,7 @@
           var selectElement = $(event.target);
           var formGroupElement = $(event.delegateTarget);
           selectElement.parent().after(_.template(newExceptionTemplate)({
-            exceptionOptions: exceptions,
+            exceptionOptions: exceptionOptions(),
             checked: true
           }));
           selectElement.removeClass('new-exception');
@@ -261,4 +249,69 @@
 
     bindEvents();
   };
+
+  function validityPeriodElement(manouvre) {
+    return _.isEmpty(manouvre.validityPeriods) ? '' : createValidityPeriodElement();
+
+    function createValidityPeriodElement() {
+      var dayLabels = {
+        Weekday: "Ma–Pe",
+        Saturday: "La",
+        Sunday: "Su"
+      };
+
+      var validityPeriodItems = _(manouvre.validityPeriods)
+        .sortByAll(dayOrder, 'startHour', 'endHour')
+        .map(function(period) {
+          var dayName = dayLabels[period.days];
+          return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
+        })
+        .join('');
+
+      return '' +
+        '<div class="validity-period-group">' +
+        '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+        '<ul>' + validityPeriodItems + '</ul>' +
+        '</div>';
+    }
+  }
+
+  function localizeExceptions(exceptions) {
+    var exceptionTypes = exceptionOptions();
+
+    return _(exceptions)
+      .map(function(typeId) {
+        return _.find(exceptionTypes, {typeId: typeId});
+      })
+      .filter()
+      .value();
+  }
+
+  function exceptionOptions() {
+    return [
+      {typeId: 21, title: 'Huoltoajo'},
+      {typeId: 22, title: 'Tontille ajo'},
+      {typeId: 10, title: 'Mopo'},
+      {typeId: 9, title: 'Moottoripyörä'},
+      {typeId: 27, title: 'Moottorikelkka'},
+      {typeId: 5, title: 'Linja-auto'},
+      {typeId: 8, title: 'Taksi'},
+      {typeId: 7, title: 'Henkilöauto'},
+      {typeId: 6, title: 'Pakettiauto'},
+      {typeId: 4, title: 'Kuorma-auto'},
+      {typeId: 15, title: 'Matkailuajoneuvo'},
+      {typeId: 19, title: 'Sotilasajoneuvo'},
+      {typeId: 13, title: 'Ajoneuvoyhdistelmä'},
+      {typeId: 14, title: 'Traktori tai maatalousajoneuvo'}
+    ];
+  }
+
+  function dayOrder(period) {
+    var days = {
+      Weekday: 0,
+      Saturday: 1,
+      Sunday: 2
+    };
+    return days[period.days];
+  }
 })(this);
