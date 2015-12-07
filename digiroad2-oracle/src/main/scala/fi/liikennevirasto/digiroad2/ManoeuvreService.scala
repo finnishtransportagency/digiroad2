@@ -12,7 +12,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
-case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
+case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
 
@@ -82,6 +82,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     OracleDatabase.withDynTransaction {
       manoeuvreUpdates.additionalInfo.foreach(setManoeuvreAdditionalInfo(manoeuvreId))
       manoeuvreUpdates.exceptions.foreach(setManoeuvreExceptions(manoeuvreId))
+      manoeuvreUpdates.validityPeriods.foreach(setManoeuvreValidityPeriods(manoeuvreId))
       updateModifiedData(userName, manoeuvreId)
     }
   }
@@ -198,6 +199,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
            delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
         """.execute
     addManoeuvreExceptions(manoeuvreId, exceptions)
+  }
+
+  private def setManoeuvreValidityPeriods(manoeuvreId: Long)(validityPeriods: Set[ValidityPeriod]) = {
+    sqlu"""
+           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+        """.execute
+    addManoeuvreValidityPeriods(manoeuvreId, validityPeriods)
   }
 
   private def updateModifiedData(username: String, manoeuvreId: Long) {
