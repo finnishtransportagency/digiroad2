@@ -246,6 +246,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       "sourceMmlId" -> manoeuvre.sourceMmlId,
       "destMmlId" -> manoeuvre.destMmlId,
       "exceptions" -> manoeuvre.exceptions,
+      "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
       "additionalInfo" -> manoeuvre.additionalInfo,
       "modifiedDateTime" -> manoeuvre.modifiedDateTime)
     }
