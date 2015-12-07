@@ -20,11 +20,11 @@ case class NumericValue(value: Int) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ProhibitionValidityPeriod], exceptions: Set[Int])
-case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
-  def and(b: ProhibitionValidityPeriod): Option[ProhibitionValidityPeriod] = {
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
+case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
+  def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
-      Some(ProhibitionValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
+      Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
     } else {
       None
     }
@@ -36,10 +36,10 @@ case class ProhibitionValidityPeriod(startHour: Int, endHour: Int, days: Validit
       24 - startHour + endHour
     }
   }
-  private def overlaps(b: ProhibitionValidityPeriod): Boolean = {
+  private def overlaps(b: ValidityPeriod): Boolean = {
     ValidityPeriodDayOfWeek.overlap(days, b.days) && hoursOverlap(b)
   }
-  private def hoursOverlap(b: ProhibitionValidityPeriod): Boolean = {
+  private def hoursOverlap(b: ValidityPeriod): Boolean = {
     liesInBetween(startHour, (b.startHour, b.endHour)) ||
     liesInBetween(b.startHour, (startHour, endHour))
   }

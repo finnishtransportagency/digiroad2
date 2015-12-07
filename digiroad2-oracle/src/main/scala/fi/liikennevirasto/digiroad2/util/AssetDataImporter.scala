@@ -744,7 +744,7 @@ class AssetDataImporter {
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-          ProhibitionValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }

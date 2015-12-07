@@ -291,7 +291,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao(null)
     val mmlId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -310,7 +310,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null)
     val mmlId = 1l
     val fixtureProhibitionValues = Set(
-      ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
+      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
 
     runWithRollback {
       setupTestProhibition(mmlId, fixtureProhibitionValues)
@@ -333,11 +333,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val mmlId4 = 4l
     val fixtureProhibitionValues1 = Set(
       ProhibitionValue(typeId = 10, Set(
-        ProhibitionValidityPeriod(12, 16, Weekday), ProhibitionValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3)),
+        ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3)),
       ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2)))
     val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty))
     val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1)))
-    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ProhibitionValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
+    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
       setupTestProhibition(mmlId1, fixtureProhibitionValues1)

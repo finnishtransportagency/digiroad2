@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValidityPeriod, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 
 import scala.util.parsing.combinator.RegexParsers
 
@@ -26,7 +26,7 @@ class TimeDomainParser {
     case class Duration(unit: DurationUnit.DurationUnit, number: Int)
 
     sealed trait Expr
-    case class Scalar(ps: Either[String, Seq[ProhibitionValidityPeriod]]) extends Expr
+    case class Scalar(ps: Either[String, Seq[ValidityPeriod]]) extends Expr
     case class And(left: Expr, right: Expr) extends Expr
     case class Or(left: Expr, right: Expr) extends Expr
 
@@ -42,21 +42,21 @@ class TimeDomainParser {
 
     def duration = '{' ~> durationPart <~ '}'  ^^ { case p => p }
 
-    def spec: Parser[Either[String, Seq[ProhibitionValidityPeriod]]] = (time ~ duration) ^^ { case time ~ duration =>
+    def spec: Parser[Either[String, Seq[ValidityPeriod]]] = (time ~ duration) ^^ { case time ~ duration =>
       time match {
         case (None, Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
           Right(Seq(
-            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday),
-            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Saturday),
-            ProhibitionValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Sunday)))
+            ValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Weekday),
+            ValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Saturday),
+            ValidityPeriod(hour, endHour, ValidityPeriodDayOfWeek.Sunday)))
         case (None, Time(TimeUnit.DayOfWeek, day)) =>
           val days = durationToDays(day, duration)
-          days.fold(err => Left(err), ds => Right(ds.map { day => ProhibitionValidityPeriod(0, 24, day) }))
+          days.fold(err => Left(err), ds => Right(ds.map { day => ValidityPeriod(0, 24, day) }))
         case (Some(Time(TimeUnit.DayOfWeek, day)), Time(TimeUnit.Hour, hour)) =>
           val endHour = (hour + duration.number) % 24 match { case 0 => 24; case x => x }
           val days = durationToDays(day, duration)
-          days.fold(error => Left(error), ds => Right(ds.map { day => ProhibitionValidityPeriod(hour, endHour, day) }))
+          days.fold(error => Left(error), ds => Right(ds.map { day => ValidityPeriod(hour, endHour, day) }))
         case _ =>
           Left(s"Couldn't parse specification: $time")
       }
@@ -82,12 +82,12 @@ class TimeDomainParser {
     def and: Parser[Expr => Expr] = '*' ~ factor ^^ { case '*' ~ b => And(_, b) }
     def factor: Parser[Expr] = spec ^^ Scalar | '[' ~> expr <~ ']'
 
-    def apply(input: String): Either[String, Seq[ProhibitionValidityPeriod]] = parseAll(phrase(expr), input) match {
+    def apply(input: String): Either[String, Seq[ValidityPeriod]] = parseAll(phrase(expr), input) match {
       case Success(result, _) => eval(result)
       case NoSuccess(msg, _) => Left(s"Parsing time domain string $input failed with message: $msg")
     }
 
-    private def eval: PartialFunction[Expr, Either[String, Seq[ProhibitionValidityPeriod]]] = {
+    private def eval: PartialFunction[Expr, Either[String, Seq[ValidityPeriod]]] = {
       case Or(l, r)  => (eval(l), eval(r)) match {
         case (Right(leftVal), Right(rightVal)) => Right(leftVal ++ rightVal)
         case (Left(errLeft), Left(errRight)) => Left(errLeft ++ errRight)
@@ -98,7 +98,7 @@ class TimeDomainParser {
       case Scalar(v) => v
     }
 
-    private def distribute(left: Either[String, Seq[ProhibitionValidityPeriod]], right: Either[String, Seq[ProhibitionValidityPeriod]]): Either[String, Seq[ProhibitionValidityPeriod]] = {
+    private def distribute(left: Either[String, Seq[ValidityPeriod]], right: Either[String, Seq[ValidityPeriod]]): Either[String, Seq[ValidityPeriod]] = {
       (left, right) match {
         case (Right(ls), Right(rs)) => Right(ls.flatMap { l => rs.flatMap { r => l.and(r) } })
         case (Left(errLeft), Left(errRight)) => Left(errLeft ++ errRight)
@@ -108,7 +108,7 @@ class TimeDomainParser {
     }
   }
 
-  def parse(s: String): Either[String, Seq[ProhibitionValidityPeriod]] = {
+  def parse(s: String): Either[String, Seq[ValidityPeriod]] = {
     parser(s)
   }
 }
