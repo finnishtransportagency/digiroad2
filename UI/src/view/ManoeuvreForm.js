@@ -31,6 +31,19 @@
           '</ul>' +
         '</div>' +
         '<% } %>' +
+        '<div class="validity-period-group">' +
+          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+          '<ul>' +
+            '<li><div class="form-group new-validity-period">' +
+            '  <select class="form-control select">' +
+            '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+            '    <option value="Weekday">Ma–Pe</option>' +
+            '    <option value="Saturday">La</option>' +
+            '    <option value="Sunday">Su</option>' +
+            '  </select>' +
+            '</div></li>' +
+          '</ul>' +
+        '</div>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
