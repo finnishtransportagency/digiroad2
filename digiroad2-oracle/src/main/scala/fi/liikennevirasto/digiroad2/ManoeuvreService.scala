@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
@@ -95,15 +95,16 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
-    val (manoeuvresById, manoeuvreExceptionsById) = OracleDatabase.withDynTransaction {
+    val (manoeuvresById, manoeuvreExceptionsById, manoeuvreValidityPeriodsById) = OracleDatabase.withDynTransaction {
       val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
       val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
-      (manoeuvresById, manoeuvreExceptionsById)
+      val manoeuvreValidityPeriodsById = fetchManoeuvreValidityPeriodsByIds(manoeuvresById.keys.toSet)
+      (manoeuvresById, manoeuvreExceptionsById, manoeuvreValidityPeriodsById)
     }
 
     manoeuvresById
       .filter(hasOnlyOneSourceAndDestination)
-      .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById))
+      .map(manoeuvreRowsToManoeuvre(manoeuvreExceptionsById, manoeuvreValidityPeriodsById))
       .filter(isValidManoeuvre(roadLinks))
       .toSeq
   }
@@ -113,13 +114,16 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     manoeuvreRows.size == 2 && manoeuvreRows.exists(_.elementType == FirstElement) && manoeuvreRows.exists(_.elementType == LastElement)
   }
 
-  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]])(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
+  private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]],
+                                       manoeuvreValidityPeriodsById: Map[Long, Set[ValidityPeriod]])
+                                      (manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
     val (id, manoeuvreRows) = manoeuvreRowsForId
     val manoeuvreSource = manoeuvreRows.find(_.elementType == FirstElement).get
     val manoeuvreDestination = manoeuvreRows.find(_.elementType == LastElement).get
     val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreSource.modifiedDate)
 
-    Manoeuvre(id, manoeuvreSource.mmlId, manoeuvreDestination.mmlId, manoeuvreExceptionsById.getOrElse(id, Seq()),
+    Manoeuvre(id, manoeuvreSource.mmlId, manoeuvreDestination.mmlId,
+      manoeuvreValidityPeriodsById.getOrElse(id, Set.empty), manoeuvreExceptionsById.getOrElse(id, Seq()),
       modifiedTimeStamp, manoeuvreSource.modifiedBy, manoeuvreSource.additionalInfo)
   }
 
@@ -162,6 +166,21 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
     val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
     manoeuvreExceptionsById
+  }
+
+  private def fetchManoeuvreValidityPeriodsByIds(manoeuvreIds: Set[Long]):  Map[Long, Set[ValidityPeriod]] = {
+    val manoeuvreValidityPeriods = MassQuery.withIds(manoeuvreIds) { idTableName =>
+      sql"""SELECT m.manoeuvre_id, m.type, m.start_hour, m.end_hour
+            FROM MANOEUVRE_VALIDITY_PERIOD m
+            JOIN #$idTableName i on m.manoeuvre_id = i.id""".as[(Long, Int, Int, Int)].list
+
+    }
+
+    manoeuvreValidityPeriods.groupBy(_._1).mapValues { periods =>
+      periods.map { case (_, dayOfWeek, startHour, endHour) =>
+        ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
+      }.toSet
+    }
   }
 
   private def setManoeuvreExceptions(manoeuvreId: Long)(exceptions: Seq[Int]) = {
