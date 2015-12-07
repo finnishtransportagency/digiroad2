@@ -250,30 +250,39 @@
     bindEvents();
   };
 
-  function validityPeriodElement(manouvre) {
-    return _.isEmpty(manouvre.validityPeriods) ? '' : createValidityPeriodElement();
+  function validityPeriodElement(period) {
+    var dayLabels = {
+      Weekday: "Ma–Pe",
+      Saturday: "La",
+      Sunday: "Su"
+    };
 
-    function createValidityPeriodElement() {
-      var dayLabels = {
-        Weekday: "Ma–Pe",
-        Saturday: "La",
-        Sunday: "Su"
-      };
+    return '' +
+      '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+      '  <button class="delete btn-delete">x</button>' +
+      '  <label class="control-label">' +
+           dayLabels[period.days] +
+      '  </label>' +
+         hourElement(period.startHour, 'start') +
+      '  <span class="hour-separator"> - </span>' +
+         hourElement(period.endHour, 'end') +
+      '</div></li>';
+  }
 
-      var validityPeriodItems = _(manouvre.validityPeriods)
-        .sortByAll(dayOrder, 'startHour', 'endHour')
-        .map(function(period) {
-          var dayName = dayLabels[period.days];
-          return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
-        })
-        .join('');
+  function hourElement(selectedHour, type) {
+    var className = type + '-hour';
+    return '' +
+      '<select class="form-control sub-control select ' + className + '">' +
+      hourOptions(selectedHour, type) +
+      '</select>';
+  }
 
-      return '' +
-        '<div class="validity-period-group">' +
-        '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
-        '<ul>' + validityPeriodItems + '</ul>' +
-        '</div>';
-    }
+  function hourOptions(selectedOption, type) {
+    var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
+    return _.map(range, function (hour) {
+      var selected = hour === selectedOption ? 'selected' : '';
+      return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+    }).join('');
   }
 
   function localizeExceptions(exceptions) {
