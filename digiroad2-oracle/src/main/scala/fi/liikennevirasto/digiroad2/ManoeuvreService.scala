@@ -11,7 +11,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 case class Manoeuvre(id: Long, sourceMmlId: Long, destMmlId: Long, validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
-case class NewManoeuvre(exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], sourceMmlId: Long, destMmlId: Long)
 case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 class ManoeuvreService(roadLinkService: RoadLinkService) {
@@ -73,6 +73,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
           """.execute
 
       addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)
+      addManoeuvreValidityPeriods(manoeuvreId, manoeuvre.validityPeriods)
       manoeuvreId
     }
   }
@@ -91,6 +92,15 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
         exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
         s"select * from dual"
       Q.updateNA(query).execute
+    }
+  }
+
+  private def addManoeuvreValidityPeriods(manoeuvreId: Long, validityPeriods: Set[ValidityPeriod]) {
+    validityPeriods.foreach { case ValidityPeriod(startHour, endHour, days) =>
+      sqlu"""
+        insert into manoeuvre_validity_period (id, manoeuvre_id, start_hour, end_hour, type)
+        values (primary_key_seq.nextval, $manoeuvreId, $startHour, $endHour, ${days.value})
+      """.execute
     }
   }
 

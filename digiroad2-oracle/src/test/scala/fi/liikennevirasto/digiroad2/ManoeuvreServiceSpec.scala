@@ -50,8 +50,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Filters out manoeuvres with non-adjacent source and destination links") {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
-    val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 233, 234))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, 123, 124))
+    val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, 233, 234))
 
     val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -60,7 +60,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Nil, None, 123, 124))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, 123, 124))
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
