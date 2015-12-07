@@ -144,7 +144,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
       sql"""SELECT m.id, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE m.id in (SELECT distinct(k.manoeuvre_id)
+            WHERE m.id in (SELECT k.manoeuvre_id
                             FROM MANOEUVRE_ELEMENT k
                             join #$idTableName i on i.id = k.mml_id
                             where valid_to is null)""".as[(Long, Long, Int, DateTime, String, String)].list
