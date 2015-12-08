@@ -190,7 +190,9 @@
             selectedManoeuvreSource.setAdditionalInfo(manoeuvreId, manoeuvre.additionalInfo || "");
           }
         }, 1000);
+
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
+
         rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvre = manoeuvreData($(event.delegateTarget));
@@ -200,6 +202,7 @@
             selectedManoeuvreSource.removeManoeuvre(manoeuvre);
           }
         });
+
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
@@ -209,9 +212,11 @@
             selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
           }
         });
+
         rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
           updateValidityPeriods($(event.delegateTarget));
         });
+
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
           var formGroupElement = $(event.delegateTarget);
@@ -226,6 +231,7 @@
             deleteException($(event.target).parent(), formGroupElement);
           });
         });
+
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
           var isChecked = $(event.target).is(':checked');
           var selects = $(event.delegateTarget).find('select');
@@ -244,14 +250,17 @@
             group.slideUp('fast');
           }
         });
+
         rootElement.find('.adjacent-link').on('click', '.exception button.delete', function(event) {
           deleteException($(event.target).parent(), $(event.delegateTarget));
         });
+
         rootElement.on('click', '.existing-validity-period .delete', function(event) {
           var elem = $(event.target).closest('.adjacent-link');
           $(event.target).parent().parent().remove();
           updateValidityPeriods(elem);
         });
+
         var deleteException = function(exceptionRow, formGroupElement) {
           exceptionRow.remove();
           var manoeuvre = manoeuvreData(formGroupElement);
@@ -262,18 +271,23 @@
           }
         };
       });
+
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
       });
+
       eventbus.on('manoeuvres:saved', function() {
         rootElement.find('.form-controls button').attr('disabled', true);
       });
+
       eventbus.on('manoeuvre:changed', function() {
         rootElement.find('.form-controls button').attr('disabled', false);
       });
+
       rootElement.on('click', '.manoeuvres button.save', function() {
         selectedManoeuvreSource.save();
       });
+
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
       });
