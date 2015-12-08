@@ -171,6 +171,16 @@
             .value();
         };
 
+        function updateValidityPeriods(element) {
+          var manoeuvre = manoeuvreData(element);
+          var manoeuvreId = manoeuvre.manoeuvreId;
+          if (_.isNull(manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          } else {
+            selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
+          }
+        }
+
         var throttledAdditionalInfoHandler = _.throttle(function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
@@ -200,13 +210,7 @@
           }
         });
         rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
-          var manoeuvre = manoeuvreData($(event.delegateTarget));
-          var manoeuvreId = manoeuvre.manoeuvreId;
-          if (_.isNull(manoeuvreId)) {
-            selectedManoeuvreSource.addManoeuvre(manoeuvre);
-          } else {
-            selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
-          }
+          updateValidityPeriods($(event.delegateTarget));
         });
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
@@ -242,6 +246,11 @@
         });
         rootElement.find('.adjacent-link').on('click', '.exception button.delete', function(event) {
           deleteException($(event.target).parent(), $(event.delegateTarget));
+        });
+        rootElement.on('click', '.existing-validity-period .delete', function(event) {
+          var elem = $(event.target).closest('.adjacent-link');
+          $(event.target).parent().parent().remove();
+          updateValidityPeriods(elem);
         });
         var deleteException = function(exceptionRow, formGroupElement) {
           exceptionRow.remove();
