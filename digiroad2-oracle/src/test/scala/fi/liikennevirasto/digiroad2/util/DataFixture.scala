@@ -285,12 +285,21 @@ object DataFixture {
   }
 
   def generateDroppedAssetsCsv(): Unit = {
-    println("\nGenerating list of numerical limits outside geometry")
+    println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
     val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     csvGenerator.generateDroppedNumericalLimits()
     csvGenerator.generateDroppedProhibitions(190, "vehicle_prohibitions")
     csvGenerator.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions")
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def generateDroppedManoeuvres(): Unit = {
+    println("\nGenerating list of manoeuvres outside geometry")
+    println(DateTime.now())
+    val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     csvGenerator.generateDroppedManoeuvres()
     println("complete at time: ")
     println(DateTime.now())
@@ -381,6 +390,8 @@ object DataFixture {
         importLitRoadsFromConversion()
       case Some("dropped_assets_csv") =>
         generateDroppedAssetsCsv()
+      case Some("dropped_manoeuvres_csv") =>
+        generateDroppedManoeuvres()
       case Some("generate_values_for_lit_roads") =>
         generateValuesForLitRoads()
       case Some("unfloat_linear_assets") =>
