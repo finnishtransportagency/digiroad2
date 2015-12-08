@@ -17,3 +17,12 @@ insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values (600025, 600024, 2);
 insert into PROHIBITION_VALIDITY_PERIOD (id, prohibition_value_id, type, START_HOUR, END_HOUR) values (600026, 600025, 1, 12, 16);
 insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values (600027, 600025, 21);
 insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values (600028, 600025, 22);
+
+-- a dropped prohibition - i.e. the mml id does not match to any existing road link
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values (600041,190,'dr2_test_data');
+insert into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000008, 123, 0, 100, 1);
+insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (600041, 70000008);
+insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values (600042, 600041, 2);
+insert into PROHIBITION_VALIDITY_PERIOD (id, prohibition_value_id, type, START_HOUR, END_HOUR) values (600043, 600042, 1, 12, 16);
+insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values (600044, 600042, 21);
+insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values (600045, 600042, 22);
