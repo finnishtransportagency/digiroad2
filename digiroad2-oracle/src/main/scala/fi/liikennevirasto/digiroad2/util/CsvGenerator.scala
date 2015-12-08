@@ -133,40 +133,43 @@ class CsvGenerator(vvhServiceHost: String) {
     println(s"*** exported CSV file $csvName in $elapsedTime seconds")
   }
 
+  val prohibitionType = Map(
+    3 -> "Ajoneuvo",
+    2 -> "Moottoriajoneuvo",
+    23 -> "Läpiajo",
+    12 -> "Jalankulku",
+    11 -> "Polkupyörä",
+    26 -> "Ratsastus",
+    10 -> "Mopo",
+    9 -> "Moottoripyörä",
+    27 -> "Moottorikelkka",
+    5 -> "Linja-auto",
+    8 -> "Taksi",
+    7 -> "Henkilöauto",
+    6 -> "Pakettiauto",
+    4 -> "Kuorma-auto",
+    15 -> "Matkailuajoneuvo",
+    19 -> "Sotilasajoneuvo",
+    13 -> "Ajoneuvoyhdistelmä",
+    14 -> "Traktori tai maatalousajoneuvo",
+    21 -> "Huoltoajo",
+    22 -> "Tontille ajo",
+    24 -> "Ryhmän A vaarallisten aineiden kuljetus",
+    25 -> "Ryhmän B vaarallisten aineiden kuljetus"
+  )
+
   def generateValueString(prohibitionValue: ProhibitionValue): String = {
-    val prohibitionType = Map(
-      3 -> "Ajoneuvo",
-      2 -> "Moottoriajoneuvo",
-      23 -> "Läpiajo",
-      12 -> "Jalankulku",
-      11 -> "Polkupyörä",
-      26 -> "Ratsastus",
-      10 -> "Mopo",
-      9 -> "Moottoripyörä",
-      27 -> "Moottorikelkka",
-      5 -> "Linja-auto",
-      8 -> "Taksi",
-      7 -> "Henkilöauto",
-      6 -> "Pakettiauto",
-      4 -> "Kuorma-auto",
-      15 -> "Matkailuajoneuvo",
-      19 -> "Sotilasajoneuvo",
-      13 -> "Ajoneuvoyhdistelmä",
-      14 -> "Traktori tai maatalousajoneuvo",
-      21 -> "Huoltoajo",
-      22 -> "Tontille ajo",
-      24 -> "Ryhmän A vaarallisten aineiden kuljetus",
-      25 -> "Ryhmän B vaarallisten aineiden kuljetus"
-    )
-
-    val exceptions = prohibitionValue.exceptions.toSeq match {
-      case Nil => ""
-      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
-    }
-
+    val exceptions = generateExceptionsString(prohibitionValue.exceptions.toSeq)
     val validityPeriods = generateValidityPeriodString(prohibitionValue.validityPeriods.toSeq)
 
     prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
+  }
+
+  private def generateExceptionsString(exceptions: Seq[Int]): String = {
+    exceptions match  {
+      case Nil => ""
+      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+    }
   }
 
   private def generateValidityPeriodString(validityPeriods: Seq[ValidityPeriod]): String = {
@@ -227,13 +230,14 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
   def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
-    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions; validityPeriods\n"
+    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions; validity_periods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._6 == Source).get
       val (destinationMmlId, destinationRoadLinkId) = value.find(_._6 == Destination).map { d => (d._4, d._5) }.getOrElse(("", ""))
+      val exceptions = generateExceptionsString(source._7)
       val validityPeriods = generateValidityPeriodString(source._8)
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; ${source._7.mkString(",")}; $validityPeriods"""
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; $exceptions; $validityPeriods"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")
