@@ -41,39 +41,41 @@
           '</div>' +
           '<p class="form-control-static">MML ID <%= mmlId %> <span class="marker"><%= marker %></span></p>' +
         '</div>' +
-        '<div class="validity-period-group">' +
-        ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
-        ' <ul>' +
-        '   <%= existingValidityPeriodElements %>' +
-        '   <li><div class="form-group new-validity-period">' +
-        '     <select class="form-control select">' +
-        '       <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-        '       <option value="Weekday">Ma–Pe</option>' +
-        '       <option value="Saturday">La</option>' +
-        '       <option value="Sunday">Su</option>' +
-        '     </select>' +
-        '   </div></li>' +
-        ' </ul>' +
-        '</div>' +
-        '<div class="exception-group <% print(checked ? "" : "exception-hidden") %>">' +
-          '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
-
-          '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-            '<div class="form-group exception">' +
-              '<%= deleteButtonTemplate %>' +
-              '<select class="form-control select">' +
-                '<% _.forEach(exceptionOptions, function(exception) { %> ' +
-                  '<option value="<%- exception.typeId %>" <% if(selectedException.typeId === exception.typeId) { print(selected="selected")} %> ><%- exception.title %></option> ' +
-                '<% }) %>' +
-              '</select>' +
-            '</div>' +
-          '<% }) %>' +
-          '<%= newExceptionSelect %>' +
-          '<div class="form-group">' +
-            '<input type="text" class="form-control additional-info" ' +
-                               'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
-                               '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
+        '<div class="manoeuvre-details <% print(checked ? "" : "hidden") %>">' +
+          '<div class="validity-period-group">' +
+          ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+          ' <ul>' +
+          '   <%= existingValidityPeriodElements %>' +
+          '   <li><div class="form-group new-validity-period">' +
+          '     <select class="form-control select">' +
+          '       <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+          '       <option value="Weekday">Ma–Pe</option>' +
+          '       <option value="Saturday">La</option>' +
+          '       <option value="Sunday">Su</option>' +
+          '     </select>' +
+          '   </div></li>' +
+          ' </ul>' +
           '</div>' +
+          '<div>' +
+            '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
+
+            '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
+              '<div class="form-group exception">' +
+                '<%= deleteButtonTemplate %>' +
+                '<select class="form-control select">' +
+                  '<% _.forEach(exceptionOptions, function(exception) { %> ' +
+                    '<option value="<%- exception.typeId %>" <% if(selectedException.typeId === exception.typeId) { print(selected="selected")} %> ><%- exception.title %></option> ' +
+                  '<% }) %>' +
+                '</select>' +
+              '</div>' +
+            '<% }) %>' +
+            '<%= newExceptionSelect %>' +
+            '<div class="form-group">' +
+              '<input type="text" class="form-control additional-info" ' +
+                                 'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
+                                 '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
+            '</div>' +
+          '<div>' +
         '<div>' +
       '</div>';
     var newExceptionTemplate = '' +
@@ -204,7 +206,7 @@
           var selects = $(event.delegateTarget).find('select');
           var button = $(event.delegateTarget).find('button');
           var text = $(event.delegateTarget).find('input[type="text"]');
-          var group = $(event.delegateTarget).find('.exception-group');
+          var group = $(event.delegateTarget).find('.manoeuvre-details');
           if(isChecked){
             selects.prop('disabled', false);
             button.prop('disabled', false);
