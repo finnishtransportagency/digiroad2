@@ -74,15 +74,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         from dual
         where not exists (select * from unknown_speed_limit where mml_id = ?)
       """)
-    limits.foreach { limit =>
-      statement.setLong(1, limit.mmlId)
-      statement.setInt(2, limit.municipalityCode)
-      statement.setInt(3, limit.administrativeClass.value)
-      statement.setLong(4, limit.mmlId)
-      statement.addBatch()
+    try {
+      limits.foreach { limit =>
+        statement.setLong(1, limit.mmlId)
+        statement.setInt(2, limit.municipalityCode)
+        statement.setInt(3, limit.administrativeClass.value)
+        statement.setLong(4, limit.mmlId)
+        statement.addBatch()
+      }
+      statement.executeBatch()
+    } finally {
+      statement.close()
     }
-    statement.executeBatch()
-    statement.close()
   }
 
   def purgeFromUnknownSpeedLimits(mmlId: Long, roadLinkLength: Double): Unit = {
