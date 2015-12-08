@@ -46,14 +46,7 @@
           ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
           ' <ul>' +
           '   <%= existingValidityPeriodElements %>' +
-          '   <li><div class="form-group new-validity-period">' +
-          '     <select class="form-control select">' +
-          '       <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-          '       <option value="Weekday">Ma–Pe</option>' +
-          '       <option value="Saturday">La</option>' +
-          '       <option value="Sunday">Su</option>' +
-          '     </select>' +
-          '   </div></li>' +
+              newValidityPeriodElement() +
           ' </ul>' +
           '</div>' +
           '<div>' +
@@ -86,6 +79,18 @@
         '</select>' +
       '</div>';
     var deleteButtonTemplate = '<button class="btn-delete delete">x</button>';
+
+    function newValidityPeriodElement() {
+      return '' +
+        '<li><div class="form-group new-validity-period">' +
+        '  <select class="form-control select">' +
+        '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+        '    <option value="Weekday">Ma–Pe</option>' +
+        '    <option value="Saturday">La</option>' +
+        '    <option value="Sunday">Su</option>' +
+        '  </select>' +
+        '</div></li>';
+    }
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
@@ -213,6 +218,8 @@
           }
         });
 
+        console.log('*** fooo ***');
+
         rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
           updateValidityPeriods($(event.delegateTarget));
         });
@@ -230,6 +237,16 @@
           selectElement.parent().on('click', 'button.delete', function(event) {
             deleteException($(event.target).parent(), formGroupElement);
           });
+        });
+
+        $(rootElement).find('.adjacent-link').on('change', '.new-validity-period select', function(event) {
+          $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
+          $(event.target).parent().parent().replaceWith(validityPeriodElement({
+            days: $(event.target).val(),
+            startHour: 0,
+            endHour: 24
+          }));
+          updateValidityPeriods($(event.delegateTarget));
         });
 
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
@@ -255,10 +272,9 @@
           deleteException($(event.target).parent(), $(event.delegateTarget));
         });
 
-        rootElement.on('click', '.existing-validity-period .delete', function(event) {
-          var elem = $(event.target).closest('.adjacent-link');
+        rootElement.find('.adjacent-link').on('click', '.existing-validity-period .delete', function(event) {
           $(event.target).parent().parent().remove();
-          updateValidityPeriods(elem);
+          updateValidityPeriods($(event.delegateTarget));
         });
 
         var deleteException = function(exceptionRow, formGroupElement) {
