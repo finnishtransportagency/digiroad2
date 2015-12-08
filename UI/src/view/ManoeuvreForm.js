@@ -31,6 +31,14 @@
           '</ul>' +
         '</div>' +
         '<% } %>' +
+      '<% if(validityPeriods.length > 0) { %>' +
+        '<div class="form-group">' +
+          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+          '<ul>' +
+            '<% _.forEach(validityPeriods, function(e) { %> <li><%= validityPeriodElements %></li> <% }) %>' +
+          '</ul>' +
+        '</div>' +
+      '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
@@ -113,7 +121,11 @@
         rootElement.html(_.template(template)(roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           rootElement.find('.form').append(_.template(manouvreTemplate)(_.merge({}, manoeuvre, {
-            localizedExceptions: localizeExceptions(manoeuvre.exceptions)
+            localizedExceptions: localizeExceptions(manoeuvre.exceptions),
+            validityPeriodElements: _(manoeuvre.validityPeriods)
+              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .map(validityPeriodDisplayElement)
+              .join('')
           })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
@@ -310,13 +322,12 @@
     bindEvents();
   };
 
+  var dayLabels = {
+    Weekday: "Ma–Pe",
+    Saturday: "La",
+    Sunday: "Su"
+  };
   function validityPeriodElement(period) {
-    var dayLabels = {
-      Weekday: "Ma–Pe",
-      Saturday: "La",
-      Sunday: "Su"
-    };
-
     return '' +
       '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
       '  <button class="delete btn-delete">x</button>' +
@@ -326,6 +337,13 @@
          hourElement(period.startHour, 'start') +
       '  <span class="hour-separator"> - </span>' +
          hourElement(period.endHour, 'end') +
+      '</div></li>';
+  }
+
+  function validityPeriodDisplayElement(period) {
+    return '' +
+      '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+        dayLabels[period.days] + ' ' + period.startHour + '–' + period.endHour +
       '</div></li>';
   }
 
