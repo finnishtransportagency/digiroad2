@@ -765,9 +765,12 @@ class AssetDataImporter {
       if (assetIds.nonEmpty) {
         val linearAssets = fetchProhibitionsByMmlIds(190, assetIds, true)
         val hazmatAssets = linearAssets.map { linearAsset =>
-          val newValue = linearAsset.value.map { case Prohibitions(prohibitionValues) =>
-            val hazMatProhibitions = prohibitionValues.filter { p => Set(24, 25).contains(p.typeId) }
-            Prohibitions(hazMatProhibitions.map(_.copy(exceptions = Set.empty)))
+          val newValue = linearAsset.value.map {
+            case Prohibitions(prohibitionValues) =>
+              val hazMatProhibitions = prohibitionValues.filter { p => Set(24, 25).contains(p.typeId) }
+              Prohibitions(hazMatProhibitions.map(_.copy(exceptions = Set.empty)))
+            case x =>
+              throw new IllegalArgumentException
           }
           linearAsset.copy(value = newValue)
         }

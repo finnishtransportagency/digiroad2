@@ -120,6 +120,8 @@ class CsvGenerator(vvhServiceHost: String) {
             val value = generateValueString(prohibitionValue)
             (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
           }
+        case _ =>
+          throw new IllegalArgumentException
       }
     }
     exportCsv(csvName, prohibitionLines.flatten)
