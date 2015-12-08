@@ -36,8 +36,9 @@ class CsvGenerator(vvhServiceHost: String) {
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
       val source = rows.find(_._6 == Source).get
       val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
-      val destination = rows.find(_._6 == Destination).get
-      adjacents.exists(_.mmlId == destination._4)
+      rows.find(_._6 == Destination).exists { destination =>
+        adjacents.exists(_.mmlId == destination._4)
+      }
     }
     val droppedManoeuvres = manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres
     val droppedManoeuvresWithExceptions =
@@ -153,19 +154,19 @@ class CsvGenerator(vvhServiceHost: String) {
     )
 
     val daysMap = Map(
-      2 -> "Ma - Pe",
-      7 -> "La",
-      1 -> "Su"
+      1 -> "Ma - Pe",
+      2 -> "La",
+      3 -> "Su"
     )
 
     val exceptions = prohibitionValue.exceptions.toSeq match {
       case Nil => ""
-      case exceptions => "Poikkeukset: " + exceptions.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
     }
 
     val validityPeriods = prohibitionValue.validityPeriods.toSeq match {
       case Nil => ""
-      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap(validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
+      case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap.getOrElse(validityPeriod.days.value, validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
     }
 
     prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
@@ -221,8 +222,8 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._6 == Source).get
-      val destination = value.find(_._6 == Destination).get
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; ${destination._4}; ${destination._5}; ${source._7.mkString(",")}"""
+      val (destinationMmlId, destinationRoadLinkId) = value.find(_._6 == Destination).map { d => (d._4, d._5) }.getOrElse(("", ""))
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; ${source._7.mkString(",")}"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")
