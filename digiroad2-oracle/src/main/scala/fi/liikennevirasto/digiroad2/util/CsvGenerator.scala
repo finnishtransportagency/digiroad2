@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{FileWriter, BufferedWriter, File}
 
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ProhibitionValue, Prohibitions}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
@@ -41,12 +41,18 @@ class CsvGenerator(vvhServiceHost: String) {
       }
     }
     val droppedManoeuvres = manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres
-    val droppedManoeuvresWithExceptions =
+    val droppedManoeuvresWithExceptionsAndValidityPeriods =
       droppedManoeuvres.mapValues { rows =>
-        val exceptions = OracleDatabase.withDynSession { sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list }
-        rows.map { x => (x._1, x._2, x._3, x._4, x._5, x._6, exceptions) }
+        OracleDatabase.withDynSession {
+          val exceptions = sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list
+          val validityPeriods = sql"""select type, start_hour, end_hour from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
+           """.as[(Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour) =>
+            ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
+          }
+          rows.map { x => (x._1, x._2, x._3, x._4, x._5, x._6, exceptions, validityPeriods) }
+        }
       }
-    exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptions)
+    exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptionsAndValidityPeriods)
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
@@ -153,23 +159,27 @@ class CsvGenerator(vvhServiceHost: String) {
       25 -> "Ryhmän B vaarallisten aineiden kuljetus"
     )
 
+    val exceptions = prohibitionValue.exceptions.toSeq match {
+      case Nil => ""
+      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
+    }
+
+    val validityPeriods = generateValidityPeriodString(prohibitionValue.validityPeriods.toSeq)
+
+    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
+  }
+
+  private def generateValidityPeriodString(validityPeriods: Seq[ValidityPeriod]): String = {
     val daysMap = Map(
       1 -> "Ma - Pe",
       2 -> "La",
       3 -> "Su"
     )
 
-    val exceptions = prohibitionValue.exceptions.toSeq match {
-      case Nil => ""
-      case exceptionCodes => "Poikkeukset: " + exceptionCodes.map { exceptionCode => prohibitionType.getOrElse(exceptionCode, exceptionCode) }.mkString(", ")
-    }
-
-    val validityPeriods = prohibitionValue.validityPeriods.toSeq match {
+    validityPeriods match {
       case Nil => ""
       case periods => "Voimassa: " + periods.map { validityPeriod => s"${daysMap.getOrElse(validityPeriod.days.value, validityPeriod.days.value)} ${validityPeriod.startHour} - ${validityPeriod.endHour}" }.mkString(", ")
     }
-
-    prohibitionType.getOrElse(prohibitionValue.typeId, prohibitionValue.typeId) + " " + exceptions + " " + validityPeriods
   }
 
   private def generateCsvForDroppedAssets(assetTypeId: Int,
@@ -216,14 +226,14 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
   }
 
-
-  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int, Seq[Int])]]): Unit = {
-    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions\n"
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
+    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions; validityPeriods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._6 == Source).get
       val (destinationMmlId, destinationRoadLinkId) = value.find(_._6 == Destination).map { d => (d._4, d._5) }.getOrElse(("", ""))
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; ${source._7.mkString(",")}"""
+      val validityPeriods = generateValidityPeriodString(source._8)
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; ${source._7.mkString(",")}; $validityPeriods"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")
