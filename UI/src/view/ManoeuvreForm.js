@@ -218,8 +218,6 @@
           }
         });
 
-        console.log('*** fooo ***');
-
         rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
           updateValidityPeriods($(event.delegateTarget));
         });
