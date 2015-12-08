@@ -131,6 +131,14 @@
       eventbus.trigger('manoeuvre:changed');
     };
 
+    var setValidityPeriods = function(manoeuvreId, validityPeriods) {
+      dirty = true;
+      var info = updatedInfo[manoeuvreId] || {};
+      info.validityPeriods = validityPeriods;
+      updatedInfo[manoeuvreId] = info;
+      eventbus.trigger('manoeuvre:changed');
+    };
+
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       dirty = true;
       var info = updatedInfo[manoeuvreId] || {};
@@ -215,6 +223,7 @@
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       setExceptions: setExceptions,
+      setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,

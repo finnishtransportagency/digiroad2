@@ -147,9 +147,21 @@
             manoeuvreId: manoeuvreId,
             destMmlId: destMmlId,
             exceptions: manoeuvreExceptions(formGroupElement),
+            validityPeriods: manoeuvreValidityPeriods(formGroupElement),
             additionalInfo: additionalInfo
           };
         };
+
+        function manoeuvreValidityPeriods(element) {
+          var periodElements = element.find('.existing-validity-period');
+          return _.map(periodElements, function (element) {
+            return {
+              startHour: parseInt($(element).find('.start-hour').val(), 10),
+              endHour: parseInt($(element).find('.end-hour').val(), 10),
+              days: $(element).data('days')
+            };
+          });
+        }
 
         var manoeuvreExceptions = function(formGroupElement) {
           var selectedOptions = formGroupElement.find('select option:selected');
@@ -185,6 +197,15 @@
             selectedManoeuvreSource.addManoeuvre(manoeuvre);
           } else {
             selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
+          }
+        });
+        rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
+          var manoeuvre = manoeuvreData($(event.delegateTarget));
+          var manoeuvreId = manoeuvre.manoeuvreId;
+          if (_.isNull(manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          } else {
+            selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
           }
         });
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
