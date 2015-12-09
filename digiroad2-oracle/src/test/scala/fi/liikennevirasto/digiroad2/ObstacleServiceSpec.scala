@@ -28,7 +28,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
-  ignore("Can fetch by bounding box") {
+  test("Can fetch by bounding box") {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600046)

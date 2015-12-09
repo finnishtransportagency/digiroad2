@@ -53,7 +53,7 @@ object OracleObstacleDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedObstacle(id, mmlId, point.x, point.y, mValue, floating, obstacleType, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PersistedObstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 }
