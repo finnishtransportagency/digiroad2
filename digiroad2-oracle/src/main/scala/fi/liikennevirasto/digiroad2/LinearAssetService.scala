@@ -20,6 +20,8 @@ trait LinearAssetOperations {
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
+  def HazmatTransportProhibitionAssetTypeId = 210
+  def ProhibitionAssetTypeId = 190
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -41,7 +43,7 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId)
     val existingAssets =
       withDynTransaction {
-        if (typeId == 190 || typeId == 210) {
+        if (typeId == ProhibitionAssetTypeId || typeId == HazmatTransportProhibitionAssetTypeId) {
           dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
         } else {
           dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
