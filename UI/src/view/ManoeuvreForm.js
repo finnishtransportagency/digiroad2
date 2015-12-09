@@ -35,7 +35,7 @@
         '<div class="form-group validity-period-group">' +
           '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
           '<ul>' +
-            '<% _.forEach(validityPeriods, function(e) { %> <%= validityPeriodElements %> <% }) %>' +
+            '<%= validityPeriodElements %>' +
           '</ul>' +
         '</div>' +
       '<% } %>' +
