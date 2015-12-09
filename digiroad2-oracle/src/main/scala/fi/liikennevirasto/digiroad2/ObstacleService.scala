@@ -9,7 +9,7 @@ case class Obstacle(id: Long, mmlId: Long,
                               municipalityCode: Int,
                               obstacleType: Int,
                               createdBy: Option[String] = None,
-                              createdDateTime: Option[DateTime] = None,
+                              createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
@@ -32,7 +32,7 @@ class ObstacleService(val vvhClient: VVHClient)extends PointAssetOperations[Obst
       floating = floating,
       obstacleType = persistedAsset.obstacleType,
       createdBy = persistedAsset.createdBy,
-      createdDateTime = persistedAsset.createdDateTime,
+      createdAt = persistedAsset.createdDateTime,
       modifiedBy = persistedAsset.modifiedBy,
       modifiedAt = persistedAsset.modifiedDateTime)
   }
