@@ -24,7 +24,7 @@
       '<div class="form-group manoeuvre">' +
         '<p class="form-control-static">MML ID: <%= destMmlId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
-        '<div class="form-group">' +
+        '<div class="form-group exception-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
           '<ul>' +
             '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e.title %></li> <% }) %>' +
@@ -32,7 +32,7 @@
         '</div>' +
         '<% } %>' +
       '<% if(validityPeriods.length > 0) { %>' +
-        '<div class="form-group">' +
+        '<div class="form-group validity-period-group">' +
           '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
           '<ul>' +
             '<% _.forEach(validityPeriods, function(e) { %> <%= validityPeriodElements %> <% }) %>' +
