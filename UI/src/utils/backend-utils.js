@@ -136,43 +136,43 @@
       });
     };
 
-    this.getPointAssets = latestResponseRequestor(function(boundingBox) {
+    this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
-        url: 'api/pedestrianCrossings?bbox=' + boundingBox
+        url: 'api/' + endPointName + '?bbox=' + boundingBox
       };  
     });
 
-    this.getPointAssetById = latestResponseRequestor(function(id) {
+    this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
       return {
-        url: 'api/pedestrianCrossings/' + id
+        url: 'api/'+ endPointName + '/' + id
       };
     });
 
-    this.createPointAsset = function(asset) {
+    this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/pedestrianCrossings",
+        url: "api/" + endPointName,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
     };
 
-    this.updatePointAsset = function(asset) {
+    this.updatePointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/pedestrianCrossings/" + asset.id,
+        url: "api/" + endPointName + "/" + asset.id,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
     };
 
-    this.removePointAsset = _.throttle(function(id) {
+    this.removePointAsset = _.throttle(function(id, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "DELETE",
-        url: "api/pedestrianCrossings/" + id,
+        url: "api/"+ endPointName + "/" + id,
         dataType: "json"
       });
     }, 1000);

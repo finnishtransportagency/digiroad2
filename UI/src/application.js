@@ -65,7 +65,7 @@ var URLRouter = function(map, backend, models) {
 
     pedestrianCrossing: function(id) {
       applicationModel.selectLayer('pedestrianCrossing');
-      backend.getPointAssetById(id).then(function(result) {
+      backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
         map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
         models.selectedPedestrianCrossing.open(result);
       });
@@ -596,8 +596,8 @@ var URLRouter = function(map, backend, models) {
         selectedLinearAsset: selectedLinearAsset
       });
     });
-    var pedestrianCrossingCollection = PointAssetsCollection(backend);
-    var selectedPedestrianCrossing = new SelectedPointAsset(backend, 'pedestrianCrossing');
+    var pedestrianCrossingCollection = PointAssetsCollection(backend, 'pedestrianCrossings');
+    var selectedPedestrianCrossing = new SelectedPointAsset(backend, 'pedestrianCrossing', 'pedestrianCrossings');
 
     var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
     var models = {

@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, assetName) {
+  root.SelectedPointAsset = function(backend, assetName, endPointName) {
     var current = null;
     var dirty = false;
     var originalAsset;
@@ -81,11 +81,11 @@
 
     function save() {
       if (current.toBeDeleted) {
-        backend.removePointAsset(current.id).done(done).fail(fail);
+        backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {
-        backend.createPointAsset(current).done(done).fail(fail);
+        backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
-        backend.updatePointAsset(current).done(done).fail(fail);
+        backend.updatePointAsset(current, endPointName).done(done).fail(fail);
       }
 
       function done() {
