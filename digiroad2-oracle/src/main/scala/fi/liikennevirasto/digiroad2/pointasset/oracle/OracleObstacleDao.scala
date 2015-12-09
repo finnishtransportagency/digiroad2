@@ -23,7 +23,7 @@ case class PersistedObstacle(id: Long, mmlId: Long,
 case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OracleObstacleDao {
-  // This works as long as there is only one property (currently type) for obstacles and up to one value
+  // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[PersistedObstacle] = {
     val query =
       """
@@ -31,9 +31,9 @@ object OracleObstacleDao {
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
-        join property p on p.asset_type_id = a.id
-        left join enumerated_value ev on ev.property_id = p.id
-        left join single_choice_value scv on (scv.asset_id = a.id AND scv.enumerated_value_id = ev.id)
+        join property p on p.asset_type_id = a.asset_type_id
+        left join single_choice_value scv on scv.asset_id = a.id
+        left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
     StaticQuery.queryNA[PersistedObstacle](queryWithFilter).iterator.toSeq
