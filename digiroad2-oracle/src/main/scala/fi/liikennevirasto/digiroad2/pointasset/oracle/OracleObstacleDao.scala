@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
+import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
 import slick.jdbc.{PositionedResult, GetResult, StaticQuery}
@@ -19,7 +20,7 @@ case class PersistedObstacle(id: Long, mmlId: Long,
                              createdBy: Option[String] = None,
                              createdDateTime: Option[DateTime] = None,
                              modifiedBy: Option[String] = None,
-                             modifiedDateTime: Option[DateTime] = None)
+                             modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
 case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OracleObstacleDao {

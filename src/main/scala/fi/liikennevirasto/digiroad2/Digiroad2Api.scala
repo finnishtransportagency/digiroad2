@@ -21,6 +21,7 @@ case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double,
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
+                   val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -28,6 +29,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetProvider: AssetProvider = Digiroad2Context.assetProvider) extends ScalatraServlet
+
+
+
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
@@ -652,5 +656,13 @@ with GZipSupport {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
     }
+  }
+
+  get("/obstacles") {
+    val user = userProvider.getCurrentUser()
+
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    obstacleService.getByBoundingBox(user, bbox)
   }
 }
