@@ -67,7 +67,8 @@ object DataFixture {
       "kauniainen_lit_roads.sql",
       "kauniainen_vehicle_prohibitions.sql",
       "kauniainen_paved_roads.sql",
-      "kauniainen_pedestrian_crossings.sql"))
+      "kauniainen_pedestrian_crossings.sql",
+      "kauniainen_obstacles.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
