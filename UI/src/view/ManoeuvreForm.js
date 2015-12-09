@@ -181,7 +181,7 @@
         }
 
         var manoeuvreExceptions = function(formGroupElement) {
-          var selectedOptions = formGroupElement.find('select option:selected');
+          var selectedOptions = formGroupElement.find('.exception select option:selected');
           return _.chain(selectedOptions)
             .map(function(option) { return parseInt($(option).val(), 10); })
             .reject(function(val) { return _.isNaN(val); })
