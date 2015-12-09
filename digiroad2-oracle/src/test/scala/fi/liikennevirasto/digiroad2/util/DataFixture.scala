@@ -271,6 +271,16 @@ object DataFixture {
     println()
   }
 
+  def importObstacles(): Unit = {
+    val blockedPassage = 1
+    val barrierGate = 2
+    println(s"\nCommencing obstacle import from conversion at time: ${DateTime.now()}")
+    dataImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 16, blockedPassage)
+    dataImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 3, barrierGate)
+    println(s"Obstacle import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def importPedestrianCrossings(): Unit = {
     println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
     dataImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
@@ -419,12 +429,14 @@ object DataFixture {
         importHazmatProhibitions()
       case Some("mml_manoeuvres") =>
         importMMLIdsOnManoeuvres()
+      case Some("obstacles") =>
+        importObstacles()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres |" +
+        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles" +
         " repair")
     }
   }
