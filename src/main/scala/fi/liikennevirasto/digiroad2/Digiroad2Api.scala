@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.user.{UserProvider, User}
@@ -605,13 +605,16 @@ with GZipSupport {
     }
   }
 
-  get("/pointassets") {
+  def getPointAssets[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset](service: PointAssetOperations[Asset, PersistedAsset]) = {
     val user = userProvider.getCurrentUser()
 
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    pedestrianCrossingService.getByBoundingBox(user, bbox)
+    service.getByBoundingBox(user, bbox)
   }
+
+  get("/pointassets")(getPointAssets(pedestrianCrossingService))
+  get("/obstacles")(getPointAssets(obstacleService))
 
   get("/pointassets/:id") {
     val user = userProvider.getCurrentUser()
@@ -656,13 +659,5 @@ with GZipSupport {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
     }
-  }
-
-  get("/obstacles") {
-    val user = userProvider.getCurrentUser()
-
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    validateBoundingBox(bbox)
-    obstacleService.getByBoundingBox(user, bbox)
   }
 }
