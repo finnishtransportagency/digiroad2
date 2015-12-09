@@ -3,10 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
-
-
-
-
 case class Obstacle(id: Long, mmlId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
@@ -17,12 +13,7 @@ case class Obstacle(id: Long, mmlId: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-
 class ObstacleService(val vvhClient: VVHClient)extends PointAssetOperations[Obstacle, PersistedObstacle] {
-
-
-
-
 
   def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
     getFloatingAssets("id", includedMunicipalities)
@@ -32,7 +23,6 @@ class ObstacleService(val vvhClient: VVHClient)extends PointAssetOperations[Obst
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedObstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
   override def persistedAssetToAsset(persistedAsset: PersistedObstacle, floating: Boolean) = {
     Obstacle(
-
       id = persistedAsset.id,
       mmlId = persistedAsset.mmlId,
       municipalityCode = persistedAsset.municipalityCode,
@@ -45,13 +35,6 @@ class ObstacleService(val vvhClient: VVHClient)extends PointAssetOperations[Obst
       createdDateTime = persistedAsset.createdDateTime,
       modifiedBy = persistedAsset.modifiedBy,
       modifiedAt = persistedAsset.modifiedDateTime)
-
-
-
-
-
-
-
   }
 }
 
