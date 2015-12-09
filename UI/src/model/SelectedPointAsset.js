@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, collection) {
+  root.SelectedPointAsset = function(backend, assetName) {
     var current = null;
     var dirty = false;
     var originalAsset;
@@ -22,29 +22,29 @@
     function place(asset) {
       dirty = true;
       current = asset;
-      eventbus.trigger('pedestrianCrossing:selected');
+      eventbus.trigger(assetName + ':selected');
     }
 
     function move(asset) {
       dirty = true;
       current = asset;
-      eventbus.trigger('pedestrianCrossing:changed');
+      eventbus.trigger(assetName + ':changed');
     }
 
     function open(asset) {
       originalAsset = _.cloneDeep(asset);
       current = asset;
-      eventbus.trigger('pedestrianCrossing:selected');
+      eventbus.trigger(assetName + ':selected');
     }
 
     function cancel() {
       if (isNew()) {
         reset();
-        eventbus.trigger('pedestrianCrossing:creationCancelled');
+        eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
         current = originalAsset;
-        eventbus.trigger('pedestrianCrossing:cancelled');
+        eventbus.trigger(assetName + ':cancelled');
       }
     }
 
@@ -68,7 +68,7 @@
     function setToBeRemoved(toBeDeleted) {
       dirty = true;
       current.toBeDeleted = toBeDeleted;
-      eventbus.trigger('pedestrianCrossing:changed');
+      eventbus.trigger(assetName + ':changed');
     }
 
     function isDirty() {
@@ -89,7 +89,7 @@
       }
 
       function done() {
-        eventbus.trigger('pedestrianCrossing:saved');
+        eventbus.trigger(assetName + ':saved');
         close();
       }
 
@@ -100,7 +100,7 @@
 
     function close() {
       reset();
-      eventbus.trigger('pedestrianCrossing:unselected');
+      eventbus.trigger(assetName + ':unselected');
     }
 
     function isSelected(asset) {
