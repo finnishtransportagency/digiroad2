@@ -249,7 +249,7 @@
           });
         });
 
-        $(rootElement).find('.adjacent-link').on('change', '.new-validity-period select', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.new-validity-period select', function(event) {
           $(event.target).closest('.validity-period-group ul').append(newValidityPeriodElement());
           $(event.target).parent().parent().replaceWith(validityPeriodElement({
             days: $(event.target).val(),
