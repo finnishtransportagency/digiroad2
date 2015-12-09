@@ -545,7 +545,7 @@ _K&auml;&auml;ntymisrajoituksen tietojen katselu._
 
 ##K&auml;&auml;ntymisrajoitusten muokkaus##
 
-K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen kohdelinkit, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske sek&auml; tarkenne (esim. aika). Ominaisuustieton&auml;kym&auml;ss&auml; on linkin yhteydess&auml; kartalla kohdelinkkej&auml; vastaavat kirjaimet helpottamassa oikean linkin valintaa (7). Poikkeukset (ajoneuvotyypit ja vapaa tekstikentt&auml;) n&auml;kyv&auml;t ainoastaan silloin, kun kyseinen tielinkki on valittu k&auml;&auml;ntymisrajoituksen kohdelinkiksi.
+K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen kohdelinkit, lis&auml;kilven mukainen voimassaoloaika, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske eli poikkeukset sek&auml; mahdollinen muu tarkenne. Ominaisuustieton&auml;kym&auml;ss&auml; on linkin yhteydess&auml; kartalla kohdelinkkej&auml; vastaavat kirjaimet helpottamassa oikean linkin valintaa (7). Poikkeukset ja tarkenteet (aika ja vapaa tekstikentt&auml;) n&auml;kyv&auml;t ainoastaan silloin, kun kyseinen tielinkki on valittu k&auml;&auml;ntymisrajoituksen kohdelinkiksi.
 
 Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois k&auml;&auml;ntymisrajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
@@ -559,7 +559,7 @@ Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta s
  
 ####Uuden k&auml;&auml;ntymisrajoituksen poistaminen####
 
-K&auml;&auml;ntymisrajoituksen voi poistaa valitsemalla sen l&auml;hdelinkin kartalta. Ominaisuustieton&auml;kym&auml;&auml;n avautuu k&auml;&auml;ntymisrajoituksen kohteet. Poistamalla valinnan kaikista k&auml;&auml;ntymisrajoituksen kohteista ja tallentamalla, k&auml;&auml;ntymisrajoitus poistuu.
+K&auml;&auml;ntymisrajoituksen voi poistaa valitsemalla sen l&auml;hdelinkin kartalta. Ominaisuustieton&auml;kym&auml;&auml;n avautuu k&auml;&auml;ntymisrajoituksen kohteet. Poistamalla valinta k&auml;&auml;ntymisrajoituksen kohteesta tai kohteista ja tallentamalla, k&auml;&auml;ntymisrajoitus poistuu.
 
 7. Suurin sallittu X 7
 ----------------------
@@ -1387,7 +1387,7 @@ _VAK-rajoituksen muokkaus._
 
 Tielinkit, joilla ei ole VAK-rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi VAK-rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (4). Valitsemalla alasvetovalikosta rajoituksen tyyppi (5), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja toiselle rajoitukselle.
 
-![Lis&auml;ys.](k135.JPG)
+![Lis&auml;ys.](k135.jpg)
 
 _VAK-rajoituksen lis&auml;ys_
 
