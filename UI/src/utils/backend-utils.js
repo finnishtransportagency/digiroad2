@@ -138,13 +138,13 @@
 
     this.getPointAssets = latestResponseRequestor(function(boundingBox) {
       return {
-        url: 'api/pointassets?bbox=' + boundingBox
+        url: 'api/pedestrianCrossings?bbox=' + boundingBox
       };  
     });
 
     this.getPointAssetById = latestResponseRequestor(function(id) {
       return {
-        url: 'api/pointassets/' + id
+        url: 'api/pedestrianCrossings/' + id
       };
     });
 
@@ -152,7 +152,7 @@
       return $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/pointassets",
+        url: "api/pedestrianCrossings",
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
@@ -162,7 +162,7 @@
       return $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/pointassets/" + asset.id,
+        url: "api/pedestrianCrossings/" + asset.id,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
@@ -172,7 +172,7 @@
       return $.ajax({
         contentType: "application/json",
         type: "DELETE",
-        url: "api/pointassets/" + id,
+        url: "api/pedestrianCrossings/" + id,
         dataType: "json"
       });
     }, 1000);
@@ -267,7 +267,7 @@
     };
 
     this.getFloatinPedestrianCrossings = function() {
-      return $.getJSON('api/pointassets/floating');
+      return $.getJSON('api/pedestrianCrossings/floating');
     };
 
     this.createAsset = function (data, errorCallback) {

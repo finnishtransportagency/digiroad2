@@ -613,10 +613,10 @@ with GZipSupport {
     service.getByBoundingBox(user, bbox)
   }
 
-  get("/pointassets")(getPointAssets(pedestrianCrossingService))
+  get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/obstacles")(getPointAssets(obstacleService))
 
-  get("/pointassets/:id") {
+  get("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
     val asset = pedestrianCrossingService.getById(params("id").toLong)
     asset match {
@@ -627,7 +627,7 @@ with GZipSupport {
     }
   }
 
-  get("/pointassets/floating") {
+  get("/pedestrianCrossings/floating") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
@@ -636,14 +636,14 @@ with GZipSupport {
     pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
   }
 
-  delete("/pointassets/:id") {
+  delete("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
     pedestrianCrossingService.expire(id, user.username)
   }
 
-  put("/pointassets/:id") {
+  put("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[NewPointAsset]
@@ -652,7 +652,7 @@ with GZipSupport {
     }
   }
 
-  post("/pointassets") {
+  post("/pedestrianCrossings") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[NewPointAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
