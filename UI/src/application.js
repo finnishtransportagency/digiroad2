@@ -20,11 +20,11 @@ var URLRouter = function(map, backend, models) {
       'asset/:id': 'massTransitStop',
       'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
-      'pedestrianCrossing/:id': 'pedestrianCrossing',
+      'pedestrianCrossings/:id': 'pedestrianCrossings',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
-      'work-list/pedestrianCrossing': 'pedestrianCrossingWorkList'
+      'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList'
     },
 
     massTransitStop: function(id) {
@@ -63,8 +63,8 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
-    pedestrianCrossing: function(id) {
-      applicationModel.selectLayer('pedestrianCrossing');
+    pedestrianCrossings: function(id) {
+      applicationModel.selectLayer('pedestrianCrossings');
       backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
         map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
         models.selectedPedestrianCrossing.open(result);
@@ -84,7 +84,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     pedestrianCrossingWorkList: function() {
-      eventbus.trigger('workList:select', 'pedestrianCrossing', backend.getFloatinPedestrianCrossings());
+      eventbus.trigger('workList:select', 'pedestrianCrossings', backend.getFloatinPedestrianCrossings());
     }
   });
 
@@ -524,7 +524,7 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
-      pedestrianCrossing: new PointAssetLayer({
+      pedestrianCrossings: new PointAssetLayer({
         roadLayer: roadLayer,
         roadCollection: models.roadCollection,
         collection: models.pedestrianCrossingCollection,
@@ -532,7 +532,7 @@ var URLRouter = function(map, backend, models) {
         selectedAsset: models.selectedPedestrianCrossing,
         style: PointAssetStyle(),
         mapOverlay: mapOverlay,
-        layerName: 'pedestrianCrossing'
+        layerName: 'pedestrianCrossings'
       }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
@@ -597,7 +597,7 @@ var URLRouter = function(map, backend, models) {
       });
     });
     var pedestrianCrossingCollection = PointAssetsCollection(backend, 'pedestrianCrossings');
-    var selectedPedestrianCrossing = new SelectedPointAsset(backend, 'pedestrianCrossing', 'pedestrianCrossings');
+    var selectedPedestrianCrossing = new SelectedPointAsset(backend, 'pedestrianCrossings');
 
     var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
     var models = {

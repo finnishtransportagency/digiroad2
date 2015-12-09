@@ -1,7 +1,7 @@
 (function(root) {
   root.PointAssetBox = function(selectedPedestrianCrossing) {
     var title = 'Suojatie';
-    var layerName = 'pedestrianCrossing';
+    var layerName = 'pedestrianCrossings';
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group simple-limit ' + className + 's"></div>').hide();
 

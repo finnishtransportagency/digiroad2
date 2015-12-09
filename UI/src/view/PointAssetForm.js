@@ -13,22 +13,22 @@
 
     eventbus.on('application:readOnly', toggleMode);
 
-    eventbus.on('pedestrianCrossing:selected pedestrianCrossing:cancelled', function() {
+    eventbus.on('pedestrianCrossings:selected pedestrianCrossing:cancelled', function() {
       renderForm(rootElement, selectedAsset);
       toggleMode(applicationModel.isReadOnly());
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
-    eventbus.on('pedestrianCrossing:changed', function() {
+    eventbus.on('pedestrianCrossings:changed', function() {
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
-    eventbus.on('pedestrianCrossing:unselected pedestrianCrossing:creationCancelled', function() {
+    eventbus.on('pedestrianCrossings:unselected pedestrianCrossings:creationCancelled', function() {
       rootElement.empty();
     });
 
     eventbus.on('layer:selected', function(layer) {
-      if(layer === 'pedestrianCrossing') {
+      if(layer === 'pedestrianCrossings') {
         renderLinktoWorkList();
       }
       else {
@@ -107,7 +107,7 @@
   function renderLinktoWorkList() {
     $('#information-content').append('' +
       '<div class="form form-horizontal">' +
-      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossing">Geometrian ulkopuolelle jääneet suojatiet</a>' +
+      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossings">Geometrian ulkopuolelle jääneet suojatiet</a>' +
       '</div>');
   }
 })(this);

@@ -1,8 +1,9 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, assetName, endPointName) {
+  root.SelectedPointAsset = function(backend, assetName) {
     var current = null;
     var dirty = false;
     var originalAsset;
+    var endPointName = assetName;
     return {
       open: open,
       getId: getId,
