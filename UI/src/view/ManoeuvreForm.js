@@ -73,7 +73,7 @@
             '<%= newExceptionSelect %>' +
             '<div class="form-group">' +
               '<input type="text" class="form-control additional-info" ' +
-                                 'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
+                                 'placeholder="Muu tarkenne" <% print(checked ? "" : "disabled") %> ' +
                                  '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
             '</div>' +
           '<div>' +
