@@ -55,6 +55,10 @@
       collection.setExceptions(manoeuvreId, exceptions);
     };
 
+    var setValidityPeriods = function(manoeuvreId, exceptions) {
+      collection.setValidityPeriods(manoeuvreId, exceptions);
+    };
+
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       collection.setAdditionalInfo(manoeuvreId, additionalInfo);
     };
@@ -84,6 +88,7 @@
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       setExceptions: setExceptions,
+      setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
       save: save,
       cancel: cancel,

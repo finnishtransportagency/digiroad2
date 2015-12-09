@@ -178,7 +178,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def toTimeDomain(validityPeriod: ProhibitionValidityPeriod): String = {
+  def toTimeDomain(validityPeriod: ValidityPeriod): String = {
     val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
       case Sunday => "(t1){d1}"
@@ -246,6 +246,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       "sourceMmlId" -> manoeuvre.sourceMmlId,
       "destMmlId" -> manoeuvre.destMmlId,
       "exceptions" -> manoeuvre.exceptions,
+      "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
       "additionalInfo" -> manoeuvre.additionalInfo,
       "modifiedDateTime" -> manoeuvre.modifiedDateTime)
     }

@@ -139,7 +139,7 @@ object PropertyTypes {
   val ReadOnly = "read-only"
 }
 
-object ValidityPeriod {
+object MassTransitStopValidityPeriod {
   val Past = "past"
   val Current = "current"
   val Future = "future"

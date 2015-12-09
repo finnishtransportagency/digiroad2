@@ -268,14 +268,14 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
 
   private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
     (validFrom, validTo) match {
-      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { ValidityPeriod.Future } else { ValidityPeriod.Current }
-      case (None, Some(to)) => if (LocalDate.now().isAfter(to)) { ValidityPeriod.Past } else { ValidityPeriod.Current }
+      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.Future } else { MassTransitStopValidityPeriod.Current }
+      case (None, Some(to)) => if (LocalDate.now().isAfter(to)) { MassTransitStopValidityPeriod.Past } else { MassTransitStopValidityPeriod.Current }
       case (Some(from), Some(to)) =>
         val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
-        if (interval.containsNow()) { ValidityPeriod.Current }
-        else if (interval.isBeforeNow) { ValidityPeriod.Past }
-        else { ValidityPeriod.Future }
-      case _ => ValidityPeriod.Current
+        if (interval.containsNow()) { MassTransitStopValidityPeriod.Current }
+        else if (interval.isBeforeNow) { MassTransitStopValidityPeriod.Past }
+        else { MassTransitStopValidityPeriod.Future }
+      case _ => MassTransitStopValidityPeriod.Current
     }
   }
 
