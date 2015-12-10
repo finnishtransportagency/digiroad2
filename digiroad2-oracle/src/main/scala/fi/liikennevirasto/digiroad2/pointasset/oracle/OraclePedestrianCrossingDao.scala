@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{NewPointAsset, RoadLinkAssociatedPointAsset}
+import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime

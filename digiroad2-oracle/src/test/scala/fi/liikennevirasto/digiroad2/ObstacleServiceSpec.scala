@@ -64,7 +64,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Create new obstacle") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(NewPointAsset(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, 2)
+      val id = service.create(NewObstacle(2, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)

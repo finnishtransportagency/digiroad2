@@ -8,6 +8,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+case class NewMassTransitStop(lon: Double, lat: Double, mmlId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingAsset
+
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
@@ -32,7 +34,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
+trait MassTransitStopService extends PointAssetOperations[NewMassTransitStop, MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
   val spatialAssetDao: OracleSpatialAssetDao
   override val idField = "external_id"
 
@@ -178,6 +180,25 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
 
   private def fetchRoadLink(mmlId: Long): Option[(Int, Seq[Point])] = {
     vvhClient.fetchVVHRoadlink(mmlId).map{ x => (x.municipalityCode, x.geometry) }
+  }
+
+  override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int): Long = {
+    val point = Point(asset.lon, asset.lat)
+    val mValue = calculateLinearReferenceFromPoint(point, geometry)
+
+    withDynTransaction {
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val nationalId = spatialAssetDao.getNationalBusStopId
+      val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
+      insertLrmPosition(lrmPositionId, mValue, asset.mmlId)
+      insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
+      insertAssetLink(assetId, lrmPositionId)
+      val defaultValues = spatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
+      spatialAssetDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
+      getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
+      assetId
+    }
   }
 
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {

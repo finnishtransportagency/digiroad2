@@ -28,7 +28,8 @@ trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val floating: Boolean
 }
 
-case class NewPointAsset(lon: Double, lat: Double, mmlId: Long)
+case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingAsset
+case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingAsset
 
 case class PedestrianCrossing(id: Long,
                               mmlId: Long,
@@ -42,8 +43,8 @@ case class PedestrianCrossing(id: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
-  def update(id:Long, updatedAsset: NewPointAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
+class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations[NewPedestrianCrossing, PedestrianCrossing, PersistedPedestrianCrossing] {
+  def update(id:Long, updatedAsset: NewPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
@@ -75,7 +76,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
     }
   }
 
-  def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  def create(asset: NewPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username), username)

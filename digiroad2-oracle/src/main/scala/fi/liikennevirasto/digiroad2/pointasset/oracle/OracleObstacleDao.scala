@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{NewPointAsset, RoadLinkAssociatedPointAsset}
+import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -8,11 +8,6 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
-
-
-/**
-  * Created by venholat on 9.12.2015.
-  */
 
 case class PersistedObstacle(id: Long, mmlId: Long,
                              lon: Double, lat: Double,
