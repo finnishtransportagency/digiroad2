@@ -691,8 +691,8 @@ var URLRouter = function(map, backend, models) {
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing, 'Suojatie', 'pedestrianCrossings', [{symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'}, {symbolUrl: 'images/point-assets/point_red.svg', label: 'Kelluva suojatie'}]);
-    var obstacleBox = PointAssetBox(selectedObstacle, 'Esterakennelma', 'obstacles', [{symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'}, {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'}, {symbolUrl: 'images/point-assets/point_red.svg', label: 'Kelluva rakennelma'}]);
+    var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing, 'Suojatie', 'pedestrianCrossings', [{symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'}, {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}]);
+    var obstacleBox = PointAssetBox(selectedObstacle, 'Esterakennelma', 'obstacles', [{symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'}, {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'}, {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}]);
 
     return [
       [roadLinkBox],
