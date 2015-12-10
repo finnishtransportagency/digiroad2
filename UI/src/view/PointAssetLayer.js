@@ -154,6 +154,7 @@
 
     function handleChanged() {
       me.deactivateSelection();
+      _.find(vectorLayer.features, {attributes: {id: selectedAsset.getId()}}).attributes = selectedAsset.get();
       vectorLayer.redraw();
     }
 
