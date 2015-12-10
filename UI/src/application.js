@@ -534,6 +534,16 @@ var URLRouter = function(map, backend, models) {
         mapOverlay: mapOverlay,
         layerName: 'pedestrianCrossings'
       }),
+      obstacles: new PointAssetLayer({
+        roadLayer: roadLayer,
+        roadCollection: models.roadCollection,
+        collection: models.obstacleCollection,
+        map: map,
+        selectedAsset: models.selectedObstacle,
+        style: PointAssetStyle(),
+        mapOverlay: mapOverlay,
+        layerName: 'obstacles'
+      }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
@@ -596,6 +606,8 @@ var URLRouter = function(map, backend, models) {
         selectedLinearAsset: selectedLinearAsset
       });
     });
+    var obstacleCollection = PointAssetsCollection(backend, 'obstacles');
+    var selectedObstacle = new SelectedPointAsset(backend, 'obstacles');
     var pedestrianCrossingCollection = PointAssetsCollection(backend, 'pedestrianCrossings');
     var selectedPedestrianCrossing = new SelectedPointAsset(backend, 'pedestrianCrossings');
 
@@ -610,7 +622,9 @@ var URLRouter = function(map, backend, models) {
       linkPropertiesModel: linkPropertiesModel,
       manoeuvresCollection: manoeuvresCollection,
       pedestrianCrossingCollection: pedestrianCrossingCollection,
-      selectedPedestrianCrossing: selectedPedestrianCrossing
+      selectedPedestrianCrossing: selectedPedestrianCrossing,
+      obstacleCollection: obstacleCollection,
+      selectedObstacle: selectedObstacle
     };
 
     bindEvents(enabledLinearAssetSpecs);
@@ -630,7 +644,8 @@ var URLRouter = function(map, backend, models) {
                                   linkPropertiesModel,
                                   selectedSpeedLimit,
                                   selectedMassTransitStopModel,
-                                  selectedPedestrianCrossing);
+                                  selectedPedestrianCrossing,
+                                  selectedObstacle);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
       onSelect: function(layerName) {
@@ -669,12 +684,14 @@ var URLRouter = function(map, backend, models) {
                        linkPropertiesModel,
                        selectedSpeedLimit,
                        selectedMassTransitStopModel,
-                       selectedPedestrianCrossing) {
+                       selectedPedestrianCrossing,
+                       selectedObstacle) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing);
+    var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing, 'Suojatie', 'pedestrianCrossings');
+    var obstacleBox = PointAssetBox(selectedObstacle, 'Esterakennelma', 'obstacles');
 
     return [
       [roadLinkBox],
@@ -685,7 +702,7 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.massTransitLane)),
       [speedLimitBox]
         .concat(getLinearAsset(assetType.winterSpeedLimit)),
-      [massTransitBox, pedestrianCrossingBox],
+      [massTransitBox, pedestrianCrossingBox, obstacleBox],
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))
         .concat(getLinearAsset(assetType.damagedByThaw)),
