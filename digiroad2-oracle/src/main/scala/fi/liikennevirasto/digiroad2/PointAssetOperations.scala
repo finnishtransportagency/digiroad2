@@ -11,6 +11,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
   def vvhClient: VVHClient
+  val idField = "id"
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -48,7 +49,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
     }
   }
 
-  protected def getFloatingAssets(idField: String, includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
     case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
 
     withDynSession {

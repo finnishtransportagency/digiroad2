@@ -34,6 +34,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
 
 trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
   val spatialAssetDao: OracleSpatialAssetDao
+  override val idField = "external_id"
 
   override def typeId: Int = 10
   def withDynSession[T](f: => T): T
@@ -44,10 +45,6 @@ trait MassTransitStopService extends PointAssetOperations[MassTransitStopWithTim
                                 validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
-
-  def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
-    getFloatingAssets("external_id", includedMunicipalities)
-  }
 
   def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {
     withDynTransaction {

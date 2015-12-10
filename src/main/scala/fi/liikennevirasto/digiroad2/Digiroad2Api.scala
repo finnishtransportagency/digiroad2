@@ -146,7 +146,7 @@ with GZipSupport {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    massTransitStopService.getFloatingStops(includedMunicipalities)
+    massTransitStopService.getFloatingAssets(includedMunicipalities)
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
@@ -634,6 +634,15 @@ with GZipSupport {
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
+  }
+
+  get("/obstacles/floating") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    obstacleService.getFloatingAssets(includedMunicipalities)
   }
 
   delete("/pedestrianCrossings/:id") {

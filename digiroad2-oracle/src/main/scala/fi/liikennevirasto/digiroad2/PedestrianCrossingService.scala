@@ -75,10 +75,6 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
     }
   }
 
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
-    getFloatingAssets("id", includedMunicipalities)
-  }
-
   def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
