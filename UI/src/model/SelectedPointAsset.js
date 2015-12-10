@@ -11,7 +11,6 @@
       place: place,
       set: set,
       save: save,
-      setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
       isNew: isNew,
       cancel: cancel,
@@ -64,12 +63,6 @@
 
     function exists() {
       return !_.isNull(current);
-    }
-
-    function setToBeRemoved(toBeDeleted) {
-      dirty = true;
-      current.toBeDeleted = toBeDeleted;
-      eventbus.trigger(assetName + ':changed');
     }
 
     function isDirty() {
