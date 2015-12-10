@@ -10,6 +10,7 @@
       get: get,
       place: place,
       move: move,
+      set: set,
       save: save,
       setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
@@ -29,6 +30,12 @@
     function move(asset) {
       dirty = true;
       current = asset;
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function set(property, value) {
+      current[property] = value;
+      dirty = true;
       eventbus.trigger(assetName + ':changed');
     }
 

@@ -156,6 +156,7 @@
 
     function handleChanged() {
       me.deactivateSelection();
+      vectorLayer.redraw();
     }
 
     function handleMapClick(coordinates) {
