@@ -75,6 +75,7 @@
       '    <div class="form-group">' +
       '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
       '    </div>' +
+           renderValueElement(asset) +
       '    <div class="form-group form-group delete">' +
       '      <div class="checkbox" >' +
       '        <input type="checkbox">' +
@@ -83,6 +84,22 @@
       '    </div>' +
       '  </div>' +
       '</div>';
+  }
+
+  function renderValueElement(asset) {
+    var obstacleTypes = {
+      1: 'Suljettu yhteys',
+      2: 'Avattava puomi'
+    };
+    if (asset.obstacleType) {
+      return '' +
+        '    <div class="form-group editable">' +
+        '      <label class="control-label">' + 'Esterakennelma' + '</label>' +
+        '      <p class="form-control-static">' + obstacleTypes[asset.obstacleType] + '</p>' +
+        '    </div>';
+    } else {
+      return '';
+    }
   }
 
   function renderButtons() {
