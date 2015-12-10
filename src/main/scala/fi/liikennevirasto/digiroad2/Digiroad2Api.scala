@@ -627,23 +627,17 @@ with GZipSupport {
     }
   }
 
-  get("/pedestrianCrossings/floating") {
+  def getFloatingPointAssets[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset](service: PointAssetOperations[Asset, PersistedAsset]) = {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
+    service.getFloatingAssets(includedMunicipalities)
   }
 
-  get("/obstacles/floating") {
-    val user = userProvider.getCurrentUser()
-    val includedMunicipalities = user.isOperator() match {
-      case true => None
-      case false => Some(user.configuration.authorizedMunicipalities)
-    }
-    obstacleService.getFloatingAssets(includedMunicipalities)
-  }
+  get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
+  get("/obstacles/floating")(getFloatingPointAssets(obstacleService))
 
   delete("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
