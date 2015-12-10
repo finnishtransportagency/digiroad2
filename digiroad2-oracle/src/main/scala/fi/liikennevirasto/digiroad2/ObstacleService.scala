@@ -36,6 +36,13 @@ class ObstacleService(val vvhClient: VVHClient)extends PointAssetOperations[Obst
       modifiedBy = persistedAsset.modifiedBy,
       modifiedAt = persistedAsset.modifiedDateTime)
   }
+
+  def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int, obstacleType: Int): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+    withDynTransaction {
+      OracleObstacleDao.create(ObstacleToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, obstacleType), username)
+    }
+  }
 }
 
 

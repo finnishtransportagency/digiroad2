@@ -1,11 +1,13 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
+import fi.liikennevirasto.digiroad2.{NewPointAsset, RoadLinkAssociatedPointAsset}
+import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
-import slick.jdbc.{PositionedResult, GetResult, StaticQuery}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.jdbc.StaticQuery.interpolation
 
 
 /**
@@ -21,7 +23,7 @@ case class PersistedObstacle(id: Long, mmlId: Long,
                              createdDateTime: Option[DateTime] = None,
                              modifiedBy: Option[String] = None,
                              modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
-case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
+case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
 
 object OracleObstacleDao {
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
@@ -56,4 +58,33 @@ object OracleObstacleDao {
       PersistedObstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
+
+  def create(obstacle: ObstacleToBePersisted, username: String): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("Esterakennelma").first
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, geometry)
+        values ($id, 220, $username, sysdate, ${obstacle.municipalityCode}, MDSYS.SDO_GEOMETRY(4401,
+                                                 3067,
+                                                 NULL,
+                                                 MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                                 MDSYS.SDO_ORDINATE_ARRAY(${obstacle.lon}, ${obstacle.lat}, 0, 0)
+                                                ))
+
+        into lrm_position(id, start_measure, mml_id)
+        values ($lrmPositionId, ${obstacle.mValue}, ${obstacle.mmlId})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+
+      select * from dual
+    """.execute
+    insertSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
+    id
+  }
 }
+
+
+

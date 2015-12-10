@@ -660,4 +660,14 @@ with GZipSupport {
       pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
+
+  post("/obstacles") {
+    val user = userProvider.getCurrentUser()
+    val asset = (parsedBody \ "asset").extract[NewPointAsset]
+    for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
+      validateUserMunicipalityAccess(user)(link.municipalityCode)
+      val obstacleType = 2
+      obstacleService.create(asset, user.username, link.geometry, link.municipalityCode, obstacleType)
+    }
+  }
 }
