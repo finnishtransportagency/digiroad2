@@ -63,10 +63,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Get stops by bounding box") {
     runWithRollback {
-      val stop = RollbackMassTransitStopService.createNew(5.0, 0.0, 1l, 2, "masstransitstopservice_spec", Nil)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", List(Point(0.0,0.0), Point(120.0, 0.0)), 235)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
-      stops.map(_.id) should be(Seq(stop.id))
+      stops.map(_.id) should be(Seq(id))
     }
   }
 
@@ -221,15 +221,15 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val service = new TestMassTransitStopService(eventbus)
       val values = List(PropertyValue("1"))
       val properties = List(SimpleProperty("pysakin_tyyppi", values))
-      val massTransitStop = service.createNew(60.0, 0.0, 123l, 100, "test", properties)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", List(Point(0.0,0.0), Point(120.0, 0.0)), 91)
+      val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
-      massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+      massTransitStop.validityPeriod should be(MassTransitStopValidityPeriod.Current)
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
-
 
   test("Project stop location on two-point geometry") {
     val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
