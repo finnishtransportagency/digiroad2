@@ -531,7 +531,7 @@ var URLRouter = function(map, backend, models) {
         collection: models.pedestrianCrossingCollection,
         map: map,
         selectedAsset: models.selectedPedestrianCrossing,
-        style: PointAssetStyle(),
+        style: PointAssetStyle('pedestrianCrossings'),
         mapOverlay: mapOverlay,
         layerName: 'pedestrianCrossings'
       }),
@@ -541,7 +541,7 @@ var URLRouter = function(map, backend, models) {
         collection: models.obstacleCollection,
         map: map,
         selectedAsset: models.selectedObstacle,
-        style: PointAssetStyle(),
+        style: PointAssetStyle('obstacles'),
         mapOverlay: mapOverlay,
         layerName: 'obstacles'
       }),

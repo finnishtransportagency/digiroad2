@@ -1,5 +1,22 @@
 (function(root) {
-  root.PointAssetStyle = function() {
+  function getFeatureTypeRules(layerName) {
+    var featureTypeRules;
+    if (layerName === 'obstacles') {
+      featureTypeRules = [
+        new OpenLayersRule().where('obstacleType').is(1).use({externalGraphic: 'images/point-assets/point_blue.svg'}),
+        new OpenLayersRule().where('obstacleType').is(2).use({externalGraphic: 'images/point-assets/point_green.svg'}),
+        new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
+      ];
+    } else {
+      featureTypeRules = [
+        new OpenLayersRule().where('floating').is(false).use({externalGraphic: 'images/point-assets/point_blue.svg'}),
+        new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
+      ];
+    }
+    return featureTypeRules;
+  }
+
+  root.PointAssetStyle = function(layerName) {
     var defaultStyleParameters = {
       graphicWidth: 14,
       graphicHeight: 14,
@@ -7,10 +24,7 @@
       graphicYOffset: -7
     };
 
-    var featureTypeRules = [
-      new OpenLayersRule().where('floating').is(false).use({ externalGraphic: 'images/point-assets/point_blue.svg' }),
-      new OpenLayersRule().where('floating').is(true).use({ externalGraphic: 'images/point-assets/point_red.svg' })
-    ];
+    var featureTypeRules = getFeatureTypeRules(layerName);
 
     var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults(defaultStyleParameters));
     browseStyle.addRules(featureTypeRules);
