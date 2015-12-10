@@ -1,3 +1,4 @@
+window.DR2_LOGGING = true;
 var URLRouter = function(map, backend, models) {
   var Router = Backbone.Router.extend({
     initialize: function() {
@@ -24,7 +25,8 @@ var URLRouter = function(map, backend, models) {
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
-      'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList'
+      'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
+      'work-list/obstacles': 'obstacleWorkList'
     },
 
     massTransitStop: function(id) {
@@ -85,6 +87,10 @@ var URLRouter = function(map, backend, models) {
 
     pedestrianCrossingWorkList: function() {
       eventbus.trigger('workList:select', 'pedestrianCrossings', backend.getFloatinPedestrianCrossings());
+    },
+
+    obstacleWorkList: function() {
+      eventbus.trigger('workList:select', 'obstacles', backend.getFloatingObstacles());
     }
   });
 
@@ -502,8 +508,14 @@ var URLRouter = function(map, backend, models) {
         linearAsset.newTitle,
         linearAsset.title);
     });
-    PointAssetForm.initialize(models.selectedPedestrianCrossing, 'pedestrianCrossings');
-    PointAssetForm.initialize(models.selectedObstacle, 'obstacles');
+    PointAssetForm.initialize(models.selectedPedestrianCrossing, 'pedestrianCrossings', {
+      singleFloatingAssetLabel: 'suojatien',
+      manyFloatingAssetsLabel: 'suojatiet'
+    });
+    PointAssetForm.initialize(models.selectedObstacle, 'obstacles', {
+      singleFloatingAssetLabel: 'esterakennelman',
+      manyFloatingAssetsLabel: 'esterakennelmat'
+    });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       acc[asset.layerName] = new LinearAssetLayer({

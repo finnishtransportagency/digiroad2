@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedAsset, layerName) {
+  function bindEvents(selectedAsset, layerName, localizedTexts) {
     var rootElement = $('#feature-attributes');
 
     function toggleMode(readOnly) {
@@ -16,7 +16,7 @@
     eventbus.on('application:readOnly', toggleMode);
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled', function() {
-      renderForm(rootElement, selectedAsset);
+      renderForm(rootElement, selectedAsset, localizedTexts);
       toggleMode(applicationModel.isReadOnly());
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
@@ -29,22 +29,21 @@
       rootElement.empty();
     });
 
-    eventbus.on('layer:selected', function(layer) {
-      if(layer === 'pedestrianCrossings') {
-        renderLinktoWorkList();
-      }
-      else {
+    eventbus.on('layer:selected', function(layer, previousLayer) {
+      if (layer === layerName) {
+        renderLinktoWorkList(layer, localizedTexts);
+      } else if (previousLayer === layerName) {
         $('#point-asset-work-list-link').parent().remove();
       }
     });
   }
 
-  function renderForm(rootElement, selectedAsset) {
+  function renderForm(rootElement, selectedAsset, localizedTexts) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi suojatie" : 'ID: ' + id;
     var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-    var form = renderAssetFormElements(selectedAsset);
+    var form = renderAssetFormElements(selectedAsset, localizedTexts);
     var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
@@ -68,7 +67,7 @@
     });
   }
 
-  function renderAssetFormElements(selectedAsset) {
+  function renderAssetFormElements(selectedAsset, localizedTexts) {
     var asset = selectedAsset.get();
 
     if (selectedAsset.isNew()) {
@@ -82,7 +81,7 @@
       return '' +
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
-             renderFloatingNotification(asset.floating) +
+             renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
         '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
         '    </div>' +
@@ -130,21 +129,21 @@
       '</div>';
   }
 
-  function renderFloatingNotification(floating) {
+  function renderFloatingNotification(floating, localizedTexts) {
     if (floating) {
       return '' +
         '<div class="form-group form-notification">' +
-        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa suojatien sijainti</p>' +
+        ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa ' + localizedTexts.singleFloatingAssetLabel + ' sijainti</p>' +
         '</div>';
     } else {
       return '';
     }
   }
 
-  function renderLinktoWorkList() {
+  function renderLinktoWorkList(layerName, localizedTexts) {
     $('#information-content').append('' +
       '<div class="form form-horizontal">' +
-      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/pedestrianCrossings">Geometrian ulkopuolelle jääneet suojatiet</a>' +
+      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
   }
 })(this);

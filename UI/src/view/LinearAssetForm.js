@@ -29,14 +29,6 @@
       rootElement.find('.form-controls.linear-asset button.save').attr('disabled', !selectedLinearAsset.isSaveable());
       rootElement.find('.form-controls.linear-asset button.cancel').attr('disabled', false);
     });
-    eventbus.on('layer:selected', function(layer) {
-      if(layer === 'speedLimit') {
-        renderLinktoWorkList();
-      }
-      else {
-        $('#work-list-link').parent().remove();
-      }
-    });
 
     function toggleMode(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
