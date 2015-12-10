@@ -9,6 +9,8 @@
     function toggleMode(readOnly) {
       rootElement.find('.delete').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
+      rootElement.find('.editable .form-control-static').toggle(readOnly);
+      rootElement.find('.editable .form-control').toggle(!readOnly);
     }
 
     eventbus.on('application:readOnly', toggleMode);
