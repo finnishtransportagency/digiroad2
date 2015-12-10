@@ -24,3 +24,17 @@ UPDATE asset
                                     MDSYS.SDO_ORDINATE_ARRAY(374443.764141219, 6677245.28337185, 0, 0)
                                    )
   WHERE id = 600047;
+
+
+insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600048,220,'dr2_test_data',235);
+insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000011,100,100,12345);
+insert into asset_link (ASSET_ID, POSITION_ID) values (600048, 70000011);
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600048, (select id from enumerated_value where name_fi='Avattava puomi'), (select id from property where public_id='Esterakennelma'));
+UPDATE asset
+  SET geometry = MDSYS.SDO_GEOMETRY(4401,
+                                    3067,
+                                    NULL,
+                                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                    MDSYS.SDO_ORDINATE_ARRAY(374396, 6677319 , 0, 0)
+                                   )
+  WHERE id = 600048;
