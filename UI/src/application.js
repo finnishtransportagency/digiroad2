@@ -22,6 +22,7 @@ var URLRouter = function(map, backend, models) {
       'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
       'pedestrianCrossings/:id': 'pedestrianCrossings',
+      'obstacles/:id': 'obstacles',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -70,6 +71,14 @@ var URLRouter = function(map, backend, models) {
       backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
         map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
         models.selectedPedestrianCrossing.open(result);
+      });
+    },
+
+    obstacles: function(id) {
+      applicationModel.selectLayer('obstacles');
+      backend.getPointAssetById(id, 'obstacles').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedObstacle.open(result);
       });
     },
 
