@@ -692,7 +692,7 @@ var URLRouter = function(map, backend, models) {
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing, 'Suojatie', 'pedestrianCrossings');
-    var obstacleBox = PointAssetBox(selectedObstacle, 'Esterakennelma', 'obstacles');
+    var obstacleBox = PointAssetBox(selectedObstacle, 'Esterakennelma', 'obstacles', [{symbol: 'point_blue.svg', label: 'Suljettu yhteys'}, {symbol: 'point_green.svg', label: 'Avattava puomi'}]);
 
     return [
       [roadLinkBox],
