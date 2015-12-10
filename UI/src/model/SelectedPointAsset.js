@@ -9,7 +9,6 @@
       getId: getId,
       get: get,
       place: place,
-      move: move,
       set: set,
       save: save,
       setToBeRemoved: setToBeRemoved,
@@ -27,15 +26,9 @@
       eventbus.trigger(assetName + ':selected');
     }
 
-    function move(asset) {
+    function set(asset) {
       dirty = true;
-      current = asset;
-      eventbus.trigger(assetName + ':changed');
-    }
-
-    function set(property, value) {
-      current[property] = value;
-      dirty = true;
+      _.merge(current, asset);
       eventbus.trigger(assetName + ':changed');
     }
 

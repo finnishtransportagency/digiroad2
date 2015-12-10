@@ -54,10 +54,7 @@
           var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
 
-          feature.attributes.lon = feature.geometry.x;
-          feature.attributes.lat = feature.geometry.y;
-          feature.attributes.mmlId = nearestLine.mmlId;
-          selectedAsset.move(feature.attributes);
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId});
         } else {
           this.cancel();
         }
