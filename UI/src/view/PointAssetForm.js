@@ -96,6 +96,10 @@
         '    <div class="form-group editable">' +
         '      <label class="control-label">' + 'Esterakennelma' + '</label>' +
         '      <p class="form-control-static">' + obstacleTypes[asset.obstacleType] + '</p>' +
+        '      <select class="form-control" style="display:none">  ' +
+        '        <option value="1">Suljettu yhteys</option>' +
+        '        <option value="2">Avattava puomi</option>' +
+        '      </select>' +
         '    </div>';
     } else {
       return '';
