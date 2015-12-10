@@ -70,27 +70,36 @@
 
   function renderAssetFormElements(selectedAsset) {
     var asset = selectedAsset.get();
-    if (selectedAsset.isNew()) return '';
 
-    return '' +
-      '<div class="wrapper">' +
-      '  <div class="form form-horizontal form-dark form-pointasset">' +
-          renderFloatingNotification(asset.floating) +
-      '    <div class="form-group">' +
-      '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
-      '    </div>' +
-      '    <div class="form-group">' +
-      '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
-      '    </div>' +
-           renderValueElement(asset) +
-      '    <div class="form-group form-group delete">' +
-      '      <div class="checkbox" >' +
-      '        <input type="checkbox">' +
-      '      </div>' +
-      '      <p class="form-control-static">Poista</p>' +
-      '    </div>' +
-      '  </div>' +
-      '</div>';
+    if (selectedAsset.isNew()) {
+      return '' +
+        '<div class="wrapper">' +
+        '  <div class="form form-horizontal form-dark form-pointasset">' +
+             renderValueElement(asset) +
+        '  </div>' +
+        '</div>';
+    } else {
+      return '' +
+        '<div class="wrapper">' +
+        '  <div class="form form-horizontal form-dark form-pointasset">' +
+             renderFloatingNotification(asset.floating) +
+        '    <div class="form-group">' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+        '    </div>' +
+        '    <div class="form-group">' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+        '    </div>' +
+             renderValueElement(asset) +
+        '    <div class="form-group form-group delete">' +
+        '      <div class="checkbox" >' +
+        '        <input type="checkbox">' +
+        '      </div>' +
+        '      <p class="form-control-static">Poista</p>' +
+        '    </div>' +
+        '  </div>' +
+        '</div>';
+    }
+
   }
 
   function renderValueElement(asset) {

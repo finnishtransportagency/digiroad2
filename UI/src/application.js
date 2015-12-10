@@ -533,7 +533,8 @@ var URLRouter = function(map, backend, models) {
         selectedAsset: models.selectedPedestrianCrossing,
         style: PointAssetStyle('pedestrianCrossings'),
         mapOverlay: mapOverlay,
-        layerName: 'pedestrianCrossings'
+        layerName: 'pedestrianCrossings',
+        newAsset: {}
       }),
       obstacles: new PointAssetLayer({
         roadLayer: roadLayer,
@@ -543,7 +544,8 @@ var URLRouter = function(map, backend, models) {
         selectedAsset: models.selectedObstacle,
         style: PointAssetStyle('obstacles'),
         mapOverlay: mapOverlay,
-        layerName: 'obstacles'
+        layerName: 'obstacles',
+        newAsset: { obstacleType: 1 }
       }),
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),

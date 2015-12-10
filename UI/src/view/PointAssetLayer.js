@@ -7,7 +7,8 @@
       style = params.style,
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
-      layerName = params.layerName;
+      layerName = params.layerName,
+      newAsset = params.newAsset;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -177,16 +178,16 @@
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
 
-      var crossing = {
+      var asset = _.merge({}, newAsset, {
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
         floating: false,
         mmlId: nearestLine.mmlId,
         id: 0
-      };
+      });
 
-      vectorLayer.addFeatures(createFeature(crossing));
-      selectedAsset.place(crossing);
+      vectorLayer.addFeatures(createFeature(asset));
+      selectedAsset.place(asset);
 
       mapOverlay.show();
     }
