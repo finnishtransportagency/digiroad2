@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedAsset) {
+  function bindEvents(selectedAsset, layerName) {
     var rootElement = $('#feature-attributes');
 
     function toggleMode(readOnly) {
@@ -13,17 +13,17 @@
 
     eventbus.on('application:readOnly', toggleMode);
 
-    eventbus.on('pedestrianCrossings:selected pedestrianCrossing:cancelled', function() {
+    eventbus.on(layerName + ':selected ' + layerName + ':cancelled', function() {
       renderForm(rootElement, selectedAsset);
       toggleMode(applicationModel.isReadOnly());
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
-    eventbus.on('pedestrianCrossings:changed', function() {
+    eventbus.on(layerName + ':changed', function() {
       rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
     });
 
-    eventbus.on('pedestrianCrossings:unselected pedestrianCrossings:creationCancelled', function() {
+    eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
       rootElement.empty();
     });
 
