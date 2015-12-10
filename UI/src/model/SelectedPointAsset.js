@@ -43,7 +43,7 @@
         eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
-        current = originalAsset;
+        current = _.cloneDeep(originalAsset);
         eventbus.trigger(assetName + ':cancelled');
       }
     }
