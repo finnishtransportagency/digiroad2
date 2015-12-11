@@ -81,14 +81,8 @@ object OracleObstacleDao {
 
   def update(id: Long, obstacle: ObstacleToBePersisted) = {
     val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
-    sqlu"""
-      update asset
-        set
-        modified_by = ${obstacle.createdBy},
-        modified_date = sysdate,
-        municipality_code = ${obstacle.municipalityCode}
-    where id = $id
-    """.execute
+    sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
+    updateAssetModified(id, obstacle.createdBy).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
     updateSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
 
