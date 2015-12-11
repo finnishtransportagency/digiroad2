@@ -60,7 +60,6 @@ object OracleObstacleDao {
   def create(obstacle: ObstacleToBePersisted, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
@@ -75,16 +74,15 @@ object OracleObstacleDao {
       select * from dual
     """.execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
-    insertSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
+    insertSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
     id
   }
 
   def update(id: Long, obstacle: ObstacleToBePersisted) = {
-    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
     updateAssetModified(id, obstacle.createdBy).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
-    updateSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
+    updateSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
 
     sqlu"""
       update lrm_position
@@ -94,6 +92,10 @@ object OracleObstacleDao {
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id
+  }
+
+  private def getPropertyId: Long = {
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
   }
 }
 
