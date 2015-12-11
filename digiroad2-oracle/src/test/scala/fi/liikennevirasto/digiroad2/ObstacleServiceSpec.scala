@@ -73,8 +73,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val now = DateTime.now()
       val id = service.create(NewObstacle(2, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -98,10 +98,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Update obstacle") {
     runWithRollback {
-      val now = DateTime.now()
       val obstacle = service.getById(600046).get
       val updated = NewObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
-      val id = service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "testi")
+      service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "testi")
       val updatedObstacle = service.getById(600046).get
 
       updatedObstacle.obstacleType should equal(2)
