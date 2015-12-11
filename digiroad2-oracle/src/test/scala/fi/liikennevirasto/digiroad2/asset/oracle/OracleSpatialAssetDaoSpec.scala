@@ -1,13 +1,9 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{MustMatchers, FunSuite}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{PropertyRow, AssetRow}
-import fi.liikennevirasto.digiroad2.asset.{State, AdministrativeClass, Position, Modification}
-import slick.driver.JdbcDriver.backend.Database
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
-import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.PropertyRow
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification}
+import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point}
+import org.scalatest.{FunSuite, MustMatchers}
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   val spatialAssetDao = new OracleSpatialAssetDao
@@ -50,7 +46,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {
-    AssetRow(1, 1, 1, Some(Point(1, 1)), Some(1), 1, Some(180), 2, None, None, propertyRow,
-      Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, 235, false)
+    MassTransitStopRow(1, 1, 1, Some(Point(1, 1)), Some(1), 1, 123l, Some(180), 2, None, None, propertyRow,
+      Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, AdministrativeClass.apply(99), 235, false)
   }
 }

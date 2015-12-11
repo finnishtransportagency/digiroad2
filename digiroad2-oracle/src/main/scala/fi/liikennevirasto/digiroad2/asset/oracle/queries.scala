@@ -40,21 +40,6 @@ object Queries {
     val bearing: Option[Int]
   }
 
-  case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
-                      validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                      created: Modification, modified: Modification, wgsPoint: Option[Point],
-                      lrmPosition: LRMPosition, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
-
-  case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
-                           validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                           created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                           roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
-                           extends IAssetRow
-
-  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
-                      validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
-                      lrmPosition: LRMPosition, persistedFloating: Boolean, property: PropertyRow)
-
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
     val point = geometry.getPoint()
@@ -64,100 +49,6 @@ object Queries {
   implicit val getPoint = new GetResult[Point] {
     def apply(r: PositionedResult) = {
       bytesToPoint(r.nextBytes)
-    }
-  }
-
-  implicit val getAssetWithPosition = new GetResult[AssetRow] {
-    def apply(r: PositionedResult) = {
-      val id = r.nextLong
-      val externalId = r.nextLong
-      val assetTypeId = r.nextLong
-      val bearing = r.nextIntOption
-      val validityDirection = r.nextInt
-      val validFrom = r.nextDateOption.map(new LocalDate(_))
-      val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
-      val municipalityCode = r.nextInt()
-      val persistedFloating = r.nextBoolean()
-      val propertyId = r.nextLong
-      val propertyPublicId = r.nextString
-      val propertyType = r.nextString
-      val propertyUiIndex = r.nextInt
-      val propertyRequired = r.nextBoolean
-      val propertyValue = r.nextLongOption()
-      val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
-      val lrmId = r.nextLong
-      val startMeasure = r.nextInt
-      val endMeasure = r.nextInt
-      val productionRoadLinkId = r.nextLongOption()
-      val roadLinkId = r.nextLong
-      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, property,
-        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode, persistedFloating)
-    }
-  }
-
-  implicit val getSingleAssetWithPosition = new GetResult[SingleAssetRow] {
-    def apply(r: PositionedResult) = {
-      val id = r.nextLong
-      val externalId = r.nextLong
-      val assetTypeId = r.nextLong
-      val bearing = r.nextIntOption
-      val validityDirection = r.nextInt
-      val validFrom = r.nextDateOption.map(new LocalDate(_))
-      val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
-      val municipalityCode = r.nextInt()
-      val persistedFloating = r.nextBoolean()
-      val propertyId = r.nextLong
-      val propertyPublicId = r.nextString
-      val propertyType = r.nextString
-      val propertyUiIndex = r.nextInt
-      val propertyRequired = r.nextBoolean
-      val propertyValue = r.nextLongOption()
-      val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
-      val lrmId = r.nextLong
-      val startMeasure = r.nextInt
-      val endMeasure = r.nextInt
-      val productionRoadLinkId = r.nextLongOption()
-      val roadLinkId = r.nextLong
-      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      SingleAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-                     validFrom, validTo, property, created, modified, wgsPoint,
-                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
-    }
-  }
-
-  implicit val getListedAssetWithPosition = new GetResult[ListedAssetRow] {
-    def apply(r: PositionedResult) = {
-      val id = r.nextLong()
-      val externalId = r.nextLong()
-      val assetTypeId = r.nextLong()
-      val bearing = r.nextIntOption()
-      val validityDirection = r.nextInt()
-      val validFrom = r.nextDateOption().map(new LocalDate(_))
-      val validTo = r.nextDateOption().map(new LocalDate(_))
-      val pos = r.nextBytesOption()
-      val municipalityCode = r.nextInt()
-      val persistedFloating = r.nextBoolean()
-      val lrmId = r.nextLong()
-      val startMeasure = r.nextInt()
-      val endMeasure = r.nextInt()
-      val productionRoadLinkId = r.nextLongOption()
-      val roadLinkId = r.nextLong()
-      val propertyPublicId = r.nextString()
-      val propertyValue = r.nextIntOption().map(_.toString).getOrElse("")
-      val point = pos.map(bytesToPoint)
-      val property = PropertyRow(0, propertyPublicId, "", 0, false, propertyValue, "")
-      ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating, property)
     }
   }
 

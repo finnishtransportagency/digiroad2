@@ -34,6 +34,11 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends PersistedPointAsset
 
+case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
+                              validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
+                              created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
+                              roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
+
 trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
   type Asset = MassTransitStopWithTimeStamps
@@ -47,10 +52,6 @@ trait MassTransitStopService extends PointAssetOperations {
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
 
-  case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
-                                validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                                created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                                roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
   def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {
     withDynTransaction {
