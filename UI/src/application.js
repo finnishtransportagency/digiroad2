@@ -413,7 +413,7 @@ var URLRouter = function(map, backend, models) {
     }
   ];
 
-  var experimentalAssetSpecs = [
+  var experimentalLinearAssetSpecs = [
     {
       typeId: assetType.numberOfLanes,
       singleElementEventCategory: 'laneCount',
@@ -620,7 +620,7 @@ var URLRouter = function(map, backend, models) {
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
-    var enabledExperimentalAssets = isExperimental ? experimentalAssetSpecs : [];
+    var enabledExperimentalAssets = isExperimental ? experimentalLinearAssetSpecs : [];
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
