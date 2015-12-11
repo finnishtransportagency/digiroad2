@@ -20,8 +20,8 @@ var URLRouter = function(map, backend, models) {
       'asset/:id': 'massTransitStop',
       'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
-      //'pedestrianCrossings/:id': 'pedestrianCrossings',
-      //'obstacles/:id': 'obstacles',
+      'pedestrianCrossings/:id': 'pedestrianCrossings',
+      'obstacles/:id': 'obstacles',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -65,21 +65,21 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
-    //pedestrianCrossings: function(id) {
-    //  applicationModel.selectLayer('pedestrianCrossings');
-    //  backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
-    //    map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
-    //    models.selectedPedestrianCrossing.open(result);
-    //  });
-    //},
-    //
-    //obstacles: function(id) {
-    //  applicationModel.selectLayer('obstacles');
-    //  backend.getPointAssetById(id, 'obstacles').then(function(result) {
-    //    map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
-    //    models.selectedObstacle.open(result);
-    //  });
-    //},
+    pedestrianCrossings: function(id) {
+      applicationModel.selectLayer('pedestrianCrossings');
+      backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedPedestrianCrossing.open(result);
+      });
+    },
+
+    obstacles: function(id) {
+      applicationModel.selectLayer('obstacles');
+      backend.getPointAssetById(id, 'obstacles').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedObstacle.open(result);
+      });
+    },
 
     speedLimitWorkList: function() {
       eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
@@ -624,7 +624,9 @@ var URLRouter = function(map, backend, models) {
     if (localizedStrings) {
       setupProjections();
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
-      new URLRouter(map, backend, models);
+      var selectedPedestrianCrossing = _(pointAssets).find({ layerName: 'pedestrianCrossings' }).selectedPointAsset;
+      var selectedObstacle = _(pointAssets).find({ layerName:'obstacles' }).selectedPointAsset;
+      new URLRouter(map, backend, _.merge({}, models, { selectedPedestrianCrossing: selectedPedestrianCrossing }, { selectedObstacle: selectedObstacle }));
       eventbus.trigger('application:initialized');
     }
   };
