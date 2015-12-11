@@ -51,13 +51,20 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
-
     }
   }
 
   test("Expire obstacle") {
+    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+
     runWithRollback {
-      // TODO
+      val result = service.getByMunicipality(235).find(_.id == 600046).get
+      result.id should equal(600046)
+
+      service.expire(600046, "unit_test")
+
+      service.getByMunicipality(235).find(_.id == 600046) should equal(None)
     }
   }
 
@@ -71,18 +78,18 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset should be(PersistedObstacle(
-        id = id,
-        mmlId = 388553075,
-        lon = 2,
-        lat = 0,
-        mValue = 2,
-        floating = false,
-        municipalityCode = 235,
-        obstacleType = 2,
-        createdBy = Some("jakke"),
-        createdDateTime = asset.createdDateTime
-      ))
+      asset should be(
+        PersistedObstacle(
+          id = id,
+          mmlId = 388553075,
+          lon = 2,
+          lat = 0,
+          mValue = 2,
+          floating = false,
+          municipalityCode = 235,
+          obstacleType = 2,
+          createdBy = Some("jakke"),
+          createdDateTime = asset.createdDateTime))
     }
   }
 }
