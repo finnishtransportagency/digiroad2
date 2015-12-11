@@ -219,7 +219,8 @@ with GZipSupport {
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     validateUserRights(roadLinkId)
     validateCreationProperties(properties)
-    createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
+    val id = createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
+    massTransitStopService.getById(id)
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
