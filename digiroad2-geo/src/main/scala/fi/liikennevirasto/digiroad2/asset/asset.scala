@@ -105,10 +105,7 @@ trait FloatingAsset {
   val floating: Boolean
 }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
-case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
-                 imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
-                 readOnly: Boolean = true, municipalityNumber: Int, validityPeriod: Option[String] = None,
-                 floating: Boolean, stopTypes: Seq[Int] = List())
+
 object Asset {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
 }
