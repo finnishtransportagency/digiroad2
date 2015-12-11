@@ -659,6 +659,15 @@ with GZipSupport {
     }
   }
 
+  put("/obstacle/:id") {
+    val user = userProvider.getCurrentUser()
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[NewObstacle]
+    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
+      obstacleService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+    }
+  }
+
   def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) = {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.NewAsset]

@@ -19,7 +19,9 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
   type PersistedAsset = PersistedObstacle
 
   override def typeId: Int = 220
+
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedObstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
+
   override def persistedAssetToAsset(persistedAsset: PersistedObstacle, floating: Boolean) = {
     Obstacle(
       id = persistedAsset.id,
@@ -41,6 +43,14 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     withDynTransaction {
       OracleObstacleDao.create(ObstacleToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.obstacleType), username)
     }
+  }
+
+  def update(id:Long, updatedAsset: NewObstacle, geometry: Seq[Point], municipality: Int, username: String): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    withDynTransaction {
+      OracleObstacleDao.update(id, ObstacleToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.obstacleType))
+    }
+    id
   }
 
 }

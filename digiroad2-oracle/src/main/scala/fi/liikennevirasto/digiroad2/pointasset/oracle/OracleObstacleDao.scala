@@ -18,9 +18,11 @@ case class PersistedObstacle(id: Long, mmlId: Long,
                              createdDateTime: Option[DateTime] = None,
                              modifiedBy: Option[String] = None,
                              modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
+
 case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
 
 object OracleObstacleDao {
+
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[PersistedObstacle] = {
     val query =
@@ -36,6 +38,7 @@ object OracleObstacleDao {
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
     StaticQuery.queryNA[PersistedObstacle](queryWithFilter).iterator.toSeq
   }
+
   implicit val getPointAsset = new GetResult[PersistedObstacle] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -77,6 +80,33 @@ object OracleObstacleDao {
       select * from dual
     """.execute
     insertSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
+    id
+  }
+
+  def update(id: Long, obstacle: ObstacleToBePersisted) = {
+    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
+    sqlu"""
+      update asset
+        set
+        modified_by = ${obstacle.createdBy},
+        modified_date = sysdate,
+        municipality_code = ${obstacle.municipalityCode},
+        geometry = MDSYS.SDO_GEOMETRY(4401,
+                    3067,
+                    NULL,
+                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                    MDSYS.SDO_ORDINATE_ARRAY(${obstacle.lon}, ${obstacle.lat}, 0, 0))
+    where id = $id
+    """.execute
+
+    sqlu"""
+      update lrm_position
+       set
+       start_measure = ${obstacle.mValue},
+       mml_id = ${obstacle.mmlId}
+       where id = (select position_id from asset_link where asset_id = $id)
+    """.execute
+    updateSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
     id
   }
 }

@@ -19,6 +19,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(any[Long])).thenReturn(Seq(
+    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
   val service = new ObstacleService(mockVVHClient) {
     override def withDynTransaction[T](f: => T): T = f
@@ -90,6 +93,19 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
           obstacleType = 2,
           createdBy = Some("jakke"),
           createdDateTime = asset.createdDateTime))
+    }
+  }
+
+  test("Update obstacle") {
+    runWithRollback {
+      val now = DateTime.now()
+      val obstacle = service.getById(600046).get
+      val updated = NewObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
+      val id = service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "testi")
+      val updatedObstacle = service.getById(600046).get
+
+      updatedObstacle.obstacleType should equal(2)
+      updatedObstacle.id should equal(obstacle.id)
     }
   }
 }
