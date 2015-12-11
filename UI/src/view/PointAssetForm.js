@@ -112,8 +112,8 @@
         '      <label class="control-label">' + 'Esterakennelma' + '</label>' +
         '      <p class="form-control-static">' + obstacleTypes[asset.obstacleType] + '</p>' +
         '      <select class="form-control" style="display:none">  ' +
-        '        <option value="1">Suljettu yhteys</option>' +
-        '        <option value="2">Avattava puomi</option>' +
+        '        <option value="1" '+ (asset.obstacleType === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
+        '        <option value="2" '+ (asset.obstacleType === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
         '      </select>' +
         '    </div>';
     } else {
