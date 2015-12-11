@@ -6,7 +6,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.{Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
@@ -34,7 +34,7 @@ class OracleSpatialAssetDao {
     nextNationalBusStopId.as[Long].first
   }
 
-  def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
+  def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
       Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
@@ -46,7 +46,7 @@ class OracleSpatialAssetDao {
     }.toSeq
   }
 
-  private def propertyDisplayValueFromAssetRow(assetRow: IAssetRow): Option[String] = {
+  private def propertyDisplayValueFromAssetRow(assetRow: MassTransitStopRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
     else None

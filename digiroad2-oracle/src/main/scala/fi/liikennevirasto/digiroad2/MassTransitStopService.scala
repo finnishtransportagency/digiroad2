@@ -37,7 +37,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
 case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                              roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
+                              roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
 
 trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop

@@ -30,16 +30,6 @@ object Queries {
 
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
-  trait IAssetRow {
-    val validFrom: Option[LocalDate]
-    val validTo: Option[LocalDate]
-    val created: Modification
-    val modified: Modification
-    val validityDirection: Int
-    val property: PropertyRow
-    val bearing: Option[Int]
-  }
-
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
     val point = geometry.getPoint()
