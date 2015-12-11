@@ -652,7 +652,7 @@ with GZipSupport {
     }
   }
 
-  put("/obstacle/:id") {
+  put("/obstacles/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[NewObstacle]
