@@ -630,19 +630,15 @@ with GZipSupport {
   get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
   get("/obstacles/floating")(getFloatingPointAssets(obstacleService))
 
-  delete("/pedestrianCrossings/:id") {
+  def deletePointAsset(service: PointAssetOperations): Long = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
-    pedestrianCrossingService.expire(id, user.username)
+    service.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
+    service.expire(id, user.username)
   }
 
-  delete("/obstacles/:id") {
-    val user = userProvider.getCurrentUser()
-    val id = params("id").toLong
-    obstacleService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
-    obstacleService.expire(id, user.username)
-  }
+  delete("/pedestrianCrossings/:id") { deletePointAsset(pedestrianCrossingService) }
+  delete("/obstacles/:id") { deletePointAsset(obstacleService) }
 
   put("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
