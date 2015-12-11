@@ -151,6 +151,11 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = stop.propertyData)
   }
 
+
+  override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String): Long = {
+    throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
+  }
+
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
       val persistedStop = fetchPointAssets(queryFilter).headOption

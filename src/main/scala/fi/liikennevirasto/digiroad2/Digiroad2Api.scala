@@ -166,10 +166,10 @@ with GZipSupport {
       if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
-    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val (optionalLon, optionalLat, optionalMmlId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
-      case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
+    val position = (optionalLon, optionalLat, optionalMmlId) match {
+      case (Some(lon), Some(lat), Some(mmlId)) => Some(Position(lon, lat, mmlId, bearing))
       case _ => None
     }
     try {
@@ -643,23 +643,17 @@ with GZipSupport {
   delete("/pedestrianCrossings/:id") { deletePointAsset(pedestrianCrossingService) }
   delete("/obstacles/:id") { deletePointAsset(obstacleService) }
 
-  put("/pedestrianCrossings/:id") {
+  def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    val updatedAsset = (parsedBody \ "asset").extract[NewPedestrianCrossing]
+    val updatedAsset = (parsedBody \ "asset").extract[service.NewAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
-      pedestrianCrossingService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+      service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
   }
 
-  put("/obstacles/:id") {
-    val user = userProvider.getCurrentUser()
-    val id = params("id").toLong
-    val updatedAsset = (parsedBody \ "asset").extract[NewObstacle]
-    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
-      obstacleService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
-    }
-  }
+  put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
+  put("/obstacles/:id")(updatePointAsset(obstacleService))
 
   def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) = {
     val user = userProvider.getCurrentUser()

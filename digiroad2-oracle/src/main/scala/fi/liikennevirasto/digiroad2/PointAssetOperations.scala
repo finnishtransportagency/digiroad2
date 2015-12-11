@@ -49,6 +49,7 @@ trait PointAssetOperations {
   def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
   def persistedAssetToAsset(persistedAsset: PersistedAsset, floating: Boolean): Asset
   def create(asset: NewAsset, username: String, geometry: Seq[Point], municipality: Int): Long
+  def update(id:Long, updatedAsset: NewAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
     case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)

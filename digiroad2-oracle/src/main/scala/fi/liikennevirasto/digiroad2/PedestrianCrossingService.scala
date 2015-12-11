@@ -30,7 +30,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
   type Asset = PedestrianCrossing
   type PersistedAsset = PersistedPedestrianCrossing
 
-  def update(id:Long, updatedAsset: NewPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
+  def update(id:Long, updatedAsset: NewAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
