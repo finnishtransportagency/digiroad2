@@ -11,7 +11,7 @@ case class Obstacle(id: Long, mmlId: Long,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None) extends FloatingAsset
+                              modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
   type NewAsset = NewObstacle

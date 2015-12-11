@@ -105,7 +105,7 @@ with GZipSupport {
         Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
-          "municipalityNumber" -> stop.municipalityNumber,
+          "municipalityNumber" -> stop.municipalityCode,
           "lat" -> stop.lat,
           "lon" -> stop.lon,
           "validityDirection" -> stop.validityDirection,
@@ -607,9 +607,9 @@ with GZipSupport {
   get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
   get("/obstacles")(getPointAssets(obstacleService))
 
-  get("/pedestrianCrossings/:id") {
+  def getPointAssetById(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
-    val asset = pedestrianCrossingService.getById(params("id").toLong)
+    val asset = service.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
       case Some(foundAsset) =>
@@ -617,16 +617,9 @@ with GZipSupport {
         foundAsset
     }
   }
-  get("/obstacles/:id") {
-    val user = userProvider.getCurrentUser()
-    val asset = obstacleService.getById(params("id").toLong)
-    asset match {
-      case None => halt(NotFound("Asset with given id not found"))
-      case Some(foundAsset) =>
-        validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
-        foundAsset
-    }
-  }
+
+  get("/pedestrianCrossings/:id")(pedestrianCrossingService)
+  get("/obstacles/:id")(getPointAssetById(obstacleService))
 
   def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()

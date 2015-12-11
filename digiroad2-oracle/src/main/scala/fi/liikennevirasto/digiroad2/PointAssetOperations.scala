@@ -16,9 +16,13 @@ trait IncomingAsset {
   val mmlId: Long
 }
 
+trait PointAsset extends FloatingAsset {
+  val municipalityCode: Int
+}
+
 trait PointAssetOperations {
   type NewAsset <: IncomingAsset
-  type Asset <: FloatingAsset
+  type Asset <: PointAsset
   type PersistedAsset <: RoadLinkAssociatedPointAsset
 
 

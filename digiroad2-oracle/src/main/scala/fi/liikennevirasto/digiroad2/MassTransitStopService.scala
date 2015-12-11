@@ -20,12 +20,12 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
                               propertyData: Seq[Property]) extends FloatingAsset
 
 case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
-                                         bearing: Option[Int], validityDirection: Int, municipalityNumber: Int,
+                                         bearing: Option[Int], validityDirection: Int, municipalityCode: Int,
                                          validityPeriod: String, stopTypes: Seq[Int],
                                          floating: Boolean,
                                          created: Modification, modified: Modification,
                                          mmlId: Option[Long], mValue: Option[Double],
-                                         propertyData: Seq[Property]) extends FloatingAsset with RoadLinkStop with TimeStamps
+                                         propertyData: Seq[Property]) extends PointAsset with RoadLinkStop with TimeStamps
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -102,7 +102,7 @@ trait MassTransitStopService extends PointAssetOperations {
     MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
       lon = persistedStop.lon, lat = persistedStop.lat,
       bearing = persistedStop.bearing, validityDirection = persistedStop.validityDirection.get,
-      municipalityNumber = persistedStop.municipalityCode, validityPeriod = persistedStop.validityPeriod.get,
+      municipalityCode = persistedStop.municipalityCode, validityPeriod = persistedStop.validityPeriod.get,
       stopTypes = persistedStop.stopTypes, floating = floating,
       created = persistedStop.created, modified = persistedStop.modified,
       mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),

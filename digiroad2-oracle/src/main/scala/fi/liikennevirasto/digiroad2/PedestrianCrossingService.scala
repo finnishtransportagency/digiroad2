@@ -41,7 +41,7 @@ case class PedestrianCrossing(id: Long,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None) extends FloatingAsset
+                              modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type NewAsset = NewPedestrianCrossing
