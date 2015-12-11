@@ -114,19 +114,6 @@ object Asset {
 }
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double,
-                 stopTypes: Seq[Int] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
-                 readOnly: Boolean = true,
-                 municipalityNumber: Int,
-                 propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
-                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: AdministrativeClass = Unknown,
-                 floating: Boolean) extends NationalStop {
-  def getPropertyValue(propertyName: String): Option[String] = {
-    propertyData.find(_.publicId.equals(propertyName))
-      .flatMap(_.values.headOption.map(_.propertyValue))
-  }
-}
-
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, imageId: String = null)

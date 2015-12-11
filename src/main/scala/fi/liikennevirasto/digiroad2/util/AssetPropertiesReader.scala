@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property}
 import scala.language.reflectiveCalls
 
 trait AssetPropertiesReader {
@@ -32,12 +32,6 @@ trait AssetPropertiesReader {
     catch {
       case e: Exception => println(s"""$name with $properties"""); throw e
     }
-  }
-
-  protected def isUnknownStop(asset: AssetWithProperties): Boolean = {
-    val unknownType = 99L
-    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
-    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
   }
 
   protected def isTramStop(asset: { val propertyData: Seq[Property] }): Boolean = {
