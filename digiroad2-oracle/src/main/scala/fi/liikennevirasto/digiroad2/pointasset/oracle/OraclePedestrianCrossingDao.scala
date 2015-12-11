@@ -22,9 +22,7 @@ case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double
 
 object OraclePedestrianCrossingDao {
   def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
-    sqlu"""
-      update asset set municipality_code = ${persisted.municipalityCode} where id = $id
-    """.execute
+    sqlu""" update asset set municipality_code = ${persisted.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
     updateAssetModified(id, persisted.createdBy).execute
 
