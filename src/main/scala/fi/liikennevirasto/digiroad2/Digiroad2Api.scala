@@ -185,8 +185,8 @@ with GZipSupport {
     massTransitStopService.create(NewMassTransitStop(lon, lat, mmlId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode)
   }
 
-  private def validateUserRights(roadLinkId: Long) = {
-    val authorized: Boolean = vvhClient.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+  private def validateUserRights(mmlId: Long) = {
+    val authorized: Boolean = vvhClient.fetchVVHRoadlink(mmlId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
