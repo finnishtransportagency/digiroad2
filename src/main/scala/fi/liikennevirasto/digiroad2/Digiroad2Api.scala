@@ -214,12 +214,12 @@ with GZipSupport {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
-    val roadLinkId = positionParameters._3.get
+    val mmlId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    validateUserRights(roadLinkId)
+    validateUserRights(mmlId)
     validateCreationProperties(properties)
-    val id = createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
+    val id = createMassTransitStop(lon, lat, mmlId, bearing, properties)
     massTransitStopService.getById(id)
   }
 
