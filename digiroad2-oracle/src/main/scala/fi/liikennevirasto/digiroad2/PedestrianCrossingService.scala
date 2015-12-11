@@ -11,7 +11,6 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingAsset
-case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingAsset
 
 case class PedestrianCrossing(id: Long,
                               mmlId: Long,

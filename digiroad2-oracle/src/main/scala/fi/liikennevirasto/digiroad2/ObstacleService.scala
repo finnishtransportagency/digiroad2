@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
+case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingAsset
+
 case class Obstacle(id: Long, mmlId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
