@@ -69,11 +69,6 @@ object OraclePedestrianCrossingDao {
     id
   }
 
-  def expire(id: Long, username: String) {
-    val assetsUpdated = Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
-  }
-
   def fetchByFilter(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = {
     val query =
       """

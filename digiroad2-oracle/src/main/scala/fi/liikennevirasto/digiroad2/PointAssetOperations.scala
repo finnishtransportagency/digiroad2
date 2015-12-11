@@ -1,8 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{Unknown, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
@@ -116,6 +118,13 @@ trait PointAssetOperations[NewAsset <: IncomingAsset, Asset <: FloatingAsset, Pe
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
+    }
+  }
+
+  def expire(id: Long, username: String): Long = {
+    withDynSession {
+      Queries.updateAssetModified(id, username).first
+      sqlu"update asset set valid_to = sysdate where id = $id".first
     }
   }
 

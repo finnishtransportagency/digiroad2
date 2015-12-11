@@ -39,12 +39,6 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations[New
     }
   }
 
-  def expire(id: Long, username: String): Long = {
-    withDynSession {
-      OraclePedestrianCrossingDao.expire(id, username)
-      id
-    }
-  }
 }
 
 

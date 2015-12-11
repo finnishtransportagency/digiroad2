@@ -69,13 +69,6 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
       modifiedAt = persistedAsset.modifiedDateTime)
   }
 
-  def expire(id: Long, username: String): Long = {
-    withDynSession {
-        OraclePedestrianCrossingDao.expire(id, username)
-      id
-    }
-  }
-
   def create(asset: NewPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
