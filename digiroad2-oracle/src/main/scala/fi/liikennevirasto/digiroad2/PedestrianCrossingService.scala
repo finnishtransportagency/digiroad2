@@ -10,7 +10,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingAsset
+case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingPointAsset
 
 case class PedestrianCrossing(id: Long,
                               mmlId: Long,
@@ -25,11 +25,11 @@ case class PedestrianCrossing(id: Long,
                               modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
-  type NewAsset = NewPedestrianCrossing
+  type IncomingAsset = NewPedestrianCrossing
   type Asset = PedestrianCrossing
   type PersistedAsset = PersistedPedestrianCrossing
 
-  def update(id:Long, updatedAsset: NewAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
+  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))

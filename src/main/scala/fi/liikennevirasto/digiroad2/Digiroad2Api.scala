@@ -643,10 +643,10 @@ with GZipSupport {
   delete("/pedestrianCrossings/:id") { deletePointAsset(pedestrianCrossingService) }
   delete("/obstacles/:id") { deletePointAsset(obstacleService) }
 
-  def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) {
+  def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    val updatedAsset = (parsedBody \ "asset").extract[service.NewAsset]
+    val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
       service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
@@ -655,9 +655,9 @@ with GZipSupport {
   put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
   put("/obstacles/:id")(updatePointAsset(obstacleService))
 
-  def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) = {
+  def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
-    val asset = (parsedBody \ "asset").extract[service.NewAsset]
+    val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode)

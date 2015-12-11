@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-case class NewMassTransitStop(lon: Double, lat: Double, mmlId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingAsset
+case class NewMassTransitStop(lon: Double, lat: Double, mmlId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -35,7 +35,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     propertyData: Seq[Property]) extends PersistedPointAsset
 
 trait MassTransitStopService extends PointAssetOperations {
-  type NewAsset = NewMassTransitStop
+  type IncomingAsset = NewMassTransitStop
   type Asset = MassTransitStopWithTimeStamps
   type PersistedAsset = PersistedMassTransitStop
 

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
-case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingAsset
+case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingPointAsset
 
 case class Obstacle(id: Long, mmlId: Long,
                               lon: Double, lat: Double,
@@ -16,7 +16,7 @@ case class Obstacle(id: Long, mmlId: Long,
                               modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
-  type NewAsset = NewObstacle
+  type IncomingAsset = NewObstacle
   type Asset = Obstacle
   type PersistedAsset = PersistedObstacle
 

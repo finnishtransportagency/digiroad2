@@ -10,7 +10,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-trait IncomingAsset {
+trait IncomingPointAsset {
   val lon: Double
   val lat: Double
   val mmlId: Long
@@ -31,10 +31,9 @@ trait PersistedPointAsset {
 }
 
 trait PointAssetOperations {
-  type NewAsset <: IncomingAsset
+  type IncomingAsset <: IncomingPointAsset
   type Asset <: PointAsset
   type PersistedAsset <: PersistedPointAsset
-
 
   def vvhClient: VVHClient
   val idField = "id"
@@ -48,8 +47,8 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
   def persistedAssetToAsset(persistedAsset: PersistedAsset, floating: Boolean): Asset
-  def create(asset: NewAsset, username: String, geometry: Seq[Point], municipality: Int): Long
-  def update(id:Long, updatedAsset: NewAsset, geometry: Seq[Point], municipality: Int, username: String): Long
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
+  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
     case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)
