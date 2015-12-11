@@ -617,6 +617,16 @@ with GZipSupport {
         foundAsset
     }
   }
+  get("/obstacles/:id") {
+    val user = userProvider.getCurrentUser()
+    val asset = obstacleService.getById(params("id").toLong)
+    asset match {
+      case None => halt(NotFound("Asset with given id not found"))
+      case Some(foundAsset) =>
+        validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
+        foundAsset
+    }
+  }
 
   def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
