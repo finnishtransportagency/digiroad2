@@ -16,7 +16,12 @@ trait IncomingAsset {
   val mmlId: Long
 }
 
-trait PointAssetOperations[NewAsset <: IncomingAsset, Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
+trait PointAssetOperations {
+  type NewAsset <: IncomingAsset
+  type Asset <: FloatingAsset
+  type PersistedAsset <: RoadLinkAssociatedPointAsset
+
+
   def vvhClient: VVHClient
   val idField = "id"
 

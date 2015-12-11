@@ -596,7 +596,7 @@ with GZipSupport {
     }
   }
 
-  def getPointAssets[Incoming <: IncomingAsset, Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset](service: PointAssetOperations[Incoming, Asset, PersistedAsset]) = {
+  def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
 
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
@@ -618,7 +618,7 @@ with GZipSupport {
     }
   }
 
-  def getFloatingPointAssets[Incoming <: IncomingAsset, Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset](service: PointAssetOperations[Incoming, Asset, PersistedAsset]) = {
+  def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
@@ -653,9 +653,9 @@ with GZipSupport {
     }
   }
 
-  def createNewPointAsset[IncomingAssetType <: IncomingAsset, Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset](service: PointAssetOperations[IncomingAssetType, Asset, PersistedAsset])(implicit m: Manifest[IncomingAssetType]) = {
+  def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.NewAsset]) = {
     val user = userProvider.getCurrentUser()
-    val asset = (parsedBody \ "asset").extract[IncomingAssetType]
+    val asset = (parsedBody \ "asset").extract[service.NewAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode)

@@ -34,7 +34,11 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
 
-trait MassTransitStopService extends PointAssetOperations[NewMassTransitStop, MassTransitStopWithTimeStamps, PersistedMassTransitStop] {
+trait MassTransitStopService extends PointAssetOperations {
+  type NewAsset = NewMassTransitStop
+  type Asset = MassTransitStopWithTimeStamps
+  type PersistedAsset = PersistedMassTransitStop
+
   val spatialAssetDao: OracleSpatialAssetDao
   override val idField = "external_id"
 

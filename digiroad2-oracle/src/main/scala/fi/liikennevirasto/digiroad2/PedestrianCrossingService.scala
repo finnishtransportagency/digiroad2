@@ -43,7 +43,11 @@ case class PedestrianCrossing(id: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations[NewPedestrianCrossing, PedestrianCrossing, PersistedPedestrianCrossing] {
+class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
+  type NewAsset = NewPedestrianCrossing
+  type Asset = PedestrianCrossing
+  type PersistedAsset = PersistedPedestrianCrossing
+
   def update(id:Long, updatedAsset: NewPedestrianCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {

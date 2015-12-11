@@ -13,7 +13,11 @@ case class Obstacle(id: Long, mmlId: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends FloatingAsset
 
-class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations[NewObstacle, Obstacle, PersistedObstacle] {
+class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
+  type NewAsset = NewObstacle
+  type Asset = Obstacle
+  type PersistedAsset = PersistedObstacle
+
   override def typeId: Int = 220
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedObstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
   override def persistedAssetToAsset(persistedAsset: PersistedObstacle, floating: Boolean) = {
