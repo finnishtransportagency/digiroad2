@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.PersistedPointAsset
+import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -63,13 +63,8 @@ object OracleObstacleDao {
     val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, geometry)
-        values ($id, 220, $username, sysdate, ${obstacle.municipalityCode}, MDSYS.SDO_GEOMETRY(4401,
-                                                 3067,
-                                                 NULL,
-                                                 MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                                 MDSYS.SDO_ORDINATE_ARRAY(${obstacle.lon}, ${obstacle.lat}, 0, 0)
-                                                ))
+        into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 220, $username, sysdate, ${obstacle.municipalityCode})
 
         into lrm_position(id, start_measure, mml_id)
         values ($lrmPositionId, ${obstacle.mValue}, ${obstacle.mmlId})
@@ -79,6 +74,7 @@ object OracleObstacleDao {
 
       select * from dual
     """.execute
+    updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
     insertSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
     id
   }
@@ -90,14 +86,11 @@ object OracleObstacleDao {
         set
         modified_by = ${obstacle.createdBy},
         modified_date = sysdate,
-        municipality_code = ${obstacle.municipalityCode},
-        geometry = MDSYS.SDO_GEOMETRY(4401,
-                    3067,
-                    NULL,
-                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                    MDSYS.SDO_ORDINATE_ARRAY(${obstacle.lon}, ${obstacle.lat}, 0, 0))
+        municipality_code = ${obstacle.municipalityCode}
     where id = $id
     """.execute
+    updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
+    updateSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
 
     sqlu"""
       update lrm_position
@@ -106,7 +99,6 @@ object OracleObstacleDao {
        mml_id = ${obstacle.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
-    updateSingleChoiceProperty(id, propertyId, obstacle.obstacleType).execute
     id
   }
 }

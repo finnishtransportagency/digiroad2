@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.PersistedPointAsset
+import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -23,18 +23,10 @@ case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double
 object OraclePedestrianCrossingDao {
   def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
     sqlu"""
-      update asset
-        set
-        modified_by = ${persisted.createdBy},
-        modified_date = sysdate,
-        municipality_code = ${persisted.municipalityCode},
-        geometry = MDSYS.SDO_GEOMETRY(4401,
-                    3067,
-                    NULL,
-                    MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                    MDSYS.SDO_ORDINATE_ARRAY(${persisted.lon}, ${persisted.lat}, 0, 0))
-    where id = $id
+      update asset set municipality_code = ${persisted.municipalityCode} where id = $id
     """.execute
+    updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
+    updateAssetModified(id, persisted.createdBy).execute
 
     sqlu"""
       update lrm_position
@@ -51,14 +43,8 @@ object OraclePedestrianCrossingDao {
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, geometry)
-        values ($id, 200, $username, sysdate, ${crossing.municipalityCode}, MDSYS.SDO_GEOMETRY(4401,
-                                                 3067,
-                                                 NULL,
-                                                 MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                                 MDSYS.SDO_ORDINATE_ARRAY(${crossing.lon}, ${crossing.lat}, 0, 0)
-                                                ))
-
+        into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 200, $username, sysdate, ${crossing.municipalityCode})
         into lrm_position(id, start_measure, mml_id)
         values ($lrmPositionId, ${crossing.mValue}, ${crossing.mmlId})
 
@@ -66,6 +52,8 @@ object OraclePedestrianCrossingDao {
         values ($id, $lrmPositionId)
       select * from dual
     """.execute
+    updateAssetGeometry(id, Point(crossing.lon, crossing.lat))
+
     id
   }
 

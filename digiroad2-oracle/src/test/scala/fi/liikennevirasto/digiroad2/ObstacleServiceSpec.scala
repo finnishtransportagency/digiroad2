@@ -100,11 +100,13 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val obstacle = service.getById(600046).get
       val updated = NewObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
-      service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "testi")
+
+      service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test")
       val updatedObstacle = service.getById(600046).get
 
       updatedObstacle.obstacleType should equal(2)
       updatedObstacle.id should equal(obstacle.id)
+      updatedObstacle.modifiedBy should equal(Some("unit_test"))
     }
   }
 }
