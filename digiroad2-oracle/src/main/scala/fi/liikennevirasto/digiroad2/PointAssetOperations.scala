@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{Unknown, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{FloatingAsset, Unknown, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.user.User
@@ -18,6 +18,16 @@ trait IncomingAsset {
 
 trait PointAsset extends FloatingAsset {
   val municipalityCode: Int
+}
+
+trait PersistedPointAsset {
+  val id: Long
+  val lon: Double
+  val lat: Double
+  val municipalityCode: Int
+  val mmlId: Long
+  val mValue: Double
+  val floating: Boolean
 }
 
 trait PointAssetOperations {

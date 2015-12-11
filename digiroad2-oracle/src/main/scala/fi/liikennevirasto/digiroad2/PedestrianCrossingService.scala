@@ -10,21 +10,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-trait FloatingAsset {
-  val id: Long
-  val floating: Boolean
-}
-
-trait PersistedPointAsset {
-  val id: Long
-  val lon: Double
-  val lat: Double
-  val municipalityCode: Int
-  val mmlId: Long
-  val mValue: Double
-  val floating: Boolean
-}
-
 case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingAsset
 case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingAsset
 

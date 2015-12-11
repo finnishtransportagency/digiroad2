@@ -100,6 +100,10 @@ trait TimeStamps {
   val created: Modification
   val modified: Modification
 }
+trait FloatingAsset {
+  val id: Long
+  val floating: Boolean
+}
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
