@@ -10,25 +10,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-trait FloatingAsset {
-  val id: Long
-  val floating: Boolean
-}
-
-trait PersistedPointAsset {
-  val id: Long
-  val lon: Double
-  val lat: Double
-  val municipalityCode: Int
-}
-
-trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
-  val mmlId: Long
-  val mValue: Double
-  val floating: Boolean
-}
-
-case class NewPointAsset(lon: Double, lat: Double, mmlId: Long)
+case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingPointAsset
 
 case class PedestrianCrossing(id: Long,
                               mmlId: Long,
@@ -40,10 +22,14 @@ case class PedestrianCrossing(id: Long,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None) extends FloatingAsset
+                              modifiedAt: Option[DateTime] = None) extends PointAsset
 
-class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations[PedestrianCrossing, PersistedPedestrianCrossing] {
-  def update(id:Long, updatedAsset: NewPointAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
+class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
+  type IncomingAsset = NewPedestrianCrossing
+  type Asset = PedestrianCrossing
+  type PersistedAsset = PersistedPedestrianCrossing
+
+  override def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
@@ -68,18 +54,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
       modifiedAt = persistedAsset.modifiedDateTime)
   }
 
-  def expire(id: Long, username: String): Long = {
-    withDynSession {
-        OraclePedestrianCrossingDao.expire(id, username)
-      id
-    }
-  }
-
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
-    getFloatingAssets("id", includedMunicipalities)
-  }
-
-  def create(asset: NewPointAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: NewPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username), username)

@@ -45,6 +45,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(List(VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+  val testObstacleService = new ObstacleService(mockVVHClient)
   val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
@@ -55,7 +56,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testObstacleService, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {

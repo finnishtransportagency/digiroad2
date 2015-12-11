@@ -6,12 +6,14 @@
       roadCollection = params.roadCollection,
       style = params.style,
       selectedAsset = params.selectedAsset,
-      mapOverlay = params.mapOverlay;
+      mapOverlay = params.mapOverlay,
+      layerName = params.layerName,
+      newAsset = params.newAsset;
 
-    Layer.call(this, 'pedestrianCrossing', roadLayer);
+    Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-    var vectorLayer = new OpenLayers.Layer.Vector('pedestrianCrossing', { styleMap: style.browsing });
+    var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
 
     me.selectControl = defineOpenLayersSelectControl();
     function defineOpenLayersSelectControl() {
@@ -53,10 +55,7 @@
           var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
 
-          feature.attributes.lon = feature.geometry.x;
-          feature.attributes.lat = feature.geometry.y;
-          feature.attributes.mmlId = nearestLine.mmlId;
-          selectedAsset.move(feature.attributes);
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId});
         } else {
           this.cancel();
         }
@@ -126,11 +125,11 @@
 
     function bindEvents(eventListener) {
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:saved pedestrianCrossing:cancelled', handleSavedOrCancelled);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:creationCancelled', handleCreationCancelled);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:selected', handleSelected);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:unselected', handleUnSelected);
-      eventListener.listenTo(eventbus, 'pedestrianCrossing:changed', handleChanged);
+      eventListener.listenTo(eventbus, layerName + ':saved ' + layerName + ':cancelled', handleSavedOrCancelled);
+      eventListener.listenTo(eventbus, layerName + ':creationCancelled', handleCreationCancelled);
+      eventListener.listenTo(eventbus, layerName + ':selected', handleSelected);
+      eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
+      eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
 
@@ -155,6 +154,8 @@
 
     function handleChanged() {
       me.deactivateSelection();
+      _.find(vectorLayer.features, {attributes: {id: selectedAsset.getId()}}).attributes = selectedAsset.get();
+      vectorLayer.redraw();
     }
 
     function handleMapClick(coordinates) {
@@ -178,16 +179,16 @@
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
 
-      var crossing = {
+      var asset = _.merge({}, newAsset, {
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
         floating: false,
         mmlId: nearestLine.mmlId,
         id: 0
-      };
+      });
 
-      vectorLayer.addFeatures(createFeature(crossing));
-      selectedAsset.place(crossing);
+      vectorLayer.addFeatures(createFeature(asset));
+      selectedAsset.place(asset);
 
       mapOverlay.show();
     }

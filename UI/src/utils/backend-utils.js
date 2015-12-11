@@ -136,43 +136,43 @@
       });
     };
 
-    this.getPointAssets = latestResponseRequestor(function(boundingBox) {
+    this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
-        url: 'api/pointassets?bbox=' + boundingBox
+        url: 'api/' + endPointName + '?bbox=' + boundingBox
       };  
     });
 
-    this.getPointAssetById = latestResponseRequestor(function(id) {
+    this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
       return {
-        url: 'api/pointassets/' + id
+        url: 'api/'+ endPointName + '/' + id
       };
     });
 
-    this.createPointAsset = function(asset) {
+    this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/pointassets",
+        url: "api/" + endPointName,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
     };
 
-    this.updatePointAsset = function(asset) {
+    this.updatePointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/pointassets/" + asset.id,
+        url: "api/" + endPointName + "/" + asset.id,
         data: JSON.stringify({asset: asset}),
         dataType: "json"
       });
     };
 
-    this.removePointAsset = _.throttle(function(id) {
+    this.removePointAsset = _.throttle(function(id, endPointName) {
       return $.ajax({
         contentType: "application/json",
         type: "DELETE",
-        url: "api/pointassets/" + id,
+        url: "api/"+ endPointName + "/" + id,
         dataType: "json"
       });
     }, 1000);
@@ -267,7 +267,11 @@
     };
 
     this.getFloatinPedestrianCrossings = function() {
-      return $.getJSON('api/pointassets/floating');
+      return $.getJSON('api/pedestrianCrossings/floating');
+    };
+
+    this.getFloatingObstacles = function() {
+      return $.getJSON('api/obstacles/floating');
     };
 
     this.createAsset = function (data, errorCallback) {

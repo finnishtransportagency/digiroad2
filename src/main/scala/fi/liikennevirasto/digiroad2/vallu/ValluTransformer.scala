@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Property}
+import fi.liikennevirasto.digiroad2.asset.Property
 import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import scala.language.reflectiveCalls

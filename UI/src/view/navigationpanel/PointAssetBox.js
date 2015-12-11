@@ -1,17 +1,23 @@
-(function(root) {
-  root.PointAssetBox = function(selectedPedestrianCrossing) {
-    var title = 'Suojatie';
-    var layerName = 'pedestrianCrossing';
+(function (root) {
+  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues) {
     var className = _.kebabCase(layerName);
-    var element = $('<div class="panel-group simple-limit ' + className + 's"></div>').hide();
+    var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
     var toolSelection = new ActionPanelBoxes.ToolSelection([
-      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPedestrianCrossing),
-      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, selectedPedestrianCrossing)
+      new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedPointAsset),
+      new ActionPanelBoxes.Tool('Add', ActionPanelBoxes.addToolIcon, selectedPointAsset)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
-    var panel = $('<div class="panel"><header class="panel-header expanded">Suojatie</header></div>');
+
+    var legendTemplate = _(legendValues).map(function (val) {
+      return '<div class="legend-entry">' +
+        '<div class="label"><span>' + val.label + '</span> <img class="symbol" src="' + val.symbolUrl + '"/></div>' +
+        '</div>';
+    }).join('');
+
+    var legend = '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>';
+    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + '</div>');
     panel.append(toolSelection.element);
     panel.append(editModeToggle.element);
 

@@ -1,16 +1,42 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
-import fi.liikennevirasto.digiroad2.asset.{Unknown, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.{FloatingAsset, Unknown, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
+trait IncomingPointAsset {
+  val lon: Double
+  val lat: Double
+  val mmlId: Long
+}
 
-trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAssociatedPointAsset] {
+trait PointAsset extends FloatingAsset {
+  val municipalityCode: Int
+}
+
+trait PersistedPointAsset {
+  val id: Long
+  val lon: Double
+  val lat: Double
+  val municipalityCode: Int
+  val mmlId: Long
+  val mValue: Double
+  val floating: Boolean
+}
+
+trait PointAssetOperations {
+  type IncomingAsset <: IncomingPointAsset
+  type Asset <: PointAsset
+  type PersistedAsset <: PersistedPointAsset
+
   def vvhClient: VVHClient
+  val idField = "id"
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -21,6 +47,8 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
   def persistedAssetToAsset(persistedAsset: PersistedAsset, floating: Boolean): Asset
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
+  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
     case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)
@@ -48,7 +76,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
     }
   }
 
-  protected def getFloatingAssets(idField: String, includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
     case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
 
     withDynSession {
@@ -112,6 +140,13 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
     }
   }
 
+  def expire(id: Long, username: String): Long = {
+    withDynSession {
+      Queries.updateAssetModified(id, username).first
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+    }
+  }
+
   protected def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
                                          roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
                                         (persistedStop: PersistedAsset): T = {
@@ -138,7 +173,7 @@ trait PointAssetOperations[Asset <: FloatingAsset, PersistedAsset <: RoadLinkAss
 }
 
 object PointAssetOperations {
-  def isFloating(persistedAsset: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+  def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {
       case None => true

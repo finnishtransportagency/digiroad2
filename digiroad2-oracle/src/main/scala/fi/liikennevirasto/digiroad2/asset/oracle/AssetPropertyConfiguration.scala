@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
+import fi.liikennevirasto.digiroad2.MassTransitStopRow
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.IAssetRow
 import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, Property, PropertyValue}
 import org.joda.time.DateTime
 
@@ -34,7 +34,7 @@ object AssetPropertyConfiguration {
     ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, 20, values = Seq()))
   )
 
-  def assetRowToCommonProperties(row: IAssetRow): Seq[Property] = {
+  def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {
    List(
       createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
       createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),

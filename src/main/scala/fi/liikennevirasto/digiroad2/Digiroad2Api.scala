@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.user.{UserProvider, User}
@@ -21,6 +21,7 @@ case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double,
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
+                   val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -28,6 +29,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetProvider: AssetProvider = Digiroad2Context.assetProvider) extends ScalatraServlet
+
+
+
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
@@ -101,7 +105,7 @@ with GZipSupport {
         Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
-          "municipalityNumber" -> stop.municipalityNumber,
+          "municipalityNumber" -> stop.municipalityCode,
           "lat" -> stop.lat,
           "lon" -> stop.lon,
           "validityDirection" -> stop.validityDirection,
@@ -142,7 +146,7 @@ with GZipSupport {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    massTransitStopService.getFloatingStops(includedMunicipalities)
+    massTransitStopService.getFloatingAssets(includedMunicipalities)
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
@@ -162,10 +166,10 @@ with GZipSupport {
       if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
-    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val (optionalLon, optionalLat, optionalMmlId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
-      case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
+    val position = (optionalLon, optionalLat, optionalMmlId) match {
+      case (Some(lon), Some(lat), Some(mmlId)) => Some(Position(lon, lat, mmlId, bearing))
       case _ => None
     }
     try {
@@ -176,22 +180,13 @@ with GZipSupport {
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
-    val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
-    Map("id" -> massTransitStop.id,
-      "nationalId" -> massTransitStop.nationalId,
-      "stopTypes" -> massTransitStop.stopTypes,
-      "lat" -> massTransitStop.lat,
-      "lon" -> massTransitStop.lon,
-      "validityDirection" -> massTransitStop.validityDirection,
-      "bearing" -> massTransitStop.bearing,
-      "validityPeriod" -> massTransitStop.validityPeriod,
-      "floating" -> massTransitStop.floating,
-      "propertyData" -> massTransitStop.propertyData)
+  private def createMassTransitStop(lon: Double, lat: Double, mmlId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
+    val roadLink = vvhClient.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+    massTransitStopService.create(NewMassTransitStop(lon, lat, mmlId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode)
   }
 
-  private def validateUserRights(roadLinkId: Long) = {
-    val authorized: Boolean = vvhClient.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+  private def validateUserRights(mmlId: Long) = {
+    val authorized: Boolean = vvhClient.fetchVVHRoadlink(mmlId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -219,12 +214,13 @@ with GZipSupport {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
-    val roadLinkId = positionParameters._3.get
+    val mmlId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    validateUserRights(roadLinkId)
+    validateUserRights(mmlId)
     validateCreationProperties(properties)
-    createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
+    val id = createMassTransitStop(lon, lat, mmlId, bearing, properties)
+    massTransitStopService.getById(id)
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
@@ -601,17 +597,20 @@ with GZipSupport {
     }
   }
 
-  get("/pointassets") {
+  def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
 
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    pedestrianCrossingService.getByBoundingBox(user, bbox)
+    service.getByBoundingBox(user, bbox)
   }
 
-  get("/pointassets/:id") {
+  get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
+  get("/obstacles")(getPointAssets(obstacleService))
+
+  def getPointAssetById(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
-    val asset = pedestrianCrossingService.getById(params("id").toLong)
+    val asset = service.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
       case Some(foundAsset) =>
@@ -620,37 +619,52 @@ with GZipSupport {
     }
   }
 
-  get("/pointassets/floating") {
+  get("/pedestrianCrossings/:id")(pedestrianCrossingService)
+  get("/obstacles/:id")(getPointAssetById(obstacleService))
+
+  def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    pedestrianCrossingService.getFloatingAssets(includedMunicipalities)
+    service.getFloatingAssets(includedMunicipalities)
   }
 
-  delete("/pointassets/:id") {
+  get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
+  get("/obstacles/floating")(getFloatingPointAssets(obstacleService))
+
+  def deletePointAsset(service: PointAssetOperations): Long = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    pedestrianCrossingService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
-    pedestrianCrossingService.expire(id, user.username)
+    service.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
+    service.expire(id, user.username)
   }
 
-  put("/pointassets/:id") {
+  delete("/pedestrianCrossings/:id") { deletePointAsset(pedestrianCrossingService) }
+  delete("/obstacles/:id") { deletePointAsset(obstacleService) }
+
+  def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    val updatedAsset = (parsedBody \ "asset").extract[NewPointAsset]
+    val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
-      pedestrianCrossingService.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+      service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
   }
 
-  post("/pointassets") {
+  put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
+  put("/obstacles/:id")(updatePointAsset(obstacleService))
+
+  def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
-    val asset = (parsedBody \ "asset").extract[NewPointAsset]
+    val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
-      pedestrianCrossingService.create(asset, user.username, link.geometry, link.municipalityCode)
+      service.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
+
+  post("/pedestrianCrossings")(createNewPointAsset(pedestrianCrossingService))
+  post("/obstacles")(createNewPointAsset(obstacleService))
 }

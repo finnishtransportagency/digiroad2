@@ -20,11 +20,13 @@ var URLRouter = function(map, backend, models) {
       'asset/:id': 'massTransitStop',
       'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
-      'pedestrianCrossing/:id': 'pedestrianCrossing',
+      'pedestrianCrossings/:id': 'pedestrianCrossings',
+      'obstacles/:id': 'obstacles',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
-      'work-list/pedestrianCrossing': 'pedestrianCrossingWorkList'
+      'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
+      'work-list/obstacles': 'obstacleWorkList'
     },
 
     massTransitStop: function(id) {
@@ -63,11 +65,19 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
-    pedestrianCrossing: function(id) {
-      applicationModel.selectLayer('pedestrianCrossing');
-      backend.getPointAssetById(id).then(function(result) {
+    pedestrianCrossings: function(id) {
+      applicationModel.selectLayer('pedestrianCrossings');
+      backend.getPointAssetById(id, 'pedestrianCrossings').then(function(result) {
         map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
         models.selectedPedestrianCrossing.open(result);
+      });
+    },
+
+    obstacles: function(id) {
+      applicationModel.selectLayer('obstacles');
+      backend.getPointAssetById(id, 'obstacles').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedObstacle.open(result);
       });
     },
 
@@ -84,7 +94,11 @@ var URLRouter = function(map, backend, models) {
     },
 
     pedestrianCrossingWorkList: function() {
-      eventbus.trigger('workList:select', 'pedestrianCrossing', backend.getFloatinPedestrianCrossings());
+      eventbus.trigger('workList:select', 'pedestrianCrossings', backend.getFloatinPedestrianCrossings());
+    },
+
+    obstacleWorkList: function() {
+      eventbus.trigger('workList:select', 'obstacles', backend.getFloatingObstacles());
     }
   });
 
@@ -135,7 +149,9 @@ var URLRouter = function(map, backend, models) {
     trafficVolume: 170,
     winterSpeedLimit: 180,
     prohibition: 190,
-    hazardousMaterialTransportProhibition: 210
+    pedestrianCrossings: 200,
+    hazardousMaterialTransportProhibition: 210,
+    obstacles: 220
   };
 
   var linearAssetSpecs = [
@@ -398,7 +414,7 @@ var URLRouter = function(map, backend, models) {
     }
   ];
 
-  var experimentalAssetSpecs = [
+  var experimentalLinearAssetSpecs = [
     {
       typeId: assetType.numberOfLanes,
       singleElementEventCategory: 'laneCount',
@@ -413,6 +429,36 @@ var URLRouter = function(map, backend, models) {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Linkin mukainen tyypillinen kaistamäärä'
+      }
+    }
+  ];
+
+  var pointAssetSpecs = [
+    {
+      typeId: 200,
+      layerName: 'pedestrianCrossings',
+      title: 'Suojatie',
+      newAsset: {  },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+      formLabels: {
+        singleFloatingAssetLabel: 'suojatien',
+        manyFloatingAssetsLabel: 'suojatiet'
+      }
+    },
+    {
+      typeId: 220,
+      layerName: 'obstacles',
+      title: 'Esterakennelma',
+      newAsset: { obstacleType: 1 },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
+        {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+      formLabels: {
+        singleFloatingAssetLabel: 'esterakennelman',
+        manyFloatingAssetsLabel: 'esterakennelmat'
       }
     }
   ];
@@ -472,7 +518,7 @@ var URLRouter = function(map, backend, models) {
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, withTileMaps, startupParameters) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
 
     var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
@@ -502,7 +548,10 @@ var URLRouter = function(map, backend, models) {
         linearAsset.newTitle,
         linearAsset.title);
     });
-    PointAssetForm.initialize(models.selectedPedestrianCrossing);
+
+    _.forEach(pointAssets, function(pointAsset) {
+      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
+    });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
       acc[asset.layerName] = new LinearAssetLayer({
@@ -522,17 +571,23 @@ var URLRouter = function(map, backend, models) {
       return acc;
     }, {});
 
-    var layers = _.merge({
-      road: roadLayer,
-      pedestrianCrossing: new PointAssetLayer({
+    var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
+      acc[asset.layerName] = new PointAssetLayer({
         roadLayer: roadLayer,
         roadCollection: models.roadCollection,
-        collection: models.pedestrianCrossingCollection,
+        collection: asset.collection,
         map: map,
-        selectedAsset: models.selectedPedestrianCrossing,
-        style: PointAssetStyle(),
-        mapOverlay: mapOverlay
-      }),
+        selectedAsset: asset.selectedPointAsset,
+        style: PointAssetStyle(asset.layerName),
+        mapOverlay: mapOverlay,
+        layerName: asset.layerName,
+        newAsset: asset.newAsset
+      });
+      return acc;
+    }, {});
+
+    var layers = _.merge({
+      road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
@@ -546,7 +601,7 @@ var URLRouter = function(map, backend, models) {
         roadLayer: roadLayer
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, new GeometryUtils(), models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
-    }, linearAssetLayers);
+    }, linearAssetLayers, pointAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -565,11 +620,13 @@ var URLRouter = function(map, backend, models) {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
-  var startApplication = function(backend, models, linearAssets, withTileMaps, startupParameters) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, withTileMaps, startupParameters);
-      new URLRouter(map, backend, models);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
+      var selectedPedestrianCrossing = _(pointAssets).find({ layerName: 'pedestrianCrossings' }).selectedPointAsset;
+      var selectedObstacle = _(pointAssets).find({ layerName:'obstacles' }).selectedPointAsset;
+      new URLRouter(map, backend, _.merge({}, models, { selectedPedestrianCrossing: selectedPedestrianCrossing }, { selectedObstacle: selectedObstacle }));
       eventbus.trigger('application:initialized');
     }
   };
@@ -585,7 +642,7 @@ var URLRouter = function(map, backend, models) {
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
-    var enabledExperimentalAssets = isExperimental ? experimentalAssetSpecs : [];
+    var enabledExperimentalAssets = isExperimental ? experimentalLinearAssetSpecs : [];
     var enabledLinearAssetSpecs = linearAssetSpecs.concat(enabledExperimentalAssets);
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
       var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -595,8 +652,14 @@ var URLRouter = function(map, backend, models) {
         selectedLinearAsset: selectedLinearAsset
       });
     });
-    var pedestrianCrossingCollection = PointAssetsCollection(backend);
-    var selectedPedestrianCrossing = new SelectedPointAsset(backend, pedestrianCrossingCollection);
+    var pointAssets = _.map(pointAssetSpecs, function(spec) {
+      var collection = new PointAssetsCollection(backend, spec.layerName);
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName);
+      return _.merge({}, spec, {
+        collection: collection,
+        selectedPointAsset: selectedPointAsset
+      });
+    });
 
     var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
     var models = {
@@ -607,29 +670,29 @@ var URLRouter = function(map, backend, models) {
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection,
-      pedestrianCrossingCollection: pedestrianCrossingCollection,
-      selectedPedestrianCrossing: selectedPedestrianCrossing
+      manoeuvresCollection: manoeuvresCollection
     };
 
     bindEvents(enabledLinearAssetSpecs);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
+    var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
       selectedAssetModel,
       selectedSpeedLimit,
       selectedLinkProperty,
-      selectedPedestrianCrossing,
-      selectedManoeuvreSource].concat(selectedLinearAssetModels));
+      selectedManoeuvreSource]
+        .concat(selectedLinearAssetModels)
+        .concat(selectedPointAssetModels));
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
     var assetGroups = groupAssets(linearAssets,
+                                  pointAssets,
                                   linkPropertiesModel,
                                   selectedSpeedLimit,
-                                  selectedMassTransitStopModel,
-                                  selectedPedestrianCrossing);
+                                  selectedMassTransitStopModel);
 
     var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
       onSelect: function(layerName) {
@@ -659,21 +722,20 @@ var URLRouter = function(map, backend, models) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, tileMaps, startupParameters);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters);
       });
     });
   };
 
   function groupAssets(linearAssets,
+                       pointAssets,
                        linkPropertiesModel,
                        selectedSpeedLimit,
-                       selectedMassTransitStopModel,
-                       selectedPedestrianCrossing) {
+                       selectedMassTransitStopModel) {
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
-    var pedestrianCrossingBox = PointAssetBox(selectedPedestrianCrossing);
 
     return [
       [roadLinkBox],
@@ -684,7 +746,9 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.massTransitLane)),
       [speedLimitBox]
         .concat(getLinearAsset(assetType.winterSpeedLimit)),
-      [massTransitBox, pedestrianCrossingBox],
+      [massTransitBox]
+        .concat(getPointAsset(assetType.obstacles))
+        .concat(getPointAsset(assetType.pedestrianCrossings)),
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))
         .concat(getLinearAsset(assetType.damagedByThaw)),
@@ -705,6 +769,14 @@ var URLRouter = function(map, backend, models) {
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
         return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
+      }
+      return [];
+    }
+
+    function getPointAsset(typeId) {
+      var asset = _.find(pointAssets, {typeId: typeId});
+      if (asset) {
+        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues)];
       }
       return [];
     }

@@ -1,16 +1,16 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, collection) {
+  root.SelectedPointAsset = function(backend, assetName) {
     var current = null;
     var dirty = false;
     var originalAsset;
+    var endPointName = assetName;
     return {
       open: open,
       getId: getId,
       get: get,
       place: place,
-      move: move,
+      set: set,
       save: save,
-      setToBeRemoved: setToBeRemoved,
       isDirty: isDirty,
       isNew: isNew,
       cancel: cancel,
@@ -22,29 +22,29 @@
     function place(asset) {
       dirty = true;
       current = asset;
-      eventbus.trigger('pedestrianCrossing:selected');
+      eventbus.trigger(assetName + ':selected');
     }
 
-    function move(asset) {
+    function set(asset) {
       dirty = true;
-      current = asset;
-      eventbus.trigger('pedestrianCrossing:changed');
+      _.merge(current, asset);
+      eventbus.trigger(assetName + ':changed');
     }
 
     function open(asset) {
       originalAsset = _.cloneDeep(asset);
       current = asset;
-      eventbus.trigger('pedestrianCrossing:selected');
+      eventbus.trigger(assetName + ':selected');
     }
 
     function cancel() {
       if (isNew()) {
         reset();
-        eventbus.trigger('pedestrianCrossing:creationCancelled');
+        eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
-        current = originalAsset;
-        eventbus.trigger('pedestrianCrossing:cancelled');
+        current = _.cloneDeep(originalAsset);
+        eventbus.trigger(assetName + ':cancelled');
       }
     }
 
@@ -65,12 +65,6 @@
       return !_.isNull(current);
     }
 
-    function setToBeRemoved(toBeDeleted) {
-      dirty = true;
-      current.toBeDeleted = toBeDeleted;
-      eventbus.trigger('pedestrianCrossing:changed');
-    }
-
     function isDirty() {
       return dirty;
     }
@@ -81,15 +75,15 @@
 
     function save() {
       if (current.toBeDeleted) {
-        backend.removePointAsset(current.id).done(done).fail(fail);
+        backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {
-        backend.createPointAsset(current).done(done).fail(fail);
+        backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
-        backend.updatePointAsset(current).done(done).fail(fail);
+        backend.updatePointAsset(current, endPointName).done(done).fail(fail);
       }
 
       function done() {
-        eventbus.trigger('pedestrianCrossing:saved');
+        eventbus.trigger(assetName + ':saved');
         close();
       }
 
@@ -100,7 +94,7 @@
 
     function close() {
       reset();
-      eventbus.trigger('pedestrianCrossing:unselected');
+      eventbus.trigger(assetName + ':unselected');
     }
 
     function isSelected(asset) {

@@ -240,6 +240,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
+    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
+    obstacles.filterNot(_.floating).map { obstacle =>
+      val timeStamps: AssetTimeStamps = AssetTimeStamps(
+        Modification(obstacle.createdAt, None),
+        Modification(obstacle.modifiedAt, None))
+
+      Map("id" -> obstacle.id,
+        "point" -> Point(obstacle.lon, obstacle.lat),
+        "mmlId" -> obstacle.mmlId,
+        "m_value" -> obstacle.mValue,
+        "obstacle_type" -> obstacle.obstacleType,
+        extractModificationTime(timeStamps))
+    }
+  }
+
   def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
     manoeuvres.map { manoeuvre =>
       Map("id" -> manoeuvre.id,
@@ -267,8 +284,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "height_limits" => linearAssetsToApi(70, municipalityNumber)
         case "length_limits" => linearAssetsToApi(80, municipalityNumber)
         case "width_limits" => linearAssetsToApi(90, municipalityNumber)
-        case "blocked_passages" => ReadOnlyPointAssetService.getByMunicipality(16, municipalityNumber)
-        case "barrier_gates" => ReadOnlyPointAssetService.getByMunicipality(3, municipalityNumber)
+        case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
         case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)

@@ -709,6 +709,92 @@ class AssetDataImporter {
     }
   }
 
+  case class Obstacle(id: Long,
+                      mmlId: Long,
+                      mValue: Double,
+                      floating: Boolean,
+                      lon: Double,
+                      lat: Double,
+                      municipalityCode: Int) extends PersistedPointAsset
+
+  def importObstacles(database: DatabaseDef, vvhServiceHost: String, conversionTypeId: Int, enumeratedValue: Int): Unit = {
+    val query = sql"""
+         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.alkum, s.loppum
+           from segments s
+           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+           where s.tyyppi = $conversionTypeId
+        """
+
+    val obstacles = database.withDynSession {
+      query.as[(Long, Long, Int, Seq[Point], Double, Double)].list
+    }
+
+    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(obstacles.map(_._2).toSet)
+    val groupSize = 3000
+    val groupedObstacles = obstacles.grouped(groupSize).toList
+    val totalGroupCount = groupedObstacles.length
+
+    OracleDatabase.withDynTransaction {
+      val propertyId = sql"""select id from property where public_id = 'esterakennelma'""".as[Long].first
+      val enumeratedValueId = sql"""select id from ENUMERATED_VALUE where PROPERTY_ID = $propertyId and value = $enumeratedValue""".as[Long].first
+
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val singleChoicePS = dynamicSession.prepareStatement(s"insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (?, $enumeratedValueId, $propertyId)")
+
+      println(s"*** Importing ${obstacles.length} obstacles in $totalGroupCount groups of $groupSize each")
+
+      groupedObstacles.zipWithIndex.foreach { case (obstacles, i) =>
+        val startTime = DateTime.now()
+
+        val assetGeometries = obstacles.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 220)
+          assetPS.setInt(3, municipalityCode)
+          val pointAsset = Obstacle(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
+          assetPS.setBoolean(4, PointAssetOperations.isFloating(
+            pointAsset,
+            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
+          ))
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, 1)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          singleChoicePS.setLong(1, assetId)
+          singleChoicePS.addBatch()
+
+          (assetId, points.head)
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        singleChoicePS.executeBatch()
+
+        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
+
+        println(s"*** Imported ${obstacles.length} obstacles in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      singleChoicePS.close()
+    }
+  }
+
   def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 

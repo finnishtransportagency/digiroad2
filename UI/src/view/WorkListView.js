@@ -35,7 +35,8 @@
       speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
       linkProperty: 'Korjattavien linkkien lista',
       massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
-      pedestrianCrossing: 'Geometrian ulkopuolelle jääneet suojatiet'
+      pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
+      obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
