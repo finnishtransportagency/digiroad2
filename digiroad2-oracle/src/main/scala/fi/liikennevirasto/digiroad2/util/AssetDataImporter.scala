@@ -735,7 +735,7 @@ class AssetDataImporter {
     val totalGroupCount = groupedObstacles.length
 
     OracleDatabase.withDynTransaction {
-      val propertyId = sql"""select id from property where public_id = 'Esterakennelma'""".as[Long].first
+      val propertyId = sql"""select id from property where public_id = 'esterakennelma'""".as[Long].first
       val enumeratedValueId = sql"""select id from ENUMERATED_VALUE where PROPERTY_ID = $propertyId and value = $enumeratedValue""".as[Long].first
 
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")

@@ -57,7 +57,7 @@ object OracleObstacleDao {
   def create(obstacle: ObstacleToBePersisted, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("Esterakennelma").first
+    val propertyId = StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, geometry)
