@@ -637,6 +637,13 @@ with GZipSupport {
     pedestrianCrossingService.expire(id, user.username)
   }
 
+  delete("/obstacles/:id") {
+    val user = userProvider.getCurrentUser()
+    val id = params("id").toLong
+    obstacleService.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
+    obstacleService.expire(id, user.username)
+  }
+
   put("/pedestrianCrossings/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
