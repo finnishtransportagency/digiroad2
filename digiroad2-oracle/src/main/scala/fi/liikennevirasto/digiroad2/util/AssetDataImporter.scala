@@ -715,7 +715,7 @@ class AssetDataImporter {
                       floating: Boolean,
                       lon: Double,
                       lat: Double,
-                      municipalityCode: Int) extends RoadLinkAssociatedPointAsset
+                      municipalityCode: Int) extends PersistedPointAsset
 
   def importObstacles(database: DatabaseDef, vvhServiceHost: String, conversionTypeId: Int, enumeratedValue: Int): Unit = {
     val query = sql"""

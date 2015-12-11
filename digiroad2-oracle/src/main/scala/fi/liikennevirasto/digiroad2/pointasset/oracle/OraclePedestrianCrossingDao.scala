@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.RoadLinkAssociatedPointAsset
+import fi.liikennevirasto.digiroad2.PersistedPointAsset
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -16,7 +16,7 @@ case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
                                        createdBy: Option[String] = None,
                                        createdDateTime: Option[DateTime] = None,
                                        modifiedBy: Option[String] = None,
-                                       modifiedDateTime: Option[DateTime] = None) extends RoadLinkAssociatedPointAsset
+                                       modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 

@@ -32,7 +32,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property]) extends RoadLinkAssociatedPointAsset
+                                    propertyData: Seq[Property]) extends PersistedPointAsset
 
 trait MassTransitStopService extends PointAssetOperations {
   type NewAsset = NewMassTransitStop

@@ -20,9 +20,6 @@ trait PersistedPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-}
-
-trait RoadLinkAssociatedPointAsset extends PersistedPointAsset {
   val mmlId: Long
   val mValue: Double
   val floating: Boolean

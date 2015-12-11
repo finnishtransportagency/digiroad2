@@ -23,7 +23,7 @@ trait PointAsset extends FloatingAsset {
 trait PointAssetOperations {
   type NewAsset <: IncomingAsset
   type Asset <: PointAsset
-  type PersistedAsset <: RoadLinkAssociatedPointAsset
+  type PersistedAsset <: PersistedPointAsset
 
 
   def vvhClient: VVHClient
@@ -163,7 +163,7 @@ trait PointAssetOperations {
 }
 
 object PointAssetOperations {
-  def isFloating(persistedAsset: RoadLinkAssociatedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+  def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {
       case None => true
