@@ -186,58 +186,6 @@ object Queries {
       update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId
     """
 
-  def allAssets =
-    """
-    select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
-    p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
-    case
-      when e.name_fi is not null then e.name_fi
-      when tp.value_fi is not null then tp.value_fi
-      else null
-    end as display_value,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id,
-    a.created_date, a.created_by, a.modified_date, a.modified_by,
-    SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
-    from asset a
-      join asset_link al on a.id = al.asset_id
-        join lrm_position lrm on al.position_id = lrm.id
-      join property p on a.asset_type_id = p.asset_type_id
-        left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-        left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
-        left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-        left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-    where a.asset_type_id = 10"""
-
-  def allAssetsWithoutProperties =
-    """
-    select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, p.public_id, e.value
-    from asset a
-      join asset_link al on a.id = al.asset_id
-        join lrm_position lrm on al.position_id = lrm.id
-      join property p on a.asset_type_id = p.asset_type_id
-        left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-        left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-        left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-    where a.asset_type_id = 10"""
-
-  def assetLrmPositionId =
-    "select position_id from asset_link where asset_id = ?"
-
-  def assetWithPositionById = allAssets + " AND a.id = ?"
-
-  def assetByExternalId = allAssets + " AND a.external_id = ?"
-
-  def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
-
-  def andExpiredBefore = "AND a.valid_to < ? AND a.valid_from IS NOT NULL"
-
-  def andValidAfter = "AND a.valid_from > ?"
-
-  def updateAssetBearing(assetId: Long, bearing: Int) = sqlu"update asset set bearing = $bearing where id = $assetId"
-
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
     val y = point.y
@@ -261,16 +209,6 @@ object Queries {
       values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator, $municipalityCode)
     """
 
-  def insertAssetPosition(assetId: Long, lrmPositionId: Long) =
-    sqlu"""
-      insert into asset_link(asset_id, position_id)
-      values ($assetId, $lrmPositionId)
-    """
-
-  def deleteAsset(assetId: Long) = sqlu"""delete from asset where id = $assetId"""
-
-  def deleteAssetLink(assetId: Long) = sqlu"""delete from asset_link where asset_id = $assetId"""
-
   def propertyIdByPublicId = "select id from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
@@ -287,12 +225,6 @@ object Queries {
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), current_timestamp)
     """
 
-  def deleteMultipleChoiceProperty(assetId: Long, propertyId: Long) =
-    sqlu"delete from multiple_choice_value where asset_id = $assetId and property_id = $propertyId"
-
-  def deleteAssetMultipleChoiceProperties(assetId: Long) =
-    sqlu"delete from multiple_choice_value where asset_id = $assetId"
-
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
@@ -305,9 +237,6 @@ object Queries {
 
   def deleteTextProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from text_property_value where asset_id = $assetId and property_id = $propertyId"
-
-  def deleteAssetTextProperties(assetId: Long) =
-    sqlu"delete from text_property_value where asset_id = $assetId"
 
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
@@ -326,12 +255,6 @@ object Queries {
         where asset_id = $assetId and property_id = $propertyId
     """
 
-  def deleteSingleChoiceProperty(assetId: Long, propertyId: Long) =
-    sqlu"delete from single_choice_value where asset_id = $assetId and property_id = $propertyId"
-
-  def deleteAssetSingleChoiceProperties(assetId: Long) =
-    sqlu"delete from single_choice_value where asset_id = $assetId"
-
   def existsSingleChoiceProperty =
     "select asset_id from single_choice_value where asset_id = ? and property_id = ?"
 
@@ -347,42 +270,12 @@ object Queries {
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
-  def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
-    if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
-
-  def roadLinksAndWithinBoundingBox = "AND SDO_FILTER(geom, ?) = 'TRUE'"
-
   def enumeratedPropertyValues = """
     select p.id, p.public_id, p.property_type, ls.value_fi as property_name, p.required, e.value, e.name_fi from asset_type a
     join property p on p.asset_type_id = a.id
     join enumerated_value e on e.property_id = p.id
     join localized_string ls on ls.id = p.name_localized_string_id
     where p.property_type = 'single_choice' or p.property_type = 'multiple_choice' and a.id = ?"""
-
-  def updateLRMeasure(lrmPositionId: Long, testId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection) {
-    val updateMeasure = conn.prepareStatement("UPDATE lrm_position SET start_measure = ?, end_measure = ?, road_link_id = ?, prod_road_link_id = ? WHERE id = ?")
-    updateMeasure.setBigDecimal(1, lrMeasure.bigDecimal)
-    updateMeasure.setBigDecimal(2, lrMeasure.bigDecimal)
-    updateMeasure.setLong(3, testId)
-    updateMeasure.setLong(4, roadLinkId)
-    updateMeasure.setLong(5, lrmPositionId)
-    updateMeasure.executeUpdate()
-    updateMeasure.close()
-  }
-
-  def deleteLRMPosition(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
-
-  def insertLRMPosition(lrmPositionId: Long, testId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection): Long = {
-    val insertPosition = conn.prepareStatement("INSERT INTO lrm_position (id, start_measure, end_measure, road_link_id, prod_road_link_id) values (?, ?, ?, ?, ?)")
-    insertPosition.setLong(1, lrmPositionId)
-    insertPosition.setBigDecimal(2, lrMeasure.bigDecimal)
-    insertPosition.setBigDecimal(3, lrMeasure.bigDecimal)
-    insertPosition.setLong(4, testId)
-    insertPosition.setLong(5, roadLinkId)
-    val ret = insertPosition.executeUpdate()
-    insertPosition.close()
-    ret
-  }
 
   def storeGeometry(geometry: JGeometry, conn: Connection): STRUCT = {
     JGeometry.store(geometry, bonecpToInternalConnection(conn))
