@@ -683,8 +683,8 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource]
-      .concat(selectedLinearAssetModels)
-      .concat(selectedPointAssetModels));
+        .concat(selectedLinearAssetModels)
+        .concat(selectedPointAssetModels));
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
