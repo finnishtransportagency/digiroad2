@@ -33,7 +33,6 @@ case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, poi
 
 trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
-  type Asset = PersistedMassTransitStop
   type PersistedAsset = PersistedMassTransitStop
 
   val spatialAssetDao: OracleSpatialAssetDao
