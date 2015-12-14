@@ -20,7 +20,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
   override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.create(RailwayCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.safetyEquipment, asset.name), username)
+      OracleRailwayCrossingDao.create(RailwayCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.safetyEquipment, asset.name))
     }
   }
 
