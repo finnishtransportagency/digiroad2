@@ -80,13 +80,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       .getOrElse(""))
   }
 
-  def extractModifier(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
+  def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
     "muokannut_viimeksi" ->  massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
       .getOrElse(""))
   }
 
-  private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
+  private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
     def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
@@ -98,15 +98,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
     def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
-    def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
-    def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
-    def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-    def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
-    def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
+    def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
+    def extractMmlId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "mml_id" -> Some(massTransitStop.mmlId) }
+    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop: MassTransitStopWithTimeStamps) => Map(
+        case (massTransitStop: PersistedMassTransitStop) => Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
@@ -150,7 +150,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       })
   }
 
-  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
+  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[PersistedMassTransitStop] = {
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
