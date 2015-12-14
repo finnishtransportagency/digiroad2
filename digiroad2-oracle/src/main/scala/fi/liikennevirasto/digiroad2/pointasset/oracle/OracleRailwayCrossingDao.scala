@@ -9,23 +9,23 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class PersistedRailwayCrossing(id: Long, mmlId: Long,
-                                    lon: Double, lat: Double,
-                                    mValue: Double, floating: Boolean,
-                                    municipalityCode: Int,
-                                    safetyEquipment: Int,
-                                    name: String,
-                                    createdBy: Option[String] = None,
-                                    createdDateTime: Option[DateTime] = None,
-                                    modifiedBy: Option[String] = None,
-                                    modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+case class RailwayCrossing(id: Long, mmlId: Long,
+                           lon: Double, lat: Double,
+                           mValue: Double, floating: Boolean,
+                           municipalityCode: Int,
+                           safetyEquipment: Int,
+                           name: String,
+                           createdBy: Option[String] = None,
+                           createdDateTime: Option[DateTime] = None,
+                           modifiedBy: Option[String] = None,
+                           modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, safetyEquipment: Int, name: String)
 
 object OracleRailwayCrossingDao {
 
   // This works as long as there are only two properties of different types for railway crossings
-  def fetchByFilter(queryFilter: String => String): Seq[PersistedRailwayCrossing] = {
+  def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =
       s"""
         select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
@@ -38,10 +38,10 @@ object OracleRailwayCrossingDao {
         left join text_property_value tpv on (tpv.property_id = $getNamePropertyId AND tpv.asset_id = a.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
-    StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[RailwayCrossing](queryWithFilter).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[PersistedRailwayCrossing] {
+  implicit val getPointAsset = new GetResult[RailwayCrossing] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val mmlId = r.nextLong()
@@ -56,7 +56,7 @@ object OracleRailwayCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedRailwayCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      RailwayCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 

@@ -7,14 +7,13 @@ case class NewRailwayCrossing(lon: Double, lat: Double, mmlId: Long, safetyEquip
 
 class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewRailwayCrossing
-  type Asset = PersistedRailwayCrossing
-  type PersistedAsset = PersistedRailwayCrossing
+  type PersistedAsset = RailwayCrossing
 
   override def typeId: Int = 230
 
-  override def fetchPointAssets(queryFilter: String => String): Seq[PersistedRailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String): Seq[RailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
 
-  override def setFloating(persistedAsset: PersistedRailwayCrossing, floating: Boolean) = {
+  override def setFloating(persistedAsset: RailwayCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
   }
 
