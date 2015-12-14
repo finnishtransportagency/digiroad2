@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
+import fi.liikennevirasto.digiroad2.{IncomingRailwayCrossing, Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -20,10 +20,7 @@ case class RailwayCrossing(id: Long, mmlId: Long,
                            modifiedBy: Option[String] = None,
                            modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
-case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, username: String, safetyEquipment: Int, name: String)
-
 object OracleRailwayCrossingDao {
-
   // This works as long as there are only two properties of different types for railway crossings
   def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =
@@ -60,31 +57,31 @@ object OracleRailwayCrossingDao {
     }
   }
 
-  def create(railwayCrossing: RailwayCrossingToBePersisted): Long = {
+  def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 230, ${railwayCrossing.username}, sysdate, ${railwayCrossing.municipalityCode})
+        values ($id, 230, $username, sysdate, $municipality)
 
         into lrm_position(id, start_measure, mml_id)
-        values ($lrmPositionId, ${railwayCrossing.mValue}, ${railwayCrossing.mmlId})
+        values ($lrmPositionId, $mValue, ${asset.mmlId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
 
       select * from dual
     """.execute
-    updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
-    insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
-    insertTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
+    updateAssetGeometry(id, Point(asset.lon, asset.lat))
+    insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, asset.safetyEquipment).execute
+    insertTextProperty(id, getNamePropertyId, asset.name).execute
     id
   }
 
-  def update(id: Long, railwayCrossing: RailwayCrossingToBePersisted) = {
-    sqlu""" update asset set municipality_code = ${railwayCrossing.municipalityCode} where id = $id """.execute
-    updateAssetModified(id, railwayCrossing.username).execute
+  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String) = {
+    sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
+    updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     updateTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
@@ -92,7 +89,7 @@ object OracleRailwayCrossingDao {
     sqlu"""
       update lrm_position
        set
-       start_measure = ${railwayCrossing.mValue},
+       start_measure = $mValue,
        mml_id = ${railwayCrossing.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
