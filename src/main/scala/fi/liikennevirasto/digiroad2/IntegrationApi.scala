@@ -240,6 +240,24 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
+    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
+    crossings.filterNot(_.floating).map { railwayCrossing =>
+      val timeStamps: AssetTimeStamps = AssetTimeStamps(
+        Modification(railwayCrossing.createdAt, None),
+        Modification(railwayCrossing.modifiedAt, None))
+
+      Map("id" -> railwayCrossing.id,
+        "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
+        "mmlId" -> railwayCrossing.mmlId,
+        "m_value" -> railwayCrossing.mValue,
+        "safetyEquipment" -> railwayCrossing.safetyEquipment,
+        "name" -> railwayCrossing.name,
+        extractModificationTime(timeStamps))
+    }
+  }
+
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
     case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
@@ -288,7 +306,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
         case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
-        case "railway_crossings" => ReadOnlyPointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
+        case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
