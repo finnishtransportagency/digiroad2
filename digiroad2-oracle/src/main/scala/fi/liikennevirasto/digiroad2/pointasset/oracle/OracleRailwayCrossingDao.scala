@@ -20,14 +20,12 @@ case class PersistedRailwayCrossing(id: Long, mmlId: Long,
                                     modifiedBy: Option[String] = None,
                                     modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
-case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, railwayCrossingType: Int, name: String)
+case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, safetyEquipment: Int, name: String)
 
 object OracleRailwayCrossingDao {
 
   // This works as long as there are only two properties of different types for railway crossings
   def fetchByFilter(queryFilter: String => String): Seq[PersistedRailwayCrossing] = {
-    val railwayCrossingType = getRailwayCrossingTypePropertyId
-    val namePropertyId = getNamePropertyId
     val query =
       s"""
         select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
@@ -36,8 +34,8 @@ object OracleRailwayCrossingDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
         left join single_choice_value scv on scv.asset_id = a.id
-        left join enumerated_value ev on (ev.property_id = $railwayCrossingType AND scv.enumerated_value_id = ev.id)
-        left join text_property_value tpv on (tpv.property_id = $namePropertyId AND tpv.asset_id = a.id)
+        left join enumerated_value ev on (ev.property_id = $getSafetyEquipmentPropertyId AND scv.enumerated_value_id = ev.id)
+        left join text_property_value tpv on (tpv.property_id = $getNamePropertyId AND tpv.asset_id = a.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
     StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
@@ -51,14 +49,14 @@ object OracleRailwayCrossingDao {
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val municipalityCode = r.nextInt()
-      val railwayCrossingType = r.nextInt()
+      val safetyEquipment = r.nextInt()
       val name = r.nextString()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedRailwayCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, railwayCrossingType, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PersistedRailwayCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
@@ -79,7 +77,7 @@ object OracleRailwayCrossingDao {
       select * from dual
     """.execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
-    insertSingleChoiceProperty(id, getRailwayCrossingTypePropertyId, railwayCrossing.railwayCrossingType).execute
+    insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     insertTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
     id
   }
@@ -88,7 +86,7 @@ object OracleRailwayCrossingDao {
     sqlu""" update asset set municipality_code = ${railwayCrossing.municipalityCode} where id = $id """.execute
     updateAssetModified(id, railwayCrossing.createdBy).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
-    updateSingleChoiceProperty(id, getRailwayCrossingTypePropertyId, railwayCrossing.railwayCrossingType).execute
+    updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     updateTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
 
     sqlu"""
@@ -101,7 +99,7 @@ object OracleRailwayCrossingDao {
     id
   }
 
-  private def getRailwayCrossingTypePropertyId: Long = {
+  private def getSafetyEquipmentPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("turvavarustus").first
   }
 
