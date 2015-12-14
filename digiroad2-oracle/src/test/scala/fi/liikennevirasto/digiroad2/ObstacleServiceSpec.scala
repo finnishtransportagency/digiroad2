@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedPedestrianCrossing, PersistedObstacle}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedPedestrianCrossing, Obstacle}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
@@ -73,7 +73,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val id = service.create(PersistedObstacle(2, 388553075, 2.0, 0.0, 2.0, false, 235, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(Obstacle(2, 388553075, 2.0, 0.0, 2.0, false, 235, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -82,7 +82,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset should be(
-        PersistedObstacle(
+        Obstacle(
           id = id,
           mmlId = 388553075,
           lon = 2,

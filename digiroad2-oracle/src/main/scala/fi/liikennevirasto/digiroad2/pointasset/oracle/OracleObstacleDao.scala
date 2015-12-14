@@ -9,22 +9,20 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class PersistedObstacle(id: Long, mmlId: Long,
-                             lon: Double, lat: Double,
-                             mValue: Double, floating: Boolean,
-                             municipalityCode: Int,
-                             obstacleType: Int,
-                             createdBy: Option[String] = None,
-                             createdDateTime: Option[DateTime] = None,
-                             modifiedBy: Option[String] = None,
-                             modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
-//case class NewObstacle(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
-//case class NewObstacle(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
+case class Obstacle(id: Long, mmlId: Long,
+                    lon: Double, lat: Double,
+                    mValue: Double, floating: Boolean,
+                    municipalityCode: Int,
+                    obstacleType: Int,
+                    createdBy: Option[String] = None,
+                    createdDateTime: Option[DateTime] = None,
+                    modifiedBy: Option[String] = None,
+                    modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 object OracleObstacleDao {
 
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
-  def fetchByFilter(queryFilter: String => String): Seq[PersistedObstacle] = {
+  def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val query =
       """
         select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
@@ -36,10 +34,10 @@ object OracleObstacleDao {
         left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[PersistedObstacle](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[PersistedObstacle] {
+  implicit val getPointAsset = new GetResult[Obstacle] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val mmlId = r.nextLong()
@@ -53,11 +51,11 @@ object OracleObstacleDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedObstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      Obstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
-  def create(obstacle: PersistedObstacle, username: String): Long = {
+  def create(obstacle: Obstacle, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -78,7 +76,7 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: PersistedObstacle) = {
+  def update(id: Long, obstacle: Obstacle) = {
     sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
     updateAssetModified(id, obstacle.modifiedBy.get).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
