@@ -12,21 +12,9 @@ import slick.jdbc.StaticQuery.interpolation
 
 case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends IncomingPointAsset
 
-case class PedestrianCrossing(id: Long,
-                              mmlId: Long,
-                              municipalityCode: Int,
-                              lon: Double,
-                              lat: Double,
-                              mValue: Double,
-                              floating: Boolean,
-                              createdBy: Option[String] = None,
-                              createdAt: Option[DateTime] = None,
-                              modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None) extends PointAsset
-
 class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewPedestrianCrossing
-  type Asset = PedestrianCrossing
+  type Asset = PersistedPedestrianCrossing
   type PersistedAsset = PersistedPedestrianCrossing
 
   override def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
@@ -40,7 +28,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
   override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
-    PedestrianCrossing(
+    PersistedPedestrianCrossing(
       id = persistedAsset.id,
       mmlId = persistedAsset.mmlId,
       municipalityCode = persistedAsset.municipalityCode,
@@ -49,9 +37,9 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
       mValue = persistedAsset.mValue,
       floating = floating,
       createdBy = persistedAsset.createdBy,
-      createdAt = persistedAsset.createdDateTime,
+      createdDateTime = persistedAsset.createdDateTime,
       modifiedBy = persistedAsset.modifiedBy,
-      modifiedAt = persistedAsset.modifiedDateTime)
+      modifiedDateTime = persistedAsset.modifiedDateTime)
   }
 
   override def create(asset: NewPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
