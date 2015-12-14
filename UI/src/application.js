@@ -481,12 +481,12 @@ var URLRouter = function(map, backend, models) {
       typeId: 230,
       layerName: 'railwayCrossings',
       title: 'Rautatien tasoristeys',
-      newAsset: { railwayCrossingType: 1 },
+      newAsset: { safetyEquipment: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
       formLabels: {
-        singleFloatingAssetLabel: 'rautatien tasoristeyksen',
+        singleFloatingAssetLabel: 'tasoristeyksen',
         manyFloatingAssetsLabel: 'tasoristeykset',
         newAssetLabel: 'tasoristeys'
       }
