@@ -22,6 +22,7 @@ case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double,
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
+                   val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -611,6 +612,9 @@ with GZipSupport {
   put("/obstacles/:id")(updatePointAsset(obstacleService))
   post("/obstacles")(createNewPointAsset(obstacleService))
 
+  get("/railwayCrossings")(getPointAssets(railwayCrossingService))
+  get("/railwayCrossings/:id")(getPointAssetById(railwayCrossingService))
+  get("/railwayCrossings/floating")(getFloatingPointAssets(railwayCrossingService))
 
   private def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()

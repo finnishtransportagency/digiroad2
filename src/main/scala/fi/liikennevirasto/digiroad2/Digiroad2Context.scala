@@ -132,6 +132,10 @@ object Digiroad2Context {
     new ObstacleService(vvhClient)
   }
 
+  lazy val railwayCrossingService: RailwayCrossingService = {
+    new RailwayCrossingService(vvhClient)
+  }
+
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService)
   }
