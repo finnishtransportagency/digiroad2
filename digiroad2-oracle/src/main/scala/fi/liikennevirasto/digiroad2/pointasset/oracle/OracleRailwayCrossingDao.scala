@@ -24,8 +24,8 @@ case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, m
 
 object OracleRailwayCrossingDao {
 
-  // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
-  def fetchByFilter(queryFilter: String => String): Seq[PersistedObstacle] = {
+  // This works as long as there is only one (and exactly one) property (currently type) for railway crossins and up to one value
+  def fetchByFilter(queryFilter: String => String): Seq[PersistedRailwayCrossing] = {
     val query =
       """
         select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
@@ -37,10 +37,10 @@ object OracleRailwayCrossingDao {
         left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[PersistedObstacle](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[PersistedObstacle] {
+  implicit val getPointAsset = new GetResult[PersistedRailwayCrossing] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val mmlId = r.nextLong()
@@ -48,55 +48,56 @@ object OracleRailwayCrossingDao {
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val municipalityCode = r.nextInt()
-      val obstacleType = r.nextInt()
+      val railwayCrossingType = r.nextInt()
+      val name = r.nextString()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedObstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PersistedRailwayCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, railwayCrossingType, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
-  def create(obstacle: ObstacleToBePersisted, username: String): Long = {
+  def create(RailwayCrossing: RailwayCrossingToBePersisted, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 220, $username, sysdate, ${obstacle.municipalityCode})
+        values ($id, 220, $username, sysdate, ${RailwayCrossing.municipalityCode})
 
         into lrm_position(id, start_measure, mml_id)
-        values ($lrmPositionId, ${obstacle.mValue}, ${obstacle.mmlId})
+        values ($lrmPositionId, ${RailwayCrossing.mValue}, ${RailwayCrossing.mmlId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
 
       select * from dual
     """.execute
-    updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
-    insertSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
+    updateAssetGeometry(id, Point(RailwayCrossing.lon, RailwayCrossing.lat))
+    insertSingleChoiceProperty(id, getPropertyId, RailwayCrossing.railwayCrossingType).execute
     id
   }
 
-  def update(id: Long, obstacle: ObstacleToBePersisted) = {
-    sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
-    updateAssetModified(id, obstacle.createdBy).execute
-    updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
-    updateSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
+  def update(id: Long, RailwayCrossing: RailwayCrossingToBePersisted) = {
+    sqlu""" update asset set municipality_code = ${RailwayCrossing.municipalityCode} where id = $id """.execute
+    updateAssetModified(id, RailwayCrossing.createdBy).execute
+    updateAssetGeometry(id, Point(RailwayCrossing.lon, RailwayCrossing.lat))
+    updateSingleChoiceProperty(id, getPropertyId, RailwayCrossing.railwayCrossingType).execute
 
     sqlu"""
       update lrm_position
        set
-       start_measure = ${obstacle.mValue},
-       mml_id = ${obstacle.mmlId}
+       start_measure = ${RailwayCrossing.mValue},
+       mml_id = ${RailwayCrossing.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id
   }
 
   private def getPropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("turvavarustus").first
   }
 }
 
