@@ -40,7 +40,7 @@ object OracleRailwayCrossingDao {
         left join text_property_value tpv on (tpv.asset_id = a.id)
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) AND " +
-      "ev.property_id = $railwayCrossingType AND tpv.property_id = $namePropertyId "
+      s"""ev.property_id = $railwayCrossingType AND tpv.property_id = $namePropertyId """
     StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
   }
 
