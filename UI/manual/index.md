@@ -555,7 +555,7 @@ _K&auml;&auml;ntymisrajoitusten muokkaus._
 
 ####Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen####
 
-Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde. Sivun oikeaan laitaan avautuu ominaisuustieton&auml;kym&auml; (6), jossa on n&auml;kyviss&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit, sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (7). Ominaisuustieton&auml;kym&auml;st&auml; valitaan ne tielinkit, joille valitulta tielinkilt&auml; ei saa k&auml;&auml;nty&auml;. Kun linkin valitsee, sen alapuolelle ilmestyy alasvetovalikko niiden ajoneuvojen valintaan, joita k&auml;&auml;ntymisrajoitus ei koske sek&auml; vapaa tekstikentt&auml;. Valitsemalla k&auml;&auml;ntymisrajoituksen kohde uusi k&auml;&auml;ntymisrajoitus visualisoituu kartalle. Kevyen liikenteen v&auml;ylille ei voi lis&auml;t&auml; k&auml;&auml;ntymisrajoitusta.
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde. Sivun oikeaan laitaan avautuu ominaisuustieton&auml;kym&auml; (6), jossa on n&auml;kyviss&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit, sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (7). Ominaisuustieton&auml;kym&auml;st&auml; valitaan ne tielinkit, joille valitulta tielinkilt&auml; ei saa k&auml;&auml;nty&auml;. Kun linkin valitsee, sen alapuolelle ilmestyy alasvetovalikko niiden ajoneuvojen valintaan, joita k&auml;&auml;ntymisrajoitus ei koske, voimassaolokellonaika ja vapaa tekstikentt&auml;. Valitsemalla k&auml;&auml;ntymisrajoituksen kohde uusi k&auml;&auml;ntymisrajoitus visualisoituu kartalle. Kevyen liikenteen v&auml;ylille ei voi lis&auml;t&auml; k&auml;&auml;ntymisrajoitusta.
  
 ####Uuden k&auml;&auml;ntymisrajoituksen poistaminen####
 
@@ -1437,7 +1437,7 @@ _Uusien yksisuuntaisten VAK-rajoitusten arvojen valinta._
 
 Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
-19. Suojatiet
+19. Suojatie
 ----------------------
 
 Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttan&auml;kym&auml;&auml;n voi valita suojatiet tietolajit-paletista (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;.
@@ -1454,6 +1454,20 @@ Yksitt&auml;isen suojatiemerkinn&auml;n voi valita klikkaamalla kartalta sen geo
 
 _Suojatien katselu._
 
+##Suojatiemerkinn&auml;n muokkaus##
+
+Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys###
+
+Muokattava suojatie valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla.
+
+Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Linkki, jolle suojatie siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla.
+
+![Muokkaustila.](k145.JPG)
+
+Suojatiemerkint&auml; voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (6). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (7).
+
 ###Geometrian ulkopuolelle j&auml;&auml;neet suojatiet###
 
 Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Suojatiemerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
@@ -1462,20 +1476,65 @@ Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punai
 
 _Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punainen._
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (2). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (2). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
 ![Ulkopuoliset suojatiet.](k144.JPG)
 
-##Suojatiemerkinn&auml;n muokkaus##
+_Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 
-Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+20. Esterakennelma
+----------------------
 
-###Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys###
+Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajit(1) -paletista "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolella olevia esterakennelmia.
 
-Muokattava rajoitus valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla.
+![Valinta.](k146.jpg)
 
-Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla.
+_Esterakennelman valinta._
 
-![Muokkaustila.](k145.JPG)
+##Esterakennelman tietojen katselu##
 
-Suojatiemerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (6). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (7).
+Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustieton&auml;kym&auml; (3). Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
+
+![Katselu.](k147.jpg)
+
+_Esterakennelman katselu._
+
+##Esterakennelman muokkaus##
+
+Esterakennelman voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Lis&auml;ksi olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa avattavan puomin ja suljetun yhteyden v&auml;lill&auml; alasvetovalikosta. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Esterakennelman poisto, siirto, lis&auml;ys ja tyyppi###
+
+Muokattava esterakennelma valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu esterakennelma voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta. Muutokset voidaan kumota peruuta-napilla. Olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa oikean laidan alasvetovalikosta valitsemalla suljettu yhteys tai avattava puomi (5). Kohteen visualisointi kartalla muuttuu valinnan mukaan.
+
+![Muokkaus.](k148.jpg)
+
+_Esterakennelman muokkaus._
+
+Yksitt&auml;ist&auml; esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (8). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+
+![Siirto.](k152.jpg)
+
+_Esterakennelman siirto._
+
+Esterakennelma voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Esterakennelma lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Esterakennelmalle valitaan oikeasta laidasta tyyppi eli suljettu yhteys tai avattava puomi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
+
+![Lisays.](k149.jpg)
+
+_Esterakennelman lis&auml;ys._
+
+Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
+
+###Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat###
+
+Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Esterakennelmaa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (2). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Merkinta.](k150.jpg)
+
+_Geometrian ulkopuolinen esterakennelma on v&auml;rilt&auml;&auml;n punainen._
+
+![Ulkopuoliset esterakennelmat.](k151.jpg)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden esterakennelmien lista._

@@ -458,7 +458,8 @@ var URLRouter = function(map, backend, models) {
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
       formLabels: {
         singleFloatingAssetLabel: 'suojatien',
-        manyFloatingAssetsLabel: 'suojatiet'
+        manyFloatingAssetsLabel: 'suojatiet',
+        newAssetLabel: 'suojatie'
       }
     },
     {
@@ -472,7 +473,8 @@ var URLRouter = function(map, backend, models) {
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
       formLabels: {
         singleFloatingAssetLabel: 'esterakennelman',
-        manyFloatingAssetsLabel: 'esterakennelmat'
+        manyFloatingAssetsLabel: 'esterakennelmat',
+        newAssetLabel: 'esterakennelma'
       }
     },
     {

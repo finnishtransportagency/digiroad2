@@ -41,7 +41,7 @@
   function renderForm(rootElement, selectedAsset, localizedTexts) {
     var id = selectedAsset.getId();
 
-    var title = selectedAsset.isNew() ? "Uusi suojatie" : 'ID: ' + id;
+    var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
     var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
     var form = renderAssetFormElements(selectedAsset, localizedTexts);
     var footer = '<footer>' + renderButtons() + '</footer>';
