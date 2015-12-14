@@ -10,15 +10,15 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
 case class PersistedRailwayCrossing(id: Long, mmlId: Long,
-                             lon: Double, lat: Double,
-                             mValue: Double, floating: Boolean,
-                             municipalityCode: Int,
-                             railwayCrossingType: Int,
-                             name: String,
-                             createdBy: Option[String] = None,
-                             createdDateTime: Option[DateTime] = None,
-                             modifiedBy: Option[String] = None,
-                             modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+                                    lon: Double, lat: Double,
+                                    mValue: Double, floating: Boolean,
+                                    municipalityCode: Int,
+                                    safetyEquipment: Int,
+                                    name: String,
+                                    createdBy: Option[String] = None,
+                                    createdDateTime: Option[DateTime] = None,
+                                    modifiedBy: Option[String] = None,
+                                    modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, railwayCrossingType: Int, name: String)
 

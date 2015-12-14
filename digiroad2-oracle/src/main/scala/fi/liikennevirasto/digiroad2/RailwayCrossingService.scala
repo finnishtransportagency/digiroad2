@@ -3,18 +3,18 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
-case class NewRailwayCrossing(lon: Double, lat: Double, mmlId: Long, railwayCrossingType: Int, name: String) extends IncomingPointAsset
+case class NewRailwayCrossing(lon: Double, lat: Double, mmlId: Long, safetyEquipment: Int, name: String) extends IncomingPointAsset
 
 case class RailwayCrossing(id: Long, mmlId: Long,
-                    lon: Double, lat: Double,
-                    mValue: Double, floating: Boolean,
-                    municipalityCode: Int,
-                    railwayCrossingType: Int,
-                    name: String,
-                    createdBy: Option[String] = None,
-                    createdAt: Option[DateTime] = None,
-                    modifiedBy: Option[String] = None,
-                    modifiedAt: Option[DateTime] = None) extends PointAsset
+                           lon: Double, lat: Double,
+                           mValue: Double, floating: Boolean,
+                           municipalityCode: Int,
+                           safetyEquipment: Int,
+                           name: String,
+                           createdBy: Option[String] = None,
+                           createdAt: Option[DateTime] = None,
+                           modifiedBy: Option[String] = None,
+                           modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewRailwayCrossing
@@ -34,7 +34,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
       lat = persistedAsset.lat,
       mValue = persistedAsset.mValue,
       floating = floating,
-      railwayCrossingType = persistedAsset.railwayCrossingType,
+      safetyEquipment = persistedAsset.safetyEquipment,
       name = persistedAsset.name,
       createdBy = persistedAsset.createdBy,
       createdAt = persistedAsset.createdDateTime,
@@ -45,14 +45,14 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
   override def create(asset: NewRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.create(RailwayCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.railwayCrossingType, asset.name), username)
+      OracleRailwayCrossingDao.create(RailwayCrossingToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.safetyEquipment, asset.name), username)
     }
   }
 
   override def update(id:Long, updatedAsset: NewRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.update(id, RailwayCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.railwayCrossingType, updatedAsset.name))
+      OracleRailwayCrossingDao.update(id, RailwayCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.safetyEquipment, updatedAsset.name))
     }
     id
   }
