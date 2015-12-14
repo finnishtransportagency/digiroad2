@@ -69,7 +69,7 @@ object OracleRailwayCrossingDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 220, $username, sysdate, ${railwayCrossing.municipalityCode})
+        values ($id, 230, $username, sysdate, ${railwayCrossing.municipalityCode})
 
         into lrm_position(id, start_measure, mml_id)
         values ($lrmPositionId, ${railwayCrossing.mValue}, ${railwayCrossing.mmlId})
