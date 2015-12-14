@@ -36,11 +36,10 @@ object OracleRailwayCrossingDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
         left join single_choice_value scv on scv.asset_id = a.id
-        left join enumerated_value ev on (scv.enumerated_value_id = ev.id)
-        left join text_property_value tpv on (tpv.asset_id = a.id)
+        left join enumerated_value ev on (ev.property_id = $railwayCrossingType AND scv.enumerated_value_id = ev.id)
+        left join text_property_value tpv on (tpv.property_id = $namePropertyId AND tpv.asset_id = a.id)
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) AND " +
-      s"""ev.property_id = $railwayCrossingType AND tpv.property_id = $namePropertyId """
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
     StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
   }
 
