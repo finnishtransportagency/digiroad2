@@ -615,6 +615,7 @@ with GZipSupport {
   get("/railwayCrossings")(getPointAssets(railwayCrossingService))
   get("/railwayCrossings/:id")(getPointAssetById(railwayCrossingService))
   get("/railwayCrossings/floating")(getFloatingPointAssets(railwayCrossingService))
+  delete("/railwayCrossings/:id")(deletePointAsset(railwayCrossingService))
 
   private def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()

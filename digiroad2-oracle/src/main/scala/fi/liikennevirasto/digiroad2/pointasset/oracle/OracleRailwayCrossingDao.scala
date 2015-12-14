@@ -24,19 +24,23 @@ case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, m
 
 object OracleRailwayCrossingDao {
 
-  // This works as long as there is only one (and exactly one) property (currently type) for railway crossins and up to one value
+  // This works as long as there are only two properties of different types for railway crossings
   def fetchByFilter(queryFilter: String => String): Seq[PersistedRailwayCrossing] = {
+    val railwayCrossingType = getRailwayCrossingType
+    val namePropertyId = getNamePropertyId
     val query =
-      """
-        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+      s"""
+        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
+        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
-        join property p on p.asset_type_id = a.asset_type_id
         left join single_choice_value scv on scv.asset_id = a.id
-        left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
+        left join enumerated_value ev on (scv.enumerated_value_id = ev.id)
+        left join text_property_value tpv on (tpv.asset_id = a.id)
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) AND " +
+      "ev.property_id = $railwayCrossingType AND tpv.property_id = $namePropertyId "
     StaticQuery.queryNA[PersistedRailwayCrossing](queryWithFilter).iterator.toSeq
   }
 
@@ -76,7 +80,7 @@ object OracleRailwayCrossingDao {
       select * from dual
     """.execute
     updateAssetGeometry(id, Point(RailwayCrossing.lon, RailwayCrossing.lat))
-    insertSingleChoiceProperty(id, getPropertyId, RailwayCrossing.railwayCrossingType).execute
+    insertSingleChoiceProperty(id, getNamePropertyId, RailwayCrossing.railwayCrossingType).execute
     id
   }
 
@@ -84,7 +88,7 @@ object OracleRailwayCrossingDao {
     sqlu""" update asset set municipality_code = ${RailwayCrossing.municipalityCode} where id = $id """.execute
     updateAssetModified(id, RailwayCrossing.createdBy).execute
     updateAssetGeometry(id, Point(RailwayCrossing.lon, RailwayCrossing.lat))
-    updateSingleChoiceProperty(id, getPropertyId, RailwayCrossing.railwayCrossingType).execute
+    updateSingleChoiceProperty(id, getRailwayCrossingType, RailwayCrossing.railwayCrossingType).execute
 
     sqlu"""
       update lrm_position
@@ -96,8 +100,12 @@ object OracleRailwayCrossingDao {
     id
   }
 
-  private def getPropertyId: Long = {
+  private def getRailwayCrossingType: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("turvavarustus").first
+  }
+
+  private def getNamePropertyId: Long = {
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("rautatien_tasoristeyksen_nimi").first
   }
 }
 
