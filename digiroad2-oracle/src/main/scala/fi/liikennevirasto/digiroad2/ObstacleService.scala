@@ -17,27 +17,14 @@ case class Obstacle(id: Long, mmlId: Long,
 
 class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewObstacle
-  type Asset = Obstacle
   type PersistedAsset = PersistedObstacle
 
   override def typeId: Int = 220
 
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedObstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
 
-  override def persistedAssetToAsset(persistedAsset: PersistedObstacle, floating: Boolean) = {
-    Obstacle(
-      id = persistedAsset.id,
-      mmlId = persistedAsset.mmlId,
-      municipalityCode = persistedAsset.municipalityCode,
-      lon = persistedAsset.lon,
-      lat = persistedAsset.lat,
-      mValue = persistedAsset.mValue,
-      floating = floating,
-      obstacleType = persistedAsset.obstacleType,
-      createdBy = persistedAsset.createdBy,
-      createdAt = persistedAsset.createdDateTime,
-      modifiedBy = persistedAsset.modifiedBy,
-      modifiedAt = persistedAsset.modifiedDateTime)
+  override def setFloating(persistedAsset: PersistedObstacle, floating: Boolean) = {
+    persistedAsset.copy(floating = floating)
   }
 
   override def create(asset: NewObstacle, username: String, geometry: Seq[Point], municipality: Int): Long = {

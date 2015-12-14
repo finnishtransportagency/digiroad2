@@ -27,7 +27,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
 
   override def typeId: Int = 200
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
-  override def persistedAssetToAsset(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
+  override def setFloating(persistedAsset: PersistedPedestrianCrossing, floating: Boolean) = {
     PersistedPedestrianCrossing(
       id = persistedAsset.id,
       mmlId = persistedAsset.mmlId,

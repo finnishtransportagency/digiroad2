@@ -14,7 +14,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
 
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedRailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
 
-  override def persistedAssetToAsset(persistedAsset: PersistedRailwayCrossing, floating: Boolean) = {
+  override def setFloating(persistedAsset: PersistedRailwayCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
   }
 

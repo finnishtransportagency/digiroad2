@@ -18,7 +18,6 @@ case class PersistedObstacle(id: Long, mmlId: Long,
                              createdDateTime: Option[DateTime] = None,
                              modifiedBy: Option[String] = None,
                              modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
-
 case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
 
 object OracleObstacleDao {

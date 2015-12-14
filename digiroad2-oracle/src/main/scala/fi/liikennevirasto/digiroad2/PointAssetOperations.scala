@@ -32,7 +32,6 @@ trait PersistedPointAsset extends PointAsset {
 
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
-  type Asset <: PointAsset
   type PersistedAsset <: PersistedPointAsset
 
   def vvhClient: VVHClient
@@ -46,12 +45,12 @@ trait PointAssetOperations {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
-  def persistedAssetToAsset(persistedAsset: PersistedAsset, floating: Boolean): Asset
+  def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
-  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[Asset] = {
-    case class AssetBeforeUpdate(asset: Asset, persistedFloating: Boolean)
+  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
+    case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean)
 
     val roadLinks = vvhClient.fetchVVHRoadlinks(bounds)
     withDynSession {
@@ -61,9 +60,9 @@ trait PointAssetOperations {
 
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
-      }.map { persistedAsset =>
+      }.map { (persistedAsset: PersistedAsset) =>
         val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.mmlId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
-        AssetBeforeUpdate(persistedAssetToAsset(persistedAsset, floating), persistedAsset.floating)
+        AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating)
       }
 
       assetsBeforeUpdate.foreach { asset =>
@@ -110,26 +109,26 @@ trait PointAssetOperations {
     }
   }
 
-  def getByMunicipality(municipalityCode: Int): Seq[Asset] = {
+  def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAsset, findRoadlink)))
+        .map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
         .toList
     }
   }
 
-  def getById(id: Long): Option[Asset] = {
+  def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.mmlId) }
 
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
-    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(persistedAssetToAsset, findRoadlink)))
+    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {

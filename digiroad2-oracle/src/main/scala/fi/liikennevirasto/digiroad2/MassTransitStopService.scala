@@ -91,7 +91,7 @@ trait MassTransitStopService extends PointAssetOperations {
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
-  override def persistedAssetToAsset(persistedStop: PersistedMassTransitStop, floating: Boolean): PersistedMassTransitStop = {
+  override def setFloating(persistedStop: PersistedMassTransitStop, floating: Boolean): PersistedMassTransitStop = {
     persistedStop.copy(floating = floating)
   }
 
