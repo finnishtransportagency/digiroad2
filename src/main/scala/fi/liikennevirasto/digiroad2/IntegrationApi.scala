@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, PersistedPedestrianCrossing, PersistedRailwayCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, PedestrianCrossing, PersistedRailwayCrossing}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -225,7 +225,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def pedestrianCrossingsToApi(crossings: Seq[PersistedPedestrianCrossing]): Seq[Map[String, Any]] = {
+  def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
     case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
     crossings.filterNot(_.floating).map { pedestrianCrossing =>

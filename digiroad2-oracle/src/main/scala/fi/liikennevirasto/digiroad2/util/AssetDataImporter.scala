@@ -8,7 +8,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.PersistedPedestrianCrossing
+import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
 import org.joda.time.format.PeriodFormatterBuilder
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -672,7 +672,7 @@ class AssetDataImporter {
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 200)
           assetPS.setInt(3, municipalityCode)
-          val pointAsset = PersistedPedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, municipalityCode)
+          val pointAsset = PedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, municipalityCode)
           assetPS.setBoolean(4, PointAssetOperations.isFloating(
             pointAsset,
             roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.pointasset.oracle.PersistedPedestrianCrossing
+import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
@@ -72,7 +72,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset should be(PersistedPedestrianCrossing(
+      asset should be(PedestrianCrossing(
         id = id,
         mmlId = 388553075,
         lon = 2,
