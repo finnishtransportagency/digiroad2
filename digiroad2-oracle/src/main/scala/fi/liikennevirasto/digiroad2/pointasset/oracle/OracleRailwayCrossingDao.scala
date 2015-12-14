@@ -20,7 +20,7 @@ case class RailwayCrossing(id: Long, mmlId: Long,
                            modifiedBy: Option[String] = None,
                            modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
-case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, safetyEquipment: Int, name: String)
+case class RailwayCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, username: String, safetyEquipment: Int, name: String)
 
 object OracleRailwayCrossingDao {
 
@@ -66,7 +66,7 @@ object OracleRailwayCrossingDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 230, ${railwayCrossing.createdBy}, sysdate, ${railwayCrossing.municipalityCode})
+        values ($id, 230, ${railwayCrossing.username}, sysdate, ${railwayCrossing.municipalityCode})
 
         into lrm_position(id, start_measure, mml_id)
         values ($lrmPositionId, ${railwayCrossing.mValue}, ${railwayCrossing.mmlId})
@@ -84,7 +84,7 @@ object OracleRailwayCrossingDao {
 
   def update(id: Long, railwayCrossing: RailwayCrossingToBePersisted) = {
     sqlu""" update asset set municipality_code = ${railwayCrossing.municipalityCode} where id = $id """.execute
-    updateAssetModified(id, railwayCrossing.createdBy).execute
+    updateAssetModified(id, railwayCrossing.username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     updateTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
