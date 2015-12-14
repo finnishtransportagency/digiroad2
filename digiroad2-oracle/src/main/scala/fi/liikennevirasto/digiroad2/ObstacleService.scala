@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
-case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingPointAsset
+//case class NewObstacle(lon: Double, lat: Double, mmlId: Long, obstacleType: Int) extends IncomingPointAsset
+//case class NewObstacle(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
 
 case class Obstacle(id: Long, mmlId: Long,
                               lon: Double, lat: Double,
@@ -16,7 +17,7 @@ case class Obstacle(id: Long, mmlId: Long,
                               modifiedAt: Option[DateTime] = None) extends PointAsset
 
 class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
-  type IncomingAsset = NewObstacle
+  type IncomingAsset = PersistedObstacle
   type PersistedAsset = PersistedObstacle
 
   override def typeId: Int = 220
@@ -27,17 +28,17 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: NewObstacle, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: PersistedObstacle, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.create(ObstacleToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username, asset.obstacleType), username)
+      OracleObstacleDao.create(asset.copy(mValue = mValue, municipalityCode = municipality), username)
     }
   }
 
-  override def update(id:Long, updatedAsset: NewObstacle, geometry: Seq[Point], municipality: Int, username: String): Long = {
+  override def update(id:Long, updatedAsset: PersistedObstacle, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, ObstacleToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.obstacleType))
+      OracleObstacleDao.update(id, updatedAsset.copy(mValue = mValue, municipalityCode = municipality, modifiedBy = Some(username)))
     }
     id
   }

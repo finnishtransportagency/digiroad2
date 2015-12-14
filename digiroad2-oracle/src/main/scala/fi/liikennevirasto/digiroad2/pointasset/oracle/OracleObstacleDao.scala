@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
+import fi.liikennevirasto.digiroad2.{IncomingPointAsset, Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -18,7 +18,8 @@ case class PersistedObstacle(id: Long, mmlId: Long,
                              createdDateTime: Option[DateTime] = None,
                              modifiedBy: Option[String] = None,
                              modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
-case class ObstacleToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
+//case class NewObstacle(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
+//case class NewObstacle(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String, obstacleType: Int)
 
 object OracleObstacleDao {
 
@@ -56,7 +57,7 @@ object OracleObstacleDao {
     }
   }
 
-  def create(obstacle: ObstacleToBePersisted, username: String): Long = {
+  def create(obstacle: PersistedObstacle, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -77,9 +78,9 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: ObstacleToBePersisted) = {
+  def update(id: Long, obstacle: PersistedObstacle) = {
     sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
-    updateAssetModified(id, obstacle.createdBy).execute
+    updateAssetModified(id, obstacle.modifiedBy.get).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
     updateSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
 
