@@ -5,20 +5,9 @@ import org.joda.time.DateTime
 
 case class NewRailwayCrossing(lon: Double, lat: Double, mmlId: Long, safetyEquipment: Int, name: String) extends IncomingPointAsset
 
-case class RailwayCrossing(id: Long, mmlId: Long,
-                           lon: Double, lat: Double,
-                           mValue: Double, floating: Boolean,
-                           municipalityCode: Int,
-                           safetyEquipment: Int,
-                           name: String,
-                           createdBy: Option[String] = None,
-                           createdAt: Option[DateTime] = None,
-                           modifiedBy: Option[String] = None,
-                           modifiedAt: Option[DateTime] = None) extends PointAsset
-
 class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewRailwayCrossing
-  type Asset = RailwayCrossing
+  type Asset = PersistedRailwayCrossing
   type PersistedAsset = PersistedRailwayCrossing
 
   override def typeId: Int = 230
@@ -26,20 +15,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
   override def fetchPointAssets(queryFilter: String => String): Seq[PersistedRailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
 
   override def persistedAssetToAsset(persistedAsset: PersistedRailwayCrossing, floating: Boolean) = {
-    RailwayCrossing(
-      id = persistedAsset.id,
-      mmlId = persistedAsset.mmlId,
-      municipalityCode = persistedAsset.municipalityCode,
-      lon = persistedAsset.lon,
-      lat = persistedAsset.lat,
-      mValue = persistedAsset.mValue,
-      floating = floating,
-      safetyEquipment = persistedAsset.safetyEquipment,
-      name = persistedAsset.name,
-      createdBy = persistedAsset.createdBy,
-      createdAt = persistedAsset.createdDateTime,
-      modifiedBy = persistedAsset.modifiedBy,
-      modifiedAt = persistedAsset.modifiedDateTime)
+    persistedAsset.copy(floating = floating)
   }
 
   override def create(asset: NewRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
@@ -49,7 +25,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
     }
   }
 
-  override def update(id:Long, updatedAsset: NewRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
+  override def update(id: Long, updatedAsset: NewRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
       OracleRailwayCrossingDao.update(id, RailwayCrossingToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.safetyEquipment, updatedAsset.name))

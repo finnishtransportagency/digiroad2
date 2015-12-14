@@ -20,7 +20,7 @@ trait PointAsset extends FloatingAsset {
   val municipalityCode: Int
 }
 
-trait PersistedPointAsset {
+trait PersistedPointAsset extends PointAsset {
   val id: Long
   val lon: Double
   val lat: Double
