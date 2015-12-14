@@ -14,7 +14,6 @@ case class NewPedestrianCrossing(lon: Double, lat: Double, mmlId: Long) extends 
 
 class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = NewPedestrianCrossing
-  type Asset = PersistedPedestrianCrossing
   type PersistedAsset = PersistedPedestrianCrossing
 
   override def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
