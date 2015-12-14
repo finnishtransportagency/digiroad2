@@ -282,6 +282,13 @@ object DataFixture {
     println()
   }
 
+  def importRailwayCrossings(): Unit = {
+    println(s"\nCommencing railway crossings import from conversion at time: ${DateTime.now()}")
+    dataImporter.importRailwayCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println(s"Railway crossings import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def importPedestrianCrossings(): Unit = {
     println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
     dataImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
@@ -432,6 +439,8 @@ object DataFixture {
         importMMLIdsOnManoeuvres()
       case Some("obstacles") =>
         importObstacles()
+      case Some("railway_crossings") =>
+        importRailwayCrossings()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
