@@ -597,7 +597,22 @@ with GZipSupport {
     }
   }
 
-  def getPointAssets(service: PointAssetOperations) = {
+  get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
+  get("/pedestrianCrossings/:id")(getPointAssetById(pedestrianCrossingService))
+  get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
+  delete("/pedestrianCrossings/:id")(deletePointAsset(pedestrianCrossingService))
+  put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
+  post("/pedestrianCrossings")(createNewPointAsset(pedestrianCrossingService))
+
+  get("/obstacles")(getPointAssets(obstacleService))
+  get("/obstacles/:id")(getPointAssetById(obstacleService))
+  get("/obstacles/floating")(getFloatingPointAssets(obstacleService))
+  delete("/obstacles/:id")(deletePointAsset(obstacleService))
+  put("/obstacles/:id")(updatePointAsset(obstacleService))
+  post("/obstacles")(createNewPointAsset(obstacleService))
+
+
+  private def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
 
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
@@ -605,10 +620,7 @@ with GZipSupport {
     service.getByBoundingBox(user, bbox)
   }
 
-  get("/pedestrianCrossings")(getPointAssets(pedestrianCrossingService))
-  get("/obstacles")(getPointAssets(obstacleService))
-
-  def getPointAssetById(service: PointAssetOperations) = {
+  private def getPointAssetById(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
     val asset = service.getById(params("id").toLong)
     asset match {
@@ -619,10 +631,7 @@ with GZipSupport {
     }
   }
 
-  get("/pedestrianCrossings/:id")(pedestrianCrossingService)
-  get("/obstacles/:id")(getPointAssetById(obstacleService))
-
-  def getFloatingPointAssets(service: PointAssetOperations) = {
+  private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None
@@ -631,20 +640,14 @@ with GZipSupport {
     service.getFloatingAssets(includedMunicipalities)
   }
 
-  get("/pedestrianCrossings/floating")(getFloatingPointAssets(pedestrianCrossingService))
-  get("/obstacles/floating")(getFloatingPointAssets(obstacleService))
-
-  def deletePointAsset(service: PointAssetOperations): Long = {
+  private def deletePointAsset(service: PointAssetOperations): Long = {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     service.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
     service.expire(id, user.username)
   }
 
-  delete("/pedestrianCrossings/:id") { deletePointAsset(pedestrianCrossingService) }
-  delete("/obstacles/:id") { deletePointAsset(obstacleService) }
-
-  def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
+  private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
@@ -653,10 +656,7 @@ with GZipSupport {
     }
   }
 
-  put("/pedestrianCrossings/:id")(updatePointAsset(pedestrianCrossingService))
-  put("/obstacles/:id")(updatePointAsset(obstacleService))
-
-  def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
+  private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
@@ -664,7 +664,4 @@ with GZipSupport {
       service.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
-
-  post("/pedestrianCrossings")(createNewPointAsset(pedestrianCrossingService))
-  post("/obstacles")(createNewPointAsset(obstacleService))
 }
