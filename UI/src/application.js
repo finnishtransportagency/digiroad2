@@ -487,7 +487,8 @@ var URLRouter = function(map, backend, models) {
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
       formLabels: {
         singleFloatingAssetLabel: 'rautatien tasoristeyksen',
-        manyFloatingAssetsLabel: 'tasoristeykset'
+        manyFloatingAssetsLabel: 'tasoristeykset',
+        newAssetLabel: 'tasoristeys'
       }
     }
   ];
