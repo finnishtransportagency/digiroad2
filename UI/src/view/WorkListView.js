@@ -36,7 +36,8 @@
       linkProperty: 'Korjattavien linkkien lista',
       massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
       pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
-      obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat'
+      obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
+      railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +

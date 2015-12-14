@@ -27,7 +27,8 @@ var URLRouter = function(map, backend, models) {
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
       'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
-      'work-list/obstacles': 'obstacleWorkList'
+      'work-list/obstacles': 'obstacleWorkList',
+      'work-list/railwayCrossings': 'railwayCrossingWorkList'
     },
 
     massTransitStop: function(id) {
@@ -108,6 +109,9 @@ var URLRouter = function(map, backend, models) {
 
     obstacleWorkList: function() {
       eventbus.trigger('workList:select', 'obstacles', backend.getFloatingObstacles());
+    },
+    railwayCrossingWorkList: function() {
+      eventbus.trigger('workList:select', 'railwayCrossings', backend.getFloatingRailwayCrossings());
     }
   });
 
@@ -481,7 +485,7 @@ var URLRouter = function(map, backend, models) {
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
       formLabels: {
         singleFloatingAssetLabel: 'rautatien tasoristeyksen',
-        manyFloatingAssetsLabel: 'rautatien tasoristeykset'
+        manyFloatingAssetsLabel: 'tasoristeykset'
       }
     }
   ];
