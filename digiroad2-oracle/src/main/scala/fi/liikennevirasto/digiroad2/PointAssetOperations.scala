@@ -176,21 +176,16 @@ object PointAssetOperations {
     val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {
       case None => true
-      case Some((municipalityCode, geometry)) =>
-        val calculatedPoint = GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue)
-
-        municipalityCode != persistedAsset.municipalityCode ||
-          !(coordinatesWithinThreshold(Some(point), calculatedPoint, DISTANCE_BETWEEN_OLD_AND_CALCULATED_POINT_THRESHOLD_IN_METERS) &&
-            coordinatesWithinThreshold(Some(geometry.last), calculatedPoint, DISTANCE_TO_GEOMETRY))
+      case Some((municipalityCode, geometry)) => municipalityCode != persistedAsset.municipalityCode ||
+        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue))
     }
   }
 
-  private val DISTANCE_BETWEEN_OLD_AND_CALCULATED_POINT_THRESHOLD_IN_METERS = 3
-  private val DISTANCE_TO_GEOMETRY = 1
+  private val FLOAT_THRESHOLD_IN_METERS = 3
 
-  def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point], threshold: Int): Boolean = {
+  def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
     (pt1, pt2) match {
-      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= threshold
+      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
       case _ => false
     }
   }

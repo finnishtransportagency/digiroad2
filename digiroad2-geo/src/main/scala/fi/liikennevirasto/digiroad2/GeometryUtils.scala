@@ -78,8 +78,9 @@ object GeometryUtils {
         if (acc.result.isDefined) {
           acc
         } else {
-          val distance = point.distanceTo(acc.previousPoint)
-          if (acc.remainingMeasure <= distance) {
+          val distance = Math.round(point.distanceTo(acc.previousPoint))
+          val remainingMeasure = Math.round(acc.remainingMeasure)
+          if (remainingMeasure <= distance) {
             val directionVector = (point - acc.previousPoint).normalize()
             val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
             AlgorithmState(point, acc.remainingMeasure - distance, result)
@@ -88,13 +89,7 @@ object GeometryUtils {
           }
         }
       }
-      state match {
-        case AlgorithmState(point, remainingMeasure, None) =>
-          val previousPoint = geometry(-2)
-          val directionVector = (point - previousPoint).normalize()
-          Some(previousPoint + directionVector.scale(remainingMeasure))
-        case _ => state.result
-      }
+      state.result
     }
   }
 
