@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{IncomingPointAsset, Point, PersistedPointAsset}
+import fi.liikennevirasto.digiroad2.{IncomingObstacle, IncomingPointAsset, Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.joda.time.DateTime
@@ -20,7 +20,6 @@ case class Obstacle(id: Long, mmlId: Long,
                     modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 object OracleObstacleDao {
-
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val query =
@@ -55,16 +54,16 @@ object OracleObstacleDao {
     }
   }
 
-  def create(obstacle: Obstacle, username: String): Long = {
+  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 220, $username, sysdate, ${obstacle.municipalityCode})
+        values ($id, 220, $username, sysdate, $municipality)
 
         into lrm_position(id, start_measure, mml_id)
-        values ($lrmPositionId, ${obstacle.mValue}, ${obstacle.mmlId})
+        values ($lrmPositionId, $mValue, ${obstacle.mmlId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -76,16 +75,16 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: Obstacle) = {
-    sqlu""" update asset set municipality_code = ${obstacle.municipalityCode} where id = $id """.execute
-    updateAssetModified(id, obstacle.modifiedBy.get).execute
+  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int) = {
+    sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
+    updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
     updateSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
 
     sqlu"""
       update lrm_position
        set
-       start_measure = ${obstacle.mValue},
+       start_measure = $mValue,
        mml_id = ${obstacle.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
