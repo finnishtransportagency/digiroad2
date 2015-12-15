@@ -53,7 +53,7 @@
       selectedAsset.set({ toBeDeleted: eventTarget.attr('checked') === 'checked' });
     });
 
-    rootElement.find('input[type="text"]').on('change', function(event) {
+    rootElement.find('input[type="text"]').on('input change', function(event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({ name: eventTarget.val() });
     });
