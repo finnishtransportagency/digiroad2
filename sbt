@@ -1,5 +1,5 @@
 #!/bin/sh
-if [[ -e ~/.sbt.opts ]]; then
+if [ -e ~/.sbt.opts ]; then
   source ~/.sbt.opts
 else
   SBT_OPTS="-Xms1512M -Xmx2536M -Xss1M -XX:MaxPermSize=1024M"
