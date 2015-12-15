@@ -84,7 +84,8 @@ object OracleRailwayCrossingDao {
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
-    updateTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
+    deleteTextProperty(id, getNamePropertyId).execute
+    insertTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
 
     sqlu"""
       update lrm_position
