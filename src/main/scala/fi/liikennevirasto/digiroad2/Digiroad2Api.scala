@@ -615,6 +615,7 @@ with GZipSupport {
   get("/railwayCrossings")(getPointAssets(railwayCrossingService))
   get("/railwayCrossings/:id")(getPointAssetById(railwayCrossingService))
   get("/railwayCrossings/floating")(getFloatingPointAssets(railwayCrossingService))
+  put("/railwayCrossings/:id")(updatePointAsset(railwayCrossingService))
   delete("/railwayCrossings/:id")(deletePointAsset(railwayCrossingService))
 
   private def getPointAssets(service: PointAssetOperations) = {
@@ -653,6 +654,7 @@ with GZipSupport {
   }
 
   private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
+    println("*** foo")
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]

@@ -53,6 +53,11 @@
       selectedAsset.set({ toBeDeleted: eventTarget.attr('checked') === 'checked' });
     });
 
+    rootElement.find('input[type="text"]').on('change', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ name: eventTarget.val() });
+    });
+
     rootElement.find('select').on('change', function(event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
