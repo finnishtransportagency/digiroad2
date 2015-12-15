@@ -657,8 +657,9 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
-      service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+    roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId) match {
+      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.mmlId} does not exist"))
+      case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
   }
 
