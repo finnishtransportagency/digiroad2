@@ -19,8 +19,12 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(any[Long])).thenReturn(Seq(
+  when(mockVVHClient.fetchVVHRoadlink(388553074)).thenReturn(Seq(
     VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
+
+  when(mockVVHClient.fetchVVHRoadlink(1191950690)).thenReturn(Seq(
+    VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
   val service = new ObstacleService(mockVVHClient) {
@@ -107,6 +111,16 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedObstacle.obstacleType should equal(2)
       updatedObstacle.id should equal(obstacle.id)
       updatedObstacle.modifiedBy should equal(Some("unit_test"))
+    }
+  }
+
+  test("Asset can be outside link within treshold") {
+    runWithRollback {
+      val id = service.create(NewObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
+
+      val asset = service.getById(id).get
+
+      asset.floating should be(false)
     }
   }
 }
