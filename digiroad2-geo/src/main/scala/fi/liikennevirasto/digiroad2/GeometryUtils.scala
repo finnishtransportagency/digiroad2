@@ -80,7 +80,7 @@ object GeometryUtils {
         } else {
           val distance = point.distanceTo(acc.previousPoint)
           val remainingMeasure = acc.remainingMeasure
-          if (distance - remainingMeasure > 0.01) {
+          if (remainingMeasure <= distance + 0.01) {
             val directionVector = (point - acc.previousPoint).normalize()
             val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
             AlgorithmState(point, acc.remainingMeasure - distance, result)
