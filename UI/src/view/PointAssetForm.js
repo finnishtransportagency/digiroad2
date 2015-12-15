@@ -59,8 +59,13 @@
     });
 
     rootElement.find('select').on('change', function(event) {
+      var asset = selectedAsset.get();
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
+      if (asset.obstacleType) {
+        selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
+      } else if (asset.safetyEquipment) {
+        selectedAsset.set({ safetyEquipment: parseInt(eventTarget.val(), 10) });
+      }
     });
 
     rootElement.find('.pointasset button.save').on('click', function() {
