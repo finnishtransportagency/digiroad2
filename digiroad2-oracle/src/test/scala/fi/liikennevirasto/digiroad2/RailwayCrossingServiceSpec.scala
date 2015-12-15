@@ -10,9 +10,6 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
 
-/**
-  * Created by venholat on 14.12.2015.
-  */
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   val testUser = User(
     id = 1,
