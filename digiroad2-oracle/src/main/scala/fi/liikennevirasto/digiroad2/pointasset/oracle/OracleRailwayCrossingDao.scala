@@ -14,7 +14,7 @@ case class RailwayCrossing(id: Long, mmlId: Long,
                            mValue: Double, floating: Boolean,
                            municipalityCode: Int,
                            safetyEquipment: Int,
-                           name: String,
+                           name: Option[String],
                            createdBy: Option[String] = None,
                            createdDateTime: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
@@ -47,7 +47,7 @@ object OracleRailwayCrossingDao {
       val floating = r.nextBoolean()
       val municipalityCode = r.nextInt()
       val safetyEquipment = r.nextInt()
-      val name = r.nextString()
+      val name = r.nextStringOption()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
@@ -75,7 +75,7 @@ object OracleRailwayCrossingDao {
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
     insertSingleChoiceProperty(id, getSafetyEquipmentPropertyId, asset.safetyEquipment).execute
-    insertTextProperty(id, getNamePropertyId, asset.name).execute
+    asset.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
     id
   }
 
@@ -85,7 +85,7 @@ object OracleRailwayCrossingDao {
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
     updateSingleChoiceProperty(id, getSafetyEquipmentPropertyId, railwayCrossing.safetyEquipment).execute
     deleteTextProperty(id, getNamePropertyId).execute
-    insertTextProperty(id, getNamePropertyId, railwayCrossing.name).execute
+    railwayCrossing.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
 
     sqlu"""
       update lrm_position

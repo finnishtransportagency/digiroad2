@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
-case class IncomingRailwayCrossing(lon: Double, lat: Double, mmlId: Long, safetyEquipment: Int, name: String) extends IncomingPointAsset
+case class IncomingRailwayCrossing(lon: Double, lat: Double, mmlId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
 
 class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
