@@ -72,8 +72,10 @@ object GeometryUtils {
 
   def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
-    if (geometry.size < 2 || measure < 0) { None }
-    else {
+
+    if (geometry.size < 2 || measure < 0) {
+      None
+    } else {
       val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
         if (acc.result.isDefined) {
           acc
@@ -90,9 +92,9 @@ object GeometryUtils {
       }
       state match {
         case AlgorithmState(point, remainingMeasure, None) =>
-          val previousPoint = geometry(-2)
+          val previousPoint = geometry(geometry.size - 2)
           val directionVector = (point - previousPoint).normalize()
-          Some(previousPoint + directionVector.scale(remainingMeasure))
+          Some(point + directionVector.scale(remainingMeasure))
         case _ => state.result
       }
     }

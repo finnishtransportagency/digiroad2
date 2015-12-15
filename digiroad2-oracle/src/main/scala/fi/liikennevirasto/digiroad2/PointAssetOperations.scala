@@ -188,7 +188,7 @@ object PointAssetOperations {
   private val DISTANCE_BETWEEN_OLD_AND_CALCULATED_POINT_THRESHOLD_IN_METERS = 3
   private val DISTANCE_TO_GEOMETRY = 1
 
-  def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point], threshold: Int): Boolean = {
+  def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point], threshold: Int = DISTANCE_BETWEEN_OLD_AND_CALCULATED_POINT_THRESHOLD_IN_METERS): Boolean = {
     (pt1, pt2) match {
       case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= threshold
       case _ => false

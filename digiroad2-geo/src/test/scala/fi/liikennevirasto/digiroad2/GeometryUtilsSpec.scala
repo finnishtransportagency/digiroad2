@@ -108,10 +108,10 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     point should be(None)
   }
 
-  test("Linear reference point outside geometry should be undefined") {
+  test("Linear reference point outside geometry should not be undefined") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val point: Option[Point] = calculatePointFromLinearReference(linkGeometry, 1.5)
-    point should be(None)
+    point should be(Some(Point(1.5, 0.0, 0.0)))
   }
 
   test("Calculate length of two point geometry") {
