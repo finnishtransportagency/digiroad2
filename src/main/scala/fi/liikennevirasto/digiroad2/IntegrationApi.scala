@@ -69,6 +69,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
+  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
   before() {
     basicAuth
   }
@@ -206,12 +208,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
     linearAssets.map { link =>
-      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(
+      val timeStamps: AssetTimeStamps = AssetTimeStamps(
         Modification(link.createdDateTime, None),
         Modification(link.modifiedDateTime, None))
       Map("id" -> link.id,
@@ -226,8 +227,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
-    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       val timeStamps: AssetTimeStamps = AssetTimeStamps(
         Modification(pedestrianCrossing.createdDateTime, None),
@@ -242,8 +241,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
-    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
     crossings.filterNot(_.floating).map { railwayCrossing =>
       val timeStamps: AssetTimeStamps = AssetTimeStamps(
         Modification(railwayCrossing.createdDateTime, None),
@@ -260,8 +257,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
-    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
     obstacles.filterNot(_.floating).map { obstacle =>
       val timeStamps: AssetTimeStamps = AssetTimeStamps(
         Modification(obstacle.createdDateTime, None),
