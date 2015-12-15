@@ -31,7 +31,6 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     }
     id
   }
-
 }
 
 
