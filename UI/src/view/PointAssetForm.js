@@ -149,8 +149,8 @@
           '    </div>' +
           '    <div class="form-group editable">' +
           '        <label class="control-label">' + 'Nimi' + '</label>' +
-          '        <p class="form-control-static">' + asset.name + '</p>' +
-          '        <input type="text" class="form-control" value="' + asset.name  + '">' +
+          '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
+          '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
           '    </div>';
     } else {
       return '';
