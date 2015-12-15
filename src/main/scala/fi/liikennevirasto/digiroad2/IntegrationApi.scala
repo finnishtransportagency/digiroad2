@@ -8,6 +8,8 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, PedestrianCrossing, RailwayCrossing}
+import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -68,6 +70,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
+  case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+
   before() {
     basicAuth
   }
@@ -79,13 +83,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       .getOrElse(""))
   }
 
-  def extractModifier(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
+  def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
     "muokannut_viimeksi" ->  massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
       .getOrElse(""))
   }
 
-  private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
+  private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
     def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
@@ -97,21 +101,21 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
     def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
-    def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
-    def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
-    def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-    def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
-    def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
+    def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
+    def extractMmlId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "mml_id" -> Some(massTransitStop.mmlId) }
+    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop: MassTransitStopWithTimeStamps) => Map(
+        case (massTransitStop: PersistedMassTransitStop) => Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
           "properties" -> Map(
             extractModifier(massTransitStop),
-            extractModificationTime(massTransitStop),
+            latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
@@ -149,7 +153,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       })
   }
 
-  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
+  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[PersistedMassTransitStop] = {
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
@@ -162,7 +166,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "mmlId" -> speedLimit.mmlId,
-        extractModificationTime(SpeedLimitTimeStamps(speedLimit.id, Modification(speedLimit.createdDateTime, speedLimit.createdBy), Modification(speedLimit.modifiedDateTime, speedLimit.modifiedBy)))
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
       )
     }
   }
@@ -205,55 +209,59 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   }
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
-    linearAssets.map { link =>
-      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(
-        Modification(link.createdDateTime, None),
-        Modification(link.modifiedDateTime, None))
-      Map("id" -> link.id,
-        "points" -> link.geometry,
-        "value" -> valueToApi(link.value),
-        "side_code" -> link.sideCode.value,
-        "mmlId" -> link.mmlId,
-        "startMeasure" -> link.startMeasure,
-        "endMeasure" -> link.endMeasure,
-         extractModificationTime(timeStamps))
+    linearAssets.map { asset =>
+      Map("id" -> asset.id,
+        "points" -> asset.geometry,
+        "value" -> valueToApi(asset.value),
+        "side_code" -> asset.sideCode.value,
+        "mmlId" -> asset.mmlId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime))
     }
   }
 
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
-    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(pedestrianCrossing.createdAt, None),
-        Modification(pedestrianCrossing.modifiedAt, None))
-
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "mmlId" -> pedestrianCrossing.mmlId,
         "m_value" -> pedestrianCrossing.mValue,
-        extractModificationTime(timeStamps))
+        latestModificationTime(pedestrianCrossing.createdDateTime, pedestrianCrossing.modifiedDateTime))
+    }
+  }
+
+  def latestModificationTime(createdDateTime: Option[DateTime], modifiedDateTime: Option[DateTime]): (String, String) = {
+    "muokattu_viimeksi" ->
+      modifiedDateTime
+        .orElse(createdDateTime)
+        .map(DateTimePropertyFormat.print)
+        .getOrElse("")
+  }
+
+  def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
+    crossings.filterNot(_.floating).map { railwayCrossing =>
+      Map("id" -> railwayCrossing.id,
+        "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
+        "mmlId" -> railwayCrossing.mmlId,
+        "m_value" -> railwayCrossing.mValue,
+        "safetyEquipment" -> railwayCrossing.safetyEquipment,
+        "name" -> railwayCrossing.name,
+        latestModificationTime(railwayCrossing.createdDateTime, railwayCrossing.modifiedDateTime))
     }
   }
 
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
-    case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
     obstacles.filterNot(_.floating).map { obstacle =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(obstacle.createdAt, None),
-        Modification(obstacle.modifiedAt, None))
-
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
         "mmlId" -> obstacle.mmlId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
-        extractModificationTime(timeStamps))
+        latestModificationTime(obstacle.createdDateTime, obstacle.modifiedDateTime))
     }
   }
 
@@ -288,7 +296,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
         case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
-        case "railway_crossings" => ReadOnlyPointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
+        case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)

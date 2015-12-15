@@ -19,20 +19,12 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
                               validityPeriod: Option[String], floating: Boolean,
                               propertyData: Seq[Property]) extends FloatingAsset
 
-case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
-                                         bearing: Option[Int], validityDirection: Int, municipalityCode: Int,
-                                         validityPeriod: String, stopTypes: Seq[Int],
-                                         floating: Boolean,
-                                         created: Modification, modified: Modification,
-                                         mmlId: Option[Long], mValue: Option[Double],
-                                         propertyData: Seq[Property]) extends PointAsset with RoadLinkStop with TimeStamps
-
 case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property]) extends PersistedPointAsset
+                                    propertyData: Seq[Property]) extends PersistedPointAsset with TimeStamps
 
 case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
@@ -41,7 +33,6 @@ case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, poi
 
 trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
-  type Asset = MassTransitStopWithTimeStamps
   type PersistedAsset = PersistedMassTransitStop
 
   val spatialAssetDao: OracleSpatialAssetDao
@@ -99,15 +90,8 @@ trait MassTransitStopService extends PointAssetOperations {
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
-  override def persistedAssetToAsset(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
-    MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
-      lon = persistedStop.lon, lat = persistedStop.lat,
-      bearing = persistedStop.bearing, validityDirection = persistedStop.validityDirection.get,
-      municipalityCode = persistedStop.municipalityCode, validityPeriod = persistedStop.validityPeriod.get,
-      stopTypes = persistedStop.stopTypes, floating = floating,
-      created = persistedStop.created, modified = persistedStop.modified,
-      mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
-      propertyData = persistedStop.propertyData)
+  override def setFloating(persistedStop: PersistedMassTransitStop, floating: Boolean): PersistedMassTransitStop = {
+    persistedStop.copy(floating = floating)
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {

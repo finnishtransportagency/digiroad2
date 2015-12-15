@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{Private, BoundingRectangle, Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedPedestrianCrossing, PersistedObstacle}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -29,7 +28,6 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   val service = new ObstacleService(mockVVHClient) {
     override def withDynTransaction[T](f: => T): T = f
-
     override def withDynSession[T](f: => T): T = f
   }
 
@@ -77,7 +75,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val id = service.create(NewObstacle(2, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -86,7 +84,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset should be(
-        PersistedObstacle(
+        Obstacle(
           id = id,
           mmlId = 388553075,
           lon = 2,
@@ -103,7 +101,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle") {
     runWithRollback {
       val obstacle = service.getById(600046).get
-      val updated = NewObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
+      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
 
       service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test")
       val updatedObstacle = service.getById(600046).get
@@ -116,7 +114,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Asset can be outside link within treshold") {
     runWithRollback {
-      val id = service.create(NewObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
 
       val asset = service.getById(id).get
 

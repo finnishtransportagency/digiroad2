@@ -22,6 +22,7 @@ case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double,
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
+                   val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -611,6 +612,12 @@ with GZipSupport {
   put("/obstacles/:id")(updatePointAsset(obstacleService))
   post("/obstacles")(createNewPointAsset(obstacleService))
 
+  get("/railwayCrossings")(getPointAssets(railwayCrossingService))
+  get("/railwayCrossings/:id")(getPointAssetById(railwayCrossingService))
+  get("/railwayCrossings/floating")(getFloatingPointAssets(railwayCrossingService))
+  put("/railwayCrossings/:id")(updatePointAsset(railwayCrossingService))
+  delete("/railwayCrossings/:id")(deletePointAsset(railwayCrossingService))
+  post("/railwayCrossings")(createNewPointAsset(railwayCrossingService))
 
   private def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
@@ -651,8 +658,9 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId)) {
-      service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+    roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId) match {
+      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.mmlId} does not exist"))
+      case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
   }
 

@@ -53,9 +53,19 @@
       selectedAsset.set({ toBeDeleted: eventTarget.attr('checked') === 'checked' });
     });
 
-    rootElement.find('select').on('change', function(event) {
+    rootElement.find('input[type="text"]').on('input change', function(event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
+      selectedAsset.set({ name: eventTarget.val() });
+    });
+
+    rootElement.find('select').on('change', function(event) {
+      var asset = selectedAsset.get();
+      var eventTarget = $(event.currentTarget);
+      if (asset.obstacleType) {
+        selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
+      } else if (asset.safetyEquipment) {
+        selectedAsset.set({ safetyEquipment: parseInt(eventTarget.val(), 10) });
+      }
     });
 
     rootElement.find('.pointasset button.save').on('click', function() {
@@ -106,6 +116,14 @@
       1: 'Suljettu yhteys',
       2: 'Avattava puomi'
     };
+    var safetyEquipments = {
+      1: 'Rautatie ei käytössä',
+      2: 'Ei turvalaitetta',
+      3: 'Valo/äänimerkki',
+      4: 'Puolipuomi',
+      5: 'Kokopuomi'
+    };
+
     if (asset.obstacleType) {
       return '' +
         '    <div class="form-group editable">' +
@@ -116,9 +134,28 @@
         '        <option value="2" '+ (asset.obstacleType === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
         '      </select>' +
         '    </div>';
+    } else if (asset.safetyEquipment) {
+      return '' +
+          '    <div class="form-group editable">' +
+          '      <label class="control-label">' + 'Turvavarustus' + '</label>' +
+          '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
+          '      <select class="form-control" style="display:none">  ' +
+          '        <option value="1" '+ (asset.safetyEquipment === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
+          '        <option value="2" '+ (asset.safetyEquipment === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
+          '        <option value="3" '+ (asset.safetyEquipment === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
+          '        <option value="4" '+ (asset.safetyEquipment === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
+          '        <option value="5" '+ (asset.safetyEquipment === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
+          '      </select>' +
+          '    </div>' +
+          '    <div class="form-group editable">' +
+          '        <label class="control-label">' + 'Nimi' + '</label>' +
+          '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
+          '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+          '    </div>';
     } else {
       return '';
     }
+
   }
 
   function renderButtons() {
@@ -143,7 +180,7 @@
   function renderLinktoWorkList(layerName, localizedTexts) {
     $('#information-content').append('' +
       '<div class="form form-horizontal">' +
-      '<a id="point-asset-work-list-link" class="floating-pedestrian-crossings" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
+      '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
   }
 })(this);

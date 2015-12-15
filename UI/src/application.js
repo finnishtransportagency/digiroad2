@@ -22,11 +22,13 @@ var URLRouter = function(map, backend, models) {
       'speedLimit/:mmlId': 'speedLimit',
       'pedestrianCrossings/:id': 'pedestrianCrossings',
       'obstacles/:id': 'obstacles',
+      'railwayCrossings/:id': 'railwayCrossings',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
       'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
-      'work-list/obstacles': 'obstacleWorkList'
+      'work-list/obstacles': 'obstacleWorkList',
+      'work-list/railwayCrossings': 'railwayCrossingWorkList'
     },
 
     massTransitStop: function(id) {
@@ -81,6 +83,14 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
+    railwayCrossings: function(id) {
+      applicationModel.selectLayer('railwayCrossings');
+      backend.getPointAssetById(id, 'railwayCrossings').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedRailwayCrossing.open(result);
+      });
+    },
+
     speedLimitWorkList: function() {
       eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
     },
@@ -99,6 +109,9 @@ var URLRouter = function(map, backend, models) {
 
     obstacleWorkList: function() {
       eventbus.trigger('workList:select', 'obstacles', backend.getFloatingObstacles());
+    },
+    railwayCrossingWorkList: function() {
+      eventbus.trigger('workList:select', 'railwayCrossings', backend.getFloatingRailwayCrossings());
     }
   });
 
@@ -151,7 +164,8 @@ var URLRouter = function(map, backend, models) {
     prohibition: 190,
     pedestrianCrossings: 200,
     hazardousMaterialTransportProhibition: 210,
-    obstacles: 220
+    obstacles: 220,
+    railwayCrossings: 230
   };
 
   var linearAssetSpecs = [
@@ -462,6 +476,20 @@ var URLRouter = function(map, backend, models) {
         manyFloatingAssetsLabel: 'esterakennelmat',
         newAssetLabel: 'esterakennelma'
       }
+    },
+    {
+      typeId: 230,
+      layerName: 'railwayCrossings',
+      title: 'Rautatien tasoristeys',
+      newAsset: { safetyEquipment: 1 },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+      formLabels: {
+        singleFloatingAssetLabel: 'tasoristeyksen',
+        manyFloatingAssetsLabel: 'tasoristeykset',
+        newAssetLabel: 'tasoristeys'
+      }
     }
   ];
 
@@ -628,7 +656,8 @@ var URLRouter = function(map, backend, models) {
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
       var selectedPedestrianCrossing = _(pointAssets).find({ layerName: 'pedestrianCrossings' }).selectedPointAsset;
       var selectedObstacle = _(pointAssets).find({ layerName:'obstacles' }).selectedPointAsset;
-      new URLRouter(map, backend, _.merge({}, models, { selectedPedestrianCrossing: selectedPedestrianCrossing }, { selectedObstacle: selectedObstacle }));
+      var selectedRailwayCrossing = _(pointAssets).find({ layerName:'railwayCrossings' }).selectedPointAsset;
+      new URLRouter(map, backend, _.merge({}, models, { selectedPedestrianCrossing: selectedPedestrianCrossing }, { selectedObstacle: selectedObstacle }, { selectedRailwayCrossing: selectedRailwayCrossing }));
       eventbus.trigger('application:initialized');
     }
   };
@@ -750,6 +779,7 @@ var URLRouter = function(map, backend, models) {
         .concat(getLinearAsset(assetType.winterSpeedLimit)),
       [massTransitBox]
         .concat(getPointAsset(assetType.obstacles))
+        .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.pedestrianCrossings)),
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))

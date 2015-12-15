@@ -9,14 +9,14 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class PersistedPedestrianCrossing(id: Long, mmlId: Long,
-                                       lon: Double, lat: Double,
-                                       mValue: Double, floating: Boolean,
-                                       municipalityCode: Int,
-                                       createdBy: Option[String] = None,
-                                       createdDateTime: Option[DateTime] = None,
-                                       modifiedBy: Option[String] = None,
-                                       modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+case class PedestrianCrossing(id: Long, mmlId: Long,
+                              lon: Double, lat: Double,
+                              mValue: Double, floating: Boolean,
+                              municipalityCode: Int,
+                              createdBy: Option[String] = None,
+                              createdDateTime: Option[DateTime] = None,
+                              modifiedBy: Option[String] = None,
+                              modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
 
 case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
@@ -55,7 +55,7 @@ object OraclePedestrianCrossingDao {
     id
   }
 
-  def fetchByFilter(queryFilter: String => String): Seq[PersistedPedestrianCrossing] = {
+  def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val query =
       """
         select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
@@ -64,10 +64,10 @@ object OraclePedestrianCrossingDao {
         join lrm_position pos on al.position_id = pos.id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[PersistedPedestrianCrossing](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[PersistedPedestrianCrossing] {
+  implicit val getPointAsset = new GetResult[PedestrianCrossing] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val mmlId = r.nextLong()
@@ -80,7 +80,7 @@ object OraclePedestrianCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PersistedPedestrianCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PedestrianCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 }

@@ -46,9 +46,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Calculate mass transit stop validity periods") {
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      massTransitStops.find(_.id == 300000).map(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Current))
-      massTransitStops.find(_.id == 300001).map(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Past))
-      massTransitStops.find(_.id == 300003).map(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Future))
+      massTransitStops.find(_.id == 300000).flatMap(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Current))
+      massTransitStops.find(_.id == 300001).flatMap(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Past))
+      massTransitStops.find(_.id == 300003).flatMap(_.validityPeriod) should be(Some(MassTransitStopValidityPeriod.Future))
     }
   }
 
@@ -226,7 +226,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
-      massTransitStop.validityPeriod should be(MassTransitStopValidityPeriod.Current)
+      massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
