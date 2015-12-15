@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, PedestrianCrossing, RailwayCrossing}
+import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -114,7 +115,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
           "properties" -> Map(
             extractModifier(massTransitStop),
-            extractModificationTime(massTransitStop),
+            latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
@@ -165,7 +166,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "mmlId" -> speedLimit.mmlId,
-        extractModificationTime(SpeedLimitTimeStamps(speedLimit.id, Modification(speedLimit.createdDateTime, speedLimit.createdBy), Modification(speedLimit.modifiedDateTime, speedLimit.modifiedBy)))
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
       )
     }
   }
@@ -211,63 +212,56 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
     val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
 
-    linearAssets.map { link =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(link.createdDateTime, None),
-        Modification(link.modifiedDateTime, None))
-      Map("id" -> link.id,
-        "points" -> link.geometry,
-        "value" -> valueToApi(link.value),
-        "side_code" -> link.sideCode.value,
-        "mmlId" -> link.mmlId,
-        "startMeasure" -> link.startMeasure,
-        "endMeasure" -> link.endMeasure,
-         extractModificationTime(timeStamps))
+    linearAssets.map { asset =>
+      Map("id" -> asset.id,
+        "points" -> asset.geometry,
+        "value" -> valueToApi(asset.value),
+        "side_code" -> asset.sideCode.value,
+        "mmlId" -> asset.mmlId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime))
     }
   }
 
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(pedestrianCrossing.createdDateTime, None),
-        Modification(pedestrianCrossing.modifiedDateTime, None))
-
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "mmlId" -> pedestrianCrossing.mmlId,
         "m_value" -> pedestrianCrossing.mValue,
-        extractModificationTime(timeStamps))
+        latestModificationTime(pedestrianCrossing.createdDateTime, pedestrianCrossing.modifiedDateTime))
     }
+  }
+
+  def latestModificationTime(createdDateTime: Option[DateTime], modifiedDateTime: Option[DateTime]): (String, String) = {
+    "muokattu_viimeksi" ->
+      modifiedDateTime
+        .orElse(createdDateTime)
+        .map(DateTimePropertyFormat.print)
+        .getOrElse("")
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(_.floating).map { railwayCrossing =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(railwayCrossing.createdDateTime, None),
-        Modification(railwayCrossing.modifiedDateTime, None))
-
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
         "mmlId" -> railwayCrossing.mmlId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
-        extractModificationTime(timeStamps))
+        latestModificationTime(railwayCrossing.createdDateTime, railwayCrossing.modifiedDateTime))
     }
   }
 
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
     obstacles.filterNot(_.floating).map { obstacle =>
-      val timeStamps: AssetTimeStamps = AssetTimeStamps(
-        Modification(obstacle.createdDateTime, None),
-        Modification(obstacle.modifiedDateTime, None))
-
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
         "mmlId" -> obstacle.mmlId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
-        extractModificationTime(timeStamps))
+        latestModificationTime(obstacle.createdDateTime, obstacle.modifiedDateTime))
     }
   }
 
