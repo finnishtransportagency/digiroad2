@@ -696,7 +696,7 @@ var URLRouter = function(map, backend, models) {
   };
 
   function getSelectedPointAsset(pointAssets, layerName) {
-    return _(pointAssets).find({ layerName: layerName }).selectedPointAsset
+    return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
   application.start = function(customBackend, withTileMaps, isExperimental) {
