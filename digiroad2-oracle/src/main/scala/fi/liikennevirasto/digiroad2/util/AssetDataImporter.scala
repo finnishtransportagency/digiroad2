@@ -884,6 +884,86 @@ class AssetDataImporter {
     }
   }
 
+  def importDirectionalTrafficSigns(database: DatabaseDef, vvhServiceHost: String): Unit = {
+    val query = sql"""
+         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.puoli, s.opas_teksti
+           from segm_opastaulu s
+           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+        """
+
+    val directionalTrafficSigns = database.withDynSession {
+      query.as[(Long, Long, Int, Seq[Point], Double, Double, Int, String)].list
+    }
+
+    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(directionalTrafficSigns.map(_._2).toSet)
+    val groupSize = 3000
+    val groupedTrafficSigns = directionalTrafficSigns.grouped(groupSize).toList
+    val totalGroupCount = groupedTrafficSigns.length
+
+    OracleDatabase.withDynTransaction {
+      val textPropertyId = sql"""select id from property where public_id = 'rautatien_tasoristeyksen_nimi'""".as[Long].first
+
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val textPropertyPS =  dynamicSession.prepareStatement(s"insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, $textPropertyId, ?)")
+
+      println(s"*** Importing ${directionalTrafficSigns.length} directional traffic signs in $totalGroupCount groups of $groupSize each")
+
+      groupedTrafficSigns.zipWithIndex.foreach { case (directionalTrafficSign, i) =>
+        val startTime = DateTime.now()
+
+        val assetGeometries = directionalTrafficSign.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, sideCode, text) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 240)
+          assetPS.setInt(3, municipalityCode)
+          val pointAsset = ImportedPointAsset(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
+          assetPS.setBoolean(4, PointAssetOperations.isFloating(
+            pointAsset,
+            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
+          ))
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, sideCode)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          val id = Sequences.nextPrimaryKeySeqValue
+          textPropertyPS.setLong(1, id)
+          textPropertyPS.setLong(2, assetId)
+          textPropertyPS.setString(3, text)
+          textPropertyPS.addBatch()
+
+          (assetId, points.head)
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        textPropertyPS.executeBatch()
+
+        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
+
+        println(s"*** Imported ${directionalTrafficSign.length} directional traffic signs in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      textPropertyPS.close()
+    }
+  }
+
+
   def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
