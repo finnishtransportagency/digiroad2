@@ -11,6 +11,7 @@ class ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.speedLimitProvider,
       Digiroad2Context.obstacleService,
       Digiroad2Context.railwayCrossingService,
+      Digiroad2Context.directionalTrafficSignService,
       Digiroad2Context.vvhClient,
       Digiroad2Context.massTransitStopService,
       Digiroad2Context.linearAssetService

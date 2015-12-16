@@ -23,6 +23,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
+                   val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -618,6 +619,8 @@ with GZipSupport {
   put("/railwayCrossings/:id")(updatePointAsset(railwayCrossingService))
   delete("/railwayCrossings/:id")(deletePointAsset(railwayCrossingService))
   post("/railwayCrossings")(createNewPointAsset(railwayCrossingService))
+
+  get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
 
   private def getPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
