@@ -465,7 +465,8 @@ var URLRouter = function(map, backend, models) {
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'suojatien',
         manyFloatingAssetsLabel: 'suojatiet',
@@ -480,7 +481,8 @@ var URLRouter = function(map, backend, models) {
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
         {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'esterakennelman',
         manyFloatingAssetsLabel: 'esterakennelmat',
@@ -494,7 +496,8 @@ var URLRouter = function(map, backend, models) {
       newAsset: { safetyEquipment: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'tasoristeyksen',
         manyFloatingAssetsLabel: 'tasoristeykset',
@@ -506,7 +509,9 @@ var URLRouter = function(map, backend, models) {
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu ja sen informaatio',
       legendValues: [
-        {symbolUrl: 'images/link-properties/arrow-drop-grey.svg', label: 'Opastustaulu'}],
+        {symbolUrl: 'images/link-properties/arrow-drop-grey.svg', label: 'Opastustaulu'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'opastustaulun',
         manyFloatingAssetsLabel: 'opastustaulut',

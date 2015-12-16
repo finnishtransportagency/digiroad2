@@ -7,7 +7,15 @@
         new OpenLayersRule().where('obstacleType').is(2).use({externalGraphic: 'images/point-assets/point_green.svg'}),
         new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
       ];
-    } else {
+    }
+    if (layerName === 'directionalTrafficSigns') {
+      featureTypeRules = [
+        new OpenLayersRule().where('floating').is(false).use({externalGraphic: 'images/link-properties/arrow-drop-grey.svg'}),
+        new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
+      ];
+
+    }
+    else {
       featureTypeRules = [
         new OpenLayersRule().where('floating').is(false).use({externalGraphic: 'images/point-assets/point_blue.svg'}),
         new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
