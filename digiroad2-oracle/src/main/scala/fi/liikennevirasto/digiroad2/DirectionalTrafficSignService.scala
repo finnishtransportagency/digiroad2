@@ -11,7 +11,7 @@ class DirectionalTrafficSignService(val vvhClient: VVHClient) extends PointAsset
   type IncomingAsset = IncomingDirectionalTrafficSign
   type PersistedAsset = DirectionalTrafficSign
 
-  override def typeId: Int = 230
+  override def typeId: Int = 240
 
   override def fetchPointAssets(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     OracleDirectionalTrafficSignDao.fetchByFilter(queryFilter)
