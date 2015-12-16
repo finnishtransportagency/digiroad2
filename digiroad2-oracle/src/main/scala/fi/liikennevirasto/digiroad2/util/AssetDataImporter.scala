@@ -901,7 +901,7 @@ class AssetDataImporter {
     val totalGroupCount = groupedTrafficSigns.length
 
     OracleDatabase.withDynTransaction {
-      val textPropertyId = sql"""select id from property where public_id = 'rautatien_tasoristeyksen_nimi'""".as[Long].first
+      val textPropertyId = sql"""select id from property where public_id = 'opastustaulun_teksti'""".as[Long].first
 
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
