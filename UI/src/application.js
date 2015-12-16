@@ -676,19 +676,23 @@ var URLRouter = function(map, backend, models) {
     if (localizedStrings) {
       setupProjections();
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
-      var selectedPedestrianCrossing = _(pointAssets).find({ layerName: 'pedestrianCrossings' }).selectedPointAsset;
-      var selectedObstacle = _(pointAssets).find({ layerName:'obstacles' }).selectedPointAsset;
-      var selectedRailwayCrossing = _(pointAssets).find({ layerName:'railwayCrossings' }).selectedPointAsset;
-      var selectedDirectionalTrafficSign = _(pointAssets).find({ layerName:'directionalTrafficSigns' }).selectedPointAsset;
+      var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
+      var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
+      var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
+      var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
-          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign }
+          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign  }
       ));
       eventbus.trigger('application:initialized');
     }
   };
+
+  function getSelectedPointAsset(pointAssets, layerName) {
+    return _(pointAssets).find({ layerName: layerName }).selectedPointAsset
+  }
 
   application.start = function(customBackend, withTileMaps, isExperimental) {
     var backend = customBackend || new Backend();
