@@ -69,8 +69,7 @@ object DataFixture {
       "kauniainen_paved_roads.sql",
       "kauniainen_pedestrian_crossings.sql",
       "kauniainen_obstacles.sql",
-      "kauniainen_railway_crossings.sql",
-      "kauniainen_directional_traffic_signs.sql"))
+      "kauniainen_railway_crossings.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
@@ -388,6 +387,7 @@ object DataFixture {
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         importMunicipalityCodes()
+        TrafficSignTestData.createTestData
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(taskPool)
