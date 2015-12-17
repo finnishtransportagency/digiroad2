@@ -66,26 +66,32 @@
     }
 
     function createFeature(asset) {
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), asset.lon, asset.lat);
+      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+      var rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
     }
 
     this.refreshView = function() {
-      redrawLinks(map);
-      collection.fetch(map.getExtent()).then(function(assets) {
-        if (selectedAsset.exists()) {
-          var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
-          assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
-        }
+      eventbus.once('roadLinks:fetched', function () {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+        collection.fetch(map.getExtent()).then(function(assets) {
+          if (selectedAsset.exists()) {
+            var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
+            assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
+          }
 
-        if (me.isStarted()) {
-          withDeactivatedSelectControl(function() {
-            me.removeLayerFeatures();
-          });
-          var features = _.map(assets, createFeature);
-          vectorLayer.addFeatures(features);
-          applySelection();
-        }
+          if (me.isStarted()) {
+            withDeactivatedSelectControl(function() {
+              me.removeLayerFeatures();
+            });
+            var features = _.map(assets, createFeature);
+            vectorLayer.addFeatures(features);
+            applySelection();
+          }
+        });
       });
+      roadCollection.fetch(map.getExtent());
     };
 
     this.removeLayerFeatures = function() {
@@ -192,13 +198,6 @@
       selectedAsset.place(asset);
 
       mapOverlay.show();
-    }
-
-    function redrawLinks(map) {
-      eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
-      });
-      roadCollection.fetch(map.getExtent());
     }
 
     function show(map) {

@@ -10,8 +10,20 @@
     }
     if (layerName === 'directionalTrafficSigns') {
       featureTypeRules = [
-        new OpenLayersRule().where('floating').is(false).use({externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg'}),
-        new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg'})
+        new OpenLayersRule().where('floating').is(false).use({
+          externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
+          rotation: '${rotation}',
+          graphicWidth: 30,
+          graphicHeight: 16,
+          graphicXOffset: -15,
+          graphicYOffset: -8 }),
+        new OpenLayersRule().where('floating').is(true).use({
+          externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg',
+          rotation: '${rotation}',
+          graphicWidth: 30,
+          graphicHeight: 16,
+          graphicXOffset: -15,
+          graphicYOffset: -8 })
       ];
 
     }
