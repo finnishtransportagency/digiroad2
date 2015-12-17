@@ -514,7 +514,8 @@ var URLRouter = function(map, backend, models) {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:saved', function() {
+    var pointAssetSaved = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saved'; }).join(' ');
+    eventbus.on('asset:saved ' + pointAssetSaved, function() {
       jQuery('.spinner-overlay').remove();
     });
     var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
