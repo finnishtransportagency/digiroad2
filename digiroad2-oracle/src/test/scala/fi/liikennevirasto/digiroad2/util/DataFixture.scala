@@ -276,29 +276,29 @@ object DataFixture {
     val blockedPassage = 1
     val barrierGate = 2
     println(s"\nCommencing obstacle import from conversion at time: ${DateTime.now()}")
-    dataImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 16, blockedPassage)
-    dataImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 3, barrierGate)
+    PointAssetImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 16, blockedPassage)
+    PointAssetImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 3, barrierGate)
     println(s"Obstacle import complete at time: ${DateTime.now()}")
     println()
   }
 
   def importRailwayCrossings(): Unit = {
     println(s"\nCommencing railway crossings import from conversion at time: ${DateTime.now()}")
-    dataImporter.importRailwayCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    PointAssetImporter.importRailwayCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Railway crossings import complete at time: ${DateTime.now()}")
     println()
   }
 
   def importDirectionalTrafficSigns(): Unit = {
     println(s"\nCommencing directional traffic signs import from conversion at time: ${DateTime.now()}")
-    dataImporter.importDirectionalTrafficSigns(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    PointAssetImporter.importDirectionalTrafficSigns(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Directional traffic signs import complete at time: ${DateTime.now()}")
     println()
   }
 
   def importPedestrianCrossings(): Unit = {
     println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
-    dataImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    PointAssetImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Pedestrian crossings import complete at time: ${DateTime.now()}")
     println()
   }
