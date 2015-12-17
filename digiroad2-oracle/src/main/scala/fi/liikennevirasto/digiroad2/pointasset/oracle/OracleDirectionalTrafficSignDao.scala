@@ -18,7 +18,8 @@ case class DirectionalTrafficSign(id: Long, mmlId: Long,
                                   createdBy: Option[String] = None,
                                   createdDateTime: Option[DateTime] = None,
                                   modifiedBy: Option[String] = None,
-                                  modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+                                  modifiedDateTime: Option[DateTime] = None,
+                                  geometry: Seq[Point] = Nil) extends PersistedPointAsset
 
 object OracleDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {

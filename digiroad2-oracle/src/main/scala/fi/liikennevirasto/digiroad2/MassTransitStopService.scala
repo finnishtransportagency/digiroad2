@@ -65,7 +65,7 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = persistedStop.propertyData)
   }
 
-  override def fetchPointAssets(queryFilter: String => String): Seq[PersistedMassTransitStop] = {
+  override def fetchPointAssets(queryFilter: String => String, roadLinks:Seq[VVHRoadlink]): Seq[PersistedMassTransitStop] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,

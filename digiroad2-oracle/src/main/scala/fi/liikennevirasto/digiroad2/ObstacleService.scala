@@ -11,7 +11,7 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
 
   override def typeId: Int = 220
 
-  override def fetchPointAssets(queryFilter: String => String): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: Obstacle, floating: Boolean) = {
     persistedAsset.copy(floating = floating)

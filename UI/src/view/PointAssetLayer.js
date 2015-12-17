@@ -66,32 +66,34 @@
     }
 
     function createFeature(asset) {
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), asset.lon, asset.lat);
-      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      var rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
+      var rotation = 0;
+      if (asset.geometry && asset.geometry.length > 0){
+        var bearing = geometrycalculator.getLineDirectionDegAngle({start: _.first(asset.geometry), end: _.last(asset.geometry)});
+        rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
+      }
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
     }
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
-        collection.fetch(map.getExtent()).then(function(assets) {
-          if (selectedAsset.exists()) {
-            var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
-            assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
-          }
-
-          if (me.isStarted()) {
-            withDeactivatedSelectControl(function() {
-              me.removeLayerFeatures();
-            });
-            var features = _.map(assets, createFeature);
-            vectorLayer.addFeatures(features);
-            applySelection();
-          }
-        });
       });
       roadCollection.fetch(map.getExtent());
+      collection.fetch(map.getExtent()).then(function(assets) {
+        if (selectedAsset.exists()) {
+          var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
+          assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
+        }
+
+        if (me.isStarted()) {
+          withDeactivatedSelectControl(function() {
+            me.removeLayerFeatures();
+          });
+          var features = _.map(assets, createFeature);
+          vectorLayer.addFeatures(features);
+          applySelection();
+        }
+      });
     };
 
     this.removeLayerFeatures = function() {

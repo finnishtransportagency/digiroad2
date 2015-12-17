@@ -623,7 +623,7 @@ with GZipSupport {
   get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
   post("/directionalTrafficSigns")(createNewPointAsset(directionalTrafficSignService))
 
-  private def getPointAssets(service: PointAssetOperations) = {
+  private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
 
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))

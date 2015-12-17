@@ -44,7 +44,7 @@ trait PointAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def typeId: Int
-  def fetchPointAssets(queryFilter: String => String): Seq[PersistedAsset]
+  def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
@@ -52,11 +52,11 @@ trait PointAssetOperations {
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean)
 
-    val roadLinks = vvhClient.fetchVVHRoadlinks(bounds)
+    val roadLinks: Seq[VVHRoadlink] = vvhClient.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter))
+      val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
