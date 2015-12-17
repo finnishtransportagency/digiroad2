@@ -29,11 +29,12 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     test("Can fetch by bounding box") {
       runWithRollback {
         val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
-        result.id should equal(600049)
+        result.id should equal(600053)
         result.mmlId should equal(388553074)
         result.lon should equal(374467)
         result.lat should equal(6677347)
         result.mValue should equal(103)
+        result.text should equal(Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       }
     }
 
