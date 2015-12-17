@@ -152,6 +152,20 @@
           '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
           '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
           '    </div>';
+      } else if (asset.validityDirection) {
+        return '' +
+            '  <div class="form-group editable">' +
+            '      <label class="control-label">' + 'Teksti' + '</label>' +
+            '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
+            '      <input type="text" class="form-control" value="' + (asset.text || '')  + '">' +
+            '  </div>' +
+          '    <div class="form-group editable">' +
+          '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
+          '      <p class="form-control-static">' + asset.validityDirection + '</p>' +
+          '      <select class="form-control" style="display:none">  ' +
+          '        <option value="1" '+ (asset.validityDirection === 1 ? 'selected' : '') +'>Vaihda suuntaa</option>' +
+          '      </select>' +
+          '    </div>';
     } else {
       return '';
     }
