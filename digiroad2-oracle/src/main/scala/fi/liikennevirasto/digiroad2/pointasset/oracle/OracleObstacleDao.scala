@@ -15,9 +15,9 @@ case class Obstacle(id: Long, mmlId: Long,
                     municipalityCode: Int,
                     obstacleType: Int,
                     createdBy: Option[String] = None,
-                    createdDateTime: Option[DateTime] = None,
+                    createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
-                    modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+                    modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
 
 object OracleObstacleDao {
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value

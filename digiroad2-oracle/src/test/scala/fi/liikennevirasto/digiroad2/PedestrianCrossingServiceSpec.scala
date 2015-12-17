@@ -81,7 +81,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         floating = false,
         municipalityCode = 235,
         createdBy = Some("jakke"),
-        createdDateTime = asset.createdDateTime
+        createdAt = asset.createdAt
       ))
     }
   }

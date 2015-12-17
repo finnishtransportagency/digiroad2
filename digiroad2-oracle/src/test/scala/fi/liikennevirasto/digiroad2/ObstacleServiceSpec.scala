@@ -92,7 +92,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       asset.municipalityCode should be(235)
       asset.obstacleType should be(2)
       asset.createdBy should be(Some("jakke"))
-      asset.createdDateTime shouldBe defined
+      asset.createdAt shouldBe defined
     }
   }
 
@@ -107,7 +107,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedObstacle.obstacleType should equal(2)
       updatedObstacle.id should equal(obstacle.id)
       updatedObstacle.modifiedBy should equal(Some("unit_test"))
-      updatedObstacle.modifiedDateTime shouldBe defined
+      updatedObstacle.modifiedAt shouldBe defined
     }
   }
 

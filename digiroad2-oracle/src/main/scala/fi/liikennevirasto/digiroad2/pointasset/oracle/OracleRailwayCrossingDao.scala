@@ -16,9 +16,9 @@ case class RailwayCrossing(id: Long, mmlId: Long,
                            safetyEquipment: Int,
                            name: Option[String],
                            createdBy: Option[String] = None,
-                           createdDateTime: Option[DateTime] = None,
+                           createdAt: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
-                           modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+                           modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
 
 object OracleRailwayCrossingDao {
   // This works as long as there are only two properties of different types for railway crossings
