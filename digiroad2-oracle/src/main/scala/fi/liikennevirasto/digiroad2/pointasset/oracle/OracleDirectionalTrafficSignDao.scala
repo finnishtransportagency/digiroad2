@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.{IncomingRailwayCrossing, Point, PersistedPointAsset}
-import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.{IncomingDirectionalTrafficSign, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class DirectionalTrafficSign(id: Long, mmlId: Long,
                                   lon: Double, lat: Double,
@@ -57,6 +57,32 @@ object OracleDirectionalTrafficSignDao {
   private def getTextPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("opastustaulun_teksti").first
   }
+
+
+  def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 240, $username, sysdate, $municipality)
+        into lrm_position(id, start_measure, mml_id)
+        values ($lrmPositionId, $mValue, ${sign.mmlId})
+
+        into traffic_direction(mml_id, traffic_direction, modified_date, modified_by)
+        values (${sign.mmlId}, ${sign.validityDirection}, sysdate, $username)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(sign.lon, sign.lat))
+    sign.text.foreach(insertTextProperty(id, getTextPropertyId, _).execute)
+    id
+  }
+
+
 }
 
 
