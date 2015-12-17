@@ -68,8 +68,8 @@ object OracleDirectionalTrafficSignDao {
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 240, $username, sysdate, $municipality)
-        into lrm_position(id, start_measure, mml_id, side_code)
-        values ($lrmPositionId, $mValue, ${sign.mmlId}, ${sign.validityDirection})
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.mmlId}, ${sign.validityDirection})
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
       select * from dual
