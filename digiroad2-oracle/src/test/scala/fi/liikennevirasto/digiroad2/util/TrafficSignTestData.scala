@@ -30,10 +30,11 @@ object TrafficSignTestData {
             select * from dual
       """.execute
 
+      val twoLineText = "KESKUSTA:CENTRUM;;;;2;1;\nLAHTI:LAHTIS;;4;E75;2;1;"
       sqlu"""
             insert all
               into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (600056, 600053, (select id from property where public_id='opastustaulun_teksti'), 'HELSINKI:HELSINGFORS;;;;1;1;', sysdate, 'dr2_test_data')
-              into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (600057, 600054, (select id from property where public_id='opastustaulun_teksti'), 'KESKUSTA:CENTRUM;;;;2;1;', sysdate, 'dr2_test_data')
+              into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (600057, 600054, (select id from property where public_id='opastustaulun_teksti'), $twoLineText, sysdate, 'dr2_test_data')
               into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (600058, 600055, (select id from property where public_id='opastustaulun_teksti'), 'KESKUSTA:CENTRUM;4:7;E75;1;1;', sysdate, 'dr2_test_data')
             select * from dual
       """.execute

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, PedestrianCrossing, RailwayCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{DirectionalTrafficSign, Obstacle, PedestrianCrossing, RailwayCrossing}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -234,6 +234,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def directionalTrafficSignsToApi(directionalTrafficSign: Seq[DirectionalTrafficSign]): Seq[Map[String, Any]] = {
+    directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
+      Map("id" -> directionalTrafficSign.id,
+        "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        "mmlId" -> directionalTrafficSign.mmlId,
+        "m_value" -> directionalTrafficSign.mValue,
+        "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
+        latestModificationTime(directionalTrafficSign.createdDateTime, directionalTrafficSign.modifiedDateTime))
+    }
+  }
+
   def latestModificationTime(createdDateTime: Option[DateTime], modifiedDateTime: Option[DateTime]): (String, String) = {
     "muokattu_viimeksi" ->
       modifiedDateTime
@@ -295,7 +306,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
-        case "directional_traffic_signs" => ReadOnlyPointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
+        case "directional_traffic_signs" => directionalTrafficSignsToApi(directionalTrafficSignService.getByMunicipality(municipalityNumber))
         case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
         case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)

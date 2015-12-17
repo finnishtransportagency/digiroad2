@@ -34,20 +34,6 @@ object ReadOnlyPointAssetService {
     }
   }
 
-  def getDirectionalTrafficSignsByMunicipality(municipalityNumber: Int): Seq[Map[String, Any]] = {
-    Database.forDataSource(dataSource).withDynTransaction {
-      val query = sql"""
-         select s.segm_id, s.tielinkki_id, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.puoli, s.opas_teksti
-           from segm_opastaulu s
-           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-           where t.kunta_nro = $municipalityNumber
-        """
-      query.as[(Long, Long, Seq[Point], Int, String)].iterator.map {
-        case (id, roadLinkId, geometry, sideCode, infoText) => Map("id" -> id, "point" -> geometry.head, "sideCode" -> sideCode, "infoText" -> infoText)
-      }.toSeq
-    }
-  }
-
   def getRailwayCrossingsByMunicipality(municipalityNumber: Int): Seq[Map[String, Any]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
