@@ -509,8 +509,8 @@ var URLRouter = function(map, backend, models) {
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu ja sen informaatio',
       legendValues: [
-        {symbolUrl: 'images/link-properties/arrow-drop-grey.svg', label: 'Opastustaulu'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+        {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg', label: 'Opastustaulu'},
+        {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg', label: 'Geometrian ulkopuolella'}
       ],
       formLabels: {
         singleFloatingAssetLabel: 'opastustaulun',
