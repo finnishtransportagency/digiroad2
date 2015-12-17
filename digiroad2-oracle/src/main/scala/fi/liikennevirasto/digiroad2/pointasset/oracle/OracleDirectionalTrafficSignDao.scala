@@ -30,6 +30,7 @@ object OracleDirectionalTrafficSignDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
         left join text_property_value tpv on (tpv.property_id = $getTextPropertyId AND tpv.asset_id = a.id)
+
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
     StaticQuery.queryNA[DirectionalTrafficSign](queryWithFilter).iterator.toSeq
@@ -67,12 +68,8 @@ object OracleDirectionalTrafficSignDao {
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 240, $username, sysdate, $municipality)
-        into lrm_position(id, start_measure, mml_id)
-        values ($lrmPositionId, $mValue, ${sign.mmlId})
-
-        into traffic_direction(mml_id, traffic_direction, modified_date, modified_by)
-        values (${sign.mmlId}, ${sign.validityDirection}, sysdate, $username)
-
+        into lrm_position(id, start_measure, mml_id, side_code)
+        values ($lrmPositionId, $mValue, ${sign.mmlId}, ${sign.validityDirection})
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
       select * from dual
