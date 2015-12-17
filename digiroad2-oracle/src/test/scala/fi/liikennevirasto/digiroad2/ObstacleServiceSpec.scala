@@ -83,18 +83,16 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset should be(
-        Obstacle(
-          id = id,
-          mmlId = 388553075,
-          lon = 2,
-          lat = 0,
-          mValue = 2,
-          floating = false,
-          municipalityCode = 235,
-          obstacleType = 2,
-          createdBy = Some("jakke"),
-          createdDateTime = asset.createdDateTime))
+      asset.id should be(id)
+      asset.mmlId should be(388553075)
+      asset.lon should be(2)
+      asset.lat should be(0)
+      asset.mValue should be(2)
+      asset.floating should be(false)
+      asset.municipalityCode should be(235)
+      asset.obstacleType should be(2)
+      asset.createdBy should be(Some("jakke"))
+      asset.createdDateTime shouldBe defined
     }
   }
 
@@ -109,6 +107,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedObstacle.obstacleType should equal(2)
       updatedObstacle.id should equal(obstacle.id)
       updatedObstacle.modifiedBy should equal(Some("unit_test"))
+      updatedObstacle.modifiedDateTime shouldBe defined
     }
   }
 
