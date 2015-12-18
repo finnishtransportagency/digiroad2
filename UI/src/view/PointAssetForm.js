@@ -58,6 +58,17 @@
       selectedAsset.set({ name: eventTarget.val() });
     });
 
+    rootElement.find('textarea').on('change', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ text: eventTarget.val() });
+    });
+
+    rootElement.find('button#change-validity-direction').on('click', function(event) {
+      var eventTarget = $(event.currentTarget);
+      previousValidityDirection = selectedAsset.get().validityDirection;
+      selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+    });
+
     rootElement.find('select').on('change', function(event) {
       var asset = selectedAsset.get();
       var eventTarget = $(event.currentTarget);
@@ -157,14 +168,11 @@
             '  <div class="form-group editable">' +
             '      <label class="control-label">' + 'Teksti' + '</label>' +
             '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-            '      <input type="text" class="form-control" value="' + (asset.text || '')  + '">' +
+            '      <textarea class="form-control">' + (asset.text || '')  + '</textarea>' +
             '  </div>' +
           '    <div class="form-group editable">' +
           '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
-          '      <p class="form-control-static">' + asset.validityDirection + '</p>' +
-          '      <select class="form-control" style="display:none">  ' +
-          '        <option value="1" '+ (asset.validityDirection === 1 ? 'selected' : '') +'>Vaihda suuntaa</option>' +
-          '      </select>' +
+          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else {
       return '';
