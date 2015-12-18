@@ -168,7 +168,7 @@
             '  <div class="form-group editable">' +
             '      <label class="control-label">' + 'Teksti' + '</label>' +
             '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-            '      <textarea class="form-control">' + (asset.text || '')  + '</textarea>' +
+            '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
             '  </div>' +
           '    <div class="form-group editable">' +
           '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
