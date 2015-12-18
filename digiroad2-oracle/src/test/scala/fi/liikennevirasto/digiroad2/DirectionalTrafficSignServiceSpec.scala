@@ -42,7 +42,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("'HELSINKI:HELSINGFORS;;;;1;1;'") ), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("HELSINKI:HELSINGFORS;;;;1;1;") ), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
 
@@ -58,12 +58,24 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       asset.floating should be(false)
       asset.municipalityCode should be(235)
       asset.validityDirection should be(3)
-      asset.text should be (Some("'HELSINKI:HELSINGFORS;;;;1;1;'"))
+      asset.text should be (Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       asset.createdBy should be(Some("jakke"))
       asset.createdDateTime shouldBe defined
 
     }
   }
+  test("Expire directional traffic sign") {
+    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
+    runWithRollback {
+      val result = service.getByMunicipality(235).find(_.id == 600053).get
+      result.id should equal(600053)
+
+      service.expire(600053,testUser.username)
+
+      service.getByMunicipality(235).find(_.id == 600053) should equal(None)
+    }
+  }
 
 }
