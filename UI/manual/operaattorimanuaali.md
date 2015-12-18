@@ -300,9 +300,9 @@ Kalpa-APIn tarkastelua varten selaimessa kannattaa olla asennettuna JSON-lis&aum
 
 Kalpa-APIn osoite on (Liikenneviraston verkon ulkopuolelta)
 
-Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
-Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
-Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
+Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
+Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
+Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 
 Esim: https://devtest.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=494 (pys&auml;kit kunnasta 494)
 
