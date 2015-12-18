@@ -622,6 +622,7 @@ with GZipSupport {
 
   get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
   post("/directionalTrafficSigns")(createNewPointAsset(directionalTrafficSignService))
+  delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
