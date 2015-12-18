@@ -66,12 +66,17 @@
     }
 
     function createFeature(asset) {
+      var rotation = determineRotation(asset);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
+    }
+
+    function determineRotation(asset) {
       var rotation = 0;
       if (asset.geometry && asset.geometry.length > 0){
         var bearing = geometrycalculator.getLineDirectionDegAngle({start: _.first(asset.geometry), end: _.last(asset.geometry)});
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
       }
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
+      return rotation;
     }
 
     this.refreshView = function() {
@@ -163,7 +168,9 @@
 
     function handleChanged() {
       me.deactivateSelection();
-      _.find(vectorLayer.features, {attributes: {id: selectedAsset.getId()}}).attributes = selectedAsset.get();
+      var asset = selectedAsset.get();
+      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset)});
+      _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       vectorLayer.redraw();
     }
 
