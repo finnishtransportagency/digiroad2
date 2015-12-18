@@ -37,7 +37,8 @@
       massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
       pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
       obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
-      railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset'
+      railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
+      directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +

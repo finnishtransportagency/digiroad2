@@ -621,6 +621,8 @@ with GZipSupport {
   post("/railwayCrossings")(createNewPointAsset(railwayCrossingService))
 
   get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
+  get("/directionalTrafficSigns/:id")(getPointAssetById(directionalTrafficSignService))
+  get("/directionalTrafficSigns/floating")(getFloatingPointAssets(directionalTrafficSignService))
   post("/directionalTrafficSigns")(createNewPointAsset(directionalTrafficSignService))
   delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
 

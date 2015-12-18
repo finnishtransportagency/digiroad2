@@ -29,7 +29,8 @@ var URLRouter = function(map, backend, models) {
       'work-list/massTransitStop': 'massTransitStopWorkList',
       'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
       'work-list/obstacles': 'obstacleWorkList',
-      'work-list/railwayCrossings': 'railwayCrossingWorkList'
+      'work-list/railwayCrossings': 'railwayCrossingWorkList',
+      'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList'
     },
 
     massTransitStop: function(id) {
@@ -121,6 +122,10 @@ var URLRouter = function(map, backend, models) {
     },
     railwayCrossingWorkList: function() {
       eventbus.trigger('workList:select', 'railwayCrossings', backend.getFloatingRailwayCrossings());
+    },
+
+    directionalTrafficSignsWorkList: function() {
+      eventbus.trigger('workList:select', 'directionalTrafficSigns', backend.getFloatingDirectionalTrafficSigns());
     }
   });
 
