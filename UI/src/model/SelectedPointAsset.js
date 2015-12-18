@@ -74,6 +74,7 @@
     }
 
     function save() {
+      eventbus.trigger(assetName + ':saving');
       if (current.toBeDeleted) {
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {

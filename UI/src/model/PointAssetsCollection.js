@@ -5,7 +5,11 @@
     };
 
     function fetch(boundingBox) {
-      return backend.getPointAssets(boundingBox, endPointName);
+      return backend.getPointAssets(boundingBox, endPointName)
+        .then(function(assets) {
+          eventbus.trigger('pointAssets:fetched');
+          return assets;
+        });
     }
   };
 })(this);

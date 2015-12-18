@@ -230,7 +230,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "mmlId" -> pedestrianCrossing.mmlId,
         "m_value" -> pedestrianCrossing.mValue,
-        latestModificationTime(pedestrianCrossing.createdDateTime, pedestrianCrossing.modifiedDateTime))
+        latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt))
     }
   }
 
@@ -261,7 +261,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
-        latestModificationTime(railwayCrossing.createdDateTime, railwayCrossing.modifiedDateTime))
+        latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt))
     }
   }
 
@@ -272,7 +272,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "mmlId" -> obstacle.mmlId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
-        latestModificationTime(obstacle.createdDateTime, obstacle.modifiedDateTime))
+        latestModificationTime(obstacle.createdAt, obstacle.modifiedAt))
     }
   }
 

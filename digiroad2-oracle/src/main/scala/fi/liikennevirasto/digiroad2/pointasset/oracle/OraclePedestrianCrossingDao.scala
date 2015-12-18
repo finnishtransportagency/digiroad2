@@ -14,9 +14,9 @@ case class PedestrianCrossing(id: Long, mmlId: Long,
                               mValue: Double, floating: Boolean,
                               municipalityCode: Int,
                               createdBy: Option[String] = None,
-                              createdDateTime: Option[DateTime] = None,
+                              createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
-                              modifiedDateTime: Option[DateTime] = None) extends PersistedPointAsset
+                              modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
 
 case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 

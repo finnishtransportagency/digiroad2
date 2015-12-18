@@ -54,6 +54,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       result.lon should equal(374396)
       result.lat should equal(6677319)
       result.mValue should equal(103)
+      result.createdAt shouldBe defined
     }
   }
 

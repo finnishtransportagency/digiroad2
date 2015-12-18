@@ -528,19 +528,24 @@ var URLRouter = function(map, backend, models) {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var bindEvents = function(linearAssetSpecs) {
+  var bindEvents = function(linearAssetSpecs, pointAssetSpecs) {
     var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
     var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
-    var savingEventNames = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
-    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + savingEventNames, function() {
+    var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
+    var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
+    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
       indicatorOverlay();
     });
+
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched ' + fetchedEventNames, function() {
+    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:saved', function() {
+    var pointAssetSaved = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saved'; }).join(' ');
+    var linearAssetsSaved = _.map(singleElementEventNames, function(name) { return name + ':saved'; }).join(' ');
+
+    eventbus.on('asset:saved speedLimit:saved linkProperties:saved manoeuvres:saved ' + linearAssetsSaved + ' ' + pointAssetSaved, function() {
       jQuery('.spinner-overlay').remove();
     });
     var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
@@ -742,7 +747,7 @@ var URLRouter = function(map, backend, models) {
       manoeuvresCollection: manoeuvresCollection
     };
 
-    bindEvents(enabledLinearAssetSpecs);
+    bindEvents(enabledLinearAssetSpecs, pointAssetSpecs);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
