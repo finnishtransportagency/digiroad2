@@ -513,6 +513,7 @@ var URLRouter = function(map, backend, models) {
       typeId: 240,
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu ja sen informaatio',
+      newAsset: { validityDirection: 2 },
       legendValues: [
         {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg', label: 'Opastustaulu'},
         {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg', label: 'Geometrian ulkopuolella'}
