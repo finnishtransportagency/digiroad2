@@ -256,7 +256,7 @@ K&auml;ytt&auml;ytyminen-valikon (6) Yleiskatsaus-kohdasta voi katsoa eri Digiro
 8. Tietolajikohtaisia tarkempia tietoja
 -------------------
 
-Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattoreiden tietoon.
+Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattori-k&auml;ytt&auml;jien tietoon.
 
 8.1 Tielinkit
 ---------------------------------------------
@@ -269,27 +269,46 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 -   Kohdeluokka ajotielle t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa toiminnallinen luokka muu yksityistie ja linkkityyppi yksiajoratainen tie
 -   Kohdeluokka k&auml;vely- ja py&ouml;r&auml;tie t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa kevyen liikenteen v&auml;yl&auml;ksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
 
-Korjattavien linkkien lista (incomplete_links.html) p&auml;ivitet&auml;&auml;n automaattisesti joka y&ouml; tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 21:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
+Korjattavien linkkien lista (incomplete_links.html) p&auml;ivitet&auml;&auml;n automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
-8.2 Joukkoliikenteen pys&auml;kki
+8.2 Pistem&auml;iset tietolajit
 ---------------------------------------------
 
-Kun pys&auml;kkej&auml; tarkastellaan kartalla tai ajetaan skripti tietokannassa, sovellus tarkastaa, ovatko pys&auml;kit kiinni geometriassa. Geometriasta irti olevaa pys&auml;kki&auml; kutsutaan "kelluvaksi" pys&auml;kiksi. Tarkastus perustuu siihen, ett&auml; pys&auml;keille on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
+Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, mink&auml; perusteella sovellus katsoo niiden olevan irti geometriasta. Pistem&auml;isi&auml; tietolajeja ovat esimerkiksi joukkoliikenteen pys&auml;kki, suojatie ja rautatien tasoristeys.
 
-1. L&ouml;ytyyk&ouml; ko. pys&auml;kin linkin MML-ID:ll&auml; edelleen tielinkki.
+Kun pistett&auml; tarkastellaan kartalla, ajetaan skripti tietokannassa tai kysell&auml;&auml;n kohteita Kalpa-Apista, sovellus tarkastaa, ovatko pisteet kiinni geometriassa. Geometriasta irti olevaa pistett&auml; kutsutaan "kelluvaksi". Tarkastus perustuu siihen, ett&auml; pisteelle on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
+
+1. L&ouml;ytyyk&ouml; ko. pisteen linkin MML-ID:ll&auml; edelleen tielinkki.
     a. Ei l&ouml;ydy -> Kelluu
     b. L&ouml;ytyy -> Tarkastus siirtyy seuraavaan kohtaan
-1. Pys&auml;kin sijainnin tarkistus linkill&auml;: sijainti tietokantaan tallennettujen x,y-koordinaattien ja linkin geometrian + pys&auml;kin m-arvon v&auml;lill&auml;
+1. Pisteen sijainnin tarkistus linkill&auml;: sijainti tietokantaan tallennettujen x,y-koordinaattien ja linkin geometrian + pisteen m-arvon v&auml;lill&auml;
     a. Jos et&auml;isyys tietokantaan tallennettujen koordinaattien ja linkin geometrian + pys&auml;kin m-arvon v&auml;lill&auml; on yli 3 metri&auml; -> Kelluu
-    b. Jos et&auml;isyys alle tai 3 metri&auml;, pys&auml;kki katsotaan olevan tarpeeksi l&auml;hell&auml; samaa sijaintia kuin ennen geometrian p&auml;ivittymist&auml; ja se ei kellu.
+    b. Jos et&auml;isyys alle tai 3 metri&auml;, pisteen katsotaan olevan tarpeeksi l&auml;hell&auml; samaa sijaintia kuin ennen geometrian p&auml;ivittymist&auml; ja se ei kellu.
 
-Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattisesti tuotantokannassa joka y&ouml; samassa yhteydess&auml;, kun ylemp&auml;n&auml; esitelty pys&auml;kki-csv ajetaan.
+Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattisesti tuotantokannassa joka y&ouml; samassa yhteydess&auml;, kun ylemp&auml;n&auml; esitelty pys&auml;kki-csv (Vallu-export) ajetaan.
+
+Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&auml; kohteet l&auml;pi Kalpa-Apista (esim. FME-ajon avulla).
     
 8.3 Nopeusrajoitus
 ---------------------------------------------
-Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. 
+Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus.
 
-Puuttuvista/korjattavista nopeusrajoituksista ei ole olemassa erillist&auml; listaa.
+9. Kalpa-API
+-------------------
+Digiroad-tietokannassa on olemassa Kalpa-API niminen JSON-rajapinta, josta on mahdollista hakea jokaisen tietolajin tiedot kunnittain esimerkiksi FME-ty&ouml;tilaan. Kalpa-APIsta haetaan Digiroad-tietolajien tiedot julkaisua varten.
+Kalpa-APIn tarkastelua varten selaimessa kannattaa olla asennettuna JSON-lis&auml;osa.
+
+Kalpa-APIn osoite on (Liikenneviraston verkon ulkopuolelta)
+
+Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
+Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
+Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/<tietolaji_t&auml;h&auml;n>?municipality=<kuntanumero t&auml;h&auml;n>
+
+Esim: https://devtest.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=494 (pys&auml;kit kunnasta 494)
+
+Jokaisen ymp&auml;rist&ouml;n Kalpa-APIin on oma salasanansa. Salasanat voi kysy&auml; Digiroad2-kehitystiimilt&auml;. K&auml;ytt&auml;j&auml;tunnus on kaikkiin sama (kalpa).
+
+Liikenneviraston sis&auml;verkossa tai VPN-yhteyden kautta Kalpa-APIa voi k&auml;ytt&auml;&auml; IP-osoitteiden avulla, jolloin ei tarvitse erikseen autentikoitua Livin extranet-tunnuksilla.
 
 Linkit:
 ------

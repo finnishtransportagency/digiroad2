@@ -1485,7 +1485,7 @@ _Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 20. Esterakennelma
 ----------------------
 
-Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajit(1) -paletista "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolella olevia esterakennelmia.
+Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajit(1) -paletista "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
 
 ![Valinta.](k146.jpg)
 
@@ -1501,7 +1501,7 @@ _Esterakennelman katselu._
 
 ##Esterakennelman muokkaus##
 
-Esterakennelman voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Lis&auml;ksi olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa avattavan puomin ja suljetun yhteyden v&auml;lill&auml; alasvetovalikosta. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+Esterakennelman voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ksi olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa avattavan puomin ja suljetun yhteyden v&auml;lill&auml; alasvetovalikosta. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
 ###Esterakennelman poisto, siirto, lis&auml;ys ja tyyppi###
 
@@ -1538,3 +1538,60 @@ _Geometrian ulkopuolinen esterakennelma on v&auml;rilt&auml;&auml;n punainen._
 ![Ulkopuoliset esterakennelmat.](k151.jpg)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden esterakennelmien lista._
+
+21. Rautatien tasoristeys
+----------------------
+
+Kartalle voi valita rautatien tasoristeykset valitsemalle tietolajit(1) -paletista "Rautatien tasoristeys". Rautatien tasoristeykset n&auml;kyv&auml;t kartalla sinisen&auml; ympyr&auml;n&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; tasoristeyksi&auml;.
+
+![Valinta.](k153.jpg)
+
+_Rautatien tasoristeyksen valinta._
+
+##Rautatien tasoristeyksen tietojen katselu##
+
+Yksitt&auml;isen tasoristeyksen voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu tasoristeyksen ominaisuustieton&auml;kym&auml; (3). Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot, tasoristeyksen turvavarustus sek&auml; nimi. Valinnan voi poistaa klikkaamalla muualle.
+
+![Katselu.](k154.jpg)
+
+_Rautatien tasoristeyksen katselu._
+
+##Rautatien tasoristeyksen muokkaus##
+
+Rautatien tasoristeyksen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ksi olemassa olevan tasoristeyksen turvavarustusta voi muokata alasvetovalikosta ja nime&auml; voi muokata. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Rautatien tasoristeyksen ominaisuustietojen muokkaus, siirto, poisto ja lis&auml;ys###
+
+Muokattava tasoristeys valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu tasoristeys voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4). Olemassa olevan tasoristeyksen turvavarustuksen tietoja voi vaihtaa oikean laidan alasvetovalikosta. Muutokset tallennetaan tallenna-painikkeesta tai voi perua peruuta-painikkeesta (6).
+
+![Muokkaus.](k155.jpg)
+
+_Rautatien tasoristeyksen muokkaus._
+
+Yksitt&auml;ist&auml; tasoristeyst&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle tasoristeys siirtyy, korostuu kartalla sinisell&auml; (8). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+
+![Siirto.](k156.jpg)
+
+_Rautatien tasoristeyksen siirto._
+
+Uusi tasoristeys voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Tasoristeys lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Tasoristeykselle valitaan oikean laidan alasvetovalikosta turvavarustus-tieto sek&auml; kirjoitetaan nimi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. Lis&auml;yksen voi perua peruuta-painikkeesta.
+
+![Lisays.](k157.jpg)
+
+_Rautatien tasoristeyksen lis&auml;ys._
+
+Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
+
+###Geometrian ulkopuolelle j&auml;&auml;neet rautatien tasoristeykset###
+
+Geometrian ulkopuolelle j&auml;&auml;neet tasoristeykset on korostettu kartalla punaisella ympyr&auml;ll&auml; (1). N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Tasoristeyst&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; tasoristeyksill&auml; on oma lista (2). Tasoristeykset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne tasoristeykset, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan tasoristeykseen on listassa linkki, josta p&auml;&auml;see suoraan tasoristeyksen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Merkinta.](k158.jpg)
+
+_Geometrian ulkopuolinen rautatien tasoristeys on v&auml;rilt&auml;&auml;n punainen._
+
+![Ulkopuoliset tasoristeykset.](k159.jpg)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden rautatien tasoristeysten lista._
