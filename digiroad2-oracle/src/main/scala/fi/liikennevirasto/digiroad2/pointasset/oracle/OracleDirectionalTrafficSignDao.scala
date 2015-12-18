@@ -56,11 +56,6 @@ object OracleDirectionalTrafficSignDao {
     }
   }
 
-  private def getTextPropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("opastustaulun_teksti").first
-  }
-
-
   def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
 
@@ -80,7 +75,27 @@ object OracleDirectionalTrafficSignDao {
     id
   }
 
+  def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String) = {
+    sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
+    updateAssetModified(id, username).execute
+    updateAssetGeometry(id, Point(sign.lon, sign.lat))
+    deleteTextProperty(id, getTextPropertyId).execute
+    sign.text.foreach(insertTextProperty(id, getTextPropertyId, _).execute)
 
+    sqlu"""
+      update lrm_position
+       set
+       start_measure = $mValue,
+       mml_id = ${sign.mmlId},
+       side_code = ${sign.validityDirection}
+       where id = (select position_id from asset_link where asset_id = $id)
+    """.execute
+    id
+  }
+
+  private def getTextPropertyId: Long = {
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("opastustaulun_teksti").first
+  }
 }
 
 

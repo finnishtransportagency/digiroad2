@@ -72,10 +72,50 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600053).get
       result.id should equal(600053)
 
+
       service.expire(600053,testUser.username)
 
       service.getByMunicipality(235).find(_.id == 600053) should equal(None)
     }
   }
 
+  test("Update directional traffic sign") {
+    val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
+    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockVVHClient.fetchByMunicipality(91)).thenReturn(Seq(
+      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      val beforeUpdate = service.getByMunicipality(235).find(_.id == 600053).get
+      beforeUpdate.id should equal(600053)
+      beforeUpdate.lon should equal(374467.0)
+      beforeUpdate.lat should equal(6677347.0)
+      beforeUpdate.mValue should equal(103.0)
+      beforeUpdate.mmlId should equal(388553074)
+      beforeUpdate.municipalityCode should equal(235)
+      beforeUpdate.createdBy should equal(Some("dr2_test_data"))
+      beforeUpdate.createdDateTime.isDefined should equal(true)
+      beforeUpdate.modifiedBy should equal(None)
+      beforeUpdate.modifiedDateTime should equal(None)
+      beforeUpdate.text should equal(Some("HELSINKI:HELSINGFORS;;;;1;1;"))
+      beforeUpdate.validityDirection should equal(2)
+
+      service.update(id = 600053, IncomingDirectionalTrafficSign(100, 0, 123, 3, Some("New text")), linkGeometry, 91, "test")
+
+      val afterUpdate = service.getByMunicipality(91).find(_.id == 600053).get
+      afterUpdate.id should equal(600053)
+      afterUpdate.lon should equal(100)
+      afterUpdate.lat should equal(0)
+      afterUpdate.mValue should equal(100)
+      afterUpdate.mmlId should equal(123)
+      afterUpdate.municipalityCode should equal(91)
+      afterUpdate.createdBy should equal(Some("dr2_test_data"))
+      afterUpdate.createdDateTime should equal(beforeUpdate.createdDateTime)
+      afterUpdate.modifiedBy should equal(Some("test"))
+      afterUpdate.modifiedDateTime.isDefined should equal(true)
+      afterUpdate.text should equal(Some("New text"))
+      afterUpdate.validityDirection should equal(3)
+    }
+  }
 }

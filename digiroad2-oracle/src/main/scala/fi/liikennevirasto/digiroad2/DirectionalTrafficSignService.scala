@@ -28,7 +28,13 @@ class DirectionalTrafficSignService(val vvhClient: VVHClient) extends PointAsset
       OracleDirectionalTrafficSignDao.create(asset, mValue, municipality ,username)
     }
   }
-  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String): Long = 0
+  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    withDynTransaction {
+      OracleDirectionalTrafficSignDao.update(id, updatedAsset, mValue, municipality, username)
+    }
+    id
+  }
 }
 
 

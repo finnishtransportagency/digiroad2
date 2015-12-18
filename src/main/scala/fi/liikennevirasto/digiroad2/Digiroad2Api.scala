@@ -624,6 +624,7 @@ with GZipSupport {
   get("/directionalTrafficSigns/:id")(getPointAssetById(directionalTrafficSignService))
   get("/directionalTrafficSigns/floating")(getFloatingPointAssets(directionalTrafficSignService))
   post("/directionalTrafficSigns")(createNewPointAsset(directionalTrafficSignService))
+  put("/directionalTrafficSigns/:id")(updatePointAsset(directionalTrafficSignService))
   delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
