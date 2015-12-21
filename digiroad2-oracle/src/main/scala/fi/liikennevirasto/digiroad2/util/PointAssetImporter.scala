@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.sql.SQLType
+
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
@@ -355,12 +357,39 @@ object PointAssetImporter {
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (ID,ASSET_ID,TYPE,ADDITIONAL_INFO,NAME,TYPE_EXTENSION) values (?,?,?,?,?,?)")
+      val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION) values (?,?,?,?,?,?)")
 
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")
 
       groupedServicePoints.zipWithIndex.foreach { case (group, i) =>
         val startTime = DateTime.now()
+
+        val servicesByPointId = group.groupBy(_._7)
+
+        servicesByPointId.foreach { case (oid, rows) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 250)
+          assetPS.addBatch()
+
+          rows.foreach { case (serviceType, additionalInfo, railwayStationType, _, restAreaType, _, _, name) =>
+            servicePointPS.setLong(1, Sequences.nextPrimaryKeySeqValue)
+            servicePointPS.setLong(2, assetId)
+            servicePointPS.setInt(3, serviceType)
+            servicePointPS.setString(4, name.orNull)
+            servicePointPS.setString(5, additionalInfo.orNull)
+            val typeExtension = (railwayStationType, restAreaType) match {
+              case (Some(t), None) => Some(t + 4)
+              case (None, Some(t)) => Some(t)
+              case _ => None
+            }
+            typeExtension.fold { servicePointPS.setNull(6, java.sql.Types.INTEGER) } { servicePointPS.setInt(6, _) }
+            servicePointPS.addBatch()
+          }
+        }
+
+        assetPS.executeBatch()
+        servicePointPS.executeBatch()
 
         println(s"*** Imported ${group.length} directional service points in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }

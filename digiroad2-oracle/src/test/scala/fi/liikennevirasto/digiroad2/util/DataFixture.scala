@@ -291,8 +291,9 @@ object DataFixture {
     println(s"Directional traffic signs import complete at time: ${DateTime.now()}")
     println()
   }
+
   def importServicePoints(): Unit = {
-    println(s"\nCommencing service points signs import from conversion at time: ${DateTime.now()}")
+    println(s"\nCommencing service points import from conversion at time: ${DateTime.now()}")
     PointAssetImporter.importServicePoints(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Service points import complete at time: ${DateTime.now()}")
     println()
@@ -461,7 +462,7 @@ object DataFixture {
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | service_points" +
+        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings | directional_traffic_signs | service_points |" +
         " repair")
     }
   }
