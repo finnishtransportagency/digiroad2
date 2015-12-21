@@ -200,7 +200,8 @@
         lat: projectionOnNearestLine.y,
         floating: false,
         mmlId: nearestLine.mmlId,
-        id: 0
+        id: 0,
+        geometry: [nearestLine.start, nearestLine.end]
       });
 
       vectorLayer.addFeatures(createFeature(asset));
