@@ -150,6 +150,7 @@
 
     function handleCreationCancelled() {
       me.selectControl.unselectAll();
+      me.activateSelection();
       mapOverlay.hide();
       vectorLayer.styleMap = style.browsing;
       me.refreshView();
