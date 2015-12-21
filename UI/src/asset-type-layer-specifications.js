@@ -21,7 +21,8 @@
     hazardousMaterialTransportProhibition: 210,
     obstacles: 220,
     railwayCrossings: 230,
-    directionalTrafficSigns: 240
+    directionalTrafficSigns: 240,
+    servicePoints: 250
   };
 
   root.linearAssetSpecs = [
@@ -305,7 +306,7 @@
 
   root.pointAssetSpecs = [
     {
-      typeId: 200,
+      typeId: assetType.pedestrianCrossings,
       layerName: 'pedestrianCrossings',
       title: 'Suojatie',
       newAsset: {  },
@@ -320,7 +321,7 @@
       }
     },
     {
-      typeId: 220,
+      typeId: assetType.obstacles,
       layerName: 'obstacles',
       title: 'Esterakennelma',
       newAsset: { obstacleType: 1 },
@@ -336,7 +337,7 @@
       }
     },
     {
-      typeId: 230,
+      typeId: assetType.railwayCrossings,
       layerName: 'railwayCrossings',
       title: 'Rautatien tasoristeys',
       newAsset: { safetyEquipment: 1 },
@@ -351,7 +352,7 @@
       }
     },
     {
-      typeId: 240,
+      typeId: assetType.directionalTrafficSigns,
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu',
       newAsset: { validityDirection: 2 },
@@ -363,6 +364,20 @@
         singleFloatingAssetLabel: 'opastustaulun',
         manyFloatingAssetsLabel: 'opastustaulut',
         newAssetLabel: 'opastustaulu'
+      }
+    },
+    {
+      typeId: assetType.servicePoints,
+      layerName: 'servicePoints',
+      title: 'Palvelupiste',
+      newAsset: {  },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
+      ],
+      formLabels: {
+        singleFloatingAssetLabel: 'palvelupisteen',
+        manyFloatingAssetsLabel: 'palvelupisteet',
+        newAssetLabel: 'palvelupiste'
       }
     }
   ];
