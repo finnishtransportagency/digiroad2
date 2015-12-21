@@ -12,11 +12,10 @@ class ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.obstacleService,
       Digiroad2Context.railwayCrossingService,
       Digiroad2Context.directionalTrafficSignService,
+      Digiroad2Context.servicePointService,
       Digiroad2Context.vvhClient,
       Digiroad2Context.massTransitStopService,
       Digiroad2Context.linearAssetService
-
-
     ), "/api/*")
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")

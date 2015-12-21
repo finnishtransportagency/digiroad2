@@ -24,6 +24,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
+                   val servicePointService: ServicePointService = Digiroad2Context.servicePointService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
@@ -627,7 +628,10 @@ with GZipSupport {
   put("/directionalTrafficSigns/:id")(updatePointAsset(directionalTrafficSignService))
   delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
 
-  get("/servicePoints")(getPointAssets(obstacleService))
+  get("/servicePoints") {
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    servicePointService.get(bbox)
+  }
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
