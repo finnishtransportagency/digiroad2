@@ -31,17 +31,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
-                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider) extends ScalatraServlet
-
-
-
-with JacksonJsonSupport
-with CorsSupport
-with RequestHeaderAuthentication
-with GZipSupport {
+                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider)
+  extends ScalatraServlet
+  with JacksonJsonSupport
+  with CorsSupport
+  with RequestHeaderAuthentication
+  with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
-  val MunicipalityNumber = "municipalityNumber"
-  val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
