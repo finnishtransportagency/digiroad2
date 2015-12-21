@@ -294,7 +294,7 @@ object DataFixture {
 
   def importServicePoints(): Unit = {
     println(s"\nCommencing service points import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importServicePoints(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    ServicePointImporter.importServicePoints(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Service points import complete at time: ${DateTime.now()}")
     println()
   }
