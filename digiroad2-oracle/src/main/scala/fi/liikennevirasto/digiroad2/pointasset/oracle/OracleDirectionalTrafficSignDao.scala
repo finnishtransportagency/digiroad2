@@ -16,9 +16,9 @@ case class DirectionalTrafficSign(id: Long, mmlId: Long,
                                   validityDirection: Int,
                                   text: Option[String],
                                   createdBy: Option[String] = None,
-                                  createdDateTime: Option[DateTime] = None,
+                                  createdAt: Option[DateTime] = None,
                                   modifiedBy: Option[String] = None,
-                                  modifiedDateTime: Option[DateTime] = None,
+                                  modifiedAt: Option[DateTime] = None,
                                   geometry: Seq[Point] = Nil) extends PersistedPointAsset
 
 object OracleDirectionalTrafficSignDao {

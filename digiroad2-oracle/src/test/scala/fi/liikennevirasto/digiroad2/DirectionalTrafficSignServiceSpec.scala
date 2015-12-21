@@ -60,7 +60,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       asset.validityDirection should be(3)
       asset.text should be (Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       asset.createdBy should be(Some("jakke"))
-      asset.createdDateTime shouldBe defined
+      asset.createdAt shouldBe defined
 
     }
   }
@@ -95,9 +95,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.mmlId should equal(388553074)
       beforeUpdate.municipalityCode should equal(235)
       beforeUpdate.createdBy should equal(Some("dr2_test_data"))
-      beforeUpdate.createdDateTime.isDefined should equal(true)
+      beforeUpdate.createdAt.isDefined should equal(true)
       beforeUpdate.modifiedBy should equal(None)
-      beforeUpdate.modifiedDateTime should equal(None)
+      beforeUpdate.modifiedAt should equal(None)
       beforeUpdate.text should equal(Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       beforeUpdate.validityDirection should equal(2)
 
@@ -111,9 +111,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       afterUpdate.mmlId should equal(123)
       afterUpdate.municipalityCode should equal(91)
       afterUpdate.createdBy should equal(Some("dr2_test_data"))
-      afterUpdate.createdDateTime should equal(beforeUpdate.createdDateTime)
+      afterUpdate.createdAt should equal(beforeUpdate.createdAt)
       afterUpdate.modifiedBy should equal(Some("test"))
-      afterUpdate.modifiedDateTime.isDefined should equal(true)
+      afterUpdate.modifiedAt.isDefined should equal(true)
       afterUpdate.text should equal(Some("New text"))
       afterUpdate.validityDirection should equal(3)
     }
