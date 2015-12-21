@@ -56,7 +56,7 @@
           roadLayer.selectRoadLink(nearestLine);
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
 
-          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId});
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end]});
         } else {
           this.cancel();
         }
