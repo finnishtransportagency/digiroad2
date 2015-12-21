@@ -1,18 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{Conversion, TemporaryTables}
-import fi.liikennevirasto.digiroad2.util.RoadLinkDataImporter._
-import org.joda.time.DateTime
-import scala.concurrent.forkjoin.ForkJoinPool
 import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import scala.Some
-import java.io.{File, PrintWriter}
-import scala.collection.parallel.ForkJoinTaskSupport
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
-import slick.jdbc.{StaticQuery => Q, _}
-import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.joda.time.DateTime
+import slick.jdbc.{StaticQuery => Q}
+
+import scala.concurrent.forkjoin.ForkJoinPool
 
 object DataFixture {
   val TestAssetId = 300000
@@ -388,6 +384,7 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         importMunicipalityCodes()
         TrafficSignTestData.createTestData
+        ServicePointTestData.createTestData
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(taskPool)
