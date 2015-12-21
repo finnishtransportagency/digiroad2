@@ -340,56 +340,33 @@ object PointAssetImporter {
       textPropertyPS.close()
     }
   }
+
   def importServicePoints(database: DatabaseDef, vvhServiceHost: String): Unit =  {
-
-    val query = sql"""
-                            select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi
-                              from palvelupisteet p
-                           """
-
     val servicePoints = database.withDynSession {
-      query.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].list
-    }.groupBy(_._1).values.toList
+      sql"""
+        select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi
+        from palvelupisteet p
+      """.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].list
+    }
 
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
 
     OracleDatabase.withDynTransaction {
-
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
       val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (ID,ASSET_ID,TYPE,ADDITIONAL_INFO,NAME,TYPE_EXTENSION) values (?,?,?,?,?,?)")
+
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")
 
-      groupedServicePoints.zipWithIndex.foreach { case (servicePoint, i) =>
+      groupedServicePoints.zipWithIndex.foreach { case (group, i) =>
         val startTime = DateTime.now()
 
-        val assetId = Sequences.nextPrimaryKeySeqValue
-
-        assetPS.setLong(1, assetId)
-        assetPS.setInt(2, 250)
-
-        assetPS.addBatch()
-
-        servicePoint.foreach { case (servicePointType, additionalInfo, railwayStationType, _, restAreaType, geometry, name ) =>
-
-          servicePointPS.setLong(1,Sequences.nextPrimaryKeySeqValue)
-          servicePointPS.setLong(2, assetId)
-          servicePointPS.setInt(3, servicePointType)
-          servicePointPS.setString(4, additionalInfo)
-          servicePointPS.setString(5, name)
-
-        }
-
-        assetPS.executeBatch()
-
-        println(s"*** Imported ${servicePoint.length} directional traffic signs in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+        println(s"*** Imported ${group.length} directional service points in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
+
+      servicePointPS.close()
       assetPS.close()
-
     }
-
-
   }
-
 }
