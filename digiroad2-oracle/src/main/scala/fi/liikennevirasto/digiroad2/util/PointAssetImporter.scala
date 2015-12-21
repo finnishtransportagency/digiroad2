@@ -4,10 +4,11 @@ import java.sql.SQLType
 
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
-import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point, PointAssetOperations, VVHClient}
+import oracle.spatial.geometry.JGeometry
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -362,6 +363,8 @@ object PointAssetImporter {
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")
 
       groupedServicePoints.zipWithIndex.foreach { case (group, i) =>
+        val assetIdToPoint = scala.collection.mutable.Map.empty[Long, Point]
+
         val startTime = DateTime.now()
 
         val servicesByPointId = group.groupBy(_._7)
@@ -370,6 +373,7 @@ object PointAssetImporter {
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 250)
+          assetIdToPoint += assetId -> rows.head._6.head
           assetPS.addBatch()
 
           rows.foreach { case (serviceType, additionalInfo, railwayStationType, _, restAreaType, _, _, name) =>
@@ -390,6 +394,10 @@ object PointAssetImporter {
 
         assetPS.executeBatch()
         servicePointPS.executeBatch()
+
+        assetIdToPoint.foreach { case (assetId, point) =>
+          Queries.updateAssetGeometry(assetId, point)
+        }
 
         println(s"*** Imported ${group.length} directional service points in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
