@@ -58,6 +58,17 @@
       selectedAsset.set({ name: eventTarget.val() });
     });
 
+    rootElement.find('textarea').on('change', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ text: eventTarget.val() });
+    });
+
+    rootElement.find('button#change-validity-direction').on('click', function(event) {
+      var eventTarget = $(event.currentTarget);
+      previousValidityDirection = selectedAsset.get().validityDirection;
+      selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+    });
+
     rootElement.find('select').on('change', function(event) {
       var asset = selectedAsset.get();
       var eventTarget = $(event.currentTarget);
@@ -151,6 +162,17 @@
           '        <label class="control-label">' + 'Nimi' + '</label>' +
           '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
           '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
+          '    </div>';
+      } else if (asset.validityDirection) {
+        return '' +
+            '  <div class="form-group editable">' +
+            '      <label class="control-label">' + 'Teksti' + '</label>' +
+            '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
+            '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
+            '  </div>' +
+          '    <div class="form-group editable">' +
+          '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
+          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else {
       return '';

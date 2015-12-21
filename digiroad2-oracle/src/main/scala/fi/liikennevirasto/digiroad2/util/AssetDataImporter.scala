@@ -70,6 +70,13 @@ object AssetDataImporter {
     val roadLinkTable: String = "tielinkki"
     val busStopTable: String = "lineaarilokaatio"
   }
+
+  def humanReadableDurationSince(startTime: DateTime): String = {
+    val periodFormatter = new PeriodFormatterBuilder().appendDays().appendSuffix(" days, ").appendHours().appendSuffix(" hours, ").appendSeconds().appendSuffix(" seconds").toFormatter
+    val humanReadablePeriod = periodFormatter.print(new Period(startTime, DateTime.now()))
+    humanReadablePeriod
+  }
+
 }
 
 class AssetDataImporter {
@@ -519,12 +526,6 @@ class AssetDataImporter {
     println(s"Imported ${allLinks.length} linear assets in ${humanReadableDurationSince(startTime)}")
   }
 
-  def humanReadableDurationSince(startTime: DateTime): String = {
-    val periodFormatter = new PeriodFormatterBuilder().appendDays().appendSuffix(" days, ").appendHours().appendSuffix(" hours, ").appendSeconds().appendSuffix(" seconds").toFormatter
-    val humanReadablePeriod = periodFormatter.print(new Period(startTime, DateTime.now()))
-    humanReadablePeriod
-  }
-
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
     val litRoadLinks: Seq[(Long, Long, Double, Double, Int)] = conversionDatabase.withDynSession {
       sql"""
@@ -640,249 +641,8 @@ class AssetDataImporter {
     }
   }
 
-  def importPedestrianCrossings(database: DatabaseDef, vvhServiceHost: String): Unit = {
-    val query = sql"""
-         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.alkum, s.loppum
-           from segments s
-           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-           where s.tyyppi = 17
-        """
-
-    val pedestrianCrossings = database.withDynSession {
-      query.as[(Long, Long, Int, Seq[Point], Double, Double)].list
-    }
-
-    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(pedestrianCrossings.map(_._2).toSet)
-    val groupSize = 3000
-    val groupedCrossings = pedestrianCrossings.grouped(groupSize).toList
-    val totalGroupCount = groupedCrossings.length
-
-    OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
-      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-
-      println(s"*** Importing ${pedestrianCrossings.length} pedestrian crossings in $totalGroupCount groups of $groupSize each")
-
-      groupedCrossings.zipWithIndex.foreach { case (crossings, i) =>
-        val startTime = DateTime.now()
-
-        val assetGeometries = crossings.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure) =>
-          val assetId = Sequences.nextPrimaryKeySeqValue
-          assetPS.setLong(1, assetId)
-          assetPS.setInt(2, 200)
-          assetPS.setInt(3, municipalityCode)
-          val pointAsset = PedestrianCrossing(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, municipalityCode)
-          assetPS.setBoolean(4, PointAssetOperations.isFloating(
-            pointAsset,
-            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
-          ))
-          assetPS.addBatch()
-
-          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-          lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, roadLinkId)
-          lrmPositionPS.setLong(3, mmlId)
-          lrmPositionPS.setDouble(4, startMeasure)
-          lrmPositionPS.setDouble(5, endMeasure)
-          lrmPositionPS.setInt(6, 1)
-          lrmPositionPS.addBatch()
-
-          assetLinkPS.setLong(1, assetId)
-          assetLinkPS.setLong(2, lrmPositionId)
-          assetLinkPS.addBatch()
-
-          (assetId, points.head)
-        }
-
-        assetPS.executeBatch()
-        lrmPositionPS.executeBatch()
-        assetLinkPS.executeBatch()
-
-        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
-
-        println(s"*** Imported ${crossings.length} pedestrian crossings in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
-      }
-      assetPS.close()
-      lrmPositionPS.close()
-      assetLinkPS.close()
-    }
-  }
-
-  case class ImportedPointAsset(id: Long,
-                      mmlId: Long,
-                      mValue: Double,
-                      floating: Boolean,
-                      lon: Double,
-                      lat: Double,
-                      municipalityCode: Int) extends PersistedPointAsset
-
-  def importObstacles(database: DatabaseDef, vvhServiceHost: String, conversionTypeId: Int, enumeratedValue: Int): Unit = {
-    val query = sql"""
-         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.alkum, s.loppum
-           from segments s
-           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-           where s.tyyppi = $conversionTypeId
-        """
-
-    val obstacles = database.withDynSession {
-      query.as[(Long, Long, Int, Seq[Point], Double, Double)].list
-    }
-
-    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(obstacles.map(_._2).toSet)
-    val groupSize = 3000
-    val groupedObstacles = obstacles.grouped(groupSize).toList
-    val totalGroupCount = groupedObstacles.length
-
-    OracleDatabase.withDynTransaction {
-      val propertyId = sql"""select id from property where public_id = 'esterakennelma'""".as[Long].first
-      val enumeratedValueId = sql"""select id from ENUMERATED_VALUE where PROPERTY_ID = $propertyId and value = $enumeratedValue""".as[Long].first
-
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
-      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-      val singleChoicePS = dynamicSession.prepareStatement(s"insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (?, $enumeratedValueId, $propertyId)")
-
-      println(s"*** Importing ${obstacles.length} obstacles in $totalGroupCount groups of $groupSize each")
-
-      groupedObstacles.zipWithIndex.foreach { case (obstacles, i) =>
-        val startTime = DateTime.now()
-
-        val assetGeometries = obstacles.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure) =>
-          val assetId = Sequences.nextPrimaryKeySeqValue
-          assetPS.setLong(1, assetId)
-          assetPS.setInt(2, 220)
-          assetPS.setInt(3, municipalityCode)
-          val pointAsset = ImportedPointAsset(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
-          assetPS.setBoolean(4, PointAssetOperations.isFloating(
-            pointAsset,
-            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
-          ))
-          assetPS.addBatch()
-
-          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-          lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, roadLinkId)
-          lrmPositionPS.setLong(3, mmlId)
-          lrmPositionPS.setDouble(4, startMeasure)
-          lrmPositionPS.setDouble(5, endMeasure)
-          lrmPositionPS.setInt(6, 1)
-          lrmPositionPS.addBatch()
-
-          assetLinkPS.setLong(1, assetId)
-          assetLinkPS.setLong(2, lrmPositionId)
-          assetLinkPS.addBatch()
-
-          singleChoicePS.setLong(1, assetId)
-          singleChoicePS.addBatch()
-
-          (assetId, points.head)
-        }
-
-        assetPS.executeBatch()
-        lrmPositionPS.executeBatch()
-        assetLinkPS.executeBatch()
-        singleChoicePS.executeBatch()
-
-        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
-
-        println(s"*** Imported ${obstacles.length} obstacles in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
-      }
-      assetPS.close()
-      lrmPositionPS.close()
-      assetLinkPS.close()
-      singleChoicePS.close()
-    }
-  }
-
-  def importRailwayCrossings(database: DatabaseDef, vvhServiceHost: String): Unit = {
-    val query = sql"""
-         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.varustus, s.nimi_s
-           from segm_tasoristeys s
-           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
-        """
-
-    val railwayCrossings = database.withDynSession {
-      query.as[(Long, Long, Int, Seq[Point], Double, Double, Int, String)].list
-    }
-
-    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(railwayCrossings.map(_._2).toSet)
-    val groupSize = 3000
-    val groupedObstacles = railwayCrossings.grouped(groupSize).toList
-    val totalGroupCount = groupedObstacles.length
-
-    OracleDatabase.withDynTransaction {
-      val safetyGearPropertyId = sql"""select id from property where public_id = 'turvavarustus'""".as[Long].first
-      val safetyGearEnumValueIds = sql"""select value, id from ENUMERATED_VALUE where PROPERTY_ID = $safetyGearPropertyId""".as[(Int, Long)].list.groupBy(_._1).mapValues(_.head._2)
-      val textPropertyId = sql"""select id from property where public_id = 'rautatien_tasoristeyksen_nimi'""".as[Long].first
-
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
-      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-      val singleChoicePS = dynamicSession.prepareStatement(s"insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (?, ?, $safetyGearPropertyId)")
-      val textPropertyPS =  dynamicSession.prepareStatement(s"insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, $textPropertyId, ?)")
 
 
-      println(s"*** Importing ${railwayCrossings.length} railway crossings in $totalGroupCount groups of $groupSize each")
-
-      groupedObstacles.zipWithIndex.foreach { case (railwayCrossings, i) =>
-        val startTime = DateTime.now()
-
-        val assetGeometries = railwayCrossings.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, safetyGear, name) =>
-          val assetId = Sequences.nextPrimaryKeySeqValue
-          assetPS.setLong(1, assetId)
-          assetPS.setInt(2, 230)
-          assetPS.setInt(3, municipalityCode)
-          val pointAsset = ImportedPointAsset(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
-          assetPS.setBoolean(4, PointAssetOperations.isFloating(
-            pointAsset,
-            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
-          ))
-          assetPS.addBatch()
-
-          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-          lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, roadLinkId)
-          lrmPositionPS.setLong(3, mmlId)
-          lrmPositionPS.setDouble(4, startMeasure)
-          lrmPositionPS.setDouble(5, endMeasure)
-          lrmPositionPS.setInt(6, 1)
-          lrmPositionPS.addBatch()
-
-          assetLinkPS.setLong(1, assetId)
-          assetLinkPS.setLong(2, lrmPositionId)
-          assetLinkPS.addBatch()
-
-          singleChoicePS.setLong(1, assetId)
-          singleChoicePS.setLong(2, safetyGearEnumValueIds(safetyGear))
-          singleChoicePS.addBatch()
-
-          val id = Sequences.nextPrimaryKeySeqValue
-          textPropertyPS.setLong(1, id)
-          textPropertyPS.setLong(2, assetId)
-          textPropertyPS.setString(3, name)
-          textPropertyPS.addBatch()
-
-          (assetId, points.head)
-        }
-
-        assetPS.executeBatch()
-        lrmPositionPS.executeBatch()
-        assetLinkPS.executeBatch()
-        singleChoicePS.executeBatch()
-        textPropertyPS.executeBatch()
-
-        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
-
-        println(s"*** Imported ${railwayCrossings.length} railway crossings in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
-      }
-      assetPS.close()
-      lrmPositionPS.close()
-      assetLinkPS.close()
-      singleChoicePS.close()
-      textPropertyPS.close()
-    }
-  }
 
   def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"

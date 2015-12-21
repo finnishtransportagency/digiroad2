@@ -6,13 +6,8 @@ import scala.io.{Codec, Source}
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 
 object SqlScriptRunner {
-  def runScript(filename: String) {
-    executeStatements(readScriptStatements(filename))
-  }
-
   def runScripts(filenames: Seq[String]) {
     executeStatements(filenames.flatMap(readScriptStatements))
   }

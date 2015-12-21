@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
@@ -47,6 +48,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
   val testObstacleService = new ObstacleService(mockVVHClient)
   val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
+  val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockVVHClient)
   val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
@@ -57,7 +59,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
@@ -230,6 +232,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("updating numerical limits should require an operator role") {
     postJsonWithUserAuth("/linearassets", """{"value":6000, "typeId": 30, "ids": [11112]}""".getBytes, username = "test") {
       status should equal(401)
+    }
+  }
+
+  test("get directional traffic signs with bounding box") {
+    getWithUserAuth("/directionalTrafficSigns?bbox=374419,6677198,374467,6677281") {
+      status should equal(200)
+      val trafficSigns = parse(body).extract[Seq[DirectionalTrafficSign]]
+      trafficSigns.size should be(1)
     }
   }
 

@@ -278,6 +278,10 @@
       return $.getJSON('api/railwayCrossings/floating');
     };
 
+    this.getFloatingDirectionalTrafficSigns = function() {
+      return $.getJSON('api/directionalTrafficSigns/floating');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

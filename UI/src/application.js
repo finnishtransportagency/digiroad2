@@ -23,12 +23,14 @@ var URLRouter = function(map, backend, models) {
       'pedestrianCrossings/:id': 'pedestrianCrossings',
       'obstacles/:id': 'obstacles',
       'railwayCrossings/:id': 'railwayCrossings',
+      'directionalTrafficSigns/:id': 'directionalTrafficSigns',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
       'work-list/massTransitStop': 'massTransitStopWorkList',
       'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
       'work-list/obstacles': 'obstacleWorkList',
-      'work-list/railwayCrossings': 'railwayCrossingWorkList'
+      'work-list/railwayCrossings': 'railwayCrossingWorkList',
+      'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList'
     },
 
     massTransitStop: function(id) {
@@ -91,6 +93,14 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
+    directionalTrafficSigns: function(id) {
+      applicationModel.selectLayer('directionalTrafficSigns');
+      backend.getPointAssetById(id, 'directionalTrafficSigns').then(function(result) {
+        map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+        models.selectedDirectionalTrafficSign.open(result);
+      });
+    },
+
     speedLimitWorkList: function() {
       eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
     },
@@ -112,6 +122,10 @@ var URLRouter = function(map, backend, models) {
     },
     railwayCrossingWorkList: function() {
       eventbus.trigger('workList:select', 'railwayCrossings', backend.getFloatingRailwayCrossings());
+    },
+
+    directionalTrafficSignsWorkList: function() {
+      eventbus.trigger('workList:select', 'directionalTrafficSigns', backend.getFloatingDirectionalTrafficSigns());
     }
   });
 
@@ -165,7 +179,8 @@ var URLRouter = function(map, backend, models) {
     pedestrianCrossings: 200,
     hazardousMaterialTransportProhibition: 210,
     obstacles: 220,
-    railwayCrossings: 230
+    railwayCrossings: 230,
+    directionalTrafficSigns: 240
   };
 
   var linearAssetSpecs = [
@@ -455,7 +470,8 @@ var URLRouter = function(map, backend, models) {
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'suojatien',
         manyFloatingAssetsLabel: 'suojatiet',
@@ -470,7 +486,8 @@ var URLRouter = function(map, backend, models) {
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
         {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'esterakennelman',
         manyFloatingAssetsLabel: 'esterakennelmat',
@@ -484,11 +501,27 @@ var URLRouter = function(map, backend, models) {
       newAsset: { safetyEquipment: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}],
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
       formLabels: {
         singleFloatingAssetLabel: 'tasoristeyksen',
         manyFloatingAssetsLabel: 'tasoristeykset',
         newAssetLabel: 'tasoristeys'
+      }
+    },
+    {
+      typeId: 240,
+      layerName: 'directionalTrafficSigns',
+      title: 'Opastustaulu',
+      newAsset: { validityDirection: 2 },
+      legendValues: [
+        {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg', label: 'Opastustaulu'},
+        {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning-directional-traffic-sign.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        singleFloatingAssetLabel: 'opastustaulun',
+        manyFloatingAssetsLabel: 'opastustaulut',
+        newAssetLabel: 'opastustaulu'
       }
     }
   ];
@@ -659,13 +692,23 @@ var URLRouter = function(map, backend, models) {
     if (localizedStrings) {
       setupProjections();
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
-      var selectedPedestrianCrossing = _(pointAssets).find({ layerName: 'pedestrianCrossings' }).selectedPointAsset;
-      var selectedObstacle = _(pointAssets).find({ layerName:'obstacles' }).selectedPointAsset;
-      var selectedRailwayCrossing = _(pointAssets).find({ layerName:'railwayCrossings' }).selectedPointAsset;
-      new URLRouter(map, backend, _.merge({}, models, { selectedPedestrianCrossing: selectedPedestrianCrossing }, { selectedObstacle: selectedObstacle }, { selectedRailwayCrossing: selectedRailwayCrossing }));
+      var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
+      var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
+      var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
+      var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
+      new URLRouter(map, backend, _.merge({}, models,
+          { selectedPedestrianCrossing: selectedPedestrianCrossing },
+          { selectedObstacle: selectedObstacle },
+          { selectedRailwayCrossing: selectedRailwayCrossing },
+          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign  }
+      ));
       eventbus.trigger('application:initialized');
     }
   };
+
+  function getSelectedPointAsset(pointAssets, layerName) {
+    return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;
+  }
 
   application.start = function(customBackend, withTileMaps, isExperimental) {
     var backend = customBackend || new Backend();
@@ -785,6 +828,7 @@ var URLRouter = function(map, backend, models) {
       [massTransitBox]
         .concat(getPointAsset(assetType.obstacles))
         .concat(getPointAsset(assetType.railwayCrossings))
+        .concat(getPointAsset(assetType.directionalTrafficSigns))
         .concat(getPointAsset(assetType.pedestrianCrossings)),
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))

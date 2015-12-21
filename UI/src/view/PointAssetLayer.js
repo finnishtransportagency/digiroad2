@@ -56,7 +56,7 @@
           roadLayer.selectRoadLink(nearestLine);
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
 
-          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId});
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end]});
         } else {
           this.cancel();
         }
@@ -66,11 +66,25 @@
     }
 
     function createFeature(asset) {
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), asset);
+      var rotation = determineRotation(asset);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
+    }
+
+    function determineRotation(asset) {
+      var rotation = 0;
+      if (asset.geometry && asset.geometry.length > 0){
+        var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
+        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
+      }
+      return rotation;
     }
 
     this.refreshView = function() {
-      redrawLinks(map);
+      eventbus.once('roadLinks:fetched', function () {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+      });
+      roadCollection.fetch(map.getExtent());
       collection.fetch(map.getExtent()).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
@@ -136,6 +150,7 @@
 
     function handleCreationCancelled() {
       me.selectControl.unselectAll();
+      me.activateSelection();
       mapOverlay.hide();
       vectorLayer.styleMap = style.browsing;
       me.refreshView();
@@ -155,7 +170,9 @@
 
     function handleChanged() {
       me.deactivateSelection();
-      _.find(vectorLayer.features, {attributes: {id: selectedAsset.getId()}}).attributes = selectedAsset.get();
+      var asset = selectedAsset.get();
+      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset)});
+      _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       vectorLayer.redraw();
     }
 
@@ -185,20 +202,14 @@
         lat: projectionOnNearestLine.y,
         floating: false,
         mmlId: nearestLine.mmlId,
-        id: 0
+        id: 0,
+        geometry: [nearestLine.start, nearestLine.end]
       });
 
       vectorLayer.addFeatures(createFeature(asset));
       selectedAsset.place(asset);
 
       mapOverlay.show();
-    }
-
-    function redrawLinks(map) {
-      eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
-      });
-      roadCollection.fetch(map.getExtent());
     }
 
     function show(map) {
