@@ -40,7 +40,8 @@
 
     var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
-      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: handleDragging });
+      var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
+      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: dragHandler });
       allowClickEventBubbling();
       map.addControl(dragControl);
 
@@ -48,7 +49,16 @@
         dragControl.handlers.feature.stopClick = false;
       }
 
-      function handleDragging(feature, mousePosition) {
+      function dragFreely(feature, mousePosition) {
+        if (selectedAsset.isSelected(feature.attributes)) {
+          var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
+          selectedAsset.set({lon: currentLonLat.lon, lat: currentLonLat.lat});
+        } else {
+          this.cancel();
+        }
+      }
+
+      function dragAlongNearestLink(feature, mousePosition) {
         if (selectedAsset.isSelected(feature.attributes)) {
           var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
           var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
