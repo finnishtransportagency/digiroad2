@@ -72,8 +72,9 @@
 
     function determineRotation(asset) {
       var rotation = 0;
+      var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
       if (asset.geometry && asset.geometry.length > 0){
-        var bearing = geometrycalculator.getLineDirectionDegAngle({start: _.first(asset.geometry), end: _.last(asset.geometry)});
+        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
       }
       return rotation;
