@@ -6,23 +6,18 @@
   function bindEvents(selectedAsset, layerName, localizedTexts) {
     var rootElement = $('#feature-attributes');
 
-    function toggleMode(readOnly) {
-      rootElement.find('.delete').toggle(!readOnly);
-      rootElement.find('.form-controls').toggle(!readOnly);
-      rootElement.find('.editable .form-control-static').toggle(readOnly);
-      rootElement.find('.editable .form-control').toggle(!readOnly);
-    }
-
-    eventbus.on('application:readOnly', toggleMode);
+    eventbus.on('application:readOnly', function(readOnly) {
+      toggleMode(rootElement, readOnly);
+    });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled', function() {
       renderForm(rootElement, selectedAsset, localizedTexts);
-      toggleMode(applicationModel.isReadOnly());
-      rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
+      toggleMode(rootElement, applicationModel.isReadOnly());
+      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').attr('disabled', !selectedAsset.isDirty());
+      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -50,7 +45,7 @@
 
     rootElement.find('input[type="checkbox"]').on('change', function(event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ toBeDeleted: eventTarget.attr('checked') === 'checked' });
+      selectedAsset.set({ toBeDeleted: eventTarget.prop('checked') === 'checked' });
     });
 
     rootElement.find('input[type="text"]').on('input change', function(event) {
@@ -62,8 +57,24 @@
       selectedAsset.set({ text: $(event.currentTarget).val() });
     });
 
-    rootElement.find('.form-service-point textarea').on('input change', function(event) {
+    rootElement.find('.form-service textarea').on('input change', function(event) {
       selectedAsset.set({additionalInfo: $(event.currentTarget).val()});
+    });
+
+    rootElement.find('.form-service').on('change', 'select', function(event) {
+      var newServiceType = parseInt($(event.currentTarget).val(), 10);
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      var services = _.map(selectedAsset.get().services, function(service) {
+        if (service.id === serviceId) {
+          return _.merge({}, service, {serviceType: newServiceType});
+        } else {
+          return service;
+        }
+      });
+      selectedAsset.set({services: services});
+      renderForm(rootElement, selectedAsset, localizedTexts);
+      toggleMode(rootElement, applicationModel.isReadOnly());
+      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
     });
 
     rootElement.find('button#change-validity-direction').on('click', function() {
@@ -121,49 +132,51 @@
         '  </div>' +
         '</div>';
     }
-
   }
 
-  function renderValueElement(asset) {
-    var obstacleTypes = {
-      1: 'Suljettu yhteys',
-      2: 'Avattava puomi'
-    };
-    var safetyEquipments = {
-      1: 'Rautatie ei käytössä',
-      2: 'Ei turvalaitetta',
-      3: 'Valo/äänimerkki',
-      4: 'Puolipuomi',
-      5: 'Kokopuomi'
-    };
-    var serviceTypes = [
-      { value: 4,  label: 'Tulli' },
-      { value: 5,  label: 'Rajanylityspaikka' },
-      { value: 6,  label: 'Levähdysalue' },
-      { value: 8,  label: 'Lentokenttä' },
-      { value: 9,  label: 'Laivaterminaali' },
-      { value: 10, label: 'Taksiasema' },
-      { value: 11, label: 'Rautatieasema' },
-      { value: 12, label: 'Pysäköintialue' },
-      { value: 13, label: 'Autojen lastausterminaali' },
-      { value: 14, label: 'Kuorma-autojen pysäköintialue' },
-      { value: 15, label: 'Pysäköintitalo' },
-      { value: 16, label: 'Linja-autoasema' }
-    ];
-    var serviceTypeExtensions = {
-      6: [
-        {value: 1, label: 'Kattava varustelu'},
-        {value: 2, label: 'Perusvarustelu'},
-        {value: 3, label: 'Yksityinen palvelualue'},
-        {value: 4, label: 'Ei lisätietoja'}
-      ],
-      11: [
-        {value: 5, label: 'Merkittävä rautatieasema'},
-        {value: 6, label: 'Vähäisempi rautatieasema'},
-        {value: 7, label: 'Maanalainen/metroasema'}
-      ]
-    };
+  var obstacleTypes = {
+    1: 'Suljettu yhteys',
+    2: 'Avattava puomi'
+  };
 
+  var safetyEquipments = {
+    1: 'Rautatie ei käytössä',
+    2: 'Ei turvalaitetta',
+    3: 'Valo/äänimerkki',
+    4: 'Puolipuomi',
+    5: 'Kokopuomi'
+  };
+
+  var serviceTypes = [
+    { value: 4,  label: 'Tulli' },
+    { value: 5,  label: 'Rajanylityspaikka' },
+    { value: 6,  label: 'Levähdysalue' },
+    { value: 8,  label: 'Lentokenttä' },
+    { value: 9,  label: 'Laivaterminaali' },
+    { value: 10, label: 'Taksiasema' },
+    { value: 11, label: 'Rautatieasema' },
+    { value: 12, label: 'Pysäköintialue' },
+    { value: 13, label: 'Autojen lastausterminaali' },
+    { value: 14, label: 'Kuorma-autojen pysäköintialue' },
+    { value: 15, label: 'Pysäköintitalo' },
+    { value: 16, label: 'Linja-autoasema' }
+  ];
+
+  var serviceTypeExtensions = {
+    6: [
+      {value: 1, label: 'Kattava varustelu'},
+      {value: 2, label: 'Perusvarustelu'},
+      {value: 3, label: 'Yksityinen palvelualue'},
+      {value: 4, label: 'Ei lisätietoja'}
+    ],
+    11: [
+      {value: 5, label: 'Merkittävä rautatieasema'},
+      {value: 6, label: 'Vähäisempi rautatieasema'},
+      {value: 7, label: 'Maanalainen/metroasema'}
+    ]
+  };
+
+  function renderValueElement(asset) {
     if (asset.obstacleType) {
       return '' +
         '    <div class="form-group editable form-obstacle">' +
@@ -204,10 +217,12 @@
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else if (asset.services) {
-      var services = _.map(asset.services, function(service) { return renderService(service, serviceTypes, serviceTypeExtensions); }).join('');
+      var services = _.map(asset.services, function(service) {
+        return renderService(service);
+      }).join('');
 
       return '' +
-        '    <div class="form-group editable form-service-point">' +
+        '    <div class="form-group editable form-service">' +
         '      <label class="asset-label">Palvelu</label>' +
         '      <ul>' +
                services +
@@ -218,7 +233,7 @@
     }
   }
 
-  function renderService(service, serviceTypes, serviceTypeExtensions) {
+  function renderService(service) {
     var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
       return $('<option>', {value: serviceType.value, selected: service.serviceType == serviceType.value, text: serviceType.label})[0].outerHTML;
       //return '<option value="'+ serviceType.value + '" ' + (service.serviceType == serviceType.value ? 'selected' : '') + '>' + serviceType.label +'</option>';
@@ -227,7 +242,7 @@
     return '<li>' +
       '  <div class="form-group editable">' +
       '    <h4> ' + _.find(serviceTypes, { value: service.serviceType }).label + '</h4>' +
-      '    <select class="form-control" style="display:none">  ' +
+      '    <select class="form-control" style="display:none" data-service-id="' + service.id + '">  ' +
       serviceTypeLabelOptions +
       '    </select>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
@@ -247,10 +262,10 @@
       var extensionOptions = _.map(extensions, function(extension) {
         return $('<option>', {value: extension.value, text: extension.label, selected: extension.value === service.typeExtension})[0].outerHTML;
       }).join('');
-
+      var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
         '<label class="control-label"></label>' +
-        '<p class="form-control-static">' + (_.find(extensions, {value: service.typeExtension}).label || '') + '</p>' +
+        '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '') + '</p>' +
         '<select class="form-control" style="display:none">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
            extensionOptions +
@@ -284,5 +299,12 @@
       '<div class="form form-horizontal">' +
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
+  }
+
+  function toggleMode(rootElement, readOnly) {
+    rootElement.find('.delete').toggle(!readOnly);
+    rootElement.find('.form-controls').toggle(!readOnly);
+    rootElement.find('.editable .form-control-static').toggle(readOnly);
+    rootElement.find('.editable .form-control').toggle(!readOnly);
   }
 })(this);
