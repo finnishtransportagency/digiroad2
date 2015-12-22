@@ -23,8 +23,8 @@ object ServicePointImporter {
     val totalGroupCount = groupedServicePoints.length
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION) values (?,?,?,?,?,?)")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, created_date, created_by) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (id, asset_id, type, name, additional_info, parking_place_count, type_extension) values (?,?,?,?,?,?,?)")
 
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")
 
@@ -42,18 +42,19 @@ object ServicePointImporter {
           assetIdToPoint += assetId -> rows.head._6.head
           assetPS.addBatch()
 
-          rows.foreach { case (serviceType, additionalInfo, railwayStationType, _, restAreaType, _, _, name) =>
+          rows.foreach { case (serviceType, additionalInfo, railwayStationType, parkingPlaceCount, restAreaType, _, _, name) =>
             servicePointPS.setLong(1, Sequences.nextPrimaryKeySeqValue)
             servicePointPS.setLong(2, assetId)
             servicePointPS.setInt(3, serviceType)
             servicePointPS.setString(4, name.orNull)
             servicePointPS.setString(5, additionalInfo.orNull)
+            parkingPlaceCount.fold { servicePointPS.setNull(6, java.sql.Types.INTEGER) } { servicePointPS.setInt(6, _) }
             val typeExtension = (railwayStationType, restAreaType) match {
               case (Some(t), None) => Some(t + 4)
               case (None, Some(t)) => Some(t)
               case _ => None
             }
-            typeExtension.fold { servicePointPS.setNull(6, java.sql.Types.INTEGER) } { servicePointPS.setInt(6, _) }
+            typeExtension.fold { servicePointPS.setNull(7, java.sql.Types.INTEGER) } { servicePointPS.setInt(7, _) }
             servicePointPS.addBatch()
           }
         }

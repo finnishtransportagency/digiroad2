@@ -5,6 +5,7 @@ create table service_point_value(
   asset_id number references asset not null,
   type integer not null,
   additional_info varchar2(4000),
+  parking_place_count number,
   name varchar2(128),
   type_extension number
 );
