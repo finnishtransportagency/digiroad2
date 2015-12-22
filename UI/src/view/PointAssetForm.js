@@ -61,20 +61,30 @@
       selectedAsset.set({additionalInfo: $(event.currentTarget).val()});
     });
 
-    rootElement.find('.form-service').on('change', 'select', function(event) {
+    rootElement.find('.form-service').on('change', '.select-service-type', function(event) {
       var newServiceType = parseInt($(event.currentTarget).val(), 10);
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-      var services = _.map(selectedAsset.get().services, function(service) {
-        if (service.id === serviceId) {
-          return _.merge({}, service, {serviceType: newServiceType});
-        } else {
-          return service;
-        }
-      });
+      var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
       selectedAsset.set({services: services});
       renderForm(rootElement, selectedAsset, localizedTexts);
       toggleMode(rootElement, applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+    });
+
+    function modifyService(services, id, modifications) {
+      return _.map(services, function(service) {
+        if (service.id === id) {
+          return _.merge({}, service, modifications);
+        } else {
+          return service;
+        }
+      });
+    }
+
+    rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {typeExtension: newTypeExtension})});
     });
 
     rootElement.find('button#change-validity-direction').on('click', function() {
@@ -242,7 +252,7 @@
     return '<li>' +
       '  <div class="form-group editable">' +
       '    <h4> ' + _.find(serviceTypes, { value: service.serviceType }).label + '</h4>' +
-      '    <select class="form-control" style="display:none" data-service-id="' + service.id + '">  ' +
+      '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
       serviceTypeLabelOptions +
       '    </select>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
@@ -266,7 +276,7 @@
       return '' +
         '<label class="control-label"></label>' +
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '') + '</p>' +
-        '<select class="form-control" style="display:none">  ' +
+        '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
            extensionOptions +
         '</select>';
