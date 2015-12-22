@@ -24,15 +24,26 @@ case class ServicePoint(id: Long,
                         modifiedAt: Option[DateTime] = None)
 
 object OracleServicePointDao {
-  def get: Set[ServicePoint] = Set.empty
+  def get: Set[ServicePoint] = {
+    getWithFilter("")
+  }
 
   def get(bounds: BoundingRectangle): Set[ServicePoint] = {
     val bboxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+    getWithFilter(bboxFilter)
+  }
+
+  private def getWithFilter(filter: String): Set[ServicePoint] = {
+    val withFilter = if (!filter.isEmpty)
+      s"and $filter"
+    else
+      ""
+
     val servicePoints = StaticQuery.queryNA[ServicePoint](
       s"""
       select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date
       from asset a
-      where a.ASSET_TYPE_ID = 250 and $bboxFilter
+      where a.ASSET_TYPE_ID = 250 $withFilter
     """).iterator.toSet
 
     val services: Map[Long, Set[Service]] =
@@ -42,12 +53,13 @@ object OracleServicePointDao {
         StaticQuery.queryNA[Service](s"""
           select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION
           from SERVICE_POINT_VALUE
-          where ASSET_ID in (${servicePoints.map(_.id).mkString(",")})
+          where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({x => s"($x, $x)"}).mkString(",")})
         """).iterator.toSet.groupBy(_.assetId)
 
     servicePoints.map { servicePoint =>
       servicePoint.copy(services = services(servicePoint.id))
     }
+
   }
 
   implicit val getServicePoint = new GetResult[ServicePoint] {
