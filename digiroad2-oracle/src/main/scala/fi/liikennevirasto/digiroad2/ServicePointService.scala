@@ -6,6 +6,12 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleServicePointDao, ServicePoint}
 
 class ServicePointService {
+  def get: Set[ServicePoint] = {
+    OracleDatabase.withDynSession {
+      OracleServicePointDao.get
+    }
+  }
+
   def get(boundingBox: BoundingRectangle): Set[ServicePoint] = {
     OracleDatabase.withDynSession {
       OracleServicePointDao.get(boundingBox)

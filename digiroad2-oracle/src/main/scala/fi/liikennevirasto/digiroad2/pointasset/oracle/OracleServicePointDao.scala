@@ -24,6 +24,8 @@ case class ServicePoint(id: Long,
                         modifiedAt: Option[DateTime] = None)
 
 object OracleServicePointDao {
+  def get: Set[ServicePoint] = Set.empty
+
   def get(bounds: BoundingRectangle): Set[ServicePoint] = {
     val bboxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
     val servicePoints = StaticQuery.queryNA[ServicePoint](
