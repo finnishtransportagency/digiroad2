@@ -190,7 +190,13 @@
           '    </div>';
     } else if (asset.services) {
       var serviceTypes = _.map(asset.services, function(service) {
-          return '<li><p class="form-control-static">' + servicePointType[service.serviceType] + '</p></li>';
+          return '<li>' +
+                 '  <div class="form-group editable">' +
+                 '    <h4> ' + servicePointType[service.serviceType] + '</h4>' +
+                 '    <label class="control-label">Palvelun nimi</label>' +
+                 '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
+                 '  </div>' +
+                 '</li>';
         }).join('');
 
       return '' +
