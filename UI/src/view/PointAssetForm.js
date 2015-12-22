@@ -58,25 +58,27 @@
       selectedAsset.set({ name: eventTarget.val() });
     });
 
-    rootElement.find('textarea').on('change', function(event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ text: eventTarget.val() });
+    rootElement.find('.form-directional-traffic-sign textarea').on('input change', function(event) {
+      selectedAsset.set({ text: $(event.currentTarget).val() });
     });
 
-    rootElement.find('button#change-validity-direction').on('click', function(event) {
-      var eventTarget = $(event.currentTarget);
-      previousValidityDirection = selectedAsset.get().validityDirection;
+    rootElement.find('.form-service-point textarea').on('input change', function(event) {
+      selectedAsset.set({additionalInfo: $(event.currentTarget).val()});
+    });
+
+    rootElement.find('button#change-validity-direction').on('click', function() {
+      var previousValidityDirection = selectedAsset.get().validityDirection;
       selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
     });
 
-    rootElement.find('select').on('change', function(event) {
-      var asset = selectedAsset.get();
+    rootElement.find('.form-railway-crossing select').on('change', function(event) {
       var eventTarget = $(event.currentTarget);
-      if (asset.obstacleType) {
-        selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
-      } else if (asset.safetyEquipment) {
-        selectedAsset.set({ safetyEquipment: parseInt(eventTarget.val(), 10) });
-      }
+      selectedAsset.set({ safetyEquipment: parseInt(eventTarget.val(), 10) });
+    });
+
+    rootElement.find('.form-obstacle select').on('change', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ obstacleType: parseInt(eventTarget.val(), 10) });
     });
 
     rootElement.find('.pointasset button.save').on('click', function() {
@@ -164,8 +166,8 @@
 
     if (asset.obstacleType) {
       return '' +
-        '    <div class="form-group editable">' +
-        '      <label class="control-label">' + 'Esterakennelma' + '</label>' +
+        '    <div class="form-group editable form-obstacle">' +
+        '      <label class="control-label">Esterakennelma</label>' +
         '      <p class="form-control-static">' + obstacleTypes[asset.obstacleType] + '</p>' +
         '      <select class="form-control" style="display:none">  ' +
         '        <option value="1" '+ (asset.obstacleType === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
@@ -174,8 +176,8 @@
         '    </div>';
     } else if (asset.safetyEquipment) {
       return '' +
-          '    <div class="form-group editable">' +
-          '      <label class="control-label">' + 'Turvavarustus' + '</label>' +
+          '    <div class="form-group editable form-railway-crossing">' +
+          '      <label class="control-label">Turvavarustus</label>' +
           '      <p class="form-control-static">' + safetyEquipments[asset.safetyEquipment] + '</p>' +
           '      <select class="form-control" style="display:none">  ' +
           '        <option value="1" '+ (asset.safetyEquipment === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
@@ -185,19 +187,19 @@
           '        <option value="5" '+ (asset.safetyEquipment === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
           '      </select>' +
           '    </div>' +
-          '    <div class="form-group editable">' +
+          '    <div class="form-group editable form-railway-crossing">' +
           '        <label class="control-label">' + 'Nimi' + '</label>' +
           '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
           '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
           '    </div>';
       } else if (asset.validityDirection) {
         return '' +
-            '  <div class="form-group editable">' +
-            '      <label class="control-label">' + 'Teksti' + '</label>' +
+            '  <div class="form-group editable form-directional-traffic-sign">' +
+            '      <label class="control-label">Teksti</label>' +
             '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
             '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
             '  </div>' +
-          '    <div class="form-group editable">' +
+          '    <div class="form-group editable form-directional-traffic-sign">' +
           '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
@@ -205,8 +207,8 @@
       var services = _.map(asset.services, function(service) { return renderService(service, serviceTypes, serviceTypeExtensions); }).join('');
 
       return '' +
-        '    <div class="form-group editable">' +
-        '      <label class="asset-label"> Palvelu </label>' +
+        '    <div class="form-group editable form-service-point">' +
+        '      <label class="asset-label">Palvelu</label>' +
         '      <ul>' +
                services +
         '      </ul>' +
