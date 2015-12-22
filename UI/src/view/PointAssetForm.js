@@ -195,6 +195,8 @@
                  '    <h4> ' + servicePointType[service.serviceType] + '</h4>' +
                  '    <label class="control-label">Palvelun nimi</label>' +
                  '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
+                 '    <label class="control-label">Palvelun lisätieto</label>' +
+                 '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
                  '  </div>' +
                  '</li>';
         }).join('');
