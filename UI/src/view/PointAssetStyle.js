@@ -8,7 +8,7 @@
         new OpenLayersRule().where('floating').is(true).use({externalGraphic: 'images/point-assets/point_red.svg'})
       ];
     }
-    if (layerName === 'directionalTrafficSigns') {
+    else if (layerName === 'directionalTrafficSigns') {
       featureTypeRules = [
         new OpenLayersRule().where('floating').is(false).use({
           externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg',
@@ -25,7 +25,6 @@
           graphicXOffset: -15,
           graphicYOffset: -8 })
       ];
-
     }
     else {
       featureTypeRules = [
