@@ -12,7 +12,12 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-case class Service(id: Long, assetId: Long, serviceType: Int, name: Option[String], additionalInfo: Option[String], typeExtension: Int)
+case class Service(id: Long,
+                   assetId: Long,
+                   serviceType: Int,
+                   name: Option[String],
+                   additionalInfo: Option[String],
+                   typeExtension: Int)
 
 case class ServicePoint(id: Long,
                         lon: Double,
