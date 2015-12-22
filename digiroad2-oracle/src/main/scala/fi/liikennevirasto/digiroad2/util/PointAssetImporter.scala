@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.sql.SQLType
-
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
