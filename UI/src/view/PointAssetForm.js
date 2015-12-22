@@ -134,6 +134,20 @@
       4: 'Puolipuomi',
       5: 'Kokopuomi'
     };
+    var servicePointType = {
+      4: 'Tulli',
+      5: 'Rajanylityspaikka',
+      6: 'Levähdysalue',
+      8: 'Lentokenttä',
+      9: 'Laivaterminaali',
+      10: 'Taksiasema',
+      11: 'Rautatieasema',
+      12: 'Pysäköintialue',
+      13: 'Autojen lastausterminaali',
+      14: 'Kuorma-autojen pysäköintialue',
+      15: 'Pysäköintitalo',
+      16: 'Linja-autoasema'
+    };
 
     if (asset.obstacleType) {
       return '' +
@@ -174,6 +188,18 @@
           '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
+    } else if (asset.services) {
+      var serviceTypes = _.map(asset.services, function(service) {
+          return '<li><p class="form-control-static">' + servicePointType[service.serviceType] + '</p></li>';
+        }).join('');
+
+      return '' +
+        '    <div class="form-group editable">' +
+        '      <label class="asset-label"> Palvelu </label>' +
+        '      <ul>' +
+               serviceTypes +
+        '      </ul>' +
+        '    </div>';
     } else {
       return '';
     }

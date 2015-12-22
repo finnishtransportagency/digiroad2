@@ -20,6 +20,7 @@ object ServicePointTestData {
            into SERVICE_POINT_VALUE (ID,ASSET_ID,TYPE,ADDITIONAL_INFO,NAME,TYPE_EXTENSION) values (600062,600059,11,'00127;;Tavaraliikenne;liikennepaikka','Rautatieasema',5)
            into SERVICE_POINT_VALUE (ID,ASSET_ID,TYPE,NAME,TYPE_EXTENSION) values (600063,600060,6,'Levähdyspaikka',3)
            into SERVICE_POINT_VALUE (ID,ASSET_ID,TYPE,ADDITIONAL_INFO,NAME,TYPE_EXTENSION) values (600064,600061,8,'00023;Henkilöliikenne;;liikennepaikka','Lentokenttä',NULL)
+           into SERVICE_POINT_VALUE (ID,ASSET_ID,TYPE,NAME,TYPE_EXTENSION) values (600065,600061,6,'Levähdyspaikka',2)
         select * from dual
       """.execute
 
