@@ -25,7 +25,9 @@
           graphicXOffset: -15,
           graphicYOffset: -8 })
       ];
-
+    }
+    if (layerName === 'servicePoints') {
+      return [];
     }
     else {
       featureTypeRules = [
@@ -41,7 +43,8 @@
       graphicWidth: 14,
       graphicHeight: 14,
       graphicXOffset: -7,
-      graphicYOffset: -7
+      graphicYOffset: -7,
+      externalGraphic: 'images/point-assets/point_blue.svg'
     };
 
     var featureTypeRules = getFeatureTypeRules(layerName);
