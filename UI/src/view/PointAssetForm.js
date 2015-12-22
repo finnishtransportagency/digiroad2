@@ -147,15 +147,19 @@
       { value: 14, label: 'Kuorma-autojen pysäköintialue' },
       { value: 15, label: 'Pysäköintitalo' },
       { value: 16, label: 'Linja-autoasema' }
-  ];
-    var serviceTypeExtension = {
-      1: 'Kattava varustelu',
-      2: 'Perusvarustelu',
-      3: 'Yksityinen palvelualue',
-      4: 'Ei lisätietoja',
-      5: 'Merkittävä rautatieasema',
-      6: 'Vähäisempi rautatieasema',
-      7: 'Maanalainen/metroasema'
+    ];
+    var serviceTypeExtensions = {
+      6: [
+        {value: 1, label: 'Kattava varustelu'},
+        {value: 2, label: 'Perusvarustelu'},
+        {value: 3, label: 'Yksityinen palvelualue'},
+        {value: 4, label: 'Ei lisätietoja'}
+      ],
+      11: [
+        {value: 5, label: 'Merkittävä rautatieasema'},
+        {value: 6, label: 'Vähäisempi rautatieasema'},
+        {value: 7, label: 'Maanalainen/metroasema'}
+      ]
     };
 
     if (asset.obstacleType) {
@@ -198,7 +202,7 @@
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else if (asset.services) {
-      var services = _.map(asset.services, function(service) { return renderService(service, serviceTypes, serviceTypeExtension); }).join('');
+      var services = _.map(asset.services, function(service) { return renderService(service, serviceTypes, serviceTypeExtensions); }).join('');
 
       return '' +
         '    <div class="form-group editable">' +
@@ -212,9 +216,10 @@
     }
   }
 
-  function renderService(service, serviceTypes, serviceTypeExtension) {
+  function renderService(service, serviceTypes, serviceTypeExtensions) {
     var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
-      return  '<option value="'+ serviceType.value +'"'+ (service.serviceType == serviceType.value ? 'selected' : '') +'>'+ serviceType.label +'</option>';
+      return $('<option>', {value: serviceType.value, selected: service.serviceType == serviceType.value, text: serviceType.label})[0].outerHTML;
+      //return '<option value="'+ serviceType.value + '" ' + (service.serviceType == serviceType.value ? 'selected' : '') + '>' + serviceType.label +'</option>';
     }).join('');
 
     return '<li>' +
@@ -223,7 +228,7 @@
       '    <select class="form-control" style="display:none">  ' +
       serviceTypeLabelOptions +
       '    </select>' +
-      serviceTypeExtensionElements(service, serviceTypeExtension) +
+      serviceTypeExtensionElements(service, serviceTypeExtensions) +
       '    <label class="control-label">Palvelun nimi</label>' +
       '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
       '    <input type="text" class="form-control" value="' + (service.name || '')  + '">' +
@@ -234,22 +239,20 @@
       '</li>';
   }
 
-  function serviceTypeExtensionElements(service, serviceTypeExtension) {
+  function serviceTypeExtensionElements(service, serviceTypeExtensions) {
     if (service.serviceType === 6 || service.serviceType === 11) {
-      return '' +
-        '    <label class="control-label"></label>' +
-        '    <p class="form-control-static">' + (serviceTypeExtension[service.typeExtension] || '') + '</p>' +
-        '    <select class="form-control" style="display:none">  ' +
-        '      <option disabled selected>Lisää tarkenne</option>' +
-        '      <option value="1" '+ (service.typeExtension === 1 ? 'selected' : '') +'>Kattava varustelu</option>' +
-        '      <option value="2" '+ (service.typeExtension === 2 ? 'selected' : '') +'>Perusvarustelu</option>' +
-        '      <option value="3" '+ (service.typeExtension === 3 ? 'selected' : '') +'>Yksityinen palvelualue</option>' +
-        '      <option value="4" '+ (service.typeExtension === 4 ? 'selected' : '') +'>Ei lisätietoja</option>' +
-        '      <option value="5" '+ (service.typeExtension === 5 ? 'selected' : '') +'>Merkittävä rautatieasema</option>' +
-        '      <option value="6" '+ (service.typeExtension === 6 ? 'selected' : '') +'>Vähäisempi rautatieasema</option>' +
-        '      <option value="7" '+ (service.typeExtension === 7 ? 'selected' : '') +'>Maanalainen/metroasema</option>' +
-        '    </select>';
+      var extensions = serviceTypeExtensions[service.serviceType];
+      var extensionOptions = _.map(extensions, function(extension) {
+        return $('<option>', {value: extension.value, text: extension.label, selected: extension.value === service.typeExtension})[0].outerHTML;
+      }).join('');
 
+      return '' +
+        '<label class="control-label"></label>' +
+        '<p class="form-control-static">' + (_.find(extensions, {value: service.typeExtension}).label || '') + '</p>' +
+        '<select class="form-control" style="display:none">  ' +
+        '  <option disabled selected>Lisää tarkenne</option>' +
+           extensionOptions +
+        '</select>';
     } else {
       return '';
     }
