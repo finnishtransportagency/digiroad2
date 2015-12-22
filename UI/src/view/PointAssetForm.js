@@ -148,6 +148,15 @@
       15: 'Pysäköintitalo',
       16: 'Linja-autoasema'
     };
+    var serviceTypeExtension = {
+      1: 'Kattava varustelu',
+      2: 'Perusvarustelu',
+      3: 'Yksityinen palvelualue',
+      4: 'Ei lisätietoja',
+      5: 'Merkittävä rautatieasema',
+      6: 'Vähäisempi rautatieasema',
+      7: 'Maanalainen/metroasema'
+    };
 
     if (asset.obstacleType) {
       return '' +
@@ -193,6 +202,8 @@
           return '<li>' +
                  '  <div class="form-group editable">' +
                  '    <h4> ' + servicePointType[service.serviceType] + '</h4>' +
+                 '    <label class="control-label"></label>' +
+                 '    <p class="form-control-static">' + (serviceTypeExtension[service.typeExtension] || '') + '</p>' +
                  '    <label class="control-label">Palvelun nimi</label>' +
                  '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
                  '    <label class="control-label">Palvelun lisätieto</label>' +
