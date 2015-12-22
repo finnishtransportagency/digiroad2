@@ -65,7 +65,7 @@ object ServicePointImporter {
           Queries.updateAssetGeometry(assetId, point)
         }
 
-        println(s"*** Imported ${group.length} directional service points in ${AssetDataImporter.humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+        println(s"*** Imported ${group.length} service points in ${AssetDataImporter.humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
 
       servicePointPS.close()
