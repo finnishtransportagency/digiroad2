@@ -251,7 +251,8 @@
 
     return '<li>' +
       '  <div class="form-group editable">' +
-      '    <h4> ' + _.find(serviceTypes, { value: service.serviceType }).label + '</h4>' +
+      '    <label class="control-label">Palvelun tyyppi</label>' +
+      '    <p class="form-control-static">' + _.find(serviceTypes, { value: service.serviceType }).label + '</p>' +
       '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
       serviceTypeLabelOptions +
       '    </select>' +
@@ -277,7 +278,7 @@
       }).join('');
       var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
-        '<label class="control-label"></label>' +
+        '<label class="control-label">Tarkenne</label>' +
         '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
