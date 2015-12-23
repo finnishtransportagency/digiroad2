@@ -244,7 +244,6 @@
 
       return '' +
         '    <div class="form-group editable form-service">' +
-        '      <label class="asset-label">Palvelu</label>' +
         '      <ul>' +
                services +
         '      </ul>' +
@@ -262,11 +261,12 @@
 
     return '<li>' +
       '  <div class="form-group editable">' +
-      '    <label class="control-label">Palvelun tyyppi</label>' +
-      '    <p class="form-control-static">' + _.find(serviceTypes, { value: service.serviceType }).label + '</p>' +
+        '  <div class="form-group">' +
+      '    <h4 class="form-control-static"> ' + _.find(serviceTypes, { value: service.serviceType }).label + '</h4>' +
       '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
       serviceTypeLabelOptions +
       '    </select>' +
+        '  </div>' +
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
       '    <label class="control-label">Palvelun nimi</label>' +
       '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
