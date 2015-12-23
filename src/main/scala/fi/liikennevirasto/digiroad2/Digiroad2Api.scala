@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.user.{UserProvider, User}
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
@@ -42,7 +43,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val MAX_BOUNDING_BOX = 100000000
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
-    null
+    case _ => throw new NotImplementedError("DateTime deserialization")
   }, {
     case d: DateTime => JString(d.toString(DateTimePropertyFormat))
   }))
@@ -627,6 +628,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/servicePoints") {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     servicePointService.get(bbox)
+  }
+
+  put("/servicePoints/:id") {
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
+    val user = userProvider.getCurrentUser()
+    servicePointService.update(id, updatedAsset, user.username)
   }
 
   delete("/servicePoints/:id") {

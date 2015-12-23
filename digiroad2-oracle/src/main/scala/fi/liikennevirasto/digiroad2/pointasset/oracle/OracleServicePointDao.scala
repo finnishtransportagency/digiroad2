@@ -12,12 +12,22 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+case class IncomingServicePoint(lon: Double,
+                                lat: Double,
+                                services: Set[IncomingService])
+
+case class IncomingService(serviceType: Int,
+                           name: Option[String],
+                           additionalInfo: Option[String],
+                           typeExtension: Option[Int],
+                           parkingPlaceCount: Option[Int])
+
 case class Service(id: Long,
                    assetId: Long,
                    serviceType: Int,
                    name: Option[String],
                    additionalInfo: Option[String],
-                   typeExtension: Int,
+                   typeExtension: Option[Int],
                    parkingPlaceCount: Option[Int])
 
 case class ServicePoint(id: Long,
@@ -30,6 +40,18 @@ case class ServicePoint(id: Long,
                         modifiedAt: Option[DateTime] = None)
 
 object OracleServicePointDao {
+  def update(assetId: Long, updatedAsset: IncomingServicePoint, user: String) = {
+    sqlu"""delete from SERVICE_POINT_VALUE where ASSET_ID = $assetId""".execute
+    Queries.updateAssetGeometry(assetId, Point(updatedAsset.lon, updatedAsset.lat))
+    updatedAsset.services.foreach { service =>
+      val id = Sequences.nextPrimaryKeySeqValue
+      sqlu"""
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION) values
+        ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension})
+      """.execute
+    }
+  }
+
   def expire(id: Long, username: String) = {
     Queries.expireAsset(id, username)
   }
@@ -94,7 +116,7 @@ object OracleServicePointDao {
       val serviceType = r.nextInt()
       val name = r.nextStringOption()
       val additionalInfo = r.nextStringOption()
-      val typeExtension = r.nextInt()
+      val typeExtension = r.nextIntOption()
       val parkingPlaceCount = r.nextIntOption()
 
       Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
