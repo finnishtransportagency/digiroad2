@@ -629,6 +629,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     servicePointService.get(bbox)
   }
 
+  delete("/servicePoints/:id") {
+    val id = params("id").toLong
+    val user = userProvider.getCurrentUser()
+    servicePointService.expire(id, user.username)
+  }
+
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
 

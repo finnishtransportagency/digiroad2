@@ -30,6 +30,10 @@ case class ServicePoint(id: Long,
                         modifiedAt: Option[DateTime] = None)
 
 object OracleServicePointDao {
+  def expire(id: Long, username: String) = {
+    Queries.expireAsset(id, username)
+  }
+
   def get: Set[ServicePoint] = {
     getWithFilter("")
   }
@@ -49,7 +53,9 @@ object OracleServicePointDao {
       s"""
       select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date
       from asset a
-      where a.ASSET_TYPE_ID = 250 $withFilter
+      where a.ASSET_TYPE_ID = 250
+      and (a.valid_to >= sysdate or a.valid_to is null)
+      $withFilter
     """).iterator.toSet
 
     val services: Map[Long, Set[Service]] =

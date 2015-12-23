@@ -90,6 +90,10 @@ object Queries {
       values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator, $municipalityCode)
     """
 
+  def expireAsset(id: Long, username: String): Unit = {
+    sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
+  }
+
   def propertyIdByPublicId = "select id from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"

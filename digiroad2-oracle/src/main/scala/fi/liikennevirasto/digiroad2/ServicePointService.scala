@@ -6,6 +6,12 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleServicePointDao, ServicePoint}
 
 class ServicePointService {
+  def expire(id: Long, username: String) = {
+    OracleDatabase.withDynSession {
+      OracleServicePointDao.expire(id, username)
+    }
+  }
+
   def get: Set[ServicePoint] = {
     OracleDatabase.withDynSession {
       OracleServicePointDao.get
