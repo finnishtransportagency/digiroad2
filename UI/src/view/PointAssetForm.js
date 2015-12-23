@@ -262,6 +262,9 @@
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input">' + (service.additionalInfo || '')  + '</textarea>' +
+      '    <label class="control-label">Parkkipaikkojen lukumäärä</label>' +
+      '    <p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
+      '    <input type="text" class="form-control" value="' + (service.parkingPlaceCount || '')  + '">' +
       '  </div>' +
       '</li>';
   }
