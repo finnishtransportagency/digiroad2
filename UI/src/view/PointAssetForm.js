@@ -45,7 +45,7 @@
 
     rootElement.find('input[type="checkbox"]').on('change', function(event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ toBeDeleted: eventTarget.prop('checked') === 'checked' });
+      selectedAsset.set({ toBeDeleted: eventTarget.prop('checked') });
     });
 
     rootElement.find('input[type="text"]').on('input change', function(event) {
