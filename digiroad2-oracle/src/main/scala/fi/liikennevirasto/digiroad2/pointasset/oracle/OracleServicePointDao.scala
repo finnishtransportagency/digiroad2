@@ -17,7 +17,8 @@ case class Service(id: Long,
                    serviceType: Int,
                    name: Option[String],
                    additionalInfo: Option[String],
-                   typeExtension: Int)
+                   typeExtension: Int,
+                   parkingPlaceCount: Option[Int])
 
 case class ServicePoint(id: Long,
                         lon: Double,
@@ -56,7 +57,7 @@ object OracleServicePointDao {
         Map.empty
       else
         StaticQuery.queryNA[Service](s"""
-          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION
+          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT
           from SERVICE_POINT_VALUE
           where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({x => s"($x, $x)"}).mkString(",")})
         """).iterator.toSet.groupBy(_.assetId)
@@ -88,8 +89,9 @@ object OracleServicePointDao {
       val name = r.nextStringOption()
       val additionalInfo = r.nextStringOption()
       val typeExtension = r.nextInt()
+      val parkingPlaceCount = r.nextIntOption()
 
-      Service(id, assetId, serviceType, name, additionalInfo, typeExtension)
+      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
     }
   }
 }
