@@ -7,6 +7,15 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingServicePoint, Ora
 import fi.liikennevirasto.digiroad2.user.User
 
 class ServicePointService {
+
+  val typeId: Int = 250
+
+  def create(asset: IncomingServicePoint, username: String) = {
+    OracleDatabase.withDynTransaction {
+      OracleServicePointDao.create(asset, username)
+    }
+  }
+
   def update(id: Long, updatedAsset: IncomingServicePoint, username: String) = {
     OracleDatabase.withDynTransaction {
       OracleServicePointDao.update(id, updatedAsset, username)
@@ -31,7 +40,7 @@ class ServicePointService {
     }
   }
 
-  val typeId: Int = 250
+
 }
 
 

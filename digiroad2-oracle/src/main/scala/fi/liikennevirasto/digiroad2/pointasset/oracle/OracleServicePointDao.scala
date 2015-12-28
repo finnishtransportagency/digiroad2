@@ -39,6 +39,27 @@ case class ServicePoint(id: Long,
                         modifiedAt: Option[DateTime] = None)
 
 object OracleServicePointDao {
+
+  def create(servicePoint: IncomingServicePoint, username: String): Long = {
+    // TODO: Check if municipality code is needed for service points
+    val servicePointId = Sequences.nextPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date)
+        values ($servicePointId, 250, $username, sysdate)
+      select * from dual
+    """.execute
+    Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
+    servicePoint.services.foreach { service =>
+      val serviceId = Sequences.nextPrimaryKeySeqValue
+      sqlu"""
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT) values
+        ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount})
+      """.execute
+    }
+    servicePointId
+  }
+
   def update(assetId: Long, updatedAsset: IncomingServicePoint, user: String) = {
     sqlu"""delete from SERVICE_POINT_VALUE where ASSET_ID = $assetId""".execute
     Queries.updateAssetGeometry(assetId, Point(updatedAsset.lon, updatedAsset.lat))

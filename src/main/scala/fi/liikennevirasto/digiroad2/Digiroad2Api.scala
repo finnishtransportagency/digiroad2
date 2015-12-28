@@ -684,6 +684,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     servicePointService.get(bbox)
   }
 
+  post("/servicePoints") {
+    val user = userProvider.getCurrentUser()
+    val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
+    servicePointService.create(asset, user.username)
+  }
+
   put("/servicePoints/:id") {
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
