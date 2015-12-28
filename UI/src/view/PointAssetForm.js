@@ -67,6 +67,11 @@
       selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
     });
 
+    rootElement.find('.service-parking-place-count').on('input change', function(event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
+    });
+
     rootElement.find('.form-service').on('change', '.select-service-type', function(event) {
       var newServiceType = parseInt($(event.currentTarget).val(), 10);
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
@@ -271,7 +276,7 @@
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
       '    <label class="control-label">Parkkipaikkojen lukumäärä</label>' +
       '    <p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
-      '    <input type="text" class="form-control" value="' + (service.parkingPlaceCount || '')  + '">' +
+      '    <input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">' +
       '  </div>' +
       '</li>';
   }
