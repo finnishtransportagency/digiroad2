@@ -58,7 +58,8 @@
     });
 
     rootElement.find('.form-service textarea').on('input change', function(event) {
-      selectedAsset.set({additionalInfo: $(event.currentTarget).val()});
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
     });
 
     rootElement.find('.form-service').on('change', '.select-service-type', function(event) {
@@ -262,7 +263,7 @@
       '    <input type="text" class="form-control" value="' + (service.name || '')  + '">' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
-      '    <textarea class="form-control large-input">' + (service.additionalInfo || '')  + '</textarea>' +
+      '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
       '    <label class="control-label">Parkkipaikkojen lukumäärä</label>' +
       '    <p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
       '    <input type="text" class="form-control" value="' + (service.parkingPlaceCount || '')  + '">' +
