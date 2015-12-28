@@ -62,6 +62,11 @@
       selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
     });
 
+    rootElement.find('.service-name').on('input change', function(event) {
+      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
+    });
+
     rootElement.find('.form-service').on('change', '.select-service-type', function(event) {
       var newServiceType = parseInt($(event.currentTarget).val(), 10);
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
@@ -260,7 +265,7 @@
       serviceTypeExtensionElements(service, serviceTypeExtensions) +
       '    <label class="control-label">Palvelun nimi</label>' +
       '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
-      '    <input type="text" class="form-control" value="' + (service.name || '')  + '">' +
+      '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
