@@ -625,24 +625,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/directionalTrafficSigns/:id")(updatePointAsset(directionalTrafficSignService))
   delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
 
-  get("/servicePoints") {
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    servicePointService.get(bbox)
-  }
-
-  put("/servicePoints/:id") {
-    val id = params("id").toLong
-    val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
-    val user = userProvider.getCurrentUser()
-    servicePointService.update(id, updatedAsset, user.username)
-  }
-
-  delete("/servicePoints/:id") {
-    val id = params("id").toLong
-    val user = userProvider.getCurrentUser()
-    servicePointService.expire(id, user.username)
-  }
-
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
 
@@ -696,4 +678,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       service.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
+
+  get("/servicePoints") {
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    servicePointService.get(bbox)
+  }
+
+  put("/servicePoints/:id") {
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
+    val user = userProvider.getCurrentUser()
+    servicePointService.update(id, updatedAsset, user.username)
+  }
+
+  delete("/servicePoints/:id") {
+    val id = params("id").toLong
+    val user = userProvider.getCurrentUser()
+    servicePointService.expire(id, user.username)
+  }
+
 }
