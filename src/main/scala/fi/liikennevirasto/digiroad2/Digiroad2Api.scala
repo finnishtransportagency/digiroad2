@@ -686,9 +686,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def getClosestRoadlinkFromVVH(authorizedMunicipalities: Set[Int], point: Point) = {
-    val diagonal = Vector3d(5000, 5000, 0)
-    roadLinkService.getRoadLinksFromVVH(BoundingRectangle(point-diagonal, point+diagonal), authorizedMunicipalities).
-      min(Ordering.by((roadlink:RoadLink) => minimumDistance(point, roadlink.geometry)))
+    val diagonal = Vector3d(500, 500, 0)
+    val roadLinks = roadLinkService.getVVHRoadLinks(BoundingRectangle(point-diagonal, point+diagonal), authorizedMunicipalities)
+    if (roadLinks.isEmpty) {
+      halt(Conflict(s"Can not find nearby road link for given municipalities " + authorizedMunicipalities))
+    }
+    roadLinks.min(Ordering.by((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry)))
   }
 
   post("/servicePoints") {
