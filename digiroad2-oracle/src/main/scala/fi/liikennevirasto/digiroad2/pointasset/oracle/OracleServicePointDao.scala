@@ -147,6 +147,10 @@ object OracleServicePointDao {
       Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
     }
   }
+
+  def fetchByFilter(filter: String): Set[ServicePoint] = {
+    getWithFilter(filter)
+  }
 }
 
 
