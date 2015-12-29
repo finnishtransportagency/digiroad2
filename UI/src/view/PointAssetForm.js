@@ -85,6 +85,7 @@
     function modifyService(services, id, modifications) {
       return _.map(services, function(service) {
         if (service.id === id) {
+          delete service.typeExtension;
           return _.merge({}, service, modifications);
         } else {
           return service;
