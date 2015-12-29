@@ -27,8 +27,7 @@ case class Service(id: Long,
                    name: Option[String],
                    additionalInfo: Option[String],
                    typeExtension: Option[Int],
-                   parkingPlaceCount: Option[Int],
-                   municipalityCode: Int)
+                   parkingPlaceCount: Option[Int])
 
 case class ServicePoint(id: Long,
                         lon: Double,
@@ -98,7 +97,7 @@ object OracleServicePointDao {
 
     val servicePoints = StaticQuery.queryNA[ServicePoint](
       s"""
-      select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date
+      select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date, a.municipality_code
       from asset a
       where a.ASSET_TYPE_ID = 250
       and (a.valid_to > sysdate or a.valid_to is null)
@@ -144,9 +143,8 @@ object OracleServicePointDao {
       val additionalInfo = r.nextStringOption()
       val typeExtension = r.nextIntOption()
       val parkingPlaceCount = r.nextIntOption()
-      val municipalityCode = r.nextInt()
 
-      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount, municipalityCode)
+      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
     }
   }
 }

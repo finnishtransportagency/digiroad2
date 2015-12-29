@@ -695,7 +695,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val municipalityCode = getClosestRoadlinkFromVVH(user.configuration.authorizedMunicipalities,
-      Point(asset.lat, asset.lon)).municipalityCode
+      Point(asset.lon, asset.lat)).municipalityCode
     servicePointService.create(asset, municipalityCode, user.username)
   }
 
@@ -704,7 +704,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val user = userProvider.getCurrentUser()
     val municipalityCode = getClosestRoadlinkFromVVH(user.configuration.authorizedMunicipalities,
-      Point(updatedAsset.lat, updatedAsset.lon)).municipalityCode
+      Point(updatedAsset.lon, updatedAsset.lat)).municipalityCode
     servicePointService.update(id, updatedAsset, municipalityCode, user.username)
   }
 
