@@ -260,11 +260,14 @@
       //return '<option value="'+ serviceType.value + '" ' + (service.serviceType == serviceType.value ? 'selected' : '') + '>' + serviceType.label +'</option>';
     }).join('');
 
+    var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
+
     return '<li>' +
       '  <div class="form-group editable">' +
         '  <div class="form-group">' +
-      '    <h4 class="form-control-static"> ' + _.find(serviceTypes, { value: service.serviceType }).label + '</h4>' +
+      '    <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
       '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
+      '  <option disabled selected>Lisää tyyppi</option>' +
       serviceTypeLabelOptions +
       '    </select>' +
         '  </div>' +
