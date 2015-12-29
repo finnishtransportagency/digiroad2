@@ -59,7 +59,7 @@
       selectedAsset.set({ name: eventTarget.val() });
     });
 
-    rootElement.find('textarea').on('change', function(event) {
+    rootElement.find('textarea').on('keyup', function(event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({ text: eventTarget.val() });
     });
