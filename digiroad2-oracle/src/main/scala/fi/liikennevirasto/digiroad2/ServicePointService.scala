@@ -10,15 +10,15 @@ class ServicePointService {
 
   val typeId: Int = 250
 
-  def create(asset: IncomingServicePoint, username: String) = {
+  def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
     OracleDatabase.withDynTransaction {
-      OracleServicePointDao.create(asset, username)
+      OracleServicePointDao.create(asset, municipalityCode, username)
     }
   }
 
-  def update(id: Long, updatedAsset: IncomingServicePoint, username: String) = {
+  def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String) = {
     OracleDatabase.withDynTransaction {
-      OracleServicePointDao.update(id, updatedAsset, username)
+      OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }
 

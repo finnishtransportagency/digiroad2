@@ -27,7 +27,8 @@ case class Service(id: Long,
                    name: Option[String],
                    additionalInfo: Option[String],
                    typeExtension: Option[Int],
-                   parkingPlaceCount: Option[Int])
+                   parkingPlaceCount: Option[Int],
+                   municipalityCode: Int)
 
 case class ServicePoint(id: Long,
                         lon: Double,
@@ -36,17 +37,17 @@ case class ServicePoint(id: Long,
                         createdBy: Option[String] = None,
                         createdAt: Option[DateTime] = None,
                         modifiedBy: Option[String] = None,
-                        modifiedAt: Option[DateTime] = None)
+                        modifiedAt: Option[DateTime] = None,
+                        municipalityCode: Int)
 
 object OracleServicePointDao {
 
-  def create(servicePoint: IncomingServicePoint, username: String): Long = {
-    // TODO: Check if municipality code is needed for service points
+  def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date)
-        values ($servicePointId, 250, $username, sysdate)
+        into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($servicePointId, 250, $username, sysdate, $municipalityCode)
       select * from dual
     """.execute
     Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
@@ -60,7 +61,11 @@ object OracleServicePointDao {
     servicePointId
   }
 
-  def update(assetId: Long, updatedAsset: IncomingServicePoint, user: String) = {
+  def update(assetId: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, user: String) = {
+    sqlu"""
+           UPDATE asset
+            SET municipality_code = $municipalityCode, modified_by = $user, modified_date = sysdate
+            WHERE id = $assetId""".execute
     sqlu"""delete from SERVICE_POINT_VALUE where ASSET_ID = $assetId""".execute
     Queries.updateAssetGeometry(assetId, Point(updatedAsset.lon, updatedAsset.lat))
     updatedAsset.services.foreach { service =>
@@ -124,8 +129,9 @@ object OracleServicePointDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val municipalityCode = r.nextInt()
 
-      ServicePoint(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      ServicePoint(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime, municipalityCode)
     }
   }
 
@@ -138,8 +144,9 @@ object OracleServicePointDao {
       val additionalInfo = r.nextStringOption()
       val typeExtension = r.nextIntOption()
       val parkingPlaceCount = r.nextIntOption()
+      val municipalityCode = r.nextInt()
 
-      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
+      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount, municipalityCode)
     }
   }
 }

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.GeometryUtils.minimumDistance
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
@@ -684,17 +685,27 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     servicePointService.get(bbox)
   }
 
+  def getClosestRoadlinkFromVVH(authorizedMunicipalities: Set[Int], point: Point) = {
+    val diagonal = Vector3d(5000, 5000, 0)
+    roadLinkService.getRoadLinksFromVVH(BoundingRectangle(point-diagonal, point+diagonal), authorizedMunicipalities).
+      min(Ordering.by((roadlink:RoadLink) => minimumDistance(point, roadlink.geometry)))
+  }
+
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
-    servicePointService.create(asset, user.username)
+    val municipalityCode = getClosestRoadlinkFromVVH(user.configuration.authorizedMunicipalities,
+      Point(asset.lat, asset.lon)).municipalityCode
+    servicePointService.create(asset, municipalityCode, user.username)
   }
 
   put("/servicePoints/:id") {
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val user = userProvider.getCurrentUser()
-    servicePointService.update(id, updatedAsset, user.username)
+    val municipalityCode = getClosestRoadlinkFromVVH(user.configuration.authorizedMunicipalities,
+      Point(updatedAsset.lat, updatedAsset.lon)).municipalityCode
+    servicePointService.update(id, updatedAsset, municipalityCode, user.username)
   }
 
   delete("/servicePoints/:id") {
