@@ -63,8 +63,7 @@ _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 
 Importeilla tuodaan aineistoja j&auml;rjestelm&auml;&auml;n.
 
-2.1 CSV-tuonti 
---------------
+##2.1 CSV-tuonti##
 
 Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta, tyyppi&auml; ja varusteita voi p&auml;ivitt&auml;&auml; tuomalla .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
 
@@ -107,8 +106,8 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 
 Exporteilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;st&auml; ulos.
 
-3.1 Pys&auml;kkitietojen CSV (ns. Vallu-CSV)
----------------------------------------------
+##3.1 Pys&auml;kkitietojen CSV (ns. Vallu-CSV)##
+
 Vallu-j&auml;rjestelm&auml; ei en&auml;&auml; hy&ouml;dynn&auml; t&auml;t&auml; CSV-tiedostoa, mutta CSV-tiedosto luodaan joka y&ouml; operaattorin omaan k&auml;ytt&ouml;&ouml;n ja jaettavaksi Digiroadin nettisivuille. Pys&auml;kki-CSV export k&auml;ynnistyy klo 00:00 joka y&ouml; Livin FME Serverill&auml;. CSV:n tekeminen kest&auml;&auml; noin 5 tuntia. Lopputulos vied&auml;&auml;n Digiroad2:sen ftp-palvelimelle. Jos export ep&auml;onnistuu, FME-ajo katkeaa eik&auml; tiedostoa vied&auml; ftp:lle.
 
 ###Pys&auml;kki-CSV:n tietolajit###
@@ -116,8 +115,8 @@ Vallu-j&auml;rjestelm&auml; ei en&auml;&auml; hy&ouml;dynn&auml; t&auml;t&auml; 
 Pys&auml;kki-CSV:n tietolajit voi lukea Digiroadin nettisivuilla olevasta taulukosta: http://www.digiroad.fi/Uusi_DR/pysakki/fi_FI/pysakki/
 
 
-3.2 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n
----------------------------------------------
+##3.2 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n##
+
 Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee v&auml;litt&ouml;m&auml;sti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
 
 Muuttuneita tietoja voi tarkastella lokista: https://testiextranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi).
@@ -130,8 +129,8 @@ digiroad2.vallu.server.address=http://localhost:9002
 ```
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. 
 
-3.3 Pys&auml;kkitiedot GTFS-muodossa Waltti-j&auml;rjestelm&auml;&auml;n
----------------------------------------------------------------
+##3.3 Pys&auml;kkitiedot GTFS-muodossa Waltti-j&auml;rjestelm&auml;&auml;n##
+
 Waltti-j&auml;rjestelm&auml;&auml; varten hy&ouml;dynt&auml;j&auml;t voivat hakea aineiston Liikenneviraston aineistojen latauspalvelusta http://aineistot.liikennevirasto.fi/gtfs/. Aineisto tehd&auml;&auml;n Livin FME Serverill&auml; ajastetusti, ja se p&auml;ivittyy sivustolle joka aamu TVV-aluekohtaisina paketteina.
 
 Tarvittaessa Waltti-irrotuksen voi tehd&auml; my&ouml;s omalla koneella valmiista FME-ty&ouml;tilasta.
@@ -272,8 +271,7 @@ K&auml;ytt&auml;ytyminen-valikon (6) Yleiskatsaus-kohdasta voi katsoa eri Digiro
 
 Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattori-k&auml;ytt&auml;jien tietoon.
 
-8.1 Tielinkit
----------------------------------------------
+##8.1 Tielinkit##
 
 Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
 
@@ -287,8 +285,7 @@ Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto 
 
 Korjattavien linkkien lista (incomplete_links.html) p&auml;ivitet&auml;&auml;n automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
-8.2 Pistem&auml;iset tietolajit
----------------------------------------------
+##8.2 Pistem&auml;iset tietolajit##
 
 Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, mink&auml; perusteella sovellus katsoo niiden olevan irti geometriasta. Pistem&auml;isi&auml; tietolajeja ovat esimerkiksi joukkoliikenteen pys&auml;kki, suojatie ja rautatien tasoristeys.
 
@@ -305,12 +302,13 @@ Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattises
 
 Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&auml; kohteet l&auml;pi Kalpa-Apista (esim. FME-ajon avulla).
     
-8.3 Nopeusrajoitus
----------------------------------------------
+##8.3 Nopeusrajoitus##
+
 Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus.
 
 9. Kalpa-API
--------------------
+--------------
+
 Digiroad-tietokannassa on olemassa Kalpa-API niminen JSON-rajapinta, josta on mahdollista hakea jokaisen tietolajin tiedot kunnittain esimerkiksi FME-ty&ouml;tilaan. Kalpa-APIsta haetaan Digiroad-tietolajien tiedot julkaisua varten.
 Kalpa-APIn tarkastelua varten selaimessa kannattaa olla asennettuna JSON-lis&auml;osa. Huom! Isoja tietolajeja (esim. tielinkit, nopeusrajoitus) Kalpa-APIsta tarkastellessa voi tietojen latautuminen selaimeen kest&auml;&auml; todella kauan tai selain voi my&ouml;s kaatua.
 
@@ -335,12 +333,13 @@ Tietokannasta ominaisuustiedot siirtyv&auml;t Kalpa-APIin sellaisenaan. Kalpa-AP
 Muutokset tehd&auml;&auml;n exporttien FME-ty&ouml;tilassa.
 
 1. Suuntatiedollisten pisteiden astesuunnan eli suuntiman korjaus (esim. pys&auml;kit): Pisteen suunta on tallennettu tietokantaan suhteessa digitointisuuntaan. Lis&auml;ksi pisteell&auml; on tallennettuna tielinkin kaltevuudesta suunta astelukuna. N&auml;iden kahden yhdistelm&auml;ll&auml; voidaan laskea pisteen todellinen suuntima. Ilman korjausta suuntimaa ei voi hy&ouml;dynt&auml;&auml; ilman digitointisuuntaa. Exportteihin vied&auml;&auml;n todellinen suuntima (asteina 0-360):
-- Jos pisteen vaikutussuunta on digitointisuuntaan (=2): asteluku eli suuntima on tietokantaan tallennettu (ei korjauksia)
-- Jos pisteen vaikutussuunta on digitointisuuntaa vastaan (=3): jos suuntima <= 180, niin suuntima on suuntima+180, esim. 175+180=355 ja jos suuntima on > 180, niin suuntima on suuntima-180, eli esim. 267-180=84
+	a. Jos pisteen vaikutussuunta on digitointisuuntaan (=2): asteluku eli suuntima on tietokantaan tallennettu (ei korjauksia)
+	b. Jos pisteen vaikutussuunta on digitointisuuntaa vastaan (=3): jos suuntima <= 180, niin suuntima on suuntima+180, esim. 175+180=355 ja jos suuntima on > 180, niin suuntima on suuntima-180, eli esim. 267-180=84
 
 2. Kaikille kohteille on lis&auml;tty kuntanumero (tielinkin kuntanumeron perusteella)
 
 3. Pys&auml;kin ensimm&auml;inen ja viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; on muutettu pp.kk.vvvv -muotoon, jotta kaikki exporttien p&auml;iv&auml;m&auml;&auml;r&auml;t olisivat samassa muodossa
+
 
 10. Kuntaliitosten aiheuttamat muutokset vuodenvaihteessa
 -------------------
