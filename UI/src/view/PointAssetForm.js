@@ -11,6 +11,7 @@
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.edit-only').toggle(!readOnly);
     }
 
     eventbus.on('application:readOnly', toggleMode);
@@ -170,8 +171,8 @@
             '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
             '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
             '  </div>' +
-          '    <div class="form-group editable">' +
-          '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
+          '    <div class="form-group editable edit-only">' +
+          '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else {
