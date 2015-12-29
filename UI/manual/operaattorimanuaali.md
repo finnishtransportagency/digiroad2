@@ -1,6 +1,12 @@
 Operaattorin k&auml;ytt&ouml;ohje
 =========================
 
+Digiroad2-j&auml;rjestelm&auml; koostuu ominaisuustietojen hallinnasta (OTH) ja V&auml;yl&auml;verkon hallinnasta (VVH). T&auml;ss&auml; ohjeessa kerrotaan OTH:n operaattorille tarkoitettuja, tarkempia ohjeita.
+
+OTH hy&ouml;dynt&auml;&auml; VVH:ta seuraavasti:
+VVH:n testikanta --> OTH:n testikanta
+VVH:n tuotantokanta --> OTH:n koulutuskanta ja tuotantokanta
+
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
 
@@ -13,9 +19,15 @@ K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&
 1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092). TVV-alueiden kuntanumerot alla.
 1. Oikeuden tyyppi: Muokkausoikeus (tai Katseluoikeus)*
 
-*Katseluoikeuksia ei lis&auml;t&auml; toistaiseksi. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia. Katselemaan p&auml;&auml;see kirjautumalla sovellukseen.
+*Katseluoikeuksia ei lis&auml;t&auml; toistaiseksi. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia (ns. visitor-rooli, k&auml;ytt&auml;j&auml;&auml; ei ole tallennettu Digiroad-yll&auml;pitosovelluksen tietokantaan). Katselemaan p&auml;&auml;see kirjautumalla sovellukseen extranet-tunnuksilla.
 
 Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus ilmoittaa onnistuneesta k&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml;. Jos k&auml;ytt&auml;j&auml;ksi lis&auml;t&auml;&auml;n jo olemassa olevan k&auml;ytt&auml;j&auml;, sovellus poistaa vanhan ja korvaa sen uudella k&auml;ytt&auml;j&auml;ll&auml;. K&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml; ei l&auml;hde automaattista viesti&auml; loppuk&auml;ytt&auml;j&auml;lle. Operaattorin tulee itse ilmoittaa k&auml;ytt&auml;j&auml;lle, kun k&auml;ytt&ouml;oikeus on luotu. T&auml;m&auml;n j&auml;lkeen k&auml;ytt&auml;j&auml; p&auml;&auml;see kirjautumaan Liikenneviraston tunnuksilla j&auml;rjestelm&auml;&auml;n.
+
+Jos halutaan lis&auml;t&auml; k&auml;ytt&auml;j&auml;lle oikeudet vain pys&auml;kkiaineistoon, lis&auml;t&auml;&auml;n k&auml;ytt&auml;j&auml;lle oikeudet ensin k&auml;ytt&ouml;liittym&auml;ss&auml;, ja poistetaan sen j&auml;lkeen tietokannassa k&auml;ytt&auml;j&auml;lt&auml; "premium"-parametri.
+
+Jos halutaan lis&auml;t&auml; operaattori-k&auml;ytt&auml;j&auml;, lis&auml;t&auml;&auml;n k&auml;ytt&auml;j&auml; ensin k&auml;ytt&ouml;liittym&auml;ss&auml;, ja sen j&auml;lkeen lis&auml;t&auml;&auml;n k&auml;ytt&auml;j&auml;lle parametrin "premium" tilalle parametri "operator" tietokannassa. Operaattori-k&auml;ytt&auml;j&auml;lle ei tarvitse antaa kuntalistausta, koska operator-parametri takaa p&auml;&auml;syn kaikkiin k&auml;ytt&ouml;liittym&auml;n ominaisuuksiin.
+
+Huom! Digiroad2-sovelluksen k&auml;ytt&auml;j&auml;nhallintasivu ja k&auml;ytt&auml;j&auml;nhallinta tietokantatasolla eiv&auml;t ole yhteydess&auml; Liikenneviraston k&auml;ytt&auml;j&auml;nhallintaan. On hyv&auml; tiedostaa, ett&auml; n&auml;m&auml; ovat kaksi eri asiaa. Liikenneviraston k&auml;ytt&auml;j&auml;nhallinnan avulla k&auml;ytt&auml;j&auml; p&auml;&auml;see kirjautumaan Digiroad-yll&auml;pitosovellukseen. Digiroadin omassa k&auml;ytt&auml;j&auml;nhallinassa m&auml;&auml;ritell&auml;&auml;n, mihin kaikkialle k&auml;ytt&auml;j&auml;ll&auml; on oikeus tehd&auml; muutoksia Digiroadissa. K&auml;ytt&auml;j&auml;nhallintasivu (newuser.html) ei siis tarkista, onko ko. k&auml;ytt&auml;j&auml;tunnusta oikeasti olemassa Liikenneviraston k&auml;ytt&auml;j&auml;nhallinnassa. Samoin, jos k&auml;ytt&auml;j&auml;n extranet-tunnus poistuu voimasta Liikenneviraston k&auml;ytt&auml;j&auml;nhallinnassa, tulee se poistaa erikseen Digiroad2:sen tietokannasta. Poistuneella k&auml;ytt&auml;j&auml;tunnuksella ei kuitenkaan p&auml;&auml;se kirjautumaan Digiroadiin, koska Liikenneviraston k&auml;ytt&auml;j&auml;nhallinnasta ei p&auml;&auml;se l&auml;pi sill&auml;.
 
 ![K&auml;ytt&auml;j&auml;n lis&auml;&auml;minen](k20.JPG)
 
@@ -118,9 +130,11 @@ digiroad2.vallu.server.address=http://localhost:9002
 ```
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. 
 
-3.3 Pys&auml;kkitietojen vienti Waltti-j&auml;rjestelm&auml;&auml;n
+3.3 Pys&auml;kkitiedot GTFS-muodossa Waltti-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------------------------
-Waltti-j&auml;rjestelm&auml;&auml; varten ei ole tehty automaattisia exportteja, vaan Waltti-irrotus tehd&auml;&auml;n omalla koneella valmiista FME-ty&ouml;tilasta.
+Waltti-j&auml;rjestelm&auml;&auml; varten hy&ouml;dynt&auml;j&auml;t voivat hakea aineiston Liikenneviraston aineistojen latauspalvelusta http://aineistot.liikennevirasto.fi/gtfs/. Aineisto tehd&auml;&auml;n Livin FME Serverill&auml; ajastetusti, ja se p&auml;ivittyy sivustolle joka aamu TVV-aluekohtaisina paketteina.
+
+Tarvittaessa Waltti-irrotuksen voi tehd&auml; my&ouml;s omalla koneella valmiista FME-ty&ouml;tilasta.
 
 
 4. Kehitysymp&auml;rist&ouml;n asennus
@@ -213,11 +227,11 @@ __Linux:__
 5. Radiator
 -----------
 
-[Radiatorista](https://livi-ci.reaktor.fi/user/liikenne/my-views/view/Radiator/) voi seurata sovelluksen buildit, uuden version viennit eri ymp&auml;rist&ouml;ihin, ovatko ymp&auml;rist&ouml;t pystyss&auml; ja Vallu CSV-exportin onnistumisen sek&auml; siihen k&auml;ytetyn ajan.
+[Radiatorista](https://livi-ci.reaktor.fi/user/liikenne/my-views/view/Radiator/) voi seurata sovelluksen buildit, uuden version viennit eri ymp&auml;rist&ouml;ihin ja ovatko ymp&auml;rist&ouml;t pystyss&auml;.
 
-Buildeja p&auml;&auml;see katsomaan DR2-build -laatikosta. Deploy to "stagu" -laatikko kertoo uuden version viennist&auml; testiymp&auml;rist&ouml;&ouml;n, Deploy to production -laatikko tuotantoymp&auml;rist&ouml;&ouml;n viennist&auml; ja Deploy to training -laatikko koulutusymp&auml;rist&ouml;&ouml;n viennist&auml;. Vallu export -laatikosta p&auml;&auml;see katsomaan Vallu CSV-exportin onnistumista sek&auml; siihen kulunutta aikaa.
+Buildeja p&auml;&auml;see katsomaan DR2-build -laatikosta. Deploy to "stagu" -laatikko kertoo uuden version viennist&auml; testiymp&auml;rist&ouml;&ouml;n, Deploy to production -laatikko tuotantoymp&auml;rist&ouml;&ouml;n viennist&auml; ja Deploy to training -laatikko koulutusymp&auml;rist&ouml;&ouml;n viennist&auml;.
 
-Deploy to "stagu"-, Deploy to production- ja Deploy to training -laatikot ovat vihrein&auml;, mik&auml;li ko. laatikon ymp&auml;rist&ouml; on pystyss&auml;. DR2-build- ja Vallu export -laatikot ovat vihrein&auml;, mik&auml;li buildi tai export on onnistunut. Laatikoiden oikeassa alakulmassa oleva aika kertoo viimeisimm&auml;n suorituksen keston. Kun suoritus on kesken, laatikossa n&auml;kyy vaalean vihre&auml; palkki, joka kuvaa suoritusta.
+Deploy to "stagu"-, Deploy to production- ja Deploy to training -laatikot ovat vihrein&auml;, mik&auml;li ko. laatikon ymp&auml;rist&ouml; on pystyss&auml;. DR2-build-laatikko on vihre&auml;n&auml;, mik&auml;li buildi on onnistunut. Laatikoiden oikeassa alakulmassa oleva aika kertoo viimeisimm&auml;n suorituksen keston. Kun suoritus on kesken, laatikossa n&auml;kyy vaalean vihre&auml; palkki, joka kuvaa suoritusta.
  
 Radiaattoriin tarvitsee k&auml;ytt&auml;j&auml;tunnuksen. K&auml;ytt&auml;j&auml;tunnusta voi kysy&auml; kehitystiimilt&auml;: digiroad2@reaktor.fi.
 
@@ -269,6 +283,8 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 -   Kohdeluokka ajotielle t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa toiminnallinen luokka muu yksityistie ja linkkityyppi yksiajoratainen tie
 -   Kohdeluokka k&auml;vely- ja py&ouml;r&auml;tie t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa kevyen liikenteen v&auml;yl&auml;ksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
 
+Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto Maanmittauslaitokselta VVH:n rajapinnasta. Jos Maanmittauslaitokselta tullutta tietoa liikennevirran suunnalle muokataan Digiroad-yll&auml;pitosovelluksessa, ei Maanmittauslaitoksen t&auml;st&auml; eri&auml;v&auml; tieto kumoa Digiroadissa olevaa tietoa (ns. override, tietokantaan tallennetaan MML:n tiedon korvaava tieto). N&auml;in varmistetaan, etteiv&auml;t yll&auml;pit&auml;jien tekem&auml;t muutokset kumoudu Maanmittauslaitoksen virheellisell&auml; tiedolla.
+
 Korjattavien linkkien lista (incomplete_links.html) p&auml;ivitet&auml;&auml;n automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
 8.2 Pistem&auml;iset tietolajit
@@ -278,7 +294,7 @@ Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, min
 
 Kun pistett&auml; tarkastellaan kartalla, ajetaan skripti tietokannassa tai kysell&auml;&auml;n kohteita Kalpa-Apista, sovellus tarkastaa, ovatko pisteet kiinni geometriassa. Geometriasta irti olevaa pistett&auml; kutsutaan "kelluvaksi". Tarkastus perustuu siihen, ett&auml; pisteelle on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
 
-1. L&ouml;ytyyk&ouml; ko. pisteen linkin MML-ID:ll&auml; edelleen tielinkki.
+1. L&ouml;ytyyk&ouml; ko. pisteen linkin MML-ID:ll&auml; edelleen tielinkki ja kuntakoodi s&auml;ilyy samana.
     a. Ei l&ouml;ydy -> Kelluu
     b. L&ouml;ytyy -> Tarkastus siirtyy seuraavaan kohtaan
 1. Pisteen sijainnin tarkistus linkill&auml;: sijainti tietokantaan tallennettujen x,y-koordinaattien ja linkin geometrian + pisteen m-arvon v&auml;lill&auml;
@@ -296,7 +312,7 @@ Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoit
 9. Kalpa-API
 -------------------
 Digiroad-tietokannassa on olemassa Kalpa-API niminen JSON-rajapinta, josta on mahdollista hakea jokaisen tietolajin tiedot kunnittain esimerkiksi FME-ty&ouml;tilaan. Kalpa-APIsta haetaan Digiroad-tietolajien tiedot julkaisua varten.
-Kalpa-APIn tarkastelua varten selaimessa kannattaa olla asennettuna JSON-lis&auml;osa.
+Kalpa-APIn tarkastelua varten selaimessa kannattaa olla asennettuna JSON-lis&auml;osa. Huom! Isoja tietolajeja (esim. tielinkit, nopeusrajoitus) Kalpa-APIsta tarkastellessa voi tietojen latautuminen selaimeen kest&auml;&auml; todella kauan tai selain voi my&ouml;s kaatua.
 
 Kalpa-APIn osoite on (Liikenneviraston verkon ulkopuolelta)
 
@@ -304,11 +320,41 @@ Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/tieto
 Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 
-Esim: https://devtest.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=494 (pys&auml;kit kunnasta 494)
+Esim: https://devtest.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=5 (pys&auml;kit kunnasta 5)
+
+![Kalpa API.](k160.JPG)
+
+_Pys&auml;kki Kalpa-APIssa._
 
 Jokaisen ymp&auml;rist&ouml;n Kalpa-APIin on oma salasanansa. Salasanat voi kysy&auml; Digiroad2-kehitystiimilt&auml;. K&auml;ytt&auml;j&auml;tunnus on kaikkiin sama (kalpa).
 
-Liikenneviraston sis&auml;verkossa tai VPN-yhteyden kautta Kalpa-APIa voi k&auml;ytt&auml;&auml; IP-osoitteiden avulla, jolloin ei tarvitse erikseen autentikoitua Livin extranet-tunnuksilla.
+Liikenneviraston sis&auml;verkossa tai SSH-yhteyden kautta Kalpa-APIa voi k&auml;ytt&auml;&auml; IP-osoitteiden avulla, jolloin ei tarvitse erikseen autentikoitua Livin extranet-tunnuksilla. (IP-osoitteet voisi lis&auml;t&auml;, mutta operaattori ei toistaiseksi tarvitse n&auml;it&auml;)
+
+Tietokannasta ominaisuustiedot siirtyv&auml;t Kalpa-APIin sellaisenaan. Kalpa-APIsta tiedot k&auml;ytet&auml;&auml;n exportteihin p&auml;&auml;asiassa tietokannasta tulevassa muodossa. T&auml;h&auml;n on kuitenkin muutamia poikkeuksia, jotta tietojen hy&ouml;dynt&auml;minen olisi hy&ouml;dynt&auml;jille helpompaa. 
+
+Muutokset tehd&auml;&auml;n exporttien FME-ty&ouml;tilassa.
+
+1. Suuntatiedollisten pisteiden astesuunnan eli suuntiman korjaus (esim. pys&auml;kit): Pisteen suunta on tallennettu tietokantaan suhteessa digitointisuuntaan. Lis&auml;ksi pisteell&auml; on tallennettuna tielinkin kaltevuudesta suunta astelukuna. N&auml;iden kahden yhdistelm&auml;ll&auml; voidaan laskea pisteen todellinen suuntima. Ilman korjausta suuntimaa ei voi hy&ouml;dynt&auml;&auml; ilman digitointisuuntaa. Exportteihin vied&auml;&auml;n todellinen suuntima (asteina 0-360):
+- Jos pisteen vaikutussuunta on digitointisuuntaan (=2): asteluku eli suuntima on tietokantaan tallennettu (ei korjauksia)
+- Jos pisteen vaikutussuunta on digitointisuuntaa vastaan (=3): jos suuntima <= 180, niin suuntima on suuntima+180, esim. 175+180=355 ja jos suuntima on > 180, niin suuntima on suuntima-180, eli esim. 267-180=84
+
+2. Kaikille kohteille on lis&auml;tty kuntanumero (tielinkin kuntanumeron perusteella)
+
+3. Pys&auml;kin ensimm&auml;inen ja viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; on muutettu pp.kk.vvvv -muotoon, jotta kaikki exporttien p&auml;iv&auml;m&auml;&auml;r&auml;t olisivat samassa muodossa
+
+10. Kuntaliitosten aiheuttamat muutokset vuodenvaihteessa
+-------------------
+
+Vuodenvaihteessa tapahtuvat kuntaliitokset aiheuttavat muutoksia sek&auml; OTH:ssa ett&auml; VVH:ssa. VVH:ssa p&auml;ivitet&auml;&auml;n tielinkkien kuntakoodit vastaamaan uutta tilannetta. OTH:ssa on pisteille tallennettu kuntakoodi tietokantaan, mink&auml; vuoksi nuo kuntakoodit tulee korjata vastaamaan uutta tilannetta tietokannassa. 
+
+Seuraavat muutokset tulee huomioida kuntaliitosten yhteydess&auml;:
+
+1. VVH p&auml;ivitt&auml;&auml; kuntakoodit -> Kun VVH:ssa p&auml;ivitet&auml;&auml;n kuntakoodit, muuttuvat OTH:n pistem&auml;iset kohteet kelluviksi
+2. OTH:ssa p&auml;ivitet&auml;&auml;n asset-tauluun kuntakoodit tietokantaan -> kohteet eiv&auml;t kellu en&auml;&auml;
+3. K&auml;ytt&auml;jien k&auml;ytt&ouml;oikeudet uusien kuntanumeroiden mukaisiksi OTH:n tuotantokannassa
+4. Turhien kuntien poistaminen OTH:n kunta- ja ely-tauluista tietokannasta
+
+Kuntaliitoksiin liittyv&auml;t muutokset on muistettava tehd&auml; kaikkiin ymp&auml;rist&ouml;iihin (testikanta, koulutuskanta ja tuotantokanta)! Muutokset kannattaa tehd&auml; ensin VVH:n testiin ja OTH:n testiin, ja sen j&auml;lkeen VVH:n tuotantokantaan ja sitten OTH:n koulutuskantaan ja tuotantokantaan.
 
 Linkit:
 ------
