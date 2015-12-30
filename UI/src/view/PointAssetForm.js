@@ -94,6 +94,18 @@
       });
     }
 
+    rootElement.find('.form-service').on('change', '.new-service select', function (event) {
+      var newServiceType = parseInt($(event.currentTarget).val(), 10);
+      var assetId = selectedAsset.getId();
+      var services = selectedAsset.get().services;
+      var generatedId = services.length;
+      var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType});
+      selectedAsset.set({services: newServices});
+      renderForm(rootElement, selectedAsset, localizedTexts);
+      toggleMode(rootElement, applicationModel.isReadOnly());
+      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+    });
+
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
       var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
