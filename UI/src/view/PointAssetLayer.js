@@ -55,8 +55,8 @@
           var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
           roadLayer.selectRoadLink(nearestLine);
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
-
-          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false});
+          var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
         } else {
           this.cancel();
         }
@@ -67,18 +67,28 @@
 
     function createFeature(asset) {
       var rotation = determineRotation(asset);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation}));
+      var bearing = determineBearing(asset);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation, bearing: bearing}));
     }
 
     function determineRotation(asset) {
       var rotation = 0;
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
-        var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
-        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
       }
       return rotation;
     }
+
+    function determineBearing(asset) {
+      var bearing = 90;
+      if (!asset.floating && asset.geometry && asset.geometry.length > 0){
+        var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
+        bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+      }
+      return bearing;
+    }
+
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
@@ -171,7 +181,7 @@
     function handleChanged() {
       me.deactivateSelection();
       var asset = selectedAsset.get();
-      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset)});
+      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset)});
       _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       vectorLayer.redraw();
     }
@@ -196,6 +206,7 @@
       var selectedLat = coordinates.lat;
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+      var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
       var asset = _.merge({}, newAsset, {
         lon: projectionOnNearestLine.x,
@@ -203,7 +214,8 @@
         floating: false,
         mmlId: nearestLine.mmlId,
         id: 0,
-        geometry: [nearestLine.start, nearestLine.end]
+        geometry: [nearestLine.start, nearestLine.end],
+        bearing: bearing
       });
 
       vectorLayer.addFeatures(createFeature(asset));
