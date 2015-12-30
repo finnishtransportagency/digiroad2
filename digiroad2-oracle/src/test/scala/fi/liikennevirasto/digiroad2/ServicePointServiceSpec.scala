@@ -40,7 +40,6 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
       asset.lat should be(6677512)
       asset.createdBy should be(Some("jakke"))
       asset.createdAt shouldBe defined
-
     }
   }
 
@@ -50,7 +49,8 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
       val assets = service.getPersistedAssetsByIds(Set(id))
       val asset = assets.head
       service.expire(asset.id, "jakke")
-      service.getPersistedAssetsByIds(Set(asset.id)) should be ('empty)    }
+      service.getPersistedAssetsByIds(Set(asset.id)) should be ('empty)
+    }
   }
 
   test("Update service point") {

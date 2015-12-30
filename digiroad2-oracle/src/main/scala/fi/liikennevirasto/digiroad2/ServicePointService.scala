@@ -12,31 +12,31 @@ class ServicePointService {
   val typeId: Int = 250
 
   def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       OracleServicePointDao.create(asset, municipalityCode, username)
     }
   }
 
   def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String) = {
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }
 
   def expire(id: Long, username: String) = {
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       OracleServicePointDao.expire(id, username)
     }
   }
 
   def get: Set[ServicePoint] = {
-    OracleDatabase.withDynSession {
+    withDynSession {
       OracleServicePointDao.get
     }
   }
 
   def get(boundingBox: BoundingRectangle): Set[ServicePoint] = {
-    OracleDatabase.withDynSession {
+    withDynSession {
       OracleServicePointDao.get(boundingBox)
     }
   }
@@ -50,7 +50,7 @@ class ServicePointService {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   def getPersistedAssetsByIds(ids: Set[Long]): Set[ServicePoint] = {
-    OracleDatabase.withDynSession {
+    withDynSession {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"a.id in ($idsStr)"
       fetchPointAssets(filter)
