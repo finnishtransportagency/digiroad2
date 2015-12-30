@@ -54,6 +54,19 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update service point") {
+    runWithRollback {
 
+      val result = service.get(BoundingRectangle(Point(374127.5, 6677511.5), Point(374128.5, 6677512.5))).head
+      result.id should equal(600061)
+
+      val updated = IncomingServicePoint(result.lon,result.lat, Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))))
+
+      service.update(result.id, updated, 235, "unit_test")
+      val updatedServicePoint = service.get(BoundingRectangle(Point(374127.5, 6677511.5), Point(374128.5, 6677512.5))).head
+
+      updatedServicePoint.id should equal (result.id)
+      updatedServicePoint.modifiedBy should equal(Some("unit_test"))
+      updatedServicePoint.modifiedAt shouldBe defined
+    }
   }
 }
