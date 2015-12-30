@@ -21,7 +21,7 @@ Oikeudet jakautuvat maantieteellisesti seuraavasti:
 - Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin tai vain pys&auml;kkiaineistoihin.
 - Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
 
-Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kirjautuneelle henkil&ouml;lle ole luotu Digiroad-oikeuksia. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
+Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
 
 1.1 Mist&auml; saada opastusta?
 --------------------------
@@ -48,7 +48,7 @@ Digiroad -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiro
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu oikein) toimi seuraavasti:
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
-- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio (mieluiten Firefox tai Chrome). 
+- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
 - Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-palveluun: info@digiroad.fi 
 
 ####Kirjautuminen Digiroad-sovellukseen####
@@ -70,7 +70,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 2. Yleist&auml;
 ----------
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; ja nopeusrajoituksia. 
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija tai vierailija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; ja nopeusrajoituksia. 
 
 Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan sivun vasemman yl&auml;kulman tietolajit-paletista(1).
 
@@ -95,7 +95,7 @@ Karttaa liikutetaan raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan vasemmassa alakulmassa (9).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan oikeassa alakulmassa (9).
 
 ####Karttahaut####
 
@@ -375,7 +375,7 @@ __Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:__
 1. Klikkaa linkin kohtaa, johon haluat lis&auml;t&auml; pys&auml;kin.
 1. Lis&auml;&auml; ominaisuustieto -n&auml;kym&auml;&auml;n (6) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
 1. Jos et haluakaan luoda ko. pys&auml;kki&auml;, paina Peruuta-painiketta (22).
-1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Luo-painiketta (21).
+1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Tallenna-painiketta (21).
 
 ![Pys&auml;kin lis&auml;&auml;minen.](k16.jpg)
 
@@ -1595,3 +1595,78 @@ _Geometrian ulkopuolinen rautatien tasoristeys on v&auml;rilt&auml;&auml;n punai
 ![Ulkopuoliset tasoristeykset.](k159.jpg)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden rautatien tasoristeysten lista._
+
+22. Opastustaulu ja sen informaatio
+----------------------
+
+Opastustaulu ja sen informaatio ovat moottori- ja moottoriliikenneteill&auml; sijaitseva tai niille opastava tienviitta. Karttan&auml;kym&auml;&auml;n voi valita opastustaulut tietolajit-paletista (1). Kartalle tulevat esiin opastustaulut sinisen&auml; nuolena. Nuolen suunta kuvaa opastustaulun vaikutussuuntaa. Punaisella nuolella olevat opastustaulut kuvaavat geometrian ulkopuolella olevia opastustauluja.
+
+![Valinta.](k161.JPG)
+
+_Opastustaulun valinta._
+
+##Opastustaulun tietojen katselu##
+
+Yksitt&auml;isen opastustaulun voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu opastustaulun ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot ja opastustaulun informaatio. Valinnan voi purkaa klikkaamalla taustakarttaa.
+
+![Katselu.](k162.JPG)
+
+_Opastustaulun katselu._
+
+__Opastustaulun informaation sis&auml;lt&ouml;__
+
+Informaatiokent&auml;ss&auml; on seuraavat tiedot puolipisteell&auml; eroteltuina ja useampi kohde rivinvaihdolla:
+
+PAIKKAKUNNAT;V&auml;RI;SIJAINTI
+PAIKKAKUNNAT;V&auml;RI;SIJAINTI
+
+Kenttien sis&auml;ll&auml; tiedot on eroteltu kaksoispisteell&auml;. Esim:
+
+HELSINKI:HELSINGFORS;1;500
+
+Merkkijonon osien tarkennukset informaatiokent&auml;ss&auml;:
+
+Paikkakunnat: Paikkakuntien nimet samalla tavalla kirjoitettuna kuin opastustaulussa (kaikki kirjaimet ovat ISOJA). Jos opastustaulussa on useampi kuin yksi paikkakunta, niin ne tulee erotella rivinvaihdoilla.
+
+Taustav&auml;ri:
+1 ei tietoa
+2 vihre&auml; (moottori- tai moottoriliikennetie)
+3 sininen (maantie)
+4 valkoinen (paikalliskohde, esim. kaupunginosa)
+	
+Sijainti: Taulun et&auml;isyys liittym&auml;st&auml; metrein&auml;.
+
+##Opastustaulun muokkaus##
+
+Opastustaulun voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Opastustaulun siirto, muokkaus ja poisto###
+
+Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (3) ja painamalla tallenna painiketta (4). Muutokset voidaan kumota peruuta-napilla (5).
+
+Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (4). Muutokset voidaan kumota peruuta-napilla(5).
+
+Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (6) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (7). 
+
+![Muokkaus.](k163.JPG)
+
+_Opastustaulun muokkaus._
+
+###Opastustaulun lis&auml;ys###
+
+Opastustaulu voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (8). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (9).
+
+###Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut###
+
+Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut on korostettu kartalla punaisella nuolella. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Opastustaulumerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu. Ennen opastustaulun korjaamista tiegeometrialle, tulee alla olevan tielinkit tiedot olla tarvittaessa korjattu.
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; opastustauluilla on oma lista (2). Opastustaulut on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne opastustaulut, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Opastustauluista on listassa linkki, josta p&auml;&auml;see suoraan opastustaulun kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Ulkopuolella1.](k164.JPG)
+
+_Geometrian ulkopuolinen opastustaulu on v&auml;rilt&auml;&auml;n punainen._
+
+![Ulkopuolella2.](k165.JPG)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden opastustaulujen lista._
+

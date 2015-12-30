@@ -52,9 +52,10 @@
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({ name: eventTarget.val() });
     });
-
-    rootElement.find('.form-directional-traffic-sign textarea').on('input change', function(event) {
-      selectedAsset.set({ text: $(event.currentTarget).val() });
+    
+    rootElement.find('.form-directional-traffic-sign textarea').on('keyup', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ text: eventTarget.val() });
     });
 
     rootElement.find('.form-service textarea').on('input change', function(event) {
@@ -234,8 +235,8 @@
             '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
             '      <textarea class="form-control large-input">' + (asset.text || '')  + '</textarea>' +
             '  </div>' +
-          '    <div class="form-group editable form-directional-traffic-sign">' +
-          '      <label class="control-label">' + 'Vaikutussuunta' + '</label>' +
+          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+          '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else if (asset.services) {
@@ -335,5 +336,6 @@
     rootElement.find('.form-controls').toggle(!readOnly);
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
+    rootElement.find('.edit-only').toggle(!readOnly);
   }
 })(this);
