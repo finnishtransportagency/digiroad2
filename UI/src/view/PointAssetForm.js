@@ -248,6 +248,7 @@
         '    <div class="form-group editable form-service">' +
         '      <ul>' +
                services +
+              renderNewServiceElement() +
         '      </ul>' +
         '    </div>';
     } else {
@@ -284,6 +285,20 @@
       '    <input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">' +
       '  </div>' +
       '</li>';
+  }
+
+  function renderNewServiceElement() {
+    var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
+      return $('<option>', {value: serviceType.value, text: serviceType.label})[0].outerHTML;
+    }).join('');
+
+    return '' +
+      '<li><div class="form-group new-service">' +
+      '  <select class="form-control select">' +
+      '    <option class="empty" disabled selected>Lisää uusi palvelu</option>' +
+      serviceTypeLabelOptions +
+      '  </select>' +
+      '</div></li>';
   }
 
   function serviceTypeExtensionElements(service, serviceTypeExtensions) {
