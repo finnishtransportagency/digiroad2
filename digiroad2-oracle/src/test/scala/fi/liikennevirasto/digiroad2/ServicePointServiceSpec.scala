@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingService, IncomingServicePoint}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
@@ -14,7 +15,12 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
-
+    runWithRollback {
+      val result = service.get(BoundingRectangle(Point(374127.5, 6677511.5), Point(374128.5, 6677512.5))).head
+      result.id should equal(600061)
+      result.lon should equal(374128)
+      result.lat should equal(6677512)
+    }
   }
 
   test("Create new service point") {
@@ -40,11 +46,11 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
 
   test("Expire service point") {
     runWithRollback {
-         val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
-         val assets = service.getPersistedAssetsByIds(Set(id))
-         val asset = assets.head
-         service.expire(asset.id, "jakke")
-         service.getPersistedAssetsByIds(Set(asset.id)) should be ('empty)    }
+      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+      val assets = service.getPersistedAssetsByIds(Set(id))
+      val asset = assets.head
+      service.expire(asset.id, "jakke")
+      service.getPersistedAssetsByIds(Set(asset.id)) should be ('empty)    }
   }
 
   test("Update service point") {
