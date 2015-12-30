@@ -56,7 +56,7 @@
           roadLayer.selectRoadLink(nearestLine);
           feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
 
-          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end]});
+          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false});
         } else {
           this.cancel();
         }
@@ -72,7 +72,7 @@
 
     function determineRotation(asset) {
       var rotation = 0;
-      if (asset.geometry && asset.geometry.length > 0){
+      if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
