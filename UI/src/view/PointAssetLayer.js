@@ -207,19 +207,33 @@
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
 
-      var asset = _.merge({}, newAsset, {
-        lon: projectionOnNearestLine.x,
-        lat: projectionOnNearestLine.y,
-        floating: false,
-        mmlId: nearestLine.mmlId,
-        id: 0,
-        geometry: [nearestLine.start, nearestLine.end]
-      });
+      var asset = checkAssetType(selectedLat,selectedLon,nearestLine,projectionOnNearestLine);
 
       vectorLayer.addFeatures(createFeature(asset));
       selectedAsset.place(asset);
 
       mapOverlay.show();
+    }
+
+    function checkAssetType(selectedLat,selectedLon,nearestLine,projectionOnNearestLine){
+
+        var asset = _.merge({}, newAsset, {
+          lon: projectionOnNearestLine.x,
+          lat: projectionOnNearestLine.y,
+          floating: false,
+          mmlId: nearestLine.mmlId,
+          id: 0,
+          geometry: [nearestLine.start, nearestLine.end]
+        });
+
+        if (asset.hasOwnProperty('services')) {
+          asset = _.merge({}, newAsset, {
+          lon: selectedLon,
+          lat: selectedLat,
+          id: 0
+          });
+        }
+      return asset;
     }
 
     function show(map) {
