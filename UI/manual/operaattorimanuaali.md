@@ -253,7 +253,7 @@ _Geckoboardin osiot._
 4. Bounce Rate (Today) ei ole kiinnostava tieto, koska Digiroad-sovellus on p&auml;&auml;asiassa yhdell&auml; sivulla. L&auml;hde: Google Analytics
 5. Production VVH Response Times on VVH:n vasteajat viimeisen puolen tunnin ajalta. Vasemman laidan asteikko on siniselle viivalle ja se on millisekunteja. Siniset piikit ja tuhansiin kohoavat millisekunnit kertovat, ett&auml; VVH:n vasteajat ovat korkeita ja sovellus todenn&auml;k&ouml;isesti on hidas. L&auml;hde: New Relic
 6. Production VVH Response Times Weekly on VVH:n vasteajat viimeisen viikon ajalta. Tarkastellaan samalla tavalla, kuin ylemp&auml;&auml; asteikkoa. Y&ouml;lliset piikit johtuvat joka&ouml;isten pys&auml;kkiexporttien tekemisest&auml;. L&auml;hde: New Relic
-7. Viimeisimmät buildit. Lähde: Jenkins
+7. Viimeisimm&auml;t buildit. L&auml;hde: Jenkins
 8. Buildien tilanne. L&auml;hde: Jenkins
 9. Unique Visitors (today) on p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
 10.Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
