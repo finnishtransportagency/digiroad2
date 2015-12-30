@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingService, IncomingServicePoint}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class ServicePointServiceSpec extends FunSuite with Matchers {
@@ -40,7 +39,12 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire service point") {
-
+    runWithRollback {
+         val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+         val assets = service.getPersistedAssetsByIds(Set(id))
+         val asset = assets.head
+         service.expire(asset.id, "jakke")
+         service.getPersistedAssetsByIds(Set(asset.id)) should be ('empty)    }
   }
 
   test("Update service point") {
