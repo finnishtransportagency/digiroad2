@@ -256,7 +256,7 @@ _Geckoboardin osiot._
 7. Viimeisimm&auml;t buildit. L&auml;hde: Jenkins
 8. Buildien tilanne. L&auml;hde: Jenkins
 9. Unique Visitors (today) on p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
-10.Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
+10. Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
 11. Reaktorin Leuat, jepjep... :)
 
 
