@@ -7,18 +7,18 @@ OTH hy&ouml;dynt&auml;&auml; VVH:ta seuraavasti:
 VVH:n testikanta --> OTH:n testikanta
 VVH:n tuotantokanta --> OTH:n koulutuskanta ja tuotantokanta
 
-OTH:n eri ympäristöjen osoitteet selaimessa:
+OTH:n eri ymp&auml;rist&ouml;jen osoitteet selaimessa:
 Testikanta https://devtest.liikennevirasto.fi/digiroad/
 Koulutuskanta https://apptest.liikennevirasto.fi/digiroad/
 Tuotantokanta https://testiextranet.liikennevirasto.fi/digiroad/
 
-Uudet versiot menevät ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. Tämän jälkeen uusi käyttöohje päivitetään testikantaan. Toimiva versio viedään koulutuskantaan ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
+Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. T&auml;m&auml;n j&auml;lkeen uusi k&auml;ytt&ouml;ohje p&auml;ivitet&auml;&auml;n testikantaan. Toimiva versio vied&auml;&auml;n koulutuskantaan ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
 
-Kaikki Digiroad-ylläpitosovelluksen käyttöliittymään liittyvät sivut toimivat kaikissa ympäristöissä (sovellus, käyttöohje, uuden käyttäjän lisääminen jne.). Vaihtamalla osoitteen alkuun devtest, apptest tai testiextranet voi valita, mihin ympäristöön menee. Tässä ohjeessa olevat linkit ovat tuotantoympäristöön (testiextranet).
+Kaikki Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;liittym&auml;&auml;n liittyv&auml;t sivut toimivat kaikissa ymp&auml;rist&ouml;iss&auml; (sovellus, k&auml;ytt&ouml;ohje, uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen jne.). Vaihtamalla osoitteen alkuun devtest, apptest tai testiextranet voi valita, mihin ymp&auml;rist&ouml;&ouml;n menee. T&auml;ss&auml; ohjeessa olevat linkit ovat tuotantoymp&auml;rist&ouml;&ouml;n (testiextranet).
 
-__Huom! Kaikki ympäristöt näyttävät selaimessa päälisin puolin samalta, joten tulee olla tarkkana, mihin ympäristöön muutoksia tekee!__
+__Huom! Kaikki ymp&auml;rist&ouml;t n&auml;ytt&auml;v&auml;t selaimessa p&auml;&auml;lisin puolin samalta, joten tulee olla tarkkana, mihin ymp&auml;rist&ouml;&ouml;n muutoksia tekee!__
 
-Ohjeessa on useassa kohdassa mainittu, että tunnuksien hallinta on Digiroad2-kehitystiimillä ja ne saa osoitteesta digiroad2@reaktor.fi. Tämä tilanne tulee muuttumaan, kun kehitysprojekti päättyy ja siirrytään ylläpitovaiheeseen, mutta toistaiseksi kehitykseen liittyvien tilien/sivujen tunnusten ja salasanojen hallinta on kehitystiimissä.
+Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad2-kehitystiimill&auml; ja ne saa osoitteesta digiroad2@reaktor.fi. T&auml;m&auml; tilanne tulee muuttumaan, kun kehitysprojekti p&auml;&auml;ttyy ja siirryt&auml;&auml;n yll&auml;pitovaiheeseen, mutta toistaiseksi kehitykseen liittyvien tilien/sivujen tunnusten ja salasanojen hallinta on kehitystiimiss&auml;.
 
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
@@ -72,7 +72,7 @@ _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 |Joensuun TVV|167,276,426|
 
 
-2. CSV-import pysäkkien ominaisuustiedoille
+2. CSV-import pys&auml;kkien ominaisuustiedoille
 -----------
 
 Importeilla tuodaan aineistoja j&auml;rjestelm&auml;&auml;n.
@@ -111,7 +111,7 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
 
 
-3. Pysäkkien exportit
+3. Pys&auml;kkien exportit
 -----------
 
 Exporteilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;st&auml; ulos.
@@ -141,10 +141,10 @@ L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vall
 
 ##3.3 Pys&auml;kkitiedot GTFS-muodossa Waltti-j&auml;rjestelm&auml;&auml;n##
 
-Waltti-järjestelmään pysäkit luetaan GTFS-muodossa. GTFS-formaatista voi lukea lisää seuraavista linkeistä:
+Waltti-j&auml;rjestelm&auml;&auml;n pys&auml;kit luetaan GTFS-muodossa. GTFS-formaatista voi lukea lis&auml;&auml; seuraavista linkeist&auml;:
 https://en.wikipedia.org/wiki/General_Transit_Feed_Specification
 https://developers.google.com/transit/gtfs/
-https://developers.google.com/transit/gtfs/reference ja täältä https://developers.google.com/transit/gtfs/reference#stops_fields Digiroadista toimitetaan Walttiin stops.txt-tiedosto
+https://developers.google.com/transit/gtfs/reference ja t&auml;&auml;lt&auml; https://developers.google.com/transit/gtfs/reference#stops_fields Digiroadista toimitetaan Walttiin stops.txt-tiedosto
 
 Waltti-j&auml;rjestelm&auml;&auml; varten hy&ouml;dynt&auml;j&auml;t voivat hakea aineiston Liikenneviraston aineistojen latauspalvelusta http://aineistot.liikennevirasto.fi/gtfs/. Aineisto tehd&auml;&auml;n Livin FME Serverill&auml; ajastetusti, ja se p&auml;ivittyy sivustolle joka aamu TVV-aluekohtaisina paketteina.
 
@@ -241,21 +241,21 @@ __Linux:__
 5. Geckoboard
 -----------
 
-Digiroadin tuotantoympäristön tilaa voi seurata Geckoboardilta https://reaktor.geckoboard.com/dashboards/C33E233E34A644EE (ei vaadi kirjautumista). Geckoboardista voi esimerkiksi etsiä apua sovelluksen hitausongelmien selvityksessä. Geckoboardin sisältö on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot kerätään New Relicistä, Google Analyticsistä ja Jenkinsistä. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsistä kerrotaan tarkemmin kappaleessa 7. Jenkinsiin ei ole toistaiseksi pääsyä operaattorilla, mutta tulee myöhemmin.
+Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://reaktor.geckoboard.com/dashboards/C33E233E34A644EE (ei vaadi kirjautumista). Geckoboardista voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml;, Google Analyticsist&auml; ja Jenkinsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 7. Jenkinsiin ei ole toistaiseksi p&auml;&auml;sy&auml; operaattorilla, mutta tulee my&ouml;hemmin.
 
 ![Geckoboard.](k166.jpg)
 
 _Geckoboardin osiot._
 
-1. Appdex Score kertoo sovelluksen suorituskyvystä. Mitä lähempänä luku on 1:stä, sitä parempi. Noin 0.7:n kohdalla sovellus alkaa hidastella niin, että työskentely vaikeutuu huomattavasti. Lähde: New Relic
-2. Current Visitor Gauge kertoo tämän hetkisten aktiivisten käyttäjien lukumäärän. Oikean laidan luku on käyttäjien lukumäärän ennätys. Lähde: Google Analytics
-3. Avg. Time on Site (today), keskimääräinen vierailuaika sivulla per käyttäjä tämän päivän aikana. Lähde: Google Analytics
-4. Bounce Rate (Today) ei ole kiinnostava tieto, koska Digiroad-sovellus on pääasiassa yhdellä sivulla. Lähde: Google Analytics
-5. Production VVH Response Times on VVH:n vasteajat viimeisen puolen tunnin ajalta. Vasemman laidan asteikko on siniselle viivalle ja se on millisekunteja. Siniset piikit ja tuhansiin kohoavat millisekunnit kertovat, että VVH:n vasteajat ovat korkeita ja sovellus todennäköisesti on hidas. Lähde: New Relic
-6. Production VVH Response Times Weekly on VVH:n vasteajat viimeisen viikon ajalta. Tarkastellaan samalla tavalla, kuin ylempää asteikkoa. Yölliset piikit johtuvat jokaöisten pysäkkiexporttien tekemisestä. Lähde: New Relic
-7. ja 8. Viimeisimmät buildit ja niiden tilanne. Lähde: Jenkins
-9. Unique Visitors (today) on päivän yksilölliset kävijät. Lähde: Google Analytics
-10.Unique Visitors (30D) on viimeisen 30 päivän yksilölliset kävijät. Lähde: Google Analytics
+1. Appdex Score kertoo sovelluksen suorituskyvyst&auml;. Mit&auml; l&auml;hemp&auml;n&auml; luku on 1:st&auml;, sit&auml; parempi. Noin 0.7:n kohdalla sovellus alkaa hidastella niin, ett&auml; ty&ouml;skentely vaikeutuu huomattavasti. L&auml;hde: New Relic
+2. Current Visitor Gauge kertoo t&auml;m&auml;n hetkisten aktiivisten k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n. Oikean laidan luku on k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n enn&auml;tys. L&auml;hde: Google Analytics
+3. Avg. Time on Site (today), keskim&auml;&auml;r&auml;inen vierailuaika sivulla per k&auml;ytt&auml;j&auml; t&auml;m&auml;n p&auml;iv&auml;n aikana. L&auml;hde: Google Analytics
+4. Bounce Rate (Today) ei ole kiinnostava tieto, koska Digiroad-sovellus on p&auml;&auml;asiassa yhdell&auml; sivulla. L&auml;hde: Google Analytics
+5. Production VVH Response Times on VVH:n vasteajat viimeisen puolen tunnin ajalta. Vasemman laidan asteikko on siniselle viivalle ja se on millisekunteja. Siniset piikit ja tuhansiin kohoavat millisekunnit kertovat, ett&auml; VVH:n vasteajat ovat korkeita ja sovellus todenn&auml;k&ouml;isesti on hidas. L&auml;hde: New Relic
+6. Production VVH Response Times Weekly on VVH:n vasteajat viimeisen viikon ajalta. Tarkastellaan samalla tavalla, kuin ylemp&auml;&auml; asteikkoa. Y&ouml;lliset piikit johtuvat joka&ouml;isten pys&auml;kkiexporttien tekemisest&auml;. L&auml;hde: New Relic
+7. ja 8. Viimeisimm&auml;t buildit ja niiden tilanne. L&auml;hde: Jenkins
+9. Unique Visitors (today) on p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
+10.Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
 11. Reaktorin Leuat, jepjep... :)
 
 
@@ -308,7 +308,7 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 
 Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto Maanmittauslaitokselta VVH:n rajapinnasta. Jos Maanmittauslaitokselta tullutta tietoa liikennevirran suunnalle muokataan Digiroad-yll&auml;pitosovelluksessa, ei Maanmittauslaitoksen t&auml;st&auml; eri&auml;v&auml; tieto kumoa Digiroadissa olevaa tietoa (ns. override, tietokantaan tallennetaan MML:n tiedon korvaava tieto). N&auml;in varmistetaan, etteiv&auml;t yll&auml;pit&auml;jien tekem&auml;t muutokset kumoudu Maanmittauslaitoksen virheellisell&auml; tiedolla.
 
-Tielinkeille päivitetään korjattavien linkkien lista (incomplete_links.html) automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
+Tielinkeille p&auml;ivitet&auml;&auml;n korjattavien linkkien lista (incomplete_links.html) automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
 ##8.2 Pistem&auml;iset tietolajit##
 
@@ -329,7 +329,7 @@ Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&au
     
 ##8.3 Nopeusrajoitus##
 
-Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. Tätä ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
+Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
 
 9. Kalpa-API
 --------------
@@ -352,26 +352,26 @@ _Pys&auml;kki Kalpa-APIssa._
 __Tietolajit Kalpa-Apissa:__
 
 Tielinkki road_link_properties
-Kääntymisrajoitus manoeuvres
-Pysäkki	mass_transit_stops
+K&auml;&auml;ntymisrajoitus manoeuvres
+Pys&auml;kki	mass_transit_stops
 Nopeusrajoitus speed_limits
 Suurin sallittu massa total_weight_limits
-Yhdistelmän suurin sallittu massa trailer_truck_weight_limits
+Yhdistelm&auml;n suurin sallittu massa trailer_truck_weight_limits
 Suurin sallittu akselimassa axle_weight_limits
 Suurin sallittu telimassa bogie_weight_limits
 Suurin sallittu korkeus height_limits
 Suurin sallittu pituus length_limits
 Suurin sallittu leveys width_limits
 Valaistu tie lit_roads
-Päällystetty tie paved_roads
+P&auml;&auml;llystetty tie paved_roads
 Ajoneuvokohtainen rajoitus vehicle_prohibitions
 VAK-rajoitus hazardous_material_transport_prohibitions
 Leveys widths
-Liikennemäärä traffic_volumes
+Liikennem&auml;&auml;r&auml; traffic_volumes
 Ruuhkaantumisherkkyys congestion_tendencies
 Kelirikko roads_affected_by_thawing
 Talvinopeusrajoitus	speed_limits_during_winter
-Kaistojen lukumäärä	number_of_lanes
+Kaistojen lukum&auml;&auml;r&auml;	number_of_lanes
 Joukkoliikennekaista mass_transit_lanes
 Suojatie pedestrian_crossings
 Esterakennelma obstacles
