@@ -24,7 +24,6 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create new service point") {
-    // TODO: Rollback not working properly
     runWithRollback {
       val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
       val assets = service.getPersistedAssetsByIds(Set(id))
