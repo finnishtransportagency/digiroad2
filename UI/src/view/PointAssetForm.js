@@ -111,6 +111,13 @@
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
     });
 
+    rootElement.on('click', 'button.delete', function (evt) {
+      var existingService = $(evt.target).closest('.service-point');
+      $(evt.target).parent().parent().remove();
+      var serviceId =  parseInt(existingService.find('input[type="text"]').attr('data-service-id'), 10);
+      console.log('TODO: remove service from selected asset model serviceId:' + serviceId);
+    });
+
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
       var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
@@ -282,7 +289,7 @@
     var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
 
     return '<li>' +
-      '  <div class="form-group editable">' +
+      '  <div class="form-group service-point editable">' +
         '  <div class="form-group">' +
       '    <button class="delete btn-delete">x</button>' +
       '    <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
