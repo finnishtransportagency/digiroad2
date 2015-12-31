@@ -265,13 +265,13 @@ object PointAssetImporter {
 
   def importDirectionalTrafficSigns(database: DatabaseDef, vvhServiceHost: String): Unit = {
     val query = sql"""
-         select s.segm_id, s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.puoli, s.opas_teksti
+         select s.segm_id, s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.puoli, s.opas_teksti, to_2d(t.shape)
            from segm_opastaulu s
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
         """
 
     val directionalTrafficSigns = database.withDynSession {
-      query.as[(Long, Long, Long, Int, Seq[Point], Double, Double, Int, String)].list
+      query.as[(Long, Long, Long, Int, Seq[Point], Double, Double, Int, String, Seq[Point])].list
     }.groupBy(_._1).values.toList
 
     val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(directionalTrafficSigns.map(_.head._3).toSet)
@@ -293,7 +293,7 @@ object PointAssetImporter {
         val startTime = DateTime.now()
 
         val assetGeometries = directionalTrafficSign.map { rows =>
-          val (_, roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, sideCode, _) = rows.head
+          val (_, roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, sideCode, _, geometry) = rows.head
           val texts = rows.map(_._9)
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
@@ -305,7 +305,7 @@ object PointAssetImporter {
           assetPS.setBoolean(4, float)
           val bearing =
             PointAssetOperations.calculateBearing(pointAsset, roadLinks.find(_.mmlId == mmlId)).getOrElse(
-              PointAssetOperations.calculateBearing(pointAsset, points))
+              PointAssetOperations.calculateBearing(pointAsset, geometry))
           assetPS.setInt(5, bearing)
 
           assetPS.addBatch()
