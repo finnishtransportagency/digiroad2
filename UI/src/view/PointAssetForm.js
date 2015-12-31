@@ -185,7 +185,7 @@
   var serviceTypes = [
     { value: 4,  label: 'Tulli' },
     { value: 5,  label: 'Rajanylityspaikka' },
-    { value: 6,  label: 'Levähdysalue' },
+    { value: 6,  label: 'Lepoalue' },
     { value: 8,  label: 'Lentokenttä' },
     { value: 9,  label: 'Laivaterminaali' },
     { value: 10, label: 'Taksiasema' },
