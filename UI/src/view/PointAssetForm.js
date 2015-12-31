@@ -284,6 +284,7 @@
     return '<li>' +
       '  <div class="form-group editable">' +
         '  <div class="form-group">' +
+      '    <button class="delete btn-delete">x</button>' +
       '    <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
       '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
       '  <option disabled selected>Lisää tyyppi</option>' +
