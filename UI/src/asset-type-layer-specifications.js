@@ -370,7 +370,7 @@
       typeId: assetType.servicePoints,
       layerName: 'servicePoints',
       title: 'Palvelupiste',
-      newAsset: { services: [{id:1}] },
+      newAsset: { services: [] },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
       ],
