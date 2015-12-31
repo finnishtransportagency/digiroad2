@@ -322,7 +322,7 @@
       var currentExtensionType = _.find(extensions, {value: service.typeExtension});
       return '' +
         '<label class="control-label">Tarkenne</label>' +
-        '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '') + '</p>' +
+        '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
         '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
         '  <option disabled selected>Lisää tarkenne</option>' +
            extensionOptions +
