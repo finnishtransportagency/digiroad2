@@ -13,7 +13,12 @@
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled', function() {
       renderForm(rootElement, selectedAsset, localizedTexts);
       toggleMode(rootElement, applicationModel.isReadOnly());
-      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      if(layerName == 'servicePoints'){
+        rootElement.find('button#save-button').prop('disabled', true);
+        rootElement.find('button#cancel-button').prop('disabled', false);
+      }else{
+        rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      }
     });
 
     eventbus.on(layerName + ':changed', function() {
@@ -335,8 +340,8 @@
   function renderButtons() {
     return '' +
       '<div class="pointasset form-controls">' +
-      '  <button class="save btn btn-primary" disabled>Tallenna</button>' +
-      '  <button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
+      '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
   }
 
