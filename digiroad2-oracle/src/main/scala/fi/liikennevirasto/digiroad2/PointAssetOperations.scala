@@ -175,12 +175,12 @@ object PointAssetOperations {
     roadLinkOption match {
       case None => None
       case Some(roadLink) =>
-        Some(calculateBearing(Point(persistedPointAsset.lat, persistedPointAsset.lon), roadLink.geometry))
+        Some(calculateBearing(persistedPointAsset, roadLink.geometry))
     }
   }
 
   def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {
-    calculateBearing(Point(persistedPointAsset.lat, persistedPointAsset.lon), geometry)
+    calculateBearing(Point(persistedPointAsset.lon, persistedPointAsset.lat), geometry)
   }
 
   def calculateBearing(point: Point, geometry: Seq[Point]): Int = {
