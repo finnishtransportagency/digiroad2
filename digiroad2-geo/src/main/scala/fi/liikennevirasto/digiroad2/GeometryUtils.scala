@@ -140,16 +140,20 @@ object GeometryUtils {
   def minimumDistance(point: Point, segment: Seq[Point]): Double = {
     if (segment.size < 1) { return Double.NaN }
     if (segment.size < 2) { return point.distanceTo(segment.head) }
-    val segmentPoints = GeometryUtils.geometryEndpoints(segment)
-    val lengthSquared = math.pow(segmentPoints._1.distanceTo(segmentPoints._2), 2)
-    if (lengthSquared.equals(0.0)) return point.distanceTo(segmentPoints._1)
+    val segmentPoints = segment.init.zip(segment.tail)
+    segmentPoints.map{segment => minimumDistance(point, segment)}.min
+  }
+
+  def minimumDistance(point: Point, segment: (Point, Point)): Double = {
+    val lengthSquared = math.pow(segment._1.distanceTo(segment._2), 2)
+    if (lengthSquared.equals(0.0)) return point.distanceTo(segment._1)
     // Calculate projection coefficient
-    val segmentVector = segmentPoints._2 - segmentPoints._1
-    val t = ((point.x - segmentPoints._1.x) * (segmentPoints._2.x - segmentPoints._1.x) +
-      (point.y - segmentPoints._1.y) * (segmentPoints._2.y - segmentPoints._1.y)) / lengthSquared
-    if (t < 0.0) return point.distanceTo(segmentPoints._1)
-    if (t > 1.0) return point.distanceTo(segmentPoints._2)
-    val projection = segmentPoints._1 + segmentVector.scale(t)
-    math.min(point.distanceTo(projection), minimumDistance(point, segment.slice(1, segment.length)))
+    val segmentVector = segment._2 - segment._1
+    val t = ((point.x - segment._1.x) * (segment._2.x - segment._1.x) +
+      (point.y - segment._1.y) * (segment._2.y - segment._1.y)) / lengthSquared
+    if (t < 0.0) return point.distanceTo(segment._1)
+    if (t > 1.0) return point.distanceTo(segment._2)
+    val projection = segment._1 + segmentVector.scale(t)
+    point.distanceTo(projection)
   }
 }
