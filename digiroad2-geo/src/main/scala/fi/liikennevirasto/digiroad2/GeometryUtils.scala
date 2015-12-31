@@ -136,4 +136,22 @@ object GeometryUtils {
       geometry2Endpoints._1.distanceTo(geometry1EndPoints._2) < epsilon ||
       geometry2Endpoints._2.distanceTo(geometry1EndPoints._2) < epsilon
   }
+
+  def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
+    val partitions = segments.init.zip(segments.tail)
+    partitions.minBy { p => minimumDistance(point, p) }
+  }
+
+  def minimumDistance(point: Point, segment: (Point, Point)): Double = {
+    val lengthSquared = math.pow(segment._1.distanceTo(segment._2), 2)
+    if (lengthSquared.equals(0.0)) return point.distanceTo(segment._1)
+    // Calculate projection coefficient
+    val segmentVector = segment._2 - segment._1
+    val t = ((point.x - segment._1.x) * (segment._2.x - segment._1.x) +
+      (point.y - segment._1.y) * (segment._2.y - segment._1.y)) / lengthSquared
+    if (t < 0.0) return point.distanceTo(segment._1)
+    if (t > 1.0) return point.distanceTo(segment._2)
+    val projection = segment._1 + segmentVector.scale(t)
+    point.distanceTo(projection)
+  }
 }

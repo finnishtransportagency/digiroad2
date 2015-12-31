@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{FloatingAsset, Unknown, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, FloatingAsset, Unknown}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.user.User
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
@@ -172,6 +171,28 @@ trait PointAssetOperations {
 }
 
 object PointAssetOperations {
+  def calculateBearing(persistedPointAsset: PersistedPointAsset, roadLinkOption: Option[VVHRoadlink]): Option[Int] = {
+    roadLinkOption match {
+      case None => None
+      case Some(roadLink) =>
+        Some(calculateBearing(Point(persistedPointAsset.lat, persistedPointAsset.lon), roadLink.geometry))
+    }
+  }
+
+  def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {
+    calculateBearing(Point(persistedPointAsset.lat, persistedPointAsset.lon), geometry)
+  }
+
+  def calculateBearing(point: Point, geometry: Seq[Point]): Int = {
+    def direction(p1: Point, p2: Point): Long = {
+      val dLon = p2.y - p1.y
+      val dLat = p2.x - p1.x
+      Math.round(Math.toDegrees(Math.atan2(dLon, dLat)) + 360) % 360
+    }
+    val closest = GeometryUtils.segmentByMinimumDistance(point, geometry)
+    direction(closest._1, closest._2).toInt
+  }
+
   def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedAsset.lon, persistedAsset.lat)
     roadLink match {

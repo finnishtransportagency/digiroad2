@@ -135,4 +135,21 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val length: Double = geometryLength(List(Point(0.0, 0.0)))
     length should be(0.0)
   }
+
+  test("Get minimum distance from point to segment") {
+    val distance = minimumDistance(Point(0,0,0), (Point(-1,1,0), Point(1,1,0)))
+    distance should be (1.0)
+  }
+
+  test("Get minimum distance from point to segment end") {
+    val distance = minimumDistance(Point(0,0,0), (Point(-1,-1,0), Point(-.5,-.5,0)))
+    distance should be > .707
+    distance should be < .70711
+  }
+
+  test("Get minimum distance from point to segment midpoint") {
+    val distance = minimumDistance(Point(0,0,0),
+      segmentByMinimumDistance(Point(0,0,0), Seq(Point(-1,1,0), Point(0,.9,0), Point(1,1,0))))
+    distance should be(0.9)
+  }
 }

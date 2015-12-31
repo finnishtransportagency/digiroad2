@@ -282,7 +282,7 @@ object PointAssetImporter {
     OracleDatabase.withDynTransaction {
       val textPropertyId = sql"""select id from property where public_id = 'opastustaulun_teksti'""".as[Long].first
 
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, BEARING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val textPropertyPS =  dynamicSession.prepareStatement(s"insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, $textPropertyId, ?)")
@@ -300,10 +300,14 @@ object PointAssetImporter {
           assetPS.setInt(2, 240)
           assetPS.setInt(3, municipalityCode)
           val pointAsset = ImportedPointAsset(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
-          assetPS.setBoolean(4, PointAssetOperations.isFloating(
-            pointAsset,
-            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
-          ))
+          val float = PointAssetOperations.isFloating(
+            pointAsset, roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry)})
+          assetPS.setBoolean(4, float)
+          val bearing =
+            PointAssetOperations.calculateBearing(pointAsset, roadLinks.find(_.mmlId == mmlId)).getOrElse(
+              PointAssetOperations.calculateBearing(pointAsset, points))
+          assetPS.setInt(5, bearing)
+
           assetPS.addBatch()
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
