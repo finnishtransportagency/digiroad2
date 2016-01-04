@@ -160,7 +160,7 @@
     }
 
     function valueString(currentValue) {
-      return currentValue;
+      return currentValue || '';
     }
 
     function measureInput(currentValue, className) {
