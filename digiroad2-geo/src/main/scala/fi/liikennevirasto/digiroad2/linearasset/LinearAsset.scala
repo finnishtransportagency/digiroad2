@@ -17,6 +17,9 @@ sealed trait Value {
 case class NumericValue(value: Int) extends Value {
   override def toJson: Any = value
 }
+case class TextualValue(value: String) extends Value {
+  override def toJson: Any = value
+}
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }

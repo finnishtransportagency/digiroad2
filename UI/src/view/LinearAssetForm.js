@@ -26,6 +26,7 @@
     });
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
+      console.log('valueChanged', events('valueChanged'), selectedLinearAsset);
       rootElement.find('.form-controls.linear-asset button.save').attr('disabled', !selectedLinearAsset.isSaveable());
       rootElement.find('.form-controls.linear-asset button.cancel').attr('disabled', false);
     });

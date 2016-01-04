@@ -1,16 +1,22 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = {
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
+    EuropeanRoadsFormElements: EuropeanRoadsFormElements,
     DefaultFormElements: DefaultFormElements
   };
+
+  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+    var formElem = inputFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
+  }
 
   function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = dropDownFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-    var formElem = inputFormElement(unit);
+  function EuropeanRoadsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+    var formElem = textInputFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -136,6 +142,37 @@
       } else {
         return '';
       }
+    }
+  }
+
+  function textInputFormElement() {
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
+
+    function inputElementValue(input) {
+      var removeWhitespace = function(s) {
+        return s.replace(/\s/g, '');
+      };
+      return removeWhitespace(input.val());
+    }
+
+    function valueString(currentValue) {
+      return currentValue;
+    }
+
+    function measureInput(currentValue, className) {
+      var value = currentValue ? currentValue : '';
+      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+      return '' +
+        '<div class="input-unit-combination input-group">' +
+        '  <input ' +
+        '    type="text" ' +
+        '    class="form-control ' + className + '" ' +
+        '    value="' + value  + '" ' + disabled + ' >' +
+        '</div>';
     }
   }
 

@@ -125,8 +125,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -169,8 +169,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -192,7 +192,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit).filter(_ != assetId) shouldBe empty
 
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -211,8 +211,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
 
       val createdId = ids.filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(Set(assetId)).head
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(createdId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(190, Set(assetId)).head
 
       oldLimit.mmlId should be (388562360)
       oldLimit.sideCode should be (SideCode.BothDirections.value)

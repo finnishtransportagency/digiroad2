@@ -288,10 +288,10 @@
       typeId: assetType.europeanRoads,
       singleElementEventCategory: 'europeanRoad',
       multiElementEventCategory: 'europeanRoads',
-      layerName: 'europeanRoad',
+      layerName: 'europeanRoads',
       title: 'Eurooppatienumero',
       newTitle: 'Uusi eurooppatienumero',
-      className: 'europeanRoad',
+      className: 'european-road',
       isSeparable: true,
       editControlLabels: {
         title: '',

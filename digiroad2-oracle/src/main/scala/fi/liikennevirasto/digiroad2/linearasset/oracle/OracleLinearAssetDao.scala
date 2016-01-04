@@ -336,7 +336,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int) =
     createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
 
-  def insertEnumeratedValue(assetId: Long, valuePropertyId: String)(value: Int) = {
+  def insertEnumeratedValue(assetId: Long, valuePropertyId: String, value: Int) = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     sqlu"""
        insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
@@ -344,7 +344,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
      """.execute
   }
 
-  def insertValue(assetId: Long, valuePropertyId: String)(value: Int) = {
+  def insertValue(assetId: Long, valuePropertyId: String, value: Int) = {
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     sqlu"""
@@ -353,7 +353,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
      """.execute
   }
 
-  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: Long => Int => Unit): Long = {
+  def insertValue(assetId: Long, valuePropertyId: String, value: String) = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    Queries.insertTextProperty(assetId, propertyId, value).execute
+  }
+
+  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -374,7 +379,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       """
     Q.updateNA(insertAll).execute
 
-    value.foreach(valueInsertion(assetId))
+    value.foreach(valueInsertion(assetId, _))
 
     assetId
   }
@@ -384,7 +389,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val existingLrmPositions = fetchSpeedLimitsByMmlId(mmlId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
-      Some(forceCreateLinearAsset(creator, 20, mmlId, linkMeasures, sideCode, Some(value), insertEnumeratedValue(_, "rajoitus")))
+      Some(forceCreateLinearAsset(creator, 20, mmlId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value)))
     } else {
       None
     }
@@ -505,6 +510,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated =
       sqlu"update number_property_value set value = $value where asset_id = $id and property_id = $propertyId".first
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  def updateValue(id: Long, value: String, valuePropertyId: String, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = Queries.updateTextProperty(id, propertyId, value).first
     if (assetsUpdated == 1 && propertiesUpdated == 1) {
       Some(id)
     } else {

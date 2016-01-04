@@ -14,14 +14,20 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
+  val europeanRoadPropertyId: String = "eurooppatienumero"
+  def getValuePropertyId(typeId: Int) = typeId match {
+    case EuropeanRoadAssetTypeId => "eurooppatienumero"
+    case _ => "mittarajoitus"
+  }
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
-  def HazmatTransportProhibitionAssetTypeId = 210
-  def ProhibitionAssetTypeId = 190
+  val HazmatTransportProhibitionAssetTypeId = 210
+  val ProhibitionAssetTypeId = 190
+  val EuropeanRoadAssetTypeId = 260
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -45,6 +51,8 @@ trait LinearAssetOperations {
       withDynTransaction {
         if (typeId == ProhibitionAssetTypeId || typeId == HazmatTransportProhibitionAssetTypeId) {
           dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
+        } else if (typeId == EuropeanRoadAssetTypeId) {
+          Nil // TODO: implement
         } else {
           dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
         }
@@ -55,9 +63,9 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
+  def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      dao.fetchLinearAssetsByIds(ids, valuePropertyId)
+      dao.fetchLinearAssetsByIds(ids, getValuePropertyId(typeId))
     }
   }
 
@@ -148,6 +156,7 @@ trait LinearAssetOperations {
     val valueUpdate = value match {
       case Prohibitions(prohibitionValues) => dao.updateProhibitionValue(_: Long, Prohibitions(prohibitionValues), username)
       case NumericValue(intValue) => dao.updateValue(_: Long, intValue, valuePropertyId, username)
+      case TextualValue(textValue) => dao.updateValue(_: Long, textValue, europeanRoadPropertyId, username)
     }
 
     ids.map(valueUpdate).flatten
@@ -157,7 +166,8 @@ trait LinearAssetOperations {
     val id = dao.createLinearAsset(typeId, mmlId, expired = false, sideCode, startMeasure, endMeasure, username)
     val insertValueFor = value match {
       case Prohibitions(prohibitionValues) => dao.insertProhibitionValue(_: Long, Prohibitions(prohibitionValues))
-      case NumericValue(intValue) => dao.insertValue(_: Long, valuePropertyId)(intValue)
+      case NumericValue(intValue) => dao.insertValue(_: Long, valuePropertyId, intValue)
+      case TextualValue(textValue) => dao.insertValue(_: Long, europeanRoadPropertyId, textValue)
     }
     insertValueFor(id)
     id
