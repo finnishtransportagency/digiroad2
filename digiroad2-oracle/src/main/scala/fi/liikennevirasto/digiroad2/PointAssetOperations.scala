@@ -185,8 +185,8 @@ object PointAssetOperations {
 
   def calculateBearing(point: Point, geometry: Seq[Point]): Int = {
     def direction(p1: Point, p2: Point): Long = {
-      val dLon = p2.y - p1.y
-      val dLat = p2.x - p1.x
+      val dLon = p2.x - p1.x
+      val dLat = p2.y - p1.y
       Math.round(Math.toDegrees(Math.atan2(dLon, dLat)) + 360) % 360
     }
     val closest = GeometryUtils.segmentByMinimumDistance(point, geometry)

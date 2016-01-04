@@ -6,33 +6,57 @@ import fi.liikennevirasto.digiroad2.PointAssetOperations._
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test ("Calculate bearing for point: horizontal") {
-    val bearing = calculateBearing(Point(0,0,0), Seq(Point(-1,1,0), Point(1,1,0)))
+    val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))
     bearing should be (0)
   }
 
   test ("Calculate bearing for point: horizontal down") {
-    val bearing = calculateBearing(Point(0.1,0.5,0), Seq(Point(1,1,0), Point(-1,1,0)))
+    val bearing = calculateBearing(Point(0.1,0.5,0), Seq(Point(1,1,0), Point(1,-1,0)))
     bearing should be (180)
   }
 
   test("Calculate bearing for point: vertical") {
-    val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))
+    val bearing = calculateBearing(Point(0,0,0), Seq(Point(-1,1,0), Point(1,1,0)))
     bearing should be (90)
   }
 
   test("Calculate bearing for point: diagonal") {
-    val bearing = calculateBearing(Point(0,0,0), Seq(Point(-2,-1,0), Point(0,1,0)))
+    val bearing = calculateBearing(Point(0,0,0), Seq(Point(-1,-2,0), Point(1,0,0)))
     bearing should be (45)
   }
 
   test("Calculate bearing for point: diagonal down") {
-    val bearing = calculateBearing(Point(0,0,0), Seq(Point(-2,1,0), Point(0,-1,0)))
+    val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-2,0), Point(-1,0,0)))
     bearing should be (315)
   }
 
   test("Calculate bearing for point: corner case") {
-    val bearing = calculateBearing(Point(0.5,0,0), Seq(Point(1,-1,0), Point(0.95, 0, 0), Point(1,1,0)))
-    bearing should not be(90)
+    val bearing = calculateBearing(Point(0.5,0,0), Seq(Point(-1,1,0), Point(0, 0.95, 0), Point(1,1,0)))
+    bearing should not be (90)
   }
 
+  test("Import bearing should not change") {
+    // DR1 OPAS_ID 21362
+    val point = Point(328016.508929236,6809755.93310803)
+    val segment = Seq(Point(327999.7172,6809675.9779),
+      Point(328008.0779,6809716.6553),
+      Point(328015.3301,6809750.1494),
+      Point(328019.2966,6809769.6103))
+    val bearing = PointAssetOperations.calculateBearing(point, segment)
+    bearing should be (12)
+  }
+
+  test("Import bearing should work for floaters") {
+    // DR1 OPAS_ID 5485
+    val point = Point(678936.983911151, 6900134.73125385)
+    val segment =  Seq(Point(678909.7176,6900140.9987),
+      Point(678969.6109,6900127.2316),
+      Point(679018.0323,6900120.6011),
+      Point(679048.2324,6900117.3428),
+      Point(679088.8085,6900114.5805),
+      Point(679134.4375,6900111.3205),
+      Point(679168.803,6900107.1623))
+    val bearing = PointAssetOperations.calculateBearing(point, segment)
+    bearing should be (103)
+  }
 }
