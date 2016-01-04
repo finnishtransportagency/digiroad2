@@ -115,7 +115,9 @@
       var existingService = $(evt.target).closest('.service-point');
       $(evt.target).parent().parent().remove();
       var serviceId =  parseInt(existingService.find('input[type="text"]').attr('data-service-id'), 10);
-      console.log('TODO: remove service from selected asset model serviceId:' + serviceId);
+      var services = selectedAsset.get().services;
+      var newServices = _.reject(services, { id: serviceId });
+      selectedAsset.set({ services: newServices });
     });
 
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
