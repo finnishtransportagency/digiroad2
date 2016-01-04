@@ -1,13 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.ConversionDatabase.GetPointSeq
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
@@ -208,10 +206,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
-    val vvhRoadLinks = vvhClient.fetchVVHRoadlinks(bounds, municipalities)
     withDynTransaction {
-      enrichRoadLinksFromVVH(vvhRoadLinks)
+      enrichRoadLinksFromVVH(getVVHRoadLinks(bounds, municipalities))
     }
+  }
+
+  def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    vvhClient.fetchVVHRoadlinks(bounds, municipalities)
+  }
+  def getVVHRoadLinks(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
+    vvhClient.fetchVVHRoadlinks(bounds)
   }
 
   def getRoadLinksFromVVH(mmlIds: Set[Long]): Seq[RoadLink] = {

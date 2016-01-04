@@ -1,18 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{Conversion, TemporaryTables}
-import fi.liikennevirasto.digiroad2.util.RoadLinkDataImporter._
-import org.joda.time.DateTime
-import scala.concurrent.forkjoin.ForkJoinPool
 import java.util.Properties
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import scala.Some
-import java.io.{File, PrintWriter}
-import scala.collection.parallel.ForkJoinTaskSupport
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
-import slick.jdbc.{StaticQuery => Q, _}
-import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.joda.time.DateTime
+import slick.jdbc.{StaticQuery => Q}
+
+import scala.concurrent.forkjoin.ForkJoinPool
 
 object DataFixture {
   val TestAssetId = 300000
@@ -296,6 +292,13 @@ object DataFixture {
     println()
   }
 
+  def importServicePoints(): Unit = {
+    println(s"\nCommencing service points import from conversion at time: ${DateTime.now()}")
+    ServicePointImporter.importServicePoints(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println(s"Service points import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def importPedestrianCrossings(): Unit = {
     println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
     PointAssetImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
@@ -388,6 +391,7 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         importMunicipalityCodes()
         TrafficSignTestData.createTestData
+        ServicePointTestData.createTestData
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(taskPool)
@@ -451,12 +455,14 @@ object DataFixture {
         importRailwayCrossings()
       case Some("directional_traffic_signs") =>
         importDirectionalTrafficSigns()
+      case Some("service_points")  =>
+        importServicePoints()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles" +
+        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings | directional_traffic_signs | service_points |" +
         " repair")
     }
   }

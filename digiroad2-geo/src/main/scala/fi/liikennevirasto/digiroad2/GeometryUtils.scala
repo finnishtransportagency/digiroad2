@@ -142,6 +142,13 @@ object GeometryUtils {
     partitions.minBy { p => minimumDistance(point, p) }
   }
 
+  def minimumDistance(point: Point, segment: Seq[Point]): Double = {
+    if (segment.size < 1) { return Double.NaN }
+    if (segment.size < 2) { return point.distanceTo(segment.head) }
+    val segmentPoints = segment.init.zip(segment.tail)
+    segmentPoints.map{segment => minimumDistance(point, segment)}.min
+  }
+
   def minimumDistance(point: Point, segment: (Point, Point)): Double = {
     val lengthSquared = math.pow(segment._1.distanceTo(segment._2), 2)
     if (lengthSquared.equals(0.0)) return point.distanceTo(segment._1)

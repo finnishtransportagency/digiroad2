@@ -40,7 +40,8 @@
 
     var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
-      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: handleDragging });
+      var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
+      var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: dragHandler });
       allowClickEventBubbling();
       map.addControl(dragControl);
 
@@ -48,7 +49,16 @@
         dragControl.handlers.feature.stopClick = false;
       }
 
-      function handleDragging(feature, mousePosition) {
+      function dragFreely(feature, mousePosition) {
+        if (selectedAsset.isSelected(feature.attributes)) {
+          var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
+          selectedAsset.set({lon: currentLonLat.lon, lat: currentLonLat.lat});
+        } else {
+          this.cancel();
+        }
+      }
+
+      function dragAlongNearestLink(feature, mousePosition) {
         if (selectedAsset.isSelected(feature.attributes)) {
           var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
           var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
@@ -212,7 +222,22 @@
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
-      var asset = _.merge({}, newAsset, {
+      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing);
+
+      vectorLayer.addFeatures(createFeature(asset));
+      selectedAsset.place(asset);
+
+      mapOverlay.show();
+    }
+
+    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing) {
+      var isServicePoint = newAsset.services;
+
+      return _.merge({}, newAsset, isServicePoint ? {
+        lon: selectedLon,
+        lat: selectedLat,
+        id: 0
+      } : {
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
         floating: false,
@@ -221,11 +246,6 @@
         geometry: [nearestLine.start, nearestLine.end],
         bearing: bearing
       });
-
-      vectorLayer.addFeatures(createFeature(asset));
-      selectedAsset.place(asset);
-
-      mapOverlay.show();
     }
 
     function show(map) {

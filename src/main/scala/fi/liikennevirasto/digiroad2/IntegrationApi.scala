@@ -290,6 +290,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def servicePointsToApi = {
+    val servicePoints = servicePointService.get
+
+    servicePoints.map { asset =>
+      Map("id" -> asset.id,
+        "point" -> Point(asset.lon, asset.lat),
+        "services" -> asset.services,
+        latestModificationTime(asset.createdAt, asset.modifiedAt))
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -336,6 +347,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   get("/service_points") {
     contentType = formats("json")
-    ReadOnlyPointAssetService.getServicePoints()
+    servicePointsToApi
   }
 }

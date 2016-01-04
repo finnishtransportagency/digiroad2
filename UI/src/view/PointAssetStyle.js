@@ -26,6 +26,9 @@
           graphicYOffset: -8 })
       ];
     }
+    else if (layerName === 'servicePoints') {
+      return [];
+    }
     else {
       featureTypeRules = [
         new OpenLayersRule().where('floating').is(false).use({externalGraphic: 'images/point-assets/point_blue.svg'}),
@@ -40,7 +43,8 @@
       graphicWidth: 14,
       graphicHeight: 14,
       graphicXOffset: -7,
-      graphicYOffset: -7
+      graphicYOffset: -7,
+      externalGraphic: 'images/point-assets/point_blue.svg'
     };
 
     var featureTypeRules = getFeatureTypeRules(layerName);

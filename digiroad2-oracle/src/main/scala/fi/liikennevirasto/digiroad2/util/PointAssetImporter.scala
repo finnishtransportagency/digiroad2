@@ -1,19 +1,15 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, PointAssetOperations, VVHClient, Point}
+import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point, PointAssetOperations, VVHClient}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
-
 
 object PointAssetImporter {
 
@@ -347,5 +343,4 @@ object PointAssetImporter {
       textPropertyPS.close()
     }
   }
-
 }

@@ -144,6 +144,8 @@ object Digiroad2Context {
     new ManoeuvreService(roadLinkService)
   }
 
+  lazy val servicePointService: ServicePointService = new ServicePointService()
+
   val env = System.getProperty("env")
   def getProperty(name: String) = {
     val property = properties.getProperty(name)

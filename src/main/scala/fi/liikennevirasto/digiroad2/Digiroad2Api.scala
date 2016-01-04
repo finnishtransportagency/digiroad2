@@ -1,11 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.GeometryUtils.minimumDistance
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.user.{UserProvider, User}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.json4s._
@@ -24,28 +26,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
+                   val servicePointService: ServicePointService = Digiroad2Context.servicePointService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
-                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider) extends ScalatraServlet
-
-
-
-with JacksonJsonSupport
-with CorsSupport
-with RequestHeaderAuthentication
-with GZipSupport {
+                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider)
+  extends ScalatraServlet
+  with JacksonJsonSupport
+  with CorsSupport
+  with RequestHeaderAuthentication
+  with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
-  val MunicipalityNumber = "municipalityNumber"
-  val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
-    null
+    case _ => throw new NotImplementedError("DateTime deserialization")
   }, {
     case d: DateTime => JString(d.toString(DateTimePropertyFormat))
   }))
@@ -680,4 +679,45 @@ with GZipSupport {
       service.create(asset, user.username, link.geometry, link.municipalityCode)
     }
   }
+
+  get("/servicePoints") {
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    servicePointService.get(bbox)
+  }
+
+  def getClosestRoadlinkFromVVH(user: User, point: Point) = {
+    val diagonal = Vector3d(500, 500, 0)
+    val roadLinks = user.isOperator() match {
+      case false => roadLinkService.getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      case true => roadLinkService.getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+    }
+    if (roadLinks.isEmpty) {
+      halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+    }
+    roadLinks.min(Ordering.by((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry)))
+  }
+
+  post("/servicePoints") {
+    val user = userProvider.getCurrentUser()
+    val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
+    val municipalityCode = getClosestRoadlinkFromVVH(user,
+      Point(asset.lon, asset.lat)).municipalityCode
+    servicePointService.create(asset, municipalityCode, user.username)
+  }
+
+  put("/servicePoints/:id") {
+    val id = params("id").toLong
+    val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
+    val user = userProvider.getCurrentUser()
+    val municipalityCode = getClosestRoadlinkFromVVH(user,
+      Point(updatedAsset.lon, updatedAsset.lat)).municipalityCode
+    servicePointService.update(id, updatedAsset, municipalityCode, user.username)
+  }
+
+  delete("/servicePoints/:id") {
+    val id = params("id").toLong
+    val user = userProvider.getCurrentUser()
+    servicePointService.expire(id, user.username)
+  }
+
 }
