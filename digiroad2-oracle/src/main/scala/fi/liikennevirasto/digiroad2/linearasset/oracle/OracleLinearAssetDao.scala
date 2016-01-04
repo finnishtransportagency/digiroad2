@@ -178,6 +178,26 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+  def fetchEuropeanRoadsByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = $valuePropertyId
+          join #$idTableName i on i.id = a.id
+          left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.floating = 0
+      """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      assets.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, mmlId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      }
+    }
+  }
+
   def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       val assets = sql"""
@@ -196,6 +216,28 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
       assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
         PersistedLinearAsset(id, mmlId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      }
+    }
+  }
+
+  def fetchEuropeanRoadsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(mmlIds.toSet) { idTableName =>
+      val assets = sql"""
+        select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = $valuePropertyId
+          join #$idTableName i on i.id = pos.mml_id
+          left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.asset_type_id = $assetTypeId
+          and (a.valid_to >= sysdate or a.valid_to is null)
+          and a.floating = 0"""
+        .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, mmlId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }
     }
   }

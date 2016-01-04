@@ -49,12 +49,13 @@ trait LinearAssetOperations {
     val mmlIds = roadLinks.map(_.mmlId)
     val existingAssets =
       withDynTransaction {
-        if (typeId == ProhibitionAssetTypeId || typeId == HazmatTransportProhibitionAssetTypeId) {
-          dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
-        } else if (typeId == EuropeanRoadAssetTypeId) {
-          Nil // TODO: implement
-        } else {
-          dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
+        typeId match {
+          case ProhibitionAssetTypeId | HazmatTransportProhibitionAssetTypeId =>
+            dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
+          case EuropeanRoadAssetTypeId =>
+            dao.fetchEuropeanRoadsByMmlIds(typeId, mmlIds, europeanRoadPropertyId)
+          case _ =>
+            dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
         }
       }.filterNot(_.expired).groupBy(_.mmlId)
 
@@ -65,7 +66,12 @@ trait LinearAssetOperations {
 
   def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      dao.fetchLinearAssetsByIds(ids, getValuePropertyId(typeId))
+      typeId match {
+        case EuropeanRoadAssetTypeId =>
+          dao.fetchEuropeanRoadsByIds(ids, getValuePropertyId(typeId))
+        case _ =>
+          dao.fetchLinearAssetsByIds(ids, getValuePropertyId(typeId))
+      }
     }
   }
 
