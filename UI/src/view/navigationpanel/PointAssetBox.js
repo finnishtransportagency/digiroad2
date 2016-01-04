@@ -19,9 +19,14 @@
     var legend = '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>';
     var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + '</div>');
     panel.append(toolSelection.element);
-    panel.append(editModeToggle.element);
 
     element.append(panel);
+
+    eventbus.on('roles:fetched', function(roles) {
+      if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        panel.append(editModeToggle.element);
+      }
+    });
 
     return {
       title: title,
