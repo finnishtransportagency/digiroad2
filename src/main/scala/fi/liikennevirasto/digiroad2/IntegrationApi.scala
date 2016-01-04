@@ -333,11 +333,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
+        case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => ReadOnlyLinearAssetService.getByMunicipality(34, municipalityNumber)
         case "road_addresses" => ReadOnlyLinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
         case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
-        case "manoeuvres" =>  manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
+        case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
