@@ -206,7 +206,7 @@
       '</div>'].join('');
 
     var elements = {
-      expanded: $(expandedTemplate).append(toolSelection.element).append(editModeToggle.element)
+      expanded: $(expandedTemplate)
     };
 
     var bindDOMEventHandlers = function() {
@@ -257,8 +257,10 @@
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
-        if (!_.contains(roles, 'viewer')) {
-          elements.expanded.find('.action-mode-btn').show();
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
         }
       });
 
