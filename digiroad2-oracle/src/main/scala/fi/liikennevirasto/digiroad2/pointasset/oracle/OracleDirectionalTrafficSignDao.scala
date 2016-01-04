@@ -15,6 +15,7 @@ case class DirectionalTrafficSign(id: Long, mmlId: Long,
                                   municipalityCode: Int,
                                   validityDirection: Int,
                                   text: Option[String],
+                                  bearing: Option[Int],
                                   createdBy: Option[String] = None,
                                   createdAt: Option[DateTime] = None,
                                   modifiedBy: Option[String] = None,
@@ -26,7 +27,7 @@ object OracleDirectionalTrafficSignDao {
     val query =
       s"""
         select a.id, lrm.mml_id, a.geometry, lrm.start_measure, a.floating, a.municipality_code, lrm.side_code,
-        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
+        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
@@ -51,8 +52,9 @@ object OracleDirectionalTrafficSignDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val bearing = r.nextIntOption()
 
-      DirectionalTrafficSign(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, validityDirection, text, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      DirectionalTrafficSign(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
@@ -62,8 +64,8 @@ object OracleDirectionalTrafficSignDao {
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 240, $username, sysdate, $municipality)
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
+        values ($id, 240, $username, sysdate, $municipality, ${sign.bearing})
         into lrm_position(id, start_measure, end_measure, mml_id, side_code)
         values ($lrmPositionId, $mValue, $mValue, ${sign.mmlId}, ${sign.validityDirection})
         into asset_link(asset_id, position_id)
@@ -76,7 +78,7 @@ object OracleDirectionalTrafficSignDao {
   }
 
   def update(id: Long, sign: IncomingDirectionalTrafficSign, mValue: Double, municipality: Int, username: String) = {
-    sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
+    sqlu""" update asset set municipality_code = $municipality, bearing=${sign.bearing} where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
     deleteTextProperty(id, getTextPropertyId).execute

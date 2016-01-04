@@ -261,13 +261,13 @@ object PointAssetImporter {
 
   def importDirectionalTrafficSigns(database: DatabaseDef, vvhServiceHost: String): Unit = {
     val query = sql"""
-         select s.segm_id, s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.puoli, s.opas_teksti
+         select s.segm_id, s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)),  s.alkum, s.loppum, s.puoli, s.opas_teksti, to_2d(t.shape)
            from segm_opastaulu s
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
         """
 
     val directionalTrafficSigns = database.withDynSession {
-      query.as[(Long, Long, Long, Int, Seq[Point], Double, Double, Int, String)].list
+      query.as[(Long, Long, Long, Int, Seq[Point], Double, Double, Int, String, Seq[Point])].list
     }.groupBy(_._1).values.toList
 
     val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(directionalTrafficSigns.map(_.head._3).toSet)
@@ -278,7 +278,7 @@ object PointAssetImporter {
     OracleDatabase.withDynTransaction {
       val textPropertyId = sql"""select id from property where public_id = 'opastustaulun_teksti'""".as[Long].first
 
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, BEARING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val textPropertyPS =  dynamicSession.prepareStatement(s"insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, $textPropertyId, ?)")
@@ -289,17 +289,21 @@ object PointAssetImporter {
         val startTime = DateTime.now()
 
         val assetGeometries = directionalTrafficSign.map { rows =>
-          val (_, roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, sideCode, _) = rows.head
+          val (_, roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure, sideCode, _, geometry) = rows.head
           val texts = rows.map(_._9)
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 240)
           assetPS.setInt(3, municipalityCode)
           val pointAsset = ImportedPointAsset(assetId, mmlId, startMeasure, false, points.head.x, points.head.y, municipalityCode)
-          assetPS.setBoolean(4, PointAssetOperations.isFloating(
-            pointAsset,
-            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
-          ))
+          val float = PointAssetOperations.isFloating(
+            pointAsset, roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry)})
+          assetPS.setBoolean(4, float)
+          val bearing =
+            PointAssetOperations.calculateBearing(pointAsset, roadLinks.find(_.mmlId == mmlId)).getOrElse(
+              PointAssetOperations.calculateBearing(pointAsset, geometry))
+          assetPS.setInt(5, bearing)
+
           assetPS.addBatch()
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue

@@ -240,6 +240,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "mmlId" -> directionalTrafficSign.mmlId,
         "m_value" -> directionalTrafficSign.mValue,
+        "bearing" -> directionalTrafficSign.bearing,
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt))

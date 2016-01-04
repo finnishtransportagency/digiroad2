@@ -137,6 +137,11 @@ object GeometryUtils {
       geometry2Endpoints._2.distanceTo(geometry1EndPoints._2) < epsilon
   }
 
+  def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
+    val partitions = segments.init.zip(segments.tail)
+    partitions.minBy { p => minimumDistance(point, p) }
+  }
+
   def minimumDistance(point: Point, segment: Seq[Point]): Double = {
     if (segment.size < 1) { return Double.NaN }
     if (segment.size < 2) { return point.distanceTo(segment.head) }
