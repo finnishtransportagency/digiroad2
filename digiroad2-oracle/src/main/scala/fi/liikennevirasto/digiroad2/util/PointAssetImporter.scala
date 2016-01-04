@@ -299,9 +299,13 @@ object PointAssetImporter {
           val float = PointAssetOperations.isFloating(
             pointAsset, roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry)})
           assetPS.setBoolean(4, float)
-          val bearing =
-            PointAssetOperations.calculateBearing(pointAsset, roadLinks.find(_.mmlId == mmlId)).getOrElse(
-              PointAssetOperations.calculateBearing(pointAsset, geometry))
+          val bearing = float match {
+            case false =>
+              PointAssetOperations.calculateBearing(pointAsset, roadLinks.find(_.mmlId == mmlId)).getOrElse(
+                PointAssetOperations.calculateBearing(pointAsset, geometry))
+            case true =>
+              PointAssetOperations.calculateBearing(pointAsset, geometry)
+          }
           assetPS.setInt(5, bearing)
 
           assetPS.addBatch()
