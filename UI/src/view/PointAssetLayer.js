@@ -87,6 +87,8 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+      } else if (layerName == 'directionalTrafficSigns'){
+        bearing = asset.bearing;
       }
       return bearing;
     }
