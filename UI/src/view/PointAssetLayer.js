@@ -220,7 +220,7 @@
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
-      var asset = checkAssetType(selectedLat,selectedLon,nearestLine,projectionOnNearestLine);
+      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing);
 
       vectorLayer.addFeatures(createFeature(asset));
       selectedAsset.place(asset);
@@ -228,26 +228,22 @@
       mapOverlay.show();
     }
 
-    function checkAssetType(selectedLat,selectedLon,nearestLine,projectionOnNearestLine){
+    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing) {
+      var isServicePoint = newAsset.services;
 
-        var asset = _.merge({}, newAsset, {
-          lon: projectionOnNearestLine.x,
-          lat: projectionOnNearestLine.y,
-          floating: false,
-          mmlId: nearestLine.mmlId,
-          id: 0,
-          geometry: [nearestLine.start, nearestLine.end],
-          bearing: bearing
-        });
-
-        if (asset.hasOwnProperty('services')) {
-          asset = _.merge({}, newAsset, {
-          lon: selectedLon,
-          lat: selectedLat,
-          id: 0
-          });
-        }
-      return asset;
+      return _.merge({}, newAsset, isServicePoint ? {
+        lon: selectedLon,
+        lat: selectedLat,
+        id: 0
+      } : {
+        lon: projectionOnNearestLine.x,
+        lat: projectionOnNearestLine.y,
+        floating: false,
+        mmlId: nearestLine.mmlId,
+        id: 0,
+        geometry: [nearestLine.start, nearestLine.end],
+        bearing: bearing
+      });
     }
 
     function show(map) {
