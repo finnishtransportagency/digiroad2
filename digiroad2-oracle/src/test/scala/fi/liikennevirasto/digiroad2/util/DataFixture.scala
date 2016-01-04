@@ -65,6 +65,7 @@ object DataFixture {
       "kauniainen_paved_roads.sql",
       "kauniainen_pedestrian_crossings.sql",
       "kauniainen_obstacles.sql",
+      "kauniainen_european_roads.sql",
       "kauniainen_railway_crossings.sql"))
   }
 
