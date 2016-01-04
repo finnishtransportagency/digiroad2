@@ -285,7 +285,6 @@
   function renderService(service) {
     var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
       return $('<option>', {value: serviceType.value, selected: service.serviceType == serviceType.value, text: serviceType.label})[0].outerHTML;
-      //return '<option value="'+ serviceType.value + '" ' + (service.serviceType == serviceType.value ? 'selected' : '') + '>' + serviceType.label +'</option>';
     }).join('');
 
     var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
