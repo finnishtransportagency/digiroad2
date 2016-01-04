@@ -13,7 +13,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
@@ -272,6 +272,66 @@ class AssetDataImporter {
 
   def importWinterSpeedLimits(conversionDatabase: DatabaseDef) = {
     importLinearAssetsFromConversion(conversionDatabase, 31, 180)
+  }
+
+  def importEuropeanRoads(conversionDatabase: DatabaseDef, vvhHost: String) = {
+    val roads = conversionDatabase.withDynSession {
+      sql"""select MML_ID, eur_nro from eurooppatienumero""".as[(Long, String)].list
+    }
+
+    val roadsByMmlId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
+
+    val vvhClient = new VVHClient(vvhHost)
+    val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByMmlId.keySet)
+    val linksByMmlId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.mmlId -> link) }
+
+    val roadsWithValidLinks = roads.filter { case (mmlId, _) => linksByMmlId.contains(mmlId) }.map { road => (road, linksByMmlId(road._1)) }
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+      val propertyId = Queries.getPropertyIdByPublicId("eurooppatienumero")
+
+      roadsWithValidLinks.foreach { case ((mmlId, eRoad), link) =>
+        val assetId = Sequences.nextPrimaryKeySeqValue
+
+        assetPS.setLong(1, assetId)
+        assetPS.setInt(2, 260)
+        assetPS.addBatch()
+
+        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+        lrmPositionPS.setLong(1, lrmPositionId)
+        lrmPositionPS.setLong(2, mmlId)
+        lrmPositionPS.setInt(3, SideCode.BothDirections.value)
+        lrmPositionPS.setDouble(4, 0)
+        lrmPositionPS.setDouble(5, GeometryUtils.geometryLength(link.geometry))
+        lrmPositionPS.addBatch()
+
+        assetLinkPS.setLong(1, assetId)
+        assetLinkPS.setLong(2, lrmPositionId)
+        assetLinkPS.addBatch()
+
+        propertyPS.setLong(1, Sequences.nextPrimaryKeySeqValue)
+        propertyPS.setLong(2, assetId)
+        propertyPS.setLong(3, propertyId)
+        propertyPS.setString(4, eRoad)
+        propertyPS.addBatch()
+      }
+
+      assetPS.executeBatch()
+      lrmPositionPS.executeBatch()
+      assetLinkPS.executeBatch()
+      propertyPS.executeBatch()
+
+      assetPS.close()
+      assetLinkPS.close()
+      lrmPositionPS.close()
+      propertyPS.close()
+    }
   }
 
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
