@@ -22,7 +22,8 @@
     obstacles: 220,
     railwayCrossings: 230,
     directionalTrafficSigns: 240,
-    servicePoints: 250
+    servicePoints: 250,
+    europeanRoads: 260
   };
 
   root.linearAssetSpecs = [
@@ -281,6 +282,21 @@
         title: 'VAK-rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta'
+      }
+    },
+    {
+      typeId: assetType.europeanRoads,
+      singleElementEventCategory: 'europeanRoad',
+      multiElementEventCategory: 'europeanRoads',
+      layerName: 'europeanRoad',
+      title: 'Eurooppatienumero',
+      newTitle: 'Uusi eurooppatienumero',
+      className: 'europeanRoad',
+      isSeparable: true,
+      editControlLabels: {
+        title: '',
+        enabled: 'Eurooppatienumero',
+        disabled: 'Ei eurooppatienumeroa'
       }
     }
   ];
