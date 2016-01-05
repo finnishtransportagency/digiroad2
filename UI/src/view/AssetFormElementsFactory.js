@@ -7,7 +7,8 @@
     var assetFormElementConstructors = {
       prohibition: createProhibitionFormElements(),
       hazardousMaterialTransportProhibition: createHazardousMaterialTransportProhibitionFormElements(),
-      winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements
+      winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements,
+      europeanRoads: PiecewiseLinearAssetFormElements.EuropeanRoadsFormElements
     };
     return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }

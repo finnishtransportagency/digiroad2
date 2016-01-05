@@ -65,6 +65,7 @@ object DataFixture {
       "kauniainen_paved_roads.sql",
       "kauniainen_pedestrian_crossings.sql",
       "kauniainen_obstacles.sql",
+      "kauniainen_european_roads.sql",
       "kauniainen_railway_crossings.sql"))
   }
 
@@ -258,6 +259,13 @@ object DataFixture {
     println(s"\nCommencing winter speed limits import from conversion at time: ${DateTime.now()}")
     dataImporter.importWinterSpeedLimits(Conversion.database())
     println(s"Winter speed limits import complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  def importEuropeanRoads(): Unit = {
+    println(s"\nCommencing European road import from conversion at time: ${DateTime.now()}")
+    dataImporter.importEuropeanRoads(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println(s"European road import complete at time: ${DateTime.now()}")
     println()
   }
 
@@ -455,14 +463,17 @@ object DataFixture {
         importRailwayCrossings()
       case Some("directional_traffic_signs") =>
         importDirectionalTrafficSigns()
-      case Some("service_points")  =>
+      case Some("service_points") =>
         importServicePoints()
+      case Some("european_roads") =>
+        importEuropeanRoads()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings | directional_traffic_signs | service_points |" +
+        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings |" +
+        " directional_traffic_signs | service_points | european_roads |" +
         " repair")
     }
   }

@@ -295,7 +295,8 @@
         .concat(getLinearAsset(assetType.pavedRoad))
         .concat(getLinearAsset(assetType.width))
         .concat(getLinearAsset(assetType.numberOfLanes))
-        .concat(getLinearAsset(assetType.massTransitLane)),
+        .concat(getLinearAsset(assetType.massTransitLane))
+        .concat(getLinearAsset(assetType.europeanRoads)),
       [speedLimitBox]
         .concat(getLinearAsset(assetType.winterSpeedLimit)),
       [massTransitBox]

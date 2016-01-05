@@ -95,6 +95,7 @@ object Queries {
   }
 
   def propertyIdByPublicId = "select id from property where public_id = ?"
+  def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
 

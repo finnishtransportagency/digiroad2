@@ -1,16 +1,22 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = {
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
+    EuropeanRoadsFormElements: EuropeanRoadsFormElements,
     DefaultFormElements: DefaultFormElements
   };
+
+  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+    var formElem = inputFormElement(unit);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
+  }
 
   function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = dropDownFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-    var formElem = inputFormElement(unit);
+  function EuropeanRoadsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+    var formElem = textAreaFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -92,7 +98,7 @@
       return '' +
         '<div class="form-group editable">' +
         '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
+        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
@@ -136,6 +142,36 @@
       } else {
         return '';
       }
+    }
+  }
+
+  function textAreaFormElement() {
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
+
+    function inputElementValue(input) {
+      var removeWhitespace = function(s) {
+        return s.replace(/^\s+/g, '').replace(/\s+$/g, '');
+      };
+      return removeWhitespace(input.val());
+    }
+
+    function valueString(currentValue) {
+      return currentValue || '';
+    }
+
+    function measureInput(currentValue, className) {
+      var value = currentValue ? currentValue : '';
+      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+      return '' +
+        '<div class="input-unit-combination input-group">' +
+        '  <textarea class="form-control large-input ' + className + '" ' +
+          disabled + '>' +
+        value  + '</textarea>' +
+          '</div>';
     }
   }
 

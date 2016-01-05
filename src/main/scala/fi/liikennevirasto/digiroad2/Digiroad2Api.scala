@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 case class ExistingLinearAsset(id: Long, mmlId: Long)
 
 case class NewNumericValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewTextualValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
 case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
@@ -378,6 +379,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+    val europeanRoadNumberParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
       case Some(Nil) => None
@@ -387,13 +389,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     numericValue
       .map(NumericValue)
+      .orElse(europeanRoadNumberParameter.map(TextualValue))
       .orElse(prohibition)
   }
 
   private def extractNewLinearAssets(value: JValue) = {
     val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+    val textual = value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
     val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
-    numerical ++ prohibitions
+    numerical ++ textual ++ prohibitions
   }
 
   post("/linearassets") {
@@ -402,7 +406,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(parsedBody \ "newLimits")
-    val existingMmlIds = linearAssetService.getPersistedAssetsByIds(existingAssets).map(_.mmlId)
+    val existingMmlIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.mmlId)
     val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
@@ -417,7 +421,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/linearassets") {
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
-    val mmlIds = linearAssetService.getPersistedAssetsByIds(ids).map(_.mmlId)
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val mmlIds = linearAssetService.getPersistedAssetsByIds(typeId, ids).map(_.mmlId)
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
@@ -427,7 +432,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
-
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       extractLinearAssetValue(parsedBody \ "existingValue"),

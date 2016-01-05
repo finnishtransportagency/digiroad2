@@ -63,6 +63,11 @@
       selectedAsset.set({ text: eventTarget.val() });
     });
 
+    rootElement.find('.linear-asset.form textarea').on('keyup', function(event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({ text: eventTarget.val() });
+    });
+
     rootElement.find('.form-service textarea').on('input change', function(event) {
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
       selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
