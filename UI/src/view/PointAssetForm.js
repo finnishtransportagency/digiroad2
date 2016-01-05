@@ -294,27 +294,29 @@
     }).join('');
 
     var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
+    var parkingPlaceElements = '' +
+      '<label class="control-label">Pysäköintipaikkojen lukumäärä</label>' +
+      '<p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
+      '<input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">';
 
     return '<li>' +
       '  <div class="form-group service-point editable">' +
         '  <div class="form-group">' +
-      '    <button class="delete btn-delete">x</button>' +
-      '    <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
-      '    <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
-      '  <option disabled selected>Lisää tyyppi</option>' +
-      serviceTypeLabelOptions +
-      '    </select>' +
-        '  </div>' +
-      serviceTypeExtensionElements(service, serviceTypeExtensions) +
+      '      <button class="delete btn-delete">x</button>' +
+      '      <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
+      '      <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
+      '        <option disabled selected>Lisää tyyppi</option>' +
+             serviceTypeLabelOptions +
+      '      </select>' +
+      '    </div>' +
+           serviceTypeExtensionElements(service, serviceTypeExtensions) +
       '    <label class="control-label">Palvelun nimi</label>' +
       '    <p class="form-control-static">' + (service.name || '–') + '</p>' +
       '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
-      '    <label class="control-label">Pysäköintipaikkojen lukumäärä</label>' +
-      '    <p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
-      '    <input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">' +
+           ((selectedServiceType.value == 12 || selectedServiceType.value == 15) ? parkingPlaceElements : '') +
       '  </div>' +
       '</li>';
   }
