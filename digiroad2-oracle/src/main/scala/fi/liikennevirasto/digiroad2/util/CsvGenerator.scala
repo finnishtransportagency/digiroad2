@@ -187,6 +187,43 @@ class CsvGenerator(vvhServiceHost: String) {
     }
   }
 
+  def generateCsvForEuropeanRoads() = {
+    val startTime = DateTime.now()
+    val assetTypeId = 260
+    val assetName = "european roads"
+    val runtime = Runtime.getRuntime()
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           left join text_property_value s on s.asset_id = a.id
+           where a.asset_type_id in ($assetTypeId)
+           and (valid_to is null or valid_to >= sysdate)
+         """.as[(Long, Long, Double, Double, String, Int, Boolean)].list.toSet
+    }
+    println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
+
+    def mmlIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
+      attributes("MTKID").asInstanceOf[BigInt].longValue()
+    }
+    val assetMmlIds = limits.map(_._1)
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(assetMmlIds, Some("MTKID"), false, mmlIdFromFeature).toSet
+    println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
+
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
+
+    val floatingLimits = limits.filter(_._7)
+    exportCsv(assetName, (nonExistingLimits ++ floatingLimits).toSeq)
+    println("*** exported CSV files " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    logMemoryStatistics(runtime)
+  }
+
   private def generateCsvForDroppedAssets(assetTypeId: Int,
                                           assetName: String,
                                           startTime: DateTime) = {

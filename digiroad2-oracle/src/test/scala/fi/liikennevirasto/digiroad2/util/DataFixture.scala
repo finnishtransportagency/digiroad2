@@ -326,6 +326,7 @@ object DataFixture {
     println(DateTime.now())
     val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     csvGenerator.generateDroppedNumericalLimits()
+    csvGenerator.generateCsvForEuropeanRoads()
     csvGenerator.generateDroppedProhibitions(190, "vehicle_prohibitions")
     csvGenerator.generateDroppedProhibitions(210, "hazmat_vehicle_prohibitions")
     println("complete at time: ")
