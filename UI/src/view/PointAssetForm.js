@@ -271,15 +271,16 @@
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>';
     } else if (asset.services) {
-      var services = _.map(asset.services, function(service) {
-        return renderService(service);
-      }).join('');
+      var services = _(asset.services)
+        .sortByAll('serviceType', 'id')
+        .map(renderService)
+        .join('');
 
       return '' +
         '    <div class="form-group editable form-service">' +
         '      <ul>' +
                services +
-              renderNewServiceElement() +
+               renderNewServiceElement() +
         '      </ul>' +
         '    </div>';
     } else {
