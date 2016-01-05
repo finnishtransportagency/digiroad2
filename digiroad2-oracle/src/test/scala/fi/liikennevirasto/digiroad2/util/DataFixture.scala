@@ -269,6 +269,13 @@ object DataFixture {
     println()
   }
 
+  def importExitNumbers(): Unit = {
+    println(s"\nCommencing exit number import from conversion at time: ${DateTime.now()}")
+    dataImporter.importExitNumbers(Conversion.database())
+    println(s"Exit number import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def importProhibitions(): Unit = {
     println(s"\nCommencing prohibition import from conversion at time: ${DateTime.now()}")
     dataImporter.importProhibitions(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
@@ -468,13 +475,15 @@ object DataFixture {
         importServicePoints()
       case Some("european_roads") =>
         importEuropeanRoads()
+      case Some("exit_numbers") =>
+        importExitNumbers()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
         " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings |" +
-        " directional_traffic_signs | service_points | european_roads |" +
+        " directional_traffic_signs | service_points | european_roads | exit_numbers |" +
         " repair")
     }
   }
