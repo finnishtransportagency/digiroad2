@@ -29,11 +29,11 @@
       rootElement.empty();
     });
 
-    eventbus.on('layer:selected', function(layer, previousLayer) {
-      if (layer === layerName) {
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === layerName && layerName !== 'servicePoints') {
         renderLinktoWorkList(layer, localizedTexts);
-      } else if (previousLayer === layerName) {
-        $('#point-asset-work-list-link').parent().remove();
+      } else {
+        $('#information-content .form[data-layer-name="' + layerName +'"]').remove()
       }
     });
   }
@@ -379,7 +379,7 @@
 
   function renderLinktoWorkList(layerName, localizedTexts) {
     $('#information-content').append('' +
-      '<div class="form form-horizontal">' +
+      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
   }
