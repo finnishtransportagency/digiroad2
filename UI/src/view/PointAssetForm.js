@@ -33,7 +33,7 @@
       if (layer === layerName && layerName !== 'servicePoints') {
         renderLinktoWorkList(layer, localizedTexts);
       } else {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove()
+        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
       }
     });
   }
