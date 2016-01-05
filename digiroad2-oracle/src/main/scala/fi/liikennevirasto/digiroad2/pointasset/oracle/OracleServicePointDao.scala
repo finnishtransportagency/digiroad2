@@ -40,7 +40,6 @@ case class ServicePoint(id: Long,
                         municipalityCode: Int)
 
 object OracleServicePointDao {
-
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
@@ -82,6 +81,10 @@ object OracleServicePointDao {
 
   def get: Set[ServicePoint] = {
     getWithFilter("")
+  }
+
+  def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {
+    getWithFilter(s"a.municipality_code = $municipalityNumber")
   }
 
   def get(bounds: BoundingRectangle): Set[ServicePoint] = {

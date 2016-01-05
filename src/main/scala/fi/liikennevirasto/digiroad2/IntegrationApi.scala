@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Weekday, Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{DirectionalTrafficSign, Obstacle, PedestrianCrossing, RailwayCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -290,9 +290,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def servicePointsToApi = {
-    val servicePoints = servicePointService.get
-
+  def servicePointsToApi(servicePoints: Set[ServicePoint]) = {
     servicePoints.map { asset =>
       Map("id" -> asset.id,
         "point" -> Point(asset.lon, asset.lat),
@@ -339,15 +337,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
+        case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
     }
-  }
-
-  get("/service_points") {
-    contentType = formats("json")
-    servicePointsToApi
   }
 }

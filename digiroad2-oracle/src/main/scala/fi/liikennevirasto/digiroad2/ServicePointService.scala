@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{IncomingServicePoint, Ora
 import fi.liikennevirasto.digiroad2.user.User
 
 class ServicePointService {
-
   val typeId: Int = 250
 
   def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
@@ -32,6 +31,12 @@ class ServicePointService {
   def get: Set[ServicePoint] = {
     withDynSession {
       OracleServicePointDao.get
+    }
+  }
+
+  def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {
+    withDynSession {
+      OracleServicePointDao.getByMunicipality(municipalityNumber)
     }
   }
 
