@@ -295,7 +295,7 @@
       isSeparable: true,
       editControlLabels: {
         title: '',
-        enabled: 'Eurooppatienumero',
+        enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
       }
     }

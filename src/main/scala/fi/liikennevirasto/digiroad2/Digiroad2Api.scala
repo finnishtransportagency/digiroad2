@@ -379,6 +379,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+    val europeanRoadNumberParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
       case Some(Nil) => None
@@ -388,6 +389,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     numericValue
       .map(NumericValue)
+      .orElse(europeanRoadNumberParameter.map(TextualValue))
       .orElse(prohibition)
   }
 
@@ -430,7 +432,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
-
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       extractLinearAssetValue(parsedBody \ "existingValue"),
