@@ -103,7 +103,7 @@
 
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles)) {
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
@@ -257,7 +257,7 @@
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles)) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
