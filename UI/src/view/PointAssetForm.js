@@ -216,13 +216,17 @@
     { value: 16, label: 'Linja-autoasema' }
   ];
 
+  var commonServiceExtension = [
+    {value: 1, label: 'Kattava varustelu'},
+    {value: 2, label: 'Perusvarustelu'},
+    {value: 3, label: 'Yksityinen palvelualue'},
+    {value: 4, label: 'Ei lisätietoja'}
+  ];
+
   var serviceTypeExtensions = {
-    6: [
-      {value: 1, label: 'Kattava varustelu'},
-      {value: 2, label: 'Perusvarustelu'},
-      {value: 3, label: 'Yksityinen palvelualue'},
-      {value: 4, label: 'Ei lisätietoja'}
-    ],
+    6: commonServiceExtension,
+    12: commonServiceExtension,
+    14: commonServiceExtension,
     11: [
       {value: 5, label: 'Merkittävä rautatieasema'},
       {value: 6, label: 'Vähäisempi rautatieasema'},
@@ -336,8 +340,8 @@
   }
 
   function serviceTypeExtensionElements(service, serviceTypeExtensions) {
-    if (service.serviceType === 6 || service.serviceType === 11) {
-      var extensions = serviceTypeExtensions[service.serviceType];
+    var extensions = serviceTypeExtensions[service.serviceType];
+    if (extensions) {
       var extensionOptions = _.map(extensions, function(extension) {
         return $('<option>', {value: extension.value, text: extension.label, selected: extension.value === service.typeExtension})[0].outerHTML;
       }).join('');
