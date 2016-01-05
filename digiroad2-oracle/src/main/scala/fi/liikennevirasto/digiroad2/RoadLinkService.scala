@@ -244,10 +244,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   def getClosestRoadlinkFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
     val diagonal = Vector3d(500, 500, 0)
 
-    val roadLinks = if (user.isOperator())
-      getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
-    else
-      getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+    val roadLinks =
+      if (user.isOperator())
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+      else
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
 
     if (roadLinks.isEmpty)
       None
