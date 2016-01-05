@@ -285,21 +285,22 @@ class AssetDataImporter {
     val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByMmlId.keySet)
     val linksByMmlId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.mmlId -> link) }
 
-    val roadsWithValidLinks = roads.filter { case (mmlId, _) => linksByMmlId.contains(mmlId) }.map { road => (road, linksByMmlId(road._1)) }
+    val roadsWithLinks = roads.map { road => (road, linksByMmlId.get(road._1)) }
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
       val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
       val propertyId = Queries.getPropertyIdByPublicId("eurooppatienumero")
 
-      roadsWithValidLinks.foreach { case ((mmlId, eRoad), link) =>
+      roadsWithLinks.foreach { case ((mmlId, eRoad), link) =>
         val assetId = Sequences.nextPrimaryKeySeqValue
 
         assetPS.setLong(1, assetId)
         assetPS.setInt(2, 260)
+        assetPS.setBoolean(3, link.isEmpty)
         assetPS.addBatch()
 
         val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -308,7 +309,7 @@ class AssetDataImporter {
         lrmPositionPS.setLong(2, mmlId)
         lrmPositionPS.setInt(3, SideCode.BothDirections.value)
         lrmPositionPS.setDouble(4, 0)
-        lrmPositionPS.setDouble(5, GeometryUtils.geometryLength(link.geometry))
+        lrmPositionPS.setDouble(5, link.map(_.geometry).map(GeometryUtils.geometryLength).getOrElse(0))
         lrmPositionPS.addBatch()
 
         assetLinkPS.setLong(1, assetId)
