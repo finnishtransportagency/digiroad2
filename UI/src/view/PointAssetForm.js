@@ -312,7 +312,7 @@
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
-      '    <label class="control-label">Parkkipaikkojen lukumäärä</label>' +
+      '    <label class="control-label">Pysäköintipaikkojen lukumäärä</label>' +
       '    <p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
       '    <input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">' +
       '  </div>' +
