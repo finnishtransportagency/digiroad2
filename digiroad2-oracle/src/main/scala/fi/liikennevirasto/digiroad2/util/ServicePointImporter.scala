@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.GeometryUtils._
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
@@ -21,9 +23,10 @@ object ServicePointImporter {
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
+    val vvhClient = new VVHClient(vvhServiceHost)
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, created_date, created_by) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
       val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (id, asset_id, type, name, additional_info, parking_place_count, type_extension) values (?,?,?,?,?,?,?)")
 
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")
@@ -37,9 +40,29 @@ object ServicePointImporter {
 
         servicesByPointId.foreach { case (oid, rows) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
+          val point = rows.head._6.head
+          val diagonal = Vector3d(150, 150, 0)
+          val municipalities = vvhClient.fetchVVHRoadlinks(BoundingRectangle(point - diagonal, point + diagonal))
+          val municipalityCode = municipalities.groupBy(roadlink => roadlink.municipalityCode).size match {
+            case 0 =>
+              println("No municipality found for asset id " + assetId)
+              0
+            case 1 => municipalities.head.municipalityCode
+            case default =>
+              val groups = municipalities.groupBy(roadlink => roadlink.municipalityCode)
+              val distance = groups.mapValues(links => links.map((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry)).min)
+              val retval = municipalities.min(Ordering.by((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry))).municipalityCode
+              print("multiple choice for asset id " + assetId + ": municipality distances " + distance)
+              println(" - picking closest one: " + retval)
+              retval
+          }
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 250)
-          assetIdToPoint += assetId -> rows.head._6.head
+          municipalityCode match {
+            case 0 => assetPS.setNull(3, java.sql.Types.INTEGER)
+            case code => assetPS.setInt(3, code)
+          }
+          assetIdToPoint += assetId -> point
           assetPS.addBatch()
 
           rows.foreach { case (serviceType, additionalInfo, railwayStationType, parkingPlaceCount, restAreaType, _, _, name) =>
