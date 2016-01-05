@@ -16,7 +16,7 @@
   }
 
   function EuropeanRoadsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-    var formElem = textInputFormElement();
+    var formElem = textAreaFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -98,7 +98,7 @@
       return '' +
         '<div class="form-group editable">' +
         '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue) + '</p>' +
+        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/\n/, '<br/>') + '</p>' +
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
@@ -145,7 +145,7 @@
     }
   }
 
-  function textInputFormElement() {
+  function textAreaFormElement() {
     return {
       inputElementValue: inputElementValue,
       valueString: valueString,
@@ -154,7 +154,7 @@
 
     function inputElementValue(input) {
       var removeWhitespace = function(s) {
-        return s.replace(/\s/g, '');
+        return s.replace(/^\s+/g, '').replace(/\s+$/g, '');
       };
       return removeWhitespace(input.val());
     }
@@ -168,11 +168,10 @@
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
       return '' +
         '<div class="input-unit-combination input-group">' +
-        '  <input ' +
-        '    type="text" ' +
-        '    class="form-control ' + className + '" ' +
-        '    value="' + value  + '" ' + disabled + ' >' +
-        '</div>';
+        '  <textarea class="form-control large-input ' + className + '" ' +
+          disabled + '>' +
+        value  + '</textarea>' +
+          '</div>';
     }
   }
 
