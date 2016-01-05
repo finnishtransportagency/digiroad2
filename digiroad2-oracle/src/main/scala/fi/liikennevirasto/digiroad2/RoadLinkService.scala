@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -237,6 +239,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     withDynTransaction {
       enrichRoadLinksFromVVH(vvhRoadLinks)
     }.headOption
+  }
+
+  def getClosestRoadlinkFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
+    val diagonal = Vector3d(500, 500, 0)
+
+    val roadLinks = if (user.isOperator())
+      getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+    else
+      getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+
+    if (roadLinks.isEmpty)
+      None
+    else
+      Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
 
   protected def removeIncompleteness(mmlId: Long) = {

@@ -689,33 +689,27 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     servicePointService.get(bbox)
   }
 
-  def getClosestRoadlinkFromVVH(user: User, point: Point) = {
-    val diagonal = Vector3d(500, 500, 0)
-    val roadLinks = user.isOperator() match {
-      case false => roadLinkService.getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
-      case true => roadLinkService.getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
-    }
-    if (roadLinks.isEmpty) {
-      halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
-    }
-    roadLinks.min(Ordering.by((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry)))
-  }
-
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
-    val municipalityCode = getClosestRoadlinkFromVVH(user,
-      Point(asset.lon, asset.lat)).municipalityCode
-    servicePointService.create(asset, municipalityCode, user.username)
+    roadLinkService.getClosestRoadlinkFromVVH(user, Point(asset.lon, asset.lat)) match {
+      case None =>
+        halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+      case Some(link) =>
+        servicePointService.create(asset, link.municipalityCode, user.username)
+    }
   }
 
   put("/servicePoints/:id") {
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val user = userProvider.getCurrentUser()
-    val municipalityCode = getClosestRoadlinkFromVVH(user,
-      Point(updatedAsset.lon, updatedAsset.lat)).municipalityCode
-    servicePointService.update(id, updatedAsset, municipalityCode, user.username)
+    roadLinkService.getClosestRoadlinkFromVVH(user, Point(updatedAsset.lon, updatedAsset.lat)) match {
+      case None =>
+        halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+      case Some(link) =>
+        servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+    }
   }
 
   delete("/servicePoints/:id") {
