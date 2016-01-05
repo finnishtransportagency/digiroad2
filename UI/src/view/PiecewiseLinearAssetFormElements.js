@@ -98,7 +98,7 @@
       return '' +
         '<div class="form-group editable">' +
         '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/, '<br>') + '</p>' +
+        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
         singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
         '</div>';
     }
