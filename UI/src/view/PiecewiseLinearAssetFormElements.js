@@ -1,7 +1,8 @@
 (function(root) {
   root.PiecewiseLinearAssetFormElements = {
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
-    EuropeanRoadsFormElements: EuropeanRoadsFormElements,
+    EuropeanRoadsFormElements: TextualValueFormElements,
+    ExitNumbersFormElements: TextualValueFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
@@ -15,7 +16,7 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function EuropeanRoadsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function TextualValueFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = textAreaFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
