@@ -220,7 +220,7 @@
     {value: 1, label: 'Kattava varustelu'},
     {value: 2, label: 'Perusvarustelu'},
     {value: 3, label: 'Yksityinen palvelualue'},
-    {value: 4, label: 'Ei lisätietoja'}
+    {value: 4, label: 'Ei tietoa'}
   ];
 
   var serviceTypeExtensions = {
@@ -320,9 +320,13 @@
       '    <label class="control-label">Palvelun lisätieto</label>' +
       '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
       '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
-           ((selectedServiceType.value == 12 || selectedServiceType.value == 15) ? parkingPlaceElements : '') +
+           (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
       '  </div>' +
       '</li>';
+  }
+
+  function showParkingPlaceCount(selectedServiceType) {
+    return (selectedServiceType.value == 12 || selectedServiceType.value == 15 || selectedServiceType.value == 14);
   }
 
   function renderNewServiceElement() {
