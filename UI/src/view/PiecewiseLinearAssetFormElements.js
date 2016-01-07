@@ -154,10 +154,7 @@
     };
 
     function inputElementValue(input) {
-      var removeWhitespace = function(s) {
-        return s.replace(/^\s+/g, '').replace(/\s+$/g, '');
-      };
-      return removeWhitespace(input.val());
+      return _.trim(input);
     }
 
     function valueString(currentValue) {
