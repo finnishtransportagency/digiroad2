@@ -187,10 +187,8 @@ class CsvGenerator(vvhServiceHost: String) {
     }
   }
 
-  def generateCsvForEuropeanRoads() = {
+  def generateCsvForTextualLinearAssets(assetTypeId: Int, assetName: String) = {
     val startTime = DateTime.now()
-    val assetTypeId = 260
-    val assetName = "european roads"
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
@@ -203,7 +201,7 @@ class CsvGenerator(vvhServiceHost: String) {
            and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Double, Double, String, Int, Boolean)].list.toSet
     }
-    println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
     def mmlIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
@@ -211,16 +209,16 @@ class CsvGenerator(vvhServiceHost: String) {
     }
     val assetMmlIds = limits.map(_._1)
     val existingMmlIds = roadLinkService.fetchVVHRoadlinks(assetMmlIds, Some("MTKID"), false, mmlIdFromFeature).toSet
-    println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    println(s"*** fetched associated road links from VVH in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
-    println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    println(s"*** calculated dropped links in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
     val floatingLimits = limits.filter(_._7)
     exportCsv(assetName, (nonExistingLimits ++ floatingLimits).toSeq)
-    println("*** exported CSV files " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
+    println(s"*** exported CSV files in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
   }
 
