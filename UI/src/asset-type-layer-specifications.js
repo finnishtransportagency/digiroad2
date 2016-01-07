@@ -308,7 +308,7 @@
       title: 'Liittymänumero',
       newTitle: 'Uusi liittymänumero',
       className: 'exit-number',
-      isSeparable: true,
+      isSeparable: false,
       editControlLabels: {
         title: '',
         enabled: 'Liittymänumero(t)',
