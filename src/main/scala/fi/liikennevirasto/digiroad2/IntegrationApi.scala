@@ -204,6 +204,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         }
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
+      case Some(TextualValue(x)) => x.split("\n").toSeq
       case _ => value.map(_.toJson)
     }
   }
