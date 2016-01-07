@@ -163,6 +163,9 @@ trait LinearAssetOperations {
   }
 
   private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
+    if (ids.isEmpty)
+      return ids
+
     val assetTypeId = sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
