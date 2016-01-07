@@ -220,7 +220,7 @@
     {value: 1, label: 'Kattava varustelu'},
     {value: 2, label: 'Perusvarustelu'},
     {value: 3, label: 'Yksityinen palvelualue'},
-    {value: 4, label: 'Ei lisätietoja'}
+    {value: 4, label: 'Ei tietoa'}
   ];
 
   var serviceTypeExtensions = {
