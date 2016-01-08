@@ -395,7 +395,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
-      case 260 =>
+      case 260 | 270 =>
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
       case 190 =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
