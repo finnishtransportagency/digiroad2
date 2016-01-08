@@ -178,7 +178,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
-  def fetchEuropeanRoadsByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+  def fetchAssetsWithTextualValuesByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(ids) { idTableName =>
       val assets = sql"""
         select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
@@ -220,7 +220,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
-  def fetchEuropeanRoadsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+  def fetchAssetsWithTextualValuesByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
