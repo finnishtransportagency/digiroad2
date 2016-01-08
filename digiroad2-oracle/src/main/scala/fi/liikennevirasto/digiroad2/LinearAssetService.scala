@@ -74,6 +74,8 @@ trait LinearAssetOperations {
       typeId match {
         case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+        case LinearAssetTypes.ProhibitionAssetTypeId =>
+          dao.fetchProhibitionsByMmlIds(typeId, ids.toSeq)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
@@ -179,7 +181,7 @@ trait LinearAssetOperations {
         case TextualValue(textValue) =>
           dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
-          dao.updateProhibitionValue(typeId, prohibitions, username)
+          dao.updateProhibitionValue(id, prohibitions, username)
       }
     }
 
