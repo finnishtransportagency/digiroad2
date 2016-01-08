@@ -177,7 +177,7 @@ trait LinearAssetOperations {
       val typeId = assetTypeById(id)
       value match {
         case NumericValue(intValue) =>
-          dao.updateValue(typeId, intValue, LinearAssetTypes.numericValuePropertyId, username)
+          dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
         case TextualValue(textValue) =>
           dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
