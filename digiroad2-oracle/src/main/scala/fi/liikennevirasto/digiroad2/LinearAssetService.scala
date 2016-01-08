@@ -12,7 +12,11 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-trait LinearAssetOperations {
+object LinearAssetTypes {
+  val ProhibitionAssetTypeId = 190
+  val HazmatTransportProhibitionAssetTypeId = 210
+  val EuropeanRoadAssetTypeId = 260
+  val ExitNumberAssetTypeId = 270
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
@@ -21,16 +25,14 @@ trait LinearAssetOperations {
     case ExitNumberAssetTypeId => exitNumberPropertyId
     case _ => numericValuePropertyId
   }
+}
 
+trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
-  val HazmatTransportProhibitionAssetTypeId = 210
-  val ProhibitionAssetTypeId = 190
-  val EuropeanRoadAssetTypeId = 260
-  val ExitNumberAssetTypeId = 270
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -53,12 +55,12 @@ trait LinearAssetOperations {
     val existingAssets =
       withDynTransaction {
         typeId match {
-          case ProhibitionAssetTypeId | HazmatTransportProhibitionAssetTypeId =>
+          case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
             dao.fetchProhibitionsByMmlIds(typeId, mmlIds, includeFloating = false)
-          case EuropeanRoadAssetTypeId | ExitNumberAssetTypeId =>
-            dao.fetchAssetsWithTextualValuesByMmlIds(typeId, mmlIds, getValuePropertyId(typeId))
+          case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+            dao.fetchAssetsWithTextualValuesByMmlIds(typeId, mmlIds, LinearAssetTypes.getValuePropertyId(typeId))
           case _ =>
-            dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, numericValuePropertyId)
+            dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, LinearAssetTypes.numericValuePropertyId)
         }
       }.filterNot(_.expired).groupBy(_.mmlId)
 
@@ -70,10 +72,10 @@ trait LinearAssetOperations {
   def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       typeId match {
-        case EuropeanRoadAssetTypeId | ExitNumberAssetTypeId =>
-          dao.fetchAssetsWithTextualValuesByIds(ids, getValuePropertyId(typeId))
+        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+          dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
         case _ =>
-          dao.fetchLinearAssetsByIds(ids, getValuePropertyId(typeId))
+          dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
     }
   }
@@ -117,7 +119,7 @@ trait LinearAssetOperations {
 
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), numericValuePropertyId).head
+      val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchVVHRoadlink(linearAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
@@ -145,7 +147,7 @@ trait LinearAssetOperations {
 
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      val existing = dao.fetchLinearAssetsByIds(Set(id), numericValuePropertyId).head
+      val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val roadLink = vvhClient.fetchVVHRoadlink(existing.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
@@ -175,9 +177,9 @@ trait LinearAssetOperations {
       val typeId = assetTypeById(id)
       value match {
         case NumericValue(intValue) =>
-          dao.updateValue(typeId, intValue, numericValuePropertyId, username)
+          dao.updateValue(typeId, intValue, LinearAssetTypes.numericValuePropertyId, username)
         case TextualValue(textValue) =>
-          dao.updateValue(id, textValue, getValuePropertyId(typeId), username)
+          dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(typeId, prohibitions, username)
       }
@@ -190,9 +192,9 @@ trait LinearAssetOperations {
     val id = dao.createLinearAsset(typeId, mmlId, expired = false, sideCode, startMeasure, endMeasure, username)
     val insertValueFor = value match {
       case NumericValue(intValue) =>
-        dao.insertValue(_: Long, numericValuePropertyId, intValue)
+        dao.insertValue(_: Long, LinearAssetTypes.numericValuePropertyId, intValue)
       case TextualValue(textValue) =>
-        dao.insertValue(_: Long, getValuePropertyId(typeId), textValue)
+        dao.insertValue(_: Long, LinearAssetTypes.getValuePropertyId(typeId), textValue)
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(_: Long, prohibitions)
     }
