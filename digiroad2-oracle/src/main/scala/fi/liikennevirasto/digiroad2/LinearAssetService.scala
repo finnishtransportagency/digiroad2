@@ -188,15 +188,14 @@ trait LinearAssetOperations {
 
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long = {
     val id = dao.createLinearAsset(typeId, mmlId, expired = false, sideCode, startMeasure, endMeasure, username)
-    val insertValueFor = value match {
+    value match {
       case NumericValue(intValue) =>
-        dao.insertValue(_: Long, LinearAssetTypes.numericValuePropertyId, intValue)
+        dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
       case TextualValue(textValue) =>
-        dao.insertValue(_: Long, LinearAssetTypes.getValuePropertyId(typeId), textValue)
+        dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
       case prohibitions: Prohibitions =>
-        dao.insertProhibitionValue(_: Long, prohibitions)
+        dao.insertProhibitionValue(id, prohibitions)
     }
-    insertValueFor(id)
     id
   }
 }
