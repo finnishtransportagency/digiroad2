@@ -154,7 +154,7 @@
     };
 
     function inputElementValue(input) {
-      return _.trim(input);
+      return _.trim(input.val());
     }
 
     function valueString(currentValue) {
