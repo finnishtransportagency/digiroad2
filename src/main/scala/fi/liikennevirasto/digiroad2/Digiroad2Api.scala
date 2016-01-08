@@ -393,11 +393,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .orElse(prohibition)
   }
 
-  private def extractNewLinearAssets(value: JValue) = {
-    val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
-    val textual = value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
-    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
-    numerical ++ textual ++ prohibitions
+  private def extractNewLinearAssets(typeId: Int, value: JValue) = {
+    typeId match {
+      case 260 =>
+        value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
+      case 190 =>
+        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+      case _ =>
+        value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+    }
   }
 
   post("/linearassets") {
@@ -405,7 +409,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLinearAssets = extractNewLinearAssets(parsedBody \ "newLimits")
+    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.mmlId)
     val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
