@@ -74,7 +74,7 @@ trait LinearAssetOperations {
       typeId match {
         case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
-        case LinearAssetTypes.ProhibitionAssetTypeId =>
+        case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
           dao.fetchProhibitionsByMmlIds(typeId, ids.toSeq)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))

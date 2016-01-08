@@ -397,7 +397,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     typeId match {
       case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId =>
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
-      case LinearAssetTypes.ProhibitionAssetTypeId =>
+      case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
