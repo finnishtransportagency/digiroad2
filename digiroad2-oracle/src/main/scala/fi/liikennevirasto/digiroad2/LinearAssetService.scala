@@ -171,8 +171,6 @@ trait LinearAssetOperations {
     val assetTypeId = sql"""select ID, ASSET_TYPE_ID from ASSET where ID in (#${ids.mkString(",")})""".as[(Long, Int)].list
     val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
-    println("Foo:", ids, ids.mkString(","))
-
     ids.foreach { id =>
       val typeId = assetTypeById(id)
       value match {
