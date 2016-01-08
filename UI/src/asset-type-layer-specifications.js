@@ -309,6 +309,7 @@
       title: 'Liittymänumero',
       newTitle: 'Uusi liittymänumero',
       className: 'exit-number',
+      unit: '',
       isSeparable: false,
       editControlLabels: {
         title: '',
