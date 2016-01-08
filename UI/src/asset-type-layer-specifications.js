@@ -293,6 +293,7 @@
       title: 'Eurooppatienumero',
       newTitle: 'Uusi eurooppatienumero',
       className: 'european-road',
+      unit: '',
       isSeparable: false,
       editControlLabels: {
         title: '',

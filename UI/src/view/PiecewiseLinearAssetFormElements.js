@@ -89,7 +89,7 @@
         if (disabled) {
           removeValue();
         } else {
-          var value = unit ? inputElementValue(inputElement) : defaultValue;
+          var value = _.isUndefined(unit) ? defaultValue : inputElementValue(inputElement);
           setValue(value);
         }
       });
