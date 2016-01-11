@@ -96,6 +96,7 @@
               '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
               '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
             '</div>' +
+            staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
             staticField('Kuntanumero', 'municipalityCode') +
             staticField('Tien nimi (Suomi)', 'roadNameFi') +
             staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
@@ -103,7 +104,6 @@
             staticField('Tien numero', 'roadNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
-            staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
