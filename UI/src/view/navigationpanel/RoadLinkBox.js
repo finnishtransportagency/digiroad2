@@ -16,6 +16,9 @@
           '<div class="radio">' +
             '<label><input type="radio" name="dataset" value="administrative-class">Hallinnollinen luokka</input></label>' +
           '</div>' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="dataset" value="vertical-level">Tasosijainti</input></label>' +
+          '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
       '</div>');
