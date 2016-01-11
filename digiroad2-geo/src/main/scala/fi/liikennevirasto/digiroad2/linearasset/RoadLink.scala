@@ -12,6 +12,7 @@ case class RoadLink(mmlId: Long, geometry: Seq[Point],
                     attributes: Map[String, Any] = Map()) extends PolyLine {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
+  def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
 
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))

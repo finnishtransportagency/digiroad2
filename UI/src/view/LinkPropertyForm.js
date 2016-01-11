@@ -31,9 +31,24 @@
       [21, 'Lautta/lossi']
     ];
 
+    var verticalLevelTypes= [
+      [-11, 'Tunneli'],
+      [-1, 'Alikulku'],
+      [0, 'Maan pinnalla'],
+      [1, 'Silta, Taso 1'],
+      [2, 'Silta, Taso 2'],
+      [3, 'Silta, Taso 3'],
+      [4, 'Silta, Taso 4']
+    ];
+
     var getLocalizedLinkType = function(linkType) {
       var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
       return localizedLinkType && localizedLinkType[1];
+    };
+
+    var getVerticalLevelType = function(verticalLevel){
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+      return verticalLevelType && verticalLevelType[1];
     };
 
     var staticField = function(labelText, dataField) {
@@ -88,6 +103,7 @@
             staticField('Tien numero', 'roadNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+            staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -133,6 +149,7 @@
         linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.roadNumber = linkProperties.roadNumber || '';
+        linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';

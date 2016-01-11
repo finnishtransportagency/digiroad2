@@ -11,6 +11,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         "functionalClass": 5,
         "linkType": 3,
         "municipalityCode": 235,
+        "verticalLevel": -1,
         "points": [{
           "x": 200.0,
           "y": 200.0
