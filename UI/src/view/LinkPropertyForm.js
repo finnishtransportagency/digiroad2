@@ -88,6 +88,7 @@
             staticField('Tien numero', 'roadNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+            staticField('Tasosijainti', 'verticalLevel') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
