@@ -85,10 +85,29 @@
     }).join('');
     linkTypeLegend.append(linkTypeLegendEntries);
 
+    var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
+    var verticalLevels = [
+      [-11, 'Tunneli'],
+      [-1, 'Alikulku'],
+      [0, 'Maan pinnalla'],
+      [1, 'Silta, Taso 1'],
+      [2, 'Silta, Taso 2'],
+      [3, 'Silta, Taso 3'],
+      [4, 'Silta, Taso 4']
+    ];
+    var verticalLevelLegendEntries = _.map(verticalLevels, function(verticalLevel) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + verticalLevel[1] + '</div>' +
+        '<div class="symbol linear linear-asset-' + verticalLevel[0] + '" />' +
+        '</div>';
+    }).join('');
+    verticalLevelLegend.append(verticalLevelLegendEntries);
+
     var legends = {
       'administrative-class': administrativeClassLegend,
       'functional-class': functionalClassLegend,
-      'link-type': linkTypeLegend
+      'link-type': linkTypeLegend,
+      'vertical-level': verticalLevelLegend
     };
 
     var editModeToggle = new EditModeToggleButton({
