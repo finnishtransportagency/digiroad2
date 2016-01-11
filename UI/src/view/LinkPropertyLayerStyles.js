@@ -186,6 +186,16 @@
       default: linkTypeSelectionDefaultStyle
     });
 
+    // --- Vertical level style maps
+    // TODO: Replace link type styles with vertical level styles
+
+    var verticalLevelDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
+
+    var verticalLevelSelectionStyleMap = new OpenLayers.StyleMap({
+      select: linkTypeSelectionSelectStyle,
+      default: linkTypeSelectionDefaultStyle
+    });
+
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var styleMaps = {
         'functional-class': {
@@ -199,6 +209,10 @@
         'link-type': {
           'default': linkTypeDefaultStyleMap,
           'select': linkTypeSelectionStyleMap
+        },
+        'vertical-level': {
+          'default': verticalLevelDefaultStyleMap,
+          'select': verticalLevelSelectionStyleMap
         }
       };
       return styleMaps[dataset][renderIntent];
