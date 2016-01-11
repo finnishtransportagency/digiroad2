@@ -23,7 +23,8 @@
     railwayCrossings: 230,
     directionalTrafficSigns: 240,
     servicePoints: 250,
-    europeanRoads: 260
+    europeanRoads: 260,
+    exitNumbers: 270
   };
 
   root.linearAssetSpecs = [
@@ -292,11 +293,28 @@
       title: 'Eurooppatienumero',
       newTitle: 'Uusi eurooppatienumero',
       className: 'european-road',
+      unit: '',
       isSeparable: false,
       editControlLabels: {
         title: '',
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
+      }
+    },
+    {
+      typeId: assetType.exitNumbers,
+      singleElementEventCategory: 'exitNumber',
+      multiElementEventCategory: 'exitNumbers',
+      layerName: 'exitNumbers',
+      title: 'Liittymänumero',
+      newTitle: 'Uusi liittymänumero',
+      className: 'exit-number',
+      unit: '',
+      isSeparable: false,
+      editControlLabels: {
+        title: '',
+        enabled: 'Liittymänumero(t)',
+        disabled: 'Ei liittymänumeroa'
       }
     }
   ];

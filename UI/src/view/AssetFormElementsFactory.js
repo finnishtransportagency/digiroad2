@@ -8,7 +8,8 @@
       prohibition: createProhibitionFormElements(),
       hazardousMaterialTransportProhibition: createHazardousMaterialTransportProhibitionFormElements(),
       winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements,
-      europeanRoads: PiecewiseLinearAssetFormElements.EuropeanRoadsFormElements
+      europeanRoads: PiecewiseLinearAssetFormElements.EuropeanRoadsFormElements,
+      exitNumbers: PiecewiseLinearAssetFormElements.ExitNumbersFormElements
     };
     return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }

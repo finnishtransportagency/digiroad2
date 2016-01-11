@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
+import java.net.URLEncoder
+
 import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import java.net.URLEncoder
-
-import scala.collection.parallel.immutable.ParSeq
 
 sealed trait FeatureClass
 object FeatureClass {
@@ -50,7 +49,7 @@ class VVHClient(hostname: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
+      case _ => s""""outFields":"MTKID,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -165,6 +164,9 @@ class VVHClient(hostname: String) {
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
+      "HORIZONTALACCURACY",
+      "VERTICALACCURACY",
+      "VERTICALLEVEL",
       "CONSTRUCTIONTYPE",
       "ROADNAME_FI",
       "ROADNAME_SM",

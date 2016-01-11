@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.GeometryUtils.minimumDistance
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
@@ -246,6 +245,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "modifiedAt" -> roadLink.modifiedAt,
       "modifiedBy" -> roadLink.modifiedBy,
       "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
       "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
       "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
       "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
@@ -379,7 +379,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
-    val europeanRoadNumberParameter = value.extractOpt[String]
+    val textualParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
       case Some(Nil) => None
@@ -389,15 +389,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     numericValue
       .map(NumericValue)
-      .orElse(europeanRoadNumberParameter.map(TextualValue))
+      .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
   }
 
-  private def extractNewLinearAssets(value: JValue) = {
-    val numerical = value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
-    val textual = value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
-    val prohibitions = value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
-    numerical ++ textual ++ prohibitions
+  private def extractNewLinearAssets(typeId: Int, value: JValue) = {
+    typeId match {
+      case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId =>
+        value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
+      case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
+        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+      case _ =>
+        value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+    }
   }
 
   post("/linearassets") {
@@ -405,7 +409,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
-    val newLinearAssets = extractNewLinearAssets(parsedBody \ "newLimits")
+    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingMmlIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.mmlId)
     val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
     roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
