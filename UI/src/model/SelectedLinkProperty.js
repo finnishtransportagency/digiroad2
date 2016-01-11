@@ -34,7 +34,7 @@
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
-          'municipalityCode','verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
+          'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
@@ -44,7 +44,7 @@
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        _.merge(properties, latestModified, municipalityCodes,verticalLevels, roadNames);
+        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadNames);
       }
 
       return properties;

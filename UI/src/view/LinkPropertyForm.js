@@ -47,9 +47,8 @@
     };
 
     var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y){ return y[0] === verticalLevel;});
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
       return verticalLevelType && verticalLevelType[1];
-
     };
 
     var staticField = function(labelText, dataField) {
