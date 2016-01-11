@@ -164,7 +164,8 @@ class VVHClient(hostname: String) {
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
-      "HORIZONTALACCURACY", "VERTICALACCURACY",
+      "HORIZONTALACCURACY",
+      "VERTICALACCURACY",
       "VERTICALLEVEL",
       "CONSTRUCTIONTYPE",
       "ROADNAME_FI",
