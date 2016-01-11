@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.GeometryUtils.minimumDistance
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
@@ -246,6 +245,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "modifiedAt" -> roadLink.modifiedAt,
       "modifiedBy" -> roadLink.modifiedBy,
       "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
       "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
       "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
       "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
