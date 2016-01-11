@@ -49,7 +49,7 @@ class VVHClient(hostname: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,MUNICIPALITYCODE,VERTICALLEVEL,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
+      case _ => s""""outFields":"MTKID,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -164,6 +164,7 @@ class VVHClient(hostname: String) {
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
+      "HORIZONTALACCURACY", "VERTICALACCURACY",
       "VERTICALLEVEL",
       "CONSTRUCTIONTYPE",
       "ROADNAME_FI",
