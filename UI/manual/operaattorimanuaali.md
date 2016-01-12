@@ -266,7 +266,9 @@ Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&au
     
 ##8.3 Nopeusrajoitus##
 
-Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
+Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. Kuitenkin jos venytyst&auml; tehd&auml;&auml;n alle puoli metri&auml;, ei uusia m-arvoja kirjoiteta tietokantaan, vaan venytys n&auml;kyy ainoastaan k&auml;ytt&ouml;liittym&auml;ss&auml; (nopeusrajoitus t&auml;ydent&auml;&auml; koko tielinkin, eik&auml; p&auml;ihin tule mustaa tuntematonta rajoitusta).
+
+T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
 
 9. Kalpa-API
 --------------
