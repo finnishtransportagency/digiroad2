@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point, PointAssetOperations, VVHClient}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -85,6 +85,75 @@ object PointAssetImporter {
         assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
 
         println(s"*** Imported ${crossings.length} pedestrian crossings in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
+      }
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+    }
+  }
+
+  def importTrafficLights(database: DatabaseDef, vvhServiceHost: String): Unit = {
+    val query = sql"""
+         select s.tielinkki_id, t.mml_id, t.kunta_nro, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.alkum, s.loppum
+           from segments s
+           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+           where s.tyyppi = 9
+        """
+
+    val trafficLights = database.withDynSession {
+      query.as[(Long, Long, Int, Seq[Point], Double, Double)].list
+    }
+
+    val roadLinks = new VVHClient(vvhServiceHost).fetchVVHRoadlinks(trafficLights.map(_._2).toSet)
+    val groupSize = 3000
+    val groupedTrafficLights = trafficLights.grouped(groupSize).toList
+    val totalGroupCount = groupedTrafficLights.length
+
+    OracleDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, MUNICIPALITY_CODE, FLOATING, CREATED_DATE, CREATED_BY) values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+      println(s"*** Importing ${trafficLights.length} traffic lights in $totalGroupCount groups of $groupSize each")
+
+      groupedTrafficLights.zipWithIndex.foreach { case (trafficLights, i) =>
+        val startTime = DateTime.now()
+
+        val assetGeometries = trafficLights.map { case (roadLinkId, mmlId, municipalityCode, points, startMeasure, endMeasure) =>
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 280)
+          assetPS.setInt(3, municipalityCode)
+          val pointAsset = TrafficLight(assetId, mmlId, points.head.x, points.head.y, startMeasure, false, municipalityCode)
+          assetPS.setBoolean(4, PointAssetOperations.isFloating(
+            pointAsset,
+            roadLinks.find(_.mmlId == mmlId).map { x => (x.municipalityCode, x.geometry) }
+          ))
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
+          lrmPositionPS.setInt(6, 1)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          (assetId, points.head)
+        }
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+
+        assetGeometries.foreach { case (assetId, point) => updateAssetGeometry(assetId, point) }
+
+        println(s"*** Imported ${trafficLights.length} traffic lights in ${humanReadableDurationSince(startTime)} (done ${i + 1}/$totalGroupCount)" )
       }
       assetPS.close()
       lrmPositionPS.close()
