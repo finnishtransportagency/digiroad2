@@ -207,7 +207,8 @@
     // Vertical level default style map
     var verticalLevelDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
-      rotation: '${rotation}'}));
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'}));
     verticalLevelDefaultStyle.addRules(verticalLevelRules);
     verticalLevelDefaultStyle.addRules(unknownVerticalLevelDefaultRules);
     verticalLevelDefaultStyle.addRules(zoomLevelRules);
@@ -220,12 +221,14 @@
     var verticalLevelSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
       graphicOpacity: 0.3,
-      rotation: '${rotation}'
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'
     }));
     var verticalLevelSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       graphicOpacity: 1.0,
-      rotation: '${rotation}'
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'
     }));
     verticalLevelSelectionDefaultStyle.addRules(verticalLevelRules);
     verticalLevelSelectionSelectStyle.addRules(verticalLevelRules);

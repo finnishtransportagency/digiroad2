@@ -191,7 +191,8 @@ var RoadStyles = function() {
     }, this);
 
     vectorLayer = new OpenLayers.Layer.Vector("road", {
-      styleMap: new RoadStyles().roadStyles
+      styleMap: new RoadStyles().roadStyles,
+      rendererOptions: {zIndexing: true}
     });
     vectorLayer.setVisibility(false);
     selectControl = new OpenLayers.Control.SelectFeature(vectorLayer);
