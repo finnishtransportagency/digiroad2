@@ -8,7 +8,7 @@
       new OpenLayersRule().where('functionalClass').is(5).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
-      new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+      new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
     var unknownFunctionalClassDefaultRules = [
       new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
@@ -139,7 +139,7 @@
       new OpenLayersRule().where('linkType').isIn([5, 6]).use({ strokeColor: '#0cd',  externalGraphic: 'images/link-properties/arrow-drop-cyan.svg'  }),
       new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
       new OpenLayersRule().where('linkType').isIn([7, 10, 11, 12]).use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
-      new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  }),
+      new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  })
     ];
     var unknownLinkTypeDefaultRules = [
       new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
@@ -186,6 +186,68 @@
       default: linkTypeSelectionDefaultStyle
     });
 
+    // --- Vertical level style maps
+
+    var verticalLevelRules = [
+      new OpenLayersRule().where('verticalLevel').is(-11).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(-1).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(0).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(1).use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(2).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(3).use({ strokeColor: '#0cd', externalGraphic: 'images/link-properties/arrow-drop-cyan.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(4).use({ strokeColor: '#444', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+    ];
+    var unknownVerticalLevelDefaultRules = [
+      new OpenLayersRule().where('verticalLevel').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+    var unknownVerticalLevelUnselectedRules = [
+      new OpenLayersRule().where('verticalLevel').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
+    // Vertical level default style map
+    var verticalLevelDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'}));
+    verticalLevelDefaultStyle.addRules(verticalLevelRules);
+    verticalLevelDefaultStyle.addRules(unknownVerticalLevelDefaultRules);
+    verticalLevelDefaultStyle.addRules(zoomLevelRules);
+    verticalLevelDefaultStyle.addRules(overlayRules);
+    verticalLevelDefaultStyle.addRules(linkTypeSizeRules);
+    verticalLevelDefaultStyle.addRules(overlayDefaultOpacity);
+    var verticalLevelDefaultStyleMap = new OpenLayers.StyleMap({ default: verticalLevelDefaultStyle });
+
+    // Vertical level selection style map
+    var verticalLevelSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'
+    }));
+    var verticalLevelSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}',
+      graphicZIndex: '${verticalLevel}'
+    }));
+    verticalLevelSelectionDefaultStyle.addRules(verticalLevelRules);
+    verticalLevelSelectionSelectStyle.addRules(verticalLevelRules);
+    verticalLevelSelectionDefaultStyle.addRules(unknownVerticalLevelUnselectedRules);
+    verticalLevelSelectionSelectStyle.addRules(unknownVerticalLevelDefaultRules);
+    verticalLevelSelectionDefaultStyle.addRules(zoomLevelRules);
+    verticalLevelSelectionSelectStyle.addRules(zoomLevelRules);
+    verticalLevelSelectionDefaultStyle.addRules(overlayRules);
+    verticalLevelSelectionSelectStyle.addRules(overlayRules);
+    verticalLevelSelectionDefaultStyle.addRules(linkTypeSizeRules);
+    verticalLevelSelectionSelectStyle.addRules(linkTypeSizeRules);
+    verticalLevelSelectionSelectStyle.addRules(overlayUnselectedOpacity);
+    verticalLevelSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    var verticalLevelSelectionStyleMap = new OpenLayers.StyleMap({
+      select: verticalLevelSelectionSelectStyle,
+      default: verticalLevelSelectionDefaultStyle
+    });
+
+    // --- Style map selection
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var styleMaps = {
         'functional-class': {
@@ -199,6 +261,10 @@
         'link-type': {
           'default': linkTypeDefaultStyleMap,
           'select': linkTypeSelectionStyleMap
+        },
+        'vertical-level': {
+          'default': verticalLevelDefaultStyleMap,
+          'select': verticalLevelSelectionStyleMap
         }
       };
       return styleMaps[dataset][renderIntent];

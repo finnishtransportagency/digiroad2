@@ -181,9 +181,6 @@
       });
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
-      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
-        draw();
-      });
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
     };
