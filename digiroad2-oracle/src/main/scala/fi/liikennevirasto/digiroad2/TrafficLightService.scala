@@ -19,8 +19,9 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
     persistedAsset.copy(floating = floating)
   }
 
-  override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[VVHRoadlink]): Seq[TrafficLight] =  OracleTrafficLightDao.fetchByFilter(queryFilter)
-
+  override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[VVHRoadlink]): Seq[TrafficLight] = {
+    OracleTrafficLightDao.fetchByFilter(queryFilter)
+  }
 
   override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
     // TODO: implementation
