@@ -22,8 +22,9 @@ UPDATE asset
                                    )
   WHERE id = 600071;
 
+-- floating traffic light
 insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600072,280,'dr2_test_data',235);
-insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000022,44.786,44.786,388552624);
+insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID) values (70000022,40,40,388552624);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600072, 70000022);
 UPDATE asset
   SET geometry = MDSYS.SDO_GEOMETRY(4401,
