@@ -70,7 +70,10 @@
         return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
       };
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
-      return lineFeatures(linearAssetsWithAdjustments);
+      var sortedAssets = _.sortBy(linearAssetsWithAdjustments, function(asset) {
+        return asset.expired ? -1 : 1;
+      });
+      return lineFeatures(sortedAssets);
     };
 
     return {

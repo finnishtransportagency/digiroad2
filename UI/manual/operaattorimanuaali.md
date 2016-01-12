@@ -12,6 +12,8 @@ Testikanta https://devtest.liikennevirasto.fi/digiroad/
 Koulutuskanta https://apptest.liikennevirasto.fi/digiroad/
 Tuotantokanta https://testiextranet.liikennevirasto.fi/digiroad/
 
+Osa tietolajeista on tarkoitettu vain operaattorin yll&auml;pitoon toistaiseksi. N&auml;m&auml; saa n&auml;kyviin lis&auml;&auml;m&auml;ll&auml; osoitteeseen ?isExperimental=true, esim. https://testiextranet.liikennevirasto.fi/digiroad/?isExperimental=true
+
 Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. T&auml;m&auml;n j&auml;lkeen uusi k&auml;ytt&ouml;ohje p&auml;ivitet&auml;&auml;n testikantaan. Toimiva versio vied&auml;&auml;n koulutuskantaan ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
 
 Kaikki Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;liittym&auml;&auml;n liittyv&auml;t sivut toimivat kaikissa ymp&auml;rist&ouml;iss&auml; (sovellus, k&auml;ytt&ouml;ohje, uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen jne.). Vaihtamalla osoitteen alkuun devtest, apptest tai testiextranet voi valita, mihin ymp&auml;rist&ouml;&ouml;n menee. T&auml;ss&auml; ohjeessa olevat linkit ovat tuotantoymp&auml;rist&ouml;&ouml;n (testiextranet).
@@ -20,8 +22,28 @@ __Huom! Kaikki ymp&auml;rist&ouml;t n&auml;ytt&auml;v&auml;t selaimessa p&auml;&
 
 Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad2-kehitystiimill&auml; ja ne saa osoitteesta digiroad2@reaktor.fi. T&auml;m&auml; tilanne tulee muuttumaan, kun kehitysprojekti p&auml;&auml;ttyy ja siirryt&auml;&auml;n yll&auml;pitovaiheeseen, mutta toistaiseksi kehitykseen liittyvien tilien/sivujen tunnusten ja salasanojen hallinta on kehitystiimiss&auml;.
 
+###Tuotantoymp&auml;rist&ouml; (kuvan saa klikkaamalla suuremmaksi):###
+
+![Tuotantokanta](tuotantokanta_kuva.png)
+
+###Testiymp&auml;rist&ouml;:###
+
+![Testikanta](testikanta_kuva.png)
+
+###Koulutusymp&auml;rist&ouml;:###
+
+![Koulutuskanta](koulutuskanta_kuva.png)
+
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
+
+Digiroad-yll&auml;pitosovelluksessa on viisi erilaista k&auml;ytt&auml;j&auml;ryhm&auml;&auml;:
+
+1. Operaattorik&auml;ytt&auml;j&auml;. Kaikki oikeudet joka paikkaan yll&auml;pitosovelluksessa. M&auml;&auml;ritelty tietokannassa parametrilla "operator".
+1. Premium-k&auml;ytt&auml;j&auml;. Muokkausoikeudet m&auml;&auml;riteltyjen kuntien alueella kaikkiin tietolajeihin. M&auml;&auml;ritelty tietokannassa parametrilla "premium" ja listattu kunnat, joihin yll&auml;pito-oikeus.
+1. Pys&auml;kkik&auml;ytt&auml;j&auml;. Muokkausoikeudet m&auml;&auml;riteltyjen kuntien alueella vain pys&auml;kkeihin.  Ei parametria tietokannassa ja listattu kunnat, joihin yll&auml;pito-oikeus.
+1. Katselija. Katseluoikeudet m&auml;&auml;riteltyjen kuntien alueella kaikkiin tietolajeihin. M&auml;&auml;ritelty tietokannassa parametrilla "viewer" ja listattu kunnat, joihin katselu-oikeus. __Huom!__ Katseluoikeuksia ei lis&auml;t&auml; en&auml;&auml;. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia (ns. vierailija-rooli, k&auml;ytt&auml;j&auml;&auml; ei ole tallennettu Digiroad-yll&auml;pitosovelluksen tietokantaan). Katselemaan p&auml;&auml;see kirjautumalla sovellukseen extranet-tunnuksilla.
+1. Vierailija. P&auml;&auml;see l&auml;pi Livin k&auml;ytt&auml;j&auml;nhallinnasta extranet-tunnuksella, oikeus katsella Digiroadia koko Suomesta kaikkien tietolajien osalta. K&auml;ytt&auml;j&auml;&auml; ei ole Digiroad-yll&auml;pitosovelluksen tietokannassa.
 
 Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n [k&auml;ytt&auml;j&auml;nhallinnassa.](https://testiextranet.liikennevirasto.fi/digiroad/newuser.html ) K&auml;ytt&auml;j&auml;nhallinnassa lis&auml;tyt k&auml;ytt&auml;j&auml;t ovat Premium-k&auml;ytt&auml;ji&auml;, joilla on oikeudet muokata m&auml;&auml;ritellyill&auml; alueilla kaikkia aineistoja.
 
@@ -30,11 +52,11 @@ K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&
 1. K&auml;ytt&auml;j&auml;tunnus: K&auml;ytt&auml;j&auml;n tunnus Liikenneviraston j&auml;rjestelmiin
 1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3), Ely-taulukko alla
 1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092). TVV-alueiden kuntanumerot alla.
-1. Oikeuden tyyppi: Muokkausoikeus (tai Katseluoikeus)*
-
-*Katseluoikeuksia ei lis&auml;t&auml; toistaiseksi. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia (ns. visitor-rooli, k&auml;ytt&auml;j&auml;&auml; ei ole tallennettu Digiroad-yll&auml;pitosovelluksen tietokantaan). Katselemaan p&auml;&auml;see kirjautumalla sovellukseen extranet-tunnuksilla.
+1. Oikeuden tyyppi: Muokkausoikeus
 
 Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus ilmoittaa onnistuneesta k&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml;. Jos k&auml;ytt&auml;j&auml;ksi lis&auml;t&auml;&auml;n jo olemassa olevan k&auml;ytt&auml;j&auml;, sovellus poistaa vanhan ja korvaa sen uudella k&auml;ytt&auml;j&auml;ll&auml;. K&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml; ei l&auml;hde automaattista viesti&auml; loppuk&auml;ytt&auml;j&auml;lle. Operaattorin tulee itse ilmoittaa k&auml;ytt&auml;j&auml;lle, kun k&auml;ytt&ouml;oikeus on luotu. T&auml;m&auml;n j&auml;lkeen k&auml;ytt&auml;j&auml; p&auml;&auml;see kirjautumaan Liikenneviraston tunnuksilla j&auml;rjestelm&auml;&auml;n.
+
+Jos k&auml;ytt&auml;ji&auml; tarkastelee tietokannan service_user -taulussa, tulee muistaa, ett&auml; k&auml;ytt&auml;j&auml;tunnuksien kirjaimet ovat tietokannassa aina pienell&auml; (lower case) riippumatta siit&auml;, miten ne on lis&auml;tty k&auml;ytt&auml;j&auml;nhallinanssa. Esim. select * from service_user where username='lx952744' tuottaa oikean tuloksen, ei 'LX952744'.
 
 Jos halutaan lis&auml;t&auml; k&auml;ytt&auml;j&auml;lle oikeudet vain pys&auml;kkiaineistoon, lis&auml;t&auml;&auml;n k&auml;ytt&auml;j&auml;lle oikeudet ensin k&auml;ytt&ouml;liittym&auml;ss&auml;, ja poistetaan sen j&auml;lkeen tietokannassa k&auml;ytt&auml;j&auml;lt&auml; "premium"-parametri.
 
@@ -71,6 +93,12 @@ _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 |Kuopion TVV|297,749|
 |Joensuun TVV|167,276,426|
 
+Poikkeuksia / virhetilanteita k&auml;ytt&auml;j&auml;nhallinnassa:
+
+- Jos tekee premium-k&auml;ytt&auml;j&auml;n ilman kuntanumeroita, k&auml;ytt&auml;j&auml; n&auml;kee kaikki tietolajit koko maasta, paitsi pys&auml;kit
+- Palvelupisteet n&auml;kyv&auml;t kaikille k&auml;ytt&auml;jille koko maasta, mutta vain oman kuntanumeron omaavia palvelupisteit&auml; voi muokata (tulee virheilmoitus "Tallennus ep&auml;onnistui, yrit&auml; my&ouml;hemmin uudelleen.")
+
+Yll&auml;pitosovelluksen k&auml;ytt&auml;j&auml;nhallinnasta on backlogilla story-lappu, jossa se tullaan uusimaan. T&auml;ss&auml; yhteydess&auml; tehd&auml;&auml;n mm. sellainen muutos, ett&auml; k&auml;ytt&auml;j&auml;t n&auml;kisiv&auml;t kaikki tietolajit koko Suomesta, mutta saisivat muokata kohteita vain m&auml;&auml;riteltyjen kuntien alueella. Nyt k&auml;ytt&auml;j&auml; ei n&auml;e kohteita ollenkaan omien muokkausoikeuksien ulkopuolelta.
 
 2. CSV-import pys&auml;kkien ominaisuustiedoille
 -----------
@@ -114,23 +142,15 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 3. Pys&auml;kkien exportit
 -----------
 
-Exporteilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;st&auml; ulos.
+##3.1 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n##
 
-##3.1 Pys&auml;kkitietojen CSV (ns. Vallu-CSV)##
+Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee v&auml;litt&ouml;m&auml;sti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot. Vallu-XML:n skeema on luettavissa GitHubista https://github.com/finnishtransportagency/digiroad2/blob/77eed2b2e97210443bf40ca960e8831e01b80dc6/src/test/resources/StopChange.xsd
 
-Vallu-j&auml;rjestelm&auml; ei en&auml;&auml; hy&ouml;dynn&auml; t&auml;t&auml; CSV-tiedostoa, mutta CSV-tiedosto luodaan joka y&ouml; operaattorin omaan k&auml;ytt&ouml;&ouml;n ja jaettavaksi Digiroadin nettisivuille. Pys&auml;kki-CSV export k&auml;ynnistyy klo 00:00 joka y&ouml; Livin FME Serverill&auml;. CSV:n tekeminen kest&auml;&auml; noin 5 tuntia. Lopputulos vied&auml;&auml;n Digiroad2:sen ftp-palvelimelle. Jos export ep&auml;onnistuu, FME-ajo katkeaa eik&auml; tiedostoa vied&auml; ftp:lle.
+Vallu-XML-logiin eiv&auml;t mene raitiovaunupys&auml;keille tehdyt muutokset.
 
-###Pys&auml;kki-CSV:n tietolajit###
-
-Pys&auml;kki-CSV:n tietolajit voi lukea Digiroadin nettisivuilla olevasta taulukosta: http://www.digiroad.fi/Uusi_DR/pysakki/fi_FI/pysakki/
-
-
-##3.2 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n##
-
-Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee v&auml;litt&ouml;m&auml;sti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
+Lis&auml;ksi Digiroadin ja Vallun Pys&auml;kkieditorin v&auml;lill&auml; on s&auml;&auml;nt&ouml;j&auml;, jotka est&auml;v&auml;t Vallu-XML:st&auml; tulevan muutoksen siirtymist&auml; Valluun. N&auml;ist&auml; voi tarvittaessa kysy&auml; operaattoripalvelun Hannele Komulaiselta (Blom Kartta) tai Liikenneviraston Teemu Peltoselta.
 
 Muuttuneita tietoja voi tarkastella lokista: https://testiextranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi). Vallu-XML-lokia ei ole koulutuskannassa.
-Vallu-XML-logiin eiv&auml;t mene raitiovaunupys&auml;keille tehdyt muutokset. Lis&auml;ksi Digiroadin ja Vallun Pys&auml;kkieditorin v&auml;lill&auml; on s&auml;&auml;nt&ouml;j&auml;, jotka est&auml;v&auml;t Vallu-XML:st&auml; tulevan muutoksen siirtymist&auml; Valluun. N&auml;ist&auml; voi tarvittaessa kysy&auml; Hannelelta tai Liikenneviraston Teemu Peltoselta.
 
 Vallu l&auml;hetyksen konfiguraatio on ./conf/[ymp&auml;rist&ouml;]/digiroad2.properties tiedostossa.
 ```
@@ -138,17 +158,6 @@ digiroad2.vallu.server.sending_enabled=true
 digiroad2.vallu.server.address=http://localhost:9002
 ```
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. 
-
-##3.3 Pys&auml;kkitiedot GTFS-muodossa Waltti-j&auml;rjestelm&auml;&auml;n##
-
-Waltti-j&auml;rjestelm&auml;&auml;n pys&auml;kit luetaan GTFS-muodossa. GTFS-formaatista voi lukea lis&auml;&auml; seuraavista linkeist&auml;:
-https://en.wikipedia.org/wiki/General_Transit_Feed_Specification
-https://developers.google.com/transit/gtfs/
-https://developers.google.com/transit/gtfs/reference ja t&auml;&auml;lt&auml; https://developers.google.com/transit/gtfs/reference#stops_fields Digiroadista toimitetaan Walttiin stops.txt-tiedosto
-
-Waltti-j&auml;rjestelm&auml;&auml; varten hy&ouml;dynt&auml;j&auml;t voivat hakea aineiston Liikenneviraston aineistojen latauspalvelusta http://aineistot.liikennevirasto.fi/gtfs/. Aineisto tehd&auml;&auml;n Livin FME Serverill&auml; ajastetusti, ja se p&auml;ivittyy sivustolle joka aamu TVV-aluekohtaisina paketteina.
-
-Tarvittaessa Waltti-irrotuksen voi tehd&auml; my&ouml;s omalla koneella valmiista FME-ty&ouml;tilasta.
 
 
 4. Kehitysymp&auml;rist&ouml;n asennus
@@ -158,85 +167,10 @@ __Projekti GitHubissa__
 
 Projektin kloonaaminen omalle koneelle edellytt&auml;&auml; tunnuksia [GitHubiin](https://github.com/), jossa versionhallinta toteutetaan. Lis&auml;ksi tarvitaan [Git client](http://git-scm.com/downloads) omalle koneelle. Client on k&auml;ytt&ouml;liittym&auml;, joita on olemassa sek&auml; graafisia ett&auml; komentorivipohjaisia. 
 
-Projektin kloonaaminen suoritetaan clientilla. Ensimm&auml;ist&auml; kertaa clienttia k&auml;ytett&auml;ess&auml; suoritetaan seuraavat komennot (komentorivipohjaisissa clienteissa):
+Projektin kloonaaminen suoritetaan clientilla.
 
-M&auml;&auml;ritell&auml;&auml;n nimimerkki, joka n&auml;kyy, kun commitoi uutta koodia GitHubiin. K&auml;yt&auml;nn&ouml;ss&auml; operaattorin ei tarvitse commitoida.
+Ohjeet kehitysymp&auml;rist&ouml;n asennukseen tarkemmin: https://github.com/finnishtransportagency/digiroad2 -> kohta README.md.
 
-```
-git config --global user.name "Nimimerkkisi"
-```
-
-Kloonataan projekti omalle koneelle.
-
-```
-git clone https://github.com/finnishtransportagency/digi-road-2.git
-```
-
-__Kehitysymp&auml;rist&ouml;__
-
-- Asenna [node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu npm).
-
-- Asenna bower. Ajetaan komentorivill&auml; komento:
-
-```
-npm install -g bower
-```
-
-- Hae ja asenna projektin tarvitsemat riippuvuudet:
-
-```
-npm install && bower install
-```
-
-- Asenna grunt:
-
-```
-npm install -g grunt-cli
-```
-
-- Alusta ja konfiguroi tietokantaymp&auml;rist&ouml;. Luo tiedosto bonecp.properties sijaintiin: digiroad2/digiroad2-oracle/conf/dev/bonecp.properties. Bonecp.properties sis&auml;lt&auml;&auml; tietokantayhteyden tiedot:
-
-```
-bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
-bonecp.username=<k&auml;ytt&auml;j&auml;tunnus>
-bonecp.password=<salasana>
-```
-
-Tietokantayhteyden tiedoista voi kysy&auml; Taru Vainikaiselta.
-
-Tietokanta ja skeema t&auml;ytyy alustaa aika ajoin (huomaa, kun kehitysymp&auml;rist&ouml; ei en&auml;&auml; toimi). Alustus suoritetaan ajamalla fixture-reset.sh-skripti komentorivill&auml;:
-
-```
-fixture-reset.sh
-```
-
-__Kehitysymp&auml;rist&ouml;n ajaminen__
-
-Kehitysymp&auml;rist&ouml;&auml; ajetaan koneella ajamalla seuraavat komennot aina, kun kehitysymp&auml;rist&ouml; k&auml;ynnistet&auml;&auml;n uudelleen:
-
-Kehitysserverin pystytys:
-
-```
-grunt server
-```
-
-API-palvelin:
-
-__Windows:__
-
-```
-sbt
-```
-
-```
-container:start
-```
-
-__Linux:__
-
-```
-./sbt '~;container:start /'
-```
 
 5. Geckoboard
 -----------
@@ -299,7 +233,7 @@ Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&au
 
 ##8.1 Tielinkit##
 
-Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
+Tielinkkien geometria p&auml;ivittyy VVH:ssa joka aamu pl. tilanteet, joissa VVH:n kanssa on sovittu, ett&auml; p&auml;ivitys laitetaan pois p&auml;&auml;lt&auml;. Digiroad-operaattori sopii t&auml;m&auml;n VVH:n kanssa. Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
 
 Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen kohdeluokka-tiedosta toiminnallinen luokka ja linkkityyppi:
 
@@ -309,13 +243,15 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 
 Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto Maanmittauslaitokselta VVH:n rajapinnasta. Jos Maanmittauslaitokselta tullutta tietoa liikennevirran suunnalle muokataan Digiroad-yll&auml;pitosovelluksessa, ei Maanmittauslaitoksen t&auml;st&auml; eri&auml;v&auml; tieto kumoa Digiroadissa olevaa tietoa (ns. override, tietokantaan tallennetaan MML:n tiedon korvaava tieto). N&auml;in varmistetaan, etteiv&auml;t yll&auml;pit&auml;jien tekem&auml;t muutokset kumoudu Maanmittauslaitoksen virheellisell&auml; tiedolla.
 
-Tielinkeille p&auml;ivitet&auml;&auml;n korjattavien linkkien lista (incomplete_links.html) automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
+Tielinkeille p&auml;ivitet&auml;&auml;n korjattavien linkkien lista (incomplete_links.html) automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. Tielinkilt&auml; tarkistetaan t&auml;ss&auml; yhteydess&auml;, ett&auml; silt&auml; l&ouml;ytyy Digiroadin tietokannasta toiminnallinen luokka ja tielinkin tyyppi. Jos jompi kumpi puuttuu, tielinkki tulee korjattavien tielinkkin listalle. Listan p&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
 ##8.2 Pistem&auml;iset tietolajit##
 
-Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, mink&auml; perusteella sovellus katsoo niiden olevan irti geometriasta. Pistem&auml;isi&auml; tietolajeja ovat esimerkiksi joukkoliikenteen pys&auml;kki, suojatie ja rautatien tasoristeys.
+Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, mink&auml; perusteella sovellus katsoo niiden olevan irti geometriasta. Pistem&auml;isi&auml; tietolajeja ovat esimerkiksi joukkoliikenteen pys&auml;kki, suojatie ja rautatien tasoristeys. Geometriasta irti olevaa pistett&auml; kutsutaan "kelluvaksi" (floating).
 
-Kun pistett&auml; tarkastellaan kartalla, ajetaan skripti tietokannassa tai kysell&auml;&auml;n kohteita Kalpa-Apista, sovellus tarkastaa, ovatko pisteet kiinni geometriassa. Geometriasta irti olevaa pistett&auml; kutsutaan "kelluvaksi". Tarkastus perustuu siihen, ett&auml; pisteelle on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
+Pisteen kelluvuus tulee tarkastetuksi kolmessa eri tilanteessa: kun pistett&auml; tarkastellaan kartalla, ajetaan skripti tietokannassa tai kysell&auml;&auml;n kohteita Kalpa-Apista (kohteiden kyseleminen Kalpa-Apista vastaa kartan raahaamista, mutta se on helppo tapa k&auml;yd&auml; koko Suomi l&auml;pi). T&auml;ll&auml; hetkell&auml; ole kellumisen tarkastavia skriptej&auml; k&auml;yt&ouml;ss&auml;, mutta kun pisteet tuodaan ensimm&auml;isen kerran tietokantaan, import-skripti p&auml;ivitt&auml;&auml; kellumistiedon. T&auml;m&auml;n j&auml;lkeen k&auml;tevin tapa p&auml;ivitt&auml;&auml; tuo tieto kaikilta kohteilta on kysell&auml; ne l&auml;pi Kalpa-Apin avulla. T&auml;m&auml;n tekee toistaiseksi Digiroad-operaattorin pyynn&ouml;st&auml; Karttakeskuksen Riikka Nousiainen, joka tekee Digiroad-exporttien FME-ty&ouml;tilat.
+
+Tarkastus perustuu siihen, ett&auml; pisteelle on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
 
 1. L&ouml;ytyyk&ouml; ko. pisteen linkin MML-ID:ll&auml; edelleen tielinkki ja kuntakoodi s&auml;ilyy samana.
     a. Ei l&ouml;ydy -> Kelluu
@@ -324,9 +260,9 @@ Kun pistett&auml; tarkastellaan kartalla, ajetaan skripti tietokannassa tai kyse
     a. Jos et&auml;isyys tietokantaan tallennettujen koordinaattien ja linkin geometrian + pys&auml;kin m-arvon v&auml;lill&auml; on yli 3 metri&auml; -> Kelluu
     b. Jos et&auml;isyys alle tai 3 metri&auml;, pisteen katsotaan olevan tarpeeksi l&auml;hell&auml; samaa sijaintia kuin ennen geometrian p&auml;ivittymist&auml; ja se ei kellu.
 
-Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattisesti tuotantokannassa joka y&ouml; samassa yhteydess&auml;, kun ylemp&auml;n&auml; esitelty pys&auml;kki-csv (Vallu-export) ajetaan.
+Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattisesti tuotantokannassa joka y&ouml; samassa yhteydess&auml;, kun ylemp&auml;n&auml; esitelty pys&auml;kki-csv (Vallu-export) ajetaan. Jos Vallu-export ei ole mennyt l&auml;pi kokonaan, ei my&ouml;sk&auml;&auml;n kelluvien pys&auml;kkien listaus ole p&auml;ivittynyt kokonaisuudessaan.
 
-Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&auml; kohteet l&auml;pi Kalpa-Apista (esim. FME-ajon avulla).
+Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&auml; kohteet l&auml;pi Kalpa-Apista (esim. FME-ajon avulla). My&ouml;s jos kelluvien pys&auml;kkien listaus ei ole p&auml;ivittynyt, voi kohteet kysell&auml; l&auml;pi Kalpa-Apista.
     
 ##8.3 Nopeusrajoitus##
 
@@ -344,7 +280,7 @@ Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/tieto
 Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 
-Esim: https://devtest.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=5 (pys&auml;kit kunnasta 5)
+Esim: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=5 (pys&auml;kit kunnasta 5)
 
 ![Kalpa API.](k160.JPG)
 
@@ -379,21 +315,9 @@ Esterakennelma obstacles
 Rautatien tasoristeys railway_crossings
 Opastustaulu ja sen informaatio	directional_traffic_signs
 
-Jokaisen ymp&auml;rist&ouml;n Kalpa-APIin on oma salasanansa. Salasanat voi kysy&auml; Digiroad2-kehitystiimilt&auml;. K&auml;ytt&auml;j&auml;tunnus on kaikkiin sama (kalpa).
+Jokaisen ymp&auml;rist&ouml;n Kalpa-APIin on oma salasanansa. Salasanoja hallinnoi Digiroadin kehitystiimi. K&auml;ytt&auml;j&auml;tunnus on kaikkiin sama (kalpa).
 
 Liikenneviraston sis&auml;verkossa tai SSH-yhteyden kautta Kalpa-APIa voi k&auml;ytt&auml;&auml; IP-osoitteiden avulla, jolloin ei tarvitse erikseen autentikoitua Livin extranet-tunnuksilla. (IP-osoitteet voisi lis&auml;t&auml;, mutta operaattori ei toistaiseksi tarvitse n&auml;it&auml;)
-
-Tietokannasta ominaisuustiedot siirtyv&auml;t Kalpa-APIin sellaisenaan. Kalpa-APIsta tiedot k&auml;ytet&auml;&auml;n exportteihin p&auml;&auml;asiassa tietokannasta tulevassa muodossa. T&auml;h&auml;n on kuitenkin muutamia poikkeuksia, jotta tietojen hy&ouml;dynt&auml;minen olisi hy&ouml;dynt&auml;jille helpompaa. 
-
-Muutokset tehd&auml;&auml;n exporttien FME-ty&ouml;tilassa.
-
-1. Suuntatiedollisten pisteiden astesuunnan eli suuntiman korjaus (esim. pys&auml;kit): Pisteen suunta on tallennettu tietokantaan suhteessa digitointisuuntaan. Lis&auml;ksi pisteell&auml; on tallennettuna tielinkin kaltevuudesta suunta astelukuna. N&auml;iden kahden yhdistelm&auml;ll&auml; voidaan laskea pisteen todellinen suuntima. Ilman korjausta suuntimaa ei voi hy&ouml;dynt&auml;&auml; ilman digitointisuuntaa. Exportteihin vied&auml;&auml;n todellinen suuntima (asteina 0-360):
-	a. Jos pisteen vaikutussuunta on digitointisuuntaan (=2): asteluku eli suuntima on tietokantaan tallennettu (ei korjauksia)
-	b. Jos pisteen vaikutussuunta on digitointisuuntaa vastaan (=3): jos suuntima <= 180, niin suuntima on suuntima+180, esim. 175+180=355 ja jos suuntima on > 180, niin suuntima on suuntima-180, eli esim. 267-180=84
-
-2. Kaikille kohteille on lis&auml;tty kuntanumero (tielinkin kuntanumeron perusteella)
-
-3. Pys&auml;kin ensimm&auml;inen ja viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; on muutettu pp.kk.vvvv -muotoon, jotta kaikki exporttien p&auml;iv&auml;m&auml;&auml;r&auml;t olisivat samassa muodossa
 
 
 10. Kuntaliitosten aiheuttamat muutokset vuodenvaihteessa
@@ -401,7 +325,7 @@ Muutokset tehd&auml;&auml;n exporttien FME-ty&ouml;tilassa.
 
 Vuodenvaihteessa tapahtuvat kuntaliitokset aiheuttavat muutoksia sek&auml; OTH:ssa ett&auml; VVH:ssa. VVH:ssa p&auml;ivitet&auml;&auml;n tielinkkien kuntakoodit vastaamaan uutta tilannetta. OTH:ssa on pisteille tallennettu kuntakoodi tietokantaan, mink&auml; vuoksi nuo kuntakoodit tulee korjata vastaamaan uutta tilannetta tietokannassa. 
 
-Seuraavat muutokset tulee huomioida kuntaliitosten yhteydess&auml;:
+Seuraavat muutokset tulee huomioida kuntaliitosten yhteydess&auml; (kohtien j&auml;rjestys ei ole n&auml;in tarkka, mutta kaikki ty&ouml;vaiheet tulee suorittaa):
 
 1. VVH p&auml;ivitt&auml;&auml; kuntakoodit -> Kun VVH:ssa p&auml;ivitet&auml;&auml;n kuntakoodit, muuttuvat OTH:n pistem&auml;iset kohteet kelluviksi
 2. OTH:ssa p&auml;ivitet&auml;&auml;n asset-tauluun kuntakoodit tietokantaan -> kohteet eiv&auml;t kellu en&auml;&auml;
