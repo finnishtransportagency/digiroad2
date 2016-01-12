@@ -33,7 +33,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
-                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider)
+                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider,
+                   val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
   extends ScalatraServlet
   with JacksonJsonSupport
   with CorsSupport
@@ -633,6 +634,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/directionalTrafficSigns")(createNewPointAsset(directionalTrafficSignService))
   put("/directionalTrafficSigns/:id")(updatePointAsset(directionalTrafficSignService))
   delete("/directionalTrafficSigns/:id")(deletePointAsset(directionalTrafficSignService))
+
+  get("/trafficLights")(getPointAssets(trafficLightService))
+  get("/trafficLights/:id")(getPointAssetById(trafficLightService))
+  get("/trafficLights/floating")(getFloatingPointAssets(trafficLightService))
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
