@@ -198,10 +198,10 @@
       new OpenLayersRule().where('verticalLevel').is(4).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' })
     ];
     var unknownVerticalLevelDefaultRules = [
-      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new OpenLayersRule().where('verticalLevel').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
     var unknownVerticalLevelUnselectedRules = [
-      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new OpenLayersRule().where('verticalLevel').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
 
     // Vertical level default style map
