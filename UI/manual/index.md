@@ -1739,7 +1739,7 @@ _Eurooppatienumeron tietojen katselu._
 Eurooppatienumero viivageometrialle voi antaa muokkaustilassa tietoja. Eurooppatienumeroa voi muokata kolmella tavalla:
 
 1.	Koko eurooppatienumeroketjulle
-2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle
 3.	Monivalinnan avulla kokonaiselle alueelle.
 
 Jos samalla tielinkill&auml; on kaksi eurooppatienumeroa, ne erotetaan lis&auml;&auml;m&auml;ll&auml; rivin vaihto tekstikentt&auml;&auml;n (enter), esimerkiksi
@@ -1781,3 +1781,66 @@ Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvo
 ![Katkaisu.](k174.JPG)
 
 _Eurooppatienumeron katkaiseminen._
+
+25. Liittym&auml;numero
+----------------------
+
+Liittym&auml;numeroilla tarkoitetaan numeroituja moottoriteiden eritasoliittymi&auml;. Liittym&auml;numerot annetaan Digiroadissa rampeille. Karttan&auml;kym&auml;&auml;n voi valita liittym&auml;numerot tietolajit-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on liittym&auml;numerot.
+ 
+![Valinta.](k175.JPG)
+
+_Liittym&auml;numeron valinta._
+
+##Liittym&auml;numeron tietojen katselu##
+
+Liittym&auml;numeron voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko liittym&auml;numeroketju, eli osuus, jossa liittym&auml;numerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla liittym&auml;numerollista tielinkki&auml;. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu liittym&auml;numeron ominaisuustieton&auml;kym&auml;.
+
+Ominaisuustieton&auml;kym&auml;ss&auml; on liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](k176.JPG)
+
+_Liittym&auml;numeron tietojen katselu._
+
+##Liittym&auml;numeron muokkaus##
+
+Liittym&auml;numeron viivageometrialle voi antaa muokkaustilassa tietoja. Liittym&auml;numeroa voi muokata kolmella tavalla:
+
+1.	Koko liittym&auml;numeroketjulle
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle
+3.	Monivalinnan avulla kokonaiselle alueelle (ei yleens&auml; tarpeen t&auml;ss&auml; tietolajissa).
+
+###Liittym&auml;numeron muokkaus ja lis&auml;ys###
+
+Muokattava tielinkki valitaan klikkaamalla sen geometriaa. Kerran klikkaamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla kohdetta. Tekstikentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; liittym&auml;numero (2).
+
+Tielinkit, joilla ei ole liittym&auml;numeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi liittym&auml;numero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan liittym&auml;numero(t) ja testikentt&auml;&auml;n (2) kirjoitetaan liittym&auml;n numero. Yhdell&auml; tielinkill&auml; on yleens&auml; yksi liittym&auml;numero, mutta niit&auml; voi olla my&ouml;s kaksi tai useampi. Ne eritell&auml;&auml;n rivinvaihdolla (enter) tekstikent&auml;ss&auml; (2).
+
+![Muokkaus.](k177.JPG)
+
+_Liittym&auml;numeron muokkaus._
+
+###Liittym&auml;numeron poistaminen###
+
+Liittym&auml;numeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei liittym&auml;numeroa. Muutokset tallentuu tallenna-napista (4) tai ne voi kumota peruuta-napista (5). Siirry katselutilaan –painikkeesta (6) p&auml;&auml;see pois muokkaustilasta.
+
+###Useamman liittym&auml;numeron muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin liittym&auml;numeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (10), jossa kirjataan liittym&auml;numero ko. viivoille (11). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiempien liittym&auml;numeroiden tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
+ 
+![Muokkaus2.](k178.JPG)
+
+_Useamman liittym&auml;numeron tietojen muokkaus kerralla._
+
+###Liittym&auml;numeron katkaiseminen###
+
+Liittym&auml;numeron voi jakaa kahteen osaan leikkausty&ouml;kalulla (7). Leikkausty&ouml;kalulla klikataan kohteen geometriasta kohtaa, josta se halutaan katkaista. Liittym&auml;numeron geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
+
+Liittym&auml;numeron katkaisussa uusille rajoituksille valitaan arvot oikean laidan radionapeista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (9). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](k179.JPG)
+
+_Liittym&auml;numeron katkaiseminen._
