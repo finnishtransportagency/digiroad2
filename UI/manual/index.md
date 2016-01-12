@@ -1714,7 +1714,7 @@ Palvelupiste voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis
 24. Eurooppatienumero
 ----------------------
 
-Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot ovat muotoa E+nro. Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajit-paletista (1). Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
+Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot ovat muotoa E+nro. Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajit-paletista (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
  
 ![Valinta.](k170.JPG)
 
@@ -1772,7 +1772,7 @@ _Useamman eurooppatienumeron tietojen muokkaus kerralla._
 
 ###Eurooppatienumeron katkaiseminen###
 
-Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla klikataan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
+Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla klikataan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
 
 Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (10). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (11). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
 
@@ -1793,7 +1793,7 @@ _Liittym&auml;numeron valinta._
 
 ##Liittym&auml;numeron tietojen katselu##
 
-Liittym&auml;numeron voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko liittym&auml;numeroketju, eli osuus, jossa liittym&auml;numerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla liittym&auml;numerollista tielinkki&auml;. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu liittym&auml;numeron ominaisuustieton&auml;kym&auml;.
+Liittym&auml;numeron voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko liittym&auml;numeroketju, eli osuus, jossa liittym&auml;numerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla liittym&auml;numerollista tielinkki&auml;. Valitun tielinkkiketjun tai yksitt&auml;isen kohteen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu liittym&auml;numeron ominaisuustieton&auml;kym&auml;.
 
 Ominaisuustieton&auml;kym&auml;ss&auml; on liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
@@ -1837,7 +1837,7 @@ _Useamman liittym&auml;numeron tietojen muokkaus kerralla._
 
 Liittym&auml;numeron voi jakaa kahteen osaan leikkausty&ouml;kalulla (7). Leikkausty&ouml;kalulla klikataan kohteen geometriasta kohtaa, josta se halutaan katkaista. Liittym&auml;numeron geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
 
-Liittym&auml;numeron katkaisussa uusille rajoituksille valitaan arvot oikean laidan radionapeista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (9). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+Liittym&auml;numeron katkaisussa kohteille valitaan arvot oikean laidan radionapeista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (9). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
 
