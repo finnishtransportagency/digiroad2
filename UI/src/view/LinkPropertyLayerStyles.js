@@ -189,17 +189,6 @@
     // --- Vertical level style maps
 
     var verticalLevelRules = [
-      //20:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/20.svg' },
-      //30:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/30.svg' },
-      //40:  { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/40.svg' },
-      //50:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/50.svg' },
-      //60:  { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/60.svg' },
-      //70:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/70.svg' },
-      //80:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/80.svg' },
-      //90:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/90.svg' },
-      //100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
-      //120: { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/120.svg' }
-
       new OpenLayersRule().where('verticalLevel').is(-11).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('verticalLevel').is(-1).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
       new OpenLayersRule().where('verticalLevel').is(0).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
