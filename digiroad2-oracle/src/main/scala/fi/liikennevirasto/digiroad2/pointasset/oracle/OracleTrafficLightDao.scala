@@ -16,4 +16,10 @@ case class TrafficLightToBePersisted(mmlId: Long, lon: Double, lat: Double, mVal
 
 object OracleTrafficLightDao {
   // TODO: implementation
+
+  def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
+
+    Seq.empty
+
+  }
 }
