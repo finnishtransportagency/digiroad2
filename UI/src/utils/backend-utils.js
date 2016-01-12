@@ -270,6 +270,10 @@
       return $.getJSON('api/pedestrianCrossings/floating');
     };
 
+    this.getFloatingTrafficLights = function() {
+      return $.getJSON('api/trafficLights/floating');
+    };
+
     this.getFloatingObstacles = function() {
       return $.getJSON('api/obstacles/floating');
     };

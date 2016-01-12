@@ -29,6 +29,7 @@
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
+        'work-list/trafficLights': 'trafficLightWorkList',
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList'
@@ -116,6 +117,10 @@
 
       pedestrianCrossingWorkList: function () {
         eventbus.trigger('workList:select', 'pedestrianCrossings', backend.getFloatinPedestrianCrossings());
+      },
+
+      trafficLightWorkList: function () {
+        eventbus.trigger('workList:select', 'trafficLights', backend.getFloatingTrafficLights());
       },
 
       obstacleWorkList: function () {
