@@ -87,13 +87,13 @@
 
     var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
     var verticalLevels = [
-      [-11, 'Tunneli'],
-      [-1, 'Alikulku'],
-      [0, 'Maan pinnalla'],
-      [1, 'Silta, Taso 1'],
-      [2, 'Silta, Taso 2'],
+      [4, 'Silta, Taso 4'],
       [3, 'Silta, Taso 3'],
-      [4, 'Silta, Taso 4']
+      [2, 'Silta, Taso 2'],
+      [1, 'Silta, Taso 1'],
+      [0, 'Maan pinnalla'],
+      [-1, 'Alikulku'],
+      [-11, 'Tunneli']
     ];
     var verticalLevelLegendEntries = _.map(verticalLevels, function(verticalLevel) {
       return '<div class="legend-entry">' +

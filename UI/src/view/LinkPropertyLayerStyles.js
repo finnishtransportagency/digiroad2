@@ -200,12 +200,12 @@
       //100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
       //120: { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/120.svg' }
 
-      new OpenLayersRule().where('verticalLevel').is(-11).use({ strokeColor: '#0cd', externalGraphic: 'images/link-properties/arrow-drop-cyan.svg' }),
-      new OpenLayersRule().where('verticalLevel').is(-1).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(-11).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(-1).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
       new OpenLayersRule().where('verticalLevel').is(0).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
       new OpenLayersRule().where('verticalLevel').is(1).use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
-      new OpenLayersRule().where('verticalLevel').is(2).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
-      new OpenLayersRule().where('verticalLevel').is(3).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(2).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('verticalLevel').is(3).use({ strokeColor: '#0cd', externalGraphic: 'images/link-properties/arrow-drop-cyan.svg' }),
       new OpenLayersRule().where('verticalLevel').is(4).use({ strokeColor: '#444', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
     var unknownVerticalLevelDefaultRules = [
