@@ -20,12 +20,6 @@
       jQuery('.spinner-overlay').remove();
     });
 
-    var pointAssetSaved = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saved'; }).join(' ');
-    var linearAssetsSaved = _.map(singleElementEventNames, function(name) { return name + ':saved'; }).join(' ');
-
-    eventbus.on('asset:saved speedLimit:saved linkProperties:saved manoeuvres:saved ' + linearAssetsSaved + ' ' + pointAssetSaved, function() {
-      jQuery('.spinner-overlay').remove();
-    });
     var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
     eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
