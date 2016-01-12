@@ -299,6 +299,7 @@
         .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.directionalTrafficSigns))
         .concat(getPointAsset(assetType.pedestrianCrossings))
+        .concat(getPointAsset(assetType.trafficLights))
         .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))

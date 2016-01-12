@@ -24,7 +24,8 @@
     directionalTrafficSigns: 240,
     servicePoints: 250,
     europeanRoads: 260,
-    exitNumbers: 270
+    exitNumbers: 270,
+    trafficLights: 280
   };
 
   root.linearAssetSpecs = [
@@ -412,6 +413,21 @@
         singleFloatingAssetLabel: 'palvelupisteen',
         manyFloatingAssetsLabel: 'palvelupisteet',
         newAssetLabel: 'palvelupiste'
+      }
+    },
+    {
+      typeId: assetType.trafficLights,
+      layerName: 'trafficLights',
+      title: 'Liikennevalot',
+      newAsset: {  },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalot'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        singleFloatingAssetLabel: 'liikennevalojen',
+        manyFloatingAssetsLabel: 'liikennevalot',
+        newAssetLabel: 'liikennevalot'
       }
     }
   ];
