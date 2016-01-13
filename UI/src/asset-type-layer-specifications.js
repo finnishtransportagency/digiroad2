@@ -427,7 +427,7 @@
       formLabels: {
         singleFloatingAssetLabel: 'liikennevalojen',
         manyFloatingAssetsLabel: 'liikennevalot',
-        newAssetLabel: 'liikennevalot'
+        newAssetLabel: 'liikennevalo'
       }
     }
   ];
