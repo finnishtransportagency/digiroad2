@@ -639,6 +639,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/trafficLights/:id")(getPointAssetById(trafficLightService))
   get("/trafficLights/floating")(getFloatingPointAssets(trafficLightService))
   post("/trafficLights")(createNewPointAsset(trafficLightService))
+  put("/trafficLights/:id")(updatePointAsset(trafficLightService))
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()

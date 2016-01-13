@@ -70,4 +70,18 @@ object OracleTrafficLightDao {
     id
   }
 
+  def update(id: Long, trafficLight: TrafficLightToBePersisted) = {
+    sqlu""" update asset set municipality_code = ${trafficLight.municipalityCode} where id = $id """.execute
+    updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
+    updateAssetModified(id, trafficLight.createdBy).execute
+
+    sqlu"""
+      update lrm_position
+       set
+       start_measure = ${trafficLight.mValue},
+       mml_id = ${trafficLight.mmlId}
+       where id = (select position_id from asset_link where asset_id = $id)
+    """.execute
+    id
+  }
 }

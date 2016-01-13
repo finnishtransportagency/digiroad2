@@ -11,8 +11,11 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
   override def typeId: Int = 280
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
-    // TODO: implementation
-    0
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    withDynTransaction {
+      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
+    }
+    id
   }
 
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
