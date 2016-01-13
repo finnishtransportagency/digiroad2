@@ -10,9 +10,6 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
 
-/**
-  * Created by venholat on 13.1.2016.
-  */
 class TrafficLightServiceSpec  extends FunSuite with Matchers {
   val testUser = User(
     id = 1,
@@ -57,7 +54,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  ignore("Expire pedestrian crossing") {
+  ignore("Expire traffic light") {
     runWithRollback {
       service.getPersistedAssetsByIds(Set(600029)).length should be(1)
       service.expire(600029, testUser.username)
