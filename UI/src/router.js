@@ -22,6 +22,7 @@
         'linkProperty/:mmlId': 'linkProperty',
         'speedLimit/:mmlId': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
+        'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
@@ -76,6 +77,14 @@
         backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
           map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
           models.selectedPedestrianCrossing.open(result);
+        });
+      },
+
+      trafficLights: function (id) {
+        applicationModel.selectLayer('trafficLights');
+        backend.getPointAssetById(id, 'trafficLights').then(function (result) {
+          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          models.selectedTrafficLight.open(result);
         });
       },
 
