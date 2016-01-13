@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficLightDao, TrafficLight}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{TrafficLightToBePersisted, OracleTrafficLightDao, TrafficLight}
 
 case class IncomingTrafficLight(lon: Double, lat: Double, mmlId: Long) extends IncomingPointAsset
 
@@ -24,7 +24,9 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
   }
 
   override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
-    // TODO: implementation
-    0
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+    withDynTransaction {
+      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username), username)
+    }
   }
 }

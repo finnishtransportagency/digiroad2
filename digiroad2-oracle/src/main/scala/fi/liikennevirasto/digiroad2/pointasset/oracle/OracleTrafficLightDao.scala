@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
-import fi.liikennevirasto.digiroad2.PersistedPointAsset
+import fi.liikennevirasto.digiroad2.{Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.asset.oracle.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -49,4 +50,24 @@ object OracleTrafficLightDao {
       TrafficLight(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
+
+  def create(trafficLight: TrafficLightToBePersisted, username: String): Long = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
+        into lrm_position(id, start_measure, mml_id)
+        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.mmlId})
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+      select * from dual
+    """.execute
+    updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
+
+    id
+  }
+
 }
