@@ -85,5 +85,41 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       ))
     }
   }
+
+  test("Update traffic light") {
+    val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
+    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+      VVHRoadlink(388553548, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockVVHClient.fetchByMunicipality(91)).thenReturn(Seq(
+      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+
+    runWithRollback {
+      val beforeUpdate = service.getByMunicipality(235).find(_.id == 600070).get
+      beforeUpdate.id should equal(600070)
+      beforeUpdate.lon should equal(374101.60105163435)
+      beforeUpdate.lat should equal(6677437.872017591)
+      beforeUpdate.mValue should equal(16.592)
+      beforeUpdate.mmlId should equal(388553548)
+      beforeUpdate.municipalityCode should equal(235)
+      beforeUpdate.createdBy should equal(Some("dr2_test_data"))
+      beforeUpdate.createdAt.isDefined should equal(true)
+      beforeUpdate.modifiedBy should equal(None)
+      beforeUpdate.modifiedAt should equal(None)
+
+      service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test")
+
+      val afterUpdate = service.getByMunicipality(91).find(_.id == 600070).get
+      afterUpdate.id should equal(600070)
+      afterUpdate.lon should equal(100)
+      afterUpdate.lat should equal(0)
+      afterUpdate.mValue should equal(100)
+      afterUpdate.mmlId should equal(123)
+      afterUpdate.municipalityCode should equal(91)
+      afterUpdate.createdBy should equal(Some("dr2_test_data"))
+      afterUpdate.createdAt should equal(beforeUpdate.createdAt)
+      afterUpdate.modifiedBy should equal(Some("test"))
+      afterUpdate.modifiedAt.isDefined should equal(true)
+    }
+  }
 }
 
