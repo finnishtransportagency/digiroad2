@@ -235,6 +235,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def trafficLightsToApi(trafficLights: Seq[TrafficLight]): Seq[Map[String, Any]] = {
+    trafficLights.filterNot(_.floating).map { trafficLight =>
+      Map("id" -> trafficLight.id,
+        "point" -> Point(trafficLight.lon, trafficLight.lat),
+        "mmlId" -> trafficLight.mmlId,
+        "m_value" -> trafficLight.mValue,
+        latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt))
+    }
+  }
+
   def directionalTrafficSignsToApi(directionalTrafficSign: Seq[DirectionalTrafficSign]): Seq[Map[String, Any]] = {
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
@@ -316,7 +326,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "length_limits" => linearAssetsToApi(80, municipalityNumber)
         case "width_limits" => linearAssetsToApi(90, municipalityNumber)
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
-        case "traffic_lights" => ReadOnlyPointAssetService.getByMunicipality(9, municipalityNumber)
+        case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
         case "directional_traffic_signs" => directionalTrafficSignsToApi(directionalTrafficSignService.getByMunicipality(municipalityNumber))
         case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))

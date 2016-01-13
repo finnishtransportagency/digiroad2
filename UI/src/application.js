@@ -160,11 +160,13 @@
       setupProjections();
       var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
+      var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
+          { selectedTrafficLight: selectedTrafficLight },
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
           { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign  }
@@ -299,6 +301,7 @@
         .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.directionalTrafficSigns))
         .concat(getPointAsset(assetType.pedestrianCrossings))
+        .concat(getPointAsset(assetType.trafficLights))
         .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
         .concat(getLinearAsset(assetType.congestionTendency))

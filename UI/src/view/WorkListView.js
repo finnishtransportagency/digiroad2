@@ -36,6 +36,7 @@
       linkProperty: 'Korjattavien linkkien lista',
       massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
       pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
+      trafficLights: 'Geometrian ulkopuolelle jääneet liikennevalot',
       obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
       railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
       directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut'

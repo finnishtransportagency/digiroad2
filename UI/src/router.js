@@ -22,6 +22,7 @@
         'linkProperty/:mmlId': 'linkProperty',
         'speedLimit/:mmlId': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
+        'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
@@ -29,6 +30,7 @@
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
         'work-list/pedestrianCrossings': 'pedestrianCrossingWorkList',
+        'work-list/trafficLights': 'trafficLightWorkList',
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList'
@@ -78,6 +80,14 @@
         });
       },
 
+      trafficLights: function (id) {
+        applicationModel.selectLayer('trafficLights');
+        backend.getPointAssetById(id, 'trafficLights').then(function (result) {
+          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          models.selectedTrafficLight.open(result);
+        });
+      },
+
       obstacles: function (id) {
         applicationModel.selectLayer('obstacles');
         backend.getPointAssetById(id, 'obstacles').then(function (result) {
@@ -116,6 +126,10 @@
 
       pedestrianCrossingWorkList: function () {
         eventbus.trigger('workList:select', 'pedestrianCrossings', backend.getFloatinPedestrianCrossings());
+      },
+
+      trafficLightWorkList: function () {
+        eventbus.trigger('workList:select', 'trafficLights', backend.getFloatingTrafficLights());
       },
 
       obstacleWorkList: function () {
