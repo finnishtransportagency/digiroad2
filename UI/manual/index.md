@@ -119,7 +119,7 @@ Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-3. Tielinkit
+3. Tielinkki
 ------------
 
 Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista Tielinkit.
@@ -219,7 +219,7 @@ _Korjattava linkki._
 
 _Korjattavien linkkien lista._
 
-4. Joukkoliikenteen pys&auml;kit
+4. Joukkoliikenteen pys&auml;kki
 --------------------------------
 
 Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
@@ -407,7 +407,7 @@ Vanhan pys&auml;kin poistamisen vaiheet:
 
 _Joukkoliikenteen pys&auml;kin poistaminen._
 
-5. Nopeusrajoitukset
+5. Nopeusrajoitus
 --------------------
 
 Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. Lis&auml;ksi nopeusrajoituksilla on ympyr&auml;, joka kertoo nopeusrajoituksen arvon. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
@@ -531,7 +531,7 @@ Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoi
 
 _Tuntemattomien nopeusrajoitusten lista._
 
-6. K&auml;&auml;ntymisrajoitukset
+6. K&auml;&auml;ntymisrajoitus
 ----------------------------------
 
 Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset paksuuntuvat, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymisrajoitukset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml;, on sininen, ja linkki, jolle ei saa k&auml;&auml;nty&auml; on visualisoitu punaisella katkoviivalla. Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
@@ -1172,6 +1172,8 @@ _Joukkoliikennekaistageometrian katkaisu._
 
 16. Kaistojen lukum&auml;&auml;r&auml; (toistaiseksi n&auml;kyviss&auml; vain operaattorik&auml;ytt&auml;jille)
 ----------------------
+
+Kaistojen lukum&auml;&auml;r&auml; n&auml;kyy t&auml;ll&auml; hetkell&auml; vain operaattorik&auml;ytt&auml;jille, koska tietolajia ei ole m&auml;&auml;ritelty uutee Digiroad-j&auml;rjestelm&auml;&auml;n.
 
 Kartalle voi valita tietolajit-paletista (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
 
@@ -1849,3 +1851,51 @@ Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvo
 ![Katkaisu.](k179.JPG)
 
 _Liittym&auml;numeron katkaiseminen._
+
+26. Liikennevalo
+----------------------
+
+Valo-ohjatuissa liittymiss&auml; liikennevalo on kuvattu pisteen&auml;. Karttan&auml;kym&auml;&auml;n voi valita liikennevalot tietolajit-paletista (1). Kartalle tulevat esiin liikennevalot sinisen&auml; pisteen&auml;. Punaisella pisteell&auml; olevat liikennevalot ovat geometrian ulkopuolella olevia liikennevaloja.
+ 
+![Valinta.](k181.JPG)
+
+_Liikennevalojen valinta._
+
+##Liikennevalon tietojen katselu##
+
+Yksitt&auml;isen liikennevalon voi valita klikkaamalla kartalta sen geometriaa.  Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu liikennevalon ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy liikennevalon ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
+
+![Katselu.](k182.JPG)
+
+_Liikennevalokohteen katselu._
+
+###Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot###
+
+Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot on korostettu kartalla punaisella pisteell&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennevaloa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+![punainen.](k183.JPG)
+
+_Geometrian ulkopuolinen liikennevalo on n&auml;kyy kartalla punaisena pisteen&auml;._
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennevaloilla on oma lista (2). Liikennevalot on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennevalot, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Liikennevalosta on listassa linkki, josta p&auml;&auml;see suoraan pisteen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Lista.](k184.JPG)
+
+_Geometrian ulkopuoliset liikennevalot._
+
+##Liikennevalon muokkaus##
+
+Liikennevalon voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden kohteen muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Liikennevalon poisto, siirto ja lis&auml;ys###
+
+Muokattava kohde valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu liikennevalo voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla (6).
+
+Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla (6).
+
+![Muokkaus.](k185.JPG)
+
+_Liikennevalokohteiden muokkaus._
+
+Liikennevalomerkint&auml; voidaan lis&auml;t&auml; klikkaamalla vasemmassa yl&auml;kulmasta plussaa eli lis&auml;ys-ty&ouml;kalua (7). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
+
