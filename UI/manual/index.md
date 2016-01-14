@@ -130,7 +130,7 @@ _Tielinkit._
 
 ####Tielinkkien haku####
 
-Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
+Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. MML-ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; MML-ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
  <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
@@ -138,11 +138,13 @@ jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml
 
 ##Tielinkin tietojen katselu##
 
-Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame), tieosoite ja osoitenumerot vasemmalla ja oikealla.
+Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, tieto tasosijainnista eli silta, alikulku tai tunneli, kuntanumero, tien nimi (suomi, ruotsi, saame), tieosoite ja osoitenumerot vasemmalla ja oikealla.
 
 Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
 
 Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tai tiennumerolla on useita tien nimi&auml;, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
+
+Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustieton&auml;kym&auml;ss&auml;. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in tuplaklikkaamalla.
 
 ![Tielinkkiketju](k54.jpg)
 
@@ -152,7 +154,7 @@ _Tielinkkiketjun valinta (klikattu kerran)._
 
 _Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
 
-Tielinkeille voi valita visualisoinnin Tietolajit -paletista tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin tai hallinnollisen luokan mukaan. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t Tietolajit-paletissa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
+Tielinkeille voi valita visualisoinnin Tietolajit -paletista tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
 Toiminnallisen luokan selitteet ovat:
 
@@ -177,6 +179,9 @@ _Tielinkit visualisoitu tielinkin tyypin mukaan._
 
 _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
+![Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan](k180.JPG)
+
+_Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
 ##Tielinkin ominaisuustietojen muokkaus##
 
