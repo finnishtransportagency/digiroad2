@@ -10,9 +10,10 @@ object TestConfiguration {
   val proxyHost: String = System.getProperty("proxyHost")
   val noProxyFor: Seq[String] = System.getProperty("noProxyFor").split(',')
   val httpConf = http
-    .proxy(Proxy(proxyHost, 80)
-      .httpsPort(80))
-    .noProxyFor(noProxyFor: _*)
+// TODO: enable proxy when 2.1.8 version is out - see https://github.com/gatling/gatling/issues/2795
+//    .proxy(Proxy(proxyHost, 80)
+//      .httpsPort(80))
+//    .noProxyFor(noProxyFor: _*)
     .baseURL(baseUrl)
     .header("Cookie", "testusername=tarutest")
     .header("OAM_REMOTE_USER", TestConfiguration.username)
