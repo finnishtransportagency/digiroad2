@@ -8,10 +8,11 @@ object TestConfiguration {
   val username: String = System.getProperty("username")
   val baseUrl: String = "http://" + host + "/digiroad"
   val proxyHost: String = System.getProperty("proxyHost")
+  val noProxyFor: Seq[String] = System.getProperty("noProxyFor").split(',')
   val httpConf = http
     .proxy(Proxy(proxyHost, 80)
       .httpsPort(80))
-    .noProxyFor(host)
+    .noProxyFor(noProxyFor: _*)
     .baseURL(baseUrl)
     .header("Cookie", "testusername=tarutest")
     .header("OAM_REMOTE_USER", TestConfiguration.username)
