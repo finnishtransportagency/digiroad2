@@ -418,10 +418,10 @@
     {
       typeId: assetType.trafficLights,
       layerName: 'trafficLights',
-      title: 'Liikennevalot',
+      title: 'Liikennevalo',
       newAsset: {  },
       legendValues: [
-        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalot'},
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
         {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
       ],
       formLabels: {
