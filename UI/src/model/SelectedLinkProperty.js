@@ -95,7 +95,7 @@
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
-      eventbus.trigger('linkProperties:cancelled', originalData);
+      eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
     };
 
     var setLinkProperty = function(key, value) {
