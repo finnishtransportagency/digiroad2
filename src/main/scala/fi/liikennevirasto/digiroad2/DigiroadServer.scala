@@ -59,6 +59,7 @@ class NLSProxyServlet extends ProxyServlet {
       val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
+      client.setIdleTimeout(60000)
     }
     client
   }
