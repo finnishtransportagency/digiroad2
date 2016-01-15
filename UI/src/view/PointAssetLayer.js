@@ -62,11 +62,13 @@
         if (selectedAsset.isSelected(feature.attributes)) {
           var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
           var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
-          var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
-          roadLayer.selectRoadLink(nearestLine);
-          feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
-          var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-          selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
+          if (nearestLine) {
+            var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
+            roadLayer.selectRoadLink(nearestLine);
+            feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
+            var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+            selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
+          }
         } else {
           this.cancel();
         }
