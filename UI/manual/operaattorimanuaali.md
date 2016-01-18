@@ -270,6 +270,24 @@ Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoit
 
 T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
 
+##8.4 Muut viivamaiset tietolajit##
+
+Muilla viivamaisilla tietolajeilla on muutamia k&auml;sittelys&auml;&auml;nt&ouml;j&auml;, miten niiden sijoittuminen alla olevan tielinkin geometriaan tarkistetaan. Tarkistukset ovat sen vuoksi, ett&auml; geometria kohteiden alla p&auml;ivittyy p&auml;ivitt&auml;in. Sovellus tarkistaa aina karttaa raahatessa tai kohteita Kalpa-Apista kyselt&auml;ess&auml;, sovittuuko viivamainen kohde alla olevan tielinkin geometriaan.
+
+Tarkistukset perustuvat kohteelle tallennettuihin m-arvoihin ja tielinkin MML-ID;seen:
+
+1. L&ouml;ytyyk&ouml; ko. viivamaisen kohteen linkin MML-ID:ll&auml; edelleen tielinkki:
+	a. Ei l&ouml;ydy -> kohdetta ei piirret&auml; kartalle*
+	b. L&ouml;ytyy -> Siirryt&auml;&auml;n seuraavaan kohtaan
+1. Kohteen sijainnin tarkistus m-arvojen ja tielinkin pituuden mukaan
+	a. Jos tielinkki on lyhentynyt (viivamaisen kohteen loppu m-arvo tielinkin loppupisteen ulkopuolella), katkaistaan sill&auml; oleva viivamainen kohde ja tallennetaan kohteelle tietokantaan uusi loppu m-arvo
+	b. Jos uusi tielinkki on vanhaa tielinkki&auml; pidempi, on viivamainen kohde tielinkill&auml; kuten ennenkin. Siten jos kohde oli ennen koko tielinkin mittainen, j&auml;&auml; tielinkille tyhj&auml;&auml; osuutta ko. viivamaisella tietolajilla
+	c. Jos keskell&auml; tielinkki&auml; oleva kohde siirtyy alle puoli metri&auml;, korjataan sen m-arvot vastaamaan uutta tilannetta. Jos muutos on yli puoli metri&auml;, kohde ei piirry kartelle*
+	d. Jos kohde j&auml;&auml; kokonaan p&auml;ivittyneen tielinkin ulkopuolelle, sit&auml; ei piirret&auml; kartalle
+
+*Kohteet, joita ei piirret&auml; kartalle, s&auml;ilyv&auml;t edelleen tietokannassa. Ne eiv&auml;t siis katoa Digiroadista, mutta niit&auml; ei voida piirt&auml;&auml; kartalle, koska en eiv&auml;t asetu p&auml;ivittyneelle geometrialle sujuvasti.
+
+
 9. Kalpa-API
 --------------
 
