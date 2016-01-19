@@ -102,6 +102,7 @@
             staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
             staticField('Tien nimi (Saame)', 'roadNameSm') +
             staticField('Tien numero', 'roadNumber') +
+            staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
           '</div>' +
@@ -149,6 +150,7 @@
         linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.roadNumber = linkProperties.roadNumber || '';
+        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

@@ -254,6 +254,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"),
+      "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
   }
 
