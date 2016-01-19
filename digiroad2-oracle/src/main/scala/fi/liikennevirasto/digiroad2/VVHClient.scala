@@ -177,7 +177,10 @@ class VVHClient(hostname: String) {
       "MAXANLEFT",
       "MINANRIGHT",
       "MAXANRIGHT",
-      "MUNICIPALITYCODE").contains(x) }
+      "MUNICIPALITYCODE").contains(x)
+    }.filter { case (_, value) =>
+      value != null
+    }
   }
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
