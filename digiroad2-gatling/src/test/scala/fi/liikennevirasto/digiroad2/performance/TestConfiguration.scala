@@ -14,6 +14,7 @@ object TestConfiguration {
 //    .proxy(Proxy(proxyHost, 80)
 //      .httpsPort(80))
 //    .noProxyFor(noProxyFor: _*)
+    .warmUp("http://localhost:8888/")
     .baseURL(baseUrl)
     .header("Cookie", "testusername=tarutest")
     .header("OAM_REMOTE_USER", TestConfiguration.username)
