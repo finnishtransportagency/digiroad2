@@ -6,7 +6,8 @@
 
   var name = function() {
     var environmentName = {
-      'testiextranet.liikennevirasto.fi': 'production',
+      'extranet.liikennevirasto.fi': 'production',
+      'testiextranet.liikennevirasto.fi': 'production', // change to 'integration' once new production in use
       'apptest.liikennevirasto.fi': 'training',
       'devtest.liikennevirasto.fi': 'staging'
     };

@@ -1,6 +1,7 @@
 (function(root) {
   var environmentProperty = function() {
     var properties = {
+      integration: 'UA-57190819-5',
       production: 'UA-57190819-4',
       training: 'UA-57190819-3',
       staging: 'UA-57190819-2',
@@ -11,6 +12,7 @@
 
   var environmentConfiguration = function() {
     var configurations = {
+      integration: 'auto',
       production: 'auto',
       training: 'auto',
       staging: 'auto',
