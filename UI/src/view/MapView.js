@@ -92,11 +92,6 @@
 
     addCenterMarkerLayerToMap(map);
 
-    if (applicationModel.getSelectedLayer() === 'speedLimit') {
-      var speedLimitLayer = layers.speedLimit;
-      speedLimitLayer.show();
-    }
-
     setCursor(applicationModel.getSelectedTool());
   };
 })(this);
