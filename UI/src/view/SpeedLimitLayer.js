@@ -9,6 +9,17 @@ window.SpeedLimitLayer = function(params) {
       layerName = 'speedLimit';
 
   Layer.call(this, layerName, roadLayer);
+  this.deactivateSelection = function() {};
+  this.activateSelection = function() {};
+  this.minZoomForContent = zoomlevels.minZoomForAssets;
+  this.refreshView = function(event) {
+    vectorLayer.setVisibility(true);
+    adjustStylesByZoomLevel(map.getZoom());
+    start();
+    collection.fetch(map.getExtent()).then(function() {
+      eventbus.trigger('layer:speedLimit:' + event);
+    });
+  };
   var me = this;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
@@ -447,24 +458,6 @@ window.SpeedLimitLayer = function(params) {
     redrawSpeedLimits(collection.getAll());
   };
 
-  var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
-      vectorLayer.setVisibility(true);
-      adjustStylesByZoomLevel(state.zoom);
-      start();
-      collection.fetch(state.bbox).then(function() {
-        eventbus.trigger('layer:speedLimit:moved');
-      });
-    } else {
-      vectorLayer.setVisibility(false);
-      stop();
-      eventbus.trigger('layer:speedLimit:moved');
-    }
-  };
-
-  // TODO: Stop listening to map:moved events when layer is stopped
-  eventbus.on('map:moved', handleMapMoved);
-
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
 
@@ -596,16 +589,14 @@ window.SpeedLimitLayer = function(params) {
   var show = function(map) {
     vectorLayer.setVisibility(true);
     indicatorLayer.setVisibility(true);
-    var layerUpdated = update(map.getZoom(), map.getExtent());
-    layerUpdated.then(function() {
-      eventbus.trigger('layer:speedLimit:shown');
-    });
+    me.show(map);
   };
 
   var hideLayer = function(map) {
     reset();
     vectorLayer.setVisibility(false);
     indicatorLayer.setVisibility(false);
+    me.stop();
     me.hide();
   };
 
