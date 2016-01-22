@@ -20,6 +20,10 @@ window.SpeedLimitLayer = function(params) {
       eventbus.trigger('layer:speedLimit:' + event);
     });
   };
+  this.removeLayerFeatures = function() {
+    vectorLayer.removeAllFeatures();
+    indicatorLayer.clearMarkers();
+  };
   var me = this;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
