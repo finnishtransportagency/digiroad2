@@ -39,12 +39,13 @@
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
         var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
+        var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadNames);
+        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames);
       }
 
       return properties;
