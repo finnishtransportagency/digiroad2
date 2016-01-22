@@ -279,6 +279,7 @@ window.SpeedLimitLayer = function(params) {
 
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
+  vectorLayer.setVisibility(false);
   map.addLayer(vectorLayer);
 
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
