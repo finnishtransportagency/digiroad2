@@ -209,7 +209,7 @@
       });
     });
 
-    var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
+    var selectedMassTransitStopModel = MassTransitStopModel.initialize(backend);
     var models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,

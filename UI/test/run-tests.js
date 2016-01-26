@@ -6,7 +6,7 @@ require.config({
     'backbone': '../../bower_components/backbone/backbone',
     'chai': '../../bower_components/chai/chai',
     'EventBus': '../src/utils/eventbus',
-    'SelectedAssetModel': '../src/model/SelectedAssetModel',
+    "MassTransitStopModel": '../src/model/MassTransitStopModel',
     'LinearAsset': '../src/utils/LinearAsset',
     'Backend': '../src/utils/backend-utils',
     'validitydirections': '../src/utils/validity-directions',
@@ -37,7 +37,7 @@ require.config({
     'EventBus': {
       deps: ['backbone']
     },
-    'SelectedAssetModel': {
+    "MassTransitStopModel": {
       deps: ['EventBus', 'lodash']
     },
     'Layer': {exports: 'Layer'},
@@ -81,7 +81,7 @@ require.config({
   waitSeconds: 10
 });
 require(['lodash',
-  'SelectedAssetModelSpec',
+  'MassTransitStopModelSpec',
   'geometry-calculations-spec',
   'asset-grouping-spec',
   'SelectedSpeedLimitSpec',
