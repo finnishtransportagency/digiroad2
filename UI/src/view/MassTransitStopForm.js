@@ -4,7 +4,7 @@
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
-      if (selectedAssetModel.isDirty() && selectedAssetModel.requiredPropertiesMissing()) {
+      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing()) {
         element.show();
       } else {
         element.hide();
@@ -25,10 +25,10 @@
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
-      selectedAssetModel.save();
+      selectedMassTransitStopModel.save();
     });
     var updateStatus = function() {
-      if (selectedAssetModel.isDirty() && !selectedAssetModel.requiredPropertiesMissing()) {
+      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing()) {
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
@@ -47,9 +47,9 @@
   };
 
   var CancelButton = function() {
-    var element = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+    var element = $('<button />').prop('disabled', !selectedMassTransitStopModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
       $("#feature-attributes").empty();
-      selectedAssetModel.cancel();
+      selectedMassTransitStopModel.cancel();
     });
 
     eventbus.on('asset:moved assetPropertyValue:changed', function() {
@@ -102,8 +102,8 @@
 
           var header = $('<header/>');
 
-          if (_.isNumber(selectedAssetModel.get('nationalId'))) {
-            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('nationalId') + '</span>');
+          if (_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
+            header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.get('nationalId') + '</span>');
           } else {
             header.append('<span>Uusi pys&auml;kki</span>');
           }
@@ -113,7 +113,7 @@
       };
 
       var getStreetView = function() {
-        var model = selectedAssetModel;
+        var model = selectedMassTransitStopModel;
         var render = function() {
           var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
           return $(streetViewTemplate({
@@ -192,7 +192,7 @@
           elementType = property.propertyType === 'long_text' ?
             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
           });
 
           if(property.values[0]) {
@@ -223,7 +223,7 @@
           }
         } else {
           element = $('<select />').addClass('form-control').change(function(x){
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
           });
 
           element = _.reduce(enumValues, function(element, value) {
@@ -250,7 +250,7 @@
 
       var createDirectionChoiceElement = function(property) {
         var element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
-          selectedAssetModel.switchDirection();
+          selectedMassTransitStopModel.switchDirection();
           streetViewHandler.update();
         });
 
@@ -293,7 +293,7 @@
               return;
             }
             var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
           }, 500));
 
           if (property.values[0]) {
@@ -353,7 +353,7 @@
                 })
                 .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
-              selectedAssetModel.setProperty(property.publicId, values);
+              selectedMassTransitStopModel.setProperty(property.publicId, values);
             });
 
             input.prop('checked', value.checked);
@@ -410,15 +410,15 @@
       var floatingStatus = function(selectedAssetModel) {
         return [{
           propertyType: 'notification',
-          enabled: selectedAssetModel.get('floating'),
+          enabled: selectedMassTransitStopModel.get('floating'),
           text: 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.'
         }];
       };
 
       var getAssetForm = function() {
-        var properties = sortProperties(selectedAssetModel.getProperties());
+        var properties = sortProperties(selectedMassTransitStopModel.getProperties());
         var contents = _.take(properties, 2)
-          .concat(floatingStatus(selectedAssetModel))
+          .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];

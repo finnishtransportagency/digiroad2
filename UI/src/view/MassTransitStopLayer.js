@@ -26,12 +26,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     clickTimestamp = null;
     unregisterMouseUpHandler(asset);
     if (assetIsMoving) {
-      selectedAssetModel.move({
-        lon: selectedAssetModel.get('lon'),
-        lat: selectedAssetModel.get('lat'),
-        bearing: selectedAssetModel.get('bearing'),
-        roadLinkId: selectedAssetModel.get('roadLinkId'),
-        mmlId: selectedAssetModel.get('mmlId')
+      selectedMassTransitStopModel.move({
+        lon: selectedMassTransitStopModel.get('lon'),
+        lat: selectedMassTransitStopModel.get('lat'),
+        bearing: selectedMassTransitStopModel.get('bearing'),
+        roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
+        mmlId: selectedMassTransitStopModel.get('mmlId')
       });
       eventbus.trigger('asset:moveCompleted');
       assetIsMoving = false;
@@ -57,7 +57,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       };
 
       if (selectedControl === 'Select') {
-        if (selectedAssetModel.getId() === asset.data.id) {
+        if (selectedMassTransitStopModel.getId() === asset.data.id) {
           commenceAssetDragging();
         }
       }
@@ -67,12 +67,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var createMouseClickHandler = function(asset) {
     return function() {
       var selectAsset = function() {
-        selectedAssetModel.change(asset.data);
+        selectedMassTransitStopModel.change(asset.data);
       };
 
       if (selectedControl === 'Select') {
-        if (selectedAssetModel.getId() !== asset.data.id) {
-          if (selectedAssetModel.isDirty()) {
+        if (selectedMassTransitStopModel.getId() !== asset.data.id) {
+          if (selectedMassTransitStopModel.isDirty()) {
             new Confirm();
           } else {
             selectAsset();
@@ -124,7 +124,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var setAssetVisibilityByValidityPeriod = function(asset) {
-    if (assetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
+    if (massTransitStopsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
       showAsset(asset);
     } else {
       hideAsset(asset);
@@ -176,14 +176,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
         var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
-        if (!assetsModel.getAsset(uiAsset.id)) {
+        if (!massTransitStopsModel.getAsset(uiAsset.id)) {
           var assetInModel = createAsset(uiAsset);
-          assetsModel.insertAsset(assetInModel, uiAsset.id);
+          massTransitStopsModel.insertAsset(assetInModel, uiAsset.id);
           addAssetToLayers(assetInModel);
         }
-        setAssetVisibilityByValidityPeriod(assetsModel.getAsset(uiAsset.id));
+        setAssetVisibilityByValidityPeriod(massTransitStopsModel.getAsset(uiAsset.id));
         if (isSelected(uiAsset)) {
-          selectedAsset = assetsModel.getAsset(uiAsset.id);
+          selectedAsset = massTransitStopsModel.getAsset(uiAsset.id);
           selectedAsset.massTransitStop.select();
           registerMouseDownHandler(selectedAsset);
         }
@@ -211,8 +211,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var handleValidityPeriodChanged = function() {
-    _.each(assetsModel.getAssets(), function(asset) {
-      if (assetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+    _.each(massTransitStopsModel.getAssets(), function(asset) {
+      if (massTransitStopsModel.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         showAsset(asset);
       } else {
         hideAsset(asset);
@@ -222,7 +222,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return;
     }
 
-    if (selectedAsset && !assetsModel.selectedValidityPeriodsContain(selectedAsset.data.validityPeriod)) {
+    if (selectedAsset && !massTransitStopsModel.selectedValidityPeriodsContain(selectedAsset.data.validityPeriod)) {
       closeAsset();
     }
   };
@@ -230,7 +230,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   function redrawGroup(group) {
     var groupAssets = group.assetGroup;
     _.each(groupAssets, function(asset) {
-      var uiAsset = assetsModel.getAsset(asset.id);
+      var uiAsset = massTransitStopsModel.getAsset(asset.id);
       uiAsset.massTransitStop.rePlaceInGroup();
     });
   }
@@ -244,16 +244,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   function createAndGroupUIAsset(backendAsset) {
     var uiAsset;
-    var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(assetsModel.getAssets()), backendAsset);
+    var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(massTransitStopsModel.getAssets()), backendAsset);
     if (assetToGroupWith) {
       uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
-      assetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      massTransitStopsModel.insertAsset(uiAsset, uiAsset.data.id);
       addAssetToGroup(uiAsset, assetToGroupWith.data.group);
       redrawGroup(assetToGroupWith.data.group);
     } else {
       var group = createDummyGroup(backendAsset.lon, backendAsset.lat, backendAsset);
       uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, group, group.assetGroup));
-      assetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      massTransitStopsModel.insertAsset(uiAsset, uiAsset.data.id);
     }
     return uiAsset;
   }
@@ -271,7 +271,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var handleAssetSaved = function(asset, positionUpdated) {
-    _.merge(assetsModel.getAsset(asset.id).data, asset);
+    _.merge(massTransitStopsModel.getAsset(asset.id).data, asset);
     if (positionUpdated) {
       redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
@@ -295,7 +295,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var regroupAssetIfNearOtherAssets = function(asset) {
-    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assetsModel.getAssets()), map.getZoom());
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(massTransitStopsModel.getAssets()), map.getZoom());
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
@@ -303,10 +303,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
     if (groupContainingSavedAsset.length > 1) {
-      assetsModel.destroyGroup(assetIds);
+      massTransitStopsModel.destroyGroup(assetIds);
     }
 
-    return assetsModel.getAsset(asset.id);
+    return massTransitStopsModel.getAsset(asset.id);
   };
 
   var reRenderGroup = function(destroyedAssets) {
@@ -350,7 +350,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       data: data,
       massTransitStop: massTransitStop};
     selectedAsset.data.stopTypes = [];
-    selectedAssetModel.place(selectedAsset.data);
+    selectedMassTransitStopModel.place(selectedAsset.data);
 
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
@@ -368,8 +368,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     var uiAsset = createAsset(asset);
-    assetsModel.insertAsset(uiAsset, asset.id);
-    addAssetToLayersAndSetVisibility(assetsModel.getAsset(asset.id));
+    massTransitStopsModel.insertAsset(uiAsset, asset.id);
+    addAssetToLayersAndSetVisibility(massTransitStopsModel.getAsset(asset.id));
     return uiAsset;
   };
 
@@ -387,10 +387,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var destroyAsset = function(backendAsset) {
-    var uiAsset = assetsModel.getAsset(backendAsset.id);
+    var uiAsset = massTransitStopsModel.getAsset(backendAsset.id);
     if(uiAsset) {
       removeAssetFromMap(uiAsset);
-      assetsModel.destroyAsset(backendAsset.id);
+      massTransitStopsModel.destroyAsset(backendAsset.id);
     }
   };
 
@@ -404,7 +404,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
-    selectedAsset = assetsModel.getAsset(backendAsset.id);
+    selectedAsset = massTransitStopsModel.getAsset(backendAsset.id);
     registerMouseDownHandler(selectedAsset);
     selectedAsset.massTransitStop.select();
   };
@@ -428,7 +428,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       selectedAsset.data.lon = lonlat.lon;
       selectedAsset.data.lat = lonlat.lat;
       moveMarker(lonlat);
-      selectedAssetModel.move({
+      selectedMassTransitStopModel.move({
         lon: lonlat.lon,
         lat: lonlat.lat,
         bearing: angle,
@@ -457,7 +457,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var addNewGroupsToModel = function(uiAssetGroups) {
-    _.each(uiAssetGroups, assetsModel.insertAssetsFromGroup);
+    _.each(uiAssetGroups, massTransitStopsModel.insertAssetsFromGroup);
   };
 
   var renderNewGroups = function(uiAssetGroups) {
@@ -526,10 +526,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
       createNewAsset(map.getLonLatFromPixel(pixel));
     } else {
-      if (selectedAssetModel.isDirty()) {
+      if (selectedMassTransitStopModel.isDirty()) {
         new Confirm();
       } else {
-        selectedAssetModel.close();
+        selectedMassTransitStopModel.close();
       }
     }
   };
@@ -545,7 +545,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       if (mapMoveEvent.selectedLayer === 'massTransitStop') {
         eventbus.once('roadLinks:fetched', function() {
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
-          assetsModel.refreshAssets(mapMoveEvent);
+          massTransitStopsModel.refreshAssets(mapMoveEvent);
         });
         roadCollection.fetch(map.getExtent());
       }
@@ -604,14 +604,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
-        assetsModel.fetchAssets(map.getExtent());
+        massTransitStopsModel.fetchAssets(map.getExtent());
       });
       roadCollection.fetch(map.getExtent());
     }
   };
 
   var hideLayer = function() {
-    selectedAssetModel.close();
+    selectedMassTransitStopModel.close();
     if (assetLayer.map && assetDirectionLayer.map) {
       map.removeLayer(assetLayer);
       map.removeLayer(assetDirectionLayer);

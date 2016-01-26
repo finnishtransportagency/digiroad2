@@ -222,12 +222,12 @@
     };
 
     bindEvents(enabledLinearAssetSpecs, pointAssetSpecs);
-    window.assetsModel = new AssetsModel(backend);
-    window.selectedAssetModel = selectedMassTransitStopModel;
+    window.massTransitStopsModel = new MassTransitStopsModel(backend);
+    window.selectedMassTransitStopModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
-      selectedAssetModel,
+      selectedMassTransitStopModel,
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource]

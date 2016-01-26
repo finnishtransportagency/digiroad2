@@ -45,8 +45,8 @@
 
     var getSelectedContent = function(asset, stopTypes) {
       var busStopImages = mapBusStopTypesToImages(stopTypes);
-      var name = selectedAssetModel.getName();
-      var direction = selectedAssetModel.getDirection();
+      var name = selectedMassTransitStopModel.getName();
+      var direction = selectedMassTransitStopModel.getDirection();
 
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
@@ -62,7 +62,7 @@
 
     var filterByValidityPeriod = function(group) {
       return _.filter(group, function(asset) {
-        return assetsModel.selectedValidityPeriodsContain(asset.validityPeriod);
+        return massTransitStopsModel.selectedValidityPeriodsContain(asset.validityPeriod);
       });
     };
 
@@ -106,7 +106,7 @@
 
     var handleAssetPropertyValueChanged = function(simpleAsset) {
       if (simpleAsset.id === data.id && _.contains(['pysakin_tyyppi', 'nimi_suomeksi'], simpleAsset.propertyData.publicId)) {
-        var properties = selectedAssetModel.getProperties();
+        var properties = selectedMassTransitStopModel.getProperties();
         var stopTypes = extractStopTypes(properties);
         data.stopTypes = stopTypes;
         var assetWithProperties = _.merge({}, data, {propertyData: properties});
@@ -127,7 +127,7 @@
     };
 
     var renderSelectedState = function() {
-      var stopTypes = extractStopTypes(selectedAssetModel.getProperties());
+      var stopTypes = extractStopTypes(selectedMassTransitStopModel.getProperties());
       $(box.div).html(getSelectedContent(data, stopTypes))
                 .addClass('selected-asset');
       setYPositionForAssetOnGroup();

@@ -7,7 +7,7 @@
     var className = toolName.toLowerCase();
     var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
       executeOrShowConfirmDialog(function() {
-        if (selectedAssetModel) selectedAssetModel.close();
+        if (selectedMassTransitStopModel) selectedMassTransitStopModel.close();
         applicationModel.setSelectedTool(toolName);
       });
     });
@@ -214,7 +214,7 @@
         executeOrShowConfirmDialog(function() {
           var el = $(event.currentTarget);
           var validityPeriod = el.prop('name');
-          assetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+          massTransitStopsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
         });
       };
 
@@ -249,11 +249,11 @@
         };
 
         var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'));
-        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, assetsModel.getValidityPeriods()));
+        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, massTransitStopsModel.getValidityPeriods()));
       });
 
       eventbus.on('asset:saved asset:created', function(asset) {
-        assetsModel.selectValidityPeriod(asset.validityPeriod, true);
+        massTransitStopsModel.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
