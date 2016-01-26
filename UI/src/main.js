@@ -13,19 +13,9 @@ var parseQueryParameters = function(queryString) {
 $(function() {
   var queryString = window.location.search.substring(1);
   var parameters = parseQueryParameters(queryString);
-  var fakeMode = parameters.withFakeData === 'true';
   var isExperimental = parameters.isExperimental === 'true';
 
   Analytics.start();
 
-  if (fakeMode) {
-    getScripts(['test_data/RoadLinkTestData.js', 'test_data/SpeedLimitsTestData.js'], function() {
-      var speedLimitsData = SpeedLimitsTestData.generate();
-      Application.start(new Backend()
-        .withRoadLinkData(RoadLinkTestData.generate())
-        .withSpeedLimitsData(speedLimitsData));
-    });
-  } else {
-    Application.start(undefined, undefined, isExperimental);
-  }
+  Application.start(undefined, undefined, isExperimental);
 });
