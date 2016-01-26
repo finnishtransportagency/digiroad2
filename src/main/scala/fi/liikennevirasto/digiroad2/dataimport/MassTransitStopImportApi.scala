@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.scalatra.servlet.{MultipartConfig, FileUploadSupport}
 import javax.servlet.ServletException
-import fi.liikennevirasto.digiroad2.util.BusStopExcelDataImporter
+import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter$
 import java.io.InputStreamReader
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s.{DefaultFormats, Formats}
@@ -23,7 +23,7 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Private, Municip
 import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.ImportLogService
 
-class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
+class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private final val threeMegabytes: Long = 3*1024*1024
   private val importLogger = LoggerFactory.getLogger(getClass)
@@ -57,7 +57,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
-    new BusStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
+    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
   }
 
   get("/log/:id") {

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 
 sealed trait Status { def dbValue: Int }
 
-class BusStopExcelDataImporter(dataSource: DataSource) {
+class MassTransitStopExcelDataImporter(dataSource: DataSource) {
   val Updater = "excel_data_migration"
   val logger = LoggerFactory.getLogger(getClass)
   case object No extends Status { val dbValue = 1 }
@@ -183,8 +183,8 @@ class BusStopExcelDataImporter(dataSource: DataSource) {
   }
 }
 
-object BusStopExcelDataImporter extends App {
-  val importer = new BusStopExcelDataImporter(initDataSource)
+object MassTransitStopExcelDataImporter extends App {
+  val importer = new MassTransitStopExcelDataImporter(initDataSource)
   importer.parseStopDataFromCsvFile("pysakkitiedot.csv")
 
   private[this] def initDataSource: DataSource = {
