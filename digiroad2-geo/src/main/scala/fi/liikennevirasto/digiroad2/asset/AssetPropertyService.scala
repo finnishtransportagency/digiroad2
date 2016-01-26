@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.LocalDate
 
-trait AssetProvider {
+trait AssetPropertyService {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def availableProperties(assetTypeId: Long): Seq[Property]
   def assetPropertyNames(language: String): Map[String, String]

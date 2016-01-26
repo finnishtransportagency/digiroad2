@@ -33,7 +33,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
-                   val assetProvider: AssetProvider = Digiroad2Context.assetProvider,
+                   val assetProvider: AssetPropertyService = Digiroad2Context.assetProvider,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
   extends ScalatraServlet
   with JacksonJsonSupport
