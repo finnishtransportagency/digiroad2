@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.scalatra.servlet.{MultipartConfig, FileUploadSupport}
 import javax.servlet.ServletException
-import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter$
+import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import java.io.InputStreamReader
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s.{DefaultFormats, Formats}
