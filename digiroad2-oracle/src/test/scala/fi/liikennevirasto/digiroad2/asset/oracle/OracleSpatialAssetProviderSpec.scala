@@ -27,7 +27,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val MunicipalityKauniainen = 235
   val TestAssetTypeId = 10
   val userProvider = new OracleUserProvider
-  val spatialAssetDao = new OracleSpatialAssetDao
+  val spatialAssetDao = new MassTransitStopDao
 
   val passThroughTransaction = new DatabaseTransaction {
     override def withDynTransaction[T](f: => T): T = f

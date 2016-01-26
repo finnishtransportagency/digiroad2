@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point}
 import org.scalatest.{FunSuite, MustMatchers}
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
-  val spatialAssetDao = new OracleSpatialAssetDao
+  val spatialAssetDao = new MassTransitStopDao
 
   test("bearing description is correct") {
     spatialAssetDao.getBearingDescription(2, Some(316)) must equal("Pohjoinen")

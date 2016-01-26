@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.asset.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -54,7 +54,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def eventbus: DigiroadEventBus = new DummyEventBus
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-    override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao
+    override val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
     override def vvhClient: VVHClient = mockVVHClient
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)

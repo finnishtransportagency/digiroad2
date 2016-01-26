@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.asset.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
@@ -36,7 +36,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override def vvhClient: VVHClient = mockVVHClient
-    override val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao
+    override val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)

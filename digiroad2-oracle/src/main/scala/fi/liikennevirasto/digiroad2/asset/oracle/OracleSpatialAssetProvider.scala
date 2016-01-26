@@ -15,7 +15,7 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 
 // FIXME:
 // - move common asset functionality to asset service
-class OracleSpatialAssetProvider(spatialAssetDao: OracleSpatialAssetDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
+class OracleSpatialAssetProvider(spatialAssetDao: MassTransitStopDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -35,7 +35,7 @@ trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
   type PersistedAsset = PersistedMassTransitStop
 
-  val spatialAssetDao: OracleSpatialAssetDao
+  val spatialAssetDao: MassTransitStopDao
   override val idField = "external_id"
 
   override def typeId: Int = 10

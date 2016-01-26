@@ -4,7 +4,7 @@ import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.asset.oracle.{MassTransitStopDao, DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -74,11 +74,11 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
-  lazy val spatialAssetDao: OracleSpatialAssetDao = new OracleSpatialAssetDao
+  lazy val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
 
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[OracleSpatialAssetDao], classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
+         .getDeclaredConstructor(classOf[MassTransitStopDao], classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
          .newInstance(spatialAssetDao, eventbus, userProvider, DefaultDatabaseTransaction)
          .asInstanceOf[AssetProvider]
   }
@@ -114,7 +114,7 @@ object Digiroad2Context {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override val spatialAssetDao: OracleSpatialAssetDao = Digiroad2Context.spatialAssetDao
+      override val spatialAssetDao: MassTransitStopDao = Digiroad2Context.spatialAssetDao
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
     }
     new ProductionMassTransitStopService(eventbus)
