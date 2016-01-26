@@ -7,7 +7,6 @@ require.config({
     'chai': '../../bower_components/chai/chai',
     'EventBus': '../src/utils/eventbus',
     "SelectedMassTransitStop": '../src/model/SelectedMassTransitStop',
-    'LinearAsset': '../src/utils/LinearAsset',
     'Backend': '../src/utils/backend-utils',
     'validitydirections': '../src/utils/validity-directions',
     'GeometryUtils': '../src/utils/GeometryUtils',
@@ -41,9 +40,6 @@ require.config({
       deps: ['EventBus', 'lodash']
     },
     'Layer': {exports: 'Layer'},
-    'LinearAsset': {
-      exports: 'LinearAsset'
-    },
     'SpeedLimitLayer': {
       exports: 'SpeedLimitLayer',
       deps: ['EventBus']

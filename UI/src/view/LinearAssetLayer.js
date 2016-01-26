@@ -3,7 +3,6 @@ window.LinearAssetLayer = function(params) {
       application = params.application,
       collection = params.collection,
       selectedLinearAsset = params.selectedLinearAsset,
-      geometryUtils = params.geometryUtils,
       roadLayer = params.roadLayer,
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
@@ -107,8 +106,8 @@ window.LinearAssetLayer = function(params) {
       var calculateSplitProperties = function(nearestLinearAsset, point) {
         var lineString = pointsToLineString(nearestLinearAsset.points);
         var startMeasureOffset = nearestLinearAsset.startMeasure;
-        var splitMeasure = geometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
-        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestLinearAsset.points), point);
+        var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
+        var splitVertices = GeometryUtils.splitByPoint(pointsToLineString(nearestLinearAsset.points), point);
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
@@ -332,7 +331,7 @@ window.LinearAssetLayer = function(params) {
     };
 
     var indicatorsForSplit = function() {
-      return me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+      return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var box = markerContainer(middlePoint);
         var $marker = $(markerTemplate(link));
         $(box.div).html($marker);
@@ -348,7 +347,7 @@ window.LinearAssetLayer = function(params) {
         return newLink;
       });
 
-      return me.mapOverLinkMiddlePoints(geometriesForIndicators, geometryUtils, function(link, middlePoint) {
+      return me.mapOverLinkMiddlePoints(geometriesForIndicators, function(link, middlePoint) {
         var box = markerContainer(middlePoint);
         var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
         $(box.div).html($marker);
@@ -388,7 +387,7 @@ window.LinearAssetLayer = function(params) {
 
   var decorateSelection = function() {
     var offsetBySideCode = function(linearAsset) {
-      return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
     };
 
     if (selectedLinearAsset.exists()) {

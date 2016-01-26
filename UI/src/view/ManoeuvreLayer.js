@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(application, map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
+  root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -197,7 +197,7 @@
       var linksWithManoeuvres = manoeuvresCollection.getAll();
       roadLayer.drawRoadLinks(linksWithManoeuvres, map.getZoom());
       drawDashedLineFeatures(linksWithManoeuvres);
-      me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres, geometryUtils);
+      me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres);
       reselectManoeuvre();
       if (selectedManoeuvreSource.isDirty()) {
         selectControl.deactivate();
@@ -242,7 +242,7 @@
 
     var drawIndicators = function(links) {
       var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
-      var indicators = me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+      var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
         var box = new OpenLayers.Marker.Box(bounds, "00000000");
         $(box.div).html(markerTemplate(link));

@@ -3,8 +3,6 @@ window.SpeedLimitLayer = function(params) {
       application = params.application,
       collection = params.collection,
       selectedSpeedLimit = params.selectedSpeedLimit,
-      geometryUtils = params.geometryUtils,
-      linearAsset = params.linearAsset,
       roadLayer = params.roadLayer,
       layerName = 'speedLimit';
 
@@ -96,8 +94,8 @@ window.SpeedLimitLayer = function(params) {
       var calculateSplitProperties = function(nearestSpeedLimit, point) {
         var lineString = pointsToLineString(nearestSpeedLimit.points);
         var startMeasureOffset = nearestSpeedLimit.startMeasure;
-        var splitMeasure = geometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
-        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestSpeedLimit.points), point);
+        var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
+        var splitVertices = GeometryUtils.splitByPoint(pointsToLineString(nearestSpeedLimit.points), point);
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
@@ -474,7 +472,7 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var indicatorsForSplit = function() {
-      return me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+      return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var box = markerContainer(middlePoint);
         var $marker = $(markerTemplate(link));
         $(box.div).html($marker);
@@ -490,7 +488,7 @@ window.SpeedLimitLayer = function(params) {
         return newLink;
       });
 
-      return me.mapOverLinkMiddlePoints(geometriesForIndicators, geometryUtils, function(link, middlePoint) {
+      return me.mapOverLinkMiddlePoints(geometriesForIndicators, function(link, middlePoint) {
         var box = markerContainer(middlePoint);
         var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
         $(box.div).html($marker);
@@ -527,7 +525,7 @@ window.SpeedLimitLayer = function(params) {
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
-      return linearAsset.offsetBySideCode(map.getZoom(), speedLimit);
+      return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
     };
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
@@ -569,7 +567,7 @@ window.SpeedLimitLayer = function(params) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
       var road = new OpenLayers.Geometry.LineString(points);
-      var signPosition = geometryUtils.calculateMidpointOfLineString(road);
+      var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
       var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
       var attributes = _.merge(_.cloneDeep(speedLimit), type);
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);

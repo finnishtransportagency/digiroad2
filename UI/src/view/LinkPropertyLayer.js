@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
+  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -87,7 +87,7 @@
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks, geometryUtils);
+      me.drawOneWaySigns(roadLayer.layer, roadLinks);
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
@@ -214,7 +214,7 @@
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
-      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks, geometryUtils);
+      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
 

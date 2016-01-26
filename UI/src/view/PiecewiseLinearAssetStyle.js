@@ -67,7 +67,7 @@
         return _.merge({}, limit, { type: 'line', expired: expired });
       });
       var offsetBySideCode = function(linearAsset) {
-        return LinearAsset().offsetBySideCode(applicationModel.zoom.level, linearAsset);
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
       };
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
       var sortedAssets = _.sortBy(linearAssetsWithAdjustments, function(asset) {

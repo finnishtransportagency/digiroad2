@@ -77,7 +77,7 @@
       $('#map-tools'),
       new SearchBox(
         instructionsPopup,
-        new LocationSearch(backend, window.applicationModel, new GeometryUtils())
+        new LocationSearch(backend, window.applicationModel)
       ),
       new LayerSelectBox(assetSelectionMenu),
       assetGroups
@@ -213,7 +213,6 @@
         collection: asset.collection,
         selectedLinearAsset: asset.selectedLinearAsset,
         roadCollection: models.roadCollection,
-        geometryUtils: new GeometryUtils(),
         roadLayer: roadLayer,
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
@@ -241,19 +240,17 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
-        geometryUtils: new GeometryUtils(),
-        linearAsset: LinearAsset(),
         backend: backend,
         roadLayer: roadLayer
       }),
-      manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, new GeometryUtils(), models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+      manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers, pointAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');

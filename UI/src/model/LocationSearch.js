@@ -1,5 +1,5 @@
 (function(root) {
-  root.LocationSearch = function(backend, applicationModel, geometryUtils) {
+  root.LocationSearch = function(backend, applicationModel) {
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
@@ -42,7 +42,7 @@
       function addDistance(item) {
         var currentLocation = applicationModel.getCurrentLocation();
 
-        var distance = geometryUtils.distanceOfPoints({
+        var distance = GeometryUtils.distanceOfPoints({
           x: currentLocation.lon,
           y: currentLocation.lat
         }, {

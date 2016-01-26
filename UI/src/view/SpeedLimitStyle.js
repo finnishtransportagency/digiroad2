@@ -160,7 +160,7 @@
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = new GeometryUtils().calculateMidpointOfLineString(road);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
         var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
         var attributes = _.merge(_.cloneDeep(speedLimit), type);
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
@@ -170,7 +170,7 @@
     var renderFeatures = function(speedLimits) {
       var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
       var offsetBySideCode = function(speedLimit) {
-        return LinearAsset().offsetBySideCode(applicationModel.zoom.level, speedLimit);
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, speedLimit);
       };
       var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
       var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
