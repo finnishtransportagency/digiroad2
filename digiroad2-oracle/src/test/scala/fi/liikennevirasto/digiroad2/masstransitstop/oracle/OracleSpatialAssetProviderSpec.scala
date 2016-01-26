@@ -31,7 +31,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val passThroughTransaction = new DatabaseTransaction {
     override def withDynTransaction[T](f: => T): T = f
   }
-  val provider = new OracleAssetPropertyService(new DummyEventBus, userProvider, passThroughTransaction)
+  val provider = new AssetPropertyService(new DummyEventBus, userProvider, passThroughTransaction)
   val user = User(
     id = 1,
     username = "Hannu",

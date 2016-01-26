@@ -13,7 +13,7 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 }
 
-class OracleAssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetPropertyService {
+class AssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {

@@ -3,8 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.asset.AssetPropertyService
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyService, MassTransitStopDao, DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -74,11 +73,8 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
-  lazy val assetProvider: AssetPropertyService = {
-    Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
-         .newInstance(eventbus, userProvider, DefaultDatabaseTransaction)
-         .asInstanceOf[AssetPropertyService]
+  lazy val assetPropertyService: AssetPropertyService = {
+    new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
   }
 
   lazy val speedLimitProvider: SpeedLimitProvider = {

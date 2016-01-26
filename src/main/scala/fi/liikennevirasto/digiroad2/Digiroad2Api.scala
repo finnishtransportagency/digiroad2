@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.AssetPropertyService
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -33,7 +34,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
-                   val assetProvider: AssetPropertyService = Digiroad2Context.assetProvider,
+                   val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
   extends ScalatraServlet
   with JacksonJsonSupport
@@ -152,7 +153,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
-    assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
+    assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
@@ -311,7 +312,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/assetTypeProperties/:assetTypeId") {
     try {
       val assetTypeId = params("assetTypeId").toLong
-      assetProvider.availableProperties(assetTypeId)
+      assetPropertyService.availableProperties(assetTypeId)
     } catch {
       case e: Exception => BadRequest("Invalid asset type id: " + params("assetTypeId"))
     }
@@ -319,7 +320,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/assetPropertyNames/:language") {
     val lang = params("language")
-    assetProvider.assetPropertyNames(lang)
+    assetPropertyService.assetPropertyNames(lang)
   }
 
   error {
