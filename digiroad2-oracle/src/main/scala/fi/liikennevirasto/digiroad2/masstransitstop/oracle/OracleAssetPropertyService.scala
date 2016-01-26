@@ -13,23 +13,23 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 }
 
-class OracleAssetPropertyService(spatialAssetDao: MassTransitStopDao, eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetPropertyService {
+class OracleAssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetPropertyService {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {
-        spatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
+        Queries.getEnumeratedPropertyValues(assetTypeId)
       }
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
-      spatialAssetDao.availableProperties(assetTypeId)
+      Queries.availableProperties(assetTypeId)
     }).sortBy(_.propertyUiIndex)
   }
 
   def assetPropertyNames(language: String): Map[String, String] = {
     AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ databaseTransaction.withDynTransaction {
-      spatialAssetDao.assetPropertyNames(language)
+      Queries.assetPropertyNames(language)
     }
   }
 }
