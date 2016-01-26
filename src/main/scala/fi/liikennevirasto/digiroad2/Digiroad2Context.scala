@@ -78,8 +78,8 @@ object Digiroad2Context {
 
   lazy val assetProvider: AssetPropertyService = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[MassTransitStopDao], classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
-         .newInstance(spatialAssetDao, eventbus, userProvider, DefaultDatabaseTransaction)
+         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
+         .newInstance(eventbus, userProvider, DefaultDatabaseTransaction)
          .asInstanceOf[AssetPropertyService]
   }
 
