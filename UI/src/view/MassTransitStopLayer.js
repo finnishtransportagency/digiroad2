@@ -1,4 +1,4 @@
-window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
+window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
   Layer.call(this, 'massTransitStop', roadLayer);
   var me = this;
   var eventListener = _.extend({running: false}, eventbus);

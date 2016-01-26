@@ -124,7 +124,7 @@
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
-      massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
+      massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
