@@ -23,7 +23,7 @@ case class NewTextualValueAsset(mmlId: Long, startMeasure: Double, endMeasure: D
 case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
-                   val speedLimitProvider: SpeedLimitProvider,
+                   val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
@@ -464,7 +464,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitProvider.get(boundingRectangle, municipalities).map { linkPartition =>
+      speedLimitService.get(boundingRectangle, municipalities).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
@@ -493,7 +493,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    speedLimitProvider.getUnknown(includedMunicipalities)
+    speedLimitService.getUnknown(includedMunicipalities)
   }
 
   put("/speedlimits") {
@@ -503,9 +503,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(value) =>
-        val updatedIds = speedLimitProvider.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
-        val createdIds = speedLimitProvider.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        speedLimitProvider.get(updatedIds ++ createdIds)
+        val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
+        val createdIds = speedLimitService.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
+        speedLimitService.get(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -513,7 +513,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
 
-    speedLimitProvider.split(params("speedLimitId").toLong,
+    speedLimitService.split(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
@@ -524,7 +524,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
 
-    speedLimitProvider.separate(params("speedLimitId").toLong,
+    speedLimitService.separate(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[Int],
       (parsedBody \ "valueAgainstDigitization").extract[Int],
       user.username,
@@ -538,11 +538,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
 
-    speedLimitProvider.create(Seq(newLimit),
+    speedLimitService.create(Seq(newLimit),
       (parsedBody \ "value").extract[Int],
       user.username,
       validateUserMunicipalityAccess(user)).headOption match {
-      case Some(id) => speedLimitProvider.find(id)
+      case Some(id) => speedLimitService.find(id)
       case _ => BadRequest("Speed limit creation failed")
     }
   }

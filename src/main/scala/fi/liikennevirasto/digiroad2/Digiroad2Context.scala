@@ -5,7 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyService, MassTransitStopDao, DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -31,7 +31,7 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
-class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitProvider) extends Actor {
+class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
@@ -62,7 +62,7 @@ object Digiroad2Context {
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitProvider), name = "speedLimitUpdater")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
@@ -77,11 +77,8 @@ object Digiroad2Context {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
   }
 
-  lazy val speedLimitProvider: SpeedLimitProvider = {
-    Class.forName(properties.getProperty("digiroad2.speedLimitProvider"))
-      .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[VVHClient], classOf[RoadLinkService])
-      .newInstance(eventbus, vvhClient, roadLinkService)
-      .asInstanceOf[SpeedLimitProvider]
+  lazy val speedLimitService: SpeedLimitService = {
+    new SpeedLimitService(eventbus, vvhClient, roadLinkService)
   }
 
   lazy val userProvider: UserProvider = {

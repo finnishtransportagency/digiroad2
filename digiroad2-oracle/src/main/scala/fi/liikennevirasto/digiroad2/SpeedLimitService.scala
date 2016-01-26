@@ -1,26 +1,26 @@
-package fi.liikennevirasto.digiroad2.linearasset.oracle
+package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) extends SpeedLimitProvider {
+class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient)
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  override def getUnknown(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
+  def getUnknown(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     withDynSession {
       dao.getUnknownSpeedLimits(municipalities)
     }
   }
 
-  override def purgeUnknown(mmlIds: Set[Long]): Unit = {
+  def purgeUnknown(mmlIds: Set[Long]): Unit = {
     val roadLinks = vvhClient.fetchVVHRoadlinks(mmlIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
@@ -37,7 +37,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     }
   }
 
-  override def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
+  def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -56,13 +56,13 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     }
   }
 
-  override def get(ids: Seq[Long]): Seq[SpeedLimit] = {
+  def get(ids: Seq[Long]): Seq[SpeedLimit] = {
     withDynTransaction {
       ids.flatMap(loadSpeedLimit)
     }
   }
 
-  override def find(speedLimitId: Long): Option[SpeedLimit] = {
+  def find(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
      loadSpeedLimit(speedLimitId)
     }
@@ -72,19 +72,19 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
-  override def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
+  def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
     }
   }
 
-  override def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
+  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     withDynTransaction {
       ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
 
-  override def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
+  def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
     withDynTransaction {
       val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
       dao.updateSpeedLimitValue(id, existingValue, username, municipalityValidation)
@@ -110,7 +110,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     speedLimit
   }
 
-  override def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
+  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
       .map(toSpeedLimit)
       .map(isSeparableValidation)
@@ -125,7 +125,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     }
   }
 
-  override def get(municipality: Int): Seq[SpeedLimit] = {
+  def get(municipality: Int): Seq[SpeedLimit] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -141,7 +141,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, vvhClient: VVHClient,
     }
   }
 
-  override def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)

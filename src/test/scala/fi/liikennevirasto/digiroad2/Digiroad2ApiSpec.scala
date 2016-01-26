@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
 import org.json4s._
@@ -49,7 +48,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testObstacleService = new ObstacleService(mockVVHClient)
   val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockVVHClient)
-  val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, testRoadLinkService)
+  val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)

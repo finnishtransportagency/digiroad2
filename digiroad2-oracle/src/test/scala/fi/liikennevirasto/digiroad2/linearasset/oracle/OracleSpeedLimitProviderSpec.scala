@@ -19,7 +19,7 @@ import scala.language.implicitConversions
 class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val provider = new OracleSpeedLimitProvider(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+  val provider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
 
@@ -73,7 +73,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in bounding box fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new OracleSpeedLimitProvider(eventBus, mockVVHClient, mockRoadLinkService) {
+      val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -86,7 +86,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in municipality fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new OracleSpeedLimitProvider(eventBus, mockVVHClient, mockRoadLinkService) {
+      val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
