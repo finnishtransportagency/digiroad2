@@ -1,6 +1,6 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 

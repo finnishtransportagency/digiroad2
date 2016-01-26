@@ -13,11 +13,11 @@ import org.joda.time.format.PeriodFormatterBuilder
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory

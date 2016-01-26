@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
 import fi.liikennevirasto.digiroad2.{IncomingRailwayCrossing, Point, PersistedPointAsset}
-import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, Queries}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Sequences, Queries}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession

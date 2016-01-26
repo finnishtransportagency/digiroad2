@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
 import java.sql.SQLException
 
@@ -9,7 +9,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}

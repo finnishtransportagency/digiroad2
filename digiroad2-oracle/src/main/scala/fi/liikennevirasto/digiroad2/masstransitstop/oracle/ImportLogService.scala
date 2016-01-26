@@ -1,6 +1,6 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.nextPrimaryKeyId
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.nextPrimaryKeyId
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}

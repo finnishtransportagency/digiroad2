@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
 import fi.liikennevirasto.digiroad2.MassTransitStopRow
 import fi.liikennevirasto.digiroad2.asset.Asset._

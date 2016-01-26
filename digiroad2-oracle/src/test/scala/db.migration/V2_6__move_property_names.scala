@@ -4,7 +4,7 @@ import com.googlecode.flyway.core.api.migration.jdbc.JdbcMigration
 import java.sql.Connection
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
-import fi.liikennevirasto.digiroad2.asset.oracle.{LocalizationDao, MassTransitStopDao, Queries}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{LocalizationDao, MassTransitStopDao, Queries}
 import Queries._
 import Q.interpolation
 import slick.driver.JdbcDriver.backend.Database

@@ -1,6 +1,6 @@
-package fi.liikennevirasto.digiroad2.asset.oracle
+package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.PropertyRow
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification}
 import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point}
 import org.scalatest.{FunSuite, MustMatchers}

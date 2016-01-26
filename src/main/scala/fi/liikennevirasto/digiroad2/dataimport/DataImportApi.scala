@@ -21,7 +21,7 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Private, Municipality, State}
 import javax.naming.OperationNotSupportedException
-import fi.liikennevirasto.digiroad2.asset.oracle.ImportLogService
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.ImportLogService
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats

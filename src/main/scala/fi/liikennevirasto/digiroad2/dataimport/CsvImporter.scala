@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.oracle.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 

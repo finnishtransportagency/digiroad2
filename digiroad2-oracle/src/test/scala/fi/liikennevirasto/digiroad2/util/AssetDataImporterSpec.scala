@@ -4,7 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.scalatest.{Matchers, FunSuite}
