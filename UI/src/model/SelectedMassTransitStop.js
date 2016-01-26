@@ -233,11 +233,11 @@
     };
 
     var getName = function() {
-      return assetutils.getPropertyValue({ propertyData: getProperties() }, 'nimi_suomeksi');
+      return getPropertyValue({ propertyData: getProperties() }, 'nimi_suomeksi');
     };
 
     var getDirection = function() {
-      return assetutils.getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
+      return getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
     };
 
     var get = function(key) {
@@ -245,6 +245,25 @@
         return currentAsset.payload[key];
       }
     };
+
+    function getPropertyValue(asset, propertyName) {
+      return _.chain(asset.propertyData)
+        .find(function (property) { return property.publicId === propertyName; })
+        .pick('values')
+        .values()
+        .flatten()
+        .map(extractDisplayValue)
+        .value()
+        .join(', ');
+    }
+
+    function extractDisplayValue(value) {
+      if(_.has(value, 'propertyDisplayValue')) {
+        return value.propertyDisplayValue;
+      } else {
+        return value.propertyValue;
+      }
+    }
 
     return {
       close: close,
