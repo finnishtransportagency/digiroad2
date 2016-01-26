@@ -48,8 +48,7 @@ class MassTransitStopDao {
 
   private def propertyDisplayValueFromAssetRow(assetRow: MassTransitStopRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
-    else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
-    else None
+    else Option(assetRow.property.propertyDisplayValue)
   }
 
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
