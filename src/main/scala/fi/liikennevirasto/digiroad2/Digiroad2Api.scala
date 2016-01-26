@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.AssetPropertyService
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.apache.commons.lang3.StringUtils.isBlank

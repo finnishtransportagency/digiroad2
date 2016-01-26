@@ -21,6 +21,8 @@ object CsvImporter {
                           excludedAssets: List[ExcludedAsset] = Nil)
 }
 
+class AssetNotFoundException(externalId: Long) extends RuntimeException
+
 trait CsvImporter {
   val massTransitStopService: MassTransitStopService
   val vvhClient: VVHClient

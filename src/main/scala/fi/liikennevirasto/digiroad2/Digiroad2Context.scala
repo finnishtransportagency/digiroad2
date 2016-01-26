@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyService, MassTransitStopDao, DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider

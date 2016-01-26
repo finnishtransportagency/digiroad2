@@ -1,10 +1,9 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, EventBusMassTransitStop}
-import org.slf4j.LoggerFactory
 
 trait DatabaseTransaction {
   def withDynTransaction[T](f: => T): T
