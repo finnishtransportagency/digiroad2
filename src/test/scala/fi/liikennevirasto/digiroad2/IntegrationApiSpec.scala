@@ -85,11 +85,4 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     integrationApi.toTimeDomain(ValidityPeriod(0, 1, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0){h1}]]")
     integrationApi.toTimeDomain(ValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0){h24}]]")
   }
-
-  test("Traffic lights should be fetchable", Tag("db")) {
-    getWithBasicUserAuth("/traffic_lights?municipality=235", "kalpa", "kalpa") {
-      status should equal(200)
-      body.length should be >300
-    }
-  }
 }
