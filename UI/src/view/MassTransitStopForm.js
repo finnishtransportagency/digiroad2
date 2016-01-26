@@ -61,7 +61,7 @@
     };
   };
 
-  root.AssetForm = {
+  root.MassTransitStopForm = {
     initialize: function(backend) {
       var enumeratedPropertyValues = null;
       var readOnly = true;
