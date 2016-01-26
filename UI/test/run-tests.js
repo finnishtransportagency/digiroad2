@@ -83,7 +83,7 @@ require.config({
 require(['lodash',
   'SelectedMassTransitStopSpec',
   'geometry-calculations-spec',
-  'asset-grouping-spec',
+  'MassTransitStopGroupingSpec',
   'SelectedSpeedLimitSpec',
   'LocationInputParserSpec'], function (lodash) {
   window._ = lodash;
