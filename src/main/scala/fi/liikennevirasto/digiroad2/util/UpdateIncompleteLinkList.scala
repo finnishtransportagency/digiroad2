@@ -10,10 +10,9 @@ object UpdateIncompleteLinkList {
   def main(args:Array[String]) : Unit = {
     try {
       UpdateIncompleteLinkList.runUpdate()
-    } catch {
-      case e: Exception => e.printStackTrace()
+    } finally {
+      Digiroad2Context.system.shutdown()
     }
-    Digiroad2Context.system.shutdown()
   }
 
   private def runUpdate(): Unit = {
