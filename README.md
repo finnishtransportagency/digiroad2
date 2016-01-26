@@ -29,17 +29,6 @@ Ympäristön pystytys
   npm install -g grunt-cli
   ```
 
-<a name="DataProviders"></a>
-Tietolähteet käyttäjä- sekä tie- ja kohdetiedoille
-==================================================
-
-Digiroad2 käsittelee ja käyttää tie- ja kohdetietoja joihin pääsy on toteutettu `AssetProvider` - rajapinnan kautta.
-Pääsy käyttäjätietoihin toteutetaan `UserProvider` - rajapinnan kautta.
-
-Projekti tarjoaa Oraclen tietokantaan integroituvat toteutukset digiroad2-oracle moduulissa.
-
-Tuki vaihtoehtoisille käyttäjä- sekä tie- ja kohdetietokannoille on saavutettavissa toteuttamalla `AssetProvider` ja `UserProvider` - rajapinnat.
-
 digiroad2-oracle
 ----------------
 
