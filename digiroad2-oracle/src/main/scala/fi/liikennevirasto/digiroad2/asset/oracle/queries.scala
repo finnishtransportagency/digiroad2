@@ -171,6 +171,12 @@ object Queries {
     Q.query[IndexedSeq[Any], R](qc.sql).apply(qc.params).list
   }
 
+  def getMunicipalities: Seq[Int] = {
+    sql"""
+      select id from municipality
+    """.as[Int].list
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }

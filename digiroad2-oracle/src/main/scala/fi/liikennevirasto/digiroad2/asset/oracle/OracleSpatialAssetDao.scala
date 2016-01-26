@@ -196,12 +196,6 @@ class OracleSpatialAssetDao {
     }
   }
 
-  def getMunicipalities: Seq[Int] = {
-    sql"""
-      select id from municipality
-    """.as[Int].list
-  }
-
   def getMunicipalityNameByCode(code: Int): String = {
     sql"""
       select name_fi from municipality where id = $code

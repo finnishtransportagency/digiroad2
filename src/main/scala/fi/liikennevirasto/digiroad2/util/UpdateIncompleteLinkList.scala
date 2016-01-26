@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -21,7 +21,7 @@ object UpdateIncompleteLinkList {
     clearIncompleteLinks()
     println("*** Get municipalities")
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
-      new OracleSpatialAssetDao().getMunicipalities
+      Queries.getMunicipalities
     }
     municipalities.foreach { municipality =>
       println("*** Processing municipality: " + municipality)
