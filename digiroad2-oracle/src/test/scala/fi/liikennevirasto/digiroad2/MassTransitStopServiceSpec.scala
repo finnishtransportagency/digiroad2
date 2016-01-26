@@ -36,7 +36,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override def vvhClient: VVHClient = mockVVHClient
-    override val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)

@@ -112,7 +112,7 @@ object Digiroad2Context {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
+      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
     }
     new ProductionMassTransitStopService(eventbus)
