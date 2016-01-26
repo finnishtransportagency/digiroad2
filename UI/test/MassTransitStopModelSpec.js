@@ -1,4 +1,4 @@
-define(['chai', 'MassTransitStopModel'], function (chai) {
+define(['chai', 'SelectedMassTransitStopModel'], function (chai) {
   var assert = chai.assert;
   describe('MassTransitStopModel', function () {
     var confirmDialogShown = false;
@@ -11,7 +11,7 @@ define(['chai', 'MassTransitStopModel'], function (chai) {
         };
       }
     };
-    var model = MassTransitStopModel.initialize(mockBackend);
+    var model = SelectedMassTransitStopModel.initialize(mockBackend);
 
     before(function () {
       eventbus = Backbone.Events;

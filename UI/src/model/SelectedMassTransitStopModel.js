@@ -1,5 +1,5 @@
-(function(massTransitStopModel) {
-  massTransitStopModel.initialize = function(backend) {
+(function(selectedMassTransitStopModel) {
+  selectedMassTransitStopModel.initialize = function(backend) {
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -267,4 +267,4 @@
     };
   };
 
-})(window.MassTransitStopModel = window.MassTransitStopModel || {});
+})(window.SelectedMassTransitStopModel = window.SelectedMassTransitStopModel || {});

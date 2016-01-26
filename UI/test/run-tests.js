@@ -6,7 +6,7 @@ require.config({
     'backbone': '../../bower_components/backbone/backbone',
     'chai': '../../bower_components/chai/chai',
     'EventBus': '../src/utils/eventbus',
-    "MassTransitStopModel": '../src/model/MassTransitStopModel',
+    "SelectedMassTransitStopModel": '../src/model/SelectedMassTransitStopModel',
     'LinearAsset': '../src/utils/LinearAsset',
     'Backend': '../src/utils/backend-utils',
     'validitydirections': '../src/utils/validity-directions',
@@ -37,7 +37,7 @@ require.config({
     'EventBus': {
       deps: ['backbone']
     },
-    "MassTransitStopModel": {
+    "SelectedMassTransitStopModel": {
       deps: ['EventBus', 'lodash']
     },
     'Layer': {exports: 'Layer'},
