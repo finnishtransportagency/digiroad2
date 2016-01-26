@@ -125,26 +125,5 @@ Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` 
 ./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
 ```
 
-Pysäkkitietojen vienti Vallu-järjestelmään
-==========================================
-
-Järjestelmä tukee pysäkkitietojen vientiä Vallu-järjestelmään. Pysäkkitiedot toimitetaan .csv-tiedostona FTP-palvelimelle. Vienti käynnistetään ajamalla `vallu_import.sh` skripti. Skripti hakee pysäkkitiedot kannasta käyttäen projektille [määriteltyä kohdetieto-tietolähdettä](#DataProviders).
-
-FTP-yhteys ja kohdekansio tulee määritellä `ftp.conf`-tiedostossa joka on tallennettu samaan polkuun `vallu_import.sh` skriptin kanssa. `ftp.conf`-tiedostossa yhteys ja kohdekansio määritellään seuraavalla tavalla:
-```
-<käyttäjänimi> <salasana> <palvelin ja kohdehakemisto>
-```
-
-Esimerkiksi:
-```
-username password localhost/valluexport
-```
-
-Vienti luo FTP-palvelimelle pysäkkitiedot zip-pakattuna .csv-tiedostona nimellä `digiroad_stops.zip` sekä `flag.txt`-tiedoston joka sisältää Vallu-viennin aikaleiman muodossa vuosi (4 merkkiä), kuukausi (2 merkkiä), päivä (2 merkkiä), tunti (2 merkkiä), minuutti (2 merkkiä), sekunti (2 merkkiä). Esimerkiksi `20140417133227`.
-
-Pysäkit jotka palvelevat ainoastaan raitiovaunuliikennettä poistetaan valluviennistä.
-
-Käyttöönotto kopioi ympäristökohtaisen `ftp.conf`-tiedoston käyttöönottoympäristön deployment-hakemistosta release-hakemistoon osana käyttöönottoa. Näin ympäristökohtaista `ftp.conf`-tiedostoa joka sisältää kirjautumistietoja voidaan ylläpitää tietoturvallisesti käyttöönottopalvelimella. Katso `deploy.rb`-tiedosto.
-
 [Käyttöönotto ja version päivitys](Deployment.md)
 =================================================
