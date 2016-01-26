@@ -214,7 +214,7 @@
         executeOrShowConfirmDialog(function() {
           var el = $(event.currentTarget);
           var validityPeriod = el.prop('name');
-          massTransitStopsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+          massTransitStopsCollection.selectValidityPeriod(validityPeriod, el.prop('checked'));
         });
       };
 
@@ -249,11 +249,11 @@
         };
 
         var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'));
-        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, massTransitStopsModel.getValidityPeriods()));
+        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, massTransitStopsCollection.getValidityPeriods()));
       });
 
       eventbus.on('asset:saved asset:created', function(asset) {
-        massTransitStopsModel.selectValidityPeriod(asset.validityPeriod, true);
+        massTransitStopsCollection.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {

@@ -209,7 +209,7 @@
       });
     });
 
-    var selectedMassTransitStopModel = SelectedMassTransitStopModel.initialize(backend);
+    var selectedMassTransitStopModel = SelectedMassTransitStop.initialize(backend);
     var models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
@@ -222,7 +222,7 @@
     };
 
     bindEvents(enabledLinearAssetSpecs, pointAssetSpecs);
-    window.massTransitStopsModel = new MassTransitStopsModel(backend);
+    window.massTransitStopsCollection = new MassTransitStopsCollection(backend);
     window.selectedMassTransitStopModel = selectedMassTransitStopModel;
     var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.pluck(pointAssets, "selectedPointAsset");

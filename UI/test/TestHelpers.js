@@ -74,12 +74,12 @@ define(['AssetsTestData',
     var markerBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
     var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
     var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
-    var asset = massTransitStopsModel.getAsset(id);
+    var asset = massTransitStopsCollection.getAsset(id);
     if (asset) { asset.mouseClickHandler(event); }
   };
 
   var moveMarker = function(id, map, deltaLon, deltaLat) {
-    var asset = massTransitStopsModel.getAsset(id);
+    var asset = massTransitStopsCollection.getAsset(id);
     if (asset) {
       var originBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
       var originLonLat = new OpenLayers.LonLat(originBounds.top, originBounds.left);

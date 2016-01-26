@@ -62,7 +62,7 @@
 
     var filterByValidityPeriod = function(group) {
       return _.filter(group, function(asset) {
-        return massTransitStopsModel.selectedValidityPeriodsContain(asset.validityPeriod);
+        return massTransitStopsCollection.selectedValidityPeriodsContain(asset.validityPeriod);
       });
     };
 

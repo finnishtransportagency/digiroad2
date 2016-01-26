@@ -1,5 +1,5 @@
 (function(root) {
-  root.MassTransitStopsModel = function(backend) {
+  root.MassTransitStopsCollection = function(backend) {
     var assets = {};
     var validityPeriods = {
       current: true,
