@@ -74,8 +74,6 @@ object Digiroad2Context {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
 
-  lazy val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
-
   lazy val assetProvider: AssetPropertyService = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
          .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
@@ -114,7 +112,7 @@ object Digiroad2Context {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override val spatialAssetDao: MassTransitStopDao = Digiroad2Context.spatialAssetDao
+      override val spatialAssetDao: MassTransitStopDao = new MassTransitStopDao
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
     }
     new ProductionMassTransitStopService(eventbus)
