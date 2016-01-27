@@ -7,9 +7,33 @@ window.SpeedLimitLayer = function(params) {
       layerName = 'speedLimit';
 
   Layer.call(this, layerName, roadLayer);
+  this.activateSelection = function() {
+    updateMassUpdateHandlerState();
+    doubleClickSelectControl.activate();
+  };
+  this.deactivateSelection = function() {
+    updateMassUpdateHandlerState();
+    doubleClickSelectControl.deactivate();
+  };
+  this.minZoomForContent = zoomlevels.minZoomForAssets;
+  this.layerStarted = function(eventListener) {
+    bindEvents(eventListener);
+    changeTool(application.getSelectedTool());
+  };
+  this.refreshView = function(event) {
+    vectorLayer.setVisibility(true);
+    adjustStylesByZoomLevel(map.getZoom());
+    collection.fetch(map.getExtent()).then(function() {
+      eventbus.trigger('layer:speedLimit:' + event);
+    });
+  };
+  this.removeLayerFeatures = function() {
+    vectorLayer.removeAllFeatures();
+    indicatorLayer.clearMarkers();
+  };
   var me = this;
 
-  var SpeedLimitCutter = function(vectorLayer, collection) {
+  var SpeedLimitCutter = function(vectorLayer, collection, eventListener) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
@@ -116,7 +140,6 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
   var combineFilters = function(filters) {
@@ -254,12 +277,13 @@ window.SpeedLimitLayer = function(params) {
 
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
+  vectorLayer.setVisibility(false);
   map.addLayer(vectorLayer);
 
   var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
   map.addLayer(indicatorLayer);
 
-  var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
+  var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
   var highlightMultipleSpeedLimitFeatures = function() {
     var partitioned = _.groupBy(vectorLayer.features, function(feature) {
@@ -328,7 +352,7 @@ window.SpeedLimitLayer = function(params) {
 
     vectorLayer.styleMap = browseStyleMap;
     vectorLayer.redraw();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
 
   var update = function(zoom, boundingBox) {
@@ -367,23 +391,6 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var start = function() {
-    if (!eventListener.running) {
-      eventListener.running = true;
-      bindEvents();
-      changeTool(application.getSelectedTool());
-      updateMassUpdateHandlerState();
-    }
-  };
-
-  var stop = function() {
-    doubleClickSelectControl.deactivate();
-    updateMassUpdateHandlerState();
-    speedLimitCutter.deactivate();
-    eventListener.stopListening(eventbus);
-    eventListener.running = false;
-  };
-
   var activateBrowseStyle = function() {
     _.each(vectorLayer.features, function(feature) {
       selectControl.unhighlight(feature);
@@ -399,7 +406,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var bindEvents = function() {
+  var bindEvents = function(eventListener) {
     eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'speedLimit:selected speedLimit:multiSelected', handleSpeedLimitSelected);
@@ -432,8 +439,8 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitChanged = function(selectedSpeedLimit) {
     doubleClickSelectControl.deactivate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+    me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits(selectedSpeedLimit.get());
@@ -441,27 +448,9 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitCancelled = function() {
     doubleClickSelectControl.activate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   };
-
-  var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
-      vectorLayer.setVisibility(true);
-      adjustStylesByZoomLevel(state.zoom);
-      start();
-      collection.fetch(state.bbox).then(function() {
-        eventbus.trigger('layer:speedLimit:moved');
-      });
-    } else {
-      vectorLayer.setVisibility(false);
-      stop();
-      eventbus.trigger('layer:speedLimit:moved');
-    }
-  };
-
-  // TODO: Stop listening to map:moved events when layer is stopped
-  eventbus.on('map:moved', handleMapMoved);
 
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
@@ -586,24 +575,22 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var reset = function() {
-    stop();
     selectControl.unselectAll();
     vectorLayer.styleMap = browseStyleMap;
+    speedLimitCutter.deactivate();
   };
 
   var show = function(map) {
     vectorLayer.setVisibility(true);
     indicatorLayer.setVisibility(true);
-    var layerUpdated = update(map.getZoom(), map.getExtent());
-    layerUpdated.then(function() {
-      eventbus.trigger('layer:speedLimit:shown');
-    });
+    me.show(map);
   };
 
   var hideLayer = function(map) {
     reset();
     vectorLayer.setVisibility(false);
     indicatorLayer.setVisibility(false);
+    me.stop();
     me.hide();
   };
 
