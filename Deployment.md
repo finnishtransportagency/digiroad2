@@ -1,6 +1,6 @@
 # Versiojulkaisu
 
-Ympäristön käyttöönotto ja versioiden julkaisu on automatisoitu [Capistranolla](http://capistranorb.com/). Uuden version vienti ympäristöön tapahtuu `cap`-komennolla. Esimerkiksi testiympäristöön vienti on:
+Ympäristön käyttöönotto ja versioiden julkaisu on automatisoitu [Capistranolla](http://capistranorb.com/). Uuden version julkaisu tapahtuu `cap`-komennolla. Esimerkiksi testiympäristöön vienti on:
 
     bundle exec cap staging deploy
 
