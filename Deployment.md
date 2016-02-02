@@ -11,9 +11,9 @@ Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
 * Koulutusympäristö, jonka asetukset on määritelty `training.rb`-tiedostossa.
 * Integraatiotestausympäristö, jonka asetukset on määritelty `testing.rb`- ja `testing2.rb`-tiedostoissa.
 
-## Ympäristöjen osoitteiden konfigurointi
+## Ympäristöjen osoitteiden asettaminen
 
-Capistrano-skripteissä ei ole konfiguroitu ympäristöjen IP-osoitteita. IP-osoitteet määritellään SSH-konfiguraatiotiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on konfiguroitu tuotantoympäristön koneet: 
+Capistrano-skripteissä ei ole asetettu ympäristöjen IP-osoitteita. IP-osoitteet määritellään SSH-asetustiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on asetettu tuotantoympäristön koneet: 
 
 ```
 host production1
