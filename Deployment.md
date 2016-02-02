@@ -6,7 +6,7 @@ Ympäristön käyttöönotto ja versioiden julkaisu on automatisoitu [Capistrano
 
 Tämän komennon voi ajaa kehittäjän koneella sekä CI-koneella.
 
-Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön. Lisäksi kullekin kohdeympäristölle määritellään omat tiedostot, kuten alla.
+Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön. Samalla komennolla voidaan myös viedä uusi versio Digiroad2-järjestelmästä kyseiseen järjestelmään. Lisäksi kullekin kohdeympäristölle määritellään omat tiedostot, kuten alla.
 
 Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
 * Tuotantoympäristö, jonka asetukset on määritelty [production.rb](config/deploy/production.rb)- ja [production2.rb](config/deploy/production2.rb)-tiedostoissa.
