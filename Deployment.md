@@ -11,8 +11,21 @@ Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
 * Koulutusympäristö, jonka asetukset on määritelty `training.rb`-tiedostossa.
 * Integraatiotestausympäristö, jonka asetukset on määritelty `testing.rb`- ja `testing2.rb`-tiedostoissa.
 
-Oracle-kantojen alustus ja päivitys
--------------------------------------
+## Ympäristöjen osoitteiden konfigurointi
+
+Capistrano-skripteissä ei ole konfiguroitu ympäristöjen IP-osoitteita. IP-osoitteet määritellään SSH-konfiguraatiotiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on konfiguroitu tuotantoympäristön koneet: 
+
+```
+host production1
+  Hostname <ip-osoite>
+  
+host production2
+  Hostname <ip-osoite>
+```
+
+Koneiden host-nimet voi katsoa Capistrano-skripteistä.
+
+## Oracle-kantojen alustus ja päivitys
 
 Käyttöönotto alustaa tarvittaessa Oracle-tietokannan ja skeemat. Tietokannan alustuksessa tietokantayhteyden määritykseen käytetään samaa `bonecp.properties` tiedostoa kuin järjestelmän ajossa. Katso lisätietoja [Digiroad-2](README.md) artikkelista.
 
