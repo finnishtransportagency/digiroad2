@@ -3,13 +3,13 @@ Käyttöönotto
 
 Ympäristön käyttöönotto on automatisoitu [Capistranolla](http://capistranorb.com/).
 
-Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön.
+Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön. Lisäksi kullekin kohdeympäristölle määritellään omat tiedostot, kuten alla.
 
 Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
-* Tuotantoympäristö, jonka asetukset on määritelty `production.rb`- ja `production2.rb`-tiedostoissa.
-* Testiympäristö, jonka asetukset on määritelty `staging.rb`-tiedostossa.
-* Koulutusympäristö, jonka asetukset on määritelty `training.rb`-tiedostossa.
-* Integraatiotestausympäristö, jonka asetukset on määritelty `testing.rb`- ja `testing2.rb`-tiedostoissa.
+* Tuotantoympäristö, jonka asetukset on määritelty [production.rb](config/deploy/production.rb)- ja [production2.rb](config/deploy/production2.rb)-tiedostoissa.
+* Testiympäristö, jonka asetukset on määritelty [staging.rb](config/deploy/staging.rb)-tiedostossa.
+* Koulutusympäristö, jonka asetukset on määritelty [training.rb](config/deploy/training.rb)-tiedostossa.
+* Integraatiotestausympäristö, jonka asetukset on määritelty [testing.rb](config/deploy/testing.rb)- ja [testing2.rb](config/deploy/testing2.rb)-tiedostoissa.
 
 ## Ympäristöjen osoitteiden asettaminen
 
