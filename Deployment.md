@@ -3,7 +3,7 @@ Käyttöönotto
 
 Ympäristön käyttöönotto on automatisoitu [Capistranolla](http://capistranorb.com/).
 
-Käyttöönotto on määritelty `deploy.rb` tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön.
+Käyttöönotto on määritelty [config/deploy.rb]()-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön.
 
 Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
 * Tuotantoympäristö, jonka asetukset on määritelty `production.rb`- ja `production2.rb`-tiedostoissa.
@@ -13,7 +13,7 @@ Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
 
 ## Ympäristöjen osoitteiden asettaminen
 
-Capistrano-skripteissä ei ole asetettu ympäristöjen IP-osoitteita. IP-osoitteet määritellään SSH-asetustiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on asetettu tuotantoympäristön koneet: 
+Capistrano-skripteissä ei ole asetettu ympäristöjen IP-osoitteita. IP-osoitteet kullekin palvelinnimelle määritellään SSH-asetustiedostossa `~/.ssh/config`. Esimerkiksi CI-koneella on asetettu tuotantoympäristön palvelinnimet: 
 
 ```
 host production1
@@ -23,7 +23,7 @@ host production2
   Hostname <ip-osoite>
 ```
 
-Koneiden host-nimet voi katsoa Capistrano-skripteistä.
+Koneiden palvelinnimet voi katsoa Capistrano-skripteistä.
 
 ## Oracle-kantojen alustus ja päivitys
 
