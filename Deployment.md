@@ -6,8 +6,10 @@ Ympäristön käyttöönotto on automatisoitu [Capistranolla](http://capistranor
 Käyttöönotto on määritelty `deploy.rb` tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön.
 
 Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
-* Tuotantoympäristö, jonka asetukset on määritelty `production.rb` tiedostossa
-* Testiympäristö, jonka asetukset on määritelty `staging.rb` tiedostossa.
+* Tuotantoympäristö, jonka asetukset on määritelty `production.rb`- ja `production2.rb`-tiedostoissa.
+* Testiympäristö, jonka asetukset on määritelty `staging.rb`-tiedostossa.
+* Koulutusympäristö, jonka asetukset on määritelty `training.rb`-tiedostossa.
+* Integraatiotestausympäristö, jonka asetukset on määritelty `testing.rb`- ja `testing2.rb`-tiedostoissa.
 
 Oracle-kantojen alustus ja päivitys
 -------------------------------------
