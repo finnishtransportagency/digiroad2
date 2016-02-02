@@ -1,7 +1,10 @@
-Käyttöönotto
-============
+# Versiojulkaisu
 
-Ympäristön käyttöönotto on automatisoitu [Capistranolla](http://capistranorb.com/).
+Ympäristön käyttöönotto ja versioiden julkaisu on automatisoitu [Capistranolla](http://capistranorb.com/). Uuden version vienti ympäristöön tapahtuu `cap`-komennolla. Esimerkiksi testiympäristöön vienti on:
+
+    bundle exec cap staging deploy
+
+Tämän komennon voi ajaa kehittäjän koneella sekä CI-koneella.
 
 Käyttöönotto on määritelty [config/deploy.rb](config/deploy.rb)-tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön. Lisäksi kullekin kohdeympäristölle määritellään omat tiedostot, kuten alla.
 
