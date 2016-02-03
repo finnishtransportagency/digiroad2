@@ -1,6 +1,9 @@
 Operaattorin k&auml;ytt&ouml;ohje
 =========================
 
+1. Digiroad-yll&auml;pitosovelluksen eri ymp&auml;rist&ouml;t
+-----------------------------
+
 Digiroad2-j&auml;rjestelm&auml; koostuu ominaisuustietojen hallinnasta (OTH) ja V&auml;yl&auml;verkon hallinnasta (VVH). T&auml;ss&auml; ohjeessa kerrotaan OTH:n operaattorille tarkoitettuja, tarkempia ohjeita.
 
 OTH hy&ouml;dynt&auml;&auml; VVH:ta seuraavasti:
@@ -41,7 +44,7 @@ Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad
 
 Integraatiotestiymp&auml;rist&ouml; ja koulutusymp&auml;rist&ouml; tulevat olemaan identtisi&auml;. Kahden identtisen ymp&auml;rist&ouml;n hy&ouml;ty saavutetaan tilanteessa, kun Digiroad-operaattori pit&auml;&auml; koulutuksia. T&auml;ll&ouml;in koulutukset voivat jatkua, vaikka kehitystiimi vie uusia versioita tuotantoon, koska integraatiotestausymp&auml;rist&ouml; korvaa vanhan koulutuksen versioiden toimivuuden varmistuksessa.
 
-1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
+2. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
 
 Digiroad-yll&auml;pitosovelluksessa on viisi erilaista k&auml;ytt&auml;j&auml;ryhm&auml;&auml;:
@@ -107,7 +110,7 @@ Poikkeuksia / virhetilanteita k&auml;ytt&auml;j&auml;nhallinnassa:
 
 Yll&auml;pitosovelluksen k&auml;ytt&auml;j&auml;nhallinnasta on backlogilla story-lappu, jossa se tullaan uusimaan. T&auml;ss&auml; yhteydess&auml; tehd&auml;&auml;n mm. sellainen muutos, ett&auml; k&auml;ytt&auml;j&auml;t n&auml;kisiv&auml;t kaikki tietolajit koko Suomesta, mutta saisivat muokata kohteita vain m&auml;&auml;riteltyjen kuntien alueella. Nyt k&auml;ytt&auml;j&auml; ei n&auml;e kohteita ollenkaan omien muokkausoikeuksien ulkopuolelta.
 
-2. CSV-import pys&auml;kkien ominaisuustiedoille
+3. CSV-import pys&auml;kkien ominaisuustiedoille
 -----------
 
 Importeilla tuodaan aineistoja j&auml;rjestelm&auml;&auml;n.
@@ -146,7 +149,7 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
 
 
-3. Pys&auml;kkien exportit
+4. Pys&auml;kkien exportit
 -----------
 
 ##3.1 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n##
@@ -167,7 +170,7 @@ digiroad2.vallu.server.address=http://localhost:9002
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. 
 
 
-4. Kehitysymp&auml;rist&ouml;n asennus
+5. Kehitysymp&auml;rist&ouml;n asennus
 ----------------------------
 
 __Projekti GitHubissa__
@@ -179,7 +182,7 @@ Projektin kloonaaminen suoritetaan clientilla.
 Ohjeet kehitysymp&auml;rist&ouml;n asennukseen tarkemmin: https://github.com/finnishtransportagency/digiroad2 -> kohta README.md.
 
 
-5. Geckoboard
+6. Geckoboard
 -----------
 
 Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://reaktor.geckoboard.com/dashboards/C33E233E34A644EE (ei vaadi kirjautumista). Geckoboardista voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml;, Google Analyticsist&auml; ja Jenkinsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 7. Jenkinsiin ei ole toistaiseksi p&auml;&auml;sy&auml; operaattorilla, mutta tulee my&ouml;hemmin.
@@ -201,14 +204,14 @@ _Geckoboardin osiot._
 11. Reaktorin Leuat, jepjep... :)
 
 
-6. DR2:n Google-tili
+7. DR2:n Google-tili
 --------------------
 
 Digiroad 2:lla on oma Google-tili: Digiroad2@gmail.com. Tili on edellytys, jotta Google Streetview:ll&auml; on mahdollista ladata muutama tuhat kuvaa p&auml;iv&auml;ss&auml;. My&ouml;s Digiroad2:sen Google Driven ja Google Analyticsin omistajuudet ovat ko. tilill&auml;. 
 
 Tunnuksia Google-tiliin voi kysy&auml; kehitystiimilt&auml;: digiroad2@reaktor.fi.
 
-7. Google Analytics
+8. Google Analytics
 -------------------
 
 Digiroad2-sovellus ja siihen liittyv&auml;t sivustot (mm. floating stops ja k&auml;ytt&ouml;ohje) on kytketty [Google Analyticsiin](https://www.google.com/analytics/) . Google Analyticsin avulla voi seurata sovelluksen k&auml;ytt&ouml;&auml; ja k&auml;ytt&auml;j&auml;m&auml;&auml;ri&auml;. Google Analyticsi&auml; p&auml;&auml;see katsomaan Digiroadin omilla gmail-tunnuksilla digiroad.ch5@gmail.com (salasana operaattorilta) tai digiroad2@gmail.com (salasana kehitystiimilt&auml;).
@@ -233,7 +236,7 @@ K&auml;ytt&auml;ytyminen-valikon (6) Yleiskatsaus-kohdasta voi katsoa eri Digiro
 
 ![googleanalytics3](googleanalytics3.jpg)
 
-8. Tietolajikohtaisia tarkempia tietoja
+9. Tietolajikohtaisia tarkempia tietoja
 -------------------
 
 Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattori-k&auml;ytt&auml;jien tietoon.
@@ -295,7 +298,7 @@ Tarkistukset perustuvat kohteelle tallennettuihin m-arvoihin ja tielinkin MML-ID
 *Kohteet, joita ei piirret&auml; kartalle, s&auml;ilyv&auml;t edelleen tietokannassa. Ne eiv&auml;t siis katoa Digiroadista, mutta niit&auml; ei voida piirt&auml;&auml; kartalle, koska en eiv&auml;t asetu p&auml;ivittyneelle geometrialle sujuvasti.
 
 
-9. Kalpa-API
+10. Kalpa-API
 --------------
 
 Digiroad-tietokannassa on olemassa Kalpa-API niminen JSON-rajapinta, josta on mahdollista hakea jokaisen tietolajin tiedot kunnittain esimerkiksi FME-ty&ouml;tilaan. Kalpa-APIsta haetaan Digiroad-tietolajien tiedot julkaisua varten.
@@ -347,7 +350,7 @@ Jokaisen ymp&auml;rist&ouml;n Kalpa-APIin on oma salasanansa. Salasanoja hallinn
 Liikenneviraston sis&auml;verkossa tai SSH-yhteyden kautta Kalpa-APIa voi k&auml;ytt&auml;&auml; IP-osoitteiden avulla, jolloin ei tarvitse erikseen autentikoitua Livin extranet-tunnuksilla. (IP-osoitteet voisi lis&auml;t&auml;, mutta operaattori ei toistaiseksi tarvitse n&auml;it&auml;)
 
 
-10. Kuntaliitosten aiheuttamat muutokset vuodenvaihteessa
+11. Kuntaliitosten aiheuttamat muutokset vuodenvaihteessa
 -------------------
 
 Vuodenvaihteessa tapahtuvat kuntaliitokset aiheuttavat muutoksia sek&auml; OTH:ssa ett&auml; VVH:ssa. VVH:ssa p&auml;ivitet&auml;&auml;n tielinkkien kuntakoodit vastaamaan uutta tilannetta. OTH:ssa on pisteille tallennettu kuntakoodi tietokantaan, mink&auml; vuoksi nuo kuntakoodit tulee korjata vastaamaan uutta tilannetta tietokannassa. 
