@@ -5,16 +5,17 @@ Digiroad2-j&auml;rjestelm&auml; koostuu ominaisuustietojen hallinnasta (OTH) ja 
 
 OTH hy&ouml;dynt&auml;&auml; VVH:ta seuraavasti:
 VVH:n testikanta --> OTH:n testikanta
-VVH:n tuotantokanta --> OTH:n koulutuskanta ja tuotantokanta
+VVH:n tuotantokanta --> OTH:n koulutuskanta, integraatiotesti ja tuotantokanta
 
 OTH:n eri ymp&auml;rist&ouml;jen osoitteet selaimessa:
+Tuotantokanta (tuleva integraatiotesti) https://testiextranet.liikennevirasto.fi/digiroad/
 Testikanta https://devtest.liikennevirasto.fi/digiroad/
 Koulutuskanta https://apptest.liikennevirasto.fi/digiroad/
-Tuotantokanta https://testiextranet.liikennevirasto.fi/digiroad/
+Tuleva tuotanto https://extranet.liikennevirasto.fi/digiroad/ (ei toimi viel&auml;)
 
 Osa tietolajeista on tarkoitettu vain operaattorin yll&auml;pitoon toistaiseksi. N&auml;m&auml; saa n&auml;kyviin lis&auml;&auml;m&auml;ll&auml; osoitteeseen ?isExperimental=true, esim. https://testiextranet.liikennevirasto.fi/digiroad/?isExperimental=true
 
-Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. T&auml;m&auml;n j&auml;lkeen uusi k&auml;ytt&ouml;ohje p&auml;ivitet&auml;&auml;n testikantaan. Toimiva versio vied&auml;&auml;n koulutuskantaan ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
+Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. T&auml;m&auml;n j&auml;lkeen uusi k&auml;ytt&ouml;ohje p&auml;ivitet&auml;&auml;n testikantaan. Toimiva versio vied&auml;&auml;n koulutuskantaan (my&ouml;hemmin my&ouml;s integraatiotestiin) ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
 
 Kaikki Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;liittym&auml;&auml;n liittyv&auml;t sivut toimivat kaikissa ymp&auml;rist&ouml;iss&auml; (sovellus, k&auml;ytt&ouml;ohje, uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen jne.). Vaihtamalla osoitteen alkuun devtest, apptest tai testiextranet voi valita, mihin ymp&auml;rist&ouml;&ouml;n menee. T&auml;ss&auml; ohjeessa olevat linkit ovat tuotantoymp&auml;rist&ouml;&ouml;n (testiextranet).
 
@@ -33,6 +34,12 @@ Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad
 ###Koulutusymp&auml;rist&ouml;:###
 
 ![Koulutuskanta](koulutuskanta_kuva.png)
+
+###Integraatiotestausymp&auml;rist&ouml;###
+
+![Integraatiotesti](integraatiotesti_kuva.png)
+
+Integraatiotestiymp&auml;rist&ouml; ja koulutusymp&auml;rist&ouml; tulevat olemaan identtisi&auml;. Kahden identtisen ymp&auml;rist&ouml;n hy&ouml;ty saavutetaan tilanteessa, kun Digiroad-operaattori pit&auml;&auml; koulutuksia. T&auml;ll&ouml;in koulutukset voivat jatkua, vaikka kehitystiimi vie uusia versioita tuotantoon, koska integraatiotestausymp&auml;rist&ouml; korvaa vanhan koulutuksen versioiden toimivuuden varmistuksessa.
 
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
