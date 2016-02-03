@@ -14,17 +14,11 @@ class PingApi extends ScalatraServlet {
 
   get("/") {
     try {
-      logger.info("ping()")
       Digiroad2Context.userProvider.getUser("")
-      logger.info("ping()")
       val properties = new Properties()
-      logger.info("ping()")
       properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-      logger.info("ping() props")
       val role = properties.getProperty("digiroad2.server.role", "unknown")
-      logger.info("ping() role = " + role)
       if ("standby".equalsIgnoreCase(role) && handleStandby(properties) || "master".equalsIgnoreCase(role)) {
-        logger.info("ping() OK")
         Ok("OK")
       } else {
         if (!"standby".equalsIgnoreCase(role)) {
