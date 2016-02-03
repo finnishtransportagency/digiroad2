@@ -259,6 +259,9 @@
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
+    // Show environment name next to Digiroad logo
+    $('#notification').append(Environment.localizedName());
+
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(map.getZoom(), map.getExtent());
