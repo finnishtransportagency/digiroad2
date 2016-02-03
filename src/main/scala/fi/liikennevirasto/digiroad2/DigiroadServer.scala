@@ -1,18 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import java.util.logging.Logger
-import javax.servlet.Servlet
-import javax.servlet.http.{HttpServlet, HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import org.eclipse.jetty.client.{HttpClient, HttpProxy, ProxyConfiguration}
-
-import scala.collection.JavaConversions._
-import org.eclipse.jetty.http.{MimeTypes, HttpURI}
+import org.eclipse.jetty.client.api.Request
+import org.eclipse.jetty.client.{HttpClient, HttpProxy}
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
-import org.eclipse.jetty.client.api.Request
+
+import scala.collection.JavaConversions._
 
 
 trait DigiroadServer {
@@ -29,7 +26,6 @@ trait DigiroadServer {
     context.addServlet(classOf[NLSProxyServlet], "/maasto/*")
     context.addServlet(classOf[VKMProxyServlet], "/vkm/*")
     context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
-    context.addServlet(classOf[MonitoringServlet], "/monitor")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -90,40 +86,4 @@ class VKMUIProxyServlet extends ProxyServlet {
   }
 }
 
-class MonitoringServlet extends HttpServlet {
-  override def doGet(req : HttpServletRequest, resp : HttpServletResponse) = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    val role = properties.getProperty("digiroad2.server.role", "unknown")
-    resp.setContentType("text/plain")
-    if ("master".equalsIgnoreCase(role)) {
-      resp.setStatus(200)
-      resp.getWriter.write("OK")
-    } else if ("standby".equalsIgnoreCase(role)) {
-      handleStandby(resp, properties)
-    } else {
-      log("Unspecified server role, returning error")
-      resp.setStatus(500)
-      resp.getWriter.write("No role specified!")
-    }
-  }
 
-  def handleStandby(resp : HttpServletResponse, properties : Properties) = {
-    val host = properties.getProperty("digiroad2.server.master", "")
-    if (host.isEmpty) {
-      log("Unspecified master host, returning error")
-      resp.getWriter.write("No master specified!")
-      resp.setStatus(500)
-    } else {
-      val client = new HttpClient()
-      client.setConnectTimeout(2000)
-      if (client.GET(host).getContentAsString.equals("OK")) {
-        resp.setStatus(503)
-        resp.getWriter.write("Master is alive")
-      } else {
-        resp.setStatus(200)
-        resp.getWriter.write("OK")
-      }
-    }
-  }
-}
