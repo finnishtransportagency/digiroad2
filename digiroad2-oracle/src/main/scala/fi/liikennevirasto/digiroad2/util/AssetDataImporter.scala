@@ -21,6 +21,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGe
 import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import scala.collection.mutable
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import slick.jdbc.StaticQuery.interpolation
@@ -1018,12 +1019,15 @@ class AssetDataImporter {
     val vvhClient = new VVHClient(vvhHost)
     val startTime = DateTime.now()
     val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val processedMmlIds = mutable.Set[Long]()
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
         println("*** fetching from vvh with municipality:" + municipalityCode)
 
-        val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode).filter(isHereFlipped)
+        val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
+          .filter(isHereFlipped)
+          .filterNot(link => processedMmlIds.contains(link.mmlId))
 
         val updatedSideCodesCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
           sqlu"""
@@ -1033,6 +1037,8 @@ class AssetDataImporter {
             and pos.side_code in (2,3)
         """.first
         }
+
+        processedMmlIds ++= flippedLinks.map(_.mmlId)
 
         println("*** updated side code for " + updatedSideCodesCount + " lrm positions in " + humanReadableDurationSince(startTime))
       }
