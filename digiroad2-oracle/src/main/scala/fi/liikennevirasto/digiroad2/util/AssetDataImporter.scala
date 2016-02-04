@@ -1038,6 +1038,20 @@ class AssetDataImporter {
         """.first
         }
 
+        flippedLinks.foreach { link =>
+          val positions = sql"""select id, start_measure, end_measure from lrm_position where mml_id = ${link.mmlId}""".as[(Long, Double, Double)].list
+          val length = GeometryUtils.geometryLength(link.geometry)
+
+          positions.foreach { case (id, startMeasure, endMeasure) =>
+            sqlu"""
+              update lrm_position
+              set start_measure = ${length - startMeasure},
+                  end_measure = ${length - endMeasure}
+              where id = $id
+            """.execute
+          }
+        }
+
         processedMmlIds ++= flippedLinks.map(_.mmlId)
 
         println("*** updated side code for " + updatedSideCodesCount + " lrm positions in " + humanReadableDurationSince(startTime))
