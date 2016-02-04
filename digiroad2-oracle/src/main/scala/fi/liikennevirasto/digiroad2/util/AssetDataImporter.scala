@@ -1013,7 +1013,38 @@ class AssetDataImporter {
       }
     }
   }
-  
+
+  def adjustToNewDigitization(vvhHost: String) = {
+    val vvhClient = new VVHClient(vvhHost)
+    val startTime = DateTime.now()
+    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+
+    withDynTransaction {
+      municipalities.foreach { municipalityCode =>
+        println("*** fetching from vvh with municipality:" + municipalityCode)
+
+        val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode).filter(isHereFlipped)
+
+        val updatedSideCodesCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
+          sqlu"""
+            update lrm_position pos
+            set pos.side_code = 5 - pos.side_code
+            where exists (select * from #$idTableName i where i.id = pos.mml_id)
+            and pos.side_code in (2,3)
+        """.first
+        }
+
+        println("*** updated side code for " + updatedSideCodesCount + " lrm positions in " + humanReadableDurationSince(startTime))
+      }
+    }
+  }
+
+  private def isHereFlipped(roadLink: VVHRoadlink) = {
+    val NotFlipped = 0
+    val Flipped = 1
+    roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[Int] == Flipped
+  }
+
   def generateValuesForLitRoads(): Unit = {
     processInChunks(100, "lit roads") { (chunkStart, chunkEnd) =>
       withDynTransaction {

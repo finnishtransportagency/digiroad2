@@ -392,6 +392,15 @@ object DataFixture {
     println("\n")
   }
 
+  def adjustToNewDigitization(): Unit = {
+    println("\nAdjusting side codes and m-values according new digitization directions")
+    println(DateTime.now())
+    dataImporter.adjustToNewDigitization(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -489,6 +498,8 @@ object DataFixture {
         importExitNumbers()
       case Some("traffic_lights") =>
         importTrafficLights()
+      case Some("adjust_digitization") =>
+        adjustToNewDigitization()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
