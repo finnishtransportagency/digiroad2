@@ -1017,25 +1017,32 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val vvhClient = new VVHClient(vvhHost)
-    val startTime = DateTime.now()
     val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
     val processedMmlIds = mutable.Set[Long]()
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
-        println("*** fetching from vvh with municipality:" + municipalityCode)
+        val startTime = DateTime.now()
+
+        println(s"*** Fetching from VVH with municipality: $municipalityCode")
 
         val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
           .filterNot(link => processedMmlIds.contains(link.mmlId))
 
-        val updatedSideCodesCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
+        var updatedCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
           sqlu"""
             update lrm_position pos
             set pos.side_code = 5 - pos.side_code
-            where exists (select * from #$idTableName i where i.id = pos.mml_id)
-            and pos.side_code in (2,3)
-        """.first
+            where exists(select * from #$idTableName i where i.id = pos.mml_id)
+            and pos.side_code in (2, 3)
+          """.first +
+          sqlu"""
+            update traffic_direction td
+            set td.traffic_direction = 7 - td.traffic_direction
+            where exists(select id from #$idTableName i where i.id = td.mml_id)
+            and td.traffic_direction in (3, 4)
+          """.first
         }
 
         flippedLinks.foreach { link =>
@@ -1043,18 +1050,18 @@ class AssetDataImporter {
           val length = GeometryUtils.geometryLength(link.geometry)
 
           positions.foreach { case (id, startMeasure, endMeasure) =>
-            sqlu"""
+            updatedCount += sqlu"""
               update lrm_position
               set start_measure = ${length - startMeasure},
                   end_measure = ${length - endMeasure}
               where id = $id
-            """.execute
+            """.first
           }
         }
 
         processedMmlIds ++= flippedLinks.map(_.mmlId)
 
-        println("*** updated side code for " + updatedSideCodesCount + " lrm positions in " + humanReadableDurationSince(startTime))
+        println(s"*** Updated $updatedCount lrm positions in ${humanReadableDurationSince(startTime)}")
       }
     }
   }
