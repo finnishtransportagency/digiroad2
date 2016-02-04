@@ -507,6 +507,7 @@ object DataFixture {
         " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
         " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings |" +
         " directional_traffic_signs | service_points | european_roads | exit_numbers | traffic_lights |" +
+        " adjust_digitization |" +
         " repair")
     }
   }
