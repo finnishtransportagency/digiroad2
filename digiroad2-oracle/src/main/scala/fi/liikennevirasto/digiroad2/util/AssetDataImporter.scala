@@ -1069,7 +1069,7 @@ class AssetDataImporter {
   private def isHereFlipped(roadLink: VVHRoadlink) = {
     val NotFlipped = 0
     val Flipped = 1
-    roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[Int] == Flipped
+    roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[BigInt] == Flipped
   }
 
   def generateValuesForLitRoads(): Unit = {
