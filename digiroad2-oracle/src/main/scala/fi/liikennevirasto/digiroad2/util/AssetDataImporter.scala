@@ -1061,7 +1061,7 @@ class AssetDataImporter {
 
         processedMmlIds ++= flippedLinks.map(_.mmlId)
 
-        println(s"*** Updated $updatedCount lrm positions in ${humanReadableDurationSince(startTime)}")
+        println(s"*** Made $updatedCount updates in ${humanReadableDurationSince(startTime)}")
       }
     }
   }
