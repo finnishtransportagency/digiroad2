@@ -1052,8 +1052,8 @@ class AssetDataImporter {
           positions.foreach { case (id, startMeasure, endMeasure) =>
             updatedCount += sqlu"""
               update lrm_position
-              set start_measure = ${length - startMeasure},
-                  end_measure = ${length - endMeasure}
+              set end_measure = ${length - startMeasure},
+                  start_measure = ${length - endMeasure}
               where id = $id
             """.first
           }
