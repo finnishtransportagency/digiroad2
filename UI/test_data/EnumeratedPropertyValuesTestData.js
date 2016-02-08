@@ -11,13 +11,11 @@
           values: [
             {
               propertyValue: "2",
-              propertyDisplayValue: "Digitointisuuntaan",
-              imageId: null
+              propertyDisplayValue: "Digitointisuuntaan"
             },
             {
               propertyValue: "3",
-              propertyDisplayValue: "Digitointisuuntaa vastaan",
-              imageId: null
+              propertyDisplayValue: "Digitointisuuntaa vastaan"
             }
           ]
         },
@@ -30,18 +28,15 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             }
           ]
         },
@@ -54,18 +49,15 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             }
           ]
         },
@@ -78,18 +70,15 @@
           values: [
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             }
           ]
         },
@@ -102,18 +91,15 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             }
           ]
         },
@@ -126,18 +112,15 @@
           values: [
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             }
           ]
         },
@@ -150,18 +133,15 @@
           values: [
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             }
           ]
         },
@@ -174,28 +154,23 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tiedossa",
-              imageId: null
+              propertyDisplayValue: "Ei tiedossa"
             },
             {
               propertyValue: "3",
-              propertyDisplayValue: "Helsingin seudun liikenne",
-              imageId: null
+              propertyDisplayValue: "Helsingin seudun liikenne"
             },
             {
               propertyValue: "4",
-              propertyDisplayValue: "Liikennevirasto",
-              imageId: null
+              propertyDisplayValue: "Liikennevirasto"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Kunta",
-              imageId: null
+              propertyDisplayValue: "Kunta"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "ELY-keskus",
-              imageId: null
+              propertyDisplayValue: "ELY-keskus"
             }
           ]
         },
@@ -208,18 +183,15 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             }
           ]
         },
@@ -232,33 +204,27 @@
           values: [
             {
               propertyValue: "5",
-              propertyDisplayValue: "Virtuaalipysäkki",
-              imageId: null
+              propertyDisplayValue: "Virtuaalipysäkki"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Raitiovaunu",
-              imageId: null
+              propertyDisplayValue: "Raitiovaunu"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Linja-autojen paikallisliikenne",
-              imageId: null
+              propertyDisplayValue: "Linja-autojen paikallisliikenne"
             },
             {
               propertyValue: "3",
-              propertyDisplayValue: "Linja-autojen kaukoliikenne",
-              imageId: null
+              propertyDisplayValue: "Linja-autojen kaukoliikenne"
             },
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "4",
-              propertyDisplayValue: "Linja-autojen pikavuoro",
-              imageId: null
+              propertyDisplayValue: "Linja-autojen pikavuoro"
             }
           ]
         },
@@ -271,18 +237,15 @@
           values: [
             {
               propertyValue: "99",
-              propertyDisplayValue: "Ei tietoa",
-              imageId: null
+              propertyDisplayValue: "Ei tietoa"
             },
             {
               propertyValue: "1",
-              propertyDisplayValue: "Ei",
-              imageId: null
+              propertyDisplayValue: "Ei"
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Kyllä",
-              imageId: null
+              propertyDisplayValue: "Kyllä"
             }
           ]
         }

@@ -174,7 +174,6 @@ define(['chai', 'SelectedMassTransitStop'], function (chai) {
           publicId: 'vaikutussuunta',
           required: false,
           values: [{
-            imageId: null,
             propertyDisplayValue: 'Digitointisuuntaan',
             propertyValue: '2'
           }
@@ -188,11 +187,9 @@ define(['chai', 'SelectedMassTransitStop'], function (chai) {
           publicId: 'pysakin_tyyppi',
           required: true,
           values: [{
-            imageId: '2_1398341376263',
             propertyDisplayValue: 'Linja-autojen paikallisliikenne',
             propertyValue: '2'
           }, {
-            imageId: '3_1398341376270',
             propertyDisplayValue: 'Linja-autojen kaukoliikenne',
             propertyValue: '3'
           }

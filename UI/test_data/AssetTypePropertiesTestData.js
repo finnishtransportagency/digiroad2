@@ -15,7 +15,7 @@
         {"id": 300003, "publicId": "maastokoordinaatti_z", "propertyType": "text", "propertyUiIndex": 63, "required": false, "values": []},
         {"id": 90, "publicId": "liikennointisuunta", "propertyType": "text", "propertyUiIndex": 64, "required": false, "values": []},
         {"id": 0, "publicId": "vaikutussuunta", "propertyType": "single_choice", "propertyUiIndex": 65, "required": false, "values": [
-          {"propertyValue": "2", "propertyDisplayValue": "2", "imageId": null}
+          {"propertyValue": "2", "propertyDisplayValue": "2"}
         ]},
         {"id": 300004, "publicId": "liikennointisuuntima", "propertyType": "read-only", "propertyUiIndex": 66, "required": false, "values": []},
         {"id": 0, "publicId": "ensimmainen_voimassaolopaiva", "propertyType": "date", "propertyUiIndex": 70, "required": false, "values": []},

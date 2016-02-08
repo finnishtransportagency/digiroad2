@@ -114,7 +114,7 @@ object Asset {
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, imageId: String = null)
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
 case class Position(lon: Double, lat: Double, mmlId: Long, bearing: Option[Int])
 
