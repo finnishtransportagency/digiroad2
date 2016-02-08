@@ -69,7 +69,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
-        p.id, p.public_id, p.property_type, p.ui_position_index, p.required, e.value,
+        p.id, p.public_id, p.property_type, p.required, e.value,
         case
           when e.name_fi is not null then e.name_fi
           when tp.value_fi is not null then tp.value_fi
@@ -233,11 +233,16 @@ trait MassTransitStopService extends PointAssetOperations {
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
-      val propertyUiIndex = r.nextInt
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
+      val property = new PropertyRow(
+        propertyId = propertyId,
+        publicId = propertyPublicId,
+        propertyType = propertyType,
+        propertyRequired = propertyRequired,
+        propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
+        propertyDisplayValue = propertyDisplayValue.orNull)
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()

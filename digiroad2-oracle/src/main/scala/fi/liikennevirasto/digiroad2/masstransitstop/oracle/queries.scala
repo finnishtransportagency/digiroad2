@@ -28,7 +28,7 @@ object Queries {
     }
   }
 
-  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
+  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
@@ -173,11 +173,11 @@ object Queries {
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
-        Property(r.nextLong, r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
+        Property(r.nextLong, r.nextString, r.nextString, r.nextBoolean, Seq())
       }
     }
     sql"""
-      select p.id, p.public_id, p.property_type, p.ui_position_index, p.required from property p where p.asset_type_id = $assetTypeId
+      select p.id, p.public_id, p.property_type, p.required from property p where p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
 

@@ -27,11 +27,11 @@ object AssetPropertyConfiguration {
   val commonAssetPropertyEnumeratedValues: Seq[EnumeratedPropertyValue] = List(enumeratedValidityDirectionValues)
 
   val commonAssetProperties: Map[String, CommonAssetProperty] = Map(
-    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(0, ValidityDirectionId, SingleChoice, 65, values = Seq(PropertyValue(ValidityDirectionSame, Some(ValidityDirectionSame)))), true),
-    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, 70, values = Seq())),
-    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, 80, values = Seq())),
-    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, 10, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, 20, values = Seq()))
+    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(0, ValidityDirectionId, SingleChoice, values = Seq(PropertyValue(ValidityDirectionSame, Some(ValidityDirectionSame)))), true),
+    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, values = Seq())),
+    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, values = Seq())),
+    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, values = Seq())),
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {

@@ -31,14 +31,14 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   }
 
   test("bearing property row generates bearing description") {
-    val propertyRow = PropertyRow(1, "liikennointisuuntima", "", 1, false, "", "")
+    val propertyRow = PropertyRow(1, "liikennointisuuntima", "", false, "", "")
     val properties = massTransitStopDao.assetRowToProperty(List(createAssetRow(propertyRow)))
     properties.head.publicId must equal("liikennointisuuntima")
     properties.head.values.head.propertyDisplayValue must equal(Some("Etelä"))
   }
 
   test("asset row values are mapped correctly to property row") {
-    val propertyRow = PropertyRow(1, "sometestproperty", "", 1, false, "123", "foo")
+    val propertyRow = PropertyRow(1, "sometestproperty", "", false, "123", "foo")
     val properties = massTransitStopDao.assetRowToProperty(List(createAssetRow(propertyRow)))
     properties.head.publicId must equal("sometestproperty")
     properties.head.values.head.propertyDisplayValue must equal(Some("foo"))

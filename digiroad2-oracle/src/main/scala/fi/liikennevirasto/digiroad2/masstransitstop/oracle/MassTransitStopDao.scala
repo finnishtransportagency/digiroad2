@@ -37,8 +37,12 @@ class MassTransitStopDao {
   def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
-      Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
-        assetRows.map(assetRow =>
+      Property(
+        id = key,
+        publicId = row.property.publicId,
+        propertyType = row.property.propertyType,
+        required = row.property.propertyRequired,
+        values = assetRows.map(assetRow =>
           PropertyValue(
             assetRow.property.propertyValue,
             propertyDisplayValueFromAssetRow(assetRow))

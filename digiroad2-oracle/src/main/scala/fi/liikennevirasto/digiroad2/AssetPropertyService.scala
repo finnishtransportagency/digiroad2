@@ -21,9 +21,9 @@ class AssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvide
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
-    (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
+    AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
       Queries.availableProperties(assetTypeId)
-    }).sortBy(_.propertyUiIndex)
+    }
   }
 
   def assetPropertyNames(language: String): Map[String, String] = {

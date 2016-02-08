@@ -248,11 +248,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   private def testAssetWithProperties(properties: List[(String, String)]) = {
     testAsset.copy(propertyData = properties.map { property =>
-      Property(
-        id = 1,
-        publicId = property._1,
-        propertyType = PropertyTypes.Text,
-        values = List(PropertyValue(property._2, Some(property._2))))
+      Property(id = 1, publicId = property._1, propertyType = PropertyTypes.Text, values = List(PropertyValue(property._2, Some(property._2))))
     }.toSeq ++ testAsset.propertyData)
   }
 }
