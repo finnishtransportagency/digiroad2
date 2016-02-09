@@ -19,10 +19,6 @@ EOF
 	    ./stop.sh
 	    pkill -f vallu_test_server.js || true )
 	;;
-  restart|force-reload)
-    stop
-    start
-	;;
   *)
 	  echo $"Usage: $0 {start|stop|restart}"
 	  exit 2
