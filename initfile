@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# digiroad          Start up the Digiroad2 server daemon
+
+START_VALLU=1
+
+case "$1" in
+  start)
+    ( sudo -u web -i <<EOF
+      cd /home/web/digiroad2/current
+	    ./start.sh
+	    [[ $START_VALLU ]] && nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
+EOF
+
+	    )
+	;;
+  stop)
+	  ( cd /home/web/digiroad2/current
+	    ./stop.sh
+	    pkill -f vallu_test_server.js || true )
+	;;
+  restart|force-reload)
+    stop
+    start
+	;;
+  *)
+	  echo $"Usage: $0 {start|stop|restart}"
+	  exit 2
+esac
