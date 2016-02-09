@@ -2,14 +2,14 @@
 
 # digiroad          Start up the Digiroad2 server daemon
 
-START_VALLU=1
+SKIP_VALLU=${SKIP_VALLU:-0}
 
 case "$1" in
   start)
     ( sudo -u web -i <<EOF
       cd /home/web/digiroad2/current
 	    ./start.sh
-	    [[ $START_VALLU ]] && nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
+	    [[ ! $SKIP_VALLU ]] && nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
 EOF
 
 	    )
