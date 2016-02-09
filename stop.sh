@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pkill -u web -f 'java.*digiroad2'
+pkill -f 'java.*digiroad2'
