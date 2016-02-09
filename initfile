@@ -20,6 +20,6 @@ EOF
 	    pkill -f vallu_test_server.js || true )
 	;;
   *)
-	  echo $"Usage: $0 {start|stop|restart}"
+	  echo $"Usage: $0 {start|stop}"
 	  exit 2
 esac
