@@ -9,7 +9,7 @@ case "$1" in
     ( sudo -u web -i <<EOF
       cd /home/web/digiroad2/current
 	    ./start.sh
-	    [[ ! $SKIP_VALLU ]] && nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
+	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
 EOF
 
 	    )
