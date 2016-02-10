@@ -1042,6 +1042,15 @@ class AssetDataImporter {
             set td.traffic_direction = 7 - td.traffic_direction
             where exists(select id from #$idTableName i where i.id = td.mml_id)
             and td.traffic_direction in (3, 4)
+          """.first +
+          sqlu"""
+            update asset a
+            set a.bearing = mod((a.bearing + 180), 360)
+            where a.id in (select al.asset_id from asset_link al
+                           join lrm_position pos on al.position_id = pos.id
+                           join #$idTableName i on i.id = pos.mml_id)
+            and a.bearing is not null
+            and a.asset_type_id in (10, 240)
           """.first
         }
 
