@@ -1050,8 +1050,8 @@ class AssetDataImporter {
 
           updatedCount += sqlu"""
               update lrm_position
-              set end_measure = ${length} - COALESCE(start_measure, 0),
-                  start_measure = ${length} - COALESCE(end_measure, start_measure, 0)
+              set end_measure = greatest(0, ${length} - COALESCE(start_measure, 0)),
+                  start_measure = greatest(0, ${length} - COALESCE(end_measure, start_measure, 0))
               where mml_id = ${link.mmlId}
             """.first
         }
