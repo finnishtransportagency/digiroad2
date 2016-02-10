@@ -21,6 +21,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGe
 import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory
+import scala.collection.mutable
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import slick.jdbc.StaticQuery.interpolation
@@ -1013,7 +1014,61 @@ class AssetDataImporter {
       }
     }
   }
-  
+
+  def adjustToNewDigitization(vvhHost: String) = {
+    val vvhClient = new VVHClient(vvhHost)
+    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val processedMmlIds = mutable.Set[Long]()
+
+    withDynTransaction {
+      municipalities.foreach { municipalityCode =>
+        val startTime = DateTime.now()
+
+        println(s"*** Fetching from VVH with municipality: $municipalityCode")
+
+        val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
+          .filter(isHereFlipped)
+          .filterNot(link => processedMmlIds.contains(link.mmlId))
+
+        var updatedCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
+          sqlu"""
+            update lrm_position pos
+            set pos.side_code = 5 - pos.side_code
+            where exists(select * from #$idTableName i where i.id = pos.mml_id)
+            and pos.side_code in (2, 3)
+          """.first +
+          sqlu"""
+            update traffic_direction td
+            set td.traffic_direction = 7 - td.traffic_direction
+            where exists(select id from #$idTableName i where i.id = td.mml_id)
+            and td.traffic_direction in (3, 4)
+          """.first
+        }
+
+        flippedLinks.foreach { link =>
+          val length = GeometryUtils.geometryLength(link.geometry)
+
+          updatedCount += sqlu"""
+              update lrm_position
+              set end_measure = ${length} - COALESCE(start_measure, 0),
+                  start_measure = ${length} - COALESCE(end_measure, start_measure, 0)
+              where mml_id = ${link.mmlId}
+            """.first
+        }
+
+        processedMmlIds ++= flippedLinks.map(_.mmlId)
+
+        println(s"*** Made $updatedCount updates in ${humanReadableDurationSince(startTime)}")
+      }
+    }
+  }
+
+  private def isHereFlipped(roadLink: VVHRoadlink) = {
+    val NotFlipped = 0
+    val Flipped = 1
+    roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[BigInt] == Flipped
+  }
+
   def generateValuesForLitRoads(): Unit = {
     processInChunks(100, "lit roads") { (chunkStart, chunkEnd) =>
       withDynTransaction {

@@ -25,6 +25,8 @@ class VVHClient(hostname: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
+  private val serviceName = "Roadlink_data"
+
   private def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -49,7 +51,7 @@ class VVHClient(hostname: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
+      case _ => s""""outFields":"MTKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -63,7 +65,7 @@ class VVHClient(hostname: String) {
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -75,7 +77,7 @@ class VVHClient(hostname: String) {
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -98,7 +100,7 @@ class VVHClient(hostname: String) {
     val idGroups: List[Set[Long]] = mmlIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(withMmlIdFilter(ids), fieldSelection)
-      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
+      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
@@ -173,11 +175,12 @@ class VVHClient(hostname: String) {
       "ROADNAME_SE",
       "ROADNUMBER",
       "ROADPARTNUMBER",
-      "MINANLEFT",
-      "MAXANLEFT",
-      "MINANRIGHT",
-      "MAXANRIGHT",
-      "MUNICIPALITYCODE").contains(x)
+      "FROM_LEFT",
+      "TO_LEFT",
+      "FROM_RIGHT",
+      "TO_RIGHT",
+      "MUNICIPALITYCODE",
+      "MTKHEREFLIP").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
