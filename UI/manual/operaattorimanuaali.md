@@ -22,7 +22,7 @@ Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version 
 
 Kaikki Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;liittym&auml;&auml;n liittyv&auml;t sivut toimivat kaikissa ymp&auml;rist&ouml;iss&auml; (sovellus, k&auml;ytt&ouml;ohje, uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen jne.). Vaihtamalla osoitteen alkuun devtest, apptest tai testiextranet voi valita, mihin ymp&auml;rist&ouml;&ouml;n menee. T&auml;ss&auml; ohjeessa olevat linkit ovat tuotantoymp&auml;rist&ouml;&ouml;n (testiextranet).
 
-__Huom! Kaikki ymp&auml;rist&ouml;t n&auml;ytt&auml;v&auml;t selaimessa p&auml;&auml;lisin puolin samalta, joten tulee olla tarkkana, mihin ymp&auml;rist&ouml;&ouml;n muutoksia tekee!__
+__Huom! Kaikki ymp&auml;rist&ouml;t n&auml;ytt&auml;v&auml;t selaimessa p&auml;&auml;lisin puolin samalta, joten tulee olla tarkkana, mihin ymp&auml;rist&ouml;&ouml;n muutoksia tekee!__ Sovelluksen vasemmassa yl&auml;kulmassa on teksti, joka kertoo osoiterivin lis&auml;ksi, miss&auml; ymp&auml;rist&ouml;ss&auml; ollaan.
 
 Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad2-kehitystiimill&auml; ja ne saa osoitteesta digiroad2@reaktor.fi. T&auml;m&auml; tilanne tulee muuttumaan, kun kehitysprojekti p&auml;&auml;ttyy ja siirryt&auml;&auml;n yll&auml;pitovaiheeseen, mutta toistaiseksi kehitykseen liittyvien tilien/sivujen tunnusten ja salasanojen hallinta on kehitystiimiss&auml;.
 
@@ -102,6 +102,8 @@ _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 |Tampereen TVV|211,980,837,562,604,922,418,536|
 |Kuopion TVV|297,749|
 |Joensuun TVV|167,276,426|
+|Kotkan TVV|75,285,624|
+|Meri-Lapin TVV|240,241,751,845,851|
 
 Poikkeuksia / virhetilanteita k&auml;ytt&auml;j&auml;nhallinnassa:
 
