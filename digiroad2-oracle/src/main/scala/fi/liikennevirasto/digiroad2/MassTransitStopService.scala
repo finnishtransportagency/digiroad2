@@ -26,7 +26,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, sto
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends PersistedPointAsset with TimeStamps
 
-case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
+case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                               roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
@@ -75,7 +75,7 @@ trait MassTransitStopService extends PointAssetOperations {
           when tp.value_fi is not null then tp.value_fi
           else null
         end as display_value,
-        lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, lrm.mml_id,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, lrm.mml_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
         SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
         from asset a
@@ -246,13 +246,12 @@ trait MassTransitStopService extends PointAssetOperations {
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
-      val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
       val mmlId = r.nextLong
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      MassTransitStopRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, mmlId, bearing, validityDirection,
+      MassTransitStopRow(id, externalId, assetTypeId, point, roadLinkId, mmlId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
         lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
