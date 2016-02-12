@@ -238,6 +238,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "mmlId" -> roadLink.mmlId,
+      "linkId" -> roadLink.linkId,
       "points" -> roadLink.geometry,
       "administrativeClass" -> roadLink.administrativeClass.toString,
       "linkType" -> roadLink.linkType.value,

@@ -203,7 +203,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
 
       RoadLink(link.mmlId, link.geometry,
         GeometryUtils.geometryLength(link.geometry), link.administrativeClass, functionalClassValue, trafficDirectionValue,
-        LinkType(adjustedLinkTypeValue), modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, attributes = link.attributes)
+        LinkType(adjustedLinkTypeValue), modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, attributes = link.attributes, link.linkId)
     }
   }
 
