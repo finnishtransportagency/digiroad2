@@ -17,9 +17,10 @@ object LinkIdImporter {
     val vvhClient = new VVHClient(vvhHost)
 //    val municipalities = withDynSession { Queries.getMunicipalities }
     val municipalities = Seq(235)
+    val total = municipalities.size
 
     withDynTransaction {
-      municipalities.foreach { municipalityCode =>
+      municipalities.zipWithIndex.foreach { case (municipalityCode, i) =>
         val startTime = DateTime.now()
 
         val roadlinks = vvhClient.fetchByMunicipality(municipalityCode)
@@ -35,9 +36,35 @@ object LinkIdImporter {
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
           """.execute
+          sqlu"""
+            update incomplete_link
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+          sqlu"""
+            update functional_class
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+          sqlu"""
+            update link_type
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+          sqlu"""
+            update manoeuvre_element
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+          sqlu"""
+            update unknown_speed_limit
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+
         }
 
-        println(s"Imported ${roadlinks.size} link IDs for municipality $municipalityCode in ${AssetDataImporter.humanReadableDurationSince(startTime)}")
+        println(s"Imported ${roadlinks.size} link IDs for municipality $municipalityCode (${i+1}/$total) in ${AssetDataImporter.humanReadableDurationSince(startTime)}")
       }
     }
   }
