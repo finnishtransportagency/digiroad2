@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.VVHClient
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -14,8 +15,8 @@ object LinkIdImporter {
 
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     val vvhClient = new VVHClient(vvhHost)
-    //    val municipalities = withDynSession { Queries.getMunicipalities }
-    val municipalities = Seq(235)
+    val municipalities = withDynSession { Queries.getMunicipalities }
+//    val municipalities = Seq(235)
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
