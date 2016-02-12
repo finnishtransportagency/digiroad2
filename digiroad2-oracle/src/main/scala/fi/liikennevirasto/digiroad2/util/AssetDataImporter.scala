@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
-import org.joda.time.format.PeriodFormatterBuilder
+import org.joda.time.format.{PeriodFormat, PeriodFormatterBuilder}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
@@ -73,11 +73,8 @@ object AssetDataImporter {
   }
 
   def humanReadableDurationSince(startTime: DateTime): String = {
-    val periodFormatter = new PeriodFormatterBuilder().appendDays().appendSuffix(" days, ").appendHours().appendSuffix(" hours, ").appendSeconds().appendSuffix(" seconds").toFormatter
-    val humanReadablePeriod = periodFormatter.print(new Period(startTime, DateTime.now()))
-    humanReadablePeriod
+    PeriodFormat.getDefault.print(new Period(startTime, DateTime.now()))
   }
-
 }
 
 class AssetDataImporter {
