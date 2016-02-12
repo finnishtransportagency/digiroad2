@@ -6,18 +6,15 @@ SKIP_VALLU=${SKIP_VALLU:-0}
 
 case "$1" in
   start)
-    ( sudo -u web -i <<EOF
+    runuser web -c $"
       cd /home/web/digiroad2/current
 	    ./start.sh
-	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &
-EOF
-
-	    )
+	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &"
 	;;
   stop)
-	  ( cd /home/web/digiroad2/current
-	    ./stop.sh
-	    pkill -f vallu_test_server.js || true )
+    cd /home/web/digiroad2/current
+    ./stop.sh
+    pkill -f vallu_test_server.js || true
 	;;
   *)
 	  echo $"Usage: $0 {start|stop}"
