@@ -21,10 +21,10 @@ class CsvGenerator(vvhServiceHost: String) {
   def generateDroppedManoeuvres() = {
     val manoeuvres = OracleDatabase.withDynSession {
       sql"""
-           select m.id, m.ADDITIONAL_INFO, m.TYPE, me.MML_ID, me.ROAD_LINK_ID, me.ELEMENT_TYPE
+           select m.id, m.ADDITIONAL_INFO, m.TYPE, me.MML_ID, me.ELEMENT_TYPE
            from manoeuvre m
            join MANOEUVRE_ELEMENT me on me.MANOEUVRE_ID = m.id
-        """.as[(Long, Option[String], Int, Long, Long, Int)].list
+        """.as[(Long, Option[String], Int, Long, Int)].list
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
@@ -34,9 +34,9 @@ class CsvGenerator(vvhServiceHost: String) {
     val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
     val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
-      val source = rows.find(_._6 == Source).get
+      val source = rows.find(_._5 == Source).get
       val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
-      rows.find(_._6 == Destination).exists { destination =>
+      rows.find(_._5 == Destination).exists { destination =>
         adjacents.exists(_.mmlId == destination._4)
       }
     }
@@ -49,7 +49,7 @@ class CsvGenerator(vvhServiceHost: String) {
            """.as[(Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour) =>
             ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
           }
-          rows.map { x => (x._1, x._2, x._3, x._4, x._5, x._6, exceptions, validityPeriods) }
+          rows.map { x => (x._1, x._2, x._3, x._4, x._5, exceptions, validityPeriods) }
         }
       }
     exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptionsAndValidityPeriods)
@@ -96,13 +96,13 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, a.floating
+           select pos.MML_ID, pos.start_measure, pos.end_measure, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            where a.asset_type_id = $assetTypeId
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Double, Double, Boolean)].list
+         """.as[(Long, Double, Double, Boolean)].list
     }
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
@@ -112,7 +112,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
     println(s"*** calculated dropped links in $elapsedTime seconds")
 
-    val floatingLimits = limits.filter(_._5)
+    val floatingLimits = limits.filter(_._4)
     val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
@@ -124,7 +124,7 @@ class CsvGenerator(vvhServiceHost: String) {
         case Prohibitions(prohibitionValues) =>
           prohibitionValues.map { prohibitionValue =>
             val value = generateValueString(prohibitionValue)
-            (droppedProhibition.mmlId, 0l, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
+            (droppedProhibition.mmlId, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
           }
         case _ =>
           throw new IllegalArgumentException
@@ -192,14 +192,14 @@ class CsvGenerator(vvhServiceHost: String) {
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
+           select pos.MML_ID, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join text_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Double, Double, String, Int, Boolean)].list.toSet
+         """.as[(Long, Double, Double, String, Int, Boolean)].list.toSet
     }
     println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
@@ -216,7 +216,7 @@ class CsvGenerator(vvhServiceHost: String) {
     println(s"*** calculated dropped links in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
-    val floatingLimits = limits.filter(_._7)
+    val floatingLimits = limits.filter(_._6)
     exportCsv(assetName, (nonExistingLimits ++ floatingLimits).toSeq)
     println(s"*** exported CSV files in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
@@ -228,14 +228,14 @@ class CsvGenerator(vvhServiceHost: String) {
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
+           select pos.MML_ID, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
            and (valid_to is null or valid_to >= sysdate)
-         """.as[(Long, Long, Double, Double, Int, Int, Boolean)].list
+         """.as[(Long, Double, Double, Int, Int, Boolean)].list
     }
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
@@ -252,7 +252,7 @@ class CsvGenerator(vvhServiceHost: String) {
     println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
-    val floatingLimits = limits.filter(_._7)
+    val floatingLimits = limits.filter(_._6)
     exportCsv(assetName, nonExistingLimits ++ floatingLimits)
     println("*** exported CSV files " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
@@ -266,15 +266,15 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
   }
 
-  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
-    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; source_road_link_id; dest_link_mml_id; dest_road_link_id; exceptions; validity_periods\n"
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
+    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; dest_link_mml_id; exceptions; validity_periods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
-      val source = value.find(_._6 == Source).get
-      val (destinationMmlId, destinationRoadLinkId) = value.find(_._6 == Destination).map { d => (d._4, d._5) }.getOrElse(("", ""))
-      val exceptions = generateExceptionsString(source._7)
-      val validityPeriods = generateValidityPeriodString(source._8)
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; ${source._5}; $destinationMmlId; $destinationRoadLinkId; $exceptions; $validityPeriods"""
+      val source = value.find(_._5 == Source).get
+      val destinationMmlId = value.find(_._5 == Destination).map { _._4 }.getOrElse(("", ""))
+      val exceptions = generateExceptionsString(source._6)
+      val validityPeriods = generateValidityPeriodString(source._7)
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; $destinationMmlId; $exceptions; $validityPeriods"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")
@@ -283,10 +283,10 @@ class CsvGenerator(vvhServiceHost: String) {
     bw.close()
   }
 
-  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Long, Double, Double, Any, Int, Boolean)]): Unit = {
-    val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
+  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Double, Double, Any, Int, Boolean)]): Unit = {
+    val headerLine = "mml_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
-      s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
+      s"""${x._1}; ${x._2}; ${x._3}; ${x._4}"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")

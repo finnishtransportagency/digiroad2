@@ -71,55 +71,6 @@ object DataFixture {
       "kauniainen_railway_crossings.sql"))
   }
 
-  def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
-    print("\nCommencing speed limit import from conversion: ")
-    println(DateTime.now())
-    dataImporter.importSpeedLimits(Conversion, taskPool)
-    print("Speed limit import complete: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importTotalWeightLimitsFromConversion() {
-    print("\nCommencing total weight limit import from conversion: ")
-    println(DateTime.now())
-    dataImporter.importTotalWeightLimits(Conversion.database())
-    print("Total weight limit import complete: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importWeightLimitsFromConversion() {
-    print("\nCommencing weight limit import from conversion: ")
-    println(DateTime.now())
-    dataImporter.importNumericalLimits(Conversion.database(), 20, 40)
-    dataImporter.importNumericalLimits(Conversion.database(), 21, 50)
-    dataImporter.importNumericalLimits(Conversion.database(), 24, 60)
-    print("Weight limit import complete: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importDimensionLimitsFromConversion() {
-    print("\nCommencing dimension limit import from conversion: ")
-    println(DateTime.now())
-    dataImporter.importNumericalLimits(Conversion.database(), 18, 70)
-    dataImporter.importNumericalLimits(Conversion.database(), 19, 80)
-    dataImporter.importNumericalLimits(Conversion.database(), 23, 90)
-    print("Dimension limit import complete: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importManoeuvresFromConversion() {
-    print("\nCommencing manoeuvre import from conversion: ")
-    println(DateTime.now())
-    dataImporter.importManoeuvres(Conversion.database())
-    print("Manoeuvre import complete: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -132,51 +83,6 @@ object DataFixture {
   def importRoadLinkData() = {
     println("\nCommencing functional classes import from conversion DB\n")
     RoadLinkDataImporter.importFromConversionDB()
-  }
-
-  def importMMLIdsOnNumericalLimits(): Unit = {
-    println("\nCommencing MML ID import on numerical limits at time: ")
-    println(DateTime.now())
-    println("import mml ids for total weight limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 30)
-    println("import mml ids for trailer truck weight limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 40)
-    println("import mml ids for axle weight limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 50)
-    println("import mml ids for bogie weight limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 60)
-    println("import mml ids for height limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 70)
-    println("import mml ids for length limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 80)
-    println("import mml ids for width limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 90)
-    println("import mml ids for lit roads")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 100)
-    println("MML ID import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importMMLIdsOnSpeedLimits(): Unit = {
-    println("\nCommencing MML ID import on speed limits at time: ")
-    println(DateTime.now())
-    println("import mml ids for speed limits")
-    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 20)
-    println("MML ID import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-
-  def importMMLIdsOnManoeuvres(): Unit = {
-    println("\nCommencing MML ID import on manoeuvres at time: ")
-    println(DateTime.now())
-    println("import mml ids for manoeuvres")
-    dataImporter.importMMLIdsOnManoeuvres(Conversion.database())
-    println("MML ID import complete at time: ")
-    println(DateTime.now())
-    println("\n")
   }
 
   def splitSpeedLimitChains(): Unit = {
@@ -203,58 +109,6 @@ object DataFixture {
     println("\n")
   }
 
-  def importLitRoadsFromConversion(): Unit = {
-    println("\nCommencing lit roads import from conversion at time: ")
-    println(DateTime.now())
-    println("import lit roads")
-    dataImporter.importLitRoadsFromConversion(Conversion.database())
-    println("Lit roads import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importPavedRoads(): Unit = {
-    println(s"\nCommencing paved roads import from conversion at time: ${DateTime.now()}")
-    dataImporter.importPavedRoadsFromConversion(Conversion.database())
-    println(s"Paved roads import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importRoadWidths(): Unit = {
-    println(s"\nCommencing road widths import from conversion at time: ${DateTime.now()}")
-    dataImporter.importRoadWidthsFromConversion(Conversion.database())
-    println(s"Road widths import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importRoadsAffectedByThawing(): Unit = {
-    println(s"\nCommencing thaw damage import from conversion at time: ${DateTime.now()}")
-    dataImporter.importRoadsAffectedByThawingFromConversion(Conversion.database())
-    println(s"Road thaw damage complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importTrafficVolumes(): Unit = {
-    println(s"\nCommencing traffic volume import from conversion at time: ${DateTime.now()}")
-    dataImporter.importTrafficVolumesFromConversion(Conversion.database())
-    println(s"Traffic volume import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importNumberOfLanes(): Unit = {
-    println(s"\nCommencing number of lanes import from conversion at time: ${DateTime.now()}")
-    dataImporter.importNumberOfLanesFromConversion(Conversion.database())
-    println(s"Number of lanes import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importWinterSpeedLimits(): Unit = {
-    println(s"\nCommencing winter speed limits import from conversion at time: ${DateTime.now()}")
-    dataImporter.importWinterSpeedLimits(Conversion.database())
-    println(s"Winter speed limits import complete at time: ${DateTime.now()}")
-    println()
-  }
-
   def importEuropeanRoads(): Unit = {
     println(s"\nCommencing European road import from conversion at time: ${DateTime.now()}")
     dataImporter.importEuropeanRoads(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
@@ -262,62 +116,10 @@ object DataFixture {
     println()
   }
 
-  def importExitNumbers(): Unit = {
-    println(s"\nCommencing exit number import from conversion at time: ${DateTime.now()}")
-    dataImporter.importExitNumbers(Conversion.database())
-    println(s"Exit number import complete at time: ${DateTime.now()}")
-    println()
-  }
-
   def importProhibitions(): Unit = {
     println(s"\nCommencing prohibition import from conversion at time: ${DateTime.now()}")
     dataImporter.importProhibitions(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println(s"Prohibition import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importObstacles(): Unit = {
-    val blockedPassage = 1
-    val barrierGate = 2
-    println(s"\nCommencing obstacle import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 16, blockedPassage)
-    PointAssetImporter.importObstacles(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"), 3, barrierGate)
-    println(s"Obstacle import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importRailwayCrossings(): Unit = {
-    println(s"\nCommencing railway crossings import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importRailwayCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    println(s"Railway crossings import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importDirectionalTrafficSigns(): Unit = {
-    println(s"\nCommencing directional traffic signs import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importDirectionalTrafficSigns(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    println(s"Directional traffic signs import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importServicePoints(): Unit = {
-    println(s"\nCommencing service points import from conversion at time: ${DateTime.now()}")
-    ServicePointImporter.importServicePoints(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    println(s"Service points import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importPedestrianCrossings(): Unit = {
-    println(s"\nCommencing pedestrian crossings import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importPedestrianCrossings(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    println(s"Pedestrian crossings import complete at time: ${DateTime.now()}")
-    println()
-  }
-
-  def importTrafficLights(): Unit = {
-    println(s"\nCommencing traffic lights import from conversion at time: ${DateTime.now()}")
-    PointAssetImporter.importTrafficLights(Conversion.database, dr2properties.getProperty("digiroad2.VVHServiceHost"))
-    println(s"Traffic lights import complete at time: ${DateTime.now()}")
     println()
   }
 
@@ -418,21 +220,6 @@ object DataFixture {
         importMunicipalityCodes()
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
-      case Some("speedlimits") =>
-        val taskPool = new ForkJoinPool(8)
-        importSpeedLimitsFromConversion(taskPool)
-      case Some("totalweightlimits") =>
-        importTotalWeightLimitsFromConversion()
-      case Some("weightlimits") =>
-        importWeightLimitsFromConversion()
-      case Some("dimensionlimits") =>
-        importDimensionLimitsFromConversion()
-      case Some("manoeuvres") =>
-        importManoeuvresFromConversion()
-      case Some("mml_numericallimits") =>
-        importMMLIdsOnNumericalLimits()
-      case Some("mml_speedlimits") =>
-        importMMLIdsOnSpeedLimits()
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>
@@ -441,8 +228,6 @@ object DataFixture {
         splitSpeedLimitChains()
       case Some("split_linear_asset_chains") =>
         splitLinearAssets()
-      case Some("litroads") =>
-        importLitRoadsFromConversion()
       case Some("dropped_assets_csv") =>
         generateDroppedAssetsCsv()
       case Some("dropped_manoeuvres_csv") =>
@@ -453,51 +238,18 @@ object DataFixture {
         unfloatLinearAssets()
       case Some("expire_split_assets_without_mml") =>
         expireSplitAssetsWithoutMml()
-      case Some("paved_roads") =>
-        importPavedRoads()
-      case Some("road_widths") =>
-        importRoadWidths()
-      case Some("roads_affected_by_thawing") =>
-        importRoadsAffectedByThawing()
-      case Some("traffic_volumes") =>
-        importTrafficVolumes()
-      case Some("number_of_lanes") =>
-        importNumberOfLanes()
-      case Some("winter_speed_limits") =>
-        importWinterSpeedLimits()
       case Some("prohibitions") =>
         importProhibitions()
-      case Some("pedestrian_crossings") =>
-        importPedestrianCrossings()
       case Some("hazmat_prohibitions") =>
         importHazmatProhibitions()
-      case Some("mml_manoeuvres") =>
-        importMMLIdsOnManoeuvres()
-      case Some("obstacles") =>
-        importObstacles()
-      case Some("railway_crossings") =>
-        importRailwayCrossings()
-      case Some("directional_traffic_signs") =>
-        importDirectionalTrafficSigns()
-      case Some("service_points") =>
-        importServicePoints()
       case Some("european_roads") =>
         importEuropeanRoads()
-      case Some("exit_numbers") =>
-        importExitNumbers()
-      case Some("traffic_lights") =>
-        importTrafficLights()
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
-        " manoeuvres | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_assets_csv |" +
+      case _ => println("Usage: DataFixture test | import_roadlink_data |" +
+        " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " paved_roads | road_widths | roads_affected_by_thawing | traffic_volumes | number_of_lanes |" +
-        " prohibitions | pedestrian_crossings | hazmat_prohibitions | mml_manoeuvres | obstacles | railway_crossings |" +
-        " directional_traffic_signs | service_points | european_roads | exit_numbers | traffic_lights |" +
-        " adjust_digitization |" +
-        " repair")
+        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair")
     }
   }
 }

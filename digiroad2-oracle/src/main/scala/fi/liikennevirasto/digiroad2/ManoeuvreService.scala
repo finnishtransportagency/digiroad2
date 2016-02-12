@@ -58,18 +58,16 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
              values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
           """.execute
 
-      val sourceRoadLinkId = 0
       val sourceMmlId = manoeuvre.sourceMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
-             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement, $sourceMmlId)
+             insert into manoeuvre_element(manoeuvre_id, element_type, mml_id)
+             values ($manoeuvreId, $FirstElement, $sourceMmlId)
           """.execute
 
-      val destRoadLinkId = 0
       val destMmlId = manoeuvre.destMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type, mml_id)
-             values ($manoeuvreId, $destRoadLinkId, $LastElement, $destMmlId)
+             insert into manoeuvre_element(manoeuvre_id, element_type, mml_id)
+             values ($manoeuvreId, $LastElement, $destMmlId)
           """.execute
 
       addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)
