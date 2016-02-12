@@ -14,7 +14,9 @@ import Database.dynamicSession
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+
   case class TableSpec(name: String, idColumn: String)
+
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     withDynTransaction {
       try { sqlu"""drop table mml_id_to_link_id""".execute } catch {
