@@ -15,8 +15,8 @@ object LinkIdImporter {
 
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     val vvhClient = new VVHClient(vvhHost)
-    val municipalities = withDynSession { Queries.getMunicipalities }
-//    val municipalities = Seq(235)
+//    val municipalities = withDynSession { Queries.getMunicipalities }
+    val municipalities = Seq(235)
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
@@ -26,9 +26,14 @@ object LinkIdImporter {
 
         roadlinks.foreach { link =>
           sqlu"""
-             update lrm_position
-             set link_id = ${link.linkId}
-             where mml_id = ${link.mmlId}
+            update lrm_position
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
+          """.execute
+          sqlu"""
+            update traffic_direction
+            set link_id = ${link.linkId}
+            where mml_id = ${link.mmlId}
           """.execute
         }
 
