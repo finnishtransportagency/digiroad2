@@ -15,8 +15,7 @@ object LinkIdImporter {
 
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     val vvhClient = new VVHClient(vvhHost)
-//    val municipalities = withDynSession { Queries.getMunicipalities }
-    val municipalities = Seq(235)
+    val municipalities = withDynSession { Queries.getMunicipalities }
     val total = municipalities.size
 
     withDynTransaction {
