@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.VVHClient
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -24,46 +24,48 @@ object LinkIdImporter {
 
         val roadlinks = vvhClient.fetchByMunicipality(municipalityCode)
 
+        var updates = 0
+
+        println(s"Importing link IDs from ${roadlinks.size} links for municipality $municipalityCode…")
+
         roadlinks.foreach { link =>
-          sqlu"""
+          updates += sqlu"""
             update lrm_position
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update traffic_direction
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update incomplete_link
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update functional_class
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update link_type
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update manoeuvre_element
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
+          """.first +
           sqlu"""
             update unknown_speed_limit
             set link_id = ${link.linkId}
             where mml_id = ${link.mmlId}
-          """.execute
-
+          """.first
         }
-
-        println(s"Imported ${roadlinks.size} link IDs for municipality $municipalityCode (${i+1}/$total) in ${AssetDataImporter.humanReadableDurationSince(startTime)}")
+        println(s"Updated $updates rows for municipality $municipalityCode (${i+1}/$total) in ${AssetDataImporter.humanReadableDurationSince(startTime)}")
       }
     }
   }
