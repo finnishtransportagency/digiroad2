@@ -150,13 +150,12 @@ class VVHClient(hostname: String) {
       Point(point(0), point(1))
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
-    val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
+    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
-    // todo: replace mml id with real link id
-    VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+    VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
   }
 
@@ -168,7 +167,7 @@ class VVHClient(hostname: String) {
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
-      "LINKID",
+      "MTKID",
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
