@@ -111,6 +111,7 @@
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+            staticField('MML ID', 'mmlId') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -158,6 +159,7 @@
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
+        linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
