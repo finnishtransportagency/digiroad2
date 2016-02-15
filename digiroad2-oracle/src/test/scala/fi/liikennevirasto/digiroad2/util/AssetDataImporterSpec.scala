@@ -77,7 +77,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
       originalSpeedLimitSegments.length should be(4)
       originalSpeedLimitSegments.map(_._1).toSet should be(Set(originalId1, originalId2))
-      originalSpeedLimitSegments.foreach { case (_, _, mmlId, _, _, _, floating, validTo, modifiedBy, _) =>
+      originalSpeedLimitSegments.foreach { case (_, _, linkId, _, _, _, floating, validTo, modifiedBy, _) =>
         val now = DateTime.now().plusSeconds(2) // add two seconds because of date time precision in db
         validTo.get.isBefore(now) should be(true)
         floating should be(false)
@@ -131,7 +131,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Expire split linear asset without mml id") {
     TestTransactions.runWithRollback() {
       val expireAssetId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1")
-      val assetWithMmlId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 1, 10)), "split_linearasset_1")
+      val assetWithLinkId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 1, 10)), "split_linearasset_1")
       val expiredAssetId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1", true)
       val differentAssetTypeId = createMultiLinkLinearAsset(40, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1")
 
@@ -147,7 +147,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       expireAsset.map(_._10.isDefined) should be(Some(true))
 
 
-      val assetWithMml = assets.find(_._1 == assetWithMmlId)
+      val assetWithMml = assets.find(_._1 == assetWithLinkId)
       assetWithMml.map(_._7) should be(Some(false))
       assetWithMml.map(_._9) should be(Some(null))
       assetWithMml.map(_._8.isDefined) should be(Some(false))
@@ -168,7 +168,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   private def prohibitionSegment(id: Long = 1l,
-                                 mmlId: Long = 1l,
+                                 linkId: Long = 1l,
                                  startMeasure: Double = 0.0,
                                  endMeasure: Double = 1.0,
                                  municipality: Int = 235,
@@ -176,7 +176,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                  sideCode: Int = 1,
                                  validityPeriod: Option[String] = None):
   (Long, Long, Double, Double, Int, Int, Int, Option[String]) = {
-    (id, mmlId, startMeasure, endMeasure, municipality, value, sideCode, validityPeriod)
+    (id, linkId, startMeasure, endMeasure, municipality, value, sideCode, validityPeriod)
   }
 
   test("Two prohibition segments on the same link produces one asset with two prohibition values") {
@@ -378,7 +378,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     result should be(Set(expectedConversionError))
   }
 
-  case class LinearAssetSegment(mmlId: Option[Long], startMeasure: Double, endMeasure: Double)
+  case class LinearAssetSegment(linkId: Option[Long], startMeasure: Double, endMeasure: Double)
 
   private def createMultiLinkLinearAsset(typeId: Int,
                                          segments: Seq[LinearAssetSegment],
@@ -402,11 +402,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
       val startMeasure = segment.startMeasure
       val endMeasure = segment.endMeasure
-      val mmlId = segment.mmlId
+      val linkId = segment.linkId
       sqlu"""
         insert all
-          into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-          values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, 1)
+          into lrm_position(id, start_measure, end_measure, link_id, side_code)
+          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, 1)
 
           into asset_link(asset_id, position_id)
           values ($speedLimitId, $lrmPositionId)
@@ -437,7 +437,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   private def fetchNumericalLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Option[Int], Boolean, Option[DateTime], String, Option[DateTime])] = {
     sql"""
-        select a.id, lrm.id, lrm.mml_id, lrm.start_measure, lrm.end_measure,
+        select a.id, lrm.id, lrm.link_id, lrm.start_measure, lrm.end_measure,
                n.value, a.floating, a.valid_to, a.modified_by, a.modified_date
         from asset a
         join asset_link al on al.asset_id = a.id
@@ -449,7 +449,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   private def fetchSpeedLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Int, Boolean)] = {
     sql"""
-        select a.id, lrm.id, lrm.mml_id, lrm.start_measure, lrm.end_measure, e.value, a.floating
+        select a.id, lrm.id, lrm.link_id, lrm.start_measure, lrm.end_measure, e.value, a.floating
         from asset a
         join asset_link al on al.asset_id = a.id
         join lrm_position lrm on lrm.id = al.position_id

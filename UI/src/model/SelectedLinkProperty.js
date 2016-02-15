@@ -63,8 +63,8 @@
     };
 
     var openMultiple = function(links) {
-      var uniqueLinks = _.unique(links, 'mmlId');
-      current = roadCollection.get(_.pluck(uniqueLinks, 'mmlId'));
+      var uniqueLinks = _.unique(links, 'linkId');
+      current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
       _.forEach(current, function (selected) {
         selected.select();
       });
@@ -75,16 +75,16 @@
       return dirty;
     };
 
-    var isSelected = function(mmlId) {
-      return _.some(current, function(selected) { return selected.getId() === mmlId; });
+    var isSelected = function(linkId) {
+      return _.some(current, function(selected) { return selected.getId() === linkId; });
     };
 
     var save = function() {
       eventbus.trigger('linkProperties:saving');
-      var mmlIds = _.map(current, function(selected) { return selected.getId(); });
+      var linkIds = _.map(current, function(selected) { return selected.getId(); });
       var modifications = _.map(current, function(c) { return c.getData(); });
 
-      backend.updateLinkProperties(mmlIds, modifications, function() {
+      backend.updateLinkProperties(linkIds, modifications, function() {
         dirty = false;
         eventbus.trigger('linkProperties:saved');
       }, function() {

@@ -32,7 +32,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600029)
-      result.mmlId should equal(388553074)
+      result.linkId should equal(388553074)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -47,7 +47,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600029).get
 
       result.id should equal(600029)
-      result.mmlId should equal(388553074)
+      result.linkId should equal(388553074)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -74,7 +74,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
       asset should be(PedestrianCrossing(
         id = id,
-        mmlId = 388553075,
+        linkId = 388553075,
         lon = 2,
         lat = 0,
         mValue = 2,

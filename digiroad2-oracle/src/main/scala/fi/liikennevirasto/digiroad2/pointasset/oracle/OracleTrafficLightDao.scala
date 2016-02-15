@@ -9,7 +9,7 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class TrafficLight(id: Long, mmlId: Long,
+case class TrafficLight(id: Long, linkId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
                               municipalityCode: Int,
@@ -18,7 +18,7 @@ case class TrafficLight(id: Long, mmlId: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
 
-case class TrafficLightToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
+case class TrafficLightToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OracleTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
@@ -37,7 +37,7 @@ object OracleTrafficLightDao {
   implicit val getPointAsset = new GetResult[TrafficLight] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val mmlId = r.nextLong()
+      val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
@@ -47,7 +47,7 @@ object OracleTrafficLightDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      TrafficLight(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      TrafficLight(id, linkId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
@@ -59,7 +59,7 @@ object OracleTrafficLightDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
         into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.mmlId})
+        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -79,7 +79,7 @@ object OracleTrafficLightDao {
       update lrm_position
        set
        start_measure = ${trafficLight.mValue},
-       link_id = ${trafficLight.mmlId}
+       link_id = ${trafficLight.linkId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id

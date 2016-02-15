@@ -3,7 +3,7 @@
     return [
       [{
         "id": 111,
-        "mmlId": 555,
+        "linkId": 555,
         "value": 40,
         "sideCode": 1,
         "startMeasure": 0,
@@ -20,7 +20,7 @@
       },
       {
         "id": 112,
-        "mmlId": 666,
+        "linkId": 666,
         "value": 40,
         "sideCode": 1,
         "startMeasure": 10,
@@ -37,7 +37,7 @@
       },
       {
         "id": 113,
-        "mmlId": 777,
+        "linkId": 777,
         "value": 40,
         "sideCode": 1,
         "startMeasure": 0,

@@ -64,8 +64,8 @@
       });
     }, 1000);
 
-    this.getRoadLinkByMMLId = _.throttle(function(mmlId, callback) {
-      return $.getJSON('api/roadlinks/' + mmlId, function(data) {
+    this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
+      return $.getJSON('api/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -100,7 +100,7 @@
       });
     }, 1000);
 
-    this.updateLinkProperties = _.throttle(function(mmlIds, data, success, failure) {
+    this.updateLinkProperties = _.throttle(function(linkIds, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",

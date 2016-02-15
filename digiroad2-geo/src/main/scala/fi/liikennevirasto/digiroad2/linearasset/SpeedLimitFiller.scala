@@ -13,7 +13,7 @@ object SpeedLimitFiller {
     val endError = roadLinkLength - segment.endMeasure
     val mAdjustment =
       if (startError > MaxAllowedMValueError || endError > MaxAllowedMValueError)
-        Seq(MValueAdjustment(segment.id, segment.mmlId, 0, roadLinkLength))
+        Seq(MValueAdjustment(segment.id, segment.linkId, 0, roadLinkLength))
       else
         Nil
     val modifiedSegment = segment.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)

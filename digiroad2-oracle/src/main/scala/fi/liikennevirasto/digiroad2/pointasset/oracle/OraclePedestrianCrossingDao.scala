@@ -9,7 +9,7 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class PedestrianCrossing(id: Long, mmlId: Long,
+case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
                               municipalityCode: Int,
@@ -18,7 +18,7 @@ case class PedestrianCrossing(id: Long, mmlId: Long,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
 
-case class PedestrianCrossingToBePersisted(mmlId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
+case class PedestrianCrossingToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
   def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
@@ -30,7 +30,7 @@ object OraclePedestrianCrossingDao {
       update lrm_position
        set
        start_measure = ${persisted.mValue},
-       link_id = ${persisted.mmlId}
+       link_id = ${persisted.linkId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id
@@ -44,7 +44,7 @@ object OraclePedestrianCrossingDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 200, $username, sysdate, ${crossing.municipalityCode})
         into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, ${crossing.mValue}, ${crossing.mmlId})
+        values ($lrmPositionId, ${crossing.mValue}, ${crossing.linkId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -70,7 +70,7 @@ object OraclePedestrianCrossingDao {
   implicit val getPointAsset = new GetResult[PedestrianCrossing] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val mmlId = r.nextLong()
+      val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
@@ -80,7 +80,7 @@ object OraclePedestrianCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PedestrianCrossing(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 }

@@ -4,7 +4,7 @@
     var original = _.clone(data);
 
     var getId = function() {
-      return data.roadLinkId || data.mmlId;
+      return data.roadLinkId || data.linkId;
     };
 
     var getData = function() {

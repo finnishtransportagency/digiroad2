@@ -35,14 +35,14 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  private def truncateLinkGeometry(mmlId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.fetchVVHRoadlink(mmlId).get.geometry
+  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
+    val geometry = vvhClient.fetchVVHRoadlink(linkId).get.geometry
     GeometryUtils.truncateGeometry(geometry, startMeasure, endMeasure)
   }
 
-  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double, dao: OracleLinearAssetDao) = {
-    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(mmlId, startMeasure, endMeasure, dao.vvhClient).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == mmlId }.get._3)
+  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleLinearAssetDao) = {
+    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == linkId }.get._3)
     expectedEndPoints._1.distanceTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
@@ -192,43 +192,43 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit purge removes fully covered link from unknown speed limit list") {
     runWithRollback {
-      val mmlId = 1068804942
+      val linkId = 1068804942
       sqlu"""delete from unknown_speed_limit""".execute
-      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
+      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
       val dao = daoWithRoadLinks(Nil)
-      dao.purgeFromUnknownSpeedLimits(mmlId, 59.934)
-      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(None)
+      dao.purgeFromUnknownSpeedLimits(linkId, 59.934)
+      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
   }
 
   test("speed limit purge does not remove partially covered link from unknown speed limit list") {
     runWithRollback {
-      val mmlId = 1068804939
+      val linkId = 1068804939
       sqlu"""delete from unknown_speed_limit""".execute
-      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
-      val roadLink = VVHRoadlink(mmlId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
+      val roadLink = VVHRoadlink(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
 
-      dao.createSpeedLimit("test", mmlId, (11.0, 16.0), SideCode.BothDirections, 40, _ => ())
-      dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
-      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(Some(mmlId))
+      dao.createSpeedLimit("test", linkId, (11.0, 16.0), SideCode.BothDirections, 40, _ => ())
+      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", mmlId, (20.0, 54.0), SideCode.BothDirections, 40, _ => ())
-      dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
-      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(None)
+      dao.createSpeedLimit("test", linkId, (20.0, 54.0), SideCode.BothDirections, 40, _ => ())
+      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
   }
 
   test("unknown speed limits can be filtered by municipality") {
     runWithRollback {
-      val mmlId = 1
-      val mmlId2 = 2
+      val linkId = 1
+      val linkId2 = 2
       sqlu"""delete from unknown_speed_limit""".execute
-      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
-      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId2, 49, 1)""".execute
+      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
+      sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId2, 49, 1)""".execute
 
-      val roadLink = VVHRoadlink(mmlId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      val roadLink2 = VVHRoadlink(mmlId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = VVHRoadlink(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink2 = VVHRoadlink(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink, roadLink2))
 
       val allSpeedLimits = dao.getUnknownSpeedLimits(None)
@@ -241,13 +241,13 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  def setupTestProhibition(mmlId: Long, 
+  def setupTestProhibition(linkId: Long,
                            prohibitionValues: Set[ProhibitionValue]): Unit = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
     sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values ($assetId,190,'dr2_test_data')""".execute
-    sqlu"""insert into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $mmlId, 0, 100, 1)""".execute
+    sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $linkId, 0, 100, 1)""".execute
     sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
 
     prohibitionValues.foreach { prohibition =>
@@ -272,16 +272,16 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao(null)
-    val mmlId = 1l
+    val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty))
 
     runWithRollback {
-      setupTestProhibition(mmlId, fixtureProhibitionValues)
+      setupTestProhibition(linkId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId))
 
       persistedAssets.size should be(1)
-      persistedAssets.head.mmlId should be(mmlId)
+      persistedAssets.head.linkId should be(linkId)
 
       val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
@@ -290,16 +290,16 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao(null)
-    val mmlId = 1l
+    val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
-      setupTestProhibition(mmlId, fixtureProhibitionValues)
+      setupTestProhibition(linkId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId))
 
       persistedAssets.size should be(1)
-      persistedAssets.head.mmlId should be(mmlId)
+      persistedAssets.head.linkId should be(linkId)
 
       val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
@@ -308,17 +308,17 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch prohibition with validity period and exceptions") {
     val dao = new OracleLinearAssetDao(null)
-    val mmlId = 1l
+    val linkId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
 
     runWithRollback {
-      setupTestProhibition(mmlId, fixtureProhibitionValues)
+      setupTestProhibition(linkId, fixtureProhibitionValues)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId))
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId))
 
       persistedAssets.size should be(1)
-      persistedAssets.head.mmlId should be(mmlId)
+      persistedAssets.head.linkId should be(linkId)
 
       val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
       fetchedProhibitionValues should equal(fixtureProhibitionValues)
@@ -327,10 +327,10 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch multiple prohibitions") {
     val dao = new OracleLinearAssetDao(null)
-    val mmlId1 = 1l
-    val mmlId2 = 2l
-    val mmlId3 = 3l
-    val mmlId4 = 4l
+    val linkId1 = 1l
+    val linkId2 = 2l
+    val linkId3 = 3l
+    val linkId4 = 4l
     val fixtureProhibitionValues1 = Set(
       ProhibitionValue(typeId = 10, Set(
         ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3)),
@@ -340,22 +340,22 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
 
     runWithRollback {
-      setupTestProhibition(mmlId1, fixtureProhibitionValues1)
-      setupTestProhibition(mmlId2, fixtureProhibitionValues2)
-      setupTestProhibition(mmlId3, fixtureProhibitionValues3)
-      setupTestProhibition(mmlId4, fixtureProhibitionValues4)
+      setupTestProhibition(linkId1, fixtureProhibitionValues1)
+      setupTestProhibition(linkId2, fixtureProhibitionValues2)
+      setupTestProhibition(linkId3, fixtureProhibitionValues3)
+      setupTestProhibition(linkId4, fixtureProhibitionValues4)
 
-      val persistedAssets = dao.fetchProhibitionsByMmlIds(190, Seq(mmlId1, mmlId2, mmlId3, mmlId4))
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId1, linkId2, linkId3, linkId4))
 
-      val sortedPersistedAssets = persistedAssets.sortBy(_.mmlId)
+      val sortedPersistedAssets = persistedAssets.sortBy(_.linkId)
       sortedPersistedAssets.size should be(4)
-      sortedPersistedAssets(0).mmlId should be(mmlId1)
+      sortedPersistedAssets(0).linkId should be(linkId1)
       sortedPersistedAssets(0).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues1)
-      sortedPersistedAssets(1).mmlId should be(mmlId2)
+      sortedPersistedAssets(1).linkId should be(linkId2)
       sortedPersistedAssets(1).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues2)
-      sortedPersistedAssets(2).mmlId should be(mmlId3)
+      sortedPersistedAssets(2).linkId should be(linkId3)
       sortedPersistedAssets(2).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues3)
-      sortedPersistedAssets(3).mmlId should be(mmlId4)
+      sortedPersistedAssets(3).linkId should be(linkId4)
       sortedPersistedAssets(3).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues4)
     }
   }

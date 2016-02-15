@@ -104,7 +104,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-    def extractMmlId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "mml_id" -> Some(massTransitStop.mmlId) }
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
     def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
     Map(
       "type" -> "FeatureCollection",
@@ -119,7 +119,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
-            extractMmlId(massTransitStop),
+            extractLinkId(massTransitStop),
             extractMvalue(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
@@ -165,7 +165,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "value" -> speedLimit.value.fold(0)(_.value),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
-        "mmlId" -> speedLimit.mmlId,
+        "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
       )
     }
@@ -173,7 +173,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
-      Map("mmlId" -> roadLink.linkId,
+      Map("linkId" -> roadLink.linkId,
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
@@ -218,7 +218,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "points" -> asset.geometry,
         "value" -> valueToApi(asset.value),
         "side_code" -> asset.sideCode.value,
-        "mmlId" -> asset.mmlId,
+        "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime))
@@ -229,7 +229,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
-        "mmlId" -> pedestrianCrossing.mmlId,
+        "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt))
     }
@@ -239,7 +239,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     trafficLights.filterNot(_.floating).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
-        "mmlId" -> trafficLight.mmlId,
+        "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt))
     }
@@ -249,7 +249,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
-        "mmlId" -> directionalTrafficSign.mmlId,
+        "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
         "bearing" -> directionalTrafficSign.bearing,
         "side_code" -> directionalTrafficSign.validityDirection,
@@ -270,7 +270,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
-        "mmlId" -> railwayCrossing.mmlId,
+        "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
@@ -282,7 +282,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     obstacles.filterNot(_.floating).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
-        "mmlId" -> obstacle.mmlId,
+        "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt))
@@ -292,8 +292,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
     manoeuvres.map { manoeuvre =>
       Map("id" -> manoeuvre.id,
-      "sourceMmlId" -> manoeuvre.sourceMmlId,
-      "destMmlId" -> manoeuvre.destMmlId,
+      "sourceLinkId" -> manoeuvre.sourceLinkId,
+      "destLinkId" -> manoeuvre.destLinkId,
       "exceptions" -> manoeuvre.exceptions,
       "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
       "additionalInfo" -> manoeuvre.additionalInfo,

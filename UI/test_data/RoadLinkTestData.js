@@ -2,7 +2,7 @@
   testData.generate = function() {
     var roadLinkData =
     [{
-      "mmlId": 1,
+      "linkId": 1,
       "administrativeClass": "Private",
       "trafficDirection": "BothDirections",
       "linkType": 2,
@@ -47,7 +47,7 @@
         "y": 6677787.428
       }]
     }, {
-      "mmlId": 2,
+      "linkId": 2,
       "administrativeClass": "Municipality",
       "trafficDirection": "AgainstDigitizing",
       "linkType": 2,
@@ -74,7 +74,7 @@
         "y": 6677723.802
       }]
     }, {
-      "mmlId": 3,
+      "linkId": 3,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -97,7 +97,7 @@
         "y": 6677735.948
       }]
     }, {
-      "mmlId": 4,
+      "linkId": 4,
       "linkType": 2,
       "points": [{
         "x": 374809.404,
@@ -119,7 +119,7 @@
         "y": 6677723.802
       }]
     }, {
-      "mmlId": 5,
+      "linkId": 5,
       "administrativeClass": "Private",
       "linkType": 2,
       "points": [{
@@ -145,7 +145,7 @@
         "y": 6677719.112
       }]
     }, {
-      "mmlId": 6,
+      "linkId": 6,
       "administrativeClass": "Municipality",
       "linkType": 2,
       "points": [{
@@ -165,7 +165,7 @@
         "y": 6677794.435
       }]
     }, {
-      "mmlId": 7,
+      "linkId": 7,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -191,7 +191,7 @@
         "y": 6677787.428
       }]
     }, {
-      "mmlId": 8,
+      "linkId": 8,
       "administrativeClass": "Private",
       "linkType": 2,
       "points": [{
@@ -238,7 +238,7 @@
         "y": 6677496.622
       }]
     }, {
-      "mmlId": 9,
+      "linkId": 9,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -261,7 +261,7 @@
         "y": 6677496.622
       }]
     }, {
-      "mmlId": 10,
+      "linkId": 10,
       "administrativeClass": "Municipality",
       "linkType": 2,
       "points": [{
@@ -290,7 +290,7 @@
         "y": 6677504.905
       }]
     }, {
-      "mmlId": 11,
+      "linkId": 11,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -313,7 +313,7 @@
         "y": 6677527.584
       }]
     }, {
-      "mmlId": 12,
+      "linkId": 12,
       "administrativeClass": "Private",
       "linkType": 2,
       "points": [{
@@ -342,7 +342,7 @@
         "y": 6677610.487
       }]
     }, {
-      "mmlId": 13,
+      "linkId": 13,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -383,7 +383,7 @@
         "y": 6677380.704
       }]
     }, {
-      "mmlId": 14,
+      "linkId": 14,
       "administrativeClass": "Private",
       "linkType": 2,
       "points": [{
@@ -415,7 +415,7 @@
         "y": 6677440.912
       }]
     }, {
-      "mmlId": 15,
+      "linkId": 15,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -456,7 +456,7 @@
         "y": 6677654.303
       }]
     }, {
-      "mmlId": 16,
+      "linkId": 16,
       "linkType": 2,
       "points": [{
         "x": 374895.585,
@@ -466,7 +466,7 @@
         "y": 6677538.7
       }]
     }, {
-      "mmlId": 17,
+      "linkId": 17,
       "administrativeClass": "Private",
       "linkType": 2,
       "points": [{
@@ -483,7 +483,7 @@
         "y": 6677649.193
       }]
     }, {
-      "mmlId": 18,
+      "linkId": 18,
       "administrativeClass": "Municipality",
       "linkType": 2,
       "points": [{
@@ -500,7 +500,7 @@
         "y": 6677588.138
       }]
     }, {
-      "mmlId": 19,
+      "linkId": 19,
       "administrativeClass": "State",
       "linkType": 2,
       "points": [{
@@ -523,7 +523,7 @@
         "y": 6677673.867
       }]
     }, {
-      "mmlId": 20,
+      "linkId": 20,
       "linkType": 2,
       "points": [{
         "x": 374867.016,

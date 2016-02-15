@@ -67,7 +67,7 @@
             roadLayer.selectRoadLink(nearestLine);
             feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
             var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-            selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, mmlId: nearestLine.mmlId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
+            selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, linkId: nearestLine.linkId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
           }
         } else {
           this.cancel();
@@ -243,7 +243,7 @@
         lon: projectionOnNearestLine.x,
         lat: projectionOnNearestLine.y,
         floating: false,
-        mmlId: nearestLine.mmlId,
+        linkId: nearestLine.linkId,
         id: 0,
         geometry: [nearestLine.start, nearestLine.end],
         bearing: bearing

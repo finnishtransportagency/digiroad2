@@ -29,10 +29,10 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
     val roadLinksWithProperties = roadLinkService.getRoadLinksFromVVH(manoeuvres.map(_._4).toSet)
-    val roadLinksByMmlId = roadLinksWithProperties.groupBy(_.linkId).mapValues(_.head)
-    val roadLinkMmlIds = roadLinksWithProperties.map(_.linkId).toSet
-    val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkMmlIds.contains(row._4)) }
-    val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByMmlId(row._4).isCarTrafficRoad }}
+    val roadLinksByLinkId = roadLinksWithProperties.groupBy(_.linkId).mapValues(_.head)
+    val roadLinkIds = roadLinksWithProperties.map(_.linkId).toSet
+    val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkIds.contains(row._4)) }
+    val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByLinkId(row._4).isCarTrafficRoad }}
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
       val source = rows.find(_._5 == Source).get
       val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
@@ -55,7 +55,7 @@ class CsvGenerator(vvhServiceHost: String) {
     exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptionsAndValidityPeriods)
   }
 
-  def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
+  def getIdsAndLinkIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       sql"""
         select dr1_id, link_id
@@ -106,17 +106,17 @@ class CsvGenerator(vvhServiceHost: String) {
     }
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.linkId)
+    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.linkId)
     println(s"*** fetched all road links from VVH in $elapsedTime seconds")
 
-    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
     println(s"*** calculated dropped links in $elapsedTime seconds")
 
     val floatingLimits = limits.filter(_._4)
-    val droppedMmlIds = (floatingLimits ++ nonExistingLimits).map(_._1)
+    val droppedLinkIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
     val droppedProhibitions =  OracleDatabase.withDynTransaction {
-      linearAssetDao.fetchProhibitionsByMmlIds(assetTypeId, droppedMmlIds, includeFloating = true)
+      linearAssetDao.fetchProhibitionsByLinkIds(assetTypeId, droppedLinkIds, includeFloating = true)
     }
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
@@ -124,7 +124,7 @@ class CsvGenerator(vvhServiceHost: String) {
         case Prohibitions(prohibitionValues) =>
           prohibitionValues.map { prohibitionValue =>
             val value = generateValueString(prohibitionValue)
-            (droppedProhibition.mmlId, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
+            (droppedProhibition.linkId, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)
           }
         case _ =>
           throw new IllegalArgumentException
@@ -204,15 +204,15 @@ class CsvGenerator(vvhServiceHost: String) {
     println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
-    def mmlIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
+    def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
       attributes("MTKID").asInstanceOf[BigInt].longValue()
     }
-    val assetMmlIds = limits.map(_._1)
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(assetMmlIds, Some("MTKID"), false, mmlIdFromFeature).toSet
+    val assetLinkIds = limits.map(_._1)
+    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
     println(s"*** fetched associated road links from VVH in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
-    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
     println(s"*** calculated dropped links in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
@@ -240,15 +240,15 @@ class CsvGenerator(vvhServiceHost: String) {
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
-    def mmlIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
+    def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
       attributes("MTKID").asInstanceOf[BigInt].longValue()
     }
-    val assetMmlIds = limits.map(_._1).toSet
-    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(assetMmlIds, Some("MTKID"), false, mmlIdFromFeature).toSet
+    val assetLinkIds = limits.map(_._1).toSet
+    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
     println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
-    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
     println("*** calculated dropped links " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
@@ -271,10 +271,10 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._5 == Source).get
-      val destinationMmlId = value.find(_._5 == Destination).map { _._4 }.getOrElse(("", ""))
+      val destinationLinkId = value.find(_._5 == Destination).map { _._4 }.getOrElse(("", ""))
       val exceptions = generateExceptionsString(source._6)
       val validityPeriods = generateValidityPeriodString(source._7)
-      s"""$key; ${source._2.getOrElse("")}; ${source._4}; $destinationMmlId; $exceptions; $validityPeriods"""
+      s"""$key; ${source._2.getOrElse("")}; ${source._4}; $destinationLinkId; $exceptions; $validityPeriods"""
     }.mkString("\n")
 
     val file = new File(fileName + ".csv")

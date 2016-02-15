@@ -6,7 +6,7 @@ object LinearAssetPartitioner extends GraphPartitioner {
   def partition[T <: LinearAsset](links: Seq[T], roadLinksForSpeedLimits: Map[Long, RoadLink]): Seq[Seq[T]] = {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
     val linkGroups = twoWayLinks.groupBy { link =>
-      val roadLink = roadLinksForSpeedLimits.get(link.mmlId)
+      val roadLink = roadLinksForSpeedLimits.get(link.linkId)
       val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
       (roadIdentifier, roadLink.map(_.administrativeClass), link.value, link.id == 0)
     }

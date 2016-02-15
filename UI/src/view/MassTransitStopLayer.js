@@ -31,7 +31,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         lat: selectedMassTransitStopModel.get('lat'),
         bearing: selectedMassTransitStopModel.get('bearing'),
         roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
-        mmlId: selectedMassTransitStopModel.get('mmlId')
+        linkId: selectedMassTransitStopModel.get('linkId')
       });
       eventbus.trigger('asset:moveCompleted');
       assetIsMoving = false;
@@ -340,7 +340,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,
-      mmlId: nearestLine.mmlId
+      linkId: nearestLine.linkId
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
@@ -433,7 +433,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         lat: lonlat.lat,
         bearing: angle,
         roadLinkId: nearestLine.roadLinkId,
-        mmlId: nearestLine.mmlId
+        linkId: nearestLine.linkId
       });
    }
   };

@@ -98,10 +98,10 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        if (roadCollection.get([feature.attributes.mmlId])[0].isCarTrafficRoad()) {
+        if (roadCollection.get([feature.attributes.linkId])[0].isCarTrafficRoad()) {
           roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
           roadLayer.redraw();
-          selectedManoeuvreSource.open(feature.attributes.mmlId);
+          selectedManoeuvreSource.open(feature.attributes.linkId);
         } else {
           unselectManoeuvre();
         }
@@ -113,10 +113,10 @@
     this.selectControl = selectControl;
     map.addControl(selectControl);
 
-    var highlightFeatures = function(mmlId) {
+    var highlightFeatures = function(linkId) {
       _.each(roadLayer.layer.features, function(x) {
         if (x.attributes.type === 'normal') {
-          if (mmlId && (x.attributes.mmlId === mmlId)) {
+          if (linkId && (x.attributes.linkId === linkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -125,12 +125,12 @@
       });
     };
 
-    var highlightOneWaySigns = function(mmlIds) {
+    var highlightOneWaySigns = function(linkIds) {
       var isOneWaySign = function(feature) { return !_.isUndefined(feature.attributes.rotation); };
 
       _.each(roadLayer.layer.features, function(x) {
         if (isOneWaySign(x)) {
-          if (_.contains(mmlIds, x.attributes.mmlId)) {
+          if (_.contains(linkIds, x.attributes.linkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -139,10 +139,10 @@
       });
     };
 
-    var highlightOverlayFeatures = function(mmlIds) {
+    var highlightOverlayFeatures = function(linkIds) {
       _.each(roadLayer.layer.features, function(x) {
         if (x.attributes.type === 'overlay') {
-          if (_.contains(mmlIds, x.attributes.mmlId)) {
+          if (_.contains(linkIds, x.attributes.linkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -175,17 +175,17 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
-        var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceMmlId(selectedManoeuvreSource.getMmlId());
-        markAdjacentFeatures(application.isReadOnly() ? destinationMmlIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'mmlId'));
+        var destinationLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceLinkId(selectedManoeuvreSource.getLinkId());
+        markAdjacentFeatures(application.isReadOnly() ? destinationLinkIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'linkId'));
         redrawRoadLayer();
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.mmlId === selectedManoeuvreSource.getMmlId();
+          return feature.attributes.linkId === selectedManoeuvreSource.getLinkId();
         });
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOneWaySigns([selectedManoeuvreSource.getMmlId()]);
-        highlightOverlayFeatures(destinationMmlIds);
+        highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
+        highlightOverlayFeatures(destinationLinkIds);
         indicatorLayer.clearMarkers();
         updateAdjacentLinkIndicators();
       }
@@ -259,7 +259,7 @@
       return _.chain(roadLink.adjacent)
         .map(function(adjacent) {
           return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
-            return link.mmlId === adjacent.mmlId;
+            return link.linkId === adjacent.linkId;
           }));
         })
         .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
@@ -268,7 +268,7 @@
 
     var markAdjacentFeatures = function(adjacentLinkIds) {
       _.forEach(roadLayer.layer.features, function(feature) {
-        feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.mmlId);
+        feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.linkId);
       });
     };
 
@@ -279,12 +279,12 @@
 
     var handleManoeuvreSelected = function(roadLink) {
       var aLinks = adjacentLinks(roadLink);
-      var adjacentLinkIds = _.pluck(aLinks, 'mmlId');
-      highlightFeatures(roadLink.mmlId);
-      var destinationMmlIds = manoeuvresCollection.getDestinationRoadLinksBySourceMmlId(roadLink.mmlId);
-      highlightOneWaySigns([roadLink.mmlId]);
-      highlightOverlayFeatures(destinationMmlIds);
-      markAdjacentFeatures(application.isReadOnly() ? destinationMmlIds : adjacentLinkIds);
+      var adjacentLinkIds = _.pluck(aLinks, 'linkId');
+      highlightFeatures(roadLink.linkId);
+      var destinationLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceLinkId(roadLink.linkId);
+      highlightOneWaySigns([roadLink.linkId]);
+      highlightOverlayFeatures(destinationLinkIds);
+      markAdjacentFeatures(application.isReadOnly() ? destinationLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       if (!application.isReadOnly()) {
         drawIndicators(aLinks);

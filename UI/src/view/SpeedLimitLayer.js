@@ -415,7 +415,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
-    eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
+    eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
   };
 
@@ -423,8 +423,8 @@ window.SpeedLimitLayer = function(params) {
     setSelectionStyleAndHighlightFeature();
   };
 
-  var selectSpeedLimitByMmlId = function(mmlId) {
-    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.mmlId === mmlId; });
+  var selectSpeedLimitByLinkId = function(linkId) {
+    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
     if (feature) {
       selectControl.select(feature);
     }

@@ -5,7 +5,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var roadLinkData =
     [
       [{
-        "mmlId": 1,
+        "linkId": 1,
         "administrativeClass": "Private",
         "trafficDirection": "BothDirections",
         "functionalClass": 5,

@@ -16,7 +16,7 @@ object NumericalLimitFiller {
     val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
-      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.mmlId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
+      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.linkId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
     }
     val adjustedAsset = asset.copy(
       startMeasure = adjustedStartMeasure.getOrElse(asset.startMeasure),
@@ -44,7 +44,7 @@ object NumericalLimitFiller {
   private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length)
     val cappedSegments = overflowingSegments.map { x => x.copy(endMeasure = roadLink.length)}
-    val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.mmlId, x.startMeasure, x.endMeasure) }
+    val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.linkId, x.startMeasure, x.endMeasure) }
     (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
@@ -91,7 +91,7 @@ object NumericalLimitFiller {
       val points = GeometryUtils.truncateGeometry(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
-        dbAsset.id, dbAsset.mmlId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
+        dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,
         dbAsset.startMeasure, dbAsset.endMeasure,
         Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime,
         dbAsset.createdBy, dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection)

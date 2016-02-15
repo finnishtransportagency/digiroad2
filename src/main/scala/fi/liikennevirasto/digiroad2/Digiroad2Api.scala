@@ -14,12 +14,12 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
-case class ExistingLinearAsset(id: Long, mmlId: Long)
+case class ExistingLinearAsset(id: Long, linkId: Long)
 
-case class NewNumericValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
-case class NewTextualValueAsset(mmlId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
+case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
-case class NewProhibition(mmlId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
+case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
@@ -158,7 +158,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
-    val roadLinkId = (parsedBody \ "mmlId").extractOpt[Long]
+    val roadLinkId = (parsedBody \ "linkId").extractOpt[Long]
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
     (lon, lat, roadLinkId, bearing)
   }
@@ -168,10 +168,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
-    val (optionalLon, optionalLat, optionalMmlId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val position = (optionalLon, optionalLat, optionalMmlId) match {
-      case (Some(lon), Some(lat), Some(mmlId)) => Some(Position(lon, lat, mmlId, bearing))
+    val position = (optionalLon, optionalLat, optionalLinkId) match {
+      case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
     }
     try {
@@ -182,13 +182,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, mmlId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
-    val roadLink = vvhClient.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, mmlId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode)
+  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
+    val roadLink = vvhClient.fetchVVHRoadlink(linkId).getOrElse(throw new NoSuchElementException)
+    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode)
   }
 
-  private def validateUserRights(mmlId: Long) = {
-    val authorized: Boolean = vvhClient.fetchVVHRoadlink(mmlId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+  private def validateUserRights(linkId: Long) = {
+    val authorized: Boolean = vvhClient.fetchVVHRoadlink(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -216,12 +216,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
-    val mmlId = positionParameters._3.get
+    val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    validateUserRights(mmlId)
+    validateUserRights(linkId)
     validateCreationProperties(properties)
-    val id = createMassTransitStop(lon, lat, mmlId, bearing, properties)
+    val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
     massTransitStopService.getById(id)
   }
 
@@ -238,7 +238,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "linkId" -> roadLink.linkId,
-      "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
       "administrativeClass" -> roadLink.administrativeClass.toString,
       "linkType" -> roadLink.linkType.value,
@@ -270,11 +269,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-  get("/roadlinks/:mmlId") {
-    val mmlId = params("mmlId").toLong
-    roadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
+  get("/roadlinks/:linkId") {
+    val linkId = params("linkId").toLong
+    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
       case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
-    }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
+    }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
   }
 
   get("/roadlinks/adjacent/:id") {
@@ -296,8 +295,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
-      roadLinkService.updateProperties(prop.mmlId, prop.functionalClass, prop.linkType, prop.trafficDirection, user.username, municipalityValidation).map { roadLink =>
-        Map("mmlId" -> roadLink.linkId,
+      roadLinkService.updateProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, user.username, municipalityValidation).map { roadLink =>
+        Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
           "functionalClass" -> roadLink.functionalClass,
@@ -305,7 +304,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "modifiedAt" -> roadLink.modifiedAt,
           "modifiedBy" -> roadLink.modifiedBy,
           "linkType" -> roadLink.linkType.value)
-      }.getOrElse(halt(NotFound("Road link with MML ID " + prop.mmlId + " not found")))
+      }.getOrElse(halt(NotFound("Road link with MML ID " + prop.linkId + " not found")))
     }
   }
 
@@ -359,7 +358,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         links.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
-            "mmlId" -> link.mmlId,
+            "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
             "value" -> link.value.map(_.toJson),
@@ -399,11 +398,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
       case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId =>
-        value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
+        value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
+        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode))
       case _ =>
-        value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.mmlId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
+        value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode))
     }
   }
 
@@ -413,9 +412,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
-    val existingMmlIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.mmlId)
-    val mmlIds = newLinearAssets.map(_.mmlId) ++ existingMmlIds
-    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+    val existingLinkIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.linkId)
+    val linkIds = newLinearAssets.map(_.linkId) ++ existingLinkIds
+    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
@@ -429,8 +428,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val mmlIds = linearAssetService.getPersistedAssetsByIds(typeId, ids).map(_.mmlId)
-    roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+    val linkIds = linearAssetService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
+    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
@@ -468,7 +467,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
-            "mmlId" -> link.mmlId,
+            "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
             "value" -> link.value.map(_.value),
@@ -534,7 +533,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
 
-    val newLimit = NewLimit((parsedBody \ "mmlId").extract[Long],
+    val newLimit = NewLimit((parsedBody \ "linkId").extract[Long],
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
 
@@ -572,8 +571,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
-      val mmlIds = manoeuvres.map(_.sourceMmlId)
-      roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+      val linkIds = manoeuvres.map(_.sourceLinkId)
+      roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
         .map(_.municipalityCode)
         .foreach(validateUserMunicipalityAccess(user))
 
@@ -589,8 +588,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
     manoeuvreIds.foreach { manoeuvreId =>
-      val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
+      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -603,8 +602,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .map { case (id, updates) => (id.toLong, updates) }
 
     manoeuvreUpdates.foreach { case (id, updates) =>
-      val sourceRoadLinkMmlId = manoeuvreService.getSourceRoadLinkMmlIdById(id)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkMmlId).get.municipalityCode)
+      val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
@@ -683,8 +682,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    roadLinkService.getRoadLinkFromVVH(updatedAsset.mmlId) match {
-      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.mmlId} does not exist"))
+    roadLinkService.getRoadLinkFromVVH(updatedAsset.linkId) match {
+      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
   }
@@ -692,7 +691,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- roadLinkService.getRoadLinkFromVVH(asset.mmlId)) {
+    for (link <- roadLinkService.getRoadLinkFromVVH(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode)
     }

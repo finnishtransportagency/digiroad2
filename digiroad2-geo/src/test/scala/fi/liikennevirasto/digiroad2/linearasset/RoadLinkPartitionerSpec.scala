@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class RoadLinkPartitionerSpec extends FunSuite with Matchers {
-  private def roadLink(mmlId: Long, geometry: Seq[Point]) = {
-    RoadLink(mmlId, geometry, 0.0, Municipality, 0,
+  private def roadLink(linkId: Long, geometry: Seq[Point]) = {
+    RoadLink(linkId, geometry, 0.0, Municipality, 0,
       TrafficDirection.BothDirections, Motorway, None, None,
       Map("ROADNUMBER" -> BigInt(123)))
   }

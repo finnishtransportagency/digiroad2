@@ -32,7 +32,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
       result.id should equal(600070)
-      result.mmlId should equal(388553548)
+      result.linkId should equal(388553548)
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
       result.mValue should equal(16.592)
@@ -47,7 +47,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600070).get
 
       result.id should equal(600070)
-      result.mmlId should equal(388553548)
+      result.linkId should equal(388553548)
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
       result.mValue should equal(16.592)
@@ -74,7 +74,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       asset should be(TrafficLight(
         id = id,
-        mmlId = 388553075,
+        linkId = 388553075,
         lon = 2,
         lat = 0,
         mValue = 2,
@@ -99,7 +99,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.lon should equal(374101.60105163435)
       beforeUpdate.lat should equal(6677437.872017591)
       beforeUpdate.mValue should equal(16.592)
-      beforeUpdate.mmlId should equal(388553548)
+      beforeUpdate.linkId should equal(388553548)
       beforeUpdate.municipalityCode should equal(235)
       beforeUpdate.createdBy should equal(Some("dr2_test_data"))
       beforeUpdate.createdAt.isDefined should equal(true)
@@ -113,7 +113,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       afterUpdate.lon should equal(100)
       afterUpdate.lat should equal(0)
       afterUpdate.mValue should equal(100)
-      afterUpdate.mmlId should equal(123)
+      afterUpdate.linkId should equal(123)
       afterUpdate.municipalityCode should equal(91)
       afterUpdate.createdBy should equal(Some("dr2_test_data"))
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)

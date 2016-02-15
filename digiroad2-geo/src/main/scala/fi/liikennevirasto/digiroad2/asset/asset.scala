@@ -94,7 +94,7 @@ object SideCode {
 
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
-  val mmlId: Option[Long]
+  val linkId: Option[Long]
   val mValue: Option[Double]
 }
 trait TimeStamps {
@@ -116,7 +116,7 @@ case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
-case class Position(lon: Double, lat: Double, mmlId: Long, bearing: Option[Int])
+case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 
 object PropertyTypes {
   val SingleChoice = "single_choice"

@@ -37,7 +37,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600046)
-      result.mmlId should equal(388553074)
+      result.linkId should equal(388553074)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -52,7 +52,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
 
       result.id should equal(600046)
-      result.mmlId should equal(388553074)
+      result.linkId should equal(388553074)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -84,7 +84,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset.id should be(id)
-      asset.mmlId should be(388553075)
+      asset.linkId should be(388553075)
       asset.lon should be(2)
       asset.lat should be(0)
       asset.mValue should be(2)
@@ -99,7 +99,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle") {
     runWithRollback {
       val obstacle = service.getById(600046).get
-      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.mmlId, 2)
+      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, 2)
 
       service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test")
       val updatedObstacle = service.getById(600046).get

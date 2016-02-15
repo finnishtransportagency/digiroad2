@@ -5,11 +5,11 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
-  case class TestLinearAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point]) extends LinearAsset
-  case class TestProhibitionAsset(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point]) extends LinearAsset
+  case class TestLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point]) extends LinearAsset
+  case class TestProhibitionAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point]) extends LinearAsset
 
-  private def linearAsset(mmlId: Long, value: Int, geometry: Seq[Point]) = {
-    TestLinearAsset(0, mmlId, SideCode.BothDirections, Some(NumericValue(value)), geometry)
+  private def linearAsset(linkId: Long, value: Int, geometry: Seq[Point]) = {
+    TestLinearAsset(0, linkId, SideCode.BothDirections, Some(NumericValue(value)), geometry)
   }
 
   private def roadLinkForAsset(roadIdentifier: Either[Int, String], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
@@ -65,7 +65,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
-    groupedLinks.head.map(_.mmlId).toSet should be(linearAssets.map(_.mmlId).toSet)
+    groupedLinks.head.map(_.linkId).toSet should be(linearAssets.map(_.linkId).toSet)
   }
 
   test("separate link with different limit value") {
@@ -127,7 +127,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = LinearAssetPartitioner.partition(linearAssets, roadLinksForSpeedLimits)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
-    groupedLinks.head.map(_.mmlId) should contain only(linearAssets.map(_.mmlId): _*)
+    groupedLinks.head.map(_.linkId) should contain only(linearAssets.map(_.linkId): _*)
   }
 
   test("separate links with different road name") {

@@ -14,8 +14,8 @@ import slick.jdbc.{StaticQuery => Q}
 
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  private def vvhRoadLink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
-    RoadLink(mmlId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
+  private def vvhRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
+    RoadLink(linkId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -23,9 +23,9 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     .thenReturn(Seq(vvhRoadLink(388562342, 235), vvhRoadLink(388569430, 235), vvhRoadLink(388569418, 235)) )
   when(mockRoadLinkService.getRoadLinksFromVVH(municipality = 235))
     .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235), vvhRoadLink(233, 235), vvhRoadLink(234, 235,  Seq(Point(15, 0), Point(20, 0)))))
-  when(mockRoadLinkService.getRoadLinkFromVVH(mmlId = 388569406))
+  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 388569406))
     .thenReturn(Some(vvhRoadLink(388569406, 235)))
-  when(mockRoadLinkService.getRoadLinkFromVVH(mmlId = 388570174))
+  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 388570174))
     .thenReturn(Some(vvhRoadLink(388570174, 235)))
 
 
@@ -44,11 +44,11 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val manoeuvres = manoeuvreService.getByBoundingBox(bounds, Set(235))
     manoeuvres.length should equal(3)
     val partiallyContainedManoeuvre = manoeuvres.find(_.id == 39561).get
-    partiallyContainedManoeuvre.sourceMmlId should equal(388562342)
-    partiallyContainedManoeuvre.destMmlId should equal(388569406)
+    partiallyContainedManoeuvre.sourceLinkId should equal(388562342)
+    partiallyContainedManoeuvre.destLinkId should equal(388569406)
     val completelyContainedManoeuvre = manoeuvres.find(_.id == 97666).get
-    completelyContainedManoeuvre.sourceMmlId should equal(388569430)
-    completelyContainedManoeuvre.destMmlId should equal(388569418)
+    completelyContainedManoeuvre.sourceLinkId should equal(388569430)
+    completelyContainedManoeuvre.destLinkId should equal(388569418)
   }
 
   test("Filters out manoeuvres with non-adjacent source and destination links") {
@@ -72,8 +72,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Create manoeuvre") {
     val manoeuvre: Manoeuvre = createManouvre
 
-    manoeuvre.sourceMmlId should equal(123)
-    manoeuvre.destMmlId should equal(124)
+    manoeuvre.sourceLinkId should equal(123)
+    manoeuvre.destLinkId should equal(124)
     manoeuvre.validityPeriods should equal(Set(ValidityPeriod(0, 21, Saturday)))
   }
 
@@ -91,7 +91,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Get source road link id with manoeuvre id") {
     val manoeuvre: Manoeuvre = createManouvre
 
-    val roadLinkId = manoeuvreService.getSourceRoadLinkMmlIdById(manoeuvre.id)
+    val roadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvre.id)
 
     roadLinkId should equal(123)
   }

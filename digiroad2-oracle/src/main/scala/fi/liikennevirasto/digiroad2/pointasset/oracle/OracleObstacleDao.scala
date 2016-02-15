@@ -9,7 +9,7 @@ import Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
-case class Obstacle(id: Long, mmlId: Long,
+case class Obstacle(id: Long, linkId: Long,
                     lon: Double, lat: Double,
                     mValue: Double, floating: Boolean,
                     municipalityCode: Int,
@@ -39,7 +39,7 @@ object OracleObstacleDao {
   implicit val getPointAsset = new GetResult[Obstacle] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val mmlId = r.nextLong()
+      val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
@@ -50,7 +50,7 @@ object OracleObstacleDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      Obstacle(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      Obstacle(id, linkId, point.x, point.y, mValue, floating, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
@@ -63,7 +63,7 @@ object OracleObstacleDao {
         values ($id, 220, $username, sysdate, $municipality)
 
         into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, $mValue, ${obstacle.mmlId})
+        values ($lrmPositionId, $mValue, ${obstacle.linkId})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -85,7 +85,7 @@ object OracleObstacleDao {
       update lrm_position
        set
        start_measure = $mValue,
-       link_id = ${obstacle.mmlId}
+       link_id = ${obstacle.linkId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id

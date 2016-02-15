@@ -17,7 +17,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
-    filledTopology.map(_.mmlId) should be(Seq(1))
+    filledTopology.map(_.linkId) should be(Seq(1))
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
 
@@ -34,7 +34,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
-    filledTopology.map(_.mmlId) should be(Seq(1))
+    filledTopology.map(_.linkId) should be(Seq(1))
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.droppedAssetIds should be(Set(1l))
@@ -53,7 +53,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.map(_.id) should be(Seq(1))
-    filledTopology.map(_.mmlId) should be(Seq(1))
+    filledTopology.map(_.linkId) should be(Seq(1))
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.droppedAssetIds should be(Set())
@@ -81,16 +81,16 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 4
 
     filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 1l).map(_.mmlId) should be(Seq(1l))
+    filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(1l))
 
     filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 2l).map(_.mmlId) should be(Seq(2l))
+    filledTopology.filter(_.id == 2l).map(_.linkId) should be(Seq(2l))
 
     filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 3l).map(_.mmlId) should be(Seq(2l))
+    filledTopology.filter(_.id == 3l).map(_.linkId) should be(Seq(2l))
 
     filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 4l).map(_.mmlId) should be(Seq(2l))
+    filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(2l))
 
     changeSet.adjustedSideCodes should be(Seq(
       SideCodeAdjustment(1l, SideCode.BothDirections),

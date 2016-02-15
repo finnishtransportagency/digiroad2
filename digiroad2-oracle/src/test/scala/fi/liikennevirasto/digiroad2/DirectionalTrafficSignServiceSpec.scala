@@ -30,7 +30,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       runWithRollback {
         val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
         result.id should equal(600053)
-        result.mmlId should equal(388553074)
+        result.linkId should equal(388553074)
         result.lon should equal(374467)
         result.lat should equal(6677347)
         result.mValue should equal(103)
@@ -51,7 +51,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset.id should be(id)
-      asset.mmlId should be(388553075)
+      asset.linkId should be(388553075)
       asset.lon should be(2)
       asset.lat should be(0)
       asset.mValue should be(2)
@@ -92,7 +92,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.lon should equal(374467.0)
       beforeUpdate.lat should equal(6677347.0)
       beforeUpdate.mValue should equal(103.0)
-      beforeUpdate.mmlId should equal(388553074)
+      beforeUpdate.linkId should equal(388553074)
       beforeUpdate.municipalityCode should equal(235)
       beforeUpdate.createdBy should equal(Some("dr2_test_data"))
       beforeUpdate.createdAt.isDefined should equal(true)
@@ -108,7 +108,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       afterUpdate.lon should equal(100)
       afterUpdate.lat should equal(0)
       afterUpdate.mValue should equal(100)
-      afterUpdate.mmlId should equal(123)
+      afterUpdate.linkId should equal(123)
       afterUpdate.municipalityCode should equal(91)
       afterUpdate.createdBy should equal(Some("dr2_test_data"))
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)

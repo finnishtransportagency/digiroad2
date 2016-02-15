@@ -7,15 +7,15 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class SpeedLimitFillerSpec extends FunSuite with Matchers {
-  private def roadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
+  private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     RoadLink(
-      mmlId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
+      linkId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
   }
 
-  private def oneWayRoadLink(mmlId: Int, geometry: Seq[Point], trafficDirection: TrafficDirection) = {
-    roadLink(mmlId, geometry).copy(trafficDirection = trafficDirection)
+  private def oneWayRoadLink(linkId: Int, geometry: Seq[Point], trafficDirection: TrafficDirection) = {
+    roadLink(linkId, geometry).copy(trafficDirection = trafficDirection)
   }
 
   test("drop segment outside of link geometry") {

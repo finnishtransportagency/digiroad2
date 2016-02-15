@@ -60,7 +60,7 @@
 
     var title = function() {
       if (selectedLinkProperty.count() == 1) {
-        return '<span>Linkin MML ID: ' + _.first(selectedLinkProperty.get()).mmlId + '</span>';
+        return '<span>Linkin MML ID: ' + _.first(selectedLinkProperty.get()).linkId + '</span>';
       } else {
         return '<span>Ominaisuustiedot</span>';
       }

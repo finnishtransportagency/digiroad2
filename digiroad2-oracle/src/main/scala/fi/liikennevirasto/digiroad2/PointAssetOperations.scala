@@ -12,7 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 trait IncomingPointAsset {
   val lon: Double
   val lat: Double
-  val mmlId: Long
+  val linkId: Long
 }
 
 trait PointAsset extends FloatingAsset {
@@ -24,7 +24,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-  val mmlId: Long
+  val linkId: Long
   val mValue: Double
   val floating: Boolean
 }
@@ -60,7 +60,7 @@ trait PointAssetOperations {
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
-        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
+        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId).map(link => (link.municipalityCode, link.geometry)))
         AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating)
       }
 
@@ -110,8 +110,8 @@ trait PointAssetOperations {
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
-    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.linkId == mmlId).map(x => (x.municipalityCode, x.geometry))
+    def findRoadlink(linkId: Long): Option[(Int, Seq[Point])] =
+      roadLinks.find(_.linkId == linkId).map(x => (x.municipalityCode, x.geometry))
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
@@ -122,10 +122,10 @@ trait PointAssetOperations {
 
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.mmlId) }
+    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.linkId) }
 
-    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.linkId == mmlId).map(x => (x.municipalityCode, x.geometry))
+    def findRoadlink(linkId: Long): Option[(Int, Seq[Point])] =
+      roadLinks.find(_.linkId == linkId).map(x => (x.municipalityCode, x.geometry))
 
     persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
   }
@@ -146,9 +146,9 @@ trait PointAssetOperations {
   }
 
   protected def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
-                                         roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
+                                         roadLinkByLinkId: Long => Option[(Int, Seq[Point])])
                                         (persistedStop: PersistedAsset): T = {
-    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
+    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     conversion(persistedStop, floating)
   }
 

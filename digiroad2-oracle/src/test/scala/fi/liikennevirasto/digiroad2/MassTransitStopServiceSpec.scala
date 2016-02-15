@@ -123,13 +123,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val position = Some(Position(60.0, 0.0, 388554364l, None))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
-      val mmlId = sql"""
-            select lrm.mml_id from asset a
+      val linkId = sql"""
+            select lrm.link_id from asset a
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
       """.as[Long].firstOption
-      mmlId should be(Some(388554364l))
+      linkId should be(Some(388554364l))
     }
   }
 

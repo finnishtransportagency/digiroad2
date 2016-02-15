@@ -115,15 +115,15 @@ class AssetDataImporter {
 
   def expireSplitAssetsWithoutMml(typeId: Int) = {
     val chunkSize = 1000
-    val splitAssetsWithoutMmlIdFilter = """
+    val splitAssetsWithoutLinkIdFilter = """
       a.created_by like 'split_linearasset_%'
       and lrm.link_id is null
       and (a.valid_to > sysdate or a.valid_to is null)"""
-    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutMmlIdFilter)
+    val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutLinkIdFilter)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case(chunkStart, chunkEnd) =>
       val start = System.currentTimeMillis()
-      expireSplitLinearAssetsWithoutMmlId(typeId, chunkStart, chunkEnd)
+      expireSplitLinearAssetsWithoutLinkId(typeId, chunkStart, chunkEnd)
       println("*** Processed linear assets between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
     }
   }
@@ -133,13 +133,13 @@ class AssetDataImporter {
       sql"""select link_id, eur_nro from eurooppatienumero""".as[(Long, String)].list
     }
 
-    val roadsByMmlId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
+    val roadsByLinkId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
 
     val vvhClient = new VVHClient(vvhHost)
-    val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByMmlId.keySet)
-    val linksByMmlId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
+    val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByLinkId.keySet)
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
 
-    val roadsWithLinks = roads.map { road => (road, linksByMmlId.get(road._1)) }
+    val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
@@ -149,7 +149,7 @@ class AssetDataImporter {
 
       val propertyId = Queries.getPropertyIdByPublicId("eurooppatienumero")
 
-      roadsWithLinks.foreach { case ((mmlId, eRoad), link) =>
+      roadsWithLinks.foreach { case ((linkId, eRoad), link) =>
         val assetId = Sequences.nextPrimaryKeySeqValue
 
         assetPS.setLong(1, assetId)
@@ -160,7 +160,7 @@ class AssetDataImporter {
         val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
         lrmPositionPS.setLong(1, lrmPositionId)
-        lrmPositionPS.setLong(2, mmlId)
+        lrmPositionPS.setLong(2, linkId)
         lrmPositionPS.setInt(3, SideCode.BothDirections.value)
         lrmPositionPS.setDouble(4, 0)
         lrmPositionPS.setDouble(5, link.map(_.geometry).map(GeometryUtils.geometryLength).getOrElse(0))
@@ -246,7 +246,7 @@ class AssetDataImporter {
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
           lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, asset.mmlId)
+          lrmPositionPS.setLong(2, asset.linkId)
           lrmPositionPS.setDouble(3, asset.startMeasure)
           lrmPositionPS.setDouble(4, asset.endMeasure)
           lrmPositionPS.setInt(5, asset.sideCode)
@@ -318,10 +318,10 @@ class AssetDataImporter {
     }
   }
 
-  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], mmlId: Long, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
+  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], linkId: Long, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
     val timeDomainParser = new TimeDomainParser
     segments.map { segment =>
-      val exceptionsForProhibition = exceptions.filter { z => z._2 == mmlId && z._4 == sideCode }.map(_._3).toSet
+      val exceptionsForProhibition = exceptions.filter { z => z._2 == linkId && z._4 == sideCode }.map(_._3).toSet
 
       segment._8 match {
         case None => Right(ProhibitionValue(segment._6, Set.empty, exceptionsForProhibition))
@@ -344,20 +344,20 @@ class AssetDataImporter {
     }
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.linkId == s._2) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => hasInvalidProhibitionType(s) }
-    val segmentsByMmlId = validSegments.groupBy(_._2)
-    val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
+    val segmentsByLinkId = validSegments.groupBy(_._2)
+    val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByLinkId.keySet.contains(x._2) }
     val (exceptionWithInvalidCode, validExceptions) = exceptionsWithProhibition.partition { x => hasInvalidExceptionType(x) }
 
-    segmentsByMmlId.flatMap { case (mmlId, segments) =>
-      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.linkId == mmlId).get.geometry)
-      val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
-      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._7))
+    segmentsByLinkId.flatMap { case (linkId, segments) =>
+      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.linkId == linkId).get.geometry)
+      val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == linkId).map(_._4))
+      val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == linkId), segments.map(_._7))
 
       expandedSegments.groupBy(_._7).flatMap { case (sideCode, segmentsPerSide) =>
-        val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, mmlId, sideCode)
+        val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190)))
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
@@ -369,7 +369,7 @@ class AssetDataImporter {
       exceptionWithInvalidCode.map { ex => Left(s"Invalid exception. Dropped exception ${ex._1}.")}
   }
 
-  def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
@@ -398,7 +398,7 @@ class AssetDataImporter {
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
@@ -408,7 +408,7 @@ class AssetDataImporter {
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
-      PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
     }.toSeq
   }
 
@@ -423,7 +423,7 @@ class AssetDataImporter {
         """.as[Long].list
 
       if (assetIds.nonEmpty) {
-        val linearAssets = fetchProhibitionsByMmlIds(190, assetIds, true)
+        val linearAssets = fetchProhibitionsByLinkIds(190, assetIds, true)
         val hazmatAssets = linearAssets.map { linearAsset =>
           val newValue = linearAsset.value.map {
             case Prohibitions(prohibitionValues) =>
@@ -505,7 +505,7 @@ class AssetDataImporter {
   def adjustToNewDigitization(vvhHost: String) = {
     val vvhClient = new VVHClient(vvhHost)
     val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
-    val processedMmlIds = mutable.Set[Long]()
+    val processedLinkIds = mutable.Set[Long]()
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
@@ -515,7 +515,7 @@ class AssetDataImporter {
 
         val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
-          .filterNot(link => processedMmlIds.contains(link.linkId))
+          .filterNot(link => processedLinkIds.contains(link.linkId))
 
         var updatedCount = MassQuery.withIds(flippedLinks.map(_.linkId).toSet) { idTableName =>
           sqlu"""
@@ -552,7 +552,7 @@ class AssetDataImporter {
             """.first
         }
 
-        processedMmlIds ++= flippedLinks.map(_.linkId)
+        processedLinkIds ++= flippedLinks.map(_.linkId)
 
         println(s"*** Made $updatedCount updates in ${humanReadableDurationSince(startTime)}")
       }
@@ -652,8 +652,8 @@ class AssetDataImporter {
           """.as[(Long, Long, Int, Option[Int], Double, Double)].list
 
       speedLimitLinks.foreach { speedLimitLink =>
-        val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value))
+        val (id, linkId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -679,8 +679,8 @@ class AssetDataImporter {
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
-      linearAssetLinks.foreach { case (id, mmlId, sideCode, startMeasure, endMeasure, value) =>
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value))
+      linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value) =>
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value))
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
@@ -696,7 +696,7 @@ class AssetDataImporter {
     }
   }
 
-  private def expireSplitLinearAssetsWithoutMmlId(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
+  private def expireSplitLinearAssetsWithoutLinkId(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
     withDynTransaction {
       sqlu"""
         update asset

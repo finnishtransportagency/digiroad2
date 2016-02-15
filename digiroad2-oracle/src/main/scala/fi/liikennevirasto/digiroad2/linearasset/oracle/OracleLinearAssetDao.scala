@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-case class PersistedSpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
+case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime])
 
 class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
-    case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
+    case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery = """
@@ -38,7 +38,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       .groupBy(_.municipality)
       .mapValues {
       _.groupBy(_.administrativeClass)
-        .mapValues(_.map(_.mmlId))
+        .mapValues(_.map(_.linkId))
     }
 
     addCountsFor(limitsByMunicipality)
@@ -76,10 +76,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       """)
     try {
       limits.foreach { limit =>
-        statement.setLong(1, limit.mmlId)
+        statement.setLong(1, limit.linkId)
         statement.setInt(2, limit.municipalityCode)
         statement.setInt(3, limit.administrativeClass.value)
-        statement.setLong(4, limit.mmlId)
+        statement.setLong(4, limit.linkId)
         statement.addBatch()
       }
       statement.executeBatch()
@@ -88,8 +88,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
-  def purgeFromUnknownSpeedLimits(mmlId: Long, roadLinkLength: Double): Unit = {
-    val speedLimits = fetchSpeedLimitsByMmlId(mmlId)
+  def purgeFromUnknownSpeedLimits(linkId: Long, roadLinkLength: Double): Unit = {
+    val speedLimits = fetchSpeedLimitsByLinkId(linkId)
 
     def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
       val limitEndPoints = speedLimits.filter(sl => sl._3 == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
@@ -99,7 +99,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
     val againstRemainders = calculateRemainders(SideCode.AgainstDigitizing)
     if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
-      sqlu"""delete from unknown_speed_limit where link_id = $mmlId""".execute
+      sqlu"""delete from unknown_speed_limit where link_id = $linkId""".execute
     }
   }
 
@@ -134,17 +134,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(links.map(_._1).toSet)
+    val roadLinksByLinkId = vvhClient.fetchVVHRoadlinks(links.map(_._1).toSet)
 
-    links.map { case (mmlId, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinksByMmlId.find(_.linkId == mmlId).getOrElse(throw new NoSuchElementException)
+    links.map { case (linkId, startMeasure, endMeasure) =>
+      val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
       val truncatedGeometry = GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure)
-      (mmlId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
+      (linkId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
     }
   }
 
-  private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
-    MassQuery.withIds(mmlIds.toSet) { idTableName =>
+  private def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]) = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
            from asset a
@@ -172,8 +172,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
       """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-      assets.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
-        PersistedLinearAsset(id, mmlId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }
     }
   }
@@ -192,14 +192,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
       """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-      assets.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
-        PersistedLinearAsset(id, mmlId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }
     }
   }
 
-  def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(mmlIds.toSet) { idTableName =>
+  def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -214,14 +214,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
-        PersistedLinearAsset(id, mmlId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }
     }
   }
 
-  def fetchAssetsWithTextualValuesByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(mmlIds.toSet) { idTableName =>
+  def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -236,16 +236,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
-        PersistedLinearAsset(id, mmlId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
       }
     }
   }
 
-  def fetchProhibitionsByMmlIds(prohibitionAssetTypeId: Int, mmlIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
-    val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
+    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
@@ -271,7 +271,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
@@ -281,7 +281,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
-      PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
     }.toSeq
   }
 
@@ -314,7 +314,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, mmlId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
@@ -324,12 +324,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
-      PersistedLinearAsset(assetId, mmlId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
     }.toSeq
   }
 
 
-  private def fetchSpeedLimitsByMmlId(mmlId: Long) = {
+  private def fetchSpeedLimitsByLinkId(linkId: Long) = {
     sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
          from asset a
@@ -338,20 +338,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
          join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
          join enumerated_value e on s.enumerated_value_id = e.id
-         where a.asset_type_id = 20 and floating = 0 and pos.link_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
+         where a.asset_type_id = 20 and floating = 0 and pos.link_id = $linkId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink]): (Seq[SpeedLimit],  Seq[RoadLink]) = {
     val topology = roadLinks.filter(_.isCarTrafficRoad)
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+    val speedLimitLinks = fetchSpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
   private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
-    val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
-    val roadLink = topology.find(_.linkId == mmlId).get
+    val (assetId, linkId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
+    val roadLink = topology.find(_.linkId == linkId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    SpeedLimit(assetId, linkId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
@@ -366,11 +366,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
 
-    val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
+    val roadLinksByLinkId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
-    speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
-      val vvhRoadLink = roadLinksByMmlId.find(_.linkId == mmlId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(assetId, mmlId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
+      val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
+      SpeedLimit(assetId, linkId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 
@@ -386,8 +386,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].firstOption
 
-    speedLimit.map { case (id, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
-      PersistedSpeedLimit(id, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    speedLimit.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
+      PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 
@@ -413,13 +413,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     """.as[(Double, Double, SideCode)].first
   }
 
-  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(vvhClient.fetchVVHRoadlink(mmlId).get.municipalityCode)
-    createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
+  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
+    municipalityValidation(vvhClient.fetchVVHRoadlink(linkId).get.municipalityCode)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value)
   }
 
-  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int) =
-    createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
+  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int) =
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value)
 
   def insertEnumeratedValue(assetId: Long, valuePropertyId: String, value: Int) = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
@@ -443,7 +443,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     Queries.insertTextProperty(assetId, propertyId, value).execute
   }
 
-  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit): Long = {
+  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -456,7 +456,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          values ($assetId, $typeId, '$creator', sysdate)
 
          into lrm_position(id, start_measure, end_measure, link_id, side_code)
-         values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCodeValue)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue)
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
@@ -469,12 +469,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     assetId
   }
   
-  private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Option[Long] = {
+  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
-    val existingLrmPositions = fetchSpeedLimitsByMmlId(mmlId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
+    val existingLrmPositions = fetchSpeedLimitsByLinkId(linkId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
-      Some(forceCreateLinearAsset(creator, 20, mmlId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value)))
+      Some(forceCreateLinearAsset(creator, 20, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value)))
     } else {
       None
     }
@@ -520,8 +520,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
     val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id)
     val link: (Long, Double, (Point, Point)) =
-      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).headOption.map { case (mmlId, length, geometry, _) =>
-        (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
+      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).headOption.map { case (linkId, length, geometry, _) =>
+        (linkId, length, GeometryUtils.geometryEndpoints(geometry))
       }.get
 
     Queries.updateAssetModified(id, username).execute
@@ -570,7 +570,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       None
     }
   }
-  def createLinearAsset(typeId: Int, mmlId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long  = {
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long  = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
@@ -580,7 +580,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         values ($id, $typeId, $username, sysdate, #$validTo)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

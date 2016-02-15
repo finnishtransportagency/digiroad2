@@ -19,8 +19,8 @@
       routes: {
         'massTransitStop/:id': 'massTransitStop',
         'asset/:id': 'massTransitStop',
-        'linkProperty/:mmlId': 'linkProperty',
-        'speedLimit/:mmlId': 'speedLimit',
+        'linkProperty/:linkId': 'linkProperty',
+        'speedLimit/:linkId': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
         'obstacles/:id': 'obstacles',
@@ -46,9 +46,9 @@
         });
       },
 
-      linkProperty: function (mmlId) {
+      linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
-        backend.getRoadLinkByMMLId(mmlId, function (response) {
+        backend.getRoadLinkByLinkId(linkId, function (response) {
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
@@ -56,8 +56,8 @@
         });
       },
 
-      speedLimit: function (mmlId) {
-        var roadLinkReceived = backend.getRoadLinkByMMLId(mmlId);
+      speedLimit: function (linkId) {
+        var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
         var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
         applicationModel.selectLayer('speedLimit');
         $.when(layerSelected).then(function () {
@@ -67,7 +67,7 @@
             return promise;
           });
           $.when(mapMoved).then(function () {
-            eventbus.trigger('speedLimit:selectByMmlId', parseInt(mmlId, 10));
+            eventbus.trigger('speedLimit:selectByLinkId', parseInt(linkId, 10));
           });
         });
       },
@@ -164,7 +164,7 @@
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
-      router.navigate('linkProperty/' + linkProperty.mmlId);
+      router.navigate('linkProperty/' + linkProperty.linkId);
     });
 
     eventbus.on('layer:selected', function (layer) {
