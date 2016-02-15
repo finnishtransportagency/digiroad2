@@ -51,6 +51,12 @@
       return verticalLevelType && verticalLevelType[1];
     };
 
+    var checkIfMultiSelection = function(mmlId){
+      if(selectedLinkProperty.count() == 1){
+        return mmlId;
+      }
+    };
+
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
                '<label class="control-label">' + labelText + '</label>' +
@@ -60,7 +66,7 @@
 
     var title = function() {
       if (selectedLinkProperty.count() == 1) {
-        return '<span>Linkin MML ID: ' + _.first(selectedLinkProperty.get()).linkId + '</span>';
+        return '<span>Linkin ID: ' + _.first(selectedLinkProperty.get()).linkId + '</span>';
       } else {
         return '<span>Ominaisuustiedot</span>';
       }
