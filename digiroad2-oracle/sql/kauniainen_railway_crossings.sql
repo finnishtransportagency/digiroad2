@@ -13,7 +13,6 @@ UPDATE asset
 
 
 insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600050,230,'dr2_test_data',235);
-insert into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000013, 388553080, 69, 69, 1);
 INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (70000013, 1611341, 388553080, 69.000, 69.000, 1);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600050, 70000013);
 insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600050, (select id from enumerated_value where name_fi='Puolipuomi'), (select id from property where public_id='turvavarustus'));
