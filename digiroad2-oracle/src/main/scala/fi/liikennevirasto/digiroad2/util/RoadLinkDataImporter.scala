@@ -27,8 +27,8 @@ object RoadLinkDataImporter {
 
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
     val statement = dynamicSession.prepareStatement("""
-        insert into functional_class(link_id, functional_class, modified_date, modified_by)
-        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
+        insert into functional_class(id, link_id, functional_class, modified_date, modified_by)
+        select primary_key_seq.nextval, ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
         where not exists (select * from functional_class where link_id = ?)
       """)

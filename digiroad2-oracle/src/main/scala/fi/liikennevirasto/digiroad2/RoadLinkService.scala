@@ -123,14 +123,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       case (Some(existingValue), _) =>
         updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
       case (None, None) =>
-        sqlu"""insert into #$table (link_id, #$column, modified_by)
-                 select $linkId, $value, $username
+        sqlu"""insert into #$table (id, link_id, #$column, modified_by)
+                 select primary_key_seq.nextval, $linkId, $value, $username
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
       case (None, Some(vvhValue)) =>
         if (vvhValue != value)
-          sqlu"""insert into #$table (link_id, #$column, modified_by)
-                   select $linkId, $value, $username
+          sqlu"""insert into #$table (id, link_id, #$column, modified_by)
+                   select primary_key_seq.nextval, $linkId, $value, $username
                    from dual
                    where not exists (select * from #$table where link_id = $linkId)""".execute
     }
@@ -279,8 +279,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       withDynTransaction {
-        sqlu"""insert into incomplete_link(link_id, municipality_code, administrative_class)
-                 select ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
+        sqlu"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
+                 select primary_key_seq.nextval, ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
                  where not exists (select * from incomplete_link where link_id = ${incompleteLink.linkId})""".execute
       }
     }
