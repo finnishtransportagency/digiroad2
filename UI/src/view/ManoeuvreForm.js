@@ -7,7 +7,7 @@
       '</div>';
     var template = '' +
       '<header>' +
-        '<span>Linkin MML ID: <%= linkId %></span>' +
+        '<span>Linkin LINK ID: <%= linkId %></span>' +
         buttons +
       '</header>' +
       '<div class="wrapper read-only">' +
@@ -22,7 +22,7 @@
       '<footer>' + buttons + '</footer>';
     var manouvreTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<p class="form-control-static">MML ID: <%= destLinkId %></p>' +
+        '<p class="form-control-static">LINK ID: <%= destLinkId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -47,7 +47,7 @@
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
-          '<p class="form-control-static">MML ID <%= linkId %> <span class="marker"><%= marker %></span></p>' +
+          '<p class="form-control-static">LINK ID <%= linkId %> <span class="marker"><%= marker %></span></p>' +
         '</div>' +
         '<div class="manoeuvre-details <% print(checked ? "" : "hidden") %>">' +
           '<div class="validity-period-group">' +
