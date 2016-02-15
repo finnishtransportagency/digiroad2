@@ -43,7 +43,11 @@ class VVHClient(hostname: String) {
   }
 
   private def withLinkIdFilter(linkIds: Set[Long]): String = {
-    withFilter("MTKID", linkIds)
+    withFilter("LINKID", linkIds)
+  }
+
+  private def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    withFilter("MTKID", mmlIds)
   }
 
   private def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
@@ -91,17 +95,28 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlink(linkId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(linkId)).headOption
 
   def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature)
+    fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
+  }
+
+  def fetchVVHRoadlinksByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
+    fetchVVHRoadlinks(mmlIds, None, true, roadLinkFromFeature, withMmlIdFilter)
   }
 
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
                            fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
+                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
+    fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
+
+  def fetchVVHRoadlinks[T](linkIds: Set[Long],
+                           fieldSelection: Option[String],
+                           fetchGeometry: Boolean,
+                           resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                           filter: Set[Long] => String): Seq[T] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(withLinkIdFilter(ids), fieldSelection)
+      val definition = layerDefinition(filter(ids), fieldSelection)
       val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
