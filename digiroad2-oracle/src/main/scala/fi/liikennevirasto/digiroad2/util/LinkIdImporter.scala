@@ -19,24 +19,24 @@ object LinkIdImporter {
 
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     withDynTransaction {
-      try { sqlu"""drop table link_id_to_link_id""".execute } catch {
+      try { sqlu"""drop table mml_id_to_link_id""".execute } catch {
         case e: SQLSyntaxErrorException => // ok
       }
-      sqlu"""create table link_id_to_link_id (
+      sqlu"""create table mml_id_to_link_id (
+          mml_id number(38, 0),
           link_id number(38, 0),
-          link_id number(38, 0),
-          primary key (link_id)
+          primary key (mml_id)
         )""".execute
     }
 
     val tableNames = Seq(
       TableSpec(name = "lrm_position", idColumn = "id"),
-      TableSpec(name = "traffic_direction", idColumn = "link_id"),
-      TableSpec(name = "incomplete_link", idColumn = "link_id"),
-      TableSpec(name = "functional_class", idColumn = "link_id"),
-      TableSpec(name = "link_type", idColumn = "link_id"),
+      TableSpec(name = "traffic_direction", idColumn = "mml_id"),
+      TableSpec(name = "incomplete_link", idColumn = "mml_id"),
+      TableSpec(name = "functional_class", idColumn = "mml_id"),
+      TableSpec(name = "link_type", idColumn = "mml_id"),
       TableSpec(name = "manoeuvre_element", idColumn = "manoeuvre_id"),
-      TableSpec(name = "unknown_speed_limit", idColumn = "link_id"))
+      TableSpec(name = "unknown_speed_limit", idColumn = "mml_id"))
 
     tableNames.foreach { table =>
       updateTable(table, vvhHost)
@@ -50,11 +50,11 @@ object LinkIdImporter {
     val vvhClient = new VVHClient(vvhHost)
 
     withDynTransaction {
-      sqlu"""delete from link_id_to_link_id""".execute
+      sqlu"""delete from mml_id_to_link_id""".execute
 
       val tempPS = dynamicSession.prepareStatement(
         """
-        insert into link_id_to_link_id (link_id, link_id) values (?, ?)
+        insert into mml_id_to_link_id (mml_id, link_id) values (?, ?)
         """)
 
       val (min, max) = sql"""select min(#$idColumn), max(#$idColumn) from #$tableName""".as[(Int, Int)].first
@@ -67,11 +67,11 @@ object LinkIdImporter {
       val startTime = DateTime.now()
 
       batches.zipWithIndex.foreach { case ((min, max), i) =>
-        val mmlIds = sql"""select distinct link_id from #$tableName where #$idColumn between $min and $max""".as[Long].list
+        val mmlIds = sql"""select distinct mml_id from #$tableName where #$idColumn between $min and $max""".as[Long].list
         val links = vvhClient.fetchVVHRoadlinks(mmlIds.toSet)
         links.foreach { link =>
-          tempPS.setLong(1, link.linkId)
-          tempPS.setLong(2, link.attributes.get("LINKID").asInstanceOf[BigInt].longValue())
+          tempPS.setLong(1, link.attributes("MTKID").asInstanceOf[BigInt].longValue())
+          tempPS.setLong(2, link.linkId)
           tempPS.addBatch()
         }
         try {
@@ -84,7 +84,7 @@ object LinkIdImporter {
 
       sqlu"""
         update #$tableName pos
-               set pos.link_id = (select t.link_id from link_id_to_link_id t where t.link_id = pos.link_id)
+               set pos.link_id = (select t.link_id from mml_id_to_link_id t where t.mml_id = pos.mml_id)
       """.execute
 
       println(s"done in ${AssetDataImporter.humanReadableDurationSince(startTime)}.")
