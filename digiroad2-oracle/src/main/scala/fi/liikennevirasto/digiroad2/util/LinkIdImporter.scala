@@ -15,7 +15,7 @@ object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  case class TableSpec(name: String, idColumn: String)
+  case class TableSpec(name: String)
 
   def importLinkIdsFromVVH(vvhHost: String): Unit = {
     withDynTransaction {
@@ -30,23 +30,20 @@ object LinkIdImporter {
     }
 
     val tableNames = Seq(
-      TableSpec(name = "lrm_position", idColumn = "id"),
-      TableSpec(name = "traffic_direction", idColumn = "mml_id"),
-      TableSpec(name = "incomplete_link", idColumn = "mml_id"),
-      TableSpec(name = "functional_class", idColumn = "mml_id"),
-      TableSpec(name = "link_type", idColumn = "mml_id"),
-      TableSpec(name = "manoeuvre_element", idColumn = "manoeuvre_id"),
-      TableSpec(name = "unknown_speed_limit", idColumn = "mml_id"))
+      "lrm_position",
+      "traffic_direction",
+      "incomplete_link",
+      "functional_class",
+      "link_type",
+      "manoeuvre_element",
+      "unknown_speed_limit")
 
     tableNames.foreach { table =>
       updateTable(table, vvhHost)
     }
   }
 
-  def updateTable(table: TableSpec, vvhHost: String): Unit = {
-    val tableName = table.name
-    val idColumn = table.idColumn
-
+  def updateTable(tableName: String, vvhHost: String): Unit = {
     val vvhClient = new VVHClient(vvhHost)
 
     withDynTransaction {
@@ -57,20 +54,28 @@ object LinkIdImporter {
         insert into mml_id_to_link_id (mml_id, link_id) values (?, ?)
         """)
 
-      val (min, max) = sql"""select min(#$idColumn), max(#$idColumn) from #$tableName""".as[(Int, Int)].first
+      val count = sql"""select count(distinct mml_id) from #$tableName""".as[Int].first
 
-      val batches = getBatchDrivers(min, max, 10000)
+      val batches = getBatchDrivers(0, count, 1000)
       val total = batches.size
 
       print(s"Table $tableName: Fetching $total batches of links… ")
 
       val startTime = DateTime.now()
 
-      batches.zipWithIndex.foreach { case ((min, max), i) =>
-        val mmlIds = sql"""select distinct mml_id from #$tableName where #$idColumn between $min and $max""".as[Long].list
+      batches.foreach { case (min, max) =>
+        val mmlIds =
+          sql"""
+               select *
+               from (select a.*, rownum rnum
+                      from (select distinct mml_id from #$tableName) a
+                      where rownum <= $max
+                ) where rnum >= $min
+          """.as[Long].list
         val links = vvhClient.fetchVVHRoadlinks(mmlIds.toSet)
         links.foreach { link =>
-          tempPS.setLong(1, link.attributes("MTKID").asInstanceOf[BigInt].longValue())
+          val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
+          tempPS.setLong(1, mmlId)
           tempPS.setLong(2, link.linkId)
           tempPS.addBatch()
         }
