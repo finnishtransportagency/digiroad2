@@ -43,7 +43,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val incompleteLinksQuery = """
-        select l.mml_id, m.name_fi, l.administrative_class
+        select l.link_id, m.name_fi, l.administrative_class
         from incomplete_link l
         join municipality m on l.municipality_code = m.id
                                  """
@@ -113,26 +113,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
                set #$column = $value,
                    modified_date = current_timestamp,
                    modified_by = $username
-               where mml_id = $mmlId""".execute
+               where link_id = $mmlId""".execute
     }
   }
 
   protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String, optionalVVHValue: Option[Int] = None) = {
-    val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
+    val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where link_id = $mmlId""".as[Int].firstOption
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
         updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
       case (None, None) =>
-        sqlu"""insert into #$table (mml_id, #$column, modified_by)
+        sqlu"""insert into #$table (link_id, #$column, modified_by)
                  select $mmlId, $value, $username
                  from dual
-                 where not exists (select * from #$table where mml_id = $mmlId)""".execute
+                 where not exists (select * from #$table where link_id = $mmlId)""".execute
       case (None, Some(vvhValue)) =>
         if (vvhValue != value)
-          sqlu"""insert into #$table (mml_id, #$column, modified_by)
+          sqlu"""insert into #$table (link_id, #$column, modified_by)
                    select $mmlId, $value, $username
                    from dual
-                   where not exists (select * from #$table where mml_id = $mmlId)""".execute
+                   where not exists (select * from #$table where link_id = $mmlId)""".execute
     }
   }
 
@@ -257,7 +257,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   protected def removeIncompleteness(mmlId: Long) = {
-    sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute
+    sqlu"""delete from incomplete_link where link_id = $mmlId""".execute
   }
 
   def updateRoadLinkChanges(roadLinkChangeSet: RoadLinkChangeSet): Unit = {
@@ -279,9 +279,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       withDynTransaction {
-        sqlu"""insert into incomplete_link(mml_id, municipality_code, administrative_class)
+        sqlu"""insert into incomplete_link(link_id, municipality_code, administrative_class)
                  select ${incompleteLink.mmlId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
-                 where not exists (select * from incomplete_link where mml_id = ${incompleteLink.mmlId})""".execute
+                 where not exists (select * from incomplete_link where link_id = ${incompleteLink.mmlId})""".execute
       }
     }
     incompleteLinks.foreach(setIncompleteness)

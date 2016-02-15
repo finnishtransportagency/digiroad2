@@ -80,7 +80,7 @@ trait PointAssetOperations {
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val allFloatingAssetsQuery = s"""
-        select a.$idField, m.name_fi, lrm.mml_id
+        select a.$idField, m.name_fi, lrm.link_id
         from asset a
         join municipality m on a.municipality_code = m.id
         join asset_link al on a.id = al.asset_id

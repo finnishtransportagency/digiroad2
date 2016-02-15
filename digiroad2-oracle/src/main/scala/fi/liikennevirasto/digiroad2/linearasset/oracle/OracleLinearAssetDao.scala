@@ -23,7 +23,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery = """
-      select s.mml_id, m.name_fi, s.administrative_class
+      select s.link_id, m.name_fi, s.administrative_class
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
       """
@@ -69,10 +69,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement("""
-        insert into unknown_speed_limit (mml_id, municipality_code, administrative_class)
+        insert into unknown_speed_limit (link_id, municipality_code, administrative_class)
         select ?, ?, ?
         from dual
-        where not exists (select * from unknown_speed_limit where mml_id = ?)
+        where not exists (select * from unknown_speed_limit where link_id = ?)
       """)
     try {
       limits.foreach { limit =>
@@ -99,7 +99,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
     val againstRemainders = calculateRemainders(SideCode.AgainstDigitizing)
     if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
-      sqlu"""delete from unknown_speed_limit where mml_id = $mmlId""".execute
+      sqlu"""delete from unknown_speed_limit where link_id = $mmlId""".execute
     }
   }
 
@@ -127,7 +127,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int)] = {
     val links = sql"""
-      select pos.mml_id, pos.start_measure, pos.end_measure
+      select pos.link_id, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -146,14 +146,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
+        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
            join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
-           join  #$idTableName i on i.id = pos.mml_id
+           join  #$idTableName i on i.id = pos.link_id
            where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
     }
   }
@@ -161,7 +161,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def fetchLinearAssetsByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(ids) { idTableName =>
       val assets = sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
+        select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
           from asset a
@@ -181,7 +181,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def fetchAssetsWithTextualValuesByIds(ids: Set[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(ids) { idTableName =>
       val assets = sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
+        select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
           from asset a
@@ -201,14 +201,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       val assets = sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
+        select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          join #$idTableName i on i.id = pos.mml_id
+          join #$idTableName i on i.id = pos.link_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
@@ -223,14 +223,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def fetchAssetsWithTextualValuesByMmlIds(assetTypeId: Int, mmlIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       val assets = sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
+        select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          join #$idTableName i on i.id = pos.mml_id
+          join #$idTableName i on i.id = pos.link_id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
@@ -247,7 +247,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
     val assets = MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code,
+        select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
                pvp.type, pvp.start_hour, pvp.end_hour,
                pe.type,
@@ -258,7 +258,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
-          join #$idTableName i on i.id = pos.mml_id
+          join #$idTableName i on i.id = pos.link_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
@@ -290,7 +290,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code,
+        select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
                pvp.type, pvp.start_hour, pvp.end_hour,
                pe.type,
@@ -331,14 +331,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   private def fetchSpeedLimitsByMmlId(mmlId: Long) = {
     sql"""
-      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
          join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
          join enumerated_value e on s.enumerated_value_id = e.id
-         where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
+         where a.asset_type_id = 20 and floating = 0 and pos.link_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink]): (Seq[SpeedLimit],  Seq[RoadLink]) = {
@@ -356,7 +356,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
     val speedLimits = sql"""
-      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
+      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -376,7 +376,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
     val speedLimit = sql"""
-      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
+      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -455,7 +455,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          into asset(id, asset_type_id, created_by, created_date)
          values ($assetId, $typeId, '$creator', sysdate)
 
-         into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+         into lrm_position(id, start_measure, end_measure, link_id, side_code)
          values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCodeValue)
 
          into asset_link(asset_id, position_id)
@@ -579,7 +579,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to)
         values ($id, $typeId, $username, sysdate, #$validTo)
 
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code)
         values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
 
         into asset_link(asset_id, position_id)

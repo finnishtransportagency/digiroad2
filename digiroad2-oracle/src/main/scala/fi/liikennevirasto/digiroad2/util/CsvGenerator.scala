@@ -21,7 +21,7 @@ class CsvGenerator(vvhServiceHost: String) {
   def generateDroppedManoeuvres() = {
     val manoeuvres = OracleDatabase.withDynSession {
       sql"""
-           select m.id, m.ADDITIONAL_INFO, m.TYPE, me.MML_ID, me.ELEMENT_TYPE
+           select m.id, m.ADDITIONAL_INFO, m.TYPE, me.link_id, me.ELEMENT_TYPE
            from manoeuvre m
            join MANOEUVRE_ELEMENT me on me.MANOEUVRE_ID = m.id
         """.as[(Long, Option[String], Int, Long, Int)].list
@@ -58,7 +58,7 @@ class CsvGenerator(vvhServiceHost: String) {
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id
+        select dr1_id, link_id
           from tielinkki_ctas
           where kunta_nro = $municipality
         """.as[(Long, Long)].list
@@ -96,7 +96,7 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.start_measure, pos.end_measure, a.floating
+           select pos.link_id, pos.start_measure, pos.end_measure, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
@@ -192,7 +192,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
+           select pos.link_id, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
@@ -228,7 +228,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val runtime = Runtime.getRuntime()
     val limits = OracleDatabase.withDynSession {
       sql"""
-           select pos.MML_ID, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
+           select pos.link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
@@ -267,7 +267,7 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
   def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
-    val headerLine = "manoeuvre_id; additional_info; source_link_mml_id; dest_link_mml_id; exceptions; validity_periods\n"
+    val headerLine = "manoeuvre_id; additional_info; source_link_link_id; dest_link_link_id; exceptions; validity_periods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
       val source = value.find(_._5 == Source).get
@@ -284,7 +284,7 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
   def exportCsv(fileName: String, droppedLimits: Seq[(Long, Double, Double, Any, Int, Boolean)]): Unit = {
-    val headerLine = "mml_id; start_measure; end_measure; value \n"
+    val headerLine = "link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}"""
     }.mkString("\n")

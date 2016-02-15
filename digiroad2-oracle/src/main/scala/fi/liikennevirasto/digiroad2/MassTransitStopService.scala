@@ -75,7 +75,7 @@ trait MassTransitStopService extends PointAssetOperations {
           when tp.value_fi is not null then tp.value_fi
           else null
         end as display_value,
-        lrm.id, lrm.start_measure, lrm.end_measure, lrm.mml_id,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
         SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
         from asset a
@@ -278,7 +278,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def updateLrmPosition(id: Long, mValue: Double, mmlId: Long) {
     sqlu"""
            update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, mml_id = $mmlId
+           set start_measure = $mValue, end_measure = $mValue, link_id = $mmlId
            where id = (
             select lrm.id
             from asset a
@@ -290,7 +290,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def insertLrmPosition(id: Long, mValue: Double, mmlId: Long) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, mml_id)
+           insert into lrm_position (id, start_measure, end_measure, link_id)
            values ($id, $mValue, $mValue, $mmlId)
       """.execute
   }

@@ -22,7 +22,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   def getSourceRoadLinkMmlIdById(id: Long): Long = {
     OracleDatabase.withDynTransaction {
       sql"""
-             select mml_id
+             select link_id
              from manoeuvre_element
              where manoeuvre_id = $id and element_type = 1
           """.as[Long].first
@@ -60,13 +60,13 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
       val sourceMmlId = manoeuvre.sourceMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, element_type, mml_id)
+             insert into manoeuvre_element(manoeuvre_id, element_type, link_id)
              values ($manoeuvreId, $FirstElement, $sourceMmlId)
           """.execute
 
       val destMmlId = manoeuvre.destMmlId
       sqlu"""
-             insert into manoeuvre_element(manoeuvre_id, element_type, mml_id)
+             insert into manoeuvre_element(manoeuvre_id, element_type, link_id)
              values ($manoeuvreId, $LastElement, $destMmlId)
           """.execute
 
@@ -154,12 +154,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   private def fetchManoeuvresByMmlIds(mmlIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
     val manoeuvres = MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      sql"""SELECT m.id, e.mml_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
+      sql"""SELECT m.id, e.link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE m.id in (SELECT k.manoeuvre_id
                             FROM MANOEUVRE_ELEMENT k
-                            join #$idTableName i on i.id = k.mml_id
+                            join #$idTableName i on i.id = k.link_id
                             where valid_to is null)""".as[(Long, Long, Int, DateTime, String, String)].list
     }
     manoeuvres.map { manoeuvreRow =>

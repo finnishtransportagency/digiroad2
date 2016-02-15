@@ -25,7 +25,7 @@ object OracleTrafficLightDao {
 
     val query =
       """
-        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -58,7 +58,7 @@ object OracleTrafficLightDao {
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
-        into lrm_position(id, start_measure, mml_id)
+        into lrm_position(id, start_measure, link_id)
         values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.mmlId})
 
         into asset_link(asset_id, position_id)
@@ -79,7 +79,7 @@ object OracleTrafficLightDao {
       update lrm_position
        set
        start_measure = ${trafficLight.mValue},
-       mml_id = ${trafficLight.mmlId}
+       link_id = ${trafficLight.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id

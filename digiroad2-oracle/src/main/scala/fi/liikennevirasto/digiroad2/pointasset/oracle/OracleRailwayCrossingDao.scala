@@ -25,7 +25,7 @@ object OracleRailwayCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =
       s"""
-        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
         tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
@@ -65,7 +65,7 @@ object OracleRailwayCrossingDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 230, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, mml_id)
+        into lrm_position(id, start_measure, link_id)
         values ($lrmPositionId, $mValue, ${asset.mmlId})
 
         into asset_link(asset_id, position_id)
@@ -91,7 +91,7 @@ object OracleRailwayCrossingDao {
       update lrm_position
        set
        start_measure = $mValue,
-       mml_id = ${railwayCrossing.mmlId}
+       link_id = ${railwayCrossing.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id

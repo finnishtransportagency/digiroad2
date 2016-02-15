@@ -117,7 +117,7 @@ class AssetDataImporter {
     val chunkSize = 1000
     val splitAssetsWithoutMmlIdFilter = """
       a.created_by like 'split_linearasset_%'
-      and lrm.mml_id is null
+      and lrm.link_id is null
       and (a.valid_to > sysdate or a.valid_to is null)"""
     val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutMmlIdFilter)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
@@ -130,7 +130,7 @@ class AssetDataImporter {
 
   def importEuropeanRoads(conversionDatabase: DatabaseDef, vvhHost: String) = {
     val roads = conversionDatabase.withDynSession {
-      sql"""select MML_ID, eur_nro from eurooppatienumero""".as[(Long, String)].list
+      sql"""select link_id, eur_nro from eurooppatienumero""".as[(Long, String)].list
     }
 
     val roadsByMmlId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
@@ -144,7 +144,7 @@ class AssetDataImporter {
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
       val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
       val propertyId = Queries.getPropertyIdByPublicId("eurooppatienumero")
@@ -200,7 +200,7 @@ class AssetDataImporter {
 
     val prohibitions = conversionDatabase.withDynSession {
       sql"""
-          select s.segm_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli, s.aika
+          select s.segm_id, t.link_id, s.alkum, s.loppum, t.kunta_nro, s.arvo, s.puoli, s.aika
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId and s.kaista is null
@@ -209,7 +209,7 @@ class AssetDataImporter {
 
     val exceptions = conversionDatabase.withDynSession {
       sql"""
-          select s.segm_id, t.mml_id, s.arvo, s.puoli
+          select s.segm_id, t.link_id, s.arvo, s.puoli
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $exceptionTypeId and s.kaista is null
@@ -231,7 +231,7 @@ class AssetDataImporter {
 
   def insertProhibitions(typeId: Int, conversionResults: Seq[Either[String, PersistedLinearAsset]]): Int = {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
       val exceptionPS = dynamicSession.prepareStatement("insert into prohibition_exception (id, prohibition_value_id, type) values (?, ?, ?)")
@@ -374,7 +374,7 @@ class AssetDataImporter {
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code,
+        select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
                pvp.type, pvp.start_hour, pvp.end_hour,
                pe.type,
@@ -521,13 +521,13 @@ class AssetDataImporter {
           sqlu"""
             update lrm_position pos
             set pos.side_code = 5 - pos.side_code
-            where exists(select * from #$idTableName i where i.id = pos.mml_id)
+            where exists(select * from #$idTableName i where i.id = pos.link_id)
             and pos.side_code in (2, 3)
           """.first +
           sqlu"""
             update traffic_direction td
             set td.traffic_direction = 7 - td.traffic_direction
-            where exists(select id from #$idTableName i where i.id = td.mml_id)
+            where exists(select id from #$idTableName i where i.id = td.link_id)
             and td.traffic_direction in (3, 4)
           """.first +
           sqlu"""
@@ -535,7 +535,7 @@ class AssetDataImporter {
             set a.bearing = mod((a.bearing + 180), 360)
             where a.id in (select al.asset_id from asset_link al
                            join lrm_position pos on al.position_id = pos.id
-                           join #$idTableName i on i.id = pos.mml_id)
+                           join #$idTableName i on i.id = pos.link_id)
             and a.bearing is not null
             and a.asset_type_id in (10, 240)
           """.first
@@ -548,7 +548,7 @@ class AssetDataImporter {
               update lrm_position
               set end_measure = greatest(0, ${length} - COALESCE(start_measure, 0)),
                   start_measure = greatest(0, ${length} - COALESCE(end_measure, start_measure, 0))
-              where mml_id = ${link.linkId}
+              where link_id = ${link.linkId}
             """.first
         }
 
@@ -638,7 +638,7 @@ class AssetDataImporter {
 
     withDynTransaction {
       val speedLimitLinks = sql"""
-            select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -668,7 +668,7 @@ class AssetDataImporter {
 
     withDynTransaction {
       val linearAssetLinks = sql"""
-            select a.id, pos.mml_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
+            select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -707,7 +707,7 @@ class AssetDataImporter {
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.created_by like 'split_linearasset_%'
-            and lrm.mml_id is null
+            and lrm.link_id is null
             and (a.valid_to > sysdate or a.valid_to is null)
             and a.id between $chunkStart and $chunkEnd
             and a.asset_type_id = $typeId)

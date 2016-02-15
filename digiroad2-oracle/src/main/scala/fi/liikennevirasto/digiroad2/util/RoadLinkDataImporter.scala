@@ -10,7 +10,7 @@ import slick.jdbc.{StaticQuery => Q}
 object RoadLinkDataImporter {
   def importFromConversionDB() {
     val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
-      sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by mml_id """
+      sql"""select link_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by link_id """
         .as[(Long, Int, Int, Int)]
         .list
     }
@@ -27,10 +27,10 @@ object RoadLinkDataImporter {
 
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
     val statement = dynamicSession.prepareStatement("""
-        insert into functional_class(mml_id, functional_class, modified_date, modified_by)
+        insert into functional_class(link_id, functional_class, modified_date, modified_by)
         select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
-        where not exists (select * from functional_class where mml_id = ?)
+        where not exists (select * from functional_class where link_id = ?)
       """)
     functionalClasses
       .foreach { x =>
@@ -45,10 +45,10 @@ object RoadLinkDataImporter {
 
   private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
-        insert into link_type(mml_id, link_type, modified_date, modified_by)
+        insert into link_type(link_id, link_type, modified_date, modified_by)
         select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
-        where not exists (select * from link_type where mml_id = ?)
+        where not exists (select * from link_type where link_id = ?)
       """)
     data
       .foreach { x =>
@@ -63,10 +63,10 @@ object RoadLinkDataImporter {
 
   private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
-        insert into traffic_direction(mml_id, traffic_direction, modified_date, modified_by)
+        insert into traffic_direction(link_id, traffic_direction, modified_date, modified_by)
         select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
-        where not exists (select * from traffic_direction where mml_id = ?)
+        where not exists (select * from traffic_direction where link_id = ?)
       """)
     data
       .foreach { x =>

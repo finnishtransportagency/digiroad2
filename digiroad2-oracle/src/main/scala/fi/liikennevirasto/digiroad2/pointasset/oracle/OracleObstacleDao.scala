@@ -24,7 +24,7 @@ object OracleObstacleDao {
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val query =
       """
-        select a.id, pos.mml_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -62,7 +62,7 @@ object OracleObstacleDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 220, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, mml_id)
+        into lrm_position(id, start_measure, link_id)
         values ($lrmPositionId, $mValue, ${obstacle.mmlId})
 
         into asset_link(asset_id, position_id)
@@ -85,7 +85,7 @@ object OracleObstacleDao {
       update lrm_position
        set
        start_measure = $mValue,
-       mml_id = ${obstacle.mmlId}
+       link_id = ${obstacle.mmlId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
     id
