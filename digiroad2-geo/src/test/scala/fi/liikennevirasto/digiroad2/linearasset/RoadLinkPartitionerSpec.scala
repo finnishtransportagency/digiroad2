@@ -19,7 +19,7 @@ class RoadLinkPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
-    groupedLinks.head.map(_.mmlId).toSet should be(roadLinks.map(_.mmlId).toSet)
+    groupedLinks.head.map(_.linkId).toSet should be(roadLinks.map(_.linkId).toSet)
   }
 
   test("separate road link group with functional class") {

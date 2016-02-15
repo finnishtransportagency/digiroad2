@@ -15,7 +15,7 @@ class DirectionalTrafficSignService(val vvhClient: VVHClient) extends PointAsset
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink]): Seq[DirectionalTrafficSign] = {
     val assets = OracleDirectionalTrafficSignDao.fetchByFilter(queryFilter)
     assets.map { asset =>
-      asset.copy(geometry = roadLinks.find(_.mmlId == asset.mmlId).map(_.geometry).getOrElse(Nil))}
+      asset.copy(geometry = roadLinks.find(_.linkId == asset.mmlId).map(_.geometry).getOrElse(Nil))}
   }
 
   override def setFloating(persistedAsset: DirectionalTrafficSign, floating: Boolean) = {

@@ -173,7 +173,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
-      Map("mmlId" -> roadLink.mmlId,
+      Map("mmlId" -> roadLink.linkId,
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,

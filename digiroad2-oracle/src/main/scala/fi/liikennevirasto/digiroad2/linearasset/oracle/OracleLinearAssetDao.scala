@@ -137,7 +137,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(links.map(_._1).toSet)
 
     links.map { case (mmlId, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
+      val vvhRoadLink = roadLinksByMmlId.find(_.linkId == mmlId).getOrElse(throw new NoSuchElementException)
       val truncatedGeometry = GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure)
       (mmlId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
     }
@@ -343,13 +343,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink]): (Seq[SpeedLimit],  Seq[RoadLink]) = {
     val topology = roadLinks.filter(_.isCarTrafficRoad)
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
   private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
-    val roadLink = topology.find(_.mmlId == mmlId).get
+    val roadLink = topology.find(_.linkId == mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
     SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
@@ -369,7 +369,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val roadLinksByMmlId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
-      val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
+      val vvhRoadLink = roadLinksByMmlId.find(_.linkId == mmlId).getOrElse(throw new NoSuchElementException)
       SpeedLimit(assetId, mmlId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }

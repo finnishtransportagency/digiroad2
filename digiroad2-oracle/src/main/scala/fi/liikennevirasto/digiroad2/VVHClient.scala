@@ -17,10 +17,9 @@ object FeatureClass {
   case object AllOthers extends FeatureClass
 }
 
-case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
+case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                       linkId: Long = 0)
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
 class VVHClient(hostname: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -152,12 +151,13 @@ class VVHClient(hostname: String) {
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
-    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+
+    // todo: replace mml id with real link id
     VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi, linkId)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
   }
 
   private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -168,6 +168,7 @@ class VVHClient(hostname: String) {
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
+      "LINKID",
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",

@@ -237,8 +237,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
-      "mmlId" -> roadLink.mmlId,
-      "linkId" -> roadLink.linkId,
+      "mmlId" -> roadLink.linkId,
+      "linkId" -> roadLink.attributes.get("LINKID"),
       "points" -> roadLink.geometry,
       "administrativeClass" -> roadLink.administrativeClass.toString,
       "linkType" -> roadLink.linkType.value,
@@ -297,7 +297,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
       roadLinkService.updateProperties(prop.mmlId, prop.functionalClass, prop.linkType, prop.trafficDirection, user.username, municipalityValidation).map { roadLink =>
-        Map("mmlId" -> roadLink.mmlId,
+        Map("mmlId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
           "functionalClass" -> roadLink.functionalClass,

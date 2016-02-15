@@ -42,7 +42,7 @@ trait LinearAssetOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.mmlId).mapValues(_.head))
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
@@ -51,7 +51,7 @@ trait LinearAssetOperations {
   }
 
   private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
-    val mmlIds = roadLinks.map(_.mmlId)
+    val mmlIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
         typeId match {

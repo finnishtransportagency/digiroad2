@@ -60,7 +60,7 @@ trait PointAssetOperations {
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
-        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.mmlId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
+        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.mmlId).map(link => (link.municipalityCode, link.geometry)))
         AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating)
       }
 
@@ -93,7 +93,7 @@ trait PointAssetOperations {
       }
 
       val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
-      val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.mmlId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass) =>
@@ -111,7 +111,7 @@ trait PointAssetOperations {
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
+      roadLinks.find(_.linkId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
@@ -125,7 +125,7 @@ trait PointAssetOperations {
     val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.mmlId) }
 
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
+      roadLinks.find(_.linkId == mmlId).map(x => (x.municipalityCode, x.geometry))
 
     persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
   }

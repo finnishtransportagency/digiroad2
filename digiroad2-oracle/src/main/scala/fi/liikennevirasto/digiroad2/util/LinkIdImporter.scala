@@ -70,8 +70,8 @@ object LinkIdImporter {
         val mmlIds = sql"""select distinct mml_id from #$tableName where #$idColumn between $min and $max""".as[Long].list
         val links = vvhClient.fetchVVHRoadlinks(mmlIds.toSet)
         links.foreach { link =>
-          tempPS.setLong(1, link.mmlId)
-          tempPS.setLong(2, link.linkId)
+          tempPS.setLong(1, link.linkId)
+          tempPS.setLong(2, link.attributes.get("LINKID").asInstanceOf[BigInt].longValue())
           tempPS.addBatch()
         }
         try {

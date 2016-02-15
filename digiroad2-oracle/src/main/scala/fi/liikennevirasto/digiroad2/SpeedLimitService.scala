@@ -24,7 +24,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val roadLinks = vvhClient.fetchVVHRoadlinks(mmlIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
-        dao.purgeFromUnknownSpeedLimits(rl.mmlId, GeometryUtils.geometryLength(rl.geometry))
+        dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
       }
     }
   }
@@ -33,7 +33,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val generatedLimits = speedLimits.filter(_.id == 0)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByMmlId(limit.mmlId)
-      UnknownSpeedLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass)
+      UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass)
     }
   }
 
@@ -42,7 +42,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       val speedLimits = speedLimitLinks.groupBy(_.mmlId)
-      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
+      val roadLinksByMmlId = topology.groupBy(_.linkId).mapValues(_.head)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
@@ -129,7 +129,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
+      val roadLinksByMmlId = topology.groupBy(_.linkId).mapValues(_.head)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
       eventbus.publish("linearAssets:update", changeSet)

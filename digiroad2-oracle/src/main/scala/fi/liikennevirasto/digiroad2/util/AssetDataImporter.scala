@@ -137,7 +137,7 @@ class AssetDataImporter {
 
     val vvhClient = new VVHClient(vvhHost)
     val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByMmlId.keySet)
-    val linksByMmlId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.mmlId -> link) }
+    val linksByMmlId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByMmlId.get(road._1)) }
 
@@ -342,14 +342,14 @@ class AssetDataImporter {
     def hasInvalidProhibitionType(prohibition: (Long, Long, Double, Double, Int, Int, Int, Option[String])): Boolean = {
       !Set(3, 2, 23, 12, 11, 26, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(prohibition._6)
     }
-    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.mmlId == s._2) }
+    val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.linkId == s._2) }
     val (segmentsOfInvalidType, validSegments) = segmentsWithRoadLink.partition { s => hasInvalidProhibitionType(s) }
     val segmentsByMmlId = validSegments.groupBy(_._2)
     val (exceptionsWithProhibition, exceptionsWithoutProhibition) = exceptions.partition { x => segmentsByMmlId.keySet.contains(x._2) }
     val (exceptionWithInvalidCode, validExceptions) = exceptionsWithProhibition.partition { x => hasInvalidExceptionType(x) }
 
     segmentsByMmlId.flatMap { case (mmlId, segments) =>
-      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.mmlId == mmlId).get.geometry)
+      val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.linkId == mmlId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == mmlId).map(_._4))
       val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == mmlId), segments.map(_._7))
 
@@ -515,9 +515,9 @@ class AssetDataImporter {
 
         val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
-          .filterNot(link => processedMmlIds.contains(link.mmlId))
+          .filterNot(link => processedMmlIds.contains(link.linkId))
 
-        var updatedCount = MassQuery.withIds(flippedLinks.map(_.mmlId).toSet) { idTableName =>
+        var updatedCount = MassQuery.withIds(flippedLinks.map(_.linkId).toSet) { idTableName =>
           sqlu"""
             update lrm_position pos
             set pos.side_code = 5 - pos.side_code
@@ -548,11 +548,11 @@ class AssetDataImporter {
               update lrm_position
               set end_measure = greatest(0, ${length} - COALESCE(start_measure, 0)),
                   start_measure = greatest(0, ${length} - COALESCE(end_measure, start_measure, 0))
-              where mml_id = ${link.mmlId}
+              where mml_id = ${link.linkId}
             """.first
         }
 
-        processedMmlIds ++= flippedLinks.map(_.mmlId)
+        processedMmlIds ++= flippedLinks.map(_.linkId)
 
         println(s"*** Made $updatedCount updates in ${humanReadableDurationSince(startTime)}")
       }

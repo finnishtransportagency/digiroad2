@@ -105,7 +105,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     val (manoeuvresById, manoeuvreExceptionsById, manoeuvreValidityPeriodsById) = OracleDatabase.withDynTransaction {
-      val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.mmlId))
+      val manoeuvresById = fetchManoeuvresByMmlIds(roadLinks.map(_.linkId))
       val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
       val manoeuvreValidityPeriodsById = fetchManoeuvreValidityPeriodsByIds(manoeuvresById.keys.toSet)
       (manoeuvresById, manoeuvreExceptionsById, manoeuvreValidityPeriodsById)
@@ -137,8 +137,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
-    val destRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
-    val sourceRoadLinkOption = roadLinks.find(_.mmlId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
+    val destRoadLinkOption = roadLinks.find(_.linkId == manoeuvre.destMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.destMmlId))
+    val sourceRoadLinkOption = roadLinks.find(_.linkId == manoeuvre.sourceMmlId).orElse(roadLinkService.getRoadLinkFromVVH(manoeuvre.sourceMmlId))
 
     (sourceRoadLinkOption, destRoadLinkOption) match {
       case (Some(sourceRoadLink), Some(destRoadLink)) => {

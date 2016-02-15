@@ -23,11 +23,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockVVHClient.fetchVVHRoadlinks(roadLinks.map(_.mmlId).toSet))
+    when(mockVVHClient.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHClient.fetchVVHRoadlink(roadLink.mmlId)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchVVHRoadlink(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new OracleLinearAssetDao(mockVVHClient)

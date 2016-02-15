@@ -66,7 +66,7 @@ object NumericalLimitFiller {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
-      PersistedLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId)
+      PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId)
     }
     (segments ++ generated, changeSet)
   }
@@ -78,7 +78,7 @@ object NumericalLimitFiller {
         .map { x => (x.startMeasure, x.endMeasure) }
       val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
       remainders.map { segment =>
-        PersistedLinearAsset(0L, roadLink.mmlId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId)
+        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId)
       }
     } else {
       Nil
@@ -111,7 +111,7 @@ object NumericalLimitFiller {
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)

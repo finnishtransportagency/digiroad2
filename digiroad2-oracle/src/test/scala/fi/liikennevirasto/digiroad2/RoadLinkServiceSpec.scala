@@ -35,7 +35,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient)
       val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
       roadLinks.find {
-        _.mmlId == 391203482
+        _.linkId == 391203482
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
       dynamicSession.rollback()
     }
@@ -49,7 +49,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient)
       val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
       println(roadLinks)
-      roadLinks.find {_.mmlId == 391203482}.map(_.functionalClass) should be(Some(4))
+      roadLinks.find {_.linkId == 391203482}.map(_.functionalClass) should be(Some(4))
       dynamicSession.rollback()
     }
   }
@@ -137,17 +137,17 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into incomplete_link(mml_id, municipality_code) values(456, 91)""".execute
       val roadLinks = service.getRoadLinksFromVVH(boundingBox)
 
-      roadLinks.find(_.mmlId == 123).get.functionalClass should be(6)
-      roadLinks.find(_.mmlId == 123).get.linkType should be(SingleCarriageway)
+      roadLinks.find(_.linkId == 123).get.functionalClass should be(6)
+      roadLinks.find(_.linkId == 123).get.linkType should be(SingleCarriageway)
 
-      roadLinks.find(_.mmlId == 456).get.functionalClass should be(7)
-      roadLinks.find(_.mmlId == 456).get.linkType should be(TractorRoad)
+      roadLinks.find(_.linkId == 456).get.functionalClass should be(7)
+      roadLinks.find(_.linkId == 456).get.linkType should be(TractorRoad)
 
-      roadLinks.find(_.mmlId == 789).get.functionalClass should be(FunctionalClass.Unknown)
-      roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
+      roadLinks.find(_.linkId == 789).get.functionalClass should be(FunctionalClass.Unknown)
+      roadLinks.find(_.linkId == 789).get.linkType should be(UnknownLinkType)
 
-      roadLinks.find(_.mmlId == 111).get.functionalClass should be(8)
-      roadLinks.find(_.mmlId == 111).get.linkType should be(CycleOrPedestrianPath)
+      roadLinks.find(_.linkId == 111).get.functionalClass should be(8)
+      roadLinks.find(_.linkId == 111).get.linkType should be(CycleOrPedestrianPath)
 
       dynamicSession.rollback()
     }
