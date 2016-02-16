@@ -17,7 +17,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
   val service = new PedestrianCrossingService(mockVVHClient) {
@@ -32,7 +32,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600029)
-      result.linkId should equal(388553074)
+      result.linkId should equal(1611317)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -41,13 +41,13 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality") {
     when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600029).get
 
       result.id should equal(600029)
-      result.linkId should equal(388553074)
+      result.linkId should equal(1611317)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
