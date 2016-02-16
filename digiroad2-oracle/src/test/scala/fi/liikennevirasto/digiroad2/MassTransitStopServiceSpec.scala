@@ -20,14 +20,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
-    VVHRoadlink(1140018963l, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(388554364l))
-    .thenReturn(Some(VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(6488445l))
+    .thenReturn(Some(VVHRoadlink(6488445l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(123l))
     .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(388553080l))
-    .thenReturn(Some(VVHRoadlink(388553080l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(1611341l))
+    .thenReturn(Some(VVHRoadlink(1611341l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
     TrafficDirection.BothDirections, FeatureClass.AllOthers)))
@@ -121,7 +121,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop road link mml id") {
     runWithRollback {
-      val position = Some(Position(60.0, 0.0, 388554364l, None))
+      val position = Some(Position(60.0, 0.0, 6488445l, None))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val linkId = sql"""
             select lrm.link_id from asset a
@@ -129,13 +129,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
       """.as[Long].firstOption
-      linkId should be(Some(388554364l))
+      linkId should be(Some(6488445l))
     }
   }
 
   test("Update mass transit stop bearing") {
     runWithRollback {
-      val position = Some(Position(60.0, 0.0, 388554364l, Some(90)))
+      val position = Some(Position(60.0, 0.0, 6488445l, Some(90)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a

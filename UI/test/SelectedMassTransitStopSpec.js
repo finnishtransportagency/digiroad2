@@ -195,7 +195,7 @@ define(['chai', 'SelectedMassTransitStop'], function (chai) {
         }
         ],
         readOnly: true,
-        roadLinkId: 1140018963,
+        roadLinkId: 1611353,
         validityDirection: 2,
         validityPeriod: 'current',
         wgslat: 60.2128746641816,
