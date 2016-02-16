@@ -16,10 +16,10 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(388553074)).thenReturn(Seq(
-    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+  when(mockVVHClient.fetchVVHRoadlink(1611317)).thenReturn(Seq(
+    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
   when(mockVVHClient.fetchVVHRoadlink(1191950690)).thenReturn(Seq(
@@ -37,7 +37,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600046)
-      result.linkId should equal(388553074)
+      result.linkId should equal(1611317)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -52,7 +52,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
 
       result.id should equal(600046)
-      result.linkId should equal(388553074)
+      result.linkId should equal(1611317)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
