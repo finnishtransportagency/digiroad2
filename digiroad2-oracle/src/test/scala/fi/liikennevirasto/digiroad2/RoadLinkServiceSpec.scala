@@ -30,12 +30,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Override road link traffic direction with adjusted value") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
-        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHClient.fetchVVHRoadlinks(Set(1611447l)))
+        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      val roadLinks = service.getRoadLinksFromVVH(Set(1611447l))
       roadLinks.find {
-        _.linkId == 391203482
+        _.linkId == 1611447
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
       dynamicSession.rollback()
     }
@@ -44,12 +44,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Include road link functional class with adjusted value") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchVVHRoadlinks(Set(391203482l)))
-        .thenReturn(Seq(VVHRoadlink(391203482l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockVVHClient.fetchVVHRoadlinks(Set(1611447l)))
+        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksFromVVH(Set(391203482l))
+      val roadLinks = service.getRoadLinksFromVVH(Set(1611447l))
       println(roadLinks)
-      roadLinks.find {_.linkId == 391203482}.map(_.functionalClass) should be(Some(4))
+      roadLinks.find {_.linkId == 1611447}.map(_.functionalClass) should be(Some(4))
       dynamicSession.rollback()
     }
   }
