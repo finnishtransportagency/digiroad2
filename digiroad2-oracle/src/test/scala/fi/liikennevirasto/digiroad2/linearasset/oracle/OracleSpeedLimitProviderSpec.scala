@@ -131,8 +131,8 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("speed limit separation fails if speed limit is one way") {
-    val roadLink = RoadLink(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
-    when(mockRoadLinkService.getRoadLinkFromVVH(388551862l)).thenReturn(Some(roadLink))
+    val roadLink = RoadLink(1611388, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+    when(mockRoadLinkService.getRoadLinkFromVVH(1611388)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
