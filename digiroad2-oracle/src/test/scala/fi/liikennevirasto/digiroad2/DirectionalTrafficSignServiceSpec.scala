@@ -16,7 +16,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
   val service = new DirectionalTrafficSignService(mockVVHClient) {
@@ -30,7 +30,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       runWithRollback {
         val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
         result.id should equal(600053)
-        result.linkId should equal(388553074)
+        result.linkId should equal(1611317)
         result.lon should equal(374467)
         result.lat should equal(6677347)
         result.mValue should equal(103)
@@ -82,7 +82,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Update directional traffic sign") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
     when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      VVHRoadlink(1611317, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     when(mockVVHClient.fetchByMunicipality(91)).thenReturn(Seq(
       VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
@@ -92,7 +92,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.lon should equal(374467.0)
       beforeUpdate.lat should equal(6677347.0)
       beforeUpdate.mValue should equal(103.0)
-      beforeUpdate.linkId should equal(388553074)
+      beforeUpdate.linkId should equal(1611317)
       beforeUpdate.municipalityCode should equal(235)
       beforeUpdate.createdBy should equal(Some("dr2_test_data"))
       beforeUpdate.createdAt.isDefined should equal(true)
