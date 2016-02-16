@@ -9,7 +9,7 @@ import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-case class DirectionalTrafficSign(id: Long, mmlId: Long,
+case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   lon: Double, lat: Double,
                                   mValue: Double, floating: Boolean,
                                   municipalityCode: Int,
@@ -26,7 +26,7 @@ object OracleDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""
-        select a.id, lrm.mml_id, a.geometry, lrm.start_measure, a.floating, a.municipality_code, lrm.side_code,
+        select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, a.municipality_code, lrm.side_code,
         tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing
         from asset a
         join asset_link al on a.id = al.asset_id
@@ -41,7 +41,7 @@ object OracleDirectionalTrafficSignDao {
   implicit val getPointAsset = new GetResult[DirectionalTrafficSign] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val mmlId = r.nextLong()
+      val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
@@ -54,7 +54,7 @@ object OracleDirectionalTrafficSignDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val bearing = r.nextIntOption()
 
-      DirectionalTrafficSign(id, mmlId, point.x, point.y, mValue, floating, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
@@ -66,8 +66,8 @@ object OracleDirectionalTrafficSignDao {
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
         values ($id, 240, $username, sysdate, $municipality, ${sign.bearing})
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.mmlId}, ${sign.validityDirection})
+        into lrm_position(id, start_measure, end_measure, link_id, side_code)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection})
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
       select * from dual
@@ -88,7 +88,7 @@ object OracleDirectionalTrafficSignDao {
       update lrm_position
        set
        start_measure = $mValue,
-       mml_id = ${sign.mmlId},
+       link_id = ${sign.linkId},
        side_code = ${sign.validityDirection}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute

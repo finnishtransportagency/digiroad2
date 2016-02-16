@@ -5,7 +5,7 @@
       'lat',
       'lon',
       'roadLinkId',
-      'mmlId',
+      'linkId',
       'nationalId',
       'validityDirection',
       'floating'];
@@ -91,7 +91,7 @@
       currentAsset.payload.lon = position.lon;
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
-      currentAsset.payload.mmlId = position.mmlId;
+      currentAsset.payload.linkId = position.linkId;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
       eventbus.trigger('asset:moved', position);

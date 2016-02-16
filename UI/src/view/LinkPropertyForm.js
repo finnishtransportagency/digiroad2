@@ -51,6 +51,12 @@
       return verticalLevelType && verticalLevelType[1];
     };
 
+    var checkIfMultiSelection = function(mmlId){
+      if(selectedLinkProperty.count() == 1){
+        return mmlId;
+      }
+    };
+
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
                '<label class="control-label">' + labelText + '</label>' +
@@ -60,7 +66,7 @@
 
     var title = function() {
       if (selectedLinkProperty.count() == 1) {
-        return '<span>Linkin MML ID: ' + _.first(selectedLinkProperty.get()).mmlId + '</span>';
+        return '<span>Linkin ID: ' + _.first(selectedLinkProperty.get()).linkId + '</span>';
       } else {
         return '<span>Ominaisuustiedot</span>';
       }
@@ -105,6 +111,7 @@
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+            staticField('MML ID', 'mmlId') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -152,6 +159,7 @@
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
+        linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';

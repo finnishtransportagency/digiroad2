@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class RoadLinkPartitionerSpec extends FunSuite with Matchers {
-  private def roadLink(mmlId: Long, geometry: Seq[Point]) = {
-    RoadLink(mmlId, geometry, 0.0, Municipality, 0,
+  private def roadLink(linkId: Long, geometry: Seq[Point]) = {
+    RoadLink(linkId, geometry, 0.0, Municipality, 0,
       TrafficDirection.BothDirections, Motorway, None, None,
       Map("ROADNUMBER" -> BigInt(123)))
   }
@@ -19,7 +19,7 @@ class RoadLinkPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
-    groupedLinks.head.map(_.mmlId).toSet should be(roadLinks.map(_.mmlId).toSet)
+    groupedLinks.head.map(_.linkId).toSet should be(roadLinks.map(_.linkId).toSet)
   }
 
   test("separate road link group with functional class") {

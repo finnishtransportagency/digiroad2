@@ -246,6 +246,8 @@ object DataFixture {
         importEuropeanRoads()
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
+      case Some("import_link_ids") =>
+        LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +

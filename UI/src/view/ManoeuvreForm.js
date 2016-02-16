@@ -7,7 +7,7 @@
       '</div>';
     var template = '' +
       '<header>' +
-        '<span>Linkin MML ID: <%= mmlId %></span>' +
+        '<span>Linkin LINK ID: <%= linkId %></span>' +
         buttons +
       '</header>' +
       '<div class="wrapper read-only">' +
@@ -22,7 +22,7 @@
       '<footer>' + buttons + '</footer>';
     var manouvreTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<p class="form-control-static">MML ID: <%= destMmlId %></p>' +
+        '<p class="form-control-static">LINK ID: <%= destLinkId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -42,12 +42,12 @@
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
-      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" mmlId="<%= mmlId %>" style="display: none">' +
+      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
-          '<p class="form-control-static">MML ID <%= mmlId %> <span class="marker"><%= marker %></span></p>' +
+          '<p class="form-control-static">LINK ID <%= linkId %> <span class="marker"><%= marker %></span></p>' +
         '</div>' +
         '<div class="manoeuvre-details <% print(checked ? "" : "hidden") %>">' +
           '<div class="validity-period-group">' +
@@ -129,7 +129,7 @@
           })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
-          var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.mmlId === manoeuvre.destMmlId; });
+          var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.linkId === manoeuvre.destLinkId; });
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = manoeuvre ? localizeExceptions(manoeuvre.exceptions) : '';
@@ -157,12 +157,12 @@
         toggleMode(applicationModel.isReadOnly());
 
         var manoeuvreData = function(formGroupElement) {
-          var destMmlId = parseInt(formGroupElement.attr('mmlId'), 10);
+          var destLinkId = parseInt(formGroupElement.attr('linkId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           return {
             manoeuvreId: manoeuvreId,
-            destMmlId: destMmlId,
+            destLinkId: destLinkId,
             exceptions: manoeuvreExceptions(formGroupElement),
             validityPeriods: manoeuvreValidityPeriods(formGroupElement),
             additionalInfo: additionalInfo

@@ -102,12 +102,12 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       val createdLimit = provider.get(Seq(createdId)).head
       val oldLimit = provider.get(Seq(200097l)).head
 
-      oldLimit.mmlId should be (388562360)
+      oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing)
       oldLimit.value should be (Some(NumericValue(50)))
       oldLimit.modifiedBy should be (Some("test"))
 
-      createdLimit.mmlId should be (388562360)
+      createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
       createdLimit.value should be (Some(NumericValue(40)))
       createdLimit.createdBy should be (Some("test"))

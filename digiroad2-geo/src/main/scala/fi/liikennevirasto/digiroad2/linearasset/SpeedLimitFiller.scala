@@ -13,7 +13,7 @@ object SpeedLimitFiller {
     val endError = roadLinkLength - segment.endMeasure
     val mAdjustment =
       if (startError > MaxAllowedMValueError || endError > MaxAllowedMValueError)
-        Seq(MValueAdjustment(segment.id, segment.mmlId, 0, roadLinkLength))
+        Seq(MValueAdjustment(segment.id, segment.linkId, 0, roadLinkLength))
       else
         Nil
     val modifiedSegment = segment.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
@@ -61,7 +61,7 @@ object SpeedLimitFiller {
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, s.startMeasure, linkLength), endMeasure = linkLength),
-        MValueAdjustment(s.id, roadLink.mmlId, s.startMeasure, linkLength))
+        MValueAdjustment(s.id, roadLink.linkId, s.startMeasure, linkLength))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -111,7 +111,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.mmlId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None)
+      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None)
     }
   }
 
@@ -136,7 +136,7 @@ object SpeedLimitFiller {
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
-      val segments = speedLimits.getOrElse(roadLink.mmlId, Nil)
+      val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
 
       val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>

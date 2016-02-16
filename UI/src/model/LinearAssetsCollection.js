@@ -36,7 +36,7 @@
     };
 
     var generateUnknownLimitId = function(linearAsset) {
-      return linearAsset.mmlId.toString() +
+      return linearAsset.linkId.toString() +
           linearAsset.startMeasure.toFixed(2) +
           linearAsset.endMeasure.toFixed(2);
     };

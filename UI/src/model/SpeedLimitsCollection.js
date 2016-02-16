@@ -28,7 +28,7 @@
     };
 
     var generateUnknownLimitId = function(speedLimit) {
-      return speedLimit.mmlId.toString() +
+      return speedLimit.linkId.toString() +
           speedLimit.startMeasure.toFixed(2) +
           speedLimit.endMeasure.toFixed(2);
     };

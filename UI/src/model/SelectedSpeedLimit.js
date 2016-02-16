@@ -60,7 +60,7 @@
       var knownSpeedLimits = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
+        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'linkId', 'startMeasure', 'endMeasure'); }),
         ids: _.pluck(knownSpeedLimits, 'id'),
         value: value
       };
@@ -92,7 +92,7 @@
       eventbus.trigger('speedLimit:saving');
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
+          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'linkId', 'startMeasure', 'endMeasure'); }) };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }

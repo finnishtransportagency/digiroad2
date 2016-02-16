@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{TrafficLightToBePersisted, OracleTrafficLightDao, TrafficLight}
 
-case class IncomingTrafficLight(lon: Double, lat: Double, mmlId: Long) extends IncomingPointAsset
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 
 class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
@@ -13,7 +13,7 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.mmlId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
+      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username))
     }
     id
   }
@@ -29,7 +29,7 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
   override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.mmlId, asset.lon, asset.lat, mValue, municipality, username), username)
+      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username)
     }
   }
 }

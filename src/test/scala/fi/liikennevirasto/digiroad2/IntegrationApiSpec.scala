@@ -13,11 +13,11 @@ import org.json4s.jackson.JsonMethods._
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def stopWithMmlId(mmlId: Long): PersistedMassTransitStop = {
-    PersistedMassTransitStop(1L, 2L, mmlId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, false, Modification(None, None), Modification(None, None), Seq())
+  def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
+    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, false, Modification(None, None), Modification(None, None), Seq())
   }
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
-  when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithMmlId(123L), stopWithMmlId(321L)))
+  when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
   private val integrationApi = new IntegrationApi(mockMassTransitStopService)
   addServlet(integrationApi, "/*")
 
@@ -48,8 +48,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
 
   test("Returns mml id of the road link that the stop refers to") {
     getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
-      val mmlIds = (((parse(body) \ "features") \ "properties") \ "mml_id").extract[Seq[Long]]
-      mmlIds should be(Seq(123L, 321L))
+      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
+      linkIds should be(Seq(123L, 321L))
     }
   }
 
@@ -61,7 +61,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "mmlId" -> 2,
+      "linkId" -> 2,
       "muokattu_viimeksi" -> ""
     )))
   }

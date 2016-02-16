@@ -20,20 +20,20 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def purgeUnknown(mmlIds: Set[Long]): Unit = {
-    val roadLinks = vvhClient.fetchVVHRoadlinks(mmlIds)
+  def purgeUnknown(linkIds: Set[Long]): Unit = {
+    val roadLinks = vvhClient.fetchVVHRoadlinks(linkIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
-        dao.purgeFromUnknownSpeedLimits(rl.mmlId, GeometryUtils.geometryLength(rl.geometry))
+        dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
       }
     }
   }
 
-  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
+  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(_.id == 0)
     generatedLimits.map { limit =>
-      val roadLink = roadLinksByMmlId(limit.mmlId)
-      UnknownSpeedLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass)
+      val roadLink = roadLinksByLinkId(limit.linkId)
+      UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass)
     }
   }
 
@@ -41,18 +41,18 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val speedLimits = speedLimitLinks.groupBy(_.mmlId)
-      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
+      val speedLimits = speedLimitLinks.groupBy(_.linkId)
+      val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
 
-      eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.mmlId).toSet)
+      eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
 
-      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
-      LinearAssetPartitioner.partition(filledTopology, roadLinksByMmlId)
+      LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
     }
   }
 
@@ -93,10 +93,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
-    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.mmlId).get
+    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.linkId).get
 
     SpeedLimit(
-      persistedSpeedLimit.id, persistedSpeedLimit.mmlId, persistedSpeedLimit.sideCode,
+      persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
       roadLink.trafficDirection, persistedSpeedLimit.value.map(NumericValue),
       GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
@@ -119,7 +119,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     withDynTransaction {
       dao.updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val newId = dao.createSpeedLimit(username, speedLimit.mmlId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
+      val newId = dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
 
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
@@ -129,12 +129,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
+      val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
+      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.linkId))
       eventbus.publish("linearAssets:update", changeSet)
 
-      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
       filledTopology
@@ -144,9 +144,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
+        dao.createSpeedLimit(username, limit.linkId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
       }
-      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.mmlId).toSet)
+      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
       createdIds
     }
   }

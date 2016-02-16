@@ -35,7 +35,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       Set(600049, 600050, 600051) should contain (result.id)
-      result.mmlId should equal(388553074)
+      result.linkId should equal(388553074)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -50,7 +50,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600051).get
 
       result.id should equal(600051)
-      result.mmlId should equal(12345)
+      result.linkId should equal(12345)
       result.lon should equal(374396)
       result.lat should equal(6677319)
       result.mValue should equal(103)

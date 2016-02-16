@@ -13,7 +13,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
-case class LinearAssetFromApi(id: Option[Long], mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
+case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -123,14 +123,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 2, "bearing": 0}"""
+    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(400)
     }
   }
 
   test("validate user rights when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 1, "bearing": 0}"""
+    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 1, "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(401)
     }
@@ -198,12 +198,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("creating speed limit requires an operator role") {
-    postJsonWithUserAuth("/speedlimits", """{"mmlId":362964704, "startMeasure":0.0, "endMeasure":50.0, "value":40}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits", """{"linkId":362964704, "startMeasure":0.0, "endMeasure":50.0, "value":40}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
 
-  case class RoadLinkHelper(mmlId: Long, points: Seq[Point],
+  case class RoadLinkHelper(linkId: Long, points: Seq[Point],
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 

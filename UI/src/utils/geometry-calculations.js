@@ -35,7 +35,7 @@
           temp = {
             id: vector.roadLinkId,
             roadLinkId: vector.roadLinkId,
-            mmlId: vector.mmlId,
+            linkId: vector.linkId,
             start: start_point,
             end: end_point,
             distance: point_distance

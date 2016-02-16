@@ -16,8 +16,8 @@ object TrafficSignTestData {
 
       sqlu"""
             insert all
-              into LRM_POSITION (ID,MML_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000015, 388553074, 103, 103, 2)
-              into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,SIDE_CODE) values (70000016,69,69,388553080, 3)
+              into LRM_POSITION (ID,MML_ID,link_id,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000015, 388553074, 1611317, 103, 103, 2)
+              into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,link_id,SIDE_CODE) values (70000016,69,69,388553080,1611341, 3)
               into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,SIDE_CODE) values (70000017,100,100,12345, 3)
             select * from dual
 

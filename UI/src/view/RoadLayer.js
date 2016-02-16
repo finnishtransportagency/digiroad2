@@ -170,7 +170,7 @@ var RoadStyles = function() {
 
     var selectRoadLink = function(roadLink) {
       var feature = _.find(vectorLayer.features, function(feature) {
-        if (roadLink.mmlId) return feature.attributes.mmlId === roadLink.mmlId;
+        if (roadLink.linkId) return feature.attributes.linkId === roadLink.linkId;
         else return feature.attributes.roadLinkId === roadLink.roadLinkId;
       });
       selectControl.unselectAll();

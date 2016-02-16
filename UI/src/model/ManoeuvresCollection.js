@@ -9,11 +9,11 @@
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
         var filteredManoeuvres = _.filter(manoeuvres, function(manoeuvre) {
-          return manoeuvre.sourceMmlId === roadLink.mmlId;
+          return manoeuvre.sourceLinkId === roadLink.linkId;
         });
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
-            return manoeuvre.destMmlId === roadLink.mmlId;
+            return manoeuvre.destLinkId === roadLink.linkId;
           })
           .pluck('id')
           .value();
@@ -54,12 +54,12 @@
       return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvresWithModifications());
     };
 
-    var getDestinationRoadLinksBySourceMmlId = function(mmlId) {
+    var getDestinationRoadLinksBySourceLinkId = function(linkId) {
       return _.chain(manoeuvresWithModifications())
         .filter(function(manoeuvre) {
-          return manoeuvre.sourceMmlId === mmlId;
+          return manoeuvre.sourceLinkId === linkId;
         })
-        .pluck('destMmlId')
+        .pluck('destLinkId')
         .value();
     };
 
@@ -71,9 +71,9 @@
       });
     };
 
-    var getLatestModificationDataBySourceRoadLink = function(mmlId) {
+    var getLatestModificationDataBySourceRoadLink = function(linkId) {
       var sourceLinkManoeuvres = _.filter(manoeuvresWithModifications(), function(manoeuvre) {
-        return manoeuvre.sourceMmlId === mmlId;
+        return manoeuvre.sourceLinkId === linkId;
       });
       var sortedManoeuvres = sortLinkManoeuvres(sourceLinkManoeuvres);
       var latestModification = _.first(sortedManoeuvres);
@@ -83,17 +83,17 @@
       };
     };
 
-    var get = function(mmlId, callback) {
-      var roadLink = _.find(getAll(), {mmlId: mmlId});
-      backend.getAdjacent(roadLink.mmlId, function(adjacent) {
-        var modificationData = getLatestModificationDataBySourceRoadLink(mmlId);
+    var get = function(linkId, callback) {
+      var roadLink = _.find(getAll(), {linkId: linkId});
+      backend.getAdjacent(roadLink.linkId, function(adjacent) {
+        var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
         var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
         var sortedAdjacentWithMarker = _.chain(adjacent)
           .sortBy('id')
           .map(function(a, i){
             return _.merge({}, a, { marker: markers[i] });
           }).value();
-        var sourceRoadLinkModel = roadCollection.get([mmlId])[0];
+        var sourceRoadLinkModel = roadCollection.get([linkId])[0];
         callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
       });
     };
@@ -148,7 +148,7 @@
     };
 
     var manoeuvresEqual = function(x, y) {
-      return (x.sourceMmlId === y.sourceMmlId && x.destMmlId === y.destMmlId);
+      return (x.sourceLinkId === y.sourceLinkId && x.destLinkId === y.destLinkId);
     };
 
     var cancelModifications = function() {
@@ -218,7 +218,7 @@
     return {
       fetch: fetch,
       getAll: getAll,
-      getDestinationRoadLinksBySourceMmlId: getDestinationRoadLinksBySourceMmlId,
+      getDestinationRoadLinksBySourceLinkId: getDestinationRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,

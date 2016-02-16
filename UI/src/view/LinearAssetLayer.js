@@ -259,7 +259,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
-    eventListener.listenTo(eventbus, singleElementEvents('selectByMmlId'), selectLinearAssetByMmlId);
+    eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
   };
 
@@ -267,8 +267,8 @@ window.LinearAssetLayer = function(params) {
     setSelectionStyleAndHighlightFeature();
   };
 
-  var selectLinearAssetByMmlId = function(mmlId) {
-    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.mmlId === mmlId; });
+  var selectLinearAssetByLinkId = function(linkId) {
+    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
     if (feature) {
       selectControl.select(feature);
     }

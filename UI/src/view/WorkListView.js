@@ -7,8 +7,8 @@
     var tableHeaderRow = function(administrativeClass) {
       return $('<caption/>').html(administrativeClass);
     };
-    var tableContentRows = function(mmlIds) {
-      return _.map(mmlIds, function(id) {
+    var tableContentRows = function(linkIds) {
+      return _.map(linkIds, function(id) {
         return $('<tr/>').append($('<td/>').append(assetLink(id)));
       });
     };
@@ -16,12 +16,12 @@
       var link = '#' + layerName + '/' + id;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
-    var tableForAdministrativeClass = function(administrativeClass, mmlIds, count) {
-      if (!mmlIds || mmlIds.length === 0) return '';
+    var tableForAdministrativeClass = function(administrativeClass, linkIds, count) {
+      if (!linkIds || linkIds.length === 0) return '';
       var countString = count ? ' (' + count + ' kpl)' : '';
       return $('<table/>').addClass('table')
         .append(tableHeaderRow(administrativeClass + countString))
-        .append(tableContentRows(mmlIds));
+        .append(tableContentRows(linkIds));
     };
     return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
       .append(tableForAdministrativeClass('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
