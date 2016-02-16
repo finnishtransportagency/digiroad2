@@ -27,7 +27,7 @@ UPDATE asset
 
 
 insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600051,230,'dr2_test_data',235);
-INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (70000014, null, 12345, 103.000, 103.000, 1);
+INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (70000014, 12345, 12345, 103.000, 103.000, 1);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600051, 70000014);
 insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (600052, 600051, (select id from property where public_id='rautatien_tasoristeyksen_nimi'), 'Hyvä nimi', sysdate, 'dr2_test_data');
 insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600051, (select id from enumerated_value where name_fi='Valo/äänimerkki'), (select id from property where public_id='turvavarustus'));
