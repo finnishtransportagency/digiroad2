@@ -20,13 +20,13 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
-    .thenReturn(Seq(vvhRoadLink(388562342, 235), vvhRoadLink(388569430, 235), vvhRoadLink(388569418, 235)) )
+    .thenReturn(Seq(vvhRoadLink(1611419, 235), vvhRoadLink(1611412, 235), vvhRoadLink(1611410, 235)) )
   when(mockRoadLinkService.getRoadLinksFromVVH(municipality = 235))
     .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235), vvhRoadLink(233, 235), vvhRoadLink(234, 235,  Seq(Point(15, 0), Point(20, 0)))))
-  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 388569406))
-    .thenReturn(Some(vvhRoadLink(388569406, 235)))
-  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 388570174))
-    .thenReturn(Some(vvhRoadLink(388570174, 235)))
+  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 1611420))
+    .thenReturn(Some(vvhRoadLink(1611420, 235)))
+  when(mockRoadLinkService.getRoadLinkFromVVH(linkId = 1611411))
+    .thenReturn(Some(vvhRoadLink(1611411, 235)))
 
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService)
@@ -44,11 +44,11 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val manoeuvres = manoeuvreService.getByBoundingBox(bounds, Set(235))
     manoeuvres.length should equal(3)
     val partiallyContainedManoeuvre = manoeuvres.find(_.id == 39561).get
-    partiallyContainedManoeuvre.sourceLinkId should equal(388562342)
-    partiallyContainedManoeuvre.destLinkId should equal(388569406)
+    partiallyContainedManoeuvre.sourceLinkId should equal(1611419)
+    partiallyContainedManoeuvre.destLinkId should equal(1611420)
     val completelyContainedManoeuvre = manoeuvres.find(_.id == 97666).get
-    completelyContainedManoeuvre.sourceLinkId should equal(388569430)
-    completelyContainedManoeuvre.destLinkId should equal(388569418)
+    completelyContainedManoeuvre.sourceLinkId should equal(1611412)
+    completelyContainedManoeuvre.destLinkId should equal(1611410)
   }
 
   test("Filters out manoeuvres with non-adjacent source and destination links") {
