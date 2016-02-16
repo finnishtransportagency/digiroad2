@@ -84,8 +84,6 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
-    println("*** " + url)
-
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
