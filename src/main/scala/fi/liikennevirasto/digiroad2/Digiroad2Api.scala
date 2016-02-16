@@ -277,6 +277,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
   }
 
+  get("/roadlinks/mml/:mmlId") {
+    val mmlId = params("mmlId").toLong
+    roadLinkService.getRoadLinkMiddlePointByMmlId(mmlId).map {
+      case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
+    }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
+  }
+
   get("/roadlinks/adjacent/:id") {
     val id = params("id").toLong
     roadLinkService.getAdjacent(id).map(roadLinkToApi)

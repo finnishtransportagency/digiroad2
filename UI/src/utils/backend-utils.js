@@ -70,6 +70,12 @@
       });
     }, 1000);
 
+    this.getRoadLinkByMmlId = _.throttle(function(mmlId, callback) {
+      return $.getJSON('api/roadlinks/mml/' + mmlId, function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getAssets = function (boundingBox) {
       self.getAssetsWithCallback(boundingBox, function (assets) {
         eventbus.trigger('assets:fetched', assets);

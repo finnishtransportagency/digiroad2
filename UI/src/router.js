@@ -20,6 +20,7 @@
         'massTransitStop/:id': 'massTransitStop',
         'asset/:id': 'massTransitStop',
         'linkProperty/:linkId': 'linkProperty',
+        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
         'speedLimit/:linkId': 'speedLimit',
         'pedestrianCrossings/:id': 'pedestrianCrossings',
         'trafficLights/:id': 'trafficLights',
@@ -49,6 +50,16 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
+          eventbus.once('linkProperties:available', function () {
+            models.selectedLinkProperty.open(response.id);
+          });
+          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+        });
+      },
+
+      linkPropertyByMml: function (mmlId) {
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByMmlId(mmlId, function (response) {
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });

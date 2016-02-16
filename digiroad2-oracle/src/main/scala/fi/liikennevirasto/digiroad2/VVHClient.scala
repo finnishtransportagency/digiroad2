@@ -98,6 +98,8 @@ class VVHClient(hostname: String) {
     fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
   }
 
+  def fetchVVHRoadlinkByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinksByMmlIds(Set(mmlId)).headOption
+
   def fetchVVHRoadlinksByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchVVHRoadlinks(mmlIds, None, true, roadLinkFromFeature, withMmlIdFilter)
   }
