@@ -59,7 +59,7 @@ object LinkIdImporter {
       val batches = getBatchDrivers(0, count, 20000)
       val total = batches.size
 
-      print(s"Table $tableName: Fetching $total batches of links… ")
+      print(s"[${DateTime.now}] Table $tableName: Fetching $total batches of links… ")
 
       val startTime = DateTime.now()
 
