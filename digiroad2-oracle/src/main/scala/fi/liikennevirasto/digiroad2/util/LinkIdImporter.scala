@@ -56,7 +56,7 @@ object LinkIdImporter {
 
       val count = sql"""select count(distinct mml_id) from #$tableName""".as[Int].first
 
-      val batches = getBatchDrivers(0, count, 1000)
+      val batches = getBatchDrivers(0, count, 20000)
       val total = batches.size
 
       print(s"Table $tableName: Fetching $total batches of links… ")
