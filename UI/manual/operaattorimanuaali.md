@@ -243,7 +243,7 @@ K&auml;ytt&auml;ytyminen-valikon (6) Yleiskatsaus-kohdasta voi katsoa eri Digiro
 
 Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattori-k&auml;ytt&auml;jien tietoon.
 
-##8.1 Tielinkit##
+##9.1 Tielinkit##
 
 Tielinkkien geometria p&auml;ivittyy VVH:ssa joka aamu pl. tilanteet, joissa VVH:n kanssa on sovittu, ett&auml; p&auml;ivitys laitetaan pois p&auml;&auml;lt&auml;. Digiroad-operaattori sopii t&auml;m&auml;n VVH:n kanssa. Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
 
@@ -257,7 +257,16 @@ Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto 
 
 Tielinkeille p&auml;ivitet&auml;&auml;n korjattavien linkkien lista (incomplete_links.html) automaattisesti joka aamu tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 7:00. Tielinkilt&auml; tarkistetaan t&auml;ss&auml; yhteydess&auml;, ett&auml; silt&auml; l&ouml;ytyy Digiroadin tietokannasta toiminnallinen luokka ja tielinkin tyyppi. Jos jompi kumpi puuttuu, tielinkki tulee korjattavien tielinkkin listalle. Listan p&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
 
-##8.2 Pistem&auml;iset tietolajit##
+__9.1.1 Geometrian k&auml;&auml;nt&ouml; eli ns. Here-flip__
+
+V&auml;yl&auml;verkon hallinassa tielinkkien digitointisuunta on k&auml;&auml;nnetty ns. Here-s&auml;&auml;nn&ouml;n mukaisesti. T&auml;ll&ouml;in tielinkin digitointisuunta on eri kuin Maanmittauslaitoksen k&auml;ytt&auml;m&auml;.
+-   Digitointisuunta on k&auml;&auml;nnetty seuraavan s&auml;&auml;nn&ouml;n mukaisesti:
+-   Digitointisuunta on aina etel&auml;st&auml; pohjoiseen.
+Jos tielinkin molemmilla p&auml;ill&auml; on sama pohjoiskoordinaatti on digitointisuunta l&auml;nnest&auml; it&auml;&auml;n.
+
+Digitointisuunnan k&auml;&auml;ntyminen ei n&auml;y yll&auml;pitosovelluksessa mitenk&auml;&auml;n. Operaattorin on kuitenkin hyv&auml; tiedostaa, ett&auml; kaikkien tielinkkien digitointisuunta ei vastaa Maanmittauslaitoksen digitointisuuntaa. Geometrian k&auml;&auml;nt&ouml;&auml; ei pysty n&auml;kem&auml;&auml;n sovelluksesta. Tarvittaessa tiedon n&auml;kee tielinkkien Kalpa-APIsta tai VVH:n rajapinnasta.
+
+##9.2 Pistem&auml;iset tietolajit##
 
 Sovellusten pistem&auml;isill&auml; tietolajeilla on kaikilla sama logiikka, mink&auml; perusteella sovellus katsoo niiden olevan irti geometriasta. Pistem&auml;isi&auml; tietolajeja ovat esimerkiksi joukkoliikenteen pys&auml;kki, suojatie ja rautatien tasoristeys. Geometriasta irti olevaa pistett&auml; kutsutaan "kelluvaksi" (floating).
 
@@ -276,13 +285,13 @@ Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattises
 
 Muiden pisteiden kelluvien listat p&auml;ivittyv&auml;t esim. kyselem&auml;ll&auml; kohteet l&auml;pi Kalpa-Apista (esim. FME-ajon avulla). My&ouml;s jos kelluvien pys&auml;kkien listaus ei ole p&auml;ivittynyt, voi kohteet kysell&auml; l&auml;pi Kalpa-Apista.
     
-##8.3 Nopeusrajoitus##
+##9.3 Nopeusrajoitus##
 
 Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. Kuitenkin jos venytyst&auml; tehd&auml;&auml;n alle puoli metri&auml;, ei uusia m-arvoja kirjoiteta tietokantaan, vaan venytys n&auml;kyy ainoastaan k&auml;ytt&ouml;liittym&auml;ss&auml; (nopeusrajoitus t&auml;ydent&auml;&auml; koko tielinkin, eik&auml; p&auml;ihin tule mustaa tuntematonta rajoitusta).
 
 T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
 
-##8.4 Muut viivamaiset tietolajit##
+##9.4 Muut viivamaiset tietolajit##
 
 Muilla viivamaisilla tietolajeilla on muutamia k&auml;sittelys&auml;&auml;nt&ouml;j&auml;, miten niiden sijoittuminen alla olevan tielinkin geometriaan tarkistetaan. Tarkistukset ovat sen vuoksi, ett&auml; geometria kohteiden alla p&auml;ivittyy p&auml;ivitt&auml;in. Sovellus tarkistaa aina karttaa raahatessa tai kohteita Kalpa-Apista kyselt&auml;ess&auml;, sovittuuko viivamainen kohde alla olevan tielinkin geometriaan.
 
