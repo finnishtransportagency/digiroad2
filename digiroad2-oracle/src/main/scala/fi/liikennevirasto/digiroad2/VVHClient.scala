@@ -21,6 +21,8 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long)
+
 class VVHClient(hostname: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -77,6 +79,33 @@ class VVHClient(hostname: String) {
       case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
+  }
+
+  def fetchChanges(bounds: BoundingRectangle): Seq[ChangeInfo] = {
+    val definition = layerDefinition("", Some("OLD_ID,NEW_ID,MTKID"))
+
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_ChangeInfo/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHChangeInfo)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  private def extractVVHChangeInfo(feature: Map[String, Any]) = {
+    val attributes = extractFeatureAttributes(feature)
+
+    println("*** " + attributes)
+
+    val oldId = Option(attributes("OLD_ID").asInstanceOf[BigInt]).map(_.longValue())
+    val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
+    val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
+
+    println("*** " + oldId + " " + newId + " " + mmlId)
+
+    ChangeInfo(oldId, newId, mmlId)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
@@ -149,7 +178,7 @@ class VVHClient(hostname: String) {
 
   private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == BigInt(0)
+    attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
   }
 
   private def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
