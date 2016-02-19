@@ -12,6 +12,9 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
@@ -219,9 +222,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
     // todo: store result, for now siply call vvh and print debug
-    vvhClient.fetchChanges(bounds)
+
+    val (changes, links) = Await.result(vvhClient.fetchChangesF(bounds).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
+
+    println("* Changes", changes)
+
     withDynTransaction {
-      enrichRoadLinksFromVVH(getVVHRoadLinks(bounds, municipalities))
+      enrichRoadLinksFromVVH(links)
     }
   }
 

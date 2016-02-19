@@ -9,6 +9,9 @@ import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
@@ -21,7 +24,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long)
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int)
 
 class VVHClient(hostname: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -81,16 +84,22 @@ class VVHClient(hostname: String) {
     }
   }
 
-  def fetchChanges(bounds: BoundingRectangle): Seq[ChangeInfo] = {
-    val definition = layerDefinition("", Some("OLD_ID,NEW_ID,MTKID"))
+  def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinks(bounds, municipalities))
+  }
+
+  def fetchChangesF(bounds: BoundingRectangle): Future[Seq[ChangeInfo]] = {
+    val definition = layerDefinition("", Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
 
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
 
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHChangeInfo)
-      case Right(error) => throw new VVHClientException(error.toString)
+    Future {
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHChangeInfo)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
     }
   }
 
@@ -102,10 +111,11 @@ class VVHClient(hostname: String) {
     val oldId = Option(attributes("OLD_ID").asInstanceOf[BigInt]).map(_.longValue())
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
+    val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
 
     println("*** " + oldId + " " + newId + " " + mmlId)
 
-    ChangeInfo(oldId, newId, mmlId)
+    ChangeInfo(oldId, newId, mmlId, changeType)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
