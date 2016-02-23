@@ -308,7 +308,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     // todo: fix existing tests (as the vvh fetch changes needs to be stubbed for many)
     // todo: add tests for "completing/filling/adjusting" changed links by old link data
     // todo: refactor so that data is fetched for all relevant old link's with one call to getRoadLinkDataByLinkIds
-    
+
     val incompleteLinksWithOldLinks = incompleteLinks.map { link =>
       val fakeVhhLinks = changes
         .filter { change => change.newId == Option(link.linkId) && change.oldId.isDefined }
@@ -320,9 +320,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
 
     incompleteLinksWithOldLinks.map { case (link, oldLinks) =>
       if (!oldLinks.isEmpty) {
-        val newFunctionalClass = if (oldLinks.forall(_.functionalClass == oldLinks.head.functionalClass)) oldLinks.head.functionalClass else link.functionalClass
-        val newLinkType = if (oldLinks.forall(_.linkType == oldLinks.head.linkType)) oldLinks.head.linkType else link.linkType
-        val newTrafficDirection = if (oldLinks.forall(_.trafficDirection == oldLinks.head.trafficDirection)) oldLinks.head.trafficDirection else link.trafficDirection
+        val newFunctionalClass = if (oldLinks.forall(_.functionalClass == oldLinks.head.functionalClass)) oldLinks.head.functionalClass else FunctionalClass.Unknown
+        val newLinkType = if (oldLinks.forall(_.linkType == oldLinks.head.linkType)) oldLinks.head.linkType else UnknownLinkType
+        val newTrafficDirection = if (oldLinks.forall(_.trafficDirection == oldLinks.head.trafficDirection)) oldLinks.head.trafficDirection else TrafficDirection.UnknownDirection
 
         link.copy(functionalClass = newFunctionalClass, linkType = newLinkType, trafficDirection = newTrafficDirection)
       } else {
