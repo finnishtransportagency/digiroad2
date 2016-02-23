@@ -106,14 +106,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
   private def extractVVHChangeInfo(feature: Map[String, Any]) = {
     val attributes = extractFeatureAttributes(feature)
 
-    println("*** " + attributes)
-
     val oldId = Option(attributes("OLD_ID").asInstanceOf[BigInt]).map(_.longValue())
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
-
-    println("*** " + oldId + " " + newId + " " + mmlId)
 
     ChangeInfo(oldId, newId, mmlId, changeType)
   }
