@@ -250,9 +250,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 3, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId1, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
-      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (4, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
-      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId2, ${Freeway.value}, 'test' )""".execute
-      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (6, $oldLinkId2, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (4, $oldLinkId2, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Freeway.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
       when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
@@ -293,17 +293,15 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 2, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId1, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
-      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (4, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
-      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId2, ${Motorway.value}, 'test' )""".execute
-      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (6, $oldLinkId2, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (4, $oldLinkId2, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Motorway.value}, 'test' )""".execute
 
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
       when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
-      //        before.head.functionalClass should be(3)
-      //        before.head.linkType should be(Freeway)
-      //        before.head.trafficDirection should be(TrafficDirection.BothDirections)
+      before.length should be(2)
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(changeInfo).future)
