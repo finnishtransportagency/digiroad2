@@ -273,4 +273,46 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("""Functional class and link type should be unknown
+         and traffic direction same as for the new VVH link
+         when multiple old links map to new link but have different properties values""") {
+    val oldLinkId1 = 1l
+    val oldLinkId2 = 2l
+    val newLinkId = 3l
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5))
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val oldRoadLinks = Seq(
+      VVHRoadlink(oldLinkId1, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
+      VVHRoadlink(oldLinkId2, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))))
+    val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 2, 'test' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId1, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (4, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId2, ${Motorway.value}, 'test' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (6, $oldLinkId2, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
+
+
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      val before = service.getRoadLinksFromVVH(boundingBox)
+      //        before.head.functionalClass should be(3)
+      //        before.head.linkType should be(Freeway)
+      //        before.head.trafficDirection should be(TrafficDirection.BothDirections)
+
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(changeInfo).future)
+      val after = service.getRoadLinksFromVVH(boundingBox)
+      after.head.functionalClass should be(FunctionalClass.Unknown)
+      after.head.linkType should be(UnknownLinkType)
+      after.head.trafficDirection should be(TrafficDirection.BothDirections)
+
+      dynamicSession.rollback()
+    }
+  }
 }
