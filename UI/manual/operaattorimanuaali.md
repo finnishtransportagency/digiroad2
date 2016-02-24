@@ -243,6 +243,19 @@ K&auml;ytt&auml;ytyminen-valikon (6) Yleiskatsaus-kohdasta voi katsoa eri Digiro
 
 Digiroad-sovelluksessa on tietolajikohtaisesti joitakin k&auml;sittelys&auml;&auml;nt&ouml;j&auml; kohteille mm. tilanteissa, kun geometria vaihtuu. T&auml;h&auml;n kappaleeseen on kirjattu n&auml;it&auml; operaattori-k&auml;ytt&auml;jien tietoon.
 
+__Sovelluksessa k&auml;ytetyt ID:t__
+
+-   MML ID - MML:n tielinkille yll&auml;pit&auml;m&auml; id, joka n&auml;ytet&auml;&auml;n sovelluksessa tielinkin ominaisuustietona.
+-   Linkin ID - V&auml;yl&auml;verkon hallinnan yll&auml;pit&auml;m&auml; tielinkin id, jolla muut tietolajit sidotaan kyseiseen tielinkkiin.
+
+Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella.
+ <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
+
+Tielinkkej&auml; voi my&ouml;s hakea MML ID:n avulla:
+ <a href=https://devtest.liikennevirasto.fi/digiroad/#linkProperty/mml/911196591 target="_blank">https://devtest.liikennevirasto.fi/digiroad/#linkProperty/mml/911196591 </a>
+  
+Jokaisella kohteella on t&auml;m&auml;n lis&auml;ksi oma yksil&ouml;iv&auml; id.
+ 
 ##9.1 Tielinkit##
 
 Tielinkkien geometria p&auml;ivittyy VVH:ssa joka aamu pl. tilanteet, joissa VVH:n kanssa on sovittu, ett&auml; p&auml;ivitys laitetaan pois p&auml;&auml;lt&auml;. Digiroad-operaattori sopii t&auml;m&auml;n VVH:n kanssa. Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
@@ -260,9 +273,11 @@ Tielinkeille p&auml;ivitet&auml;&auml;n korjattavien linkkien lista (incomplete_
 __9.1.1 Geometrian k&auml;&auml;nt&ouml; eli ns. Here-flip__
 
 V&auml;yl&auml;verkon hallinassa tielinkkien digitointisuunta on k&auml;&auml;nnetty ns. Here-s&auml;&auml;nn&ouml;n mukaisesti. T&auml;ll&ouml;in tielinkin digitointisuunta on eri kuin Maanmittauslaitoksen k&auml;ytt&auml;m&auml;.
--   Digitointisuunta on k&auml;&auml;nnetty seuraavan s&auml;&auml;nn&ouml;n mukaisesti:
+
+___Digitointisuunta on k&auml;&auml;nnetty seuraavan s&auml;&auml;nn&ouml;n mukaisesti:___
+
 -   Digitointisuunta on aina etel&auml;st&auml; pohjoiseen.
-Jos tielinkin molemmilla p&auml;ill&auml; on sama pohjoiskoordinaatti on digitointisuunta l&auml;nnest&auml; it&auml;&auml;n.
+-   Jos tielinkin molemmilla p&auml;ill&auml; on sama pohjoiskoordinaatti on digitointisuunta l&auml;nnest&auml; it&auml;&auml;n.
 
 Digitointisuunnan k&auml;&auml;ntyminen ei n&auml;y yll&auml;pitosovelluksessa mitenk&auml;&auml;n. Operaattorin on kuitenkin hyv&auml; tiedostaa, ett&auml; kaikkien tielinkkien digitointisuunta ei vastaa Maanmittauslaitoksen digitointisuuntaa. Geometrian k&auml;&auml;nt&ouml;&auml; ei pysty n&auml;kem&auml;&auml;n sovelluksesta. Tarvittaessa tiedon n&auml;kee tielinkkien Kalpa-APIsta tai VVH:n rajapinnasta.
 

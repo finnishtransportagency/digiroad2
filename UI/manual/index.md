@@ -130,17 +130,17 @@ _Tielinkit._
 
 ####Tielinkkien haku####
 
-Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. MML-ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; MML-ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
+Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
  <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
-jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
+jossa numerosarja 373320541 on tielinkin ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
 ##Tielinkin tietojen katselu##
 
 Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat:
 
-- Maanmittauslaitoksen ID (MML ID)
+- Linkin ID
 - hallinnollinen luokka
 - toiminnallinen luokka
 - liikennevirran suunta
@@ -151,6 +151,7 @@ Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tiel
 - tien numero
 - tieosanumero
 - osoitenumerot vasemmalla ja oikealla (ensimm&auml;inen ja viimeinen numero)
+- Maanmittauslaitoksen ID (MML ID)
 
 Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
 
