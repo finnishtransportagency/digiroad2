@@ -312,7 +312,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       val sourceIds = changes.filter(change => change.newId == Option(link.linkId)).map(_.oldId).flatten
       val sourceData = sourceRoadLinkAttributes.filter(link => sourceIds.contains(link.linkId))
 
-      if (!sourceData.isEmpty) {
+      if (sourceData.nonEmpty) {
         val newFunctionalClass = if (sourceData.forall(_.functionalClass == sourceData.head.functionalClass)) sourceData.head.functionalClass else FunctionalClass.Unknown
         val newLinkType = if (sourceData.forall(_.linkType == sourceData.head.linkType)) sourceData.head.linkType else UnknownLinkType
         val newTrafficDirection = if (sourceData.forall(_.trafficDirection == sourceData.head.trafficDirection)) sourceData.head.trafficDirection else link.trafficDirection
