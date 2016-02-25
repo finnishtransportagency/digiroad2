@@ -316,8 +316,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     val sourceRoadLinkAttributes = getOldRoadLinkAttributesFromChangeInfo(changes)
 
     incompleteLinks.map { link =>
-      val sourceIds = changes.filter(change => change.newId == Option(link.linkId)).map(_.oldId).flatten
-      val sourceData = sourceRoadLinkAttributes.filter(link => sourceIds.contains(link.linkId))
+      val sourceIds = changes.filter(_.newId == Option(link.linkId)).flatMap(_.oldId)
+      val sourceData = sourceRoadLinkAttributes.filter(sourceLink => sourceIds.contains(sourceLink.linkId))
 
       link.copy(
         functionalClass   = useValueWhenAllSame(sourceData.map(_.functionalClass)).getOrElse(FunctionalClass.Unknown),
