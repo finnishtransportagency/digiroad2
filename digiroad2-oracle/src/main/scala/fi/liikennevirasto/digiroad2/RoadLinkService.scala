@@ -304,6 +304,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     incompleteLinks.foreach(setIncompleteness)
   }
 
+  def useValueWhenAllSame[T](values: Seq[T]): Option[T] = {
+    if (values.nonEmpty && values.forall(_ == values.head))
+      Some(values.head)
+    else
+      None
+  }
+
   // fill incomplete links with the previous link information where they are available and where they agree
   def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
     val sourceRoadLinkAttributes = getOldRoadLinkAttributesFromChangeInfo(changes)
@@ -312,15 +319,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       val sourceIds = changes.filter(change => change.newId == Option(link.linkId)).map(_.oldId).flatten
       val sourceData = sourceRoadLinkAttributes.filter(link => sourceIds.contains(link.linkId))
 
-      if (sourceData.nonEmpty) {
-        val newFunctionalClass = if (sourceData.forall(_.functionalClass == sourceData.head.functionalClass)) sourceData.head.functionalClass else FunctionalClass.Unknown
-        val newLinkType = if (sourceData.forall(_.linkType == sourceData.head.linkType)) sourceData.head.linkType else UnknownLinkType
-        val newTrafficDirection = if (sourceData.forall(_.trafficDirection == sourceData.head.trafficDirection)) sourceData.head.trafficDirection else link.trafficDirection
-
-        link.copy(functionalClass = newFunctionalClass, linkType = newLinkType, trafficDirection = newTrafficDirection)
-      } else {
-        link
-      }
+      link.copy(
+        functionalClass   = useValueWhenAllSame(sourceData.map(_.functionalClass)).getOrElse(FunctionalClass.Unknown),
+        linkType          = useValueWhenAllSame(sourceData.map(_.linkType)).getOrElse(UnknownLinkType),
+        trafficDirection  = useValueWhenAllSame(sourceData.map(_.trafficDirection)).getOrElse(link.trafficDirection))
     }.partition(isComplete)
   }
 
