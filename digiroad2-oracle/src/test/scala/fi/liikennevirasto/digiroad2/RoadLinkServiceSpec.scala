@@ -73,7 +73,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val lastEditedDate = DateTime.now()
       val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
-      when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
+      when(mockVVHClient.fetchVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
+      when(mockVVHClient.fetchChangesF(any[BoundingRectangle])).thenReturn(Promise.successful(Nil).future)
+
       val service = new TestService(mockVVHClient)
       val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
       results.head.modifiedAt should be(Some(DateTimePropertyFormat.print(lastEditedDate)))
@@ -127,13 +129,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     OracleDatabase.withDynTransaction {
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
-        .thenReturn(List(
+      val service = new TestService(mockVVHClient)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set()))
+        .thenReturn(Promise.successful(List(
         VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
         VVHRoadlink(456l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.TractorRoad),
         VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers),
-        VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath)))
-      val service = new TestService(mockVVHClient)
+        VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath))).future)
 
       sqlu"""delete from incomplete_link where municipality_code = 91""".execute
       sqlu"""insert into incomplete_link(id, link_id, municipality_code) values(3123123123, 456, 91)""".execute
@@ -160,10 +163,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
-        .thenReturn(List(
+      val vvhRoadLinks = List(
         VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
-        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
+        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers))
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(vvhRoadLinks).future)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockVVHClient, mockEventBus)
       val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
