@@ -5,6 +5,11 @@ import fi.liikennevirasto.digiroad2.asset._
 
 import scala.util.Try
 
+case class RoadLinkProperties(linkId: Long,
+                              functionalClass: Int,
+                              linkType: LinkType,
+                              trafficDirection: TrafficDirection)
+
 case class RoadLink(linkId: Long, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
