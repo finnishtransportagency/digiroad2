@@ -173,53 +173,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
             join #$idTableName i on i.id = l.link_id""".as[(Long, Int, DateTime, String)].list
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
-    val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
-      MassQuery.withIds(vvhRoadlinks.map(_.linkId).toSet) { idTableName =>
-        val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
-        val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
-        val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(idTableName).groupBy(_._1)
-        (trafficDirections, functionalClasses, linkTypes)
-      }
-
-    vvhRoadlinks.map { link =>
-      val linkId = link.linkId
-      val functionalClass = adjustedFunctionalClasses.get(linkId).flatMap(_.headOption)
-      val adjustedLinkType = adjustedLinkTypes.get(linkId).flatMap(_.headOption)
-      val trafficDirection = adjustedTrafficDirections.get(linkId).flatMap(_.headOption)
-
-      val functionalClassValue = functionalClass.map(_._2).getOrElse(FunctionalClass.Unknown)
-      val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
-      val trafficDirectionValue = trafficDirection.map(trafficDirection =>
-        TrafficDirection(trafficDirection._2)
-      ).getOrElse(link.trafficDirection)
-
-      def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
-        (a, b) match {
-          case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
-            if (firstModifiedAt.isAfter(secondModifiedAt))
-              Some((firstModifiedAt, firstModifiedBy))
-            else
-              Some((secondModifiedAt, secondModifiedBy))
-          case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
-          case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
-          case (None, None) => None
-        }
-      }
-      val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
-        case Some((_, _, at, by)) => Some((at, by))
-        case _ => None
-      } :+ link.modifiedAt.map(at => (at, "vvh"))
-
-      val modifics: Option[(DateTime, String)] = modifications.reduce(latestModifications)
-      val (modifiedAt, modifiedBy) = (modifics.map(_._1), modifics.map(_._2))
-
-      RoadLink(link.linkId, link.geometry,
-        GeometryUtils.geometryLength(link.geometry), link.administrativeClass, functionalClassValue, trafficDirectionValue,
-        LinkType(adjustedLinkTypeValue), modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, attributes = link.attributes)
-    }
-  }
-
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
     // todo: store result, for now siply call vvh and print debug
 
@@ -376,6 +329,88 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
 
   def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
     adjustedRoadLinks(vvhRoadLinks)
+  }
+
+  private def adjustedRoadLinks(vvhRoadlinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
+    val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
+
+    vvhRoadlinks.map { link =>
+      val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "vvh")))
+      val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
+
+      RoadLink(link.linkId, link.geometry,
+        GeometryUtils.geometryLength(link.geometry),
+        link.administrativeClass,
+        propertyRows.functionalClassValue(link.linkId),
+        propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),
+        propertyRows.linkTypeValue(link.linkId),
+        modifiedAt.map(DateTimePropertyFormat.print),
+        modifiedBy, link.attributes)
+    }
+  }
+
+  private def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
+    def makeMap(propertyRows: Seq[RoadLinkPropertyRow]): Map[RoadLinkId, RoadLinkPropertyRow] = {
+      propertyRows.groupBy(_._1)
+        .filter { case (linkId, propertyRows) => propertyRows.nonEmpty }
+        .mapValues { _.head }
+    }
+
+    MassQuery.withIds(linkIds) { idTableName =>
+      RoadLinkPropertyRows(
+        makeMap(fetchTrafficDirections(idTableName)),
+        makeMap(fetchFunctionalClasses(idTableName)),
+        makeMap(fetchLinkTypes(idTableName)))
+    }
+  }
+
+  type RoadLinkId = Long
+  type RoadLinkPropertyRow = (Long, Int, DateTime, String)
+
+  case class RoadLinkPropertyRows(trafficDirectionRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
+                                  functionalClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
+                                  linkTypeRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow]) {
+
+    def functionalClassValue(linkId: Long): Int = {
+      val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
+      functionalClassRowOption.map(_._2).getOrElse(FunctionalClass.Unknown)
+    }
+
+    def linkTypeValue(linkId: Long): LinkType = {
+      val linkTypeRowOption = linkTypeRowsByLinkId.get(linkId)
+      linkTypeRowOption.map(linkTypeRow => LinkType(linkTypeRow._2)).getOrElse(UnknownLinkType)
+    }
+
+    def trafficDirectionValue(linkId: Long): Option[TrafficDirection] = {
+      val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
+      trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow._2))
+    }
+
+    def latestModifications(linkId: Long, optionalModification: Option[(DateTime, String)] = None): Option[(DateTime, String)] = {
+      val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
+      val linkTypeRowOption = linkTypeRowsByLinkId.get(linkId)
+      val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
+
+      val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption).map {
+        case Some((_, _, at, by)) => Some((at, by))
+        case _ => None
+      } :+ optionalModification
+
+      modifications.reduce(calculateLatestModifications)
+    }
+
+    private def calculateLatestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+      (a, b) match {
+        case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
+          if (firstModifiedAt.isAfter(secondModifiedAt))
+            Some((firstModifiedAt, firstModifiedBy))
+          else
+            Some((secondModifiedAt, secondModifiedBy))
+        case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
+        case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
+        case (None, None) => None
+      }
+    }
   }
 
   def getAdjacent(linkId: Long): Seq[RoadLink] = {
