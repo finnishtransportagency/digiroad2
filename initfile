@@ -6,7 +6,7 @@ SKIP_VALLU=${SKIP_VALLU:-0}
 
 case "$1" in
   start)
-    runuser web -c $"
+    runuser web -lc $"
       cd /home/web/digiroad2/current
 	    ./start.sh
 	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server >> ./src/main/webapp/vallu-server.log &"
