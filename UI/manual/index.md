@@ -130,7 +130,7 @@ _Tielinkit._
 
 ####Tielinkkien haku####
 
-Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
+Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
  <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
@@ -1188,7 +1188,7 @@ _Joukkoliikennekaistageometrian katkaisu._
 16. Kaistojen lukum&auml;&auml;r&auml; (toistaiseksi n&auml;kyviss&auml; vain operaattorik&auml;ytt&auml;jille)
 ----------------------
 
-Kaistojen lukum&auml;&auml;r&auml; n&auml;kyy t&auml;ll&auml; hetkell&auml; vain operaattorik&auml;ytt&auml;jille, koska tietolajia ei ole m&auml;&auml;ritelty uutee Digiroad-j&auml;rjestelm&auml;&auml;n.
+Kaistojen lukum&auml;&auml;r&auml; n&auml;kyy t&auml;ll&auml; hetkell&auml; vain operaattorik&auml;ytt&auml;jille, koska tietolajia ei ole m&auml;&auml;ritelty uuteen Digiroad-j&auml;rjestelm&auml;&auml;n.
 
 Kartalle voi valita tietolajit-paletista (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
 

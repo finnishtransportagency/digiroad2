@@ -24,7 +24,7 @@ Kaikki Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;liittym&auml;&auml;n li
 
 __Huom! Kaikki ymp&auml;rist&ouml;t n&auml;ytt&auml;v&auml;t selaimessa p&auml;&auml;lisin puolin samalta, joten tulee olla tarkkana, mihin ymp&auml;rist&ouml;&ouml;n muutoksia tekee!__ Sovelluksen vasemmassa yl&auml;kulmassa on teksti, joka kertoo osoiterivin lis&auml;ksi, miss&auml; ymp&auml;rist&ouml;ss&auml; ollaan.
 
-Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad2-kehitystiimill&auml; ja ne saa osoitteesta digiroad2@reaktor.fi. T&auml;m&auml; tilanne tulee muuttumaan, kun kehitysprojekti p&auml;&auml;ttyy ja siirryt&auml;&auml;n yll&auml;pitovaiheeseen, mutta toistaiseksi kehitykseen liittyvien tilien/sivujen tunnusten ja salasanojen hallinta on kehitystiimiss&auml;.
+Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad2-kehitystiimill&auml; ja ne saa osoitteesta kehitys@digiroad.fi.
 
 ###Tuotantoymp&auml;rist&ouml; (kuvan saa klikkaamalla suuremmaksi):###
 
@@ -211,7 +211,7 @@ _Geckoboardin osiot._
 
 Digiroad 2:lla on oma Google-tili: Digiroad2@gmail.com. Tili on edellytys, jotta Google Streetview:ll&auml; on mahdollista ladata muutama tuhat kuvaa p&auml;iv&auml;ss&auml;. My&ouml;s Digiroad2:sen Google Driven ja Google Analyticsin omistajuudet ovat ko. tilill&auml;. 
 
-Tunnuksia Google-tiliin voi kysy&auml; kehitystiimilt&auml;: digiroad2@reaktor.fi.
+Tunnuksia Google-tiliin voi kysy&auml; kehitystiimilt&auml;: kehitys@digiroad.fi.
 
 8. Google Analytics
 -------------------
@@ -258,7 +258,7 @@ Jokaisella kohteella on t&auml;m&auml;n lis&auml;ksi oma yksil&ouml;iv&auml; id.
  
 ##9.1 Tielinkit##
 
-Tielinkkien geometria p&auml;ivittyy VVH:ssa joka aamu pl. tilanteet, joissa VVH:n kanssa on sovittu, ett&auml; p&auml;ivitys laitetaan pois p&auml;&auml;lt&auml;. Digiroad-operaattori sopii t&auml;m&auml;n VVH:n kanssa. Kun geometria p&auml;ivittyy, ne linkit joiden MML-ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
+Tielinkkien geometria p&auml;ivittyy VVH:ssa joka aamu pl. tilanteet, joissa VVH:n kanssa on sovittu, ett&auml; p&auml;ivitys laitetaan pois p&auml;&auml;lt&auml;. Digiroad-operaattori sopii t&auml;m&auml;n VVH:n kanssa. Kun geometria p&auml;ivittyy, ne linkit joiden Link ID on edelleen sama, eiv&auml;t tule millek&auml;&auml;n korjauslistalle eik&auml; niit&auml; saateta siten operaattorin tai yll&auml;pit&auml;jien tietoon. N&auml;ille linkeille j&auml;&auml; siis edelleen sama toiminnallinen luokka, linkkityyppi ja liikennevirran suunta. 
 
 Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen kohdeluokka-tiedosta toiminnallinen luokka ja linkkityyppi:
 
@@ -289,7 +289,7 @@ Pisteen kelluvuus tulee tarkastetuksi kolmessa eri tilanteessa: kun pistett&auml
 
 Tarkastus perustuu siihen, ett&auml; pisteelle on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
 
-1. L&ouml;ytyyk&ouml; ko. pisteen linkin MML-ID:ll&auml; edelleen tielinkki ja kuntakoodi s&auml;ilyy samana.
+1. L&ouml;ytyyk&ouml; ko. pisteen linkin ID:ll&auml; edelleen tielinkki ja kuntakoodi s&auml;ilyy samana.
     a. Ei l&ouml;ydy -> Kelluu
     b. L&ouml;ytyy -> Tarkastus siirtyy seuraavaan kohtaan
 1. Pisteen sijainnin tarkistus linkill&auml;: sijainti tietokantaan tallennettujen x,y-koordinaattien ja linkin geometrian + pisteen m-arvon v&auml;lill&auml;
@@ -310,9 +310,9 @@ T&auml;t&auml; ominaisuutta ei ole muilla viivamaisilla tietolajeilla.
 
 Muilla viivamaisilla tietolajeilla on muutamia k&auml;sittelys&auml;&auml;nt&ouml;j&auml;, miten niiden sijoittuminen alla olevan tielinkin geometriaan tarkistetaan. Tarkistukset ovat sen vuoksi, ett&auml; geometria kohteiden alla p&auml;ivittyy p&auml;ivitt&auml;in. Sovellus tarkistaa aina karttaa raahatessa tai kohteita Kalpa-Apista kyselt&auml;ess&auml;, sovittuuko viivamainen kohde alla olevan tielinkin geometriaan.
 
-Tarkistukset perustuvat kohteelle tallennettuihin m-arvoihin ja tielinkin MML-ID;seen:
+Tarkistukset perustuvat kohteelle tallennettuihin m-arvoihin ja tielinkin ID:seen:
 
-1. L&ouml;ytyyk&ouml; ko. viivamaisen kohteen linkin MML-ID:ll&auml; edelleen tielinkki:
+1. L&ouml;ytyyk&ouml; ko. viivamaisen kohteen linkin ID:ll&auml; edelleen tielinkki:
 	a. Ei l&ouml;ydy -> kohdetta ei piirret&auml; kartalle*
 	b. L&ouml;ytyy -> Siirryt&auml;&auml;n seuraavaan kohtaan
 1. Kohteen sijainnin tarkistus m-arvojen ja tielinkin pituuden mukaan
@@ -403,8 +403,8 @@ Yhteystiedot
 
 __Digiroadin kehitystiimi:__
 
-digiroad2@reaktor.fi
+kehitys@digiroad.fi
 
 __Palaute operaattorin manuaalista:__
 
-emmi.sallinen@karttakeskus.fi
+antti.salo@dimenteq.fi
