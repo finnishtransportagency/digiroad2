@@ -357,4 +357,40 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       dynamicSession.rollback()
     }
   }
+
+  test("Should map link properties of old link to new link when one old link maps to one new link, old link has functional class but no link type") {
+    val oldLinkId = 1l
+    val newLinkId = 2l
+    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5)
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId, 3, 'test' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (2, $oldLinkId, ${Freeway.value}, 'test' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
+
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      val before = service.getRoadLinksFromVVH(boundingBox)
+      before.head.functionalClass should be(3)
+      before.head.linkType should be(Freeway)
+      before.head.trafficDirection should be(TrafficDirection.BothDirections)
+
+      sqlu"""delete from link_type where id=2""".execute
+
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Seq(changeInfo)).future)
+      val after = service.getRoadLinksFromVVH(boundingBox)
+      after.head.functionalClass should be(3)
+      after.head.linkType should be(UnknownLinkType)
+      after.head.trafficDirection should be(TrafficDirection.BothDirections)
+
+      dynamicSession.rollback()
+    }
+  }
 }
