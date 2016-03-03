@@ -8,7 +8,8 @@ import scala.util.Try
 case class RoadLinkProperties(linkId: Long,
                               functionalClass: Int,
                               linkType: LinkType,
-                              trafficDirection: TrafficDirection)
+                              trafficDirection: TrafficDirection,
+                              modifiedAt: Option[String]) // todo: Need to add modifiedBy
 
 case class RoadLink(linkId: Long, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
