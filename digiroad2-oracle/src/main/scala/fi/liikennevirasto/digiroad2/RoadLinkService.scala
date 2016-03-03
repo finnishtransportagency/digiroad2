@@ -265,7 +265,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     else
       None
   }
-  def getLatestModificationDate[T](values: Seq[T]): Option[T] = {
+  def getLatestModification[T](values: Seq[T]): Option[T] = {
     // todo: need to find the latest value, if there is more than one
     if (values.nonEmpty)
     Some(values.head)
@@ -288,15 +288,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         case UnknownLinkType => useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.linkType)).getOrElse(UnknownLinkType)
         case _ => incompleteLink.linkType
       }
-      // todo: add and find the latest modifiedBy to incompleteLink.copy
 
-      val newModifiedAt = getLatestModificationDate(oldPropertiesForIncompleteLink.map(_.modifiedAt)).getOrElse(None)
-
+      val newModifiedAt = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedAt)).getOrElse(None)
+      val newModifiedBy = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedBy)).getOrElse(None)
       incompleteLink.copy(
         functionalClass  = newFunctionalClass,
         linkType          = newLinkType,
         trafficDirection  = useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.trafficDirection)).getOrElse(incompleteLink.trafficDirection),
-        modifiedAt = newModifiedAt)
+        modifiedAt = newModifiedAt,
+        modifiedBy = newModifiedBy)
     }.partition(isComplete)
   }
 
@@ -351,16 +351,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
 
     oldLinkIds.map { linkId =>
-      // todo: add modifiedBy to RoadLinkProperties
 
       val latestModification = propertyRows.latestModifications(linkId)
-      val modifiedAt = latestModification.map(_._1)
+      val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
+
 
         RoadLinkProperties(linkId,
         propertyRows.functionalClassValue(linkId),
         propertyRows.linkTypeValue(linkId),
         propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
-        modifiedAt.map(DateTimePropertyFormat.print))
+        modifiedAt.map(DateTimePropertyFormat.print),
+        modifiedBy)
     }
   }
 

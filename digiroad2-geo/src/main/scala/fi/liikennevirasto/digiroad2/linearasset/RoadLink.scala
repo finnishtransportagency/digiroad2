@@ -9,7 +9,8 @@ case class RoadLinkProperties(linkId: Long,
                               functionalClass: Int,
                               linkType: LinkType,
                               trafficDirection: TrafficDirection,
-                              modifiedAt: Option[String]) // todo: Need to add modifiedBy
+                              modifiedAt: Option[String],
+                              modifiedBy: Option[String])
 
 case class RoadLink(linkId: Long, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
