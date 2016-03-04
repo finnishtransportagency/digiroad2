@@ -14,23 +14,26 @@ object SqlScriptRunner {
 
   def readScriptStatements(filename: String): Seq[String] = {
     val commentR = """\/\*.*\*\/""".r
-    val withComments = Source.fromFile("./digiroad2-oracle/sql/" + filename)(Codec.UTF8).getLines.filterNot(_.startsWith("--")).mkString
+    val withComments = Source.fromFile("./digiroad2-oracle/sql/" + filename)(Codec.UTF8).getLines.filterNot(_.trim.startsWith("--")).mkString
     commentR.replaceAllIn(withComments, "").split(";")
   }
 
   def executeStatements(stmts: Seq[String]) {
+    println("Running " + stmts.length + " statements...")
     OracleDatabase.withDynTransaction {
       stmts.foreach { stmt =>
-        println("Executing: " + stmt)
         try {
+          println("executing: " + stmt.replaceAll("\\)", ")\n"))
           (Q.u + stmt).execute
         } catch {
           case e: Exception => {
             e.printStackTrace
-            println("CONTINUING...")
+            println("CONTINUING WITH NEXT STATEMENT...")
+            return
           }
         }
       }
+      println("DONE!")
     }
   }
 
