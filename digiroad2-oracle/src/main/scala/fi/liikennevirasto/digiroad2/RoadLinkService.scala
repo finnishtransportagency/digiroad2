@@ -288,8 +288,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         case _ => incompleteLink.linkType
       }
 
-      val newModifiedAt = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedAt))
-      val newModifiedBy = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedBy))
+      val newModifiedAt = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedAt)).orElse(incompleteLink.modifiedAt)
+      val newModifiedBy = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedBy)).orElse(incompleteLink.modifiedBy)
 
       incompleteLink.copy(
         functionalClass  = newFunctionalClass,
