@@ -20,14 +20,18 @@ object SqlScriptRunner {
 
   def executeStatements(stmts: Seq[String]) {
     println("Running " + stmts.length + " statements...")
+    var i = 0
     OracleDatabase.withDynTransaction {
       stmts.foreach { stmt =>
         try {
-          println("executing: " + stmt.replaceAll("\\)", ")\n"))
           (Q.u + stmt).execute
+          i = i+1
+          if (i % 10 == 0)
+            println("" + i + " / " + stmts.length)
         } catch {
           case e: Exception => {
             e.printStackTrace
+            println("failed statement: " + stmt.replaceAll("\\)", ")\n"))
             println("CONTINUING WITH NEXT STATEMENT...")
             return
           }
