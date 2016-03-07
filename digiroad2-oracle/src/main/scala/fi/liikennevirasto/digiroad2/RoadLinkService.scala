@@ -135,10 +135,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       case (Some(existingValue), _) =>
         updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
       case (None, None) =>
-        sqlu"""insert into #$table (id, link_id, #$column, modified_by)
+        if(modifiedAt.isEmpty){
+          sqlu"""insert into #$table (id, link_id, #$column, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $username
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
+        }
+        else{
+          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+                 select primary_key_seq.nextval, $linkId, $value, $modifiedAt, $username
+                 from dual
+                 where not exists (select * from #$table where link_id = $linkId)""".execute
+
+        }
       case (None, Some(vvhValue)) =>
         if (vvhValue != value)
           sqlu"""insert into #$table (id, link_id, #$column, modified_by)
@@ -265,17 +274,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     else
       None
   }
-  def getLatestModification[T](values: Seq[Option[String]]): Option[String] = {
+  def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
     if (values.nonEmpty)
-      Some(values.max).getOrElse((None))
+     Some(values.max)
     else
-      None
+     None
     }
 
   // fill incomplete links with the previous link information where they are available and where they agree
   def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
     val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes)
-
     incompleteLinks.map { incompleteLink =>
       val oldIdsForIncompleteLink = changes.filter(_.newId == Option(incompleteLink.linkId)).flatMap(_.oldId)
       val oldPropertiesForIncompleteLink = oldRoadLinkProperties.filter(oldLink => oldIdsForIncompleteLink.contains(oldLink.linkId))
@@ -287,9 +295,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         case UnknownLinkType => useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.linkType)).getOrElse(UnknownLinkType)
         case _ => incompleteLink.linkType
       }
-
-      val newModifiedAt = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedAt)).orElse(incompleteLink.modifiedAt)
-      val newModifiedBy = getLatestModification(oldPropertiesForIncompleteLink.map(_.modifiedBy)).orElse(incompleteLink.modifiedBy)
+      val modifications = (oldPropertiesForIncompleteLink.map(_.modifiedAt) zip oldPropertiesForIncompleteLink.map(_.modifiedBy)).toMap
+      val (newModifiedAt, newModifiedBy) = getLatestModification(modifications).getOrElse(incompleteLink.modifiedAt, incompleteLink.modifiedBy)
 
       incompleteLink.copy(
         functionalClass  = newFunctionalClass,
