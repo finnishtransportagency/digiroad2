@@ -70,7 +70,9 @@ object DataFixture {
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
       "siilijarvi_functional_classes.sql",
-      "siilijarvi_link_types.sql"))
+      "siilijarvi_link_types.sql",
+      "siilijarvi_traffic_directions.sql"
+    ))
   }
 
   def importMunicipalityCodes() {
