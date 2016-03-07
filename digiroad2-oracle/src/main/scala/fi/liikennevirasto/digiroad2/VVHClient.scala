@@ -32,6 +32,9 @@ class VVHClient(hostname: String) {
 
   private val serviceName = "Roadlink_data"
 
+  // Change value to VVH_OTH_TEST in development environment
+  private val vvhRestAPI = "VVH_OTH"
+
   private def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -74,7 +77,7 @@ class VVHClient(hostname: String) {
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/" + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -95,7 +98,7 @@ class VVHClient(hostname: String) {
   def fetchChangesF(bounds: BoundingRectangle): Future[Seq[ChangeInfo]] = {
     val definition = layerDefinition("", Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
 
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_ChangeInfo/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
 
@@ -113,7 +116,7 @@ class VVHClient(hostname: String) {
   def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
 
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_ChangeInfo/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&" + queryParameters(true)
 
     Future {
@@ -138,7 +141,7 @@ class VVHClient(hostname: String) {
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/" + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -174,7 +177,7 @@ class VVHClient(hostname: String) {
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+      val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/" + serviceName + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
