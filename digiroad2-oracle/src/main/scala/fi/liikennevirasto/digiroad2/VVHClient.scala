@@ -113,7 +113,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
 
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_ChangeInfo/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&" + queryParameters(true)
 
     Future {
