@@ -58,8 +58,24 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   def getChanged(sinceDate: DateTime) = {
-    withDynTransaction {
+    val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate)
+    }
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+
+    persistedSpeedLimits.flatMap { persistedSpeedLimit =>
+      roadLinks.find(_.linkId == persistedSpeedLimit.linkId).map { roadLink =>
+        SpeedLimit(persistedSpeedLimit.id,
+          persistedSpeedLimit.linkId,
+          persistedSpeedLimit.sideCode,
+          roadLink.trafficDirection,
+          persistedSpeedLimit.value.map(NumericValue),
+          GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
+          persistedSpeedLimit.startMeasure,
+          persistedSpeedLimit.endMeasure,
+          persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
+          persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate)
+      }
     }
   }
 

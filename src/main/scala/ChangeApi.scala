@@ -18,7 +18,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport {
   get("/speedLimits") {
     val since = DateTime.parse(params("since"))
     val (addedSpeedLimits, updatedSpeedLimits) = speedLimitService.getChanged(since).partition { speedLimit =>
-      speedLimit.createdDate match {
+      speedLimit.createdDateTime match {
         case None => false
         case Some(createdDate) => createdDate.isAfter(since)
       }
@@ -28,16 +28,17 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport {
         "updated"  -> updatedSpeedLimits.map(speedLimitToApi))
   }
 
-  private def speedLimitToApi(speedLimit: PersistedSpeedLimit) = {
+  private def speedLimitToApi(speedLimit: SpeedLimit) = {
     Map("id" -> speedLimit.id,
       "value" -> speedLimit.value,
       "linkId" -> speedLimit.linkId,
       "sideCode" -> speedLimit.sideCode.value,
       "startMeasure" -> speedLimit.startMeasure,
       "endMeasure" -> speedLimit.endMeasure,
+      "geometry" -> speedLimit.geometry,
       "createdBy" -> speedLimit.createdBy,
-      "modifiedAt" -> speedLimit.modifiedDate.map(DateTimePropertyFormat.print(_)),
-      "createdAt" -> speedLimit.createdDate.map(DateTimePropertyFormat.print(_)),
+      "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+      "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
       "modifiedBy" -> speedLimit.modifiedBy)
   }
 }
