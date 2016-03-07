@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, TrafficD
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
@@ -53,6 +54,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime) = {
+    withDynTransaction {
+      dao.getSpeedLimitsChangedSince(sinceDate)
     }
   }
 
