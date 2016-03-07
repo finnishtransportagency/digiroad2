@@ -95,15 +95,12 @@ class VVHClient(hostname: String) {
     Future(fetchByMunicipality(municipality))
   }
 
-  def fetchChangesF(bounds: BoundingRectangle): Future[Seq[ChangeInfo]] = {
-    val definition = layerDefinition("", Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
-
+  def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
+    val municipalityFilter = withMunicipalityFilter(municipalities)
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
     val url = "http://" + hostname + "/arcgis/rest/services/" + vvhRestAPI + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
-
-    // TODO: VVH api does not yet support municipality filtering for change infos.
-    // Retest and fix/complete this code once VVH supports the feature
 
     Future {
       fetchVVHFeatures(url) match {

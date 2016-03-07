@@ -37,7 +37,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(vvhRoadlinksForBoundingBox)
   when(mockVVHClient.fetchVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(Promise.successful(vvhRoadlinksForBoundingBox).future)
-  when(mockVVHClient.fetchChangesF(any[BoundingRectangle])).thenReturn(Promise.successful(Nil).future)
+  when(mockVVHClient.fetchChangesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
   when(mockVVHClient.fetchVVHRoadlink(1611071l))
     .thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1611353))
