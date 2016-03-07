@@ -175,7 +175,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
     // todo: store result, for now siply call vvh and print debug
 
-    val (changes, links) = Await.result(vvhClient.fetchChangesF(bounds).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
+    val (changes, links) = Await.result(vvhClient.fetchChangesF(bounds, municipalities).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
 
     withDynTransaction {
       enrichRoadLinksFromVVH(links, changes)
