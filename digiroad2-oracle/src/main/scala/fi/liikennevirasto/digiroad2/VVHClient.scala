@@ -21,7 +21,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-class VVHClient(hostname: String) {
+class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -69,7 +69,7 @@ class VVHClient(hostname: String) {
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -81,7 +81,7 @@ class VVHClient(hostname: String) {
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -117,7 +117,7 @@ class VVHClient(hostname: String) {
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+      val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
