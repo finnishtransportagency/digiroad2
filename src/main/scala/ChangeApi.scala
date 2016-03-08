@@ -1,3 +1,4 @@
+import fi.liikennevirasto.digiroad2.AuthenticationSupport
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import fi.liikennevirasto.digiroad2.linearasset.oracle.PersistedSpeedLimit
 import org.json4s.{DefaultFormats, Formats}
@@ -8,10 +9,11 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 
 
-class ChangeApi extends ScalatraServlet with JacksonJsonSupport {
+class ChangeApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
+    basicAuth
     contentType = formats("json")
   }
 
