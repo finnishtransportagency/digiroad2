@@ -73,7 +73,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val lastEditedDate = DateTime.now()
       val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
       when(mockVVHClient.fetchVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
-      when(mockVVHClient.fetchChangesF(any[BoundingRectangle])).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockVVHClient)
       val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
@@ -129,7 +129,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val service = new TestService(mockVVHClient)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set()))
         .thenReturn(Promise.successful(List(
         VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
@@ -166,7 +166,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
         VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers))
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(vvhRoadLinks).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockVVHClient, mockEventBus)
       val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
@@ -219,14 +219,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
       before.head.linkType should be(Freeway)
       before.head.trafficDirection should be(TrafficDirection.BothDirections)
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Seq(changeInfo)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.head.functionalClass should be(3)
       after.head.linkType should be(Freeway)
@@ -258,14 +258,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Freeway.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.foreach(_.functionalClass should be(3))
       before.foreach(_.linkType should be(Freeway))
       before.foreach(_.trafficDirection should be(TrafficDirection.TowardsDigitizing))
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(changeInfo).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.head.functionalClass should be(3)
       after.head.linkType should be(Freeway)
@@ -302,12 +302,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.length should be(2)
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(changeInfo).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.head.functionalClass should be(FunctionalClass.Unknown)
       after.head.linkType should be(UnknownLinkType)
@@ -337,14 +337,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId, ${SlipRoad.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.foreach(_.functionalClass should be(3))
       before.foreach(_.linkType should be(SlipRoad))
       before.foreach(_.trafficDirection should be(TrafficDirection.TowardsDigitizing))
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(newRoadLinks).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(changeInfo).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.length should be(2)
       after.foreach { link =>
@@ -374,7 +374,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
       before.head.linkType should be(Freeway)
@@ -383,7 +383,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""delete from link_type where id=2""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Seq(changeInfo)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.head.functionalClass should be(3)
       after.head.linkType should be(UnknownLinkType)
@@ -414,7 +414,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (4, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Nil).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
       before.head.linkType should be(Freeway)
@@ -423,7 +423,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $newLinkId, 6, 'test' )""".execute
 
       when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox)).thenReturn(Promise.successful(Seq(changeInfo)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
       after.head.functionalClass should be(6)
       after.head.linkType should be(Freeway)
