@@ -149,10 +149,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         }
       case (None, Some(vvhValue)) =>
         if (vvhValue != value)
-          sqlu"""insert into #$table (id, link_id, #$column, modified_by)
+          if(latestModifiedAt.isEmpty) {
+            sqlu"""insert into #$table (id, link_id, #$column, modified_by)
                    select primary_key_seq.nextval, $linkId, $value, $username
                    from dual
                    where not exists (select * from #$table where link_id = $linkId)""".execute
+          }
+        else{
+            sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+                 select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
+                 from dual
+                 where not exists (select * from #$table where link_id = $linkId)""".execute
+          }
     }
   }
 
@@ -386,7 +394,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
 
     vvhRoadlinks.map { link =>
-      val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "automatic_adjustment")))
+      val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "vvh")))
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 
       RoadLink(link.linkId, link.geometry,
