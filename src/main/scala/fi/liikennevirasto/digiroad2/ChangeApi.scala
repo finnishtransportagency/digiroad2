@@ -1,12 +1,12 @@
-import fi.liikennevirasto.digiroad2.AuthenticationSupport
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
-import fi.liikennevirasto.digiroad2.linearasset.oracle.PersistedSpeedLimit
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{BadRequest, ScalatraServlet}
-import org.scalatra.json.JacksonJsonSupport
-import org.joda.time.DateTime
+package fi.liikennevirasto.digiroad2
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
+import org.joda.time.DateTime
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.{BadRequest, ScalatraServlet}
 
 
 class ChangeApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
@@ -17,6 +17,9 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
   }
 
+  /**
+    * Api that fetches changes for municipality after first adjusting to latest geometry from vvh
+    */
   get("/speedLimits2") {
     val since = DateTime.parse(params("since"))
     params.get("municipality").map { municipality =>
@@ -26,15 +29,18 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
+  /**
+    * Api that simply fetches all changed speed limits from db
+    */
+  get("/speedLimits") {
+    val since = DateTime.parse(params("since"))
+    changesToApi(since, speedLimitService.getChanged(since))
+  }
+
   private def speedLimitIsChanged(since: DateTime)(speedLimit: SpeedLimit) = {
     Seq(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
       .flatten
       .exists(_.isAfter(since))
-  }
-
-  get("/speedLimits") {
-    val since = DateTime.parse(params("since"))
-    changesToApi(since, speedLimitService.getChanged(since))
   }
 
   private def changesToApi(since: DateTime, speedLimits: Seq[SpeedLimit]) = {
