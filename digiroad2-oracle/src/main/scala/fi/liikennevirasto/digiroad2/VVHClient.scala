@@ -9,6 +9,9 @@ import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
@@ -21,7 +24,9 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-class VVHClient(hostname: String) {
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int)
+
+class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -69,7 +74,7 @@ class VVHClient(hostname: String) {
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -79,9 +84,58 @@ class VVHClient(hostname: String) {
     }
   }
 
+  def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinks(bounds, municipalities))
+  }
+
+  def fetchVVHRoadlinksF(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(fetchByMunicipality(municipality))
+  }
+
+  def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
+    val municipalityFilter = withMunicipalityFilter(municipalities)
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
+
+    Future {
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHChangeInfo)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }
+  }
+
+  def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
+      s"layerDefs=$definition&" + queryParameters(true)
+
+    Future {
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHChangeInfo)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }
+  }
+
+
+  private def extractVVHChangeInfo(feature: Map[String, Any]) = {
+    val attributes = extractFeatureAttributes(feature)
+
+    val oldId = Option(attributes("OLD_ID").asInstanceOf[BigInt]).map(_.longValue())
+    val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
+    val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
+    val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
+
+    ChangeInfo(oldId, newId, mmlId, changeType)
+  }
+
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -117,7 +171,7 @@ class VVHClient(hostname: String) {
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/" + serviceName + "/FeatureServer/query?" +
+      val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
@@ -149,7 +203,7 @@ class VVHClient(hostname: String) {
 
   private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == BigInt(0)
+    attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
   }
 
   private def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {

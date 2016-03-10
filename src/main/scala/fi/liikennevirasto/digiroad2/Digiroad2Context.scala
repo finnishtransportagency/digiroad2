@@ -94,7 +94,7 @@ object Digiroad2Context {
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(getProperty("digiroad2.VVHServiceHost"))
+    new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
   lazy val roadLinkService: RoadLinkService = {
