@@ -203,13 +203,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
             join #$idTableName i on i.id = l.link_id""".as[(Long, Int, DateTime, String)].list
   }
 
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesF(bounds, municipalities).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(links, changes)
+      (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
   def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
