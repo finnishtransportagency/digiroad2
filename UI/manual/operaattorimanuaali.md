@@ -187,23 +187,21 @@ Ohjeet kehitysymp&auml;rist&ouml;n asennukseen tarkemmin: https://github.com/fin
 6. Geckoboard
 -----------
 
-Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://reaktor.geckoboard.com/dashboards/C33E233E34A644EE (ei vaadi kirjautumista). Geckoboardista voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml;, Google Analyticsist&auml; ja Jenkinsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 7. Jenkinsiin ei ole toistaiseksi p&auml;&auml;sy&auml; operaattorilla, mutta tulee my&ouml;hemmin.
+Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://digiroad.geckoboard.com/dashboards/BCEBEC757A01731C (ei vaadi kirjautumista). Geckoboardilta voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml; ja Google Analyticsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 8.
 
 ![Geckoboard.](k166.jpg)
 
 _Geckoboardin osiot._
 
 1. Appdex Score kertoo sovelluksen suorituskyvyst&auml;. Mit&auml; l&auml;hemp&auml;n&auml; luku on 1:st&auml;, sit&auml; parempi. Noin 0.7:n kohdalla sovellus alkaa hidastella niin, ett&auml; ty&ouml;skentely vaikeutuu huomattavasti. L&auml;hde: New Relic
-2. Current Visitor Gauge kertoo t&auml;m&auml;n hetkisten aktiivisten k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n. Oikean laidan luku on k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n enn&auml;tys. L&auml;hde: Google Analytics
-3. Avg. Time on Site (today), keskim&auml;&auml;r&auml;inen vierailuaika sivulla per k&auml;ytt&auml;j&auml; t&auml;m&auml;n p&auml;iv&auml;n aikana. L&auml;hde: Google Analytics
-4. Bounce Rate (Today) ei ole kiinnostava tieto, koska Digiroad-sovellus on p&auml;&auml;asiassa yhdell&auml; sivulla. L&auml;hde: Google Analytics
-5. Production VVH Response Times on VVH:n vasteajat viimeisen puolen tunnin ajalta. Vasemman laidan asteikko on siniselle viivalle ja se on millisekunteja. Siniset piikit ja tuhansiin kohoavat millisekunnit kertovat, ett&auml; VVH:n vasteajat ovat korkeita ja sovellus todenn&auml;k&ouml;isesti on hidas. L&auml;hde: New Relic
-6. Production VVH Response Times Weekly on VVH:n vasteajat viimeisen viikon ajalta. Tarkastellaan samalla tavalla, kuin ylemp&auml;&auml; asteikkoa. Y&ouml;lliset piikit johtuvat joka&ouml;isten pys&auml;kkiexporttien tekemisest&auml;. L&auml;hde: New Relic
-7. Viimeisimm&auml;t buildit. L&auml;hde: Jenkins
-8. Buildien tilanne. L&auml;hde: Jenkins
-9. Unique Visitors (today) on p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
-10. Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
-11. Reaktorin Leuat, jepjep... :)
+2. Unique Visitors (30D) on viimeisen 30 p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
+3. Unique Visitors (today) on p&auml;iv&auml;n yksil&ouml;lliset k&auml;vij&auml;t. L&auml;hde: Google Analytics
+4. Avg. Time on Site (today), keskim&auml;&auml;r&auml;inen vierailuaika sivulla per k&auml;ytt&auml;j&auml; t&auml;m&auml;n p&auml;iv&auml;n aikana. L&auml;hde: Google Analytics
+5. Current Visitor Gauge kertoo t&auml;m&auml;n hetkisten aktiivisten k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n. Oikean laidan luku on k&auml;ytt&auml;jien lukum&auml;&auml;r&auml;n enn&auml;tys. L&auml;hde: Google Analytics
+6. Production VVH Response Times on VVH:n vasteajat viimeisen puolen tunnin ajalta. Vasemman laidan asteikko on siniselle viivalle ja se on millisekunteja. Siniset piikit ja tuhansiin kohoavat millisekunnit kertovat, ett&auml; VVH:n vasteajat ovat korkeita ja sovellus todenn&auml;k&ouml;isesti on hidas. L&auml;hde: New Relic
+7. Production VVH Response Times Weekly on VVH:n vasteajat viimeisen viikon ajalta. Tarkastellaan samalla tavalla, kuin ylemp&auml;&auml; asteikkoa. Y&ouml;lliset piikit johtuvat joka&ouml;isten pys&auml;kkiexporttien tekemisest&auml;. L&auml;hde: New Relic
+8. T&auml;m&auml;n hetkiset aktiiviset k&auml;ytt&auml;j&auml;t kartalla. L&auml;hde: Google Analytics
+9. T&auml;m&auml;n hetkiset aktiiviset k&auml;ytt&auml;j&auml;t paikkakunnittain. L&auml;hde: Google Analytics
 
 
 7. DR2:n Google-tili
