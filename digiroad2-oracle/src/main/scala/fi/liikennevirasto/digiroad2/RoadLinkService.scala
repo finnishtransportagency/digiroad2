@@ -81,8 +81,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
-  def updateProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
-                                direction: TrafficDirection, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
+  def updateLinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
+                           direction: TrafficDirection, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
     val vvhRoadLink = vvhClient.fetchVVHRoadlink(linkId)
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)
@@ -129,38 +129,36 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
-  protected def setLinkProperty(table: String, column: String, value: Int, linkId: Long, username: Option[String], optionalVVHValue: Option[Int] = None, latestModifiedAt: Option[String], latestModifiedBy: Option[String]) = {
+  protected def setLinkProperty(table: String, column: String, value: Int, linkId: Long, username: Option[String],
+                                optionalVVHValue: Option[Int] = None, latestModifiedAt: Option[String],
+                                latestModifiedBy: Option[String]) = {
     val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
         updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
+
       case (None, None) =>
-        if(latestModifiedAt.isEmpty){
-          sqlu"""insert into #$table (id, link_id, #$column, modified_by)
+        insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, linkId, username, value, latestModifiedAt, latestModifiedBy)
+
+      case (None, Some(vvhValue)) =>
+        if (vvhValue != value) // only save if it overrides VVH provided value
+          insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, linkId, username, value, latestModifiedAt, latestModifiedBy)
+    }
+  }
+
+  private def insertLinkProperty(optionalExistingValue: Option[Int], optionalVVHValue: Option[Int], table: String,
+                                 column: String, linkId: Long, username: Option[String], value: Int, latestModifiedAt: Option[String],
+                                 latestModifiedBy: Option[String]) = {
+    if (latestModifiedAt.isEmpty) {
+      sqlu"""insert into #$table (id, link_id, #$column, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $username
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
-        }
-        else{
-          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+    } else{
+      sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
-        }
-      case (None, Some(vvhValue)) =>
-        if (vvhValue != value)
-          if(latestModifiedAt.isEmpty) {
-            sqlu"""insert into #$table (id, link_id, #$column, modified_by)
-                   select primary_key_seq.nextval, $linkId, $value, $username
-                   from dual
-                   where not exists (select * from #$table where link_id = $linkId)""".execute
-          }
-        else{
-            sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
-                 select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
-                 from dual
-                 where not exists (select * from #$table where link_id = $linkId)""".execute
-          }
     }
   }
 
