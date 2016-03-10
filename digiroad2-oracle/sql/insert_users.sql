@@ -8,6 +8,8 @@ insert into service_user (id, username, configuration)
 values (4, 'testpirkanmaa', '{"zoom": 8, "east": 328308, "north": 6822545, "municipalityNumber": 49, "authorizedMunicipalities": [504,407,78,235,734,286,858,444,616,505,611,638,710,753,434,18,49,186,624,837]}');
 insert into service_user (id, username, configuration)
 values (5, 'testnone', '{"zoom": 8, "east": 328308, "north": 6822545, "authorizedMunicipalities": []}');
-
 insert into service_user (id, username, configuration)
 values (6, 'testviewer', '{"zoom": 8, "east": 328308, "north": 6822545, "authorizedMunicipalities": [], "roles": ["viewer"]}');
+insert into service_user (id, username, configuration)
+values (7, 'silari', '{"zoom": 8, "east": 532932, "north": 6994804, "municipalityNumber": 749, "authorizedMunicipalities": [749], "roles": ["operator"]}');
+
