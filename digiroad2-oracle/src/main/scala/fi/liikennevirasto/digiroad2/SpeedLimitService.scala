@@ -45,6 +45,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
+      // wip: get data for projection
+      fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
+
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
 
@@ -54,6 +57,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
+    }
+  }
+
+  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
+    // TODO: find previous speedlimit data for old ids
+    // find oldIds
+    val oldRoadLinkIds = changes.flatMap(_.oldId)
+    println(oldRoadLinkIds)
+    roadLinks.map{ roadLink =>
+
     }
   }
 
