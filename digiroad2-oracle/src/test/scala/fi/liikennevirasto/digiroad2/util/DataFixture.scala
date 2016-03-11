@@ -8,8 +8,6 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
 
-import scala.concurrent.forkjoin.ForkJoinPool
-
 object DataFixture {
   val TestAssetId = 300000
   lazy val properties: Properties = {
@@ -71,7 +69,8 @@ object DataFixture {
       "kauniainen_railway_crossings.sql",
       "siilijarvi_functional_classes.sql",
       "siilijarvi_link_types.sql",
-      "siilijarvi_traffic_directions.sql"
+      "siilijarvi_traffic_directions.sql",
+      "siilinjarvi_speed_limits.sql"
     ))
   }
 
