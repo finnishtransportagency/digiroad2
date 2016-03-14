@@ -34,6 +34,35 @@ case class ChangeInfo(oldId: Option[Long],
                       newEndMeasure: Option[Double],
                       vvhTimeStamp: Option[Long])
 
+/**
+  * Numerical values for change types from VVH ChangeInfo Api
+  */
+sealed trait ChangeType {
+  def value: Int
+}
+object ChangeType {
+  val values = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LenghtenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
+
+  def apply(intValue: Int): ChangeType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Unknown extends ChangeType { def value = 0 }
+  case object CombinedModifiedPart extends ChangeType { def value = 1 }
+  case object CombinedRemovedPart extends ChangeType { def value = 2 }
+  case object LenghtenedCommonPart extends ChangeType { def value = 3 }
+  case object LengthenedNewPart extends ChangeType { def value = 4 }
+  case object DividedModifiedPart extends ChangeType { def value = 5 }
+  case object DividedNewPart extends ChangeType { def value = 6 }
+  case object ShortenedCommonPart extends ChangeType { def value = 7 }
+  case object ShortenedRemovedPart extends ChangeType { def value = 8 }
+  case object Removed extends ChangeType { def value = 11 }
+  case object New extends ChangeType { def value = 12 }
+  case object ReplacedCommonPart extends ChangeType { def value = 13 }
+  case object ReplacedNewPart extends ChangeType { def value = 14 }
+  case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+}
+
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
