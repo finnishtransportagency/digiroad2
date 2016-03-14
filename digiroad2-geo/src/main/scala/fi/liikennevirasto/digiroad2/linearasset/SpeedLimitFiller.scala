@@ -111,7 +111,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None)
+      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None)
     }
   }
 
@@ -147,4 +147,34 @@ object SpeedLimitFiller {
       (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }
   }
+
+  def projectSpeedLimit(asset: SpeedLimit, from: RoadLink, to: RoadLink, projection: Projection) = {
+    val newLinkId = to.linkId
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
+    var newSideCode = asset.sideCode
+    var newStart = projection.newStart + (projection.newStart - projection.oldStart) * Math.abs(newLength/oldLength)
+    var newEnd = projection.newEnd + (projection.newEnd - projection.oldEnd) * Math.abs(newLength/oldLength)
+
+    // Test if the direction has changed - side code will be affected, too
+    if (oldLength * newLength < 0) {
+      newSideCode = newSideCode match {
+        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
+        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing
+        case _ => newSideCode
+      }
+      newStart = projection.newEnd + (projection.newEnd - projection.oldStart) * Math.abs(newLength/oldLength)
+      newEnd = projection.newStart + (projection.newStart - projection.oldEnd) * Math.abs(newLength/oldLength)
+    }
+    val geometry = Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
+      GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last))
+
+    SpeedLimit(id = 0, linkId = newLinkId, sideCode = asset.sideCode, trafficDirection = asset.trafficDirection,
+      None, GeometryUtils.truncateGeometry(geometry, 0, to.length), newStart, newEnd, modifiedBy = asset.modifiedBy,
+      modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
+      vvhTimeStamp = projection.vvhTimeStamp, vvhModifiedDate = None
+    )
+  }
+
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

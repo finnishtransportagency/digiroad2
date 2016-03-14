@@ -22,7 +22,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None)))
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient)
@@ -76,7 +76,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Create new linear asset") {
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1)), 30, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
@@ -87,7 +87,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Create new prohibition") {
     val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1)), 190, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1, 0, None)), 190, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
       asset.value should be (Some(prohibition))
@@ -122,7 +122,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate linear asset") {
     runWithRollback {
-      val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1)
+      val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
@@ -142,7 +142,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate prohibition asset") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1)
+      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 190, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
@@ -166,7 +166,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate with empty value towards digitization") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       val createdId = ServiceWithDao.separate(assetId, None, Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
@@ -187,7 +187,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Separate with empty value against digitization") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
       ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit).filter(_ != assetId) shouldBe empty
@@ -205,7 +205,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Split linear asset") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
@@ -232,7 +232,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Split prohibition") {
     runWithRollback {
-      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1)
+      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newProhibition), 190, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
@@ -261,7 +261,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Separation should call municipalityValidation") {
     def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1)
+      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       intercept[IllegalArgumentException] {
         ServiceWithDao.separate(assetId, Some(NumericValue(1)), Some(NumericValue(2)), "unittest", failingMunicipalityValidation)

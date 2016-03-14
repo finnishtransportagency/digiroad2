@@ -54,7 +54,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("encode speed limit") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None, 0, None))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
