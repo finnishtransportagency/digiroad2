@@ -228,13 +228,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
-  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+  def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesF(municipality).zip(vvhClient.fetchVVHRoadlinksF(municipality)), atMost = Duration.Inf)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(links, changes)
+      (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(municipality)._1
 
   def getRoadLinkFromVVH(linkId: Long): Option[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(Set(linkId))

@@ -140,7 +140,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   def get(municipality: Int): Seq[SpeedLimit] = {
-    val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
+
+    val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
