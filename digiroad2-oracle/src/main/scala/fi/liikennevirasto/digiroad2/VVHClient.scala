@@ -24,7 +24,14 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int)
+case class ChangeInfo(oldId: Option[Long],
+                      newId: Option[Long],
+                      mmlId: Long,
+                      changeType: Int,
+                      oldStartMeasure: Option[Double],
+                      oldEndMeasure: Option[Double],
+                      newStartMeasure: Option[Double],
+                      newEndMeasure: Option[Double])
 
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -94,7 +101,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
-    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
@@ -129,8 +136,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
+    // TODO: How to get decimal value from VVH? Tried for example Option(attributes("OLD_START").asInstanceOf[Double]).map(_.doubleValue())
+    val oldStartMeasure = None
+    val oldEndMeasure = None
+    val newStartMeasure = None
+    val newEndMeasure = None
 
-    ChangeInfo(oldId, newId, mmlId, changeType)
+    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
