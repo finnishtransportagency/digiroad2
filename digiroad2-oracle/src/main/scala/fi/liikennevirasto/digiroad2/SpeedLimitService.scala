@@ -145,7 +145,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
       persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
-      persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate)
+      persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate, persistedSpeedLimit.vvhTimeStamp, persistedSpeedLimit.vvhModifiedDate)
   }
 
   private def isSeparableValidation(speedLimit: SpeedLimit): SpeedLimit = {

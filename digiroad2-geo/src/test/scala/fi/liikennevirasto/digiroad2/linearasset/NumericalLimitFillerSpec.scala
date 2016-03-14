@@ -26,7 +26,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110, 0, None)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
@@ -45,7 +45,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110, 0, None)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
@@ -68,11 +68,11 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
     )
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110)),
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None)),
       2l -> Seq(
-        PersistedLinearAsset(2l, 2l, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110),
-        PersistedLinearAsset(3l, 2l, 3, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110),
-        PersistedLinearAsset(4l, 2l, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110)
+        PersistedLinearAsset(2l, 2l, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110, 0, None),
+        PersistedLinearAsset(3l, 2l, 3, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110, 0, None),
+        PersistedLinearAsset(4l, 2l, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None)
       )
     )
 
@@ -103,7 +103,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110)))
+      1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None)))
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
 
