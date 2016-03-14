@@ -31,7 +31,8 @@ case class ChangeInfo(oldId: Option[Long],
                       oldStartMeasure: Option[Double],
                       oldEndMeasure: Option[Double],
                       newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double])
+                      newEndMeasure: Option[Double],
+                      vvhTimeStamp: Option[Long])
 
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -136,13 +137,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
+    val vvhTimeStamp = Option(attributes("VVHMODIFIED").asInstanceOf[BigInt].longValue())
     // TODO: How to get decimal value from VVH? Tried for example Option(attributes("OLD_START").asInstanceOf[Double]).map(_.doubleValue())
-    val oldStartMeasure = None
+    val oldStartMeasure = Option(attributes("OLD_START").asInstanceOf[Double])
     val oldEndMeasure = None
     val newStartMeasure = None
     val newEndMeasure = None
 
-    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure)
+    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
