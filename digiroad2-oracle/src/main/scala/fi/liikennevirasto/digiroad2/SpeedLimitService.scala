@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -46,7 +47,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
       // wip: get data for projection
-      fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
+      fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change, speedLimits)
+      // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
@@ -60,13 +62,35 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
-    // TODO: find previous speedlimit data for old ids
-    // find oldIds
+  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo],
+                                                 assets: Map[Long, Seq[SpeedLimit]]) ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
+    val oldSpeedLimits = oldRoadLinkIds.map(id => dao.getSpeedLimitLinksById(id))
+    val projections = changeListToProjection(roadLinks, changes)
     println(oldRoadLinkIds)
-    roadLinks.map{ roadLink =>
+    projections.map { (p) =>
+      val fromLink = roadLinks.find(link => link.linkId == p._1._1.getOrElse(0))
+      val toLink = roadLinks.find(link => link.linkId == p._1._2.getOrElse(0))
+      val projection = p._2
+      assets.get(fromLink.get.linkId).map(
+        speedLimits =>
+        speedLimits.filter(limit => limit.vvhTimeStamp < projection.vvhTimeStamp).map(
+          limit =>
+            SpeedLimitFiller.projectSpeedLimit(limit, fromLink.get, toLink.get, projection)))
+    }
+  }
 
+  def changeListToProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[(Option[Long], Option[Long]), Projection] = {
+    changes.map(change => (change.oldId, change.newId) -> mapChangeToProjection(change)).toMap
+  }
+
+  def mapChangeToProjection(change: ChangeInfo) = {
+    // TODO: Do different type of change info handling here
+    change.changeType match {
+      case 5 => Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
+        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
+      case 6 => Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
+        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
     }
   }
 
