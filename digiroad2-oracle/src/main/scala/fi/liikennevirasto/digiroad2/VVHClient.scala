@@ -131,7 +131,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
-    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END"))
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
@@ -145,7 +145,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
-    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,CREATED_DATE"))
 
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&" + queryParameters(true)
@@ -166,7 +166,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
-    val vvhTimeStamp = Option(attributes("VVHMODIFIED").asInstanceOf[BigInt].longValue())
+    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue())
     // TODO: How to get decimal value from VVH? Tried for example Option(attributes("OLD_START").asInstanceOf[Double]).map(_.doubleValue())
     val oldStartMeasure = Option(attributes("OLD_START").asInstanceOf[Double])
     val oldEndMeasure = None
