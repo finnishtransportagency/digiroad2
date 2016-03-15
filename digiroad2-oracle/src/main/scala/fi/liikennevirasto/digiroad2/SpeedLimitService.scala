@@ -15,6 +15,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
+  /**
+    * Returns unknown speed limits for Digiroad2Api /speedlimits/unknown GET endpoint.
+    */
   def getUnknown(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     withDynSession {
       dao.getUnknownSpeedLimits(municipalities)
@@ -38,6 +41,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
+    */
   def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
 
     val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
@@ -47,8 +53,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
       // wip: get data for projection
-      fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change, speedLimits)
+      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
       // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
+
+      println(newSpeedLimits)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
@@ -62,17 +70,23 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo],
-                                                 assets: Map[Long, Seq[SpeedLimit]]) ={
+  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
     val oldSpeedLimits = oldRoadLinkIds.map(id => dao.getSpeedLimitLinksById(id))
     val projections = changeListToProjection(roadLinks, changes)
+    val oldIdToSpeedLimit = oldRoadLinkIds.zip(oldSpeedLimits).toMap
+
     println(oldRoadLinkIds)
-    projections.map { (p) =>
+      projections.map { (p) =>
+      // TODO: Fix API Error java.util.NoSuchElementException: None.get
+      /*
+      (p._1) match {
+        (Some(from), Some(to)) =>
+      }*/
       val fromLink = roadLinks.find(link => link.linkId == p._1._1.getOrElse(0))
       val toLink = roadLinks.find(link => link.linkId == p._1._2.getOrElse(0))
       val projection = p._2
-      assets.get(fromLink.get.linkId).map(
+      oldIdToSpeedLimit.get(p._1._1.get).map(
         speedLimits =>
         speedLimits.filter(limit => limit.vvhTimeStamp < projection.vvhTimeStamp).map(
           limit =>
@@ -91,15 +105,22 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
       case 6 => Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
         change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
+      case _ => Projection(0,0,0,0,0)
     }
   }
 
+  /**
+    * Returns speed limits for Digiroad2Api /speedlimits PUT endpoint (after updating or creating speed limits).
+    */
   def get(ids: Seq[Long]): Seq[SpeedLimit] = {
     withDynTransaction {
       ids.flatMap(loadSpeedLimit)
     }
   }
 
+  /**
+    * Returns speed limit for Digiroad2Api /speedlimits POST endpoint (after creating new speed limit).
+    */
   def find(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
      loadSpeedLimit(speedLimitId)
