@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, MValueAdjustment, ChangeSet}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
@@ -115,7 +116,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       oneWayRoadLink(1, Seq(Point(0.0, 0.0), Point(2.0, 0.0)), TrafficDirection.TowardsDigitizing))
     val speedLimits = Map(
       1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None),
-                SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None, 0, None)))
+        SpeedLimit(2, 1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None, 0, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
@@ -157,4 +158,81 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
   }
+
+  test("project speed limits to new geometry, case 1") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None))
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+    val output = changes map { change =>
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, oldRoadLink, linkmap.get(change.newId.get).get,
+      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    println (output)
+    output.length should be(3)
+    output.head.trafficDirection should be (TrafficDirection.BothDirections)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+  }
+
+  test("project speed limits to new geometry, case 2") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None))
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes map { change =>
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, oldRoadLink, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    output.head.sideCode should be (SideCode.TowardsDigitizing)
+    output.last.sideCode should be (SideCode.AgainstDigitizing)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.last.startMeasure should be(0.0)
+    output.last.endMeasure should be(3.0)
+    output.foreach(_.value should be (Some(NumericValue(40))))
+
+    val output2 = changes map { change =>
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.last, oldRoadLink, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    output2.length should be(3)
+    output2.head.sideCode should be (SideCode.AgainstDigitizing)
+    output2.last.sideCode should be (SideCode.TowardsDigitizing)
+    output2.head.startMeasure should be(0.0)
+    output2.head.endMeasure should be(3.0)
+    output2.last.startMeasure should be(0.0)
+    output2.last.endMeasure should be(3.0)
+    output2.foreach(_.value should be (Some(NumericValue(50))))
+  }
+
+  case class ChangeInfo(oldId: Option[Long],
+                        newId: Option[Long],
+                        mmlId: Long,
+                        changeType: Int,
+                        oldStartMeasure: Option[Double],
+                        oldEndMeasure: Option[Double],
+                        newStartMeasure: Option[Double],
+                        newEndMeasure: Option[Double],
+                        vvhTimeStamp: Option[Long])
 }
