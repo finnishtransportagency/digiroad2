@@ -148,7 +148,7 @@ object SpeedLimitFiller {
     }
   }
 
-  def projectSpeedLimit(asset: SpeedLimit, from: RoadLink, to: RoadLink, projection: Projection) = {
+  def projectSpeedLimit(asset: SpeedLimit, to: RoadLink, projection: Projection) = {
     val newLinkId = to.linkId
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
