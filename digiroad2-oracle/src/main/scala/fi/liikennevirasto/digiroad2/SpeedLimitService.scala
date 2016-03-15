@@ -55,11 +55,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
+      println("change: " + change)
       // wip: get data for projection
       val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
       // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
 
-      println(newSpeedLimits)
+      println("new speed limits: " + newSpeedLimits)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
@@ -102,25 +103,27 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
-    val oldSpeedLimits = oldRoadLinkIds.map(id => dao.getSpeedLimitLinksById(id))
+    println(dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)))
+    val oldSpeedLimits = dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)).toSeq.groupBy(_.linkId)
     val projections = changeListToProjection(roadLinks, changes)
-    val oldIdToSpeedLimit = oldRoadLinkIds.zip(oldSpeedLimits).toMap
 
-    println(oldRoadLinkIds)
-      projections.map { (p) =>
-      // TODO: Fix API Error java.util.NoSuchElementException: None.get
-      /*
-      (p._1) match {
-        (Some(from), Some(to)) =>
-      }*/
-      val fromLink = roadLinks.find(link => link.linkId == p._1._1.getOrElse(0))
-      val toLink = roadLinks.find(link => link.linkId == p._1._2.getOrElse(0))
-      val projection = p._2
-      oldIdToSpeedLimit.get(p._1._1.get).map(
-        speedLimits =>
-        speedLimits.filter(limit => limit.vvhTimeStamp < projection.vvhTimeStamp).map(
-          limit =>
-            SpeedLimitFiller.projectSpeedLimit(limit, fromLink.get, toLink.get, projection)))
+    println("old links: " + oldRoadLinkIds)
+    println("old speed limits: " + oldSpeedLimits)
+    projections.map { p =>
+      p match {
+        case ((Some(from), Some(to)), _) =>
+          println(" projection from " + from + " to " + to + ": " + p._2)
+          val toLink = roadLinks.find(link => link.linkId == to)
+          println(" projection to " + toLink)
+          val projection = p._2
+          oldSpeedLimits.get(from).map(
+            speedLimits =>
+              speedLimits.filter(limit => limit.vvhTimeStamp < projection.vvhTimeStamp).map(
+                limit =>
+                  SpeedLimitFiller.projectSpeedLimit(limit, toLink.get, projection)))
+        case ((_, _), _) =>
+          println("ignored: " + p)
+      }
     }
   }
 
