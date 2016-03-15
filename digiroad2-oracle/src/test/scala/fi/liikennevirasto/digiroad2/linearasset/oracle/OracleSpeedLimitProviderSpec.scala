@@ -13,6 +13,10 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
+
+import scala.concurrent.Promise
 
 import scala.language.implicitConversions
 
@@ -153,4 +157,37 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       }
     }
   }
+
+  // --- Tests for DROTH-1 Automatics for fixing speed limits after geometry update
+
+  test("Divided road link (change types 5&6): Should map speed limit of old link to two new links") {
+    val oldLinkId = 1l
+    val newLinkId1 = 2l
+    val newLinkId2 = 3l
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 345l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)))
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newRoadLinks = Seq(VVHRoadlink(newLinkId1, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
+      VVHRoadlink(newLinkId1, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (100,20,0)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (100,1)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (100,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLink), Nil))
+      val before = provider.get(boundingBox, Set(235)).head.head
+
+      /*
+      TODO: Test values before and after
+      before.value should be(Some(60))
+       */
+
+      dynamicSession.rollback()    }
+  }
+
 }
