@@ -153,24 +153,38 @@ object SpeedLimitFiller {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
     var newSideCode = asset.sideCode
-    var newStart = projection.newStart + (projection.newStart - projection.oldStart) * Math.abs(newLength/oldLength)
-    var newEnd = projection.newEnd + (projection.newEnd - projection.oldEnd) * Math.abs(newLength/oldLength)
+    var newDirection = asset.trafficDirection
+    var newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+    var newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
 
     // Test if the direction has changed - side code will be affected, too
     if (oldLength * newLength < 0) {
+      //TODO: must also adjust directionality of traffic direction
       newSideCode = newSideCode match {
         case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
         case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing
         case _ => newSideCode
       }
-      newStart = projection.newEnd + (projection.newEnd - projection.oldStart) * Math.abs(newLength/oldLength)
-      newEnd = projection.newStart + (projection.newStart - projection.oldEnd) * Math.abs(newLength/oldLength)
+      newDirection = newDirection match {
+        case (TrafficDirection.AgainstDigitizing) => TrafficDirection.TowardsDigitizing
+        case (TrafficDirection.TowardsDigitizing) => TrafficDirection.AgainstDigitizing
+        case _ => newDirection
+      }
+      newStart = projection.newStart + (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+      newEnd = projection.newEnd + (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
     }
-    val geometry = Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
-      GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last))
 
-    SpeedLimit(id = 0, linkId = newLinkId, sideCode = asset.sideCode, trafficDirection = asset.trafficDirection,
-      None, GeometryUtils.truncateGeometry(geometry, 0, to.length), newStart, newEnd, modifiedBy = asset.modifiedBy,
+    newStart = Math.min(to.length, Math.max(0.0, newStart))
+    newEnd = Math.max(0.0, Math.min(to.length, newEnd))
+
+    val geometry = GeometryUtils.truncateGeometry(
+      Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
+        GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
+      0, to.length)
+
+    SpeedLimit(id = 0, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
+      asset.value, geometry, newStart, newEnd,
+      modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
       vvhTimeStamp = projection.vvhTimeStamp, vvhModifiedDate = None
     )
