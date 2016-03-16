@@ -5,7 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -36,6 +36,13 @@ class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Act
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
     case _      => println("speedLimitFiller: Received unknown message")
+  }
+}
+
+class SpeedLimitSaveProjected(speedLimitProvider: SpeedLimitService) extends Actor {
+  def receive = {
+    //TODO: implementation
+    case x: SpeedLimit => // here: get new ID, save it to database with current_timestamp in LRM_POSITION modification date column. See also OracleLinearAssetDao.createSpeedLimit and add/modify method as needed
   }
 }
 
