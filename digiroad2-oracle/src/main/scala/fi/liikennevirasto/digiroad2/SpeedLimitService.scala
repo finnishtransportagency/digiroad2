@@ -24,6 +24,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
+    */
   def purgeUnknown(linkIds: Set[Long]): Unit = {
     val roadLinks = vvhClient.fetchVVHRoadlinks(linkIds)
     withDynTransaction {
@@ -71,6 +74,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
+    */
   def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
     println(dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)))
@@ -134,18 +140,28 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
+  /**
+    * Adds speed limits to unknown speed limits list. Used by SpeedLimitUpdater actor.
+    * Links to unknown speed limits are shown on UI Worklist page.
+    */
   def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
     }
   }
 
+  /**
+    * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
+    */
   def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     withDynTransaction {
       ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
 
+  /**
+    * Saves speed limit values when speed limit is split to two parts in UI (scissors icon). Used by Digiroad2Api /speedlimits/:speedLimitId/split POST endpoint.
+    */
   def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
     withDynTransaction {
       val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
@@ -172,6 +188,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     speedLimit
   }
 
+  /**
+    * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
+    */
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
       .map(toSpeedLimit)
@@ -187,6 +206,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Returns speed limits by municipality. Used by IntegrationApi speed_limits endpoint.
+    */
   def get(municipality: Int): Seq[SpeedLimit] = {
 
     val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(municipality)
@@ -204,6 +226,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Saves new speed limit from UI. Used by Digiroad2Api /speedlimits PUT and /speedlimits POST endpoints.
+    */
   def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
