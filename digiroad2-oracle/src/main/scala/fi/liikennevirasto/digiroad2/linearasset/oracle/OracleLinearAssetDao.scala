@@ -419,11 +419,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
 
-  def getSpeedLimitsByIds(ids: Option[Set[Long]]): List[SpeedLimit] = {
+  def getCurrentSpeedLimitsByLinkIds(ids: Option[Set[Long]]): List[SpeedLimit] = {
     def makeLinkIdSql(s: String) = {
       s.length match {
         case 0 => ""
-        case _ => s"and pos.link_id in (" + s + ")"
+        case _ => s" and pos.link_id in (" + s + ")"
       }
     }
 
@@ -435,7 +435,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     "join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus' " +
     "join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id " +
     "join ENUMERATED_VALUE e on s.enumerated_value_id = e.id " +
-    "where a.asset_type_id = 20 "
+    "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) "
 
     idString match {
       case Some(s) =>
