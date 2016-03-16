@@ -110,8 +110,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val oldRoadLinkIds = changes.flatMap(_.oldId)
     val oldSpeedLimits = dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)).toSeq
 
-    println("old links: " + oldRoadLinkIds)
-    println("old speed limits: " + oldSpeedLimits)
+//    println("old links: " + oldRoadLinkIds)
+//    println("old speed limits: " + oldSpeedLimits)
+    println(changes)
 
     val speedLimitsToProject = mapReplacementProjections(oldSpeedLimits, roadLinks, changes)
 
@@ -120,7 +121,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         limit match {
           case (speedLimit, (Some(roadLink), Some(projection))) =>
             Some(SpeedLimitFiller.projectSpeedLimit(speedLimit, roadLink, projection))
-          case (_, (_, _)) => None
+          case (_, (_, _)) =>
+            None
+
         }
     )
   }
@@ -133,7 +136,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long ) = {
-    val roadLink = roadLinks.find(rl => changes.filter(_.oldId == oldId).exists(change => change.newId.getOrElse(0) == rl.linkId))
+    val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
       case Some(info) => mapChangeToProjection(info)
