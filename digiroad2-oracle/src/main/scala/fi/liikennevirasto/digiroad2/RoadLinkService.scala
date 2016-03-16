@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -158,18 +159,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
                  where not exists (select * from #$table where link_id = $linkId)""".execute
     } else{
       try {
-        if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) { // Finnish date format
-          val parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString()
-          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
-                 select primary_key_seq.nextval, $linkId, $value, $parsedDate, $latestModifiedBy
-                 from dual
-                 where not exists (select * from #$table where link_id = $linkId)""".execute
+        var parsedDate = ""
+        if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) {
+          // Finnish date format
+          parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString()
         } else {
-          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
-                 select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
+          parsedDate = DateTime.parse(latestModifiedAt.get).toString(ISODateTimeFormat.dateTime())
+        }
+        println("now " + parsedDate)
+        sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+                 select primary_key_seq.nextval, $linkId, $value,
+                 to_timestamp_tz($parsedDate, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $latestModifiedBy
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
-        }
       } catch {
         case e: Exception =>
           println("ERR! -> (" + linkId + ", " + value + "): " + latestModifiedAt.getOrElse("null"))
