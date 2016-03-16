@@ -129,8 +129,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
+    val targetLinks = changes.flatMap(_.newId).toSet
     oldSpeedLimits.flatMap(limit =>
-      newRoadLinks.map(newRoadLink =>
+      newRoadLinks.filter(rl => targetLinks.contains(rl.linkId)).map(newRoadLink =>
         (limit, getRoadLinkAndProjection(newRoadLinks, changes, limit.linkId, newRoadLink.linkId))
       ))
   }
