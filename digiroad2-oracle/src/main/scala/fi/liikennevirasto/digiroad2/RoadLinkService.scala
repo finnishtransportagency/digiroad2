@@ -166,7 +166,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         } else {
           parsedDate = DateTime.parse(latestModifiedAt.get).toString(ISODateTimeFormat.dateTime())
         }
-        println("now " + parsedDate)
         sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
                  select primary_key_seq.nextval, $linkId, $value,
                  to_timestamp_tz($parsedDate, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $latestModifiedBy
@@ -174,7 +173,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
                  where not exists (select * from #$table where link_id = $linkId)""".execute
       } catch {
         case e: Exception =>
-          println("ERR! -> (" + linkId + ", " + value + "): " + latestModifiedAt.getOrElse("null"))
+          println("ERR! -> table " + table + " (" + linkId + ", " + value + "): mod timestamp = " + latestModifiedAt.getOrElse("null"))
           throw e
       }
     }
