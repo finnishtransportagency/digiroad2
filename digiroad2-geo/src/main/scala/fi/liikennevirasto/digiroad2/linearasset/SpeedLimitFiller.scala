@@ -159,7 +159,6 @@ object SpeedLimitFiller {
 
     // Test if the direction has changed - side code will be affected, too
     if (oldLength * newLength < 0) {
-      //TODO: must also adjust directionality of traffic direction
       newSideCode = newSideCode match {
         case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
         case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing

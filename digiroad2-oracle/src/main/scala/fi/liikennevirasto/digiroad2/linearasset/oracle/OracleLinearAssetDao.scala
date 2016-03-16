@@ -381,7 +381,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+
   def getSpeedLimitsByIds(ids: Option[Set[Long]]): List[SpeedLimit] = {
+    def makeLinkIdSql(s: String) = {
+      s.length match {
+        case 0 => ""
+        case _ => s"and pos.link_id in (" + s + ")"
+      }
+    }
+
     val idString = ids.map(_.mkString(","))
     val sql = "select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date "+
     "from ASSET a "+
@@ -394,7 +402,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
     idString match {
       case Some(s) =>
-        val idSql = sql + s"and pos.link_id in (" + s + ")"
+        val idSql = sql + makeLinkIdSql(s)
         println(idSql)
         Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])] (idSql).list.map {
           case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
