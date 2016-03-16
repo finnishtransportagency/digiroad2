@@ -174,7 +174,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
     )
     val output = changes map { change =>
-      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, oldRoadLink, linkmap.get(change.newId.get).get,
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
       Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
     println (output)
     output.length should be(3)
@@ -203,7 +203,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     )
 
     val output = changes map { change =>
-      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, oldRoadLink, linkmap.get(change.newId.get).get,
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
     output.head.sideCode should be (SideCode.TowardsDigitizing)
     output.last.sideCode should be (SideCode.AgainstDigitizing)
@@ -214,7 +214,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output.foreach(_.value should be (Some(NumericValue(40))))
 
     val output2 = changes map { change =>
-      SpeedLimitFiller.projectSpeedLimit(speedLimit.last, oldRoadLink, linkmap.get(change.newId.get).get,
+      SpeedLimitFiller.projectSpeedLimit(speedLimit.last, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
     output2.length should be(3)
     output2.head.sideCode should be (SideCode.AgainstDigitizing)
