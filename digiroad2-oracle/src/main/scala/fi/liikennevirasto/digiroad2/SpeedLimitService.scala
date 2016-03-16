@@ -58,6 +58,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       // wip: get data for projection
       val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
       // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
+      // in DAO: oldSpeedLimit.validTo -> sysdate
+      //         newSpeedLimit.id -> sequence value
+      //         newSpeedLimit.LRM_timestamp -> sysdate
 
       println("new speed limits: " + newSpeedLimits)
 
@@ -78,7 +81,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[SpeedLimit] ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
-    val oldSpeedLimits = dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)).toSeq
+    val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
 
 //    println("old links: " + oldRoadLinkIds)
 //    println("old speed limits: " + oldSpeedLimits)
