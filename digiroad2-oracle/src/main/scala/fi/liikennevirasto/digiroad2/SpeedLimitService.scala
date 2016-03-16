@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, Pe
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.jdbc.{StaticQuery => Q}
 
 case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
@@ -107,44 +106,51 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
     */
-  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) ={
+  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[SpeedLimit] ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
-    println(dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)))
-    val oldSpeedLimits = dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)).toSeq.groupBy(_.linkId)
-    val projections = changeListToProjection(roadLinks, changes)
+    val oldSpeedLimits = dao.getSpeedLimitsByIds(Some(oldRoadLinkIds.toSet)).toSeq
 
     println("old links: " + oldRoadLinkIds)
     println("old speed limits: " + oldSpeedLimits)
-    projections.map { p =>
-      p match {
-        case ((Some(from), Some(to)), _) =>
-          println(" projection from " + from + " to " + to + ": " + p._2)
-          val toLink = roadLinks.find(link => link.linkId == to)
-          println(" projection to " + toLink)
-          val projection = p._2
-          oldSpeedLimits.get(from).map(
-            speedLimits =>
-              speedLimits.filter(limit => limit.vvhTimeStamp < projection.vvhTimeStamp).map(
-                limit =>
-                  SpeedLimitFiller.projectSpeedLimit(limit, toLink.get, projection)))
-        case ((_, _), _) =>
-          println("ignored: " + p)
-      }
-    }
+
+    val speedLimitsToProject = mapReplacementProjections(oldSpeedLimits, roadLinks, changes)
+
+    speedLimitsToProject.flatMap(
+      limit =>
+        limit match {
+          case (speedLimit, (Some(roadLink), Some(projection))) =>
+            Some(SpeedLimitFiller.projectSpeedLimit(speedLimit, roadLink, projection))
+          case (_, (_, _)) => None
+        }
+    )
   }
 
-  def changeListToProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[(Option[Long], Option[Long]), Projection] = {
-    changes.map(change => (change.oldId, change.newId) -> mapChangeToProjection(change)).toMap
+  def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
+    oldSpeedLimits.flatMap(limit =>
+      newRoadLinks.map(newRoadLink =>
+        (limit, getRoadLinkAndProjection(newRoadLinks, changes, limit.linkId, newRoadLink.linkId))
+      ))
+  }
+
+  def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long ) = {
+    val roadLink = roadLinks.find(rl => changes.filter(_.oldId == oldId).exists(change => change.newId.getOrElse(0) == rl.linkId))
+    val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
+    val projection = changeInfo match {
+      case Some(info) => mapChangeToProjection(info)
+      case _ => None
+    }
+    (roadLink,projection)
   }
 
   def mapChangeToProjection(change: ChangeInfo) = {
     // TODO: Do different type of change info handling here
-    change.changeType match {
-      case 5 => Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
-      case 6 => Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0))
-      case _ => Projection(0,0,0,0,0)
+    val typed = ChangeType.apply(change.changeType)
+    typed match {
+      case ChangeType.DividedModifiedPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
+        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.DividedNewPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
+        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
+      case _ => None
     }
   }
 
