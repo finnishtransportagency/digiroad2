@@ -159,7 +159,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     } else{
       try {
         if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) { // Finnish date format
-          val parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get)
+          val parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString()
           sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $parsedDate, $latestModifiedBy
                  from dual
