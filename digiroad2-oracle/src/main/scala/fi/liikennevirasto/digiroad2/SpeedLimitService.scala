@@ -54,15 +54,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-      println("change: " + change)
-      // wip: get data for projection
-      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
+      val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
       // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
-      // in DAO: oldSpeedLimit.validTo -> sysdate
+      // in DAO: oldSpeedLimit.validTo -> current_timestamp?
       //         newSpeedLimit.id -> sequence value
-      //         newSpeedLimit.LRM_timestamp -> sysdate
+      //         newSpeedLimit.LRM_timestamp -> current_timestamp
 
       println("new speed limits: " + newSpeedLimits)
+      println("old speed limits: " + oldSpeedLimits)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
@@ -79,26 +78,18 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
     */
-  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[SpeedLimit] ={
+  def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : (Seq[SpeedLimit], Seq[SpeedLimit]) ={
     val oldRoadLinkIds = changes.flatMap(_.oldId)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
-
-//    println("old links: " + oldRoadLinkIds)
-//    println("old speed limits: " + oldSpeedLimits)
-    println(changes)
-
-    val speedLimitsToProject = mapReplacementProjections(oldSpeedLimits, roadLinks, changes)
-
-    speedLimitsToProject.flatMap(
+    val newSpeedLimits = mapReplacementProjections(oldSpeedLimits, roadLinks, changes).flatMap(
       limit =>
         limit match {
           case (speedLimit, (Some(roadLink), Some(projection))) =>
             Some(SpeedLimitFiller.projectSpeedLimit(speedLimit, roadLink, projection))
           case (_, (_, _)) =>
             None
-
-        }
-    )
+        })
+    (oldSpeedLimits, newSpeedLimits)
   }
 
   def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
