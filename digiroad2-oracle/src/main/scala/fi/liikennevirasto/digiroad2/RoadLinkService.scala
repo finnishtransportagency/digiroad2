@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.sql.SQLException
+
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -155,10 +157,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
     } else{
-      sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+      try {
+        sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
+      } catch  {
+        case e: Exception =>
+          println("ERR! -> (" + linkId + ", " + value + "): " + latestModifiedAt.getOrElse("null"))
+          throw e
+      }
     }
   }
 
