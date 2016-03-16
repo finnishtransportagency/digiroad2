@@ -29,9 +29,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
-                                    fieldSelection: Option[String],
-                                    fetchGeometry: Boolean,
-                                    resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
+                           fieldSelection: Option[String],
+                           fetchGeometry: Boolean,
+                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
     if (linkIds.nonEmpty) vvhClient.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition)
     else Seq.empty[T]
   }
@@ -100,7 +100,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       }
     }
   }
-  
+
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     vvhClient.fetchVVHRoadlink(id).map(_.geometry)
   }
@@ -158,11 +158,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
                  where not exists (select * from #$table where link_id = $linkId)""".execute
     } else{
       try {
-        sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+        if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) { // Finnish date format
+          val parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get)
+          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
+                 select primary_key_seq.nextval, $linkId, $value, $parsedDate, $latestModifiedBy
+                 from dual
+                 where not exists (select * from #$table where link_id = $linkId)""".execute
+        } else {
+          sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
                  select primary_key_seq.nextval, $linkId, $value, $latestModifiedAt, $latestModifiedBy
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
-      } catch  {
+        }
+      } catch {
         case e: Exception =>
           println("ERR! -> (" + linkId + ", " + value + "): " + latestModifiedAt.getOrElse("null"))
           throw e
@@ -291,10 +299,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
   def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
     if (values.nonEmpty)
-     Some(values.max)
+      Some(values.max)
     else
-     None
-    }
+      None
+  }
 
   // fill incomplete links with the previous link information where they are available and where they agree
   def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
@@ -383,7 +391,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 
 
-        RoadLinkProperties(linkId,
+      RoadLinkProperties(linkId,
         propertyRows.functionalClassValue(linkId),
         propertyRows.linkTypeValue(linkId),
         propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
@@ -488,9 +496,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       roadLinks.filterNot(_.linkId == linkId)
         .filter(roadLink => roadLink.isCarTrafficRoad)
         .filter(roadLink => {
-        val targetLinkGeometry = roadLink.geometry
-        GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
-      })
+          val targetLinkGeometry = roadLink.geometry
+          GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
+        })
     }).getOrElse(Nil)
   }
 }
