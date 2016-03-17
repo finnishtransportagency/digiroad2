@@ -159,7 +159,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.id) should be(Seq(0))
   }
 
-  test("project speed limits to new geometry, case 1") {
+  test("project speed limits to new geometry, case 1 - single speed, both directions") {
     val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
@@ -183,7 +183,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output.head.endMeasure should be(3.0)
   }
 
-  test("project speed limits to new geometry, case 2") {
+  test("project speed limits to new geometry, case 2 - different speeds to different directions") {
     val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
@@ -226,6 +226,40 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output2.foreach(_.value should be (Some(NumericValue(50))))
   }
 
+  test("project speed limits to new geometry, case 3 - speed changes in the middle of the roadlink") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None))
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes flatMap { change =>
+      speedLimit.map(
+      SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.foreach(_.sideCode should be (SideCode.BothDirections))
+    println(output)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.head.value should be(Some(NumericValue(40)))
+    output.last.startMeasure should be(0.0)
+    output.last.endMeasure should be(3.0)
+    output.last.value should be(Some(NumericValue(50)))
+    output.length should be (4)
+  }
   case class ChangeInfo(oldId: Option[Long],
                         newId: Option[Long],
                         mmlId: Long,
