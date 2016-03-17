@@ -176,7 +176,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
       Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
-    println (output)
     output.length should be(3)
     output.head.trafficDirection should be (TrafficDirection.BothDirections)
     output.head.startMeasure should be(0.0)
