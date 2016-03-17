@@ -192,7 +192,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def persistProjectedLimit(limits: Seq[SpeedLimit]): Unit = {
     withDynTransaction {
       limits.foreach { limit =>
-        dao.createSpeedLimit("vvh_generated", limit.linkId, (limit.startMeasure, limit.endMeasure),limit.sideCode, limit.value.get.value)
+        dao.createSpeedLimit("vvh_generated", limit.linkId, (limit.startMeasure, limit.endMeasure),limit.sideCode, limit.value.get.value, Some(limit.vvhTimeStamp))
       }
     }
   }
@@ -246,7 +246,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     withDynTransaction {
       dao.updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
-      val newId = dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
+      val newId = dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None).get
 
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }

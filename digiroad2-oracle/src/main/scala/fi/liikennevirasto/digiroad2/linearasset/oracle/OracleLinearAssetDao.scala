@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -440,7 +440,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     idString match {
       case Some(s) =>
         val idSql = sql + makeLinkIdSql(s)
-        println(idSql)
+        println("Get old speedlimits" + idSql)
         Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])] (idSql).list.map {
           case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
             SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate)
@@ -489,11 +489,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
     municipalityValidation(vvhClient.fetchVVHRoadlink(linkId).get.municipalityCode)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None)
   }
 
-  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int) =
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value)
+  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long]) =
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp)
 
   def insertEnumeratedValue(assetId: Long, valuePropertyId: String, value: Int) = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
@@ -517,7 +517,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     Queries.insertTextProperty(assetId, propertyId, value).execute
   }
 
-  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit): Long = {
+  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit, vvhTimeStamp: Option[Long]): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -529,8 +529,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          into asset(id, asset_type_id, created_by, created_date)
          values ($assetId, $typeId, '$creator', sysdate)
 
-         into lrm_position(id, start_measure, end_measure, link_id, side_code)
-         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue)
+         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)})
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
@@ -543,12 +543,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     assetId
   }
   
-  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Option[Long] = {
+  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long]): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
     val existingLrmPositions = fetchSpeedLimitsByLinkId(linkId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end, _, _) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
-      Some(forceCreateLinearAsset(creator, 20, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value)))
+      Some(forceCreateLinearAsset(creator, 20, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value), vvhTimeStamp))
     } else {
       None
     }
@@ -602,7 +602,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
     updateMValues(id, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value).get
+    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value, None).get
     createdId
   }
 

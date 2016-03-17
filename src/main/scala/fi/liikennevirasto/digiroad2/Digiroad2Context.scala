@@ -41,8 +41,7 @@ class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Act
 
 class SpeedLimitSaveProjected[T](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
-    //TODO: implementation
-    case x: Seq[T] => speedLimitProvider.persistProjectedLimit(x.asInstanceOf[Seq[SpeedLimit]])// here: get new ID, save it to database with current_timestamp in LRM_POSITION modification date column. See also OracleLinearAssetDao.createSpeedLimit and add/modify method as needed
+    case x: Seq[T] => speedLimitProvider.persistProjectedLimit(x.asInstanceOf[Seq[SpeedLimit]])
     case _             => println("speedLimitSaveProjected: Received unknown message")
   }
 }
