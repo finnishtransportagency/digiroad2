@@ -65,6 +65,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("linearAssets:update", changeSet)
+      eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
 
       eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
 
@@ -158,6 +159,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  def persistProjectedLimit(limits: Seq[SpeedLimit]): Unit = {
+    withDynTransaction {
+      limits.foreach { limit =>
+        dao.createSpeedLimit("vvh_generated", limit.linkId, (limit.startMeasure, limit.endMeasure),limit.sideCode, limit.value.get.value)
+      }
+    }
+  }
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
     */

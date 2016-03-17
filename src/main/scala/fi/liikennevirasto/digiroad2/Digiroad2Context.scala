@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -39,10 +39,11 @@ class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Act
   }
 }
 
-class SpeedLimitSaveProjected(speedLimitProvider: SpeedLimitService) extends Actor {
+class SpeedLimitSaveProjected[T](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     //TODO: implementation
-    case x: SpeedLimit => // here: get new ID, save it to database with current_timestamp in LRM_POSITION modification date column. See also OracleLinearAssetDao.createSpeedLimit and add/modify method as needed
+    case x: Seq[T] => speedLimitProvider.persistProjectedLimit(x.asInstanceOf[Seq[SpeedLimit]])// here: get new ID, save it to database with current_timestamp in LRM_POSITION modification date column. See also OracleLinearAssetDao.createSpeedLimit and add/modify method as needed
+    case _             => println("speedLimitSaveProjected: Received unknown message")
   }
 }
 
@@ -68,6 +69,9 @@ object Digiroad2Context {
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
+
+  val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
+  eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
