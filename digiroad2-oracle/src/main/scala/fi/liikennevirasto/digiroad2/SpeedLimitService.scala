@@ -88,7 +88,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             Some(SpeedLimitFiller.projectSpeedLimit(speedLimit, roadLink, projection))
           case (_, (_, _)) =>
             None
-        })
+        }).filter(sl => sl.startMeasure != sl.endMeasure) // Remove zero-length parts
     (oldSpeedLimits, newSpeedLimits)
   }
 
