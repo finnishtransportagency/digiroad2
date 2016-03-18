@@ -50,11 +50,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
     val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
-      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val speedLimits = speedLimitLinks.groupBy(_.linkId)
+      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
+      val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks.filter(_.isCarTrafficRoad), change)
+      val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-      val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks, change)
       // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
       // in DAO: oldSpeedLimit.validTo -> current_timestamp?
       //         newSpeedLimit.id -> sequence value
@@ -72,6 +72,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
+      println("topology: " + filledTopology)
+      println("changeSet: " + changeSet)
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
     }
   }
@@ -89,7 +91,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             Some(SpeedLimitFiller.projectSpeedLimit(speedLimit, roadLink, projection))
           case (_, (_, _)) =>
             None
-        }).filter(sl => sl.startMeasure != sl.endMeasure) // Remove zero-length parts
+        }).filter(sl => Math.abs(sl.startMeasure - sl.endMeasure) > 0) // Remove zero-length or invalid length parts
     (oldSpeedLimits, newSpeedLimits)
   }
 
