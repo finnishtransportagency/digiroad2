@@ -143,14 +143,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     // TODO: Do different type of change info handling here
     val typed = ChangeType.apply(change.changeType)
     typed match {
-      case ChangeType.DividedModifiedPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
-      case ChangeType.DividedNewPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
-      case ChangeType.CombinedModifiedPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
-      case ChangeType.CombinedRemovedPart => Some(Projection(change.oldStartMeasure.getOrElse(0), change.oldEndMeasure.getOrElse(0),
-        change.newStartMeasure.getOrElse(0), change.newEndMeasure.getOrElse(0), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.DividedModifiedPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.DividedNewPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.CombinedModifiedPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.CombinedRemovedPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
       case _ => None
     }
   }
