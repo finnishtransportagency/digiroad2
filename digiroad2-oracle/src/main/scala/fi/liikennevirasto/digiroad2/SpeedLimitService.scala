@@ -57,7 +57,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def getChanged(sinceDate: DateTime) = {
+  def getChanged(sinceDate: DateTime): Seq[SpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate)
     }
