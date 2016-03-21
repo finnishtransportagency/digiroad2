@@ -158,7 +158,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     }
   }
 
-  // --- Tests for DROTH-1 Automatics for fixing speed limits after geometry update
+  // --- Tests for DROTH-1 Automatics for fixing speed limits after geometry update (using VVH change info data)
 
   test("Divided road link (change types 5&6): Should map speed limit of old link to two new links") {
 
@@ -172,55 +172,58 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val newLinkId1 = 5l
     val newLinkId2 = 6l
     val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val featureClass = FeatureClass.AllOthers
+    val functionalClass = 1
+    val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
 
-    val oldVVHRoadLink = VVHRoadlink(oldLinkId, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(0.0, 11.0)), 11.0, Municipality, 1, TrafficDirection.UnknownDirection, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    //val oldVVHRoadLink = VVHRoadlink(oldLinkId, municipalityCode, Nil, administrativeClass, trafficDirection, featureClass, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val newVVHRoadLinks = Seq(VVHRoadlink(newLinkId1, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      VVHRoadlink(newLinkId2, municipalityCode, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
-    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(0.0, 0.0)), 0.0, Municipality, 1, TrafficDirection.UnknownDirection, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(0.0, 0.0)), 0.0, Municipality, 1, TrafficDirection.UnknownDirection, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+    //val newVVHRoadLinks = Seq(VVHRoadlink(newLinkId1, municipalityCode, Nil, administrativeClass, trafficDirection, featureClass, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+    //  VVHRoadlink(newLinkId2, municipalityCode, Nil, administrativeClass, trafficDirection, featureClass, attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 5, Some(10), Some(1), Some(0), Some(1), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(5), Some(0), Some(5), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 5, Some(5), Some(10), Some(0), Some(5), Some(144000000)))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 6.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 70),(select id from property where public_id = 'rajoitus'))""".execute
 
+      //when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set())).thenReturn(Seq(oldVVHRoadLink))
+      //when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldVVHRoadLink)).future)
+      //when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
 
-      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set())).thenReturn(Seq(oldVVHRoadLink))
-      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldVVHRoadLink)).future)
-      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
-
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(List(oldRoadLink))
+      //when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(oldRoadLink))
+      //when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(List(oldRoadLink))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(oldRoadLink), Nil))
+      //when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(oldRoadLink), Nil))
 
-      val before = service.get(boundingBox, Set(municipalityCode))
+      val before = service.get(boundingBox, Set(municipalityCode)).head
 
-      //println(before)
+      println(before)
       before.length should be(1)
-      //before.value should be(Some(NumericValue(70)))
-      /*
-      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set())).thenReturn(newVVHRoadLinks)
-      when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(newVVHRoadLinks).future)
-      when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
+      before.foreach(_.value should be(Some(NumericValue(70))))
 
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(newRoadLinks)
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(newRoadLinks)
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, Nil))
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, Nil))
+      //when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set())).thenReturn(newVVHRoadLinks)
+      //when(mockVVHClient.fetchVVHRoadlinksF(boundingBox, Set())).thenReturn(Promise.successful(newVVHRoadLinks).future)
+      //when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
 
-      val after = provider.get(boundingBox, Set(municipalityCode))
+      //when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(newRoadLinks)
+      //when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(newRoadLinks)
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      //when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, changeInfo))
+
+      val after = service.get(boundingBox, Set(municipalityCode)).head
       println(after)
-      */
 
-      //after.length should be(2)
+      after.length should be(2)
 
       dynamicSession.rollback()    }
   }
