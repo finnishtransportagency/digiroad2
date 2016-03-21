@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, TrafficD
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
@@ -53,6 +54,28 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
+    }
+  }
+
+  def getChanged(sinceDate: DateTime) = {
+    val persistedSpeedLimits = withDynTransaction {
+      dao.getSpeedLimitsChangedSince(sinceDate)
+    }
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+
+    persistedSpeedLimits.flatMap { persistedSpeedLimit =>
+      roadLinks.find(_.linkId == persistedSpeedLimit.linkId).map { roadLink =>
+        SpeedLimit(persistedSpeedLimit.id,
+          persistedSpeedLimit.linkId,
+          persistedSpeedLimit.sideCode,
+          roadLink.trafficDirection,
+          persistedSpeedLimit.value.map(NumericValue),
+          GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
+          persistedSpeedLimit.startMeasure,
+          persistedSpeedLimit.endMeasure,
+          persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
+          persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate)
+      }
     }
   }
 
