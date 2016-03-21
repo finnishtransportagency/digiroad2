@@ -8,6 +8,8 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
+case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
+
 class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient)
   val logger = LoggerFactory.getLogger(getClass)
@@ -57,24 +59,29 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def getChanged(sinceDate: DateTime): Seq[SpeedLimit] = {
+  def getChanged(sinceDate: DateTime): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate)
     }
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
 
-    persistedSpeedLimits.flatMap { persistedSpeedLimit =>
-      roadLinks.find(_.linkId == persistedSpeedLimit.linkId).map { roadLink =>
-        SpeedLimit(persistedSpeedLimit.id,
-          persistedSpeedLimit.linkId,
-          persistedSpeedLimit.sideCode,
-          roadLink.trafficDirection,
-          persistedSpeedLimit.value.map(NumericValue),
-          GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
-          persistedSpeedLimit.startMeasure,
-          persistedSpeedLimit.endMeasure,
-          persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
-          persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate)
+    persistedSpeedLimits.flatMap { speedLimit =>
+      roadLinks.find(_.linkId == speedLimit.linkId).map { roadLink =>
+        ChangedSpeedLimit(
+          speedLimit = SpeedLimit(
+            id = speedLimit.id,
+            linkId = speedLimit.linkId,
+            sideCode = speedLimit.sideCode,
+            trafficDirection = roadLink.trafficDirection,
+            value = speedLimit.value.map(NumericValue),
+            geometry = GeometryUtils.truncateGeometry(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure),
+            startMeasure = speedLimit.startMeasure,
+            endMeasure = speedLimit.endMeasure,
+            modifiedBy = speedLimit.modifiedBy, modifiedDateTime = speedLimit.modifiedDate,
+            createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDate
+          ),
+          link = roadLink
+        )
       }
     }
   }
