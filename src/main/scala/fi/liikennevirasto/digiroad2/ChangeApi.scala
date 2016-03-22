@@ -42,7 +42,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       "linkId" -> speedLimit.linkId,
       "linkGeometry" -> link.geometry,
       "linkFunctionalClass" -> link.functionalClass,
-      "linkType" -> link.linkType,
+      "linkType" -> link.linkType.value,
       "sideCode" -> speedLimit.sideCode.value,
       "startMeasure" -> speedLimit.startMeasure,
       "endMeasure" -> speedLimit.endMeasure,
