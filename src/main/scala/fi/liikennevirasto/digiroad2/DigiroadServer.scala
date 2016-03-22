@@ -1,17 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import java.util.logging.Logger
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import org.eclipse.jetty.client.{HttpClient, HttpProxy, ProxyConfiguration}
-
-import scala.collection.JavaConversions._
-import org.eclipse.jetty.http.{MimeTypes, HttpURI}
+import org.eclipse.jetty.client.api.Request
+import org.eclipse.jetty.client.{HttpClient, HttpProxy}
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
-import org.eclipse.jetty.client.api.Request
+
+import scala.collection.JavaConversions._
 
 
 trait DigiroadServer {
@@ -87,3 +85,5 @@ class VKMUIProxyServlet extends ProxyServlet {
     java.net.URI.create("http://localhost:3000" + req.getRequestURI.replaceFirst("/digiroad/viitekehysmuunnin/", "/"))
   }
 }
+
+

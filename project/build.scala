@@ -34,7 +34,8 @@ object Digiroad2Build extends Build {
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "org.geotools" % "gt-graph" % "13.1",
         "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
-      )
+      ),
+      offline := (env.equals("ci-vahti"))
     )
   )
 
@@ -69,7 +70,8 @@ object Digiroad2Build extends Build {
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env,
+      offline := (env.equals("ci-vahti"))
     )
   ) dependsOn(geoJar)
 
@@ -109,7 +111,8 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
+      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
+      offline := (env.equals("ci-vahti"))
     )
   ) dependsOn(geoJar, oracleJar) aggregate(geoJar, oracleJar)
 
@@ -118,7 +121,8 @@ object Digiroad2Build extends Build {
     .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
     "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
-    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
+    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"),
+      offline := true)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
