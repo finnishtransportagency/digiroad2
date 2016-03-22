@@ -151,6 +151,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
       case ChangeType.CombinedRemovedPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
         change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.LenghtenedCommonPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
+      case ChangeType.LengthenedNewPart => Some(Projection(change.oldStartMeasure.getOrElse(Double.NaN), change.oldEndMeasure.getOrElse(Double.NaN),
+        change.newStartMeasure.getOrElse(Double.NaN), change.newEndMeasure.getOrElse(Double.NaN), change.vvhTimeStamp.getOrElse(0)))
       case _ => None
     }
   }
