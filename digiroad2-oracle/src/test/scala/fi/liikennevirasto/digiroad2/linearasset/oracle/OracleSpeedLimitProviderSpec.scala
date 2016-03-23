@@ -270,5 +270,52 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       dynamicSession.rollback()    }
   }
 
+  test("Should map speed limit of old link to lengthened new link with same id (lengthened road link, change types 3 and 4)") {
 
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 4l
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val featureClass = FeatureClass.AllOthers
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 3, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 4, null, null, Some(10), Some(15), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 70),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+
+      val before = service.get(boundingBox, Set(municipalityCode)).toList
+      before.length should be(1)
+      before.head.foreach(_.value should be(Some(NumericValue(70))))
+
+      println(before)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+      after.length should be(1)
+      after.head.foreach(_.value should be(Some(NumericValue(70))))
+
+      println(after)
+
+      dynamicSession.rollback()    }
+  }
 }
