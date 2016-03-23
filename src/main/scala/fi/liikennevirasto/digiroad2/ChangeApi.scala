@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.linearasset.PieceWiseLinearAsset
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
@@ -23,7 +24,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
   get("/total_weight_limits") {
     val since = DateTime.parse(params("since"))
-    linearAssetService.getChanged(30, since)
+    changedLinearAssetsToApi(since, linearAssetService.getChanged(30, since))
   }
 
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
@@ -37,6 +38,32 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
     Map("added" -> addedSpeedLimits.map(speedLimitToApi),
       "updated"  -> updatedSpeedLimits.map(speedLimitToApi))
+  }
+
+  def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
+    if (asset.expired) {
+      "Removed"
+    } else if (asset.createdDateTime.map(_.isAfter(since)).getOrElse(false)) {
+      "Added"
+    } else {
+      "Updated"
+    }
+  }
+
+  private def changedLinearAssetsToApi(since: DateTime, assets: Seq[ChangedLinearAsset]) = {
+    assets.map {  case ChangedLinearAsset(asset, link) =>
+      Map("id" -> asset.id,
+        "geometry" -> asset.geometry,
+        "linkGeometry" -> link.geometry,
+        "linkFunctionalClass" -> link.functionalClass,
+        "linkType" -> link.linkType.value,
+        "value" -> asset.value.map(_.toJson),
+        "side_code" -> asset.sideCode.value,
+        "linkId" -> asset.linkId,
+        "startMeasure" -> asset.startMeasure,
+        "endMeasure" -> asset.endMeasure,
+        "changeType" -> extractLinearAssetChangeType(since, asset))
+    }
   }
 
   private def speedLimitToApi(changedSpeedLimit: ChangedSpeedLimit) = {

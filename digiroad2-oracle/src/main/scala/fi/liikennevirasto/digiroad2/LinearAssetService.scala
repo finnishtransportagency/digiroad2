@@ -28,7 +28,7 @@ object LinearAssetTypes {
   }
 }
 
-case class ChangedLinearAsset(linearAsset: LinearAsset, link: RoadLink)
+case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
