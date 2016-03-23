@@ -21,6 +21,11 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     changedSpeedLimitsToApi(since, speedLimitService.getChanged(since))
   }
 
+  get("/total_weight_limits") {
+    val since = DateTime.parse(params("since"))
+    linearAssetService.getChanged(30, since)
+  }
+
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
     val (addedSpeedLimits, updatedSpeedLimits) =
       speedLimits.partition { case ChangedSpeedLimit(speedLimit, link) =>
