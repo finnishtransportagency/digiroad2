@@ -21,7 +21,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
     val since = DateTime.parse(params("since"))
     params("assetType") match {
-      case "speed_limits"                => changedSpeedLimitsToApi(since, speedLimitService.getChanged(since))
+      case "speed_limits"                => toGeoJson(since, speedLimitService.getChanged(since))
       case "total_weight_limits"         => changedLinearAssetsToApi(since, linearAssetService.getChanged(30, since))
       case "trailer_truck_weight_limits" => changedLinearAssetsToApi(since, linearAssetService.getChanged(40, since))
       case "axle_weight_limits"          => changedLinearAssetsToApi(since, linearAssetService.getChanged(50, since))
@@ -31,6 +31,46 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "width_limits"                => changedLinearAssetsToApi(since, linearAssetService.getChanged(90, since))
     }
   }
+
+  private def toGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+          Map(
+            "type" -> "Feature",
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> speedLimit.geometry
+            ),
+            "properties" ->
+              Map("id" -> speedLimit.id,
+                "value" -> speedLimit.value,
+                "link" -> Map(
+                  "id" -> link.linkId,
+                  "type" -> "Feature",
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value
+                  )
+                ),
+                "sideCode" -> speedLimit.sideCode.value,
+                "startMeasure" -> speedLimit.startMeasure,
+                "endMeasure" -> speedLimit.endMeasure,
+                "createdBy" -> speedLimit.createdBy,
+                "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
+                "modifiedBy" -> speedLimit.modifiedBy,
+                "changeType" -> extractSpeedLimitChangeType(since, speedLimit)
+              )
+          )
+        }
+    )
+
 
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
     speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
