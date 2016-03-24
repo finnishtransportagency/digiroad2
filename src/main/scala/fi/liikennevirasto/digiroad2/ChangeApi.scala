@@ -41,7 +41,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
             "type" -> "Feature",
             "geometry" -> Map(
               "type" -> "LineString",
-              "coordinates" -> speedLimit.geometry
+              "coordinates" -> speedLimit.geometry.map(p => Seq(p.x, p.y, p.z))
             ),
             "properties" ->
               Map("id" -> speedLimit.id,
@@ -51,7 +51,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   "type" -> "Feature",
                   "geometry" -> Map(
                     "type" -> "LineString",
-                    "coordinates" -> link.geometry
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
                   ),
                   "properties" -> Map(
                     "functionalClass" -> link.functionalClass,
