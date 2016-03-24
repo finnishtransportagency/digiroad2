@@ -35,7 +35,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
     speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
       Map("id" -> speedLimit.id,
-        "value" -> speedLimit.value,
+        "value" -> speedLimit.value.map(_.toJson),
         "linkId" -> speedLimit.linkId,
         "linkGeometry" -> link.geometry,
         "linkFunctionalClass" -> link.functionalClass,
