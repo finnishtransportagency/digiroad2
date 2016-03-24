@@ -45,7 +45,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
             ),
             "properties" ->
               Map("id" -> speedLimit.id,
-                "value" -> speedLimit.value,
+                "value" -> speedLimit.value.map(_.toJson),
                 "link" -> Map(
                   "id" -> link.linkId,
                   "type" -> "Feature",
