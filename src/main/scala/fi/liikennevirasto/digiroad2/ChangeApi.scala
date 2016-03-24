@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.linearasset.PieceWiseLinearAsset
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
@@ -33,27 +33,30 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   }
 
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
-    val (addedSpeedLimits, updatedSpeedLimits) =
-      speedLimits.partition { case ChangedSpeedLimit(speedLimit, link) =>
-        speedLimit.createdDateTime match {
-          case None => false
-          case Some(createdDate) => createdDate.isAfter(since)
-        }
-      }
-
-    Map("added" -> addedSpeedLimits.map(speedLimitToApi),
-      "updated"  -> updatedSpeedLimits.map(speedLimitToApi))
-  }
-
-  def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
-    if (asset.expired) {
-      "Removed"
-    } else if (asset.createdDateTime.map(_.isAfter(since)).getOrElse(false)) {
-      "Added"
-    } else {
-      "Updated"
+    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+      Map("id" -> speedLimit.id,
+        "value" -> speedLimit.value,
+        "linkId" -> speedLimit.linkId,
+        "linkGeometry" -> link.geometry,
+        "linkFunctionalClass" -> link.functionalClass,
+        "linkType" -> link.linkType.value,
+        "sideCode" -> speedLimit.sideCode.value,
+        "startMeasure" -> speedLimit.startMeasure,
+        "endMeasure" -> speedLimit.endMeasure,
+        "geometry" -> speedLimit.geometry,
+        "createdBy" -> speedLimit.createdBy,
+        "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+        "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
+        "modifiedBy" -> speedLimit.modifiedBy,
+        "changeType" -> extractSpeedLimitChangeType(since, speedLimit))
     }
   }
+
+  private def extractSpeedLimitChangeType(since: DateTime, speedLimit: SpeedLimit): String =
+    if (speedLimit.createdDateTime.exists(_.isAfter(since)))
+      "Added"
+    else
+      "Updated"
 
   private def changedLinearAssetsToApi(since: DateTime, assets: Seq[ChangedLinearAsset]) = {
     assets.map {  case ChangedLinearAsset(asset, link) =>
@@ -71,22 +74,13 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
-  private def speedLimitToApi(changedSpeedLimit: ChangedSpeedLimit) = {
-    val ChangedSpeedLimit(speedLimit, link) = changedSpeedLimit
-
-    Map("id" -> speedLimit.id,
-      "value" -> speedLimit.value,
-      "linkId" -> speedLimit.linkId,
-      "linkGeometry" -> link.geometry,
-      "linkFunctionalClass" -> link.functionalClass,
-      "linkType" -> link.linkType.value,
-      "sideCode" -> speedLimit.sideCode.value,
-      "startMeasure" -> speedLimit.startMeasure,
-      "endMeasure" -> speedLimit.endMeasure,
-      "geometry" -> speedLimit.geometry,
-      "createdBy" -> speedLimit.createdBy,
-      "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
-      "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
-      "modifiedBy" -> speedLimit.modifiedBy)
+  private def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
+    if (asset.expired) {
+      "Removed"
+    } else if (asset.createdDateTime.exists(_.isAfter(since))) {
+      "Added"
+    } else {
+      "Updated"
+    }
   }
 }
