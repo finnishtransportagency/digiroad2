@@ -17,14 +17,19 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
   }
 
-  get("/speedLimits") {
+  get("/:assetType") {
+    contentType = formats("json")
     val since = DateTime.parse(params("since"))
-    changedSpeedLimitsToApi(since, speedLimitService.getChanged(since))
-  }
-
-  get("/total_weight_limits") {
-    val since = DateTime.parse(params("since"))
-    changedLinearAssetsToApi(since, linearAssetService.getChanged(30, since))
+    params("assetType") match {
+      case "speed_limits"                => changedSpeedLimitsToApi(since, speedLimitService.getChanged(since))
+      case "total_weight_limits"         => changedLinearAssetsToApi(since, linearAssetService.getChanged(30, since))
+      case "trailer_truck_weight_limits" => changedLinearAssetsToApi(since, linearAssetService.getChanged(40, since))
+      case "axle_weight_limits"          => changedLinearAssetsToApi(since, linearAssetService.getChanged(50, since))
+      case "bogie_weight_limits"         => changedLinearAssetsToApi(since, linearAssetService.getChanged(60, since))
+      case "height_limits"               => changedLinearAssetsToApi(since, linearAssetService.getChanged(70, since))
+      case "length_limits"               => changedLinearAssetsToApi(since, linearAssetService.getChanged(80, since))
+      case "width_limits"                => changedLinearAssetsToApi(since, linearAssetService.getChanged(90, since))
+    }
   }
 
   private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
