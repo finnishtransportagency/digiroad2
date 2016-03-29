@@ -21,7 +21,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
     val since = DateTime.parse(params("since"))
     params("assetType") match {
-      case "speed_limits"                => toGeoJson(since, speedLimitService.getChanged(since))
+      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since))
       case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since))
       case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(50, since))
@@ -32,7 +32,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     }
   }
 
-  private def toGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
+  private def speedLimitsToGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
