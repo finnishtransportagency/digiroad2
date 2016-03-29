@@ -22,13 +22,13 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     val since = DateTime.parse(params("since"))
     params("assetType") match {
       case "speed_limits"                => toGeoJson(since, speedLimitService.getChanged(since))
-      case "total_weight_limits"         => changedLinearAssetsToApi(since, linearAssetService.getChanged(30, since))
-      case "trailer_truck_weight_limits" => changedLinearAssetsToApi(since, linearAssetService.getChanged(40, since))
-      case "axle_weight_limits"          => changedLinearAssetsToApi(since, linearAssetService.getChanged(50, since))
-      case "bogie_weight_limits"         => changedLinearAssetsToApi(since, linearAssetService.getChanged(60, since))
-      case "height_limits"               => changedLinearAssetsToApi(since, linearAssetService.getChanged(70, since))
-      case "length_limits"               => changedLinearAssetsToApi(since, linearAssetService.getChanged(80, since))
-      case "width_limits"                => changedLinearAssetsToApi(since, linearAssetService.getChanged(90, since))
+      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since))
+      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since))
+      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(50, since))
+      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(60, since))
+      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since))
+      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since))
+      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since))
     }
   }
 
@@ -71,48 +71,50 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         }
     )
 
-
-  private def changedSpeedLimitsToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
-    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
-      Map("id" -> speedLimit.id,
-        "value" -> speedLimit.value.map(_.toJson),
-        "linkId" -> speedLimit.linkId,
-        "linkGeometry" -> link.geometry,
-        "linkFunctionalClass" -> link.functionalClass,
-        "linkType" -> link.linkType.value,
-        "sideCode" -> speedLimit.sideCode.value,
-        "startMeasure" -> speedLimit.startMeasure,
-        "endMeasure" -> speedLimit.endMeasure,
-        "geometry" -> speedLimit.geometry,
-        "createdBy" -> speedLimit.createdBy,
-        "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
-        "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
-        "modifiedBy" -> speedLimit.modifiedBy,
-        "changeType" -> extractSpeedLimitChangeType(since, speedLimit))
-    }
-  }
+  private def linearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedLinearAssets.map { case ChangedLinearAsset(linearAsset, link) =>
+          Map(
+            "type" -> "Feature",
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> linearAsset.geometry.map(p => Seq(p.x, p.y, p.z))
+            ),
+            "properties" ->
+              Map("id" -> linearAsset.id,
+                "value" -> linearAsset.value.map(_.toJson),
+                "link" -> Map(
+                  "id" -> link.linkId,
+                  "type" -> "Feature",
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value
+                  )
+                ),
+                "sideCode" -> linearAsset.sideCode.value,
+                "startMeasure" -> linearAsset.startMeasure,
+                "endMeasure" -> linearAsset.endMeasure,
+                "createdBy" -> linearAsset.createdBy,
+                "modifiedAt" -> linearAsset.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
+                "modifiedBy" -> linearAsset.modifiedBy,
+                "changeType" -> extractLinearAssetChangeType(since, linearAsset)
+              )
+          )
+        }
+    )
 
   private def extractSpeedLimitChangeType(since: DateTime, speedLimit: SpeedLimit): String =
     if (speedLimit.createdDateTime.exists(_.isAfter(since)))
       "Added"
     else
       "Updated"
-
-  private def changedLinearAssetsToApi(since: DateTime, assets: Seq[ChangedLinearAsset]) = {
-    assets.map {  case ChangedLinearAsset(asset, link) =>
-      Map("id" -> asset.id,
-        "geometry" -> asset.geometry,
-        "linkGeometry" -> link.geometry,
-        "linkFunctionalClass" -> link.functionalClass,
-        "linkType" -> link.linkType.value,
-        "value" -> asset.value.map(_.toJson),
-        "side_code" -> asset.sideCode.value,
-        "linkId" -> asset.linkId,
-        "startMeasure" -> asset.startMeasure,
-        "endMeasure" -> asset.endMeasure,
-        "changeType" -> extractLinearAssetChangeType(since, asset))
-    }
-  }
 
   private def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
     if (asset.expired) {
