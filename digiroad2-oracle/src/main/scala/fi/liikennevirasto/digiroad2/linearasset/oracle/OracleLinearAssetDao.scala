@@ -457,7 +457,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     idString match {
       case Some(s) =>
         val idSql = sql + makeLinkIdSql(s)
-        //println("Get old speedlimits" + idSql)
+        println("Get old speedlimits" + idSql)
         Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])] (idSql).list.map {
           case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
             SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate)
