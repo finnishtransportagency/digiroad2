@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustm
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -26,6 +27,8 @@ object LinearAssetTypes {
     case _ => numericValuePropertyId
   }
 }
+
+case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -81,6 +84,30 @@ trait LinearAssetOperations {
       }
     }
   }
+
+  def getChanged(typeId: Int, since: DateTime): Seq[ChangedLinearAsset] = {
+    val persistedLinearAssets = withDynTransaction {
+      dao.getLinearAssetsChangedSince(typeId, since)
+    }
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(persistedLinearAssets.map(_.linkId).toSet)
+
+    persistedLinearAssets.flatMap { persistedLinearAsset =>
+      roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
+        val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
+        val endPoints = GeometryUtils.geometryEndpoints(points)
+        ChangedLinearAsset(
+          linearAsset = PieceWiseLinearAsset(
+            persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
+            persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
+            Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
+            persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection)
+          ,
+          link = roadLink
+        )
+      }
+    }
+  }
+
 
   def expire(ids: Seq[Long], username: String): Seq[Long] = {
     withDynTransaction {

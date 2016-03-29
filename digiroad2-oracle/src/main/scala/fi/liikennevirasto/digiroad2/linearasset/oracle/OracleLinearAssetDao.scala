@@ -365,6 +365,26 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime) = {
+    val assets = sql"""
+        select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = 'mittarajoitus'
+          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.asset_type_id = $assetTypeId
+          and (a.valid_to >= $sinceDate or a.modified_date >= $sinceDate or a.created_date >= $sinceDate)
+          and a.floating = 0"""
+      .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+
+    assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId) =>
+      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId)
+    }
+  }
+
   private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, linkId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.find(_.linkId == linkId).get
