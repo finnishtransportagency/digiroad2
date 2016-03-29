@@ -48,12 +48,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
 
-    val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
 
       // find timestamps and ids from change and speedlimitLinks
-      val changeRoadLinkTimeStampsAndIds = change.map(a => a.newId.getOrElse(None) -> a.vvhTimeStamp.getOrElse(None))
+      val changeRoadLinkTimeStampsAndIds = changes.map(a => a.newId.getOrElse(None) -> a.vvhTimeStamp.getOrElse(None))
       val speedLimitLinksVvhTimeStampsAndIds = speedLimitLinks.map(s => s.linkId -> s.vvhTimeStamp)
       val merged = changeRoadLinkTimeStampsAndIds.intersect(speedLimitLinksVvhTimeStampsAndIds)
 
@@ -62,7 +62,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
       val projectableRoadLinks = roadLinks.filter(_.isCarTrafficRoad).filterNot(rl => filteredSpeedLimitLinks.map(sl => sl.linkId).contains(rl.linkId))
 
-      val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableRoadLinks, change)
+      val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableRoadLinks, changes)
       val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
@@ -103,10 +103,30 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
-    oldSpeedLimits.flatMap(limit =>
+    oldSpeedLimits.flatMap{limit =>
       newRoadLinks.filter(rl => targetLinks.contains(rl.linkId)).map(newRoadLink =>
-        (limit, getRoadLinkAndProjection(newRoadLinks, changes, limit.linkId, newRoadLink.linkId))
-      ))
+        (getLimitWithNewModifications(limit, changes), getRoadLinkAndProjection(newRoadLinks, changes, limit.linkId, newRoadLink.linkId))
+      )}
+  }
+
+  def getLimitWithNewModifications(speedLimit: SpeedLimit, changes: Seq[ChangeInfo]) : SpeedLimit = {
+
+    val grouped = changes.groupBy(_.newId).mapValues(_.flatMap(_.oldId))
+    println("SPEEDLIMIT: " + speedLimit.linkId)
+    val targetId = changes.find(c => c.oldId.contains(speedLimit.linkId)).flatMap(cs => cs.newId)
+    println("TARGETID: " + targetId)
+    val oldIds = grouped.find(g => g._1.equals(targetId)).map(d => d._2)
+    println("OLDONES" + oldIds)
+
+    // todo: get modifications by oldIds for comparison
+
+  val (newModifiedBy,newModifiedDate) = (speedLimit.modifiedBy, speedLimit.modifiedDateTime)
+
+  SpeedLimit(id = 0, speedLimit.linkId, speedLimit.sideCode, speedLimit.trafficDirection,
+    speedLimit.value, speedLimit.geometry, speedLimit.startMeasure, speedLimit.endMeasure,
+    modifiedBy = newModifiedBy,
+    modifiedDateTime = newModifiedDate, createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDateTime,
+    vvhTimeStamp = speedLimit.vvhTimeStamp, vvhModifiedDate = None)
   }
 
   def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long ) = {
