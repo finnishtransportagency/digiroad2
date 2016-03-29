@@ -181,6 +181,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -194,7 +195,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -236,6 +237,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -249,11 +251,11 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 25.000, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId, null, 0.000, 25.000, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (2,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (2,2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (2,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -295,6 +297,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -308,11 +311,11 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId, null, 15.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (2,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (2,2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (2,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -354,6 +357,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
@@ -367,15 +371,15 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (2,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (2,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (2,2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (2,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (3,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (3,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (3,3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -416,6 +420,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -426,7 +431,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -447,9 +452,10 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       dynamicSession.rollback()    }
   }
 
-  test("Should map speed limit of old link to shortened new link with same id ") {
+  test("Should map speed limit of old link to shortened new link with same id (common part + removed part)") {
 
     // Shortened road link (change types 7 and 8)
+    // 1. Common part + 2. Removed part
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -465,6 +471,58 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(0), Some(20), Some(0), Some(15), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(15), Some(20), null, null, Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      val before = service.get(boundingBox, Set(municipalityCode)).toList
+
+      before.length should be(1)
+      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.sideCode should be(SideCode.BothDirections))
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+
+      after.length should be(1)
+      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.sideCode should be(SideCode.BothDirections))
+
+      dynamicSession.rollback()    }
+  }
+
+  test("Should map speed limit of old link to shortened new link with same id (removed part + common part)") {
+
+    // Shortened road link (change types 7 and 8)
+    // 1. Removed part + 2. Common part
+    // Speed limit case 1
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -475,14 +533,12 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values (1,20,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
-
-      println(before)
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
@@ -491,11 +547,76 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
-      println(after)
-
       after.length should be(1)
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
+
+      dynamicSession.rollback()    }
+  }
+
+  test("Should take latest time stamp from old speed limits to combined road link") {
+
+    // Combined road link (change types 1 and 2)
+    // Speed limit case 1
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 5001
+    val oldLinkId2 = 5002
+    val oldLinkId3 = 5003
+    val newLinkId = 6000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+
+    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(oldLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), Some(144000000)),
+      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (1,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (2,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (2,2)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (2,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (3,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (3,3)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+
+      // TODO: Add necessary comparisons before and after
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
+
+      val before = service.get(boundingBox, Set(municipalityCode)).toList
+      //println(before)
+
+      before.length should be(3)
+
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+      //println(after)
+
+      after.length should be(1)
 
       dynamicSession.rollback()    }
   }
