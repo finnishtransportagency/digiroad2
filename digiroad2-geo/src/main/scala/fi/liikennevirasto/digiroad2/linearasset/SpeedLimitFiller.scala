@@ -150,6 +150,10 @@ object SpeedLimitFiller {
 
   def projectSpeedLimit(asset: SpeedLimit, to: RoadLink, projection: Projection) = {
     val newLinkId = to.linkId
+    val assetId = asset.linkId match {
+      case to.linkId => asset.id
+      case _ => 0
+    }
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
     var newSideCode = asset.sideCode
@@ -181,7 +185,7 @@ object SpeedLimitFiller {
         GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
       0, to.length)
 
-    SpeedLimit(id = 0, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
+    SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
       asset.value, geometry, newStart, newEnd,
       modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
