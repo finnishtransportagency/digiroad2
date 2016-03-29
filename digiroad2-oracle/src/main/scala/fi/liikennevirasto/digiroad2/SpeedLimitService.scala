@@ -54,7 +54,17 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val projectableRoadLinks = roadLinks.filter(_.isCarTrafficRoad).filterNot(rl => speedLimitLinks.map(sl => sl.linkId).contains(rl.linkId))
+
+      // find timestamps and ids from change and speedlimitLinks
+      val changeRoadLinkTimeStampsAndIds = change.map(a => a.newId.getOrElse(None) -> a.vvhTimeStamp.getOrElse(None))
+      val speedLimitLinksVvhTimeStampsAndIds = speedLimitLinks.map(s => s.linkId -> s.vvhTimeStamp)
+      val merged = changeRoadLinkTimeStampsAndIds.intersect(speedLimitLinksVvhTimeStampsAndIds)
+
+      // filter those roadlinks that have already been projected = vvhTimeStamp is same
+      val filteredSpeedLimitLinks = speedLimitLinks.filter(sl => merged.map(m => m._1).contains(sl.linkId))
+
+      val projectableRoadLinks = roadLinks.filter(_.isCarTrafficRoad).filterNot(rl => filteredSpeedLimitLinks.map(sl => sl.linkId).contains(rl.linkId))
+
       val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableRoadLinks, change)
       val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
