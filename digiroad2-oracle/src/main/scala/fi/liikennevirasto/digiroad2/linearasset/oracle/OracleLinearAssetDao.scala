@@ -657,6 +657,27 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
+    * Updates m-values and vvh time stamp in db. Used by OracleLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
+    */
+  def updateMValues(id: Long, linkMeasures: (Double, Double), vvhTimeStamp: Long): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
+    sqlu"""
+      update LRM_POSITION
+      set
+        start_measure = $startMeasure,
+        end_measure = $endMeasure,
+        adjusted_timestamp = $vvhTimeStamp,
+        modified_date = CURRENT_TIMESTAMP
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id)
+    """.execute
+  }
+
+  /**
     * Updates side codes in db. Used by SpeedLimitService.separate, LinearAssetService.persistSideCodeAdjustments and LinearAssetService.separate.
     */
   def updateSideCode(id: Long, sideCode: SideCode): Unit = {
