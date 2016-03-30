@@ -190,11 +190,17 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   def persistProjectedLimit(limits: Seq[SpeedLimit]): Unit = {
     withDynTransaction {
-      limits.foreach { limit =>
+      val (newlimits, changedlimits) = limits.partition(_.id <= 0)
+      newlimits.foreach { limit =>
+        // TODO: usernames, modification dates etc. here
         dao.createSpeedLimit("vvh_generated", limit.linkId, (limit.startMeasure, limit.endMeasure),limit.sideCode, limit.value.get.value, Some(limit.vvhTimeStamp))
+      }
+      changedlimits.foreach { limit =>
+        dao.updateMValues(limit.id, (limit.startMeasure, limit.endMeasure), limit.vvhTimeStamp)
       }
     }
   }
+
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
     */
