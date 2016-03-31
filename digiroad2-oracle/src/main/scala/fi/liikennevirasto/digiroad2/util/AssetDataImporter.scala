@@ -648,7 +648,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None)
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None)
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -675,7 +675,7 @@ class AssetDataImporter {
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
       linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value) =>
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None)
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None)
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
