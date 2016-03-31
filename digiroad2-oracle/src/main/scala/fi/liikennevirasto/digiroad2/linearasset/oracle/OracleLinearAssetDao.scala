@@ -518,14 +518,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
     municipalityValidation(vvhClient.fetchVVHRoadlink(linkId).get.municipalityCode)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
 
   /**
     * Creates new speed limit. Returns id of new speed limit. SpeedLimitService.persistProjectedLimit and SpeedLimitService.separate.
     */
-  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long]) =
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp)
+  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long], createdDate: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None) =
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt)
 
   /**
     * Saves enumerated value to db. Used by OracleLinearAssetDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
@@ -563,20 +563,30 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Saves linear asset to db. Returns id of new linear asset. Used by OracleLinearAssetDao.createSpeedLimitWithoutDuplicates,
     * AssetDataImporter.splitSpeedLimits and AssetDataImporter.splitLinearAssets.
     */
-  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit, vvhTimeStamp: Option[Long]): Long = {
+  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: (Long, Int) => Unit, vvhTimeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime]): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
 
+    val creationDate = createdDate match {
+      case Some(datetime) => s"""TO_TIMESTAMP_TZ('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case None => "sysdate"
+    }
+
+    val modifiedDate = modifiedAt match {
+      case Some(datetime) => s"""TO_TIMESTAMP_TZ('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case None => "NULL"
+    }
+
     val insertAll =
       s"""
        insert all
-         into asset(id, asset_type_id, created_by, created_date)
-         values ($assetId, $typeId, '$creator', sysdate)
+         into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
+         values ($assetId, $typeId, '$creator', $creationDate, ${modifiedBy.getOrElse("NULL")}, $modifiedDate)
 
-         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp)
-         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)})
+         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, CURRENT_TIMESTAMP)
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
@@ -589,12 +599,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     assetId
   }
   
-  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long]): Option[Long] = {
+  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime]): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
     val existingLrmPositions = fetchSpeedLimitsByLinkId(linkId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end, _, _) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
-      Some(forceCreateLinearAsset(creator, 20, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value), vvhTimeStamp))
+      Some(forceCreateLinearAsset(creator, 20, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertEnumeratedValue(id, "rajoitus", value), vvhTimeStamp, createdDate, modifiedBy, modifiedAt))
     } else {
       None
     }
@@ -609,7 +619,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       update LRM_POSITION
       set
         start_measure = $startMeasure,
-        end_measure = $endMeasure
+        end_measure = $endMeasure,
+        modified_date = CURRENT_TIMESTAMP
       where id = (
         select lrm.id
           from asset a
@@ -648,7 +659,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     sqlu"""
       update LRM_POSITION
       set
-        side_code = $sideCodeValue
+        side_code = $sideCodeValue,
+        modified_date = CURRENT_TIMESTAMP
       where id = (
         select lrm.id
           from asset a
@@ -678,7 +690,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
     updateMValues(id, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value, None).get
+    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value, None, None, None, None).get
     createdId
   }
 
@@ -742,8 +754,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to)
         values ($id, $typeId, $username, sysdate, #$validTo)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
