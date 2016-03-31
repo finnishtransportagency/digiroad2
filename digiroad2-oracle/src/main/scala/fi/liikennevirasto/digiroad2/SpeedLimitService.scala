@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, BoundingRectangle, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
@@ -60,7 +60,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       // filter those road links that have already been projected earlier
       val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
 
-      val projectableRoadLinks = roadLinks.filter(_.isCarTrafficRoad).filterNot(rl => speedLimitsOnChangedLinks.map(sl => sl.linkId).contains(rl.linkId))
+      val projectableRoadLinks = roadLinks.filter(
+        rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad).filterNot(
+        rl => speedLimitsOnChangedLinks.map(sl => sl.linkId).contains(rl.linkId))
 
       val (oldSpeedLimits, newSpeedLimits) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableRoadLinks, change)
       val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
@@ -128,7 +130,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (oldSpeedLimits, newSpeedLimits)
   }
 
-  def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
+  def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], newRoadLinks: Seq[RoadLink],
+                                changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
     oldSpeedLimits.flatMap{limit =>
       newRoadLinks.filter(rl => targetLinks.contains(rl.linkId)).map(newRoadLink =>
@@ -139,21 +142,21 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def getLimitWithNewModifications(speedLimit: SpeedLimit, changes: Seq[ChangeInfo]) : SpeedLimit = {
 
     val grouped = changes.groupBy(_.newId).mapValues(_.flatMap(_.oldId))
-    println("SPEEDLIMIT: " + speedLimit.linkId)
+    //    println("SPEEDLIMIT: " + speedLimit.linkId)
     val targetId = changes.find(c => c.oldId.contains(speedLimit.linkId)).flatMap(cs => cs.newId)
-    println("TARGETID: " + targetId)
+    //    println("TARGETID: " + targetId)
     val oldIds = grouped.find(g => g._1.equals(targetId)).map(d => d._2)
-    println("OLDONES" + oldIds)
+    //    println("OLDONES" + oldIds)
 
     // todo: get modifications by oldIds for comparison
 
-  val (newModifiedBy,newModifiedDate) = (speedLimit.modifiedBy, speedLimit.modifiedDateTime)
+    val (newModifiedBy,newModifiedDate) = (speedLimit.modifiedBy, speedLimit.modifiedDateTime)
 
-  SpeedLimit(id = 0, speedLimit.linkId, speedLimit.sideCode, speedLimit.trafficDirection,
-    speedLimit.value, speedLimit.geometry, speedLimit.startMeasure, speedLimit.endMeasure,
-    modifiedBy = newModifiedBy,
-    modifiedDateTime = newModifiedDate, createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDateTime,
-    vvhTimeStamp = speedLimit.vvhTimeStamp, vvhModifiedDate = None)
+    SpeedLimit(id = 0, speedLimit.linkId, speedLimit.sideCode, speedLimit.trafficDirection,
+      speedLimit.value, speedLimit.geometry, speedLimit.startMeasure, speedLimit.endMeasure,
+      modifiedBy = newModifiedBy,
+      modifiedDateTime = newModifiedDate, createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDateTime,
+      vvhTimeStamp = speedLimit.vvhTimeStamp, vvhModifiedDate = None)
   }
 
   def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long ) = {
@@ -200,7 +203,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def find(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
-     loadSpeedLimit(speedLimitId)
+      loadSpeedLimit(speedLimitId)
     }
   }
 
