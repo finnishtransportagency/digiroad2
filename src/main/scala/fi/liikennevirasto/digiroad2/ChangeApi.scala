@@ -112,17 +112,17 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
   private def extractSpeedLimitChangeType(since: DateTime, speedLimit: SpeedLimit): String =
     if (speedLimit.createdDateTime.exists(_.isAfter(since)))
-      "Added"
+      "Add"
     else
-      "Updated"
+      "Update"
 
   private def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
     if (asset.expired) {
-      "Removed"
+      "Remove"
     } else if (asset.createdDateTime.exists(_.isAfter(since))) {
-      "Added"
+      "Add"
     } else {
-      "Updated"
+      "Update"
     }
   }
 }
