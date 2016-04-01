@@ -28,6 +28,13 @@ INSERT ALL
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700005,50000028)
   INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700005,(select id from enumerated_value where value = 40),(select id from property where public_id = 'rajoitus'))
 
+-- Cases 3&4 (elongated road) 6470196 -> 6470196
+
+  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING,CREATED_BY) values (700006,20,0,'testfixture')
+  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (50000030, 6470196, 321633591, 0.000, 153.57, 1)
+  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700006,50000030)
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700006,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))
+
 -- Cases 3&4 (lengthened): OLD_ ID: 2226334, NEW_ID: 2226334
 -- Speed limit case 2 (separate)
 

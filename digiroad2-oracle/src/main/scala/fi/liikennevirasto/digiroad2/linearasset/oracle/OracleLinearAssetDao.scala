@@ -181,7 +181,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.link_id
-           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
+           where a.asset_type_id = 20 and floating = 0 AND valid_to > CURRENT_TIMESTAMP """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
     }
   }
 
@@ -620,7 +620,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       s"""
        insert all
          into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
-         values ($assetId, $typeId, '$creator', $creationDate, ${modifiedBy.getOrElse("NULL")}, $modifiedDate)
+         values ($assetId, $typeId, '$creator', $creationDate, '${modifiedBy.getOrElse("NULL")}', $modifiedDate)
 
          into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date)
          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, CURRENT_TIMESTAMP)

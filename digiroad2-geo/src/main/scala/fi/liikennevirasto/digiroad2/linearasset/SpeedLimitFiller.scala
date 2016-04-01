@@ -88,7 +88,7 @@ object SpeedLimitFiller {
   }
 
   private def dropRedundantSegments(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val headOption = segments.headOption
+    val headOption = segments.sortBy(s => 0L-s.vvhTimeStamp).headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
