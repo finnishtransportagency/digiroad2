@@ -102,7 +102,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     linearAssets.map(_.linkId) should be(Seq(1))
     linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
     verify(mockEventBus, times(1))
-      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
+      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Set.empty[Long]))
   }
 
   test("Municipality fetch dispatches to dao based on asset type id") {
