@@ -65,13 +65,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-      // TODO: Now save the earlier speed limits to have valid_to date to now and save the vvh time stamp in them as well
-      // in Actor: oldSpeedLimit.validTo -> current_timestamp. Change ChangeSet class to include Set of expired asset ids?
-      //         newSpeedLimit.id -> sequence value
-      //         newSpeedLimit.LRM_timestamp -> current_timestamp
-
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-      eventbus.publish("linearAssets:update", changeSet)
+
+      eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = oldSpeedLimits.map(_.id).toSet))
       eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
 
       eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)

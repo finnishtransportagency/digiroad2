@@ -8,5 +8,6 @@ object LinearAssetFiller {
   case class SideCodeAdjustment(assetId: Long, sideCode: SideCode)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
-                       adjustedSideCodes: Seq[SideCodeAdjustment])
+                       adjustedSideCodes: Seq[SideCodeAdjustment],
+                       expiredAssetIds: Set[Long])
 }

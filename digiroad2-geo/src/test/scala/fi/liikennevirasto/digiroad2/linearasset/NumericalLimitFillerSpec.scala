@@ -116,6 +116,6 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 0).map(_.value) should be(Seq(None))
     filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil))
+    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
   }
 }

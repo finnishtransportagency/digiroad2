@@ -132,7 +132,7 @@ object SpeedLimitFiller {
       dropShortLimits
     )
 
-    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil)
+    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil, Set.empty)
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
