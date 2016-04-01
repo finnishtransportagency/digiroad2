@@ -28,4 +28,29 @@ INSERT ALL
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700005,50000028)
   INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700005,(select id from enumerated_value where value = 40),(select id from property where public_id = 'rajoitus'))
 
+-- Cases 3&4 (lengthened): OLD_ ID: 2226334, NEW_ID: 2226334
+-- Speed limit case 2 (separate)
+
+  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (700100,20,0)
+  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (50000050, 2226334, null, 0.000, 426.5, 2)
+  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700100,50000050)
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700100,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))
+  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (700102,20,0)
+  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (50000052, 2226334, null, 0.000, 426.5, 3)
+  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700102,50000052)
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700102,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))
+
+-- Cases 7&8 (shortened): OLD_ID: 2226381, NEW_ID: 2226381
+-- Speed limit case 3 (split)
+
+  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (700101,20,0)
+  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (50000051, 2226381, null, 0.000, 80, 1)
+  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700101,50000051)
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700101,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))
+
+  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (700103,20,0)
+  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (50000053, 2226381, null, 80, 163.6, 1)
+  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (700103,50000053)
+  INTO SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (700103,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))
+
 SELECT * from dual;
