@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
+import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, MValueAdjustment, ChangeSet}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -131,21 +132,24 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       1l -> Seq(
         SpeedLimit(
           1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, None, None, 0, None),
+          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, None, None, None, None, 0, None),
+          Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, Some("one else"), Some(DateTime.now().minus(500)),
+          Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, None, None, None, None, 0, None)))
+          Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, Some("random guy"), Some(DateTime.now().minus(450)),
+          Some("one"), Some(DateTime.now().minus(1100)), 0, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(40))))
-    filledTopology.map(_.id) should be(Seq(1))
-    changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0.0, 1.0)))
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, SideCode.BothDirections)))
-    changeSet.droppedAssetIds should be(Set(2, 3))
+    filledTopology.map(_.id) should be(Seq(3))
+    filledTopology.map(_.modifiedBy) should be (Seq(Some("random guy"))) // latest modification should show
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, 1, 0.0, 1.0)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(3, SideCode.BothDirections)))
+    changeSet.droppedAssetIds should be(Set(1, 2))
   }
 
   test("create unknown speed limit on empty segments") {
