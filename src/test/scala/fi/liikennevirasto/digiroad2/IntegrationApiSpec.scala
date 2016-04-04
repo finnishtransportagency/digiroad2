@@ -46,6 +46,15 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("Get speed_limits requires municipality number") {
+    getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
+      status should equal(400)
+    }
+    getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
+      status should equal(200)
+    }
+  }
+
   test("Returns mml id of the road link that the stop refers to") {
     getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
       val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
