@@ -209,7 +209,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of old link to three new links, two old speed limits, different speed limits to different directions (separate) ") {
@@ -269,7 +270,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       after.length should be(6)
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of old link to three new links, two old speed limits, same speed limit both directions (split) ") {
@@ -329,7 +331,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       after.length should be(4)
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of three old links to one new link") {
@@ -395,7 +398,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of old link to lengthened new link with same id ") {
@@ -445,7 +449,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of old link to shortened new link with same id (common part + removed part)") {
@@ -496,7 +501,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should map speed limit of old link to shortened new link with same id (removed part + common part)") {
@@ -547,7 +553,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       after.head.foreach(_.value should be(Some(NumericValue(80))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
   test("Should take latest time stamp from old speed limits to combined road link") {
@@ -614,7 +621,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       after.length should be(1)
 
-      dynamicSession.rollback()    }
+      dynamicSession.rollback()
+    }
   }
 
 
@@ -642,6 +650,86 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
+    }
+  }
+
+  test("Should map speed limit of old link to replaced link ") {
+
+    // Replaced road link (change types 13 and 14)
+    // Speed limit case 1
+    /*
+    Example change data:
+   {"attributes": {
+   "OLD_ID": 743821,
+   "OLD_START": 0,
+   "OLD_END": 139.97443241,
+   "NEW_ID": 743821,
+   "NEW_START": 0,
+   "NEW_END": 126.90040119,
+   "CREATED_DATE": 1457442664000,
+   "CHANGETYPE": 13,
+   "MTKID": 1718763071
+  }},
+  {"attributes": {
+   "OLD_ID": null,
+   "OLD_START": null,
+   "OLD_END": null,
+   "NEW_ID": 743821,
+   "NEW_START": 126.90040119,
+   "NEW_END": 172.33287217,
+   "CREATED_DATE": 1457442664000,
+   "CHANGETYPE": 14,
+   "MTKID": 1718763071
+   }},
+    */
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(30.0, 0.0)), 30.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(50.0, 0.0)), 50.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 13, Some(0), Some(30), Some(0), Some(20), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 14, null, null, Some(20), Some(50), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 30.000, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values (1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
+      sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      val before = service.get(boundingBox, Set(municipalityCode)).toList
+
+      println(before)
+
+      before.length should be(1)
+      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.sideCode should be(SideCode.BothDirections))
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+      println(after)
+
+      after.length should be(1)
+      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.sideCode should be(SideCode.BothDirections))
+      after.head.foreach(_.endMeasure should be(50))
+
+      dynamicSession.rollback()
     }
   }
 
