@@ -51,6 +51,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         (sl.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp.getOrElse(0: Long)))
   }
 
+  // Filter to only those Ids that are no longer present on map
+  private def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
+    change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id))
+  }
+
   /**
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
     */
@@ -60,26 +65,24 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val oldRoadLinkIds = change.flatMap(_.oldId)
+      val oldRoadLinkIds = deletedRoadLinkIds(change, roadLinks)
       val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
 
-      // filter those road links that have already been projected earlier
+      // filter those road links that have already been projected earlier from being reprojected
       val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
 
-      println("Speedlimits: " + speedLimitLinks.map(sl => (sl.linkId, sl.value)))
-      println("Old speedlimits: " + oldSpeedLimits.map(sl => (sl.linkId, sl.value)))
-      println("Changed speedlimits: " + speedLimitsOnChangedLinks.map(sl => (sl.linkId, sl.value)))
       val projectableTargetRoadLinks = roadLinks.filter(
         rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits, speedLimitsOnChangedLinks, change)
+      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks, speedLimitsOnChangedLinks, change)
       // TODO: Remove from newSpeedLimits if we already have one saved.
-      val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
+      val speedLimits = (speedLimitLinks.filterNot(sl => newSpeedLimits.map(_.linkId).contains(sl.linkId)) ++ newSpeedLimits).groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
 
-      eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = oldSpeedLimits.map(_.id).toSet))
+      eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
+        oldSpeedLimits.map(_.id).toSet)) // Expire only non-rewritten
       eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
 
       eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
@@ -103,7 +106,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
           case (_, (_, _)) =>
             None
         }).filter(sl => Math.abs(sl.startMeasure - sl.endMeasure) > 0) // Remove zero-length or invalid length parts
-    println("NEW SPEEDLIMITS: " + newSpeedLimits)
     newSpeedLimits
   }
 
@@ -115,26 +117,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         (limit, getRoadLinkAndProjection(newRoadLinks, changes, limit.linkId, newRoadLink.linkId, oldSpeedLimits, currentSpeedLimits))
       )}
   }
-
-//  def getLimitWithNewModifications(speedLimit: SpeedLimit, changes: Seq[ChangeInfo]) : SpeedLimit = {
-//
-//    val grouped = changes.groupBy(_.newId).mapValues(_.flatMap(_.oldId))
-//    //    println("SPEEDLIMIT: " + speedLimit.linkId)
-//    val targetId = changes.find(c => c.oldId.contains(speedLimit.linkId)).flatMap(cs => cs.newId)
-//    //    println("TARGETID: " + targetId)
-//    val oldIds = grouped.find(g => g._1.equals(targetId)).map(d => d._2)
-//    //    println("OLDONES" + oldIds)
-//
-//    // todo: get modifications by oldIds for comparison
-//
-//    val (newModifiedBy,newModifiedDate) = (speedLimit.modifiedBy, speedLimit.modifiedDateTime)
-//
-//    SpeedLimit(id = speedLimit.id, speedLimit.linkId, speedLimit.sideCode, speedLimit.trafficDirection,
-//      speedLimit.value, speedLimit.geometry, speedLimit.startMeasure, speedLimit.endMeasure,
-//      modifiedBy = newModifiedBy,
-//      modifiedDateTime = newModifiedDate, createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDateTime,
-//      vvhTimeStamp = speedLimit.vvhTimeStamp, vvhModifiedDate = None)
-//  }
 
   def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
                                oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
@@ -155,17 +137,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         // cases 5, 6, 1, 2
       case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
            ChangeType.CombinedRemovedPart => projectIfNoSpeedLimitExistsOnDestination(change, oldSpeedLimits++currentSpeedLimits)
-        // cases 3, 13, 14
-      case ChangeType.LenghtenedCommonPart | ChangeType.ReplacedCommonPart |
-           ChangeType.ReplacedNewPart => projectSpeedLimitIfDestinationIsOlder(change, oldSpeedLimits++currentSpeedLimits)
+        // cases 3, 7, 13, 14
+      case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
+           ChangeType.ReplacedNewPart =>
+        projectSpeedLimitIfDestinationIsOlder(change, oldSpeedLimits++currentSpeedLimits)
       case _ => None
     }
   }
 
   // For replaced links (oldId != newId)
   def projectIfNoSpeedLimitExistsOnDestination(change: ChangeInfo, limits: Seq[SpeedLimit]) = {
-    println("project::" + change)
-    println("project::" + limits.filter(l => l.linkId == change.newId.getOrElse(0)))
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
@@ -182,7 +163,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), Some(vvhTimeStamp)) =>
-        limits.exists(l => l.linkId == newId && l.vvhTimeStamp > vvhTimeStamp) match {
+        val myLimits = limits.filter(l => l.linkId == newId)
+        myLimits.isEmpty || myLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp) match {
+            // nonempty && only old data is found for this link -> project it
           case false => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
           case true => None
         }
