@@ -181,7 +181,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.link_id
-           where a.asset_type_id = 20 and floating = 0 AND valid_to > CURRENT_TIMESTAMP """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
+           where a.asset_type_id = 20 and floating = 0 AND
+           (valid_to IS NULL OR valid_to > CURRENT_TIMESTAMP) """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
     }
   }
 

@@ -69,12 +69,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       // filter those road links that have already been projected earlier
       val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
 
+      println("Speedlimits: " + speedLimitLinks.map(sl => (sl.linkId, sl.value)))
+      println("Old speedlimits: " + oldSpeedLimits.map(sl => (sl.linkId, sl.value)))
+      println("Changed speedlimits: " + speedLimitsOnChangedLinks.map(sl => (sl.linkId, sl.value)))
       val projectableTargetRoadLinks = roadLinks.filter(
         rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits, speedLimitLinks, change)
+      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits, speedLimitsOnChangedLinks, change)
       // TODO: Remove from newSpeedLimits if we already have one saved.
-      val speedLimits = speedLimitLinks.groupBy(_.linkId) ++ newSpeedLimits.groupBy(_.linkId)
+      val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
       val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
       val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
