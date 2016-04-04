@@ -59,40 +59,42 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id))
   }
 
+  def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo]) = {
+    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+    val oldRoadLinkIds = deletedRoadLinkIds(change, roadLinks)
+    val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
+
+    // filter those road links that have already been projected earlier from being reprojected
+    val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
+
+    val projectableTargetRoadLinks = roadLinks.filter(
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+
+    val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks, speedLimitsOnChangedLinks, change)
+    // TODO: Remove from newSpeedLimits if we already have one saved.
+    val speedLimits = (speedLimitLinks.filterNot(sl => newSpeedLimits.map(_.linkId).contains(sl.linkId)) ++ newSpeedLimits).groupBy(_.linkId)
+    val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+
+    eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
+      oldSpeedLimits.map(_.id).toSet)) // Expire only non-rewritten
+    eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
+
+    eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
+
+    val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
+    eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
+
+    (filledTopology, roadLinksByLinkId)
+  }
   /**
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
     */
   def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
-
-
     val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
-      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val oldRoadLinkIds = deletedRoadLinkIds(change, roadLinks)
-      val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
-
-      // filter those road links that have already been projected earlier from being reprojected
-      val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, change))
-
-      val projectableTargetRoadLinks = roadLinks.filter(
-        rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-      val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks, speedLimitsOnChangedLinks, change)
-      // TODO: Remove from newSpeedLimits if we already have one saved.
-      val speedLimits = (speedLimitLinks.filterNot(sl => newSpeedLimits.map(_.linkId).contains(sl.linkId)) ++ newSpeedLimits).groupBy(_.linkId)
-      val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
-
-      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-
-      eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
-        oldSpeedLimits.map(_.id).toSet)) // Expire only non-rewritten
-      eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
-
-      eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
-
-      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
-      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
-
+      val (filledTopology,roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, change)
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
     }
   }
@@ -312,16 +314,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
     val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(municipality)
     withDynTransaction {
-      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
-
-      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.linkId))
-      eventbus.publish("linearAssets:update", changeSet)
-
-      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
-      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
-
-      filledTopology
+      getFilledTopologyAndRoadLinks(roadLinks, changes)._1
     }
   }
 
