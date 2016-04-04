@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, NumericValue, RoadLink, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -616,5 +617,32 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()    }
   }
 
+
+  test("Should pass change information through the actor"){
+
+    //This test pass if the actors are called even when there are any information changed
+    val municipalityCode = 235
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+
+    runWithRollback {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+
+      val provider = new SpeedLimitService(mockEventBus, mockVVHClient, mockRoadLinkService) {
+        override def withDynTransaction[T](f: => T): T = f
+      }
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+
+      provider.get(boundingBox, Set(municipalityCode))
+
+      verify(mockEventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), List(), List(), Set()))
+      verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
+      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
+
+    }
+  }
 
 }
