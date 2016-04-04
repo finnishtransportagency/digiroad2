@@ -6,6 +6,8 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, NumericValue, RoadLink, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -596,30 +598,28 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values (1,1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (2,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (2,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (2,2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (2,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (3,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values (3,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values (3,3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values (3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      // TODO: Add necessary comparisons before and after
-
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
-
-      val before = service.get(boundingBox, Set(municipalityCode)).toList
-      //println(before)
+      val before = service.get(boundingBox, Set(municipalityCode)).toList.flatten
 
       before.length should be(3)
 
-
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
-
-      val after = service.get(boundingBox, Set(municipalityCode)).toList
-      //println(after)
+      val after = service.get(boundingBox, Set(municipalityCode)).toList.flatten
 
       after.length should be(1)
+      after.head.modifiedBy should be(Some("KX2"))
+
+      val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+      val latestModifiedDate = DateTime.parse("2016-02-17 10:03:51.047483", formatter)
+      after.head.modifiedDateTime should be(Some(latestModifiedDate))
 
       dynamicSession.rollback()
     }
@@ -714,7 +714,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
-      println(before)
+      //println(before)
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
@@ -722,7 +722,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
-      println(after)
+      //println(after)
 
       after.length should be(1)
       after.head.foreach(_.value should be(Some(NumericValue(80))))
