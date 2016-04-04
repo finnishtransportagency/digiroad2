@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import org.joda.time.DateTime
 
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.5
@@ -20,12 +21,23 @@ object SpeedLimitFiller {
     (modifiedSegment, mAdjustment)
   }
 
+  private def modifiedSort(left: SpeedLimit, right: SpeedLimit) = {
+    val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
+    val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
+    (leftStamp, rightStamp) match {
+      case (Some(l), Some(r)) => l.isAfter(r)
+      case (None, Some(r)) => false
+      case (Some(l), None) => true
+      case (None, None) => true
+    }
+  }
+
   private def adjustTwoWaySegments(roadLink: RoadLink,
                                    segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections)
+    val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections).sortWith(modifiedSort)
     if (twoWaySegments.length == 1 && segments.forall(_.sideCode == SideCode.BothDirections)) {
-      val segment = segments.head
+      val segment = segments.last
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, roadLink)
       (Seq(adjustedSegment), mValueAdjustments)
     } else {
@@ -37,9 +49,9 @@ object SpeedLimitFiller {
                                    segments: Seq[SpeedLimit],
                                    runningDirection: SideCode):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection)
-    if (segmentsTowardsRunningDirection.length == 1 && segments.filter(_.sideCode == SideCode.BothDirections).isEmpty) {
-      val segment = segmentsTowardsRunningDirection.head
+    val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection).sortWith(modifiedSort)
+    if (segmentsTowardsRunningDirection.length == 1 && !segments.exists(_.sideCode == SideCode.BothDirections)) {
+      val segment = segmentsTowardsRunningDirection.last
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, roadLink)
       (Seq(adjustedSegment), mValueAdjustments)
     } else {
@@ -88,7 +100,7 @@ object SpeedLimitFiller {
   }
 
   private def dropRedundantSegments(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val headOption = segments.sortBy(s => 0L-s.vvhTimeStamp).headOption
+    val headOption = segments.sortWith(modifiedSort).headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
