@@ -3,10 +3,9 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
-import org.joda.time.DateTime
 
 object SpeedLimitFiller {
-  private val MaxAllowedMValueError = 0.5
+  private val MaxAllowedMValueError = 0.1
 
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure
@@ -100,12 +99,13 @@ object SpeedLimitFiller {
   }
 
   private def dropRedundantSegments(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val headOption = segments.sortWith(modifiedSort).headOption
+    val sortedSegments = segments.sortWith(modifiedSort)
+    val headOption = sortedSegments.headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
         val first = headOption.get
-        val rest = segments.tail
+        val rest = sortedSegments.tail
         val segmentDrops = rest.map(_.id).toSet
         (Seq(first), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ segmentDrops))
       case false => (segments, changeSet)

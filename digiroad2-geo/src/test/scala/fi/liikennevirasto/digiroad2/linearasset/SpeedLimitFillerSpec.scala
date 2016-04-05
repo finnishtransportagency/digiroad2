@@ -81,7 +81,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("drop short speed limit") {
     val topology = Seq(
-      roadLink(1, Seq(Point(0.0, 0.0), Point(0.4, 0.0))))
+      roadLink(1, Seq(Point(0.0, 0.0), Point(0.04, 0.0))))
     val speedLimits = Map(
       1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
@@ -135,11 +135,11 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
           Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, Some("one else"), Some(DateTime.now().minus(500)),
+          Seq(Point(0.2, 0.0), Point(0.55, 0.0)), 0.0, 0.35, Some("one else"), Some(DateTime.now().minus(500)),
           Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, Some("random guy"), Some(DateTime.now().minus(450)),
+          Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.0, 0.45, Some("random guy"), Some(DateTime.now().minus(450)),
           Some("one"), Some(DateTime.now().minus(1100)), 0, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
@@ -148,7 +148,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.id) should be(Seq(3))
     filledTopology.map(_.modifiedBy) should be (Seq(Some("random guy"))) // latest modification should show
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, 1, 0.0, 1.0)))
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(3, SideCode.BothDirections)))
+    changeSet.adjustedSideCodes should be(List())
     changeSet.droppedAssetIds should be(Set(1, 2))
   }
 
