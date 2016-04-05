@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.ChangeInfo
-import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, LinearAsset}
 
 /**
   * Created by venholat on 30.3.2016.
@@ -20,5 +20,19 @@ object LinearAssetUtils {
         vvhTimeStamp > asset.vvhTimeStamp
       case _ => false
     }
+  }
+
+  /**
+    * Returns true if there are new change informations for roadlink assets.
+    * Comparing if the assets vvh time stamp is older than the change time stamp
+    * @param roadLink Roadlink under consideration
+    * @param changeInfo Change information
+    * @param assets Linear assets
+    * @return true if there are new change informations for roadlink assets
+    */
+  def isNewProjection(roadLink: RoadLink, changeInfo: Seq[ChangeInfo], assets: Seq[LinearAsset]) = {
+    changeInfo.exists(_.newId == roadLink.linkId) &&
+      assets.exists(asset => (asset.linkId == roadLink.linkId) &&
+        (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp.getOrElse(0: Long)))
   }
 }

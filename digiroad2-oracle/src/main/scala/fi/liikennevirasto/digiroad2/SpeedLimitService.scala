@@ -47,13 +47,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  // TODO: Move to LinearAssetUtils
-  def isNewProjection(roadLink: RoadLink, changeInfo: Seq[ChangeInfo], speedLimits: Seq[SpeedLimit]) = {
-    changeInfo.exists(_.newId == roadLink.linkId) &&
-      speedLimits.exists(sl => (sl.linkId == roadLink.linkId) &&
-        (sl.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp.getOrElse(0: Long)))
-  }
-
   // Filter to only those Ids that are no longer present on map
   private def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
     change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id))
