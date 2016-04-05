@@ -10,7 +10,7 @@ trait LinearAsset extends PolyLine {
   val sideCode: SideCode
   val value: Option[Value]
   val vvhTimeStamp: Long
-  val vvhModifiedDate: Option[String]
+  val vvhModifiedDate: Option[DateTime]
 }
 
 sealed trait Value {
@@ -92,12 +92,12 @@ case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, valu
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
-                                vvhTimeStamp: Long, vvhModifiedDate: Option[String]) extends LinearAsset
+                                vvhTimeStamp: Long, vvhModifiedDate: Option[DateTime]) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, vvhModifiedDate: Option[String])
+                                vvhTimeStamp: Long, vvhModifiedDate: Option[DateTime])
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
-                          vvhTimeStamp: Long, vvhModifiedDate: Option[String])
+                          vvhTimeStamp: Long, vvhModifiedDate: Option[DateTime])

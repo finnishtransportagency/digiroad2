@@ -17,7 +17,7 @@ case class SpeedLimit(id: Long,
                       createdBy: Option[String],
                       createdDateTime: Option[DateTime],
                       vvhTimeStamp: Long,
-                      vvhModifiedDate: Option[String]) extends LinearAsset
+                      vvhModifiedDate: Option[DateTime]) extends LinearAsset
 
 case class NewLimit(linkId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps

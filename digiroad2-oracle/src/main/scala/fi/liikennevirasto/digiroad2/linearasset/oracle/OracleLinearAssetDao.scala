@@ -16,7 +16,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 
 case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
-                              vvhTimeStamp: Long, vvhModifiedDate: Option[String])
+                              vvhTimeStamp: Long, vvhModifiedDate: Option[DateTime])
 
 class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
@@ -182,7 +182,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.link_id
            where a.asset_type_id = 20 and floating = 0 AND
-           (valid_to IS NULL OR valid_to > CURRENT_TIMESTAMP) """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
+           (valid_to IS NULL OR valid_to > CURRENT_TIMESTAMP) """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
     }
   }
 
@@ -204,7 +204,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           join #$idTableName i on i.id = a.id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
-      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[String])].list
+      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
       assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate)
       }
@@ -228,7 +228,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           join #$idTableName i on i.id = a.id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = 0
-      """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[String])].list
+      """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
       assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate)
       }
@@ -254,7 +254,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[String])].list
+        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate)
       }
@@ -280,7 +280,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           and a.floating = 0"""
-        .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[String])].list
+        .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate) =>
         PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate)
       }
@@ -314,7 +314,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           #$floatingFilter"""
-        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[String])].list
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[DateTime])].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
@@ -415,7 +415,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join enumerated_value e on s.enumerated_value_id = e.id
          where a.asset_type_id = 20 and floating = 0
          and (a.modified_date > $sinceDate or a.created_date > $sinceDate)
-                """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
+                """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
     speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
       PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp , vvhModifiedDate)
@@ -435,13 +435,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= $sinceDate or a.modified_date >= $sinceDate or a.created_date >= $sinceDate)
           and a.floating = 0"""
-      .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[String])].list
+      .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
 
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate) =>
       PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, vvhModifiedDate)
     }
   }
-  private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])) = {
+  private def createGeometryForSegment(topology: Seq[RoadLink])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])) = {
     val (assetId, linkId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) = segment
     val roadLink = topology.find(_.linkId == linkId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
@@ -461,7 +461,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].list
+        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
     val roadLinksByLinkId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
@@ -495,7 +495,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     idString match {
       case Some(s) =>
         val idSql = sql + makeLinkIdSql(s)
-        Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])] (idSql).list.map {
+        Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])] (idSql).list.map {
           case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
             SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate)
         }
@@ -515,7 +515,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[String])].firstOption
+        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].firstOption
 
     speedLimit.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
       PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate)
