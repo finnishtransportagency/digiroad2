@@ -118,7 +118,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             startMeasure = speedLimit.startMeasure,
             endMeasure = speedLimit.endMeasure,
             modifiedBy = speedLimit.modifiedBy, modifiedDateTime = speedLimit.modifiedDate,
-            createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDate
+            createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDate,
+            vvhTimeStamp = speedLimit.vvhTimeStamp, vvhModifiedDate = speedLimit.vvhModifiedDate
           ),
           link = roadLink
         )

@@ -100,7 +100,8 @@ trait LinearAssetOperations {
             persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
-            persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection)
+            persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
+          persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.vvhModifiedDate)
           ,
           link = roadLink
         )
