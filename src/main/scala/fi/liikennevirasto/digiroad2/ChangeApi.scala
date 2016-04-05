@@ -55,7 +55,8 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   ),
                   "properties" -> Map(
                     "functionalClass" -> link.functionalClass,
-                    "type" -> link.linkType.value
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
                   )
                 ),
                 "sideCode" -> speedLimit.sideCode.value,
@@ -94,7 +95,8 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   ),
                   "properties" -> Map(
                     "functionalClass" -> link.functionalClass,
-                    "type" -> link.linkType.value
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
                   )
                 ),
                 "sideCode" -> linearAsset.sideCode.value,
