@@ -269,7 +269,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date
           from asset a
           join asset_link al on a.id = al.asset_id
