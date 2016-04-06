@@ -414,7 +414,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
          join enumerated_value e on s.enumerated_value_id = e.id
          where a.asset_type_id = 20 and floating = 0
-         and (a.modified_date > $sinceDate or a.created_date > $sinceDate)
+         and (a.modified_date > $sinceDate or a.created_date > $sinceDate or pos.modified_date > $sinceDate)
                 """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
     speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, vvhModifiedDate) =>
@@ -433,7 +433,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           join property p on p.public_id = 'mittarajoitus'
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= $sinceDate or a.modified_date >= $sinceDate or a.created_date >= $sinceDate)
+          and (a.valid_to >= $sinceDate or a.modified_date >= $sinceDate or a.created_date >= $sinceDate or pos.modified_date > $sinceDate)
           and a.floating = 0"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
 
