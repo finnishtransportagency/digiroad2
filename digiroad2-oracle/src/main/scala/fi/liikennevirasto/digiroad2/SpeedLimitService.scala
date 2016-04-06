@@ -63,8 +63,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks, speedLimitsOnChangedLinks, change)
-    // TODO: Remove from newSpeedLimits if we already have one saved.
+    val newSpeedLimits = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks,
+      oldSpeedLimits ++ speedLimitsOnChangedLinks, speedLimitsOnChangedLinks, change)
     val speedLimits = (speedLimitLinks.filterNot(sl => newSpeedLimits.map(_.linkId).contains(sl.linkId)) ++ newSpeedLimits).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
@@ -123,8 +123,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
     */
-  private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo]) : Seq[SpeedLimit] ={
-    val newSpeedLimits = mapReplacementProjections(oldSpeedLimits, currentSpeedLimits, roadLinks, changes).flatMap(
+  private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit],
+                                                 currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo]) : Seq[SpeedLimit] ={
+    val newSpeedLimits = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).flatMap(
       limit =>
         limit match {
           case (speedLimit, (Some(roadLink), Some(projection))) =>
@@ -147,27 +148,30 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
-                               oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
+                               speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
-      case Some(info) => mapChangeToProjection(info, oldSpeedLimits.filter(_.linkId == info.oldId.getOrElse(0L)),
-        currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L)))
+      case Some(info) =>
+        // ChangeInfo object related speed limits; either mentioned in oldId or in newId
+        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
+          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L))
+        mapChangeToProjection(info, speedLimits)
       case _ => None
     }
     (roadLink,projection)
   }
 
-  private def mapChangeToProjection(change: ChangeInfo, oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
+  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[SpeedLimit]) = {
     val typed = ChangeType.apply(change.changeType)
     typed match {
         // cases 5, 6, 1, 2
       case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
-           ChangeType.CombinedRemovedPart => projectSpeedLimitConditionally(change, oldSpeedLimits++currentSpeedLimits, testNoSpeedLimitExists)
+           ChangeType.CombinedRemovedPart => projectSpeedLimitConditionally(change, speedLimits, testNoSpeedLimitExists)
         // cases 3, 7, 13, 14
       case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
-        projectSpeedLimitConditionally(change, oldSpeedLimits++currentSpeedLimits, testSpeedLimitOutdated)
+        projectSpeedLimitConditionally(change, speedLimits, testSpeedLimitOutdated)
       case _ => None
     }
   }
