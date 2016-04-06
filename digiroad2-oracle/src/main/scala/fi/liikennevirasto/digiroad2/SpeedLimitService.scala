@@ -164,38 +164,34 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     typed match {
         // cases 5, 6, 1, 2
       case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
-           ChangeType.CombinedRemovedPart => projectIfNoSpeedLimitExistsOnDestination(change, oldSpeedLimits++currentSpeedLimits)
+           ChangeType.CombinedRemovedPart => projectSpeedLimitConditionally(change, oldSpeedLimits++currentSpeedLimits, testNoSpeedLimitExists)
         // cases 3, 7, 13, 14
       case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
-        projectSpeedLimitIfDestinationIsOlder(change, oldSpeedLimits++currentSpeedLimits)
+        projectSpeedLimitConditionally(change, oldSpeedLimits++currentSpeedLimits, testSpeedLimitOutdated)
       case _ => None
     }
   }
 
-  // For replaced links (oldId != newId)
-  def projectIfNoSpeedLimitExistsOnDestination(change: ChangeInfo, limits: Seq[SpeedLimit]) = {
+  private def testNoSpeedLimitExists(speedLimits: Seq[SpeedLimit], linkId: Long, mStart: Double, mEnd: Double,
+                                     vvhTimeStamp: Long) = {
+    !speedLimits.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
+  }
+
+  private def testSpeedLimitOutdated(speedLimits: Seq[SpeedLimit], linkId: Long, mStart: Double, mEnd: Double,
+                                     vvhTimeStamp: Long) = {
+    val targetLimits = speedLimits.filter(l => l.linkId == linkId)
+    targetLimits.nonEmpty && !targetLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp)
+  }
+
+  def projectSpeedLimitConditionally(change: ChangeInfo, limits: Seq[SpeedLimit],
+                                     condition: (Seq[SpeedLimit], Long, Double, Double, Long) => Boolean) = {
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        limits.exists(l => l.linkId == newId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(newStart,newEnd))) match {
-          case false => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0)))
-          case true => None
-        }
-      case _ => None
-    }
-  }
-
-  // For updated links (oldId == newId), vvhTimeStamp must then exist in change so we can compare
-  def projectSpeedLimitIfDestinationIsOlder(change: ChangeInfo, limits: Seq[SpeedLimit]) = {
-    (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
-      case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double), Some(vvhTimeStamp)) =>
-        val myLimits = limits.filter(l => l.linkId == newId)
-        myLimits.isEmpty || myLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp) match {
-            // nonempty && only old data is found for this link -> project it
-          case false => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
-          case true => None
+        condition(limits, newId, newStart, newEnd, vvhTimeStamp.getOrElse(0L)) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
+          case false => None
         }
       case _ => None
     }
