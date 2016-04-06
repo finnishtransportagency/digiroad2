@@ -322,17 +322,37 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
-      //println(before)
-
       before.length should be(2)
+      val (list1, list2) = before.flatten.partition(_.id == 1)
+      val (limit1, limit2) = (list1.head, list2.head)
+      limit1.id should be (1)
+      limit2.id should be (2)
+      limit1.value should be (Some(NumericValue(80)))
+      limit2.value should be (Some(NumericValue(60)))
+      limit1.startMeasure should be (0.0)
+      limit2.startMeasure should be (limit1.endMeasure)
+      limit2.endMeasure should be (25.0)
+      limit1.sideCode should be (SideCode.BothDirections)
+      limit2.sideCode should be (SideCode.BothDirections)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
-      //println(after)
-
       after.length should be(4)
+      after.flatten.forall(sl => sl.sideCode eq SideCode.BothDirections) should be (true)
+      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be (true)
+      val link1Limits = after.flatten.filter(sl => sl.linkId == newLinkId1)
+      val link2Limits = after.flatten.filter(sl => sl.linkId == newLinkId2)
+      val link3Limits = after.flatten.filter(sl => sl.linkId == newLinkId3)
 
+      link1Limits.length should be (1)
+      link2Limits.length should be (2)
+      link3Limits.length should be (1)
+
+      link1Limits.head.value should be (Some(NumericValue(80)))
+      link3Limits.head.value should be (Some(NumericValue(60)))
+      link2Limits.filter(_.startMeasure == 0.0).head.value should be (Some(NumericValue(80)))
+      link2Limits.filter(_.startMeasure > 0.0).head.value should be (Some(NumericValue(60)))
       dynamicSession.rollback()
     }
   }
