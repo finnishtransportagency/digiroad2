@@ -6,8 +6,8 @@ import org.joda.time.DateTime
 import org.scalatest._
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
-  case class TestLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point], vvhTimeStamp: Long = 0, vvhModifiedDate: Option[DateTime] = None) extends LinearAsset
-  case class TestProhibitionAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point], vvhTimeStamp: Long = 0, vvhModifiedDate: Option[DateTime] = None) extends LinearAsset
+  case class TestLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point], vvhTimeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
+  case class TestProhibitionAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point], vvhTimeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
 
   private def linearAsset(linkId: Long, value: Int, geometry: Seq[Point]) = {
     TestLinearAsset(0, linkId, SideCode.BothDirections, Some(NumericValue(value)), geometry)

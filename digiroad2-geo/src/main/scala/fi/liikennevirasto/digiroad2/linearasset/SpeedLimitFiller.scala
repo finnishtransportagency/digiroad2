@@ -201,7 +201,7 @@ object SpeedLimitFiller {
       asset.value, geometry, newStart, newEnd,
       modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
-      vvhTimeStamp = projection.vvhTimeStamp, vvhModifiedDate = None
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None
     )
   }
 

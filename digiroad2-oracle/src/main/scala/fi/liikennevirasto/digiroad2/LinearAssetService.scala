@@ -101,7 +101,7 @@ trait LinearAssetOperations {
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
-          persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.vvhModifiedDate)
+          persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate)
           ,
           link = roadLink
         )
