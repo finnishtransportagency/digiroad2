@@ -264,6 +264,16 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       //println(before)
 
       before.length should be(2)
+      val (list1, list2) = before.flatten.partition(_.sideCode == SideCode.TowardsDigitizing)
+      val (limit1, limit2) = (list1.head, list2.head)
+      limit1.id should be (1)
+      limit2.id should be (2)
+      limit1.value should be (Some(NumericValue(80)))
+      limit2.value should be (Some(NumericValue(60)))
+      limit1.startMeasure should be (0.0)
+      limit2.startMeasure should be (0.0)
+      limit1.endMeasure should be (25.0)
+      limit2.endMeasure should be (25.0)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
@@ -271,6 +281,16 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       //println(after)
 
       after.length should be(6)
+      after.flatten.forall(sl => sl.sideCode != SideCode.BothDirections) should be (true)
+      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be (true)
+      val towards = after.flatten.filter(sl => sl.sideCode == SideCode.TowardsDigitizing)
+      val against = after.flatten.filter(sl => sl.sideCode == SideCode.AgainstDigitizing)
+
+      towards.length should be (3)
+      against.length should be (3)
+
+      towards.forall(sl=> sl.value.get.value == 80) should be (true)
+      against.forall(sl=> sl.value.get.value == 60) should be (true)
 
       dynamicSession.rollback()
     }
