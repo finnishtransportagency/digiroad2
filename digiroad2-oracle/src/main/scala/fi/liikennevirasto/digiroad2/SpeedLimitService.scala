@@ -159,7 +159,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   def mapChangeToProjection(change: ChangeInfo, oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
-    // TODO: Do different type of change info handling here
     val typed = ChangeType.apply(change.changeType)
     typed match {
         // cases 5, 6, 1, 2
