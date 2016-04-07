@@ -1,12 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.linearasset.NumericalLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -51,7 +53,7 @@ trait LinearAssetOperations {
     */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
@@ -63,11 +65,12 @@ trait LinearAssetOperations {
     */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
-    getByRoadLinks(typeId, roadLinks)
+    getByRoadLinks(typeId, roadLinks, Seq())
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
       withDynTransaction {
         typeId match {
@@ -76,13 +79,100 @@ trait LinearAssetOperations {
           case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
             dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
           case _ =>
-            dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.numericValuePropertyId)
+            dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
         }
-      }.filterNot(_.expired).groupBy(_.linkId)
+      }.filterNot(_.expired)
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
+    val assetsOnChangedLinks = existingAssets.filter(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+    val projectableTargetRoadLinks = roadLinks.filter(
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+
+    val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      existingAssets, assetsOnChangedLinks, changes)
+    val groupedAssets = (existingAssets.filterNot(a => newAssets.map(_.linkId).contains(a.linkId)) ++ newAssets).groupBy(_.linkId)
+
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
     filledTopology
+  }
+
+  /**
+    * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
+    */
+  private def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
+                                                         currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
+    val newSpeedLimits = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, changes).flatMap(
+      limit =>
+        limit match {
+          case (asset, (Some(roadLink), Some(projection))) =>
+            Some(NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection))
+          case (_, (_, _)) =>
+            None
+        }).filter(a => Math.abs(a.startMeasure - a.endMeasure) > 0) // Remove zero-length or invalid length parts
+    newSpeedLimits
+  }
+  private def mapReplacementProjections(oldSpeedLimits: Seq[PersistedLinearAsset], currentSpeedLimits: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
+                                        changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
+    val targetLinks = changes.flatMap(_.newId).toSet
+    val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId))
+    oldSpeedLimits.flatMap{limit =>
+      newRoadLinks.map(newRoadLink =>
+        (limit,
+          getRoadLinkAndProjection(roadLinks, changes, limit.linkId, newRoadLink.linkId, oldSpeedLimits, currentSpeedLimits))
+      )}
+  }
+
+  private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
+                                       speedLimitsToUpdate: Seq[PersistedLinearAsset], currentSpeedLimits: Seq[PersistedLinearAsset]) = {
+    val roadLink = roadLinks.find(rl => newId == rl.linkId)
+    val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
+    val projection = changeInfo match {
+      case Some(info) =>
+        // ChangeInfo object related assets; either mentioned in oldId or in newId
+        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
+          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L))
+        mapChangeToProjection(info, speedLimits)
+      case _ => None
+    }
+    (roadLink,projection)
+  }
+
+  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[PersistedLinearAsset]) = {
+    val typed = ChangeType.apply(change.changeType)
+    typed match {
+      // cases 5, 6, 1, 2
+      case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
+           ChangeType.CombinedRemovedPart => projectAssetsConditionally(change, speedLimits, testNoAssetExistsOnTarget)
+      // cases 3, 7, 13, 14
+      case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
+           ChangeType.ReplacedNewPart =>
+        projectAssetsConditionally(change, speedLimits, testAssetOutdated)
+      case _ => None
+    }
+  }
+
+  private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
+                                     vvhTimeStamp: Long) = {
+    !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
+  }
+
+  private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
+                                     vvhTimeStamp: Long) = {
+    val targetLimits = assets.filter(l => l.linkId == linkId)
+    targetLimits.nonEmpty && !targetLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp)
+  }
+
+  private def projectAssetsConditionally(change: ChangeInfo, assets: Seq[PersistedLinearAsset],
+                                             condition: (Seq[PersistedLinearAsset], Long, Double, Double, Long) => Boolean) = {
+    (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
+      case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
+      Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
+        condition(assets, newId, newStart, newEnd, vvhTimeStamp.getOrElse(0L)) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
+          case false => None
+        }
+      case _ => None
+    }
   }
 
   /**
