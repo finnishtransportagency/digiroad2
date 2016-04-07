@@ -4,11 +4,16 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -269,4 +274,77 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       }
     }
   }
+
+  // Tests for DROTH-76 Automatics for fixing linear assets after geometry update (using VVH change info data)
+
+  test("Should map linear asset to new road link") {
+
+    // TODO: This is just a template for new tests, should be modified
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val newLinkId1 = 6001
+    val newLinkId2 = 6002
+    val newLinkId3 = 6003
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 100 // lit roads
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, 1234, 0.0, 10.0, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id) values (1,$assetTypeId)""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      val before = service.getByBoundingBox(100, boundingBox).head
+
+      //println(before)
+
+      /*
+      before.length should be(1)
+      before.map(_.value should be(Some(NumericValue(80))))
+      before.map(_.sideCode should be(SideCode.BothDirections))
+      */
+
+      before.length should be(1)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      val after = service.getByBoundingBox(100, boundingBox).head
+
+      //println(after)
+
+      /*
+      after.length should be(3)
+      after.map(_.value should be(Some(NumericValue(80))))
+      after.map(_.sideCode should be(SideCode.BothDirections))
+      */
+
+      dynamicSession.rollback()
+
+    }
+
+
+
+  }
+
+
 }
