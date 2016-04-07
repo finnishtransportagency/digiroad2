@@ -120,4 +120,53 @@ object NumericalLimitFiller {
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }
+
+  def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection) = {
+    val newLinkId = to.linkId
+    val assetId = asset.linkId match {
+      case to.linkId => asset.id
+      case _ => 0
+    }
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
+    var newSideCode = asset.sideCode
+// TODO: traffic direction?
+//    var newDirection = asset.trafficDirection
+    var newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+    var newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+
+    // Test if the direction has changed - side code will be affected, too
+    if (oldLength * newLength < 0) {
+      newSideCode = SideCode.apply(newSideCode) match {
+        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
+        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
+        case _ => newSideCode
+      }
+//      newDirection = newDirection match {
+//        case (TrafficDirection.AgainstDigitizing) => TrafficDirection.TowardsDigitizing
+//        case (TrafficDirection.TowardsDigitizing) => TrafficDirection.AgainstDigitizing
+//        case _ => newDirection
+//      }
+      newStart = projection.newStart + (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+      newEnd = projection.newEnd + (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+    }
+
+    newStart = Math.min(to.length, Math.max(0.0, newStart))
+    newEnd = Math.max(0.0, Math.min(to.length, newEnd))
+
+    val geometry = GeometryUtils.truncateGeometry(
+      Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
+        GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
+      0, to.length)
+
+    PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
+      value = asset.value, startMeasure = newStart, endMeasure = newEnd,
+      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
+      modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None
+    )
+  }
+
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+
 }
