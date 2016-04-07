@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 
 object SpeedLimitFiller {
-  private val MaxAllowedMValueError = 0.5
+  private val MaxAllowedMValueError = 0.1
 
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure
@@ -20,12 +20,23 @@ object SpeedLimitFiller {
     (modifiedSegment, mAdjustment)
   }
 
+  private def modifiedSort(left: SpeedLimit, right: SpeedLimit) = {
+    val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
+    val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
+    (leftStamp, rightStamp) match {
+      case (Some(l), Some(r)) => l.isAfter(r)
+      case (None, Some(r)) => false
+      case (Some(l), None) => true
+      case (None, None) => true
+    }
+  }
+
   private def adjustTwoWaySegments(roadLink: RoadLink,
                                    segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections)
+    val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections).sortWith(modifiedSort)
     if (twoWaySegments.length == 1 && segments.forall(_.sideCode == SideCode.BothDirections)) {
-      val segment = segments.head
+      val segment = segments.last
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, roadLink)
       (Seq(adjustedSegment), mValueAdjustments)
     } else {
@@ -37,9 +48,9 @@ object SpeedLimitFiller {
                                    segments: Seq[SpeedLimit],
                                    runningDirection: SideCode):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection)
-    if (segmentsTowardsRunningDirection.length == 1 && segments.filter(_.sideCode == SideCode.BothDirections).isEmpty) {
-      val segment = segmentsTowardsRunningDirection.head
+    val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection).sortWith(modifiedSort)
+    if (segmentsTowardsRunningDirection.length == 1 && !segments.exists(_.sideCode == SideCode.BothDirections)) {
+      val segment = segmentsTowardsRunningDirection.last
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, roadLink)
       (Seq(adjustedSegment), mValueAdjustments)
     } else {
@@ -88,12 +99,13 @@ object SpeedLimitFiller {
   }
 
   private def dropRedundantSegments(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val headOption = segments.headOption
+    val sortedSegments = segments.sortWith(modifiedSort)
+    val headOption = sortedSegments.headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
         val first = headOption.get
-        val rest = segments.tail
+        val rest = sortedSegments.tail
         val segmentDrops = rest.map(_.id).toSet
         (Seq(first), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ segmentDrops))
       case false => (segments, changeSet)
@@ -111,7 +123,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None)
+      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None)
     }
   }
 
@@ -132,7 +144,7 @@ object SpeedLimitFiller {
       dropShortLimits
     )
 
-    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil)
+    val initialChangeSet = ChangeSet(Set.empty, Nil, Nil, Set.empty)
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
@@ -147,4 +159,51 @@ object SpeedLimitFiller {
       (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }
   }
+
+  def projectSpeedLimit(asset: SpeedLimit, to: RoadLink, projection: Projection) = {
+    val newLinkId = to.linkId
+    val assetId = asset.linkId match {
+      case to.linkId => asset.id
+      case _ => 0
+    }
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
+    var newSideCode = asset.sideCode
+    var newDirection = asset.trafficDirection
+    var newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+    var newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+
+    // Test if the direction has changed - side code will be affected, too
+    if (oldLength * newLength < 0) {
+      newSideCode = newSideCode match {
+        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
+        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing
+        case _ => newSideCode
+      }
+      newDirection = newDirection match {
+        case (TrafficDirection.AgainstDigitizing) => TrafficDirection.TowardsDigitizing
+        case (TrafficDirection.TowardsDigitizing) => TrafficDirection.AgainstDigitizing
+        case _ => newDirection
+      }
+      newStart = projection.newStart + (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+      newEnd = projection.newEnd + (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+    }
+
+    newStart = Math.min(to.length, Math.max(0.0, newStart))
+    newEnd = Math.max(0.0, Math.min(to.length, newEnd))
+
+    val geometry = GeometryUtils.truncateGeometry(
+      Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
+        GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
+      0, to.length)
+
+    SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
+      asset.value, geometry, newStart, newEnd,
+      modifiedBy = asset.modifiedBy,
+      modifiedDateTime = asset.modifiedDateTime, createdBy = asset.createdBy, createdDateTime = asset.createdDateTime,
+      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None
+    )
+  }
+
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

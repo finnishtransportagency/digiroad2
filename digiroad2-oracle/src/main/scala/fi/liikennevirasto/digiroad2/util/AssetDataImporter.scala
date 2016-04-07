@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.io.{BufferedWriter, File, FileWriter}
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -8,27 +7,22 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.PedestrianCrossing
-import org.joda.time.format.{PeriodFormat, PeriodFormatterBuilder}
+import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import _root_.oracle.sql.STRUCT
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
-import _root_.oracle.sql.STRUCT
 import org.joda.time._
 import org.slf4j.LoggerFactory
-import scala.collection.mutable
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
-import com.github.tototoshi.slick.MySQLJodaSupport._
 
-import slick.util.CloseableIterator
+import scala.collection.mutable
 
 object AssetDataImporter {
   case class SimpleBusStop(shelterType: Int,
@@ -357,7 +351,7 @@ class AssetDataImporter {
         val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190)))
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
@@ -408,7 +402,8 @@ class AssetDataImporter {
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId)
+      // TODO: when linear assets get included in change history
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None)
     }.toSeq
   }
 
@@ -653,7 +648,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value))
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None)
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -680,7 +675,7 @@ class AssetDataImporter {
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
       linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value) =>
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value))
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None)
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")

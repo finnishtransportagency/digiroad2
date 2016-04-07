@@ -24,7 +24,44 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int)
+case class ChangeInfo(oldId: Option[Long],
+                      newId: Option[Long],
+                      mmlId: Long,
+                      changeType: Int,
+                      oldStartMeasure: Option[Double],
+                      oldEndMeasure: Option[Double],
+                      newStartMeasure: Option[Double],
+                      newEndMeasure: Option[Double],
+                      vvhTimeStamp: Option[Long])
+
+/**
+  * Numerical values for change types from VVH ChangeInfo Api
+  */
+sealed trait ChangeType {
+  def value: Int
+}
+object ChangeType {
+  val values = Set(Unknown, CombinedModifiedPart, CombinedRemovedPart, LenghtenedCommonPart, LengthenedNewPart, DividedModifiedPart, DividedNewPart, ShortenedCommonPart, ShortenedRemovedPart, Removed, New, ReplacedCommonPart, ReplacedNewPart, ReplacedRemovedPart)
+
+  def apply(intValue: Int): ChangeType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Unknown extends ChangeType { def value = 0 }
+  case object CombinedModifiedPart extends ChangeType { def value = 1 }
+  case object CombinedRemovedPart extends ChangeType { def value = 2 }
+  case object LenghtenedCommonPart extends ChangeType { def value = 3 }
+  case object LengthenedNewPart extends ChangeType { def value = 4 }
+  case object DividedModifiedPart extends ChangeType { def value = 5 }
+  case object DividedNewPart extends ChangeType { def value = 6 }
+  case object ShortenedCommonPart extends ChangeType { def value = 7 }
+  case object ShortenedRemovedPart extends ChangeType { def value = 8 }
+  case object Removed extends ChangeType { def value = 11 }
+  case object New extends ChangeType { def value = 12 }
+  case object ReplacedCommonPart extends ChangeType { def value = 13 }
+  case object ReplacedNewPart extends ChangeType { def value = 14 }
+  case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+}
 
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -72,6 +109,11 @@ class VVHClient(vvhRestApiEndPoint: String) {
     else "f=pjson"
   }
 
+  /**
+    * Returns VVH road links in bounding box area. Municipalities are optional.
+    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+    */
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
@@ -84,17 +126,29 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
   def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[VVHRoadlink]] = {
     Future(fetchVVHRoadlinks(bounds, municipalities))
   }
 
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(municipality).
+    */
   def fetchVVHRoadlinksF(municipality: Int): Future[Seq[VVHRoadlink]] = {
     Future(fetchByMunicipality(municipality))
   }
 
+  /**
+    * Returns VVH change data. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    */
   def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
-    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
@@ -107,8 +161,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  /**
+    * Returns VVH change data. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(municipality).
+    */
   def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
-    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE"))
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
 
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&" + queryParameters(true)
@@ -129,10 +187,19 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
+    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue())
+    val oldStartMeasure = extractMeasure(attributes("OLD_START"))
+    val oldEndMeasure = extractMeasure(attributes("OLD_END"))
+    val newStartMeasure = extractMeasure(attributes("NEW_START"))
+    val newEndMeasure = extractMeasure(attributes("NEW_END"))
 
-    ChangeInfo(oldId, newId, mmlId, changeType)
+    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
   }
 
+  /**
+    * Returns VVH road links by municipality.
+    * Used by VVHClient.fetchVVHRoadlinksF(municipality), RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization.
+    */
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
@@ -144,24 +211,52 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  /**
+    * Returns VVH road link by link id.
+    * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api /manoeuvres DELETE endpoint, Digiroad2Api /manoeuvres PUT endpoint,
+    * CsvImporter.updateAssetByExternalIdLimitedByRoadType, RoadLinkService,getRoadLinkMiddlePointByLinkId, RoadLinkService.updateLinkProperties, RoadLinkService.getRoadLinkGeometry,
+    * RoadLinkService.updateAutoGeneratedProperties, LinearAssetService.split, LinearAssetService.separate, MassTransitStopService.fetchRoadLink, PointAssetOperations.getById
+    * and OracleLinearAssetDao.createSpeedLimit.
+    */
   def fetchVVHRoadlink(linkId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(linkId)).headOption
 
+  /**
+    * Returns VVH road links by link ids.
+    * Used by VVHClient.fetchVVHRoadlink, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
+    * OracleLinearAssetDao.getLinksWithLengthFromVVH, OracleLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
+    */
   def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
   }
 
+  /**
+    * Returns VVH road link by mml id.
+    * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
+    */
   def fetchVVHRoadlinkByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinksByMmlIds(Set(mmlId)).headOption
 
+  /**
+    * Returns VVH road links by mml ids.
+    * Used by VVHClient.fetchVVHRoadlinkByMmlId and LinkIdImporter.updateTable
+    */
   def fetchVVHRoadlinksByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchVVHRoadlinks(mmlIds, None, true, roadLinkFromFeature, withMmlIdFilter)
   }
 
+  /**
+    * Returns VVH road links.
+    * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator)
+    */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
 
+  /**
+    * Returns VVH road links.
+    * Used by VVHClient.fetchVVHRoadlinks(linkIds), VVHClient.fetchVVHRoadlinksByMmlIds and VVHClient.fetchVVHRoadlinks
+    */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
                            fetchGeometry: Boolean,
@@ -287,6 +382,16 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .map(_.toInt)
       .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
       .getOrElse(TrafficDirection.UnknownDirection)
+  }
+
+  /**
+    * Extract double value from VVH data. Used for change info start and end measures.
+    */
+  private def extractMeasure(value: Any): Option[Double] = {
+    value match {
+      case null => None
+      case _ => Some(value.toString.toDouble)
+    }
   }
 }
 

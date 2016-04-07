@@ -24,11 +24,18 @@ case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: 
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+    * Returns road links from VVH by link ids. Used by Digiroad2Api /linearassets POST, /linearassets DELETE and /manoeuvres POST endpoints and RoadLinkService.getRoadLinksFromVVH(linkIds),
+    * RoadLinkService.getRoadLinkFromVVH(linkId) and CsvGenerator.generateDroppedProhibitions.
+    */
   def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) vvhClient.fetchVVHRoadlinks(linkIds)
     else Seq.empty[VVHRoadlink]
   }
 
+  /**
+    * Returns road links from VVH. Used by CsvGenerator.generateCsvForTextualLinearAssets and CsvGenerator.generateCsvForDroppedAssets.
+    */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
                            fetchGeometry: Boolean,
@@ -37,10 +44,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     else Seq.empty[T]
   }
 
+  /**
+    * Returns road links from VVH by municipality. No usages in OTH?
+    */
   def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink] = {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
 
+  /**
+    * Returns incomplete links by municipalities (Incomplete link = road link with no functional class and link type saved in OTH).
+    * Used by Digiroad2Api /roadLinks/incomplete GET endpoint.
+    */
   def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
     case class IncompleteLink(linkId: Long, municipality: String, administrativeClass: String)
     def toIncompleteLink(x: (Long, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
@@ -66,6 +80,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Returns road link middle point by link id. Used to select a road link by url to be shown on map (for example: index.html#linkProperty/12345).
+    * Used by Digiroad2Api /roadlinks/:linkId GET endpoint.
+    *
+    */
   def getRoadLinkMiddlePointByLinkId(linkId: Long): Option[(Long, Point)] = {
     val middlePoint: Option[Point] = vvhClient.fetchVVHRoadlink(linkId)
       .flatMap { vvhRoadLink =>
@@ -74,6 +93,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     middlePoint.map((linkId, _))
   }
 
+  /**
+    * Returns road link middle point by mml id. Used to select a road link by url to be shown on map (for example: index.html#linkProperty/mml/12345).
+    * Used by Digiroad2Api /roadlinks/mml/:mmlId GET endpoint.
+    *
+    */
   def getRoadLinkMiddlePointByMmlId(mmlId: Long): Option[(Long, Point)] = {
     vvhClient.fetchVVHRoadlinkByMmlId(mmlId).flatMap { vvhRoadLink =>
       val point = GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
@@ -84,6 +108,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Saves road link property data from UI. Used by Digiroad2Api /linkproperties PUT endpoint.
+    */
   def updateLinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
                            direction: TrafficDirection, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
     val vvhRoadLink = vvhClient.fetchVVHRoadlink(linkId)
@@ -102,24 +129,39 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Returns road link geometry by link id. Used by RoadLinkService.getAdjacent.
+    */
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     vvhClient.fetchVVHRoadlink(id).map(_.geometry)
   }
 
+  /**
+    * No usages in OTH?
+    */
   implicit val getAdministrativeClass = new GetResult[AdministrativeClass] {
     def apply(r: PositionedResult) = {
       AdministrativeClass(r.nextInt())
     }
   }
 
+  /**
+    * No usages in OTH?
+    */
   implicit val getTrafficDirection = new GetResult[TrafficDirection] {
     def apply(r: PositionedResult) = {
       TrafficDirection(r.nextIntOption())
     }
   }
 
+  /**
+    * Sets db transaction to other functions in RoadLinkService.
+    */
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  /**
+    * Sets db session to other functions in RoadLinkService.
+    */
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
@@ -203,21 +245,41 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
             join #$idTableName i on i.id = l.link_id""".as[(Long, Int, DateTime, String)].list
   }
 
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+  /**
+    * Returns road links and change data from VVH by bounding box and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesF(bounds, municipalities).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(links, changes)
+      (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
 
+  /**
+    * Returns road links by bounding box and municipalities. Used by Digiroad2Api.getRoadLinksFromVVH (data passed to Digiroad2Api /roadlinks GET endpoint),
+    * LinearAssetService.getByBoundingBox, ManoeuvreService.getByBoundingBox and RoadLinkService.getAdjacent.
+    */
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
+
+  /**
+    * Returns VVH road links by bounding box and municipalities. Used by RoadLinkService.getClosestRoadlinkFromVVH.
+    */
   def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
+
+  /**
+    * Returns VVH road links by bounding box. Used by RoadLinkService.getClosestRoadlinkFromVVH.
+    */
   def getVVHRoadLinks(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
     vvhClient.fetchVVHRoadlinks(bounds)
   }
 
+  /**
+    * Returns road links by link ids. Used by CsvGenerator.generateDroppedManoeuvres.
+    */
   def getRoadLinksFromVVH(linkIds: Set[Long]): Seq[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(linkIds)
     withDynTransaction {
@@ -225,14 +287,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
-  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+  /**
+    * Returns road links and change data by municipality. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesF(municipality).zip(vvhClient.fetchVVHRoadlinksF(municipality)), atMost = Duration.Inf)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(links, changes)
+      (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
 
+  /**
+    * Returns road links by municipality. Used by IntegrationApi road_link_properties endpoint, UpdateIncompleteLinkList.runUpdate, LinearAssetService.get and ManoeuvreService.getByMunicipality.
+    */
+  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(municipality)._1
+
+  /**
+    * Returns road link by link id. Used by Digiroad2Api.updatePointAsset, Digiroad2Api.createNewPointAsset, ManoeuvreService.isValidManoeuvre and SpeedLimitService.toSpeedLimit.
+    */
   def getRoadLinkFromVVH(linkId: Long): Option[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(Set(linkId))
     withDynTransaction {
@@ -240,6 +314,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }.headOption
   }
 
+  /**
+    * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints.
+    */
   def getClosestRoadlinkFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
     val diagonal = Vector3d(500, 500, 0)
 
@@ -259,11 +336,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute
   }
 
+  /**
+    * Updates road link data in OTH db. Used by Digiroad2Context LinkPropertyUpdater Akka actor.
+    */
   def updateRoadLinkChanges(roadLinkChangeSet: RoadLinkChangeSet): Unit = {
     updateAutoGeneratedProperties(roadLinkChangeSet.adjustedRoadLinks)
     updateIncompleteLinks(roadLinkChangeSet.incompleteLinks)
   }
 
+  /**
+    * Updates road link autogenerated properties (functional class, link type and traffic direction). Used by RoadLinkService.updateRoadLinkChanges.
+    */
   def updateAutoGeneratedProperties(adjustedRoadLinks: Seq[RoadLink]) {
     def updateProperties(roadLink: RoadLink) = {
       val vvhRoadLink = vvhClient.fetchVVHRoadlink(roadLink.linkId)
@@ -281,6 +364,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
+    */
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       withDynTransaction {
@@ -292,12 +378,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     incompleteLinks.foreach(setIncompleteness)
   }
 
+  /**
+    * Returns value when all given values are the same. Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData.
+    */
   def useValueWhenAllEqual[T](values: Seq[T]): Option[T] = {
     if (values.nonEmpty && values.forall(_ == values.head))
       Some(values.head)
     else
       None
   }
+
+  /**
+    * Returns latest value of given values (timestamp and user name). Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData.
+    */
   def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
     if (values.nonEmpty)
       Some(values.max)
@@ -305,7 +398,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
       None
   }
 
-  // fill incomplete links with the previous link information where they are available and where they agree
+  /**
+    *  Fills incomplete road links with the previous link information.
+    *  Used by ROadLinkService.enrichRoadLinksFromVVH.
+    */
   def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
     val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes)
     incompleteLinks.map { incompleteLink =>
@@ -336,11 +432,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }.partition(isComplete)
   }
 
+  /**
+    * Checks if road link is complete (has both functional class and link type in OTH).
+    * Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData and RoadLinkService.isIncomplete.
+    */
   def isComplete(roadLink: RoadLink): Boolean = {
     roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
+
+  /**
+    * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
+    */
   def isIncomplete(roadLink: RoadLink): Boolean = !isComplete(roadLink)
 
+  /**
+    * Checks if road link is partially complete (has functional class OR link type but not both). Used by RoadLinkService.enrichRoadLinksFromVVH.
+    */
   def isPartiallyIncomplete(roadLink: RoadLink): Boolean = {
     val onlyFunctionalClassIsSet = roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value == UnknownLinkType.value
     val onlyLinkTypeIsSet = roadLink.functionalClass == FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
@@ -382,6 +489,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     completeLinks ++ autoGeneratedLinks ++ changedLinks ++ stillIncompleteLinks
   }
 
+  /**
+    * Uses old road link ids from change data to fetch their OTH overridden properties from db.
+    * Used by RoadLinkSErvice.fillIncompleteLinksWithPreviousLinkData.
+    */
   def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo]): Seq[RoadLinkProperties] = {
     val oldLinkIds = changes.flatMap(_.oldId)
     val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
@@ -401,6 +512,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
+    */
   def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
     adjustedRoadLinks(vvhRoadLinks)
   }
@@ -486,6 +600,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  /**
+    * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
+    */
   def getAdjacent(linkId: Long): Seq[RoadLink] = {
     val sourceLinkGeometryOption = getRoadLinkGeometry(linkId)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {

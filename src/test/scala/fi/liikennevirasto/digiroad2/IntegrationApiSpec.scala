@@ -46,6 +46,15 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("Get speed_limits requires municipality number") {
+    getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
+      status should equal(400)
+    }
+    getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
+      status should equal(200)
+    }
+  }
+
   test("Returns mml id of the road link that the stop refers to") {
     getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
       val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
@@ -54,7 +63,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("encode speed limit") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None, 0, None))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
