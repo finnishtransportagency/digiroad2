@@ -42,12 +42,25 @@ trait LinearAssetOperations {
     new BoneCPDataSource(cfg)
   }
 
+  /**
+    * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
+    * @param typeId
+    * @param bounds
+    * @param municipalities
+    * @return
+    */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  /**
+    * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
+    * @param typeId
+    * @param municipality
+    * @return
+    */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
     getByRoadLinks(typeId, roadLinks)
@@ -72,6 +85,9 @@ trait LinearAssetOperations {
     filledTopology
   }
 
+  /**
+    * Returns linear assets by asset type and asset ids. Used by Digiroad2Api /linearassets POST and /linearassets DELETE endpoints.
+    */
   def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       typeId match {
@@ -85,6 +101,9 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Returns changed linear assets after given date. Used by ChangeApi /:assetType GET endpoint.
+    */
   def getChanged(typeId: Int, since: DateTime, until: DateTime): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until)
@@ -109,7 +128,9 @@ trait LinearAssetOperations {
     }
   }
 
-
+  /**
+    * Expires linear asset. Used by Digiroad2Api /linearassets DELETE endpoint and Digiroad2Context.LinearAssetUpdater actor.
+    */
   def expire(ids: Seq[Long], username: String): Seq[Long] = {
     withDynTransaction {
       ids.foreach(dao.updateExpiration(_, expired = true, username))
@@ -117,12 +138,18 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Saves updated linear asset from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
   def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, username)
     }
   }
 
+  /**
+    * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
+    */
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
     withDynTransaction {
       adjustments.foreach { adjustment =>
@@ -131,6 +158,9 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Updates side codes. Used by Digiroad2Context.LinearAssetUpdater actor.
+    */
   def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
     withDynTransaction {
       adjustments.foreach { adjustment =>
@@ -139,6 +169,9 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
@@ -147,6 +180,9 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Saves linear asset when linear asset is split to two parts in UI (scissors icon). Used by Digiroad2Api /linearassets/:id POST endpoint.
+    */
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
@@ -169,12 +205,18 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Sets linear assets with no geometry as floating. Used by Used by Digiroad2Context.LinearAssetUpdater actor.
+    */
   def drop(ids: Set[Long]): Unit = {
     withDynTransaction {
       dao.floatLinearAssets(ids)
     }
   }
 
+  /**
+    * Saves linear assets when linear asset is separated to two sides in UI. Used by Digiroad2Api /linearassets/:id/separate POST endpoint.
+    */
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
