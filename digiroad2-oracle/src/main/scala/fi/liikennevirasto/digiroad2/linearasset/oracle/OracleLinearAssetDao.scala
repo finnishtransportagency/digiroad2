@@ -20,6 +20,7 @@ case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value
 
 class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
+  def MassQueryThreshold = 500
   /**
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
@@ -471,10 +472,46 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+  private def massQueryCurrentSpeedLimitsByLinkIds(ids: Set[Long]): List[SpeedLimit] = {
+    val speedLimits = MassQuery.withIds(ids) { idTableName =>
+      sql"""select a.id, pos.link_id, pos.side_code, e.value,
+            pos.start_measure, pos.end_measure,
+            a.modified_by, a.modified_date, a.created_by, a.created_date,
+            pos.adjusted_timestamp, pos.modified_date
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+        join #$idTableName i on (i.id = pos.link_id)
+        where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE )""".as[
+        (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])
+        ].list
+    }
+    speedLimits.map {
+      case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
+        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate)
+    }
+  }
+
   /**
     * Returns speed limits that match a set of link ids. Used by SpeedLimitService.fillNewRoadLinksWithPreviousSpeedLimitData.
     */
   def getCurrentSpeedLimitsByLinkIds(ids: Option[Set[Long]]): List[SpeedLimit] = {
+    if (ids.isEmpty) {
+      List()
+    } else {
+      val idSet = ids.get
+      if (idSet.size > MassQueryThreshold) {
+        massQueryCurrentSpeedLimitsByLinkIds(idSet)
+      } else {
+        getCurrentSpeedLimitsByLinkIds(idSet)
+      }
+    }
+  }
+
+  private def getCurrentSpeedLimitsByLinkIds(ids: Set[Long]): List[SpeedLimit] = {
     def makeLinkIdSql(s: String) = {
       s.length match {
         case 0 => " and 1=0"
@@ -482,7 +519,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       }
     }
 
-    val idString = ids.map(_.mkString(","))
+    val idString = ids.mkString(",")
     val sql = "select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date "+
     "from ASSET a "+
     "join ASSET_LINK al on a.id = al.asset_id " +
@@ -493,7 +530,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) "
 
     idString match {
-      case Some(s) =>
+      case s =>
         val idSql = sql + makeLinkIdSql(s)
         Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])] (idSql).list.map {
           case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
