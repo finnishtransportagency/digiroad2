@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing, BothDirections}
@@ -246,6 +247,28 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     output.filter(o => o.linkId == 3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
     output.filter(o => o.linkId == 3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
     output.length should be (6)
+  }
+
+  test("adjustTwoWaySegments") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, None, 0.0, 4.5, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 160, 0, None),
+      PersistedLinearAsset(2, 1, SideCode.BothDirections.value, None, 4.5, 9.0, Some("guy"),
+        Some(DateTime.now().minusDays(2)), None, None, expired = false, 160, 0, None),
+      PersistedLinearAsset(3, 1, SideCode.BothDirections.value, None, 9.0, 10.0, Some("guy"),
+        Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None)
+    )
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
+    filledTopology.length should be (1)
+    filledTopology.head.id should be (1)
+    filledTopology.head.endMeasure should be (10.0)
+    filledTopology.head.startMeasure should be (0.0)
+    changeSet.adjustedMValues.length should be (1)
+    changeSet.adjustedMValues.head.endMeasure should be (10.0)
+    changeSet.adjustedMValues.head.startMeasure should be (0.0)
+    changeSet.droppedAssetIds should be (Set(2,3))
   }
 
   private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
