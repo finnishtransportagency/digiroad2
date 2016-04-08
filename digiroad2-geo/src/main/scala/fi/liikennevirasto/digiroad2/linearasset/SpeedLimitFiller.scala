@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 
@@ -461,7 +462,7 @@ object SpeedLimitFiller {
     var newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
 
     // Test if the direction has changed - side code will be affected, too
-    if (oldLength * newLength < 0) {
+    if (GeometryUtils.isDirectionChangeProjection(projection)) {
       newSideCode = newSideCode match {
         case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
         case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing

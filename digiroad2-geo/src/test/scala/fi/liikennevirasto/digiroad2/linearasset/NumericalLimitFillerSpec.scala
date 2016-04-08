@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing, BothDirections}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, Motorway, TrafficDirection, Municipality}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, ChangeSet, SideCodeAdjustment}
 import org.scalatest._
 
@@ -118,4 +119,156 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
     changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, Set.empty[Long]))
   }
+
+  test("project road lights to new geometry") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, None, 0.0, 10.0, Some("guy"),
+      None, None, None, expired = false, 100, 0, None)
+        )
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+    val output = changes map { change =>
+      NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    output.length should be(3)
+    output.head.sideCode should be (SideCode.BothDirections.value)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.last.endMeasure should be(3.0)
+  }
+
+  test("project paved road to new geometry, one side paved, should switch the last turned link segment") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.TowardsDigitizing.value, None, 0.0, 10.0, Some("guy"),
+        None, None, None, expired = false, 110, 0, None),
+        PersistedLinearAsset(2, 1, SideCode.AgainstDigitizing.value, None, 0.0, 10.0, Some("guy"),
+        None, None, None, expired = false, 110, 0, None)
+    )
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes map { change =>
+      NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
+    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.last.startMeasure should be(0.0)
+    output.last.endMeasure should be(3.0)
+
+    val output2 = changes map { change =>
+      NumericalLimitFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get)) }
+    output2.length should be(3)
+    output2.head.sideCode should be (SideCode.AgainstDigitizing.value)
+    output2.last.sideCode should be (SideCode.TowardsDigitizing.value)
+    output2.head.startMeasure should be(0.0)
+    output2.head.endMeasure should be(3.0)
+    output2.last.startMeasure should be(0.0)
+    output2.last.endMeasure should be(3.0)
+  }
+
+  test("project thawing asset to new geometry, cuts short") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.TowardsDigitizing.value, None, 0.0, 9.0, Some("guy"),
+        None, None, None, expired = false, 130, 0, None)
+    )
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes flatMap { change =>
+      assets.map(
+        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
+    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head.startMeasure should be(0.0)
+    output.head.endMeasure should be(3.0)
+    output.last.startMeasure should be(1.0)
+    output.last.endMeasure should be(3.0)
+    output.length should be (3)
+  }
+
+  test("project speed limits to new geometry, case 4 - speed changes in the middle of the roadlink, different for different directions") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None),
+      SpeedLimit(
+        3, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(30)),
+        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None),
+      SpeedLimit(
+        4, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None))
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes flatMap { change =>
+      speedLimit.map(
+        SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.filter(_.linkId == 1).count(_.value.contains(NumericValue(30))) should be (1)
+    output.filter(_.linkId == 1).count(_.value.contains(NumericValue(40))) should be (1)
+    output.filter(_.linkId == 2).count(_.value.contains(NumericValue(30))) should be (1)
+    output.filter(_.linkId == 2).count(_.value.contains(NumericValue(40))) should be (1)
+    output.filter(_.linkId == 2).count(_.value.contains(NumericValue(50))) should be (1)
+    output.filter(_.linkId == 2).count(_.value.contains(NumericValue(60))) should be (1)
+    output.filter(_.linkId == 3).count(_.value.contains(NumericValue(50))) should be (1)
+    output.filter(_.linkId == 3).count(_.value.contains(NumericValue(60))) should be (1)
+    output.length should be (8)
+  }
+
+  private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
+    val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
+    RoadLink(
+      linkId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
+      TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
+  }
+
+  case class ChangeInfo(oldId: Option[Long],
+                        newId: Option[Long],
+                        mmlId: Long,
+                        changeType: Int,
+                        oldStartMeasure: Option[Double],
+                        oldEndMeasure: Option[Double],
+                        newStartMeasure: Option[Double],
+                        newEndMeasure: Option[Double],
+                        vvhTimeStamp: Option[Long])
 }
