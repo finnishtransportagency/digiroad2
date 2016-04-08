@@ -263,6 +263,39 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output.length should be (4)
   }
 
+  test("project speed limits to new geometry, case 3b - speed changes in the middle of the roadlink, digitization switches there") {
+    val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val newLink2 = roadLink(2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
+    val newLink3 = roadLink(3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val linkmap = Map(1L -> newLink1, 2L -> newLink2, 3L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(7.5, 0.0)), 0.0, 7.5, None, None, None, None, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(7.5, 0.0), Point(10.0, 0.0)), 7.5, 10.0, None, None, None, None, 0, None))
+
+    val changes = Seq(ChangeInfo(Some(1l), Some(1l), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(2l), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
+      ChangeInfo(Some(1l), Some(3l), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    )
+
+    val output = changes flatMap { change =>
+      speedLimit.map(
+        SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.foreach(_.sideCode should be (SideCode.BothDirections))
+    output.length should be (4)
+    val (link3sl1, link3sl2) = (output.tail.tail.head, output.last)
+    link3sl1.startMeasure should be (2.5)
+    link3sl2.startMeasure should be (0)
+    link3sl1.endMeasure should be (3)
+    link3sl2.endMeasure should be (2.5)
+  }
+
   test("project speed limits to new geometry, case 4 - speed changes in the middle of the roadlink, different for different directions") {
     val oldRoadLink = roadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val newLink1 = roadLink(1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))

@@ -185,8 +185,8 @@ object SpeedLimitFiller {
         case (TrafficDirection.TowardsDigitizing) => TrafficDirection.AgainstDigitizing
         case _ => newDirection
       }
-      newStart = projection.newStart + (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
-      newEnd = projection.newEnd + (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+      newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+      newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
     }
 
     newStart = Math.min(to.length, Math.max(0.0, newStart))
