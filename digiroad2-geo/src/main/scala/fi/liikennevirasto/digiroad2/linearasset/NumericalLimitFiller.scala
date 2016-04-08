@@ -10,6 +10,17 @@ object NumericalLimitFiller {
   private val AllowedTolerance = 0.5
   private val MaxAllowedError = 0.01
 
+  private def modifiedSort(left: PersistedLinearAsset, right: PersistedLinearAsset) = {
+    val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
+    val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
+    (leftStamp, rightStamp) match {
+      case (Some(l), Some(r)) => l.isAfter(r)
+      case (None, Some(r)) => false
+      case (Some(l), None) => true
+      case (None, None) => true
+    }
+  }
+
   private def adjustAsset(asset: PersistedLinearAsset, roadLink: RoadLink): (PersistedLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure > MaxAllowedError) Some(0.0) else None
@@ -25,14 +36,76 @@ object NumericalLimitFiller {
     (adjustedAsset, mValueAdjustments)
   }
 
-  private def adjustTwoWaySegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val twoWaySegments = assets.filter(_.sideCode == 1)
+  private def extendHead(mStart: Double, candidates: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Double, ChangeSet) = {
+    val maybeAsset = candidates.find(a => Math.abs(a.endMeasure - mStart) < MaxAllowedError)
+    maybeAsset match {
+      case Some(extension) =>
+        extendHead(extension.startMeasure, candidates.diff(Seq(extension)),
+          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ Set(extension.id)))
+      case None => (mStart, changeSet)
+
+    }
+  }
+  private def extendTail(mEnd: Double, candidates: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Double, ChangeSet) = {
+    val maybeAsset = candidates.find(a => Math.abs(a.startMeasure - mEnd) < MaxAllowedError)
+    maybeAsset match {
+      case Some(extension) =>
+        extendTail(extension.endMeasure, candidates.diff(Seq(extension)),
+          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ Set(extension.id)))
+      case None => (mEnd, changeSet)
+    }
+  }
+
+  /**
+    * Try to find assets that start/end adjacent to the keeper asset and merge them to the keeper
+    * @param asset keeper
+    * @param candidates merging candidates
+    * @param changeSet current changeset
+    * @return updated keeper asset and updated changeset
+    */
+  private def extend(asset: PersistedLinearAsset, candidates: Seq[PersistedLinearAsset], changeSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
+    if (candidates.isEmpty) {
+      (asset, changeSet)
+    } else {
+      val (mStart, changeSetH) = extendHead(asset.startMeasure, candidates.filter(a =>
+        (a.endMeasure < asset.startMeasure + MaxAllowedError) && a.value.equals(asset.value)), changeSet)
+      val (mEnd, changeSetHT) = extendTail(asset.endMeasure, candidates.filter(a =>
+        (a.startMeasure > asset.endMeasure - MaxAllowedError) && a.value.equals(asset.value)), changeSetH)
+      val mValueAdjustments = (mStart == asset.startMeasure, mEnd == asset.endMeasure) match {
+        case (true, true) => Nil
+        case (s, e) => Seq(MValueAdjustment(asset.id, asset.linkId, mStart, mEnd))
+      }
+      val adjustedAsset = asset.copy(
+        startMeasure = mStart,
+        endMeasure = mEnd)
+      (adjustedAsset, changeSetHT.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+    }
+  }
+
+  /**
+    * Adjust two way segments and combine them if possible using tail recursion functions above
+    * @param roadLink
+    * @param assets
+    * @param changeSet
+    * @return
+    */
+  def adjustTwoWaySegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val twoWaySegments = assets.filter(_.sideCode == 1).sortWith(modifiedSort)
     if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
-      val asset = assets.head
+      val asset = twoWaySegments.head
       val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
       (Seq(adjustedAsset), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
     } else {
-      (assets, changeSet)
+      if (twoWaySegments.length > 1) {
+        val asset = twoWaySegments.head
+        val rest = twoWaySegments.tail
+        val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
+        val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
+        (rest.filterNot(p => newChangeSet.droppedAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
+          newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
+      } else {
+        (assets, changeSet)
+      }
     }
   }
 
