@@ -277,10 +277,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-76 Automatics for fixing linear assets after geometry update (using VVH change info data)
 
-  test("Should map linear asset (lit road) of old link to three new road links") {
+  test("Should map linear asset (lit road) of old link to three new road links, asset covers whole road link") {
 
     // Divided road link (change types 5 and 6)
-    // Asset covers the whole old link
+    // Asset covers the whole old road link
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -318,36 +318,108 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(100, boundingBox).toList
 
-      before.length should be(1)
-      before.head.map(_.value should be(Some(NumericValue(1))))
-      before.head.map(_.sideCode should be(SideCode.BothDirections))
-      before.head.map(_.startMeasure should be(0))
-      before.head.map(_.endMeasure should be(25))
+      before.length should be (1)
+      before.head.map(_.value should be (Some(NumericValue(1))))
+      before.head.map(_.sideCode should be (SideCode.BothDirections))
+      before.head.map(_.startMeasure should be (0))
+      before.head.map(_.endMeasure should be (25))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(100, boundingBox).toList.flatten
 
-      after.length should be(3)
-      after.foreach(_.value should be(Some(NumericValue(1))))
-      after.foreach(_.sideCode should be(SideCode.BothDirections))
+      after.length should be (3)
+      after.foreach(_.value should be (Some(NumericValue(1))))
+      after.foreach(_.sideCode should be (SideCode.BothDirections))
 
       val afterByLinkId = after.groupBy(_.linkId)
       val linearAsset1 = afterByLinkId(newLinkId1)
-      linearAsset1.length should be(1)
-      linearAsset1.head.startMeasure should be(0)
-      linearAsset1.head.endMeasure should be(10)
+      linearAsset1.length should be (1)
+      linearAsset1.head.startMeasure should be (0)
+      linearAsset1.head.endMeasure should be (10)
       val linearAsset2 = afterByLinkId(newLinkId2)
-      linearAsset2.length should be(1)
-      linearAsset2.head.startMeasure should be(0)
-      linearAsset2.head.endMeasure should be(10)
+      linearAsset2.length should be (1)
+      linearAsset2.head.startMeasure should be (0)
+      linearAsset2.head.endMeasure should be (10)
       val linearAsset3 = afterByLinkId(newLinkId3)
-      linearAsset3.length should be(1)
-      linearAsset3.head.startMeasure should be(0)
-      linearAsset3.head.endMeasure should be(5)
+      linearAsset3.length should be (1)
+      linearAsset3.head.startMeasure should be (0)
+      linearAsset3.head.endMeasure should be (5)
 
       dynamicSession.rollback()
     }
   }
 
+  test("Should map linear asset (lit road) of old link to three new road links, asset covers part of road link") {
+
+    // Divided road link (change types 5 and 6)
+    // Asset covers only part of road link
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId = 5000
+    val newLinkId1 = 6001
+    val newLinkId2 = 6002
+    val newLinkId3 = 6003
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 100 // lit roads
+
+    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, 5.0, 15.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id) values (1,$assetTypeId)""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'), 1)""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      val before = service.getByBoundingBox(100, boundingBox).toList.flatten
+
+      before.length should be (3)
+      before.foreach(_.sideCode should be (SideCode.BothDirections))
+      before.foreach(_.linkId should be (oldLinkId))
+
+      val beforeByValue = before.groupBy(_.value)
+      beforeByValue(Some(NumericValue(1))).length should be (1)
+      beforeByValue(None).length should be (2)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      val after = service.getByBoundingBox(100, boundingBox).toList.flatten
+
+      after.length should be (5)
+      after.foreach(_.sideCode should be (SideCode.BothDirections))
+
+      val afterByLinkId = after.groupBy(_.linkId)
+
+      val linearAssets1 = afterByLinkId(newLinkId1)
+      linearAssets1.length should be (2)
+      linearAssets1.filter(_.startMeasure == 0.0).head.value should be (None)
+      linearAssets1.filter(_.startMeasure == 5.0).head.value should be (Some(NumericValue(1)))
+      val linearAssets2 = afterByLinkId(newLinkId2)
+      linearAssets2.length should be (2)
+      linearAssets2.filter(_.startMeasure == 0.0).head.value should be (Some(NumericValue(1)))
+      linearAssets2.filter(_.startMeasure == 5.0).head.value should be (None)
+      val linearAssets3 = afterByLinkId(newLinkId3)
+      linearAssets3.length should be (1)
+      linearAssets3.filter(_.startMeasure == 0.0).head.value should be (None)
+
+      dynamicSession.rollback()
+    }
+  }
 
 }
