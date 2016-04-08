@@ -277,9 +277,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-76 Automatics for fixing linear assets after geometry update (using VVH change info data)
 
-  test("Should map linear asset to new road link") {
+  test("Should map linear asset (lit road) of old link to three new road links") {
 
-    // TODO: This is just a template for new tests, should be modified
+    // Divided road link (change types 5 and 6)
+    // Asset covers the whole old link
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -309,41 +310,43 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, 1234, 0.0, 10.0, 1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, 0.0, 25.0, 1)""".execute
       sqlu"""insert into asset (id, asset_type_id) values (1,$assetTypeId)""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
-      val before = service.getByBoundingBox(100, boundingBox).head
-
-      //println(before)
-
-      /*
-      before.length should be(1)
-      before.map(_.value should be(Some(NumericValue(80))))
-      before.map(_.sideCode should be(SideCode.BothDirections))
-      */
+      val before = service.getByBoundingBox(100, boundingBox).toList
 
       before.length should be(1)
+      before.head.map(_.value should be(Some(NumericValue(1))))
+      before.head.map(_.sideCode should be(SideCode.BothDirections))
+      before.head.map(_.startMeasure should be(0))
+      before.head.map(_.endMeasure should be(25))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
-      val after = service.getByBoundingBox(100, boundingBox).head
+      val after = service.getByBoundingBox(100, boundingBox).toList.flatten
 
-      //println(after)
-
-      /*
       after.length should be(3)
-      after.map(_.value should be(Some(NumericValue(80))))
-      after.map(_.sideCode should be(SideCode.BothDirections))
-      */
+      after.foreach(_.value should be(Some(NumericValue(1))))
+      after.foreach(_.sideCode should be(SideCode.BothDirections))
+
+      val afterByLinkId = after.groupBy(_.linkId)
+      val linearAsset1 = afterByLinkId(newLinkId1)
+      linearAsset1.length should be(1)
+      linearAsset1.head.startMeasure should be(0)
+      linearAsset1.head.endMeasure should be(10)
+      val linearAsset2 = afterByLinkId(newLinkId2)
+      linearAsset2.length should be(1)
+      linearAsset2.head.startMeasure should be(0)
+      linearAsset2.head.endMeasure should be(10)
+      val linearAsset3 = afterByLinkId(newLinkId3)
+      linearAsset3.length should be(1)
+      linearAsset3.head.startMeasure should be(0)
+      linearAsset3.head.endMeasure should be(5)
 
       dynamicSession.rollback()
-
     }
-
-
-
   }
 
 
