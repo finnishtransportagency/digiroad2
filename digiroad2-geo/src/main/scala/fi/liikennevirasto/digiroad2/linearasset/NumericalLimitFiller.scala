@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ChangeSet, MValueAdjustment}
@@ -121,39 +122,34 @@ object NumericalLimitFiller {
     }
   }
 
+  private def calculateNewMValuesAndSideCode(asset: PersistedLinearAsset, projection: Projection, roadLinkLength: Double) = {
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
+
+    // Test if the direction has changed -> side code will be affected, too
+    if (GeometryUtils.isDirectionChangeProjection(projection)) {
+      val newSideCode = SideCode.apply(asset.sideCode) match {
+        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
+        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
+        case _ => asset.sideCode
+      }
+      val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+      val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+      (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
+    } else {
+      val newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
+      val newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
+      (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), asset.sideCode)
+    }
+  }
+
   def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection) = {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-    var newSideCode = asset.sideCode
-// TODO: traffic direction?
-//    var newDirection = asset.trafficDirection
-    var newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
-    var newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
-
-    // Test if the direction has changed - side code will be affected, too
-    if (oldLength * newLength < 0) {
-      newSideCode = SideCode.apply(newSideCode) match {
-        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
-        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
-        case _ => newSideCode
-      }
-//      newDirection = newDirection match {
-//        case (TrafficDirection.AgainstDigitizing) => TrafficDirection.TowardsDigitizing
-//        case (TrafficDirection.TowardsDigitizing) => TrafficDirection.AgainstDigitizing
-//        case _ => newDirection
-//      }
-      newStart = projection.newStart + (asset.startMeasure - projection.oldEnd) * Math.abs(newLength/oldLength)
-      newEnd = projection.newEnd + (asset.endMeasure - projection.oldStart) * Math.abs(newLength/oldLength)
-    }
-
-    newStart = Math.min(to.length, Math.max(0.0, newStart))
-    newEnd = Math.max(0.0, Math.min(to.length, newEnd))
-
+    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
     val geometry = GeometryUtils.truncateGeometry(
       Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
         GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
@@ -166,7 +162,4 @@ object NumericalLimitFiller {
       vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None
     )
   }
-
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
-
 }
