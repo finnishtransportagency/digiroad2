@@ -70,7 +70,8 @@ object DataFixture {
       "siilijarvi_functional_classes.sql",
       "siilijarvi_link_types.sql",
       "siilijarvi_traffic_directions.sql",
-      "siilinjarvi_speed_limits.sql"
+      "siilinjarvi_speed_limits.sql",
+      "siilinjarvi_linear_assets.sql"
     ))
   }
 
