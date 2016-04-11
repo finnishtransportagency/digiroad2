@@ -39,21 +39,22 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
           Map(
             "type" -> "Feature",
+            "id" -> speedLimit.id,
             "geometry" -> Map(
               "type" -> "LineString",
               "coordinates" -> speedLimit.geometry.map(p => Seq(p.x, p.y, p.z))
             ),
             "properties" ->
-              Map("id" -> speedLimit.id,
+              Map(
                 "value" -> speedLimit.value.map(_.toJson),
                 "link" -> Map(
                   "type" -> "Feature",
+                  "id" -> link.linkId,
                   "geometry" -> Map(
                     "type" -> "LineString",
                     "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
                   ),
                   "properties" -> Map(
-                    "id" -> link.linkId,
                     "functionalClass" -> link.functionalClass,
                     "type" -> link.linkType.value,
                     "length" -> link.length
@@ -79,21 +80,22 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         changedLinearAssets.map { case ChangedLinearAsset(linearAsset, link) =>
           Map(
             "type" -> "Feature",
+            "id" -> linearAsset.id,
             "geometry" -> Map(
               "type" -> "LineString",
               "coordinates" -> linearAsset.geometry.map(p => Seq(p.x, p.y, p.z))
             ),
             "properties" ->
-              Map("id" -> linearAsset.id,
+              Map(
                 "value" -> linearAsset.value.map(_.toJson),
                 "link" -> Map(
                   "type" -> "Feature",
+                  "id" -> link.linkId,
                   "geometry" -> Map(
                     "type" -> "LineString",
                     "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
                   ),
                   "properties" -> Map(
-                    "id" -> link.linkId,
                     "functionalClass" -> link.functionalClass,
                     "type" -> link.linkType.value,
                     "length" -> link.length
