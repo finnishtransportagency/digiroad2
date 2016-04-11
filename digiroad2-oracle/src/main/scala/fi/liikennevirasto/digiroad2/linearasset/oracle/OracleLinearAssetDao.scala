@@ -405,7 +405,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     (speedLimitLinks, topology)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime) = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime) = {
     val speedLimits = sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
          from asset a
@@ -414,16 +414,24 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
          join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
          join enumerated_value e on s.enumerated_value_id = e.id
-         where a.asset_type_id = 20 and floating = 0
-         and (a.modified_date > $sinceDate or a.created_date > $sinceDate or pos.modified_date > $sinceDate)
-                """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
+         where
+         a.asset_type_id = 20
+         and floating = 0
+         and (
+           (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+           or
+           (a.created_date > $sinceDate and a.created_date <= $untilDate)
+           or
+           (pos.modified_date > $sinceDate and pos.modified_date <= $untilDate)
+         )
+    """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
     speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp , geomModifiedDate)
     }
   }
 
-  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime) = {
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime) = {
     val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -433,8 +441,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = 'mittarajoitus'
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-          where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= $sinceDate or a.modified_date >= $sinceDate or a.created_date >= $sinceDate or pos.modified_date > $sinceDate)
+          where
+          a.asset_type_id = $assetTypeId
+          and (
+            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+            or
+            (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+            or
+            (a.created_date > $sinceDate and a.created_date <= $untilDate)
+            or
+            (pos.modified_date > $sinceDate and pos.modified_date <= $untilDate)
+          )
           and a.floating = 0"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
 

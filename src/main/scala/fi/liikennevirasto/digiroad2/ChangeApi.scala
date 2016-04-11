@@ -20,15 +20,16 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   get("/:assetType") {
     contentType = formats("json")
     val since = DateTime.parse(params("since"))
+    val until = DateTime.parse(params("until"))
     params("assetType") match {
-      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since))
-      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since))
-      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since))
-      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(50, since))
-      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(60, since))
-      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since))
-      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since))
-      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since))
+      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
+      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))
+      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since, until))
+      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(50, since, until))
+      case "bogie_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(60, since, until))
+      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since, until))
+      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
+      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
     }
   }
 

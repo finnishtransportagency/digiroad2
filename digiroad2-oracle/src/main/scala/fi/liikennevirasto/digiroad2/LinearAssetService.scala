@@ -85,9 +85,9 @@ trait LinearAssetOperations {
     }
   }
 
-  def getChanged(typeId: Int, since: DateTime): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since)
+      dao.getLinearAssetsChangedSince(typeId, since, until)
     }
     val roadLinks = roadLinkService.getRoadLinksFromVVH(persistedLinearAssets.map(_.linkId).toSet)
 
