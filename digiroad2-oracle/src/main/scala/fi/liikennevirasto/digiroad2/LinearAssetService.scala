@@ -89,7 +89,7 @@ trait LinearAssetOperations {
 
     val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       existingAssets, assetsOnChangedLinks, changes)
-    val groupedAssets = (existingAssets.filterNot(a => newAssets.map(_.linkId).contains(a.linkId)) ++ newAssets).groupBy(_.linkId)
+    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
     eventBus.publish("linearAssets:update", changeSet)
@@ -101,7 +101,7 @@ trait LinearAssetOperations {
     */
   private def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
                                                          currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
-    val newSpeedLimits = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, changes).flatMap(
+    val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, changes).flatMap(
       limit =>
         limit match {
           case (asset, (Some(roadLink), Some(projection))) =>
@@ -109,7 +109,7 @@ trait LinearAssetOperations {
           case (_, (_, _)) =>
             None
         }).filter(a => Math.abs(a.startMeasure - a.endMeasure) > 0) // Remove zero-length or invalid length parts
-    newSpeedLimits
+    linearAssets
   }
   private def mapReplacementProjections(oldSpeedLimits: Seq[PersistedLinearAsset], currentSpeedLimits: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                                         changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
