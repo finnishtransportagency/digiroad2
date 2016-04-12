@@ -2,11 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
@@ -64,8 +64,8 @@ trait LinearAssetOperations {
     * @return
     */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
-    getByRoadLinks(typeId, roadLinks, Seq())
+    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+    getByRoadLinks(typeId, roadLinks, change)
   }
 
   private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
