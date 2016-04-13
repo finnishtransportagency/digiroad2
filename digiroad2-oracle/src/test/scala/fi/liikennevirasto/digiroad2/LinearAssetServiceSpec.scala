@@ -1,13 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -273,6 +274,59 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   // Tests for DROTH-76 Automatics for fixing linear assets after geometry update (using VVH change info data)
+
+  test("Should expire assets from deleted road links through the actor")
+  {
+    val oldLinkId1 = 5001
+    val oldLinkId2 = 5002
+    val oldLinkId3 = 5003
+    val newLinkId = 6000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val assetTypeId = 100 // lit roads
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val newRoadLinks = Seq(RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
+      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), Some(144000000)),
+      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), Some(144000000)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, 0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, changeInfo))
+
+      linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
+
+      val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:update"), captor.capture())
+      captor.getValue().expiredAssetIds should be (Set(1,2,3))
+
+      dynamicSession.rollback()
+    }
+  }
 
   test("Should map linear asset (lit road) of old link to three new road links, asset covers whole road link") {
 
