@@ -135,11 +135,11 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
           Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.2, 0.0), Point(0.55, 0.0)), 0.0, 0.35, Some("one else"), Some(DateTime.now().minus(500)),
+          Seq(Point(0.2, 0.0), Point(0.55, 0.0)), 0.2, 0.55, Some("one else"), Some(DateTime.now().minus(500)),
           Some("one"), Some(DateTime.now().minus(1000)), 0, None),
         SpeedLimit(
           3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
-          Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.0, 0.45, Some("random guy"), Some(DateTime.now().minus(450)),
+          Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.55, 1.0, Some("random guy"), Some(DateTime.now().minus(450)),
           Some("one"), Some(DateTime.now().minus(1100)), 0, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
@@ -336,6 +336,135 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output.filter(_.linkId == 3).count(_.value.contains(NumericValue(60))) should be (1)
     output.length should be (8)
   }
+
+  test("Should repair speed limit data on overlaps and invalid data") {
+    val rLink = roadLink(1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
+    val bdblue = Option(DateTime.now().minusDays(6))
+    val sdblue = Option(DateTime.now().minusDays(5))
+    val bdred = Option(DateTime.now().minusDays(4))
+    val sdred1 = Option(DateTime.now().minusDays(3).minusHours(1))
+    val sdred2 = Option(DateTime.now().minusDays(3))
+    val sdred3 = Option(DateTime.now().minusDays(3).plusHours(1))
+    val bdgreen = Option(DateTime.now().minusDays(2))
+    val sdgreen = Option(DateTime.now().minusDays(1))
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(26.67, 0.0), Point(43.33, 0.0)), 26.67, 43.33, None, None, Some("blue bd"), bdblue, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), bdred, 0, None),
+      SpeedLimit(
+        3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(50.0, 0.0), Point(60.0, 0.0)), 50.0, 60.0, None, None, Some("green bd"), bdgreen, 0, None),
+      SpeedLimit(
+        4, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(16.67, 0.0), Point(33.33, 0.0)), 16.67, 33.33, None, None, Some("blue td"), sdblue, 0, None),
+      SpeedLimit(
+        5, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(23.33, 0.0), Point(36.67, 0.0)), 23.33, 36.67, None, None, Some("blue ad"), sdblue, 0, None),
+      SpeedLimit(
+        6, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(0.0, 0.0), Point(16.67, 0.0)), 0.0, 16.67, None, None, Some("red td"), sdred1, 0, None),
+      SpeedLimit(
+        7, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, Some("red ad"), sdred2, 0, None),
+      SpeedLimit(
+        8, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(10.0, 0.0), Point(23.33, 0.0)), 10.0, 23.33, None, None, Some("red ad"), sdred3, 0, None),
+      SpeedLimit(
+        9, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(33.33, 0.0), Point(50.0, 0.0)), 33.33, 50.0, None, None, Some("green bd"), sdgreen, 0, None),
+      SpeedLimit(
+        10, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(36.67, 0.0), Point(50.0, 0.0)), 36.67, 50.0, None, None, Some("green bd"), sdgreen, 0, None)
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
+//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
+//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
+//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
+//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
+//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
+
+    changeSet.droppedAssetIds should be (Set(1, 2, 3, 4, 6, 7))
+    filledTopology.count(_.id != 0) should be (4)
+    filledTopology.forall(_.value.nonEmpty) should be (true)
+  }
+
+  test("Should split older asset if necessary") {
+    val rLink = roadLink(1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
+    val linkmap = Map(1L -> rLink)
+    val edit1 = Option(DateTime.now().minusDays(7))
+    val edit2 = Option(DateTime.now().minusDays(6))
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), edit2, 0, None)    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
+//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
+//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
+//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
+//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
+//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
+
+    changeSet.droppedAssetIds should be (Set())
+    filledTopology.length should be (3)
+    filledTopology.map(_.id).toSet should be (Set(0,1,2))
+    val newLink = filledTopology.find(_.id==0).get
+    newLink.startMeasure should be (0.0)
+    newLink.endMeasure should be (10.0)
+    newLink.value.get should be (NumericValue(60))
+    val oldLink1 = filledTopology.find(_.id==1).get
+    oldLink1.startMeasure should be (26.67)
+    oldLink1.endMeasure should be (50.0)
+    val oldLink2 = filledTopology.find(_.id==2).get
+    oldLink2.startMeasure should be (10.0)
+    oldLink2.endMeasure should be (26.67)
+  }
+
+  test("Should fill any holes it creates") {
+    val rLink = roadLink(1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
+    val linkmap = Map(1L -> rLink)
+    val edit1 = Option(DateTime.now().minusDays(7))
+    val edit2 = Option(DateTime.now().minusDays(6))
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(60)),
+        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 0, None),
+      SpeedLimit(
+        3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(26.8, 0.0), Point(50, 0.0)), 26.74, 50, None, None, Some("red bd"), edit2, 0, None)
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
+//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
+//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
+//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
+//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
+//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
+
+    changeSet.droppedAssetIds should be (Set(1))
+    filledTopology.length should be (3)
+    val newLink = filledTopology.find(_.id==0).get
+    newLink.startMeasure should be (0.0)
+    newLink.endMeasure should be (10.0)
+    newLink.value.get should be (NumericValue(60))
+    val oldLink1 = filledTopology.find(_.id==2).get
+    oldLink1.startMeasure should be (10.0)
+    oldLink1.endMeasure should be (26.74)
+    val oldLink2 = filledTopology.find(_.id==3).get
+    oldLink2.startMeasure should be (26.74)
+    oldLink2.endMeasure should be (50.0)
+  }
+
   case class ChangeInfo(oldId: Option[Long],
                         newId: Option[Long],
                         mmlId: Long,

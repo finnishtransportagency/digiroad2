@@ -181,4 +181,12 @@ object GeometryUtils {
       case _ => segment
     }
   }
+
+  def overlap(segment1: (Double, Double), segment2: (Double, Double)): Option[(Double, Double)] = {
+    val (seg1, seg2) = (order(segment1), order(segment2))
+    overlaps(seg1, seg2) match {
+      case false => None
+      case true => Option(Math.max(seg1._1, seg2._1), Math.min(seg1._2, seg2._2))
+    }
+  }
 }
