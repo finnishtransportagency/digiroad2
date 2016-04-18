@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.1
   private val Epsilon = 1E-6 // Smallest value we can tolerate to equal the same. One micrometer.
-  private val MinAllowedSpeedLimitLength = 0.1 // -> 4.5 meters
+  private val MinAllowedSpeedLimitLength = 3.0
 
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure
@@ -237,9 +237,7 @@ object SpeedLimitFiller {
       }
     }
 
-//    println("before combine")
     val speedLimits = limits.zipWithIndex.map(n => replaceUnknownAssetIds(n._1, 0L-n._2))
-//    speedLimits.foreach(println)
     val pointsOfInterest = (speedLimits.map(_.startMeasure) ++ speedLimits.map(_.endMeasure)).distinct.sorted
     if (pointsOfInterest.length < 2)
       return (speedLimits, changeSet)
@@ -249,10 +247,6 @@ object SpeedLimitFiller {
     val combo = squashed.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, speedLimits))
     val result = combo.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, speedLimits.find(_.id == n._1).get))
     val combinedLimits = result.keys.toSeq
-//    println("Combined")
-//    combinedLimits.sortBy(_.startMeasure).foreach(println)
-//    println("Orphans")
-//    result.values.flatten.toSeq.sortBy(_.startM).foreach(println)
     val splitLimits = combinedLimits.map(sl => generateLimitsForOrphanSegments(sl, result.getOrElse(sl, Seq()).sortBy(_.startM)))
 
     val updatedGeometries = updateGeometry(combinedLimits, roadLink)
@@ -261,21 +255,14 @@ object SpeedLimitFiller {
       speedLimits.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, sl.sideCode))
     val updatedSpeedLimits = updatedGeometries.map(n => n._1) ++ updateGeometry(splitLimits.flatten, roadLink).map(n => n._1)
-//    println("updated")
-//    updatedSpeedLimits.foreach(println)
-//    println("returns")
     val droppedIds = speedLimits.map(_.id).toSet.--(updatedSpeedLimits.map(_.id).toSet)
 
     val returnSpeedLimits = cleanSpeedLimitIds(updatedSpeedLimits, Seq())
-//    returnSpeedLimits.foreach(println)
-//    println("returns   >>>")
     (returnSpeedLimits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedIds,
       adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
   }
 
   private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-//    println("before fuse")
-//    speedLimits.foreach(println)
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
@@ -317,8 +304,6 @@ object SpeedLimitFiller {
         (speedLimits, changeSet)
       }
     }
-//    println("before fill")
-//    speedLimits.foreach(println)
     val (towardsGeometrySegments, towardsGeometryAdjustments) = fillBySideCode(speedLimits, roadLink, ChangeSet(Set(), Nil, Nil, Set()))
     (towardsGeometrySegments.toSeq,
       changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ towardsGeometryAdjustments.adjustedMValues))
@@ -348,8 +333,6 @@ object SpeedLimitFiller {
         case false => Seq(adj.head) ++ pruneSideCodes(adj.tail)
       }
     }
-//    println("before clean")
-//    speedLimits.foreach(println)
     val droppedIds = changeSet.droppedAssetIds
     val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)))
     val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)))
@@ -381,8 +364,6 @@ object SpeedLimitFiller {
       val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-//      println("Before generate")
-//      adjustedSegments.foreach(println)
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
       (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }

@@ -895,8 +895,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 //      after.flatten.sortBy(_.startMeasure).foreach(println)
-      after.flatten.length should be (12)
-      after.flatten.filter(_.id == 0).length should be (2) // Two unspecified segments in source data
+      after.flatten.length should be (11)
+      after.flatten.exists(_.id == 18040892) should be (false) // Removed too short, ~ 1 meter long
+      after.flatten.filter(_.id == 0) should have size 2  // Two unspecified segments in source data
       dynamicSession.rollback()
     }
 
