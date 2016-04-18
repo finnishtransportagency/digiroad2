@@ -261,7 +261,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
-      before.foreach(println)
+//      before.foreach(println)
 
       before.length should be(2)
       val (list1, list2) = before.flatten.partition(_.sideCode == SideCode.TowardsDigitizing)
@@ -278,7 +278,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
-      after.foreach(println)
+//      after.foreach(println)
 
       after.length should be(6)
       after.flatten.forall(sl => sl.sideCode != SideCode.BothDirections) should be (true)
