@@ -96,6 +96,8 @@ trait LinearAssetOperations {
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
       existingAssets.filter(asset => removedLinkIds.exists(id => id == asset.linkId)).map(_.id).toSet))
 
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
+
     filledTopology
   }
 
@@ -237,6 +239,18 @@ trait LinearAssetOperations {
   def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, username)
+    }
+  }
+
+  /*
+   * Create the new linear assets used by the actor
+   */
+  def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
+    withDynTransaction{
+      newLinearAssets.foreach{ linearAsset =>
+        dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse("vvh_generated"))
+      }
     }
   }
 
