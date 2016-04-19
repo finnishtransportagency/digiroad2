@@ -100,20 +100,6 @@ object SpeedLimitFiller {
     }
   }
 
-  private def dropRedundantSegments(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
-    val sortedSegments = segments.sortWith(modifiedSort)
-    val headOption = sortedSegments.headOption
-    val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
-    valueShared match {
-      case true =>
-        val first = headOption.get
-        val rest = sortedSegments.tail
-        val segmentDrops = rest.map(_.id).toSet
-        (Seq(first), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ segmentDrops))
-      case false => (segments, changeSet)
-    }
-  }
-
   private def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
       roadLink.length > MinAllowedSpeedLimitLength }.map(_.id).toSet
@@ -136,6 +122,23 @@ object SpeedLimitFiller {
     (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
   }
 
+  /**
+    * Combines speed limits so that there is no overlapping, no consecutive speed limits with same values and
+    * that the speed limits with both directions are preferred.
+    * Speed limits go through the following process
+    * - squash: road link is cut to small one-sided pieces defined by the startMeasures and endMeasures of all speed limits
+    * - combine: squashed pieces are turned into two-sided (SideCode.BothDirections) where speed limit is equal,
+    *            keeping the latest edited SpeedLimit id and timestamps
+    * - extend: combined pieces are merged if they have the same side code, speed limit value and one starts where another ends
+    * - orphans: pieces that are orphans (as newer, projected speed limit may overwrite another in the middle!) are collected
+    *            and then extended just like above.
+    * - geometry update: all the result geometries and sidecodes are revised and written in the change set
+    *
+    * @param roadLink Roadlink speed limits are related to
+    * @param limits Sequence of speed limits to combine where possible
+    * @param changeSet Original changeset
+    * @return Sequence of SpeedLimits and ChangeSet containing the changes done here
+    */
   private def combine(roadLink: RoadLink, limits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: SpeedLimit, pseudoId: Long) = {
@@ -145,7 +148,7 @@ object SpeedLimitFiller {
       }
     }
     /**
-      * Pick the latest asset for each single piece
+      * Pick the latest asset for each single piece and create SegmentPiece objects for those
      */
     def squash(startM: Double, endM: Double, speedLimits: Seq[SpeedLimit]): Seq[SegmentPiece] = {
       val sl = speedLimits.filter(sl => sl.startMeasure <= startM && sl.endMeasure >= endM)
@@ -160,10 +163,10 @@ object SpeedLimitFiller {
       }
     }
     /**
-      * Combine sides together if matching m-values and speed limit values
-      * @param segmentPieces
-      * @param limits
-      * @return
+      * Combine sides together if matching m-values and speed limit values.
+      * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
+      * @param limits All speed limits on road link
+      * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
       */
     def combineEqualValues(segmentPieces: Seq[SegmentPiece], limits: Seq[SpeedLimit]): Seq[SegmentPiece] = {
       val seg1 = segmentPieces.head
@@ -203,18 +206,35 @@ object SpeedLimitFiller {
       }
       (limit.copy(sideCode = current.sideCode, startMeasure = current.startM, endMeasure = current.endM), rest)
     }
+
+    /**
+      * Creates speed limits from orphaned segments (segments originating from a speed limit but no longer connected
+      * to them)
+      * @param origin Speed limit that was split by overwriting a segment piece(s)
+      * @param orphans List of orphaned segment pieces
+      * @return New speed limits for orphaned segment pieces
+      */
     def generateLimitsForOrphanSegments(origin: SpeedLimit, orphans: Seq[SegmentPiece]): Seq[SpeedLimit] = {
       if (orphans.nonEmpty) {
         val segmentPiece = orphans.sortBy(_.startM).head
         if (orphans.tail.nonEmpty) {
+          // Try to extend this segment as far as possible: if SegmentPieces are consecutive produce just one SpeedLimit
           val t = extendOrDivide(orphans, origin.copy(startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode))
+          // t now has a speed limit and any orphans it left behind: recursively call this method again
           return Seq(t._1.copy(id = 0L)) ++ generateLimitsForOrphanSegments(origin, t._2)
         }
+        // Only orphan in the list, create a new speed limit for it
         val sl = origin.copy(id = 0L, startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode)
         return Seq(sl)
       }
       Seq()
     }
+    /**
+      * Update geometry for speed limits and return modified speedlimits together with adjustments (if any)
+      * @param limits Speed limits
+      * @param roadLink current road link
+      * @return Sequence of tuples (SpeedLimit, optional MValueAdjustment)
+      */
     def updateGeometry(limits: Seq[SpeedLimit], roadLink: RoadLink): (Seq[(SpeedLimit, Option[MValueAdjustment])]) = {
       limits.map { sl =>
         val newGeom = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, sl.endMeasure)
@@ -224,6 +244,12 @@ object SpeedLimitFiller {
         }
       }
     }
+    /**
+      * Make sure that no two speed limits share the same id, rewrite the ones appearing later with id=0
+      * @param toProcess List of speed limits to go thru
+      * @param processed List of processed speed limits
+      * @return List of speed limits with unique or zero ids
+      */
     def cleanSpeedLimitIds(toProcess: Seq[SpeedLimit], processed: Seq[SpeedLimit]): Seq[SpeedLimit] = {
       val (current, rest) = (toProcess.head, toProcess.tail)
       val modified = processed.exists(_.id == current.id) || current.id < 0L match {
@@ -243,30 +269,38 @@ object SpeedLimitFiller {
       return (speedLimits, changeSet)
 
     val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
-    val squashed = pieces.flatMap(p => squash(p._1, p._2, speedLimits)).sortBy(_.assetId)
-    val combo = squashed.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, speedLimits))
-    val result = combo.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, speedLimits.find(_.id == n._1).get))
-    val combinedLimits = result.keys.toSeq
-    val splitLimits = combinedLimits.map(sl => generateLimitsForOrphanSegments(sl, result.getOrElse(sl, Seq()).sortBy(_.startM)))
+    val segmentPieces = pieces.flatMap(p => squash(p._1, p._2, speedLimits)).sortBy(_.assetId)
+    val combinedSegmentPieces = segmentPieces.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, speedLimits))
+    val speedLimitsAndOrphanPieces = combinedSegmentPieces.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, speedLimits.find(_.id == n._1).get))
+    val combinedLimits = speedLimitsAndOrphanPieces.keys.toSeq
+    val newSpeedLimits = combinedLimits.flatMap(sl => generateLimitsForOrphanSegments(sl, speedLimitsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
 
-    val updatedGeometries = updateGeometry(combinedLimits, roadLink)
-    val mValueAdjustments = updatedGeometries.flatMap(n => n._2)
+    val updatedSpeedLimitsAndMValueAdjustments = updateGeometry(combinedLimits, roadLink)
+    val mValueAdjustments = updatedSpeedLimitsAndMValueAdjustments.flatMap(_._2)
     val changedSideCodes = combinedLimits.filter(cl =>
       speedLimits.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, sl.sideCode))
-    val updatedSpeedLimits = updatedGeometries.map(n => n._1) ++ updateGeometry(splitLimits.flatten, roadLink).map(n => n._1)
-    val droppedIds = speedLimits.map(_.id).toSet.--(updatedSpeedLimits.map(_.id).toSet)
+    val resultingSpeedLimits = updatedSpeedLimitsAndMValueAdjustments.map(n => n._1) ++ updateGeometry(newSpeedLimits, roadLink).map(_._1)
+    val droppedIds = speedLimits.map(_.id).toSet.--(resultingSpeedLimits.map(_.id).toSet)
 
-    val returnSpeedLimits = cleanSpeedLimitIds(updatedSpeedLimits, Seq())
+    val returnSpeedLimits = cleanSpeedLimitIds(resultingSpeedLimits, Seq())
     (returnSpeedLimits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedIds,
       adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
   }
 
+  /**
+    * After other change operations connect speed limits that have same values and side codes if they extend each other
+    * @param roadLink Road link we are working on
+    * @param speedLimits List of speed limits
+    * @param changeSet Changes done previously
+    * @return List of speed limits and a change set
+    */
   private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
-      val target = sortedList.tail.find(sl => sl.startMeasure == origin.endMeasure && sl.value.equals(origin.value) && sl.sideCode.equals(origin.sideCode))
+      val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < Epsilon &&
+        sl.value.equals(origin.value) && sl.sideCode.equals(origin.sideCode))
       if (target.nonEmpty) {
         // pick id if it already has one regardless of which one is newer
         val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
@@ -274,6 +308,7 @@ object SpeedLimitFiller {
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure, geometry = GeometryUtils.truncateGeometry(roadLink.geometry, origin.startMeasure, target.get.endMeasure))
         val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
+        // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
           changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedId, adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustment))
       } else {
@@ -285,12 +320,23 @@ object SpeedLimitFiller {
     }
   }
 
+  /**
+    * Fills any missing pieces in the middle of speed limits.
+    * - If the gap is smaller than minimum allowed speed limit length the first speed limit is extended
+    *   !!! But if it is smaller than 1E-6 we let it be and treat it as a rounding error to avoid repeated writes !!!
+    * - If the gap is larger it's let to be and will be generated as unknown speed limit later
+    * @param roadLink Road link being handled
+    * @param speedLimits List of speed limits
+    * @param changeSet Set of changes
+    * @return List of speed limits and change set so that there are no small gaps between speed limits
+    */
   private def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     def fillBySideCode(speedLimits: Seq[SpeedLimit], roadLink: RoadLink, changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
       if (speedLimits.size > 1) {
         val left = speedLimits.head
         val right = speedLimits.find(sl => sl.startMeasure >= left.endMeasure)
-        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedSpeedLimitLength && Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
+        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedSpeedLimitLength &&
+          Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry(roadLink.geometry, left.startMeasure, right.get.startMeasure))
           val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
@@ -310,13 +356,18 @@ object SpeedLimitFiller {
   }
 
   /**
-    * Removes obsoleted mvalue adjustments from the list
+    * Removes obsoleted mvalue adjustments and side code adjustments from the list
     * @param roadLink
     * @param speedLimits
     * @param changeSet
     * @return
     */
   private def clean(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    /**
+      * Remove adjustments that were overwritten later (appear later in the sequence)
+      * @param adj list of adjustments
+      * @return list of adjustment final values
+      */
     def prune(adj: Seq[MValueAdjustment]): Seq[MValueAdjustment] = {
       if (adj.isEmpty)
         return adj
@@ -325,6 +376,11 @@ object SpeedLimitFiller {
         case false => Seq(adj.head) ++ prune(adj.tail)
       }
     }
+    /**
+      * Remove side code adjustments that were overwritten
+      * @param adj original list
+      * @return list of final values
+      */
     def pruneSideCodes(adj: Seq[SideCodeAdjustment]): Seq[SideCodeAdjustment] = {
       if (adj.isEmpty)
         return adj
@@ -344,7 +400,6 @@ object SpeedLimitFiller {
       dropSegmentsOutsideGeometry,
       combine,
       fuse,
-      dropRedundantSegments,
       adjustSegmentMValues,
       capToGeometry,
       adjustLopsidedLimit,
