@@ -68,7 +68,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "modifiedAt" -> speedLimit.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
                 "createdAt" -> speedLimit.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> speedLimit.modifiedBy,
-                "changeType" -> extractSpeedLimitChangeType(since, speedLimit)
+                "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime)
               )
           )
         }
@@ -109,22 +109,16 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "modifiedAt" -> linearAsset.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
-                "changeType" -> extractLinearAssetChangeType(since, linearAsset)
+                "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
               )
           )
         }
     )
 
-  private def extractSpeedLimitChangeType(since: DateTime, speedLimit: SpeedLimit): String =
-    if (speedLimit.createdDateTime.exists(_.isAfter(since)))
-      "Add"
-    else
-      "Update"
-
-  private def extractLinearAssetChangeType(since: DateTime, asset: PieceWiseLinearAsset) = {
-    if (asset.expired) {
+  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
+    if (expired) {
       "Remove"
-    } else if (asset.createdDateTime.exists(_.isAfter(since))) {
+    } else if (createdDateTime.exists(_.isAfter(since))) {
       "Add"
     } else {
       "Update"

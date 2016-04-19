@@ -16,7 +16,7 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 
 case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
-                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
+                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false)
 
 class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
@@ -407,7 +407,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime) = {
     val speedLimits = sql"""
-        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
+        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date,
+               case when a.valid_to <= sysdate then 1 else 0 end as expired
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
@@ -418,16 +419,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          a.asset_type_id = 20
          and floating = 0
          and (
+           (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+           or
            (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
            or
            (a.created_date > $sinceDate and a.created_date <= $untilDate)
            or
            (pos.modified_date > $sinceDate and pos.modified_date <= $untilDate)
          )
-    """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
+    """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean)].list
 
-    speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
-      PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp , geomModifiedDate)
+    speedLimits.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, expired) =>
+      PersistedSpeedLimit(id, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp , geomModifiedDate, expired)
     }
   }
 
