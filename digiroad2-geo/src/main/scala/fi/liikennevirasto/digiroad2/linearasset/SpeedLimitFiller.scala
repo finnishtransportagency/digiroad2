@@ -6,7 +6,9 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.1
-  private val Epsilon = 1E-6 // Smallest value we can tolerate to equal the same. One micrometer.
+  private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
+                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
+                             */
   private val MinAllowedSpeedLimitLength = 3.0
 
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
