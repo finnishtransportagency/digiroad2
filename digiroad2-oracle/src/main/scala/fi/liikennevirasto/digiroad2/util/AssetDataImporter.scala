@@ -4,9 +4,10 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -766,6 +767,36 @@ class AssetDataImporter {
       insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by)
       values ($propertyId, $assetId, (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
+  }
+
+  def findClosestObstacleRoadLink(obstacle : Obstacle, vvhHost: String) : (VVHRoadlink, Obstacle) = {
+    //FunctionalClass 7 equal to FeatureClass TractorRoad
+    //FunctionalClass 6 equal to FeatureClass DrivePath
+    //FunctionalClass 8 equal to FeatureClass CycleOrPedestrianPath
+    val allowedFeatureClasses = Set(FeatureClass.TractorRoad, FeatureClass.DrivePath, FeatureClass.CycleOrPedestrianPath)
+    val vvhClient = new VVHClient(vvhHost)
+
+    val diagonal = Vector3d(10, 10, 0)
+
+    val obstaclePoint = Point(obstacle.lat, obstacle.lon, 0)
+
+    //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
+    val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+      filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass)))
+
+    roadlinks.length match {
+      //TODO verify if the distance are less than 10 meters because the bounding rectangle have corners
+      //If exists only one road link on a 10 meters distance
+      case 1 =>  (roadlinks.head, obstacle)
+      //If exists multiple road link get the closest with less than 0.5 meters distance
+      case _ =>
+        val roadlinkMinDistance = roadlinks.
+          map(roadlink => (roadlink, GeometryUtils.minimumDistance(obstaclePoint, roadlink.geometry))).
+          filter(_._2 < 0.5).
+          minBy(_._2)
+        (roadlinkMinDistance._1, obstacle)
+    }
+
   }
 
   private[this] def initDataSource: DataSource = {
