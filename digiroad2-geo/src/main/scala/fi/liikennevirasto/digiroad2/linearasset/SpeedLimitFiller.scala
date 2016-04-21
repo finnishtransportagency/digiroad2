@@ -333,6 +333,26 @@ object SpeedLimitFiller {
     * @return List of speed limits and change set so that there are no small gaps between speed limits
     */
   private def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+    def firstAndLastLimit(speedLimits: Seq[SpeedLimit], sideCode: SideCode) = {
+      val filtered = speedLimits.filter(_.sideCode == sideCode)
+      (filtered.sortBy(_.startMeasure).headOption,
+        filtered.sortBy(0-_.endMeasure).headOption)
+    }
+    def extendToGeometry(speedLimits: Seq[SpeedLimit], roadLink: RoadLink, changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+      val (startTwoSided, endTwoSided) = firstAndLastLimit(speedLimits, SideCode.BothDirections)
+      val (startTowards, endTowards) = firstAndLastLimit(speedLimits, SideCode.TowardsDigitizing)
+      val (startAgainst, endAgainst) = firstAndLastLimit(speedLimits, SideCode.AgainstDigitizing)
+      val sortedStarts = Seq(startTwoSided, startTowards, startAgainst).flatten.sortBy(_.startMeasure)
+      val startChecks = sortedStarts.filter(sl => Math.abs(sl.startMeasure - sortedStarts.head.startMeasure) < Epsilon && sl.startMeasure > MaxAllowedMValueError)
+      val newStarts = startChecks.map(sl => sl.copy(startMeasure = 0.0, geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, sl.endMeasure)))
+      val sortedEnds = Seq(endTwoSided, endTowards, endAgainst).flatten.sortBy(0.0 - _.endMeasure)
+      val endChecks = sortedEnds.filter(sl => Math.abs(sl.endMeasure - sortedEnds.head.endMeasure) < Epsilon &&
+        Math.abs(roadLink.length - sl.endMeasure) > MaxAllowedMValueError)
+      val newEnds = endChecks.map(sl => sl.copy(endMeasure = roadLink.length, geometry = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, roadLink.length)))
+      val newLimits = newStarts ++ newEnds
+      (speedLimits.filterNot(sl => newLimits.map(_.id).contains(sl.id)) ++ newLimits,
+        changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ newLimits.map(sl => MValueAdjustment(sl.id, roadLink.linkId, sl.startMeasure, sl.endMeasure))))
+    }
     def fillBySideCode(speedLimits: Seq[SpeedLimit], roadLink: RoadLink, changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
       if (speedLimits.size > 1) {
         val left = speedLimits.head
@@ -352,9 +372,10 @@ object SpeedLimitFiller {
         (speedLimits, changeSet)
       }
     }
-    val (towardsGeometrySegments, towardsGeometryAdjustments) = fillBySideCode(speedLimits, roadLink, ChangeSet(Set(), Nil, Nil, Set()))
-    (towardsGeometrySegments.toSeq,
-      changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ towardsGeometryAdjustments.adjustedMValues))
+    val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Set()))
+    (geometrySegments.toSeq,
+      newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ geometryAdjustments.adjustedMValues))
   }
 
   /**
