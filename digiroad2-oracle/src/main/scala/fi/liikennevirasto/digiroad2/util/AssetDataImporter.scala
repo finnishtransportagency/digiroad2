@@ -783,7 +783,8 @@ class AssetDataImporter {
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
       val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
       obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
-        modifiedBy = Some("automatic_correction"), modifiedAt = Some(DateTime.now()), floating = false)
+        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+        modifiedAt = Some(DateTime.now()), floating = false)
     }
     //FunctionalClass 7 equal to FeatureClass TractorRoad
     //FunctionalClass 6 equal to FeatureClass DrivePath
@@ -806,6 +807,7 @@ class AssetDataImporter {
       case _ =>
         val roadLinksByDistance = roadlinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) -> rl).sortBy(_._1)
         val (rl1, rl2) = (roadLinksByDistance.head, roadLinksByDistance.tail.head)
+        // Has to be up to 50 cm away and the second closest at least 5 times this distance away
         if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
           recalculateObstaclePosition(obstacle, rl1._2)
         } else {
