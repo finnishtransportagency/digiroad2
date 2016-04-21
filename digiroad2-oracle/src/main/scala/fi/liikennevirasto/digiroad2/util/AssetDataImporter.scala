@@ -769,12 +769,26 @@ class AssetDataImporter {
     """.execute
   }
 
-  def findClosestObstacleRoadLink(obstacle : Obstacle, vvhHost: String) : (VVHRoadlink, Obstacle) = {
+  /**
+    * Finds closest road link from classes 6-8 for an obstacle and updates the location and clears the floating
+    * if one is found according to the rules:
+    * - at most 10 meters away
+    * - at most .5 meters away and no other candidate locations within 5 times the distance if there are multiple
+    * @param obstacle A floating obstacle to update
+    * @param vvhClient VVHClient to use (reusing for speed)
+    * @return
+    */
+  def updateObstacleToRoadLink(obstacle : Obstacle, vvhClient: VVHClient) : Obstacle = {
+    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: VVHRoadlink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
+        modifiedBy = Some("automatic_correction"), modifiedAt = Some(DateTime.now()), floating = false)
+    }
     //FunctionalClass 7 equal to FeatureClass TractorRoad
     //FunctionalClass 6 equal to FeatureClass DrivePath
     //FunctionalClass 8 equal to FeatureClass CycleOrPedestrianPath
     val allowedFeatureClasses = Set(FeatureClass.TractorRoad, FeatureClass.DrivePath, FeatureClass.CycleOrPedestrianPath)
-    val vvhClient = new VVHClient(vvhHost)
 
     val diagonal = Vector3d(10, 10, 0)
 
@@ -782,19 +796,21 @@ class AssetDataImporter {
 
     //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
     val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
-      filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass)))
+      filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass))).
+      filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0)
 
     roadlinks.length match {
-      //TODO verify if the distance are less than 10 meters because the bounding rectangle have corners
-      //If exists only one road link on a 10 meters distance
-      case 1 =>  (roadlinks.head, obstacle)
+      case 0 => obstacle // Let it float, then
+      case 1 => recalculateObstaclePosition(obstacle, roadlinks.head)
       //If exists multiple road link get the closest with less than 0.5 meters distance
       case _ =>
-        val roadlinkMinDistance = roadlinks.
-          map(roadlink => (roadlink, GeometryUtils.minimumDistance(obstaclePoint, roadlink.geometry))).
-          filter(_._2 < 0.5).
-          minBy(_._2)
-        (roadlinkMinDistance._1, obstacle)
+        val roadLinksByDistance = roadlinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) -> rl).sortBy(_._1)
+        val (rl1, rl2) = (roadLinksByDistance.head, roadLinksByDistance.tail.head)
+        if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
+          recalculateObstaclePosition(obstacle, rl1._2)
+        } else {
+          obstacle
+        }
     }
 
   }

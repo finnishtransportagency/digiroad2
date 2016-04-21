@@ -120,4 +120,45 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       asset.floating should be(false)
     }
   }
+
+  test("should not float") {
+    val testUser = User(
+      id = 1,
+      username = "Hannu",
+      configuration = Configuration(authorizedMunicipalities = Set(235)))
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val roadLink = VVHRoadlink(5797521, 853, Seq(Point(240863.911, 6700590.15),
+      Point(240864.188, 6700595.048),
+      Point(240863.843, 6700601.473),
+      Point(240862.771, 6700609.933),
+      Point(240861.592, 6700619.412),
+      Point(240859.882, 6700632.051),
+      Point(240862.857, 6700644.888),
+      Point(240864.957, 6700651.228),
+      Point(240867.555, 6700657.523),
+      Point(240869.228, 6700664.658),
+      Point(240871.009, 6700670.273),
+      Point(240877.602, 6700681.724),
+      Point(240881.381, 6700685.655),
+      Point(240885.898, 6700689.602)), Municipality,
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+      roadLink))
+    when(mockVVHClient.fetchVVHRoadlink(5797521)).thenReturn(Seq(
+      roadLink).headOption)
+
+    val service = new ObstacleService(mockVVHClient) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
+    }
+
+    runWithRollback {
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink.geometry, 853)
+
+      val asset = service.getById(id).get
+
+      asset.floating should be(false)
+    }
+
+  }
 }
