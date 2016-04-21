@@ -895,10 +895,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
-//      after.flatten.sortBy(_.startMeasure).foreach(println)
-      after.flatten.length should be (11)
+      after.flatten.length should be (10)
       after.flatten.exists(_.id == 18040892) should be (false) // Removed too short, ~ 1 meter long
-      after.flatten.filter(_.id == 0) should have size 2  // Two unspecified segments in source data
+      after.flatten.filter(_.id == 0) should have size 1  // One orphaned or unknown segment in source data
       dynamicSession.rollback()
     }
 
