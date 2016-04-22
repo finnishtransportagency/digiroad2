@@ -248,8 +248,17 @@ trait LinearAssetOperations {
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
     withDynTransaction{
       newLinearAssets.foreach{ linearAsset =>
-        dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+        val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
           linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse("vvh_generated"))
+        linearAsset.value match {
+          case Some(NumericValue(intValue)) =>
+            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+          case Some(TextualValue(textValue)) =>
+            dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
+          case Some(prohibitions: Prohibitions) =>
+            dao.insertProhibitionValue(id, prohibitions)
+          case None => None
+        }
       }
     }
   }
