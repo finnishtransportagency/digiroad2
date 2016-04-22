@@ -3,9 +3,13 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{VVHClient, Point, ObstacleService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleObstacleDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
 
 object DataFixture {
@@ -22,6 +26,8 @@ object DataFixture {
   }
 
   val dataImporter = new AssetDataImporter
+  val obstacleService = new ObstacleService(null)
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
 
   def flyway: Flyway = {
     val flyway = new Flyway()
@@ -197,6 +203,41 @@ object DataFixture {
     println("\n")
   }
 
+  def linkFloatObstacleAssets(): Unit = {
+    println("\nGenerating list of Obstacle assets to linking")
+    println(DateTime.now())
+    var endLine = false
+    var lineMin = 0
+    var lineMax = 1000
+    val lineRange = lineMax
+
+    do {
+         //Send "1" for get all floating Obstacles assets
+        //lineMin - Min Value to do the fetch
+        //lineMax - Max Value to do the fetch
+        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lineMin, lineMax)
+
+        if (floatingObstaclesAssets == null) {
+          endLine = true
+        } else {
+          lineMin = lineMax + 1
+          lineMax += lineRange
+
+          for (obstacleData <- floatingObstaclesAssets) {
+            //Call filtering operations according to rules where
+            var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, mockVVHClient)
+
+            //Save updated assets to database
+            if (!(obstacleData.equals(ObstaclesToUpdate)))
+              obstacleService.updateFloatingAssets(ObstaclesToUpdate)
+          }
+        }
+      } while (endLine)
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -251,10 +292,12 @@ object DataFixture {
         adjustToNewDigitization()
       case Some("import_link_ids") =>
         LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+      case Some ("link_float_obstacle_assets") =>
+        linkFloatObstacleAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair")
+        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets")
     }
   }
 }

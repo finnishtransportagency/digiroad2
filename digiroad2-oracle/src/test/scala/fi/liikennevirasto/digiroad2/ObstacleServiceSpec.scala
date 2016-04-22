@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Private, BoundingRectangle, Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -8,6 +9,11 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+
+
 
 class ObstacleServiceSpec extends FunSuite with Matchers {
   val testUser = User(
@@ -160,5 +166,110 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       asset.floating should be(false)
     }
 
+  }
+
+  test("Can fetch a list of floating Obstacles") {
+    OracleDatabase.withDynTransaction {
+      var lineMax = 0
+      val obstacleAssetTypeId = 220
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000051, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,70000051)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (3,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000052, 7000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (3,70000052)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400003, 3, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (4,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000053, 8000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (4,70000053)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400004, 4, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (5,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000054, 9000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (5,70000054)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400005, 5, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (6,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000055, 1000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (6,70000055)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400006, 6, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (7,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000056, 1100, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (7,70000056)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400007, 7, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (8,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000057, 1200, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (8,70000057)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400008, 8, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (9,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000058, 1300, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (9,70000058)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400009, 9, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (10,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000059, 1400, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (10,70000059)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400010, 10, 300080, 1)""".execute
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (11,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000060, 1500, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,70000060)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+
+      sqlu"""
+            UPDATE asset SET geometry = MDSYS.SDO_GEOMETRY(4401,
+              3067,
+              NULL,
+              MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+              MDSYS.SDO_ORDINATE_ARRAY(374443.764141219, 6677245.28337185, 0, 0))
+            WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+          """.execute
+
+      lineMax = 5
+      var result = service.getFloatingObstacle(1, 1, lineMax)
+      result.length should be <= lineMax
+      result.foreach { fields =>
+        fields.floating should be(true)
+      }
+
+      lineMax = 10
+      result = service.getFloatingObstacle(1, 1, lineMax)
+      result.length should be <= lineMax
+      result.foreach { fields =>
+        fields.floating should be(true)
+      }
+
+      lineMax = 20
+      result = service.getFloatingObstacle(1, 1, lineMax)
+      result.length should be <= lineMax
+      result.foreach { fields =>
+        fields.floating should be(true)
+      }
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update floating obstacle") {
+    OracleDatabase.withDynTransaction {
+      val obstacle = service.getById(600046).get
+      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true)
+
+      service.updateFloatingAssets(newObstacle)
+      val updatedObstacle = service.getById(600046).get
+
+      updatedObstacle.municipalityCode should equal(500)
+      updatedObstacle.id should equal(obstacle.id)
+      updatedObstacle.floating should be(true)
+
+      dynamicSession.rollback()
+    }
   }
 }

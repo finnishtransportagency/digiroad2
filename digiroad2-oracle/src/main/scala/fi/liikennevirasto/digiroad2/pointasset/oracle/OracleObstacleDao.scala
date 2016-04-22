@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.pointasset.oracle
 
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{IncomingObstacle, IncomingPointAsset, Point, PersistedPointAsset}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.jdbc.{StaticQuery, GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
 case class Obstacle(id: Long, linkId: Long,
@@ -90,6 +91,48 @@ object OracleObstacleDao {
     """.execute
     id
   }
+
+  def selectFloatings(floating: Int, lineMin: Int, lineMax: Int) : Seq[Obstacle] ={
+    val query =
+      """
+        SELECT m.*
+                FROM(
+                select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date, rownum rw
+                  from asset a
+                  join asset_link al on a.id = al.asset_id
+                  join lrm_position pos on al.position_id = pos.id
+                  join property p on p.asset_type_id = a.asset_type_id
+                  left join single_choice_value scv on scv.asset_id = a.id
+                  left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
+    """
+
+    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null)) m WHERE rw > "+ lineMin +" AND rw <= "+ lineMax +""
+    StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
+  }
+
+  def updateFloatingAssets(obstacleUpdated: Obstacle) = {
+    var id = obstacleUpdated.id
+    var mValue = obstacleUpdated.mValue
+    var linkId = obstacleUpdated.linkId
+    var municipalityCode = obstacleUpdated.municipalityCode
+    var modifiedBy = obstacleUpdated.modifiedBy.toString()
+    var floating = obstacleUpdated.floating
+
+    sqlu"""update asset set municipality_code = $municipalityCode, floating =  $floating where id = $id""".execute
+
+    updateAssetModified(id, modifiedBy).execute
+    updateAssetGeometry(id, Point(obstacleUpdated.lon, obstacleUpdated.lat))
+    updateSingleChoiceProperty(id, getPropertyId, obstacleUpdated.obstacleType).execute
+
+    sqlu"""
+      update lrm_position
+       set
+       start_measure = $mValue,
+       link_id = $linkId
+       where id = (select position_id from asset_link where asset_id = $id)
+    """.execute
+  }
+
 
   private def getPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
