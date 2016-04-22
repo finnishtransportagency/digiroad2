@@ -903,4 +903,49 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
 
   }
+  test("Must not expire assets that are outside of the current search even if mentioned in VVH change info") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+    val oldLinkId = 3055878L
+    val newLinkId = 3055879L
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq(ChangeInfo(None, Option(oldLinkId), 0, 4, None, None, Option(0.0), Option(2.5802222500000003), Option(1461325625000L)),
+      ChangeInfo(Option(oldLinkId), Option(oldLinkId), 0, 3, Option(0.0), Option(422.63448371), Option(2.5802222500000003), Option(424.55709429), Option(1461325625000L)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
+      sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050501',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
+
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ('46647958',null,'1','0','321',null,'3055878','1460044024000',to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ('46647960',null,'1','321','424',null,'3055878','1460044024000',to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'))""".execute
+
+      sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ('18050499','46647958')""".execute
+      sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ('18050501','46647960')""".execute
+
+      sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 40 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+      sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 50 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+      provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
+
+      verify(eventBus, times(1)).publish("linearAssets:update", ChangeSet(Set(), Seq(), Seq(), Set()))
+      dynamicSession.rollback()
+    }
+
+
+  }
 }
