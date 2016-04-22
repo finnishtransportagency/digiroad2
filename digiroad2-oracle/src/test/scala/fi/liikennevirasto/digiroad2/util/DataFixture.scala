@@ -212,11 +212,11 @@ object DataFixture {
     val lineRange = lineMax
 
     do {
-         //Send "1" for get all floating Obstacles assets
+      withDynTransaction {
+        //Send "1" for get all floating Obstacles assets
         //lineMin - Min Value to do the fetch
         //lineMax - Max Value to do the fetch
         val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lineMin, lineMax)
-
         if (floatingObstaclesAssets == null) {
           endLine = true
         } else {
@@ -232,7 +232,9 @@ object DataFixture {
               obstacleService.updateFloatingAssets(ObstaclesToUpdate)
           }
         }
-      } while (endLine)
+      }
+    } while (endLine)
+
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
