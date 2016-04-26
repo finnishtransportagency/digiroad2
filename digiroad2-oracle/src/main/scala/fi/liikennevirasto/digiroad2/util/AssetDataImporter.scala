@@ -797,7 +797,7 @@ class AssetDataImporter {
     val obstaclePoint = Point(obstacle.lat, obstacle.lon, 0)
 
     //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
-    val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+    val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal), Set(749)).
       filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass))).
       filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0)
 

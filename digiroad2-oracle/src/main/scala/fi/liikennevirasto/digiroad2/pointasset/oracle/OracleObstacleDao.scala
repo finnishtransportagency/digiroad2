@@ -92,11 +92,9 @@ object OracleObstacleDao {
     id
   }
 
-  def selectFloatings(floating: Int, lineMin: Int, lineMax: Int) : Seq[Obstacle] ={
+  def selectFloatings(floating: Int, lastIdUpdate: Long, lineRange: Int) : Seq[Obstacle] ={
     val query =
       """
-        SELECT m.*
-                FROM(
                 select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date, rownum rw
                   from asset a
                   join asset_link al on a.id = al.asset_id
@@ -106,7 +104,7 @@ object OracleObstacleDao {
                   left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
     """
 
-    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null)) m WHERE rw >= "+ lineMin +" AND rw <= "+ lineMax +" ORDER BY id desc, rw desc "
+    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null) and a.id > "+ lastIdUpdate +" and ROWNUM <= "+ lineRange +" order by id asc"
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
@@ -133,7 +131,7 @@ object OracleObstacleDao {
     """.execute
   }
 
-  def countFloatingAssets() : Int = {
+  def countFloatingObstacles() : Int = {
     val count =
       sql"""select count (*)
               from asset a

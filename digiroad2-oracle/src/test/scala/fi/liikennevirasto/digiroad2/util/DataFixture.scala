@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.IncomingObstacle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{VVHClient, Point, ObstacleService}
+import fi.liikennevirasto.digiroad2.{IncomingObstacle, VVHClient, Point, ObstacleService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleObstacleDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
@@ -218,11 +218,11 @@ object DataFixture {
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
-    val lineRange = obstacleService.countFloatingAssets()
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    //val lineRange = obstacleService.countFloatingObstacles()
+    val lineRange = 1000
     var endLine = false
-    var lineMin = lineRange - 1000
-    var lineMax = lineRange
-    var countUpdate = 0
+    var lastIdUpdate : Long = 0
 
 
     do {
@@ -230,15 +230,14 @@ object DataFixture {
         //Send "1" for get all floating Obstacles assets
         //lineMin - Min Value to do the fetch
         //lineMax - Max Value to do the fetch
-        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lineMin, lineMax)
+        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, lineRange)
         if (floatingObstaclesAssets == null) {
           endLine = true
         } else {
-          countUpdate += 1
-          lineMin -= countUpdate
-          lineMax -= countUpdate
 
           for (obstacleData <- floatingObstaclesAssets) {
+            lastIdUpdate = obstacleData.id
+
             //Call filtering operations according to rules where
             var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
 
