@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2.IncomingObstacle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{VVHClient, Point, ObstacleService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -203,6 +204,11 @@ object DataFixture {
     println("\n")
   }
 
+  private def createAndFloat(incomingObstacle: IncomingObstacle) = {
+    val id = dataImporter.createFloatingObstacle(incomingObstacle)
+    println("Created floating obstacle id=" + id)
+  }
+
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
@@ -297,12 +303,15 @@ object DataFixture {
         adjustToNewDigitization()
       case Some("import_link_ids") =>
         LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+      case Some("generate_floating_obstacles") =>
+        FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some ("link_float_obstacle_assets") =>
         linkFloatObstacleAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets")
+        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
+        " generate_floating_obstacles")
     }
   }
 }

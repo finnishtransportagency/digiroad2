@@ -7,7 +7,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, Obstacle}
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -15,6 +15,7 @@ import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
@@ -628,7 +629,7 @@ class AssetDataImporter {
       """.as[(Int, Int)].first
     }
   }
-  
+
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
     val dao = new OracleLinearAssetDao(null)
 
@@ -815,6 +816,18 @@ class AssetDataImporter {
         }
     }
 
+  }
+
+  def createFloatingObstacle(incomingObstacle: IncomingObstacle) = {
+    def getPropertyId: Long = {
+      StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
+    }
+
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749)
+    updateAssetGeometry(id, Point(incomingObstacle.lon, incomingObstacle.lat))
+    insertSingleChoiceProperty(id, getPropertyId, incomingObstacle.obstacleType).execute
+    sqlu"""update asset set floating = 1 where id = $id""".execute
+    id
   }
 
   private[this] def initDataSource: DataSource = {
