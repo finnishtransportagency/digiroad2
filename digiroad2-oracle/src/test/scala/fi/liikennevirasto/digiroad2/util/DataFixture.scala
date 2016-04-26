@@ -27,8 +27,12 @@ object DataFixture {
   }
 
   val dataImporter = new AssetDataImporter
-  val obstacleService = new ObstacleService(null)
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  lazy val vvhClient: VVHClient = {
+    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  }
+ lazy val obstacleService: ObstacleService = {
+   new ObstacleService(vvhClient)
+ }
 
   def flyway: Flyway = {
     val flyway = new Flyway()
@@ -236,7 +240,7 @@ object DataFixture {
 
           for (obstacleData <- floatingObstaclesAssets) {
             //Call filtering operations according to rules where
-            var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, mockVVHClient)
+            var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
 
             //Save updated assets to database
             if (!(obstacleData.equals(ObstaclesToUpdate)))
