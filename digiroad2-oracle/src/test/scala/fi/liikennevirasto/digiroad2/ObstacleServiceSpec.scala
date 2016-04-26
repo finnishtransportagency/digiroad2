@@ -171,7 +171,13 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Can fetch a list of floating Obstacles") {
     OracleDatabase.withDynTransaction {
       var lineMax = 0
+      var lineMin = 0
       val obstacleAssetTypeId = 220
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000050, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (1,70000050)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400000, 1, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000051, 6000, null, 0.000, 25.000)""".execute
@@ -232,26 +238,26 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
             WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
           """.execute
 
-      lineMax = 5
-      var result = service.getFloatingObstacle(1, 1, lineMax)
-      result.length should be <= lineMax
-      result.foreach { fields =>
-        fields.floating should be(true)
-      }
-
-      lineMax = 10
-      result = service.getFloatingObstacle(1, 1, lineMax)
-      result.length should be <= lineMax
-      result.foreach { fields =>
-        fields.floating should be(true)
-      }
-
+      lineMin = 1
       lineMax = 20
-      result = service.getFloatingObstacle(1, 1, lineMax)
-      result.length should be <= lineMax
+      val result = service.getFloatingObstacle(1, lineMin, lineMax)
+      result.length should be <= 11
+
       result.foreach { fields =>
         fields.floating should be(true)
       }
+
+      result(0).id should be (11)
+      result(1).id should be (10)
+      result(2).id should be (9)
+      result(3).id should be (8)
+      result(4).id should be (7)
+      result(5).id should be (6)
+      result(6).id should be (5)
+      result(7).id should be (4)
+      result(8).id should be (3)
+      result(9).id should be (2)
+      result(10).id should be (1)
 
       dynamicSession.rollback()
     }

@@ -40,6 +40,13 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     OracleObstacleDao.updateFloatingAssets(obstacleUpdated)
   }
 
+  def countFloatingAssets(): Int = {
+    withDynTransaction {
+      val count = OracleObstacleDao.countFloatingAssets()
+      count
+    }
+  }
+
 }
 
 

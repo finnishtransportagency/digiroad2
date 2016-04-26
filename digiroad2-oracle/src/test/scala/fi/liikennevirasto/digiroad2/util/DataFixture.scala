@@ -206,10 +206,12 @@ object DataFixture {
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
+    val lineRange = obstacleService.countFloatingAssets()
     var endLine = false
-    var lineMin = 0
-    var lineMax = 1000
-    val lineRange = lineMax
+    var lineMin = lineRange - 1000
+    var lineMax = lineRange
+    var countUpdate = 0
+
 
     do {
       withDynTransaction {
@@ -220,8 +222,9 @@ object DataFixture {
         if (floatingObstaclesAssets == null) {
           endLine = true
         } else {
-          lineMin = lineMax + 1
-          lineMax += lineRange
+          countUpdate += 1
+          lineMin -= countUpdate
+          lineMax -= countUpdate
 
           for (obstacleData <- floatingObstaclesAssets) {
             //Call filtering operations according to rules where

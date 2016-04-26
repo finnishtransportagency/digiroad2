@@ -106,7 +106,7 @@ object OracleObstacleDao {
                   left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
     """
 
-    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null)) m WHERE rw > "+ lineMin +" AND rw <= "+ lineMax +""
+    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null)) m WHERE rw >= "+ lineMin +" AND rw <= "+ lineMax +" ORDER BY id desc, rw desc "
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
@@ -133,6 +133,19 @@ object OracleObstacleDao {
     """.execute
   }
 
+  def countFloatingAssets() : Int = {
+    val count =
+      sql"""select count (*)
+              from asset a
+              join asset_link al on a.id = al.asset_id
+              join lrm_position pos on al.position_id = pos.id
+              join property p on p.asset_type_id = a.asset_type_id
+              left join single_choice_value scv on scv.asset_id = a.id
+              left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
+              where a.asset_type_id = 220 and a.floating = 1 and (a.valid_to > sysdate or a.valid_to is null)
+      """.as[Int].first
+    count
+  }
 
   private def getPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
