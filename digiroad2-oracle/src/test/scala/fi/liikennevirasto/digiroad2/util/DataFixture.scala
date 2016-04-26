@@ -220,9 +220,10 @@ object DataFixture {
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val lineRange = 1000
-    var endLine = false
+    var endLine = true
     var lastIdUpdate : Long = 0
-
+    var processedCount = 0
+    var updatedCount = 0;
 
     do {
       withDynTransaction {
@@ -230,25 +231,32 @@ object DataFixture {
         //lastIdUpdate - Id for start de fetch
         //lineRange - Max Values to fetch
         val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, lineRange)
-        if (floatingObstaclesAssets == null) {
-          endLine = true
+        if (floatingObstaclesAssets.length == 0) {
+          endLine = false
         } else {
 
           for (obstacleData <- floatingObstaclesAssets) {
+            println("Processing obstacle id "+obstacleData.id)
             lastIdUpdate = obstacleData.id
 
             //Call filtering operations according to rules where
             var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
-
             //Save updated assets to database
-            if (!(obstacleData.equals(ObstaclesToUpdate)))
+            if (!(obstacleData.equals(ObstaclesToUpdate))){
               obstacleService.updateFloatingAssets(ObstaclesToUpdate)
+              updatedCount += 1
+            }
+            processedCount += 1
+
           }
         }
       }
     } while (endLine)
 
-    println("complete at time: ")
+    println("\n")
+    println("Processed "+processedCount+" obstacles")
+    println("Updated "+updatedCount+" obstacles")
+    println("Complete at time: ")
     println(DateTime.now())
     println("\n")
   }

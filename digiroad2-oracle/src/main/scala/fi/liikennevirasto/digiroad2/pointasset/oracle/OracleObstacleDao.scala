@@ -95,16 +95,17 @@ object OracleObstacleDao {
   def selectFloatings(floating: Int, lastIdUpdate: Long, lineRange: Int) : Seq[Obstacle] ={
     val query =
       """
-                select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date, rownum rw
-                  from asset a
-                  join asset_link al on a.id = al.asset_id
-                  join lrm_position pos on al.position_id = pos.id
-                  join property p on p.asset_type_id = a.asset_type_id
-                  left join single_choice_value scv on scv.asset_id = a.id
-                  left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
+        select * from (
+          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join property p on p.asset_type_id = a.asset_type_id
+            left join single_choice_value scv on scv.asset_id = a.id
+            left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
     """
 
-    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null) and a.id > "+ lastIdUpdate +" and ROWNUM <= "+ lineRange +" order by id asc"
+    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null) and a.id > "+ lastIdUpdate +" order by a.id asc) where ROWNUM <= "+ lineRange
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
