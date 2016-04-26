@@ -170,8 +170,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch a list of floating Obstacles") {
     OracleDatabase.withDynTransaction {
-      var lineMax = 0
-      var lineMin = 0
+      val lastIdUpdate = 0
+      val lineRange = 1000
       val obstacleAssetTypeId = 220
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,1)""".execute
@@ -238,26 +238,24 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
             WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
           """.execute
 
-      lineMin = 1
-      lineMax = 20
-      val result = service.getFloatingObstacle(1, lineMin, lineMax)
-      result.length should be <= 11
+
+      val result = service.getFloatingObstacle(1, lastIdUpdate, lineRange)
 
       result.foreach { fields =>
         fields.floating should be(true)
       }
 
-      result(0).id should be (11)
-      result(1).id should be (10)
-      result(2).id should be (9)
-      result(3).id should be (8)
-      result(4).id should be (7)
+      result(0).id should be (1)
+      result(1).id should be (2)
+      result(2).id should be (3)
+      result(3).id should be (4)
+      result(4).id should be (5)
       result(5).id should be (6)
-      result(6).id should be (5)
-      result(7).id should be (4)
-      result(8).id should be (3)
-      result(9).id should be (2)
-      result(10).id should be (1)
+      result(6).id should be (7)
+      result(7).id should be (8)
+      result(8).id should be (9)
+      result(9).id should be (10)
+      result(10).id should be (11)
 
       dynamicSession.rollback()
     }

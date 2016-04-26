@@ -219,7 +219,6 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    //val lineRange = obstacleService.countFloatingObstacles()
     val lineRange = 1000
     var endLine = false
     var lastIdUpdate : Long = 0
@@ -228,8 +227,8 @@ object DataFixture {
     do {
       withDynTransaction {
         //Send "1" for get all floating Obstacles assets
-        //lineMin - Min Value to do the fetch
-        //lineMax - Max Value to do the fetch
+        //lastIdUpdate - Id for start de fetch
+        //lineRange - Max Values to fetch
         val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, lineRange)
         if (floatingObstaclesAssets == null) {
           endLine = true
