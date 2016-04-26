@@ -824,8 +824,6 @@ class AssetDataImporter {
     }
 
     val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749)
-    updateAssetGeometry(id, Point(incomingObstacle.lon, incomingObstacle.lat))
-    insertSingleChoiceProperty(id, getPropertyId, incomingObstacle.obstacleType).execute
     sqlu"""update asset set floating = 1 where id = $id""".execute
     id
   }

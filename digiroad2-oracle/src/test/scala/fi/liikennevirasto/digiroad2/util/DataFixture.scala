@@ -205,8 +205,10 @@ object DataFixture {
   }
 
   private def createAndFloat(incomingObstacle: IncomingObstacle) = {
-    val id = dataImporter.createFloatingObstacle(incomingObstacle)
-    println("Created floating obstacle id=" + id)
+    withDynTransaction {
+      val id = dataImporter.createFloatingObstacle(incomingObstacle)
+      println("Created floating obstacle id=" + id)
+    }
   }
 
   def linkFloatObstacleAssets(): Unit = {
