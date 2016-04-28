@@ -801,7 +801,10 @@ class AssetDataImporter {
       filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0)
 
     roadlinks.length match {
-      case 0 => obstacle // Let it float, then
+      case 0 => {
+        println("! No road link found for obstacle id=" + obstacle.id)
+        obstacle // Let it float, then
+      }
       case 1 => recalculateObstaclePosition(obstacle, roadlinks.head)
       //If exists multiple road link get the closest with less than 0.5 meters distance
       case _ =>
@@ -809,8 +812,12 @@ class AssetDataImporter {
         val (rl1, rl2) = (roadLinksByDistance.head, roadLinksByDistance.tail.head)
         // Has to be up to 50 cm away and the second closest at least 5 times this distance away
         if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
+          println("* Accepted closest for obstacle id=" + obstacle.id + ": road links and distances are " +
+            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
           recalculateObstaclePosition(obstacle, rl1._2)
         } else {
+          println("! Rejected; multiple candidates for obstacle id=" + obstacle.id + ": road links and distances are " +
+            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
           obstacle
         }
     }
