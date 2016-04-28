@@ -506,7 +506,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         join #$idTableName i on (i.id = pos.link_id)
-        where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE )""".as[
+        where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0""".as[
         (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])
         ].list
     }
@@ -548,7 +548,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       "join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus' " +
       "join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id " +
       "join ENUMERATED_VALUE e on s.enumerated_value_id = e.id " +
-      "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= SYSDATE ) "
+      "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0"
 
     val idSql = sql + makeLinkIdSql(idString)
     Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])](idSql).list.map {
