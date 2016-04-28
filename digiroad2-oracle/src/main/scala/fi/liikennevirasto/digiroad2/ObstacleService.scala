@@ -32,8 +32,8 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     id
   }
 
-  def getFloatingObstacle(floating: Int, lastIdUpdate: Long, lineRange: Int): Seq[Obstacle] = {
-    OracleObstacleDao.selectFloatings(floating, lastIdUpdate, lineRange)
+  def getFloatingObstacle(floating: Int, lastIdUpdate: Long, batchSize: Int): Seq[Obstacle] = {
+    OracleObstacleDao.selectFloatings(floating, lastIdUpdate, batchSize)
   }
 
   def updateFloatingAssets(obstacleUpdated: Obstacle) = {

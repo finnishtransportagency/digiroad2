@@ -92,7 +92,7 @@ object OracleObstacleDao {
     id
   }
 
-  def selectFloatings(floating: Int, lastIdUpdate: Long, lineRange: Int) : Seq[Obstacle] ={
+  def selectFloatings(floating: Int, lastIdUpdate: Long, batchSize: Int) : Seq[Obstacle] ={
     val query =
       """
         select * from (
@@ -105,7 +105,8 @@ object OracleObstacleDao {
             left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
     """
 
-    val queryWithFilter = query + "where a.asset_type_id = 220 and a.floating = "+ floating +" and (a.valid_to > sysdate or a.valid_to is null) and a.id > "+ lastIdUpdate +" order by a.id asc) where ROWNUM <= "+ lineRange
+    val queryWithFilter = query + s"where a.asset_type_id = 220 and a.floating = $floating and " +
+      s"(a.valid_to > sysdate or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) where ROWNUM <= $batchSize"
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 

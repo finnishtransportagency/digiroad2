@@ -30,9 +30,9 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
- lazy val obstacleService: ObstacleService = {
-   new ObstacleService(vvhClient)
- }
+  lazy val obstacleService: ObstacleService = {
+    new ObstacleService(vvhClient)
+  }
 
   def flyway: Flyway = {
     val flyway = new Flyway()
@@ -219,39 +219,34 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val lineRange = 1000
-    var endLine = true
+    val batchSize = 1000
+    var obstaclesFound = true
     var lastIdUpdate : Long = 0
     var processedCount = 0
-    var updatedCount = 0;
+    var updatedCount = 0
 
     do {
       withDynTransaction {
         //Send "1" for get all floating Obstacles assets
-        //lastIdUpdate - Id for start de fetch
-        //lineRange - Max Values to fetch
-        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, lineRange)
-        if (floatingObstaclesAssets.length == 0) {
-          endLine = false
-        } else {
+        //lastIdUpdate - Id where to start the fetch
+        //batchSize - Max number of obstacles to fetch at a time
+        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, batchSize)
+        obstaclesFound = floatingObstaclesAssets.nonEmpty
+        lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
+        for (obstacleData <- floatingObstaclesAssets) {
+          println("Processing obstacle id "+obstacleData.id)
 
-          for (obstacleData <- floatingObstaclesAssets) {
-            println("Processing obstacle id "+obstacleData.id)
-            lastIdUpdate = obstacleData.id
-
-            //Call filtering operations according to rules where
-            var ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
-            //Save updated assets to database
-            if (!(obstacleData.equals(ObstaclesToUpdate))){
-              obstacleService.updateFloatingAssets(ObstaclesToUpdate)
-              updatedCount += 1
-            }
-            processedCount += 1
-
+          //Call filtering operations according to rules where
+          val ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
+          //Save updated assets to database
+          if (!obstacleData.equals(ObstaclesToUpdate)){
+            obstacleService.updateFloatingAssets(ObstaclesToUpdate)
+            updatedCount += 1
           }
+          processedCount += 1
         }
       }
-    } while (endLine)
+    } while (obstaclesFound)
 
     println("\n")
     println("Processed "+processedCount+" obstacles")
