@@ -347,6 +347,33 @@ test("should not drop adjusted short speed limit") {
     output.length should be (8)
   }
 
+  test("test failing combination") {
+    val oldRoadLink = roadLink(6599930, Seq(Point(0.0, 0.0), Point(171.02731386, 0.0)))
+    val newLink1 = roadLink(6640715, Seq(Point(0.0, 0.0), Point(106.96978931, 0.0)))
+    val newLink2 = roadLink(6640718, Seq(Point(0.0, 0.0), Point(57.4888233, 0.0)))
+    val newLink3 = roadLink(6640719, Seq(Point(0.0, 0.0), Point(6.56875041, 0.0)))
+    val linkmap = Map(6640715L -> newLink1, 6640718L -> newLink2, 6640719L -> newLink3)
+    val speedLimit = Seq(
+      SpeedLimit(
+        1, oldRoadLink.linkId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(40)),
+        Seq(Point(0.0, 0.0), Point(54.825, 0.0)), 0.0, 54.825, None, None, None, None, 0, None),
+      SpeedLimit(
+        2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
+        Seq(Point(54.825, 0.0), Point(171.027, 0.0)), 54.825, 171.027, None, None, None, None, 0, None))
+
+    val changes = Seq(ChangeInfo(Some(oldRoadLink.linkId), Some(newLink2.linkId), 2l, 5, Some(113.53850795), Some(171.02731386), Some(0.0), Some(57.4888233), Some(1461844024000L)),
+      ChangeInfo(Some(oldRoadLink.linkId), Some(newLink1.linkId), 2l, 6, Some(6.56875026), Some(113.53850795), Some(0.0), Some(106.96978931), Some(1461844024000L)),
+      ChangeInfo(Some(oldRoadLink.linkId), Some(newLink3.linkId), 2l, 6, Some(0.0), Some(6.56875026), Some(0.0), Some(6.56875026), Some(1461844024000L))
+    )
+
+    val output = changes flatMap { change =>
+      speedLimit.map(
+        SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
+
+    output.foreach(println)
+  }
+
   test("Should repair speed limit data on overlaps and invalid data") {
     val rLink = roadLink(1, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
     val bdblue = Option(DateTime.now().minusDays(6))
