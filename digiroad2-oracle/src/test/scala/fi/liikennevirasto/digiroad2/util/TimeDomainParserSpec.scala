@@ -56,9 +56,9 @@ class TimeDomainParserSpec extends FunSuite with Matchers {
     }
     println(s"Amount of successfully parsed time domain strings: ${results.count { x => x._2.isRight }}")
     println(s"Amount of failed parsed time domain strings: ${results.count { x => x._2.isLeft }}")
-    println(s"Failed time domain strings: ")
-    results.filter { x => x._2.isLeft }.foreach { case (input, r) =>
-      println(s"\tParsing failed on input: $input due to ${r.left.get}")
-    }
+    /*    println(s"Failed time domain strings: ")
+        results.filter { x => x._2.isLeft }.foreach { case (input, r) =>
+          println(s"\tParsing failed on input: $input due to ${r.left.get}")
+        }*/
   }
 }

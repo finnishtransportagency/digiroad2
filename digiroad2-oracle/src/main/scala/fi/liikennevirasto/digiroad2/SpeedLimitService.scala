@@ -72,7 +72,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
 
     eventbus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
-      oldSpeedLimits.map(_.id).toSet)) // Expire only non-rewritten
+      oldSpeedLimits.map(_.id).toSet ++ changeSet.droppedAssetIds, droppedAssetIds = Set())) // Expire all assets that are dropped or expired. No more floating speed limits.
     eventbus.publish("speedLimits:saveProjectedSpeedLimits", newSpeedLimits)
 
     eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
