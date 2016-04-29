@@ -431,7 +431,7 @@ object SpeedLimitFiller {
       fillHoles,
       clean
     )
-
+      // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val initialChangeSet = ChangeSet(Set.empty, Nil, Nil, Set.empty)
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
