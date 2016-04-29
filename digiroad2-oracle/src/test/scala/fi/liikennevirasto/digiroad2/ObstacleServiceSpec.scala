@@ -264,11 +264,15 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update floating obstacle") {
     OracleDatabase.withDynTransaction {
       val obstacle = service.getById(600046).get
-      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true)
+      val newMvalue = obstacle.mValue+1
+      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true, mValue = newMvalue, linkId = 1611317, modifiedBy = Some("unit_test"))
 
       service.updateFloatingAsset(newObstacle)
       val updatedObstacle = service.getById(600046).get
 
+      updatedObstacle.linkId should equal (1611317)
+      updatedObstacle.mValue should equal (newMvalue)
+      updatedObstacle.modifiedBy should equal (Some("unit_test"))
       updatedObstacle.municipalityCode should equal(500)
       updatedObstacle.id should equal(obstacle.id)
       updatedObstacle.floating should be(true)

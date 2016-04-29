@@ -111,24 +111,19 @@ object OracleObstacleDao {
   }
 
   def updateFloatingAsset(obstacleUpdated: Obstacle) = {
-    var id = obstacleUpdated.id
-    var mValue = obstacleUpdated.mValue
-    var linkId = obstacleUpdated.linkId
-    var municipalityCode = obstacleUpdated.municipalityCode
-    var modifiedBy = obstacleUpdated.modifiedBy.get
-    var floating = obstacleUpdated.floating
+    val id = obstacleUpdated.id
 
-    sqlu"""update asset set municipality_code = $municipalityCode, floating =  $floating where id = $id""".execute
+    sqlu"""update asset set municipality_code = ${obstacleUpdated.municipalityCode}, floating =  ${obstacleUpdated.floating} where id = $id""".execute
 
-    updateAssetModified(id, modifiedBy).execute
+    updateAssetModified(id, obstacleUpdated.modifiedBy.get).execute
     updateAssetGeometry(id, Point(obstacleUpdated.lon, obstacleUpdated.lat))
     updateSingleChoiceProperty(id, getPropertyId, obstacleUpdated.obstacleType).execute
 
     sqlu"""
       update lrm_position
        set
-       start_measure = $mValue,
-       link_id = $linkId
+       start_measure = ${obstacleUpdated.mValue},
+       link_id = ${obstacleUpdated.linkId}
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
   }
