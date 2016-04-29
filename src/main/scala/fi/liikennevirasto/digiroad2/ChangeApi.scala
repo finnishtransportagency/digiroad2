@@ -121,7 +121,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     } else if (createdDateTime.exists(_.isAfter(since))) {
       "Add"
     } else {
-      "Update"
+      "Modify"
     }
   }
 }
