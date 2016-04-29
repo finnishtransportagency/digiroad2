@@ -239,7 +239,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
           """.execute
 
 
-      val result = service.getFloatingObstacle(1, lastIdUpdate, lineRange)
+      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange)
 
       result.foreach { fields =>
         fields.floating should be(true)
@@ -266,7 +266,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val obstacle = service.getById(600046).get
       val newObstacle = obstacle.copy(municipalityCode = 500, floating = true)
 
-      service.updateFloatingAssets(newObstacle)
+      service.updateFloatingAsset(newObstacle)
       val updatedObstacle = service.getById(600046).get
 
       updatedObstacle.municipalityCode should equal(500)

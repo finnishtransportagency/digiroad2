@@ -230,17 +230,17 @@ object DataFixture {
         //Send "1" for get all floating Obstacles assets
         //lastIdUpdate - Id where to start the fetch
         //batchSize - Max number of obstacles to fetch at a time
-        val floatingObstaclesAssets = obstacleService.getFloatingObstacle(1, lastIdUpdate, batchSize)
+        val floatingObstaclesAssets = obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
         obstaclesFound = floatingObstaclesAssets.nonEmpty
         lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
         for (obstacleData <- floatingObstaclesAssets) {
           println("Processing obstacle id "+obstacleData.id)
 
           //Call filtering operations according to rules where
-          val ObstaclesToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
+          val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
           //Save updated assets to database
-          if (!obstacleData.equals(ObstaclesToUpdate)){
-            obstacleService.updateFloatingAssets(ObstaclesToUpdate)
+          if (!obstacleData.equals(obstacleToUpdate)){
+            obstacleService.updateFloatingAsset(obstacleToUpdate)
             updatedCount += 1
           }
           processedCount += 1

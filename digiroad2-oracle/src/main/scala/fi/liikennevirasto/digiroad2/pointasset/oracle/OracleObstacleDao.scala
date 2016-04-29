@@ -110,12 +110,12 @@ object OracleObstacleDao {
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
-  def updateFloatingAssets(obstacleUpdated: Obstacle) = {
+  def updateFloatingAsset(obstacleUpdated: Obstacle) = {
     var id = obstacleUpdated.id
     var mValue = obstacleUpdated.mValue
     var linkId = obstacleUpdated.linkId
     var municipalityCode = obstacleUpdated.municipalityCode
-    var modifiedBy = obstacleUpdated.modifiedBy.toString()
+    var modifiedBy = obstacleUpdated.modifiedBy.get
     var floating = obstacleUpdated.floating
 
     sqlu"""update asset set municipality_code = $municipalityCode, floating =  $floating where id = $id""".execute
