@@ -116,42 +116,42 @@ trait LinearAssetOperations {
         }).filter(a => Math.abs(a.startMeasure - a.endMeasure) > 0) // Remove zero-length or invalid length parts
     linearAssets
   }
-  private def mapReplacementProjections(oldSpeedLimits: Seq[PersistedLinearAsset], currentSpeedLimits: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
+  private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                                         changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
     val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId))
-    oldSpeedLimits.flatMap{limit =>
+    oldLinearAssets.flatMap{limit =>
       newRoadLinks.map(newRoadLink =>
         (limit,
-          getRoadLinkAndProjection(roadLinks, changes, limit.linkId, newRoadLink.linkId, oldSpeedLimits, currentSpeedLimits))
+          getRoadLinkAndProjection(roadLinks, changes, limit.linkId, newRoadLink.linkId, oldLinearAssets, currentLinearAssets))
       )}
   }
 
   private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
-                                       speedLimitsToUpdate: Seq[PersistedLinearAsset], currentSpeedLimits: Seq[PersistedLinearAsset]) = {
+                                       linearAssetsToUpdate: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
       case Some(info) =>
         // ChangeInfo object related assets; either mentioned in oldId or in newId
-        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
-          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L))
-        mapChangeToProjection(info, speedLimits)
+        val linearAssets = linearAssetsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
+          currentLinearAssets.filter(_.linkId == info.newId.getOrElse(0L))
+        mapChangeToProjection(info, linearAssets)
       case _ => None
     }
     (roadLink,projection)
   }
 
-  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[PersistedLinearAsset]) = {
+  private def mapChangeToProjection(change: ChangeInfo, linearAssets: Seq[PersistedLinearAsset]) = {
     val typed = ChangeType.apply(change.changeType)
     typed match {
       // cases 5, 6, 1, 2
       case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
-           ChangeType.CombinedRemovedPart => projectAssetsConditionally(change, speedLimits, testNoAssetExistsOnTarget)
+           ChangeType.CombinedRemovedPart => projectAssetsConditionally(change, linearAssets, testNoAssetExistsOnTarget)
       // cases 3, 7, 13, 14
       case ChangeType.LenghtenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
-        projectAssetsConditionally(change, speedLimits, testAssetOutdated)
+        projectAssetsConditionally(change, linearAssets, testAssetOutdated)
       case _ => None
     }
   }
