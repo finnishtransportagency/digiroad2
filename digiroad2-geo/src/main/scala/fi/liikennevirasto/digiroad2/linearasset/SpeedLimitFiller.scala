@@ -493,6 +493,5 @@ object SpeedLimitFiller {
     )
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[NumericValue])
 }
