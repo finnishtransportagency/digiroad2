@@ -4,9 +4,6 @@ import fi.liikennevirasto.digiroad2.ChangeInfo
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, PersistedLinearAsset, RoadLink, LinearAsset}
 
-/**
-  * Created by venholat on 30.3.2016.
-  */
 object LinearAssetUtils {
   /**
     * Return true if the vvh time stamp is older than change time stamp

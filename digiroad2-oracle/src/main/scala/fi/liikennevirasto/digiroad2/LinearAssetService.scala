@@ -102,7 +102,7 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
+    * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
   private def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
                                                          currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
@@ -116,6 +116,7 @@ trait LinearAssetOperations {
         }).filter(a => Math.abs(a.startMeasure - a.endMeasure) > 0) // Remove zero-length or invalid length parts
     linearAssets
   }
+
   private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                                         changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
@@ -128,7 +129,7 @@ trait LinearAssetOperations {
   }
 
   private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
-                                       linearAssetsToUpdate: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset]) = {
+                                       linearAssetsToUpdate: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset]): (Option[RoadLink], Option[Projection]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
@@ -142,7 +143,7 @@ trait LinearAssetOperations {
     (roadLink,projection)
   }
 
-  private def mapChangeToProjection(change: ChangeInfo, linearAssets: Seq[PersistedLinearAsset]) = {
+  private def mapChangeToProjection(change: ChangeInfo, linearAssets: Seq[PersistedLinearAsset]): Option[Projection] = {
     val typed = ChangeType.apply(change.changeType)
     typed match {
       // cases 5, 6, 1, 2
@@ -157,18 +158,18 @@ trait LinearAssetOperations {
   }
 
   private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
-                                     vvhTimeStamp: Long) = {
+                                     vvhTimeStamp: Long): Boolean = {
     !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
   private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
-                                     vvhTimeStamp: Long) = {
+                                     vvhTimeStamp: Long): Boolean = {
     val targetLimits = assets.filter(l => l.linkId == linkId)
     targetLimits.nonEmpty && !targetLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp)
   }
 
   private def projectAssetsConditionally(change: ChangeInfo, assets: Seq[PersistedLinearAsset],
-                                             condition: (Seq[PersistedLinearAsset], Long, Double, Double, Long) => Boolean) = {
+                                             condition: (Seq[PersistedLinearAsset], Long, Double, Double, Long) => Boolean): Option[Projection] = {
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
@@ -243,7 +244,7 @@ trait LinearAssetOperations {
   }
 
   /*
-   * Create the new linear assets used by the actor
+   * Creates new linear assets. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
     withDynTransaction{
