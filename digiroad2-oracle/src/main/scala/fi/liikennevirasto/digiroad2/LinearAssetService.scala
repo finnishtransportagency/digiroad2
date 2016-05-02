@@ -94,7 +94,7 @@ trait LinearAssetOperations {
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
-      existingAssets.filter(asset => removedLinkIds.exists(id => id == asset.linkId)).map(_.id).toSet))
+      existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
