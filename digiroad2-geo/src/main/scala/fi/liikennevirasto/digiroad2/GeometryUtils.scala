@@ -194,5 +194,9 @@ object GeometryUtils {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }
 
+  def isDirectionChangeProjection(projection: Projection): Boolean = {
+    ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
