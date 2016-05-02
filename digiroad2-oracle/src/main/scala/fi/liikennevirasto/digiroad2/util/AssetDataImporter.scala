@@ -4,9 +4,10 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, Obstacle}
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -14,6 +15,7 @@ import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
@@ -627,7 +629,7 @@ class AssetDataImporter {
       """.as[(Int, Int)].first
     }
   }
-  
+
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
     val dao = new OracleLinearAssetDao(null)
 
@@ -766,6 +768,70 @@ class AssetDataImporter {
       insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by)
       values ($propertyId, $assetId, (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
+  }
+
+  /**
+    * Finds closest road link from classes 6-8 for an obstacle and updates the location and clears the floating
+    * if one is found according to the rules:
+    * - at most 10 meters away
+    * - at most .5 meters away and no other candidate locations within 5 times the distance if there are multiple
+    * @param obstacle A floating obstacle to update
+    * @param vvhClient VVHClient to use (reusing for speed)
+    * @return
+    */
+  def updateObstacleToRoadLink(obstacle : Obstacle, vvhClient: VVHClient) : Obstacle = {
+    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: VVHRoadlink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
+        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+        modifiedAt = Some(DateTime.now()), floating = false)
+    }
+    //FunctionalClass 7 equal to FeatureClass TractorRoad
+    //FunctionalClass 6 equal to FeatureClass DrivePath
+    //FunctionalClass 8 equal to FeatureClass CycleOrPedestrianPath
+    val allowedFeatureClasses = Set(FeatureClass.TractorRoad, FeatureClass.DrivePath, FeatureClass.CycleOrPedestrianPath)
+
+    val diagonal = Vector3d(10, 10, 0)
+
+    val obstaclePoint = Point(obstacle.lon, obstacle.lat, 0)
+    //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
+    val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+      filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass))).
+      filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0)
+
+    roadlinks.length match {
+      case 0 => {
+        println("! No road link found for obstacle id=" + obstacle.id)
+        obstacle // Let it float, then
+      }
+      case 1 => recalculateObstaclePosition(obstacle, roadlinks.head)
+      //If exists multiple road link get the closest with less than 0.5 meters distance
+      case _ =>
+        val roadLinksByDistance = roadlinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) -> rl).sortBy(_._1)
+        val (rl1, rl2) = (roadLinksByDistance.head, roadLinksByDistance.tail.head)
+        // Has to be up to 50 cm away and the second closest at least 5 times this distance away
+        if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
+          println("* Accepted closest for obstacle id=" + obstacle.id + ": road links and distances are " +
+            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
+          recalculateObstaclePosition(obstacle, rl1._2)
+        } else {
+          println("! Rejected; multiple candidates for obstacle id=" + obstacle.id + ": road links and distances are " +
+            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
+          obstacle
+        }
+    }
+
+  }
+
+  def createFloatingObstacle(incomingObstacle: IncomingObstacle) = {
+    def getPropertyId: Long = {
+      StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
+    }
+
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749)
+    sqlu"""update asset set floating = 1 where id = $id""".execute
+    id
   }
 
   private[this] def initDataSource: DataSource = {

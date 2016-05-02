@@ -3,9 +3,14 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2.IncomingObstacle
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{IncomingObstacle, VVHClient, Point, ObstacleService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleObstacleDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
 
 object DataFixture {
@@ -22,6 +27,12 @@ object DataFixture {
   }
 
   val dataImporter = new AssetDataImporter
+  lazy val vvhClient: VVHClient = {
+    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  }
+  lazy val obstacleService: ObstacleService = {
+    new ObstacleService(vvhClient)
+  }
 
   def flyway: Flyway = {
     val flyway = new Flyway()
@@ -197,6 +208,54 @@ object DataFixture {
     println("\n")
   }
 
+  private def createAndFloat(incomingObstacle: IncomingObstacle) = {
+    withDynTransaction {
+      val id = dataImporter.createFloatingObstacle(incomingObstacle)
+      println("Created floating obstacle id=" + id)
+    }
+  }
+
+  def linkFloatObstacleAssets(): Unit = {
+    println("\nGenerating list of Obstacle assets to linking")
+    println(DateTime.now())
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val batchSize = 1000
+    var obstaclesFound = true
+    var lastIdUpdate : Long = 0
+    var processedCount = 0
+    var updatedCount = 0
+
+    do {
+      withDynTransaction {
+        //Send "1" for get all floating Obstacles assets
+        //lastIdUpdate - Id where to start the fetch
+        //batchSize - Max number of obstacles to fetch at a time
+        val floatingObstaclesAssets = obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
+        obstaclesFound = floatingObstaclesAssets.nonEmpty
+        lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
+        for (obstacleData <- floatingObstaclesAssets) {
+          println("Processing obstacle id "+obstacleData.id)
+
+          //Call filtering operations according to rules where
+          val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
+          //Save updated assets to database
+          if (!obstacleData.equals(obstacleToUpdate)){
+            obstacleService.updateFloatingAsset(obstacleToUpdate)
+            updatedCount += 1
+          }
+          processedCount += 1
+        }
+      }
+    } while (obstaclesFound)
+
+    println("\n")
+    println("Processed "+processedCount+" obstacles")
+    println("Updated "+updatedCount+" obstacles")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -251,10 +310,15 @@ object DataFixture {
         adjustToNewDigitization()
       case Some("import_link_ids") =>
         LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+      case Some("generate_floating_obstacles") =>
+        FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
+      case Some ("link_float_obstacle_assets") =>
+        linkFloatObstacleAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
-        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair")
+        " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
+        " generate_floating_obstacles")
     }
   }
 }
