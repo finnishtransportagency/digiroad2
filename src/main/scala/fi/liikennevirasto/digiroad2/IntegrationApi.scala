@@ -293,8 +293,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
     manoeuvres.map { manoeuvre =>
       Map("id" -> manoeuvre.id,
-      "sourceLinkId" -> manoeuvre.sourceLinkId,
-      "destLinkId" -> manoeuvre.destLinkId,
+      // TODO: DROTH-177: add intermediate links
+      "sourceLinkId" -> manoeuvre.elements.head.sourceLinkId,
+      "destLinkId" -> manoeuvre.elements.head.destLinkId,
       "exceptions" -> manoeuvre.exceptions,
       "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
       "additionalInfo" -> manoeuvre.additionalInfo,
