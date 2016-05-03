@@ -189,4 +189,10 @@ object GeometryUtils {
       case true => Option(Math.max(seg1._1, seg2._1), Math.min(seg1._2, seg2._2))
     }
   }
+
+  def isDirectionChangeProjection(projection: Projection): Boolean = {
+    ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
+  }
+
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

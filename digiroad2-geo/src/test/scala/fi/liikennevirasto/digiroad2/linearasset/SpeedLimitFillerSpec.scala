@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, MValueAdjustment, ChangeSet}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._

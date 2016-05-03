@@ -1,11 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.ChangeInfo
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, LinearAsset}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, PersistedLinearAsset, RoadLink, LinearAsset}
 
-/**
-  * Created by venholat on 30.3.2016.
-  */
 object LinearAssetUtils {
   /**
     * Return true if the vvh time stamp is older than change time stamp
@@ -22,6 +20,10 @@ object LinearAssetUtils {
     }
   }
 
+  def newChangeInfoDetected(a: PersistedLinearAsset, changes: Seq[ChangeInfo]): Boolean = {
+    newChangeInfoDetected(persistedLinearAssetToLinearAsset(a), changes)
+  }
+
   /**
     * Returns true if there are new change informations for roadlink assets.
     * Comparing if the assets vvh time stamp is older than the change time stamp
@@ -34,5 +36,22 @@ object LinearAssetUtils {
     changeInfo.exists(_.newId == roadLink.linkId) &&
       assets.exists(asset => (asset.linkId == roadLink.linkId) &&
         (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp.getOrElse(0: Long)))
+  }
+
+  /* Filter to only those Ids that are no longer present on map and not referred to in change information
+     Used by LinearAssetService and SpeedLimitService
+   */
+  def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
+    change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id)).
+      filterNot(id => change.exists(ci => ci.newId.getOrElse(0) == id))
+  }
+
+  private def persistedLinearAssetToLinearAsset(persisted: PersistedLinearAsset) = {
+    PieceWiseLinearAsset(id = persisted.id, linkId = persisted.linkId, sideCode = SideCode.apply(persisted.sideCode),
+      value = persisted.value,
+      geometry = Seq(), expired = persisted.expired, startMeasure = persisted.startMeasure, endMeasure = persisted.endMeasure,
+      endpoints = Set(), modifiedBy = persisted.modifiedBy, modifiedDateTime = persisted.modifiedDateTime, createdBy =
+        persisted.createdBy, createdDateTime = persisted.createdDateTime, typeId = persisted.typeId, trafficDirection =
+        TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate)
   }
 }

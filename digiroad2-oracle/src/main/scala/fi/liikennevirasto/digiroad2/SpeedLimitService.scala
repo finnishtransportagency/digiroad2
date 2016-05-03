@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, BoundingRectangle, SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.Projection
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -47,15 +47,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  // Filter to only those Ids that are no longer present on map
-  private def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
-    change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id)).
-      filterNot(id => change.exists(ci => ci.newId.getOrElse(0) == id))
-  }
-
   private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo]) = {
     val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-    val oldRoadLinkIds = deletedRoadLinkIds(change, roadLinks)
+    val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(change, roadLinks)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet)).toSeq
 
     // filter those road links that have already been projected earlier from being reprojected
