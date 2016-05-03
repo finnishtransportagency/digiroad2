@@ -44,12 +44,12 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val manoeuvres = manoeuvreService.getByBoundingBox(bounds, Set(235))
     manoeuvres.length should equal(3)
     val partiallyContainedManoeuvre = manoeuvres.find(_.id == 39561).get
-    partiallyContainedManoeuvre.elements.find(_.elementType==manoeuvreService.FirstElement).get.sourceLinkId should equal(1611419)
-    partiallyContainedManoeuvre.elements.find(_.elementType==manoeuvreService.FirstElement).get.destLinkId should equal(1611420)
-    partiallyContainedManoeuvre.elements.find(_.elementType==manoeuvreService.LastElement).get.sourceLinkId should equal(1611420)
+    partiallyContainedManoeuvre.elements.find(_.elementType==ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)
+    partiallyContainedManoeuvre.elements.find(_.elementType==ElementTypes.FirstElement).get.destLinkId should equal(1611420)
+    partiallyContainedManoeuvre.elements.find(_.elementType==ElementTypes.LastElement).get.sourceLinkId should equal(1611420)
     val completelyContainedManoeuvre = manoeuvres.find(_.id == 97666).get
-    completelyContainedManoeuvre.elements.find(_.elementType==manoeuvreService.FirstElement).get.sourceLinkId should equal(1611412)
-    completelyContainedManoeuvre.elements.find(_.elementType==manoeuvreService.LastElement).get.sourceLinkId should equal(1611410)
+    completelyContainedManoeuvre.elements.find(_.elementType==ElementTypes.FirstElement).get.sourceLinkId should equal(1611412)
+    completelyContainedManoeuvre.elements.find(_.elementType==ElementTypes.LastElement).get.sourceLinkId should equal(1611410)
   }
 
   // TODO: DROTH-180
