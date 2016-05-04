@@ -424,8 +424,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
            (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
            or
            (a.created_date > $sinceDate and a.created_date <= $untilDate)
-           or
-           (pos.modified_date > $sinceDate and pos.modified_date <= $untilDate)
          )
     """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean)].list
 
@@ -452,8 +450,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
             (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
             or
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
-            or
-            (pos.modified_date > $sinceDate and pos.modified_date <= $untilDate)
           )
           and a.floating = 0"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list

@@ -28,7 +28,7 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     linearAssetService.drop(changeSet.droppedAssetIds)
     linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
     linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
-    linearAssetService.expire(changeSet.expiredAssetIds.toSeq, "vvh_generated")
+    linearAssetService.expire(changeSet.expiredAssetIds.toSeq, LinearAssetTypes.VvhGenerated)
   }
 }
 
