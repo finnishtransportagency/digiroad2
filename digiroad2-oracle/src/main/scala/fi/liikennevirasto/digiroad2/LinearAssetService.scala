@@ -28,7 +28,6 @@ object LinearAssetTypes {
     case ExitNumberAssetTypeId => exitNumberPropertyId
     case _ => numericValuePropertyId
   }
-  val VvhGenerated = "vvh_generated"
 }
 
 case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
@@ -251,7 +250,7 @@ trait LinearAssetOperations {
     withDynTransaction{
       newLinearAssets.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated))
+          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse("vvh_generated"))
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)

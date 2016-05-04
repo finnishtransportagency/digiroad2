@@ -232,7 +232,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     withDynTransaction {
       val (newlimits, changedlimits) = limits.partition(_.id <= 0)
       newlimits.foreach { limit =>
-        dao.createSpeedLimit(limit.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), limit.linkId, (limit.startMeasure, limit.endMeasure),
+        dao.createSpeedLimit(limit.createdBy.getOrElse("vvh_generated"), limit.linkId, (limit.startMeasure, limit.endMeasure),
           limit.sideCode, limit.value.get.value, Some(limit.vvhTimeStamp), limit.createdDateTime, limit.modifiedBy,
           limit.modifiedDateTime)
       }

@@ -17,12 +17,6 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
   }
 
-
-  // The TN-ITS API is the only client for the change api and it does not care about the changes propagating
-  // from the changes to the VVH roadlinks. Including changes to geometry and link id's.
-  //
-  // Hence all these adjustements are simply filtered out already in the DAO level.
-
   get("/:assetType") {
     contentType = formats("json")
     val since = DateTime.parse(params("since"))
