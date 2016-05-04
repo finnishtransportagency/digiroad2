@@ -101,7 +101,3 @@ case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Op
 
 case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
-
-object Lol {
-  val vvhGenerated = "vvh_generated"
-}
