@@ -67,22 +67,53 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
+    def  checkAdjacency(manoeuvreElement: ManoeuvreElement, allRoadLinks: Seq[RoadLink]): Boolean = {
+
+      val destRoadLinkOption = allRoadLinks.find(_.linkId == manoeuvreElement.destLinkId)
+      val sourceRoadLinkOption = allRoadLinks.find(_.linkId == manoeuvreElement.sourceLinkId)
+
+      (sourceRoadLinkOption, destRoadLinkOption) match {
+        case (Some(sourceRoadLink), Some(destRoadLink)) => {
+          GeometryUtils.areAdjacent(sourceRoadLink.geometry, destRoadLink.geometry) &&
+            sourceRoadLink.isCarTrafficRoad &&
+            destRoadLink.isCarTrafficRoad
+        }
+        case _ => false
+      }
+    }
+
+    //Get all road links from vvh that are not on the RoadLinks sequence passed as parameter
     val linkIds = allLinkIds(manoeuvre)
     val additionalRoadLinks = linkIds.forall(id => roadLinks.exists(_.linkId == id)) match {
       case false => roadLinkService.getRoadLinksFromVVH(linkIds.toSet -- roadLinks.map(_.linkId))
       case true => Seq()
     }
 
-    // TODO: DROTH-180
-    //    (sourceRoadLinkOption, destRoadLinkOption) match {
-    //      case (Some(sourceRoadLink), Some(destRoadLink)) => {
-    //        GeometryUtils.areAdjacent(sourceRoadLink.geometry, destRoadLink.geometry) &&
-    //          sourceRoadLink.isCarTrafficRoad &&
-    //          destRoadLink.isCarTrafficRoad
-    //      }
-    //      case _ => false
-    //    }
-    true
+    val allRoadLinks = roadLinks ++ additionalRoadLinks
+
+    val manoeuvreSortedByElementType = manoeuvre.elements.sortBy(_.elementType)
+
+    if(manoeuvreSortedByElementType.head.elementType != ElementTypes.FirstElement)
+      false
+
+    if(manoeuvreSortedByElementType.last.elementType != ElementTypes.LastElement)
+      false
+
+    manoeuvreSortedByElementType.forall{ manoeuvreElement =>
+      manoeuvreElement.elementType match {
+        case ElementTypes.FirstElement =>
+          checkAdjacency(manoeuvreElement, allRoadLinks)
+        case ElementTypes.IntermediateElement =>
+          //Verify if some manoeuvre element in the chain is connected with this manoeuvre element
+          if(manoeuvre.elements.exists(_.sourceLinkId == manoeuvreElement.destLinkId))
+            checkAdjacency(manoeuvreElement, allRoadLinks)
+          else
+            false
+        case ElementTypes.LastElement =>
+          //Verify if some manoeuvre element in the chain is connected with the end roadlink
+          manoeuvre.elements.exists(_.destLinkId == manoeuvreElement.sourceLinkId)
+      }
+    }
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) = {

@@ -52,9 +52,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     completelyContainedManoeuvre.elements.find(_.elementType==ElementTypes.LastElement).get.sourceLinkId should equal(1611410)
   }
 
-  // TODO: DROTH-180
-//  test("Filters out manoeuvres with non-adjacent source and destination links") {
-  ignore("Filters out manoeuvres with non-adjacent source and destination links") {
+  test("Filters out manoeuvres with non-adjacent source and destination links") {
     val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 124)))
     val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234)))
 
