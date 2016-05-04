@@ -97,7 +97,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,CREATED_DATE,GEOMETRY_EDITED_DATE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -349,7 +349,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "TO_RIGHT",
       "MUNICIPALITYCODE",
       "MTKHEREFLIP",
-      "CREATED_DATE",
+      "VALIDFROM",
       "GEOMETRY_EDITED_DATE").contains(x)
     }.filter { case (_, value) =>
       value != null
@@ -376,12 +376,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
       }
     }
 
-    val createdDate = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
     val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
     val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
 
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
+    latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
   private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
