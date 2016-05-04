@@ -421,9 +421,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          and (
            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
            or
-           (a.modified_date > $sinceDate and a.modified_date <= $untilDate and a.modified_by <> ${LinearAssetTypes.VvhGenereated})
+           (a.modified_date > $sinceDate and a.modified_date <= $untilDate and a.modified_by <> ${LinearAssetTypes.VvhGenerated})
            or
-           (a.created_date > $sinceDate and a.created_date <= $untilDate and a.created_by <> ${LinearAssetTypes.VvhGenereated})
+           (a.created_date > $sinceDate and a.created_date <= $untilDate and a.created_by <> ${LinearAssetTypes.VvhGenerated})
          )
     """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Boolean)].list
 
@@ -447,9 +447,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           and (
             (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
             or
-            (a.modified_date > $sinceDate and a.modified_date <= $untilDate and a.modified_by <> ${LinearAssetTypes.VvhGenereated})
+            (a.modified_date > $sinceDate and a.modified_date <= $untilDate and a.modified_by <> ${LinearAssetTypes.VvhGenerated})
             or
-            (a.created_date > $sinceDate and a.created_date <= $untilDate and a.created_by <> ${LinearAssetTypes.VvhGenereated})
+            (a.created_date > $sinceDate and a.created_date <= $untilDate and a.created_by <> ${LinearAssetTypes.VvhGenerated})
           )
           and a.floating = 0"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime])].list
