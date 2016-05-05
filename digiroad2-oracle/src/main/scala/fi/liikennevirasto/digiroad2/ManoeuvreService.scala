@@ -93,10 +93,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val manoeuvreSortedByElementType = manoeuvre.elements.sortBy(_.elementType)
 
-    if(manoeuvreSortedByElementType.head.elementType != ElementTypes.FirstElement)
-      false
-
-    if(manoeuvreSortedByElementType.last.elementType != ElementTypes.LastElement)
+    if(manoeuvreSortedByElementType.head.elementType != ElementTypes.FirstElement ||
+      manoeuvreSortedByElementType.last.elementType != ElementTypes.LastElement)
       false
 
     manoeuvreSortedByElementType.forall{ manoeuvreElement =>
@@ -105,7 +103,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
           checkAdjacency(manoeuvreElement, allRoadLinks)
         case ElementTypes.IntermediateElement =>
           //Verify if some manoeuvre element in the chain is connected with this manoeuvre element
-          if(manoeuvre.elements.exists(_.sourceLinkId == manoeuvreElement.destLinkId))
+          if(manoeuvre.elements.exists(_.destLinkId == manoeuvreElement.sourceLinkId))
             checkAdjacency(manoeuvreElement, allRoadLinks)
           else
             false
