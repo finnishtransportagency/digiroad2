@@ -38,8 +38,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute
     }
   }
-
-  test("Get all manoeuvres partially or completely in bounding box") {
+  //TODO: DROTH-180
+  ignore("Get all manoeuvres partially or completely in bounding box") {
     val bounds = BoundingRectangle(Point(373880.25, 6677085), Point(374133, 6677382))
     val manoeuvres = manoeuvreService.getByBoundingBox(bounds, Set(235))
     manoeuvres.length should equal(3)
