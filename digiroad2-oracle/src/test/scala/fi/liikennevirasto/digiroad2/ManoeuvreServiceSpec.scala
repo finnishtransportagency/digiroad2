@@ -96,4 +96,61 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     roadLinkId should equal(123)
   }
+
+  test("Cleanup should remove extra elements") {
+    val start = ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement)
+    val end = ManoeuvreElement(1, 4, 0, ElementTypes.LastElement)
+    val intermediates = Seq(ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 3, 8, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement))
+    val result = manoeuvreService.cleanChain(start, end, intermediates)
+    result should have size 4
+    result.exists(_.destLinkId == 8) should be (false)
+  }
+
+  test("Cleanup should remove loops") {
+    val start = ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement)
+    val end = ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)
+    val intermediates = Seq(ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 4, 2, ElementTypes.IntermediateElement))
+    val result = manoeuvreService.cleanChain(start, end, intermediates)
+    result should have size 0
+  }
+
+  test("Cleanup should remove forks") {
+    val start = ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement)
+    val end = ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)
+    val intermediates = Seq(ManoeuvreElement(1, 3, 5, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 2, 5, ElementTypes.IntermediateElement))
+    val result = manoeuvreService.cleanChain(start, end, intermediates)
+    result.size > 2 should be (true)
+  }
+
+  test("Cleanup should not change working sequence") {
+    val start = ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement)
+    val end = ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)
+    val intermediates = Seq(ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement))
+    val result = manoeuvreService.cleanChain(start, end, intermediates)
+    result should have size 5
+    result.filter(_.elementType == ElementTypes.IntermediateElement) should be (intermediates)
+  }
+
+  test("Cleanup should produce correct order") {
+    val start = ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement)
+    val end = ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)
+    val intermediates = Seq(ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement),
+      ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement))
+    val result = manoeuvreService.cleanChain(start, end, intermediates)
+    result should have size 5
+    result.filter(_.elementType == ElementTypes.IntermediateElement) shouldNot be (intermediates)
+    val newIntermediates = result.filter(_.elementType == ElementTypes.IntermediateElement)
+    newIntermediates.zip(newIntermediates.tail).forall(e => e._1.destLinkId == e._2.sourceLinkId) should be (true)
+    newIntermediates.head.sourceLinkId should be (start.destLinkId)
+    newIntermediates.last.destLinkId should be (end.sourceLinkId)
+  }
 }
