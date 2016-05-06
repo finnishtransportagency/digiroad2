@@ -38,16 +38,61 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     }
   }
 
+  /**
+    * Builds a valid chain from given pieces if possible:
+    * Starting with a start element in chain, add every piece
+    * to the chain until in last element. If there are multiple choices,
+    * returns first found list of items that forms the chain.
+    * 1) Find possible next elements
+    * 2) For each of them
+    *    a) If it is the last element, add it to the current chain and return it
+    *    b) If it is an intermediate element, add it to the list and call this function recursively.
+    *       Then check that the resulting chain has the final element as the last item (i.e. it is valid chain)
+    *       and return that.
+    *    c) If the recursive call fails, try next candidate
+    * 3) If none work, return chain as it currently is (thus, we will return with the original starting chain)
+    * @param toProcess List of elements that aren't yet accepted to valid chain
+    * @param chain     List of elements that are accepted to our valid chain (or valid as far as we know)
+    * @return          Valid chain or the starting value for chain (only starting element).
+    */
+  private def buildChain(toProcess: Seq[ManoeuvreElement], chain: Seq[ManoeuvreElement]): Seq[ManoeuvreElement] = {
+    val (candidates, rest) = toProcess.partition(element => element.sourceLinkId == chain.last.destLinkId)
+    val nextElements = candidates.toIterator
+    while (nextElements.hasNext) {
+      val element = nextElements.next()
+      if (element.elementType == ElementTypes.LastElement)
+        return chain ++ Seq(element)
+      val resultChain = buildChain(rest, chain ++ Seq(element))
+      if (resultChain.last.elementType == ElementTypes.LastElement)
+        return resultChain
+    }
+    chain
+  }
+
+  /**
+    * Cleans the chain from extra elements, returning a valid chain or an empty chain if no valid chain is possible
+    * @param firstElement Starting element
+    * @param lastElement  Target element
+    * @param intermediateElements Intermediate elements' list
+    * @return Sequence of Start->Intermediate(s)->Target elements.
+    */
+  def cleanChain(firstElement: ManoeuvreElement, lastElement: ManoeuvreElement, intermediateElements: Seq[ManoeuvreElement]) = {
+    if (intermediateElements.isEmpty)
+      Seq(firstElement, lastElement)
+    else {
+      val chain = buildChain(intermediateElements ++ Seq(lastElement), Seq(firstElement))
+      if (chain.nonEmpty && chain.last.elementType == ElementTypes.LastElement)
+        chain
+      else
+        Seq()
+    }
+  }
+
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     withDynTransaction {
       dao.getByRoadLinks(roadLinks.map(_.linkId))
         .filter(isValidManoeuvre(roadLinks))
     }
-  }
-
-  private def hasOnlyOneSourceAndDestination(manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Boolean = {
-    val (_, manoeuvreRows) = manoeuvreRowsForId
-    manoeuvreRows.size == 2 && manoeuvreRows.exists(_.elementType == ElementTypes.FirstElement) && manoeuvreRows.exists(_.elementType == ElementTypes.LastElement)
   }
 
   private def sourceLinkId(manoeuvre: Manoeuvre) = {
