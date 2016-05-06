@@ -87,11 +87,31 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
         Seq()
     }
   }
+  
+  /**
+    * Validate the manoeuvre elements chain, after cleaning the extra elements
+    * @param manoeuvre Manoeuvre to be  validated
+    * @return true if it's valid.
+    */
+  def isValid(manoeuvre: Manoeuvre) : Boolean = {
+    val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
+    val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+    val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+
+    manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+    isValidManoeuvre()(manoeuvre)
+  }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
     withDynTransaction {
-      dao.getByRoadLinks(roadLinks.map(_.linkId))
-        .filter(isValidManoeuvre(roadLinks))
+      dao.getByRoadLinks(roadLinks.map(_.linkId)).map{ manoeuvre =>
+        val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
+        val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+        val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+
+        manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+
+      }.filter(isValidManoeuvre(roadLinks))
     }
   }
 
@@ -111,8 +131,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     manoeuvre.elements.map(_.sourceLinkId)
   }
 
-  private def isValidManoeuvre(roadLinks: Seq[RoadLink])(manoeuvre: Manoeuvre): Boolean = {
-    def  checkAdjacency(manoeuvreElement: ManoeuvreElement, allRoadLinks: Seq[RoadLink]): Boolean = {
+  private def isValidManoeuvre(roadLinks: Seq[RoadLink] = Seq())(manoeuvre: Manoeuvre): Boolean = {
+    def checkAdjacency(manoeuvreElement: ManoeuvreElement, allRoadLinks: Seq[RoadLink]): Boolean = {
 
       val destRoadLinkOption = allRoadLinks.find(_.linkId == manoeuvreElement.destLinkId)
       val sourceRoadLinkOption = allRoadLinks.find(_.linkId == manoeuvreElement.sourceLinkId)
@@ -136,32 +156,24 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val allRoadLinks = roadLinks ++ additionalRoadLinks
 
-    val manoeuvreSortedByElementType = manoeuvre.elements.sortBy(_.elementType)
-
-    if(manoeuvreSortedByElementType.head.elementType != ElementTypes.FirstElement ||
-      manoeuvreSortedByElementType.last.elementType != ElementTypes.LastElement)
+    if(manoeuvre.elements.head.elementType != ElementTypes.FirstElement ||
+      manoeuvre.elements.last.elementType != ElementTypes.LastElement)
       return false
 
-    manoeuvreSortedByElementType.forall{ manoeuvreElement =>
+    manoeuvre.elements.forall{ manoeuvreElement =>
       manoeuvreElement.elementType match {
-        case ElementTypes.FirstElement =>
-          checkAdjacency(manoeuvreElement, allRoadLinks)
-        case ElementTypes.IntermediateElement =>
-          //Verify if some manoeuvre element in the chain is connected with this manoeuvre element
-          if(manoeuvre.elements.exists(_.destLinkId == manoeuvreElement.sourceLinkId))
-            checkAdjacency(manoeuvreElement, allRoadLinks)
-          else
-            false
         case ElementTypes.LastElement =>
-          //Verify if some manoeuvre element in the chain is connected with the end roadlink
-          manoeuvre.elements.exists(_.destLinkId == manoeuvreElement.sourceLinkId)
+          true
+        case _ =>
+          //If it's IntermediateElement or FirstElement
+          checkAdjacency(manoeuvreElement, allRoadLinks)
       }
     }
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) = {
     withDynTransaction {
-      dao.createManoeuvre(userName, manoeuvre)
+        dao.createManoeuvre(userName, manoeuvre)
     }
   }
 
