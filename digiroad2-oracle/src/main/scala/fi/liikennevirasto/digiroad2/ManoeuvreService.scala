@@ -90,16 +90,30 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   
   /**
     * Validate the manoeuvre elements chain, after cleaning the extra elements
-    * @param manoeuvre Manoeuvre to be  validated
+    * @param newManoeuvre Manoeuvre to be  validated
+    * @param roadLinks Manoeuvre roadlinks
     * @return true if it's valid.
     */
-  def isValid(manoeuvre: Manoeuvre) : Boolean = {
-    val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
-    val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
-    val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+  def isValid(newManoeuvre: NewManoeuvre, roadLinks: Seq[RoadLink] = Seq()) : Boolean = {
 
-    manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
-    isValidManoeuvre()(manoeuvre)
+    val linkPairs = newManoeuvre.linkIds.zip(newManoeuvre.linkIds.tail)
+
+    val startingElement = linkPairs.head
+    val firstElement = ManoeuvreElement(0, startingElement._1, startingElement._2, ElementTypes.FirstElement)
+
+    val destLinkId = newManoeuvre.linkIds.last
+    val lastElement = ManoeuvreElement(0, destLinkId, 0, ElementTypes.LastElement)
+
+    val intermediateLinkIds = linkPairs.tail
+    val intermediateElements = intermediateLinkIds.map( linkPair =>
+      ManoeuvreElement(0, startingElement._1, startingElement._2, ElementTypes.LastElement)
+    )
+
+    val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
+
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, null, null, newManoeuvre.additionalInfo.get)
+
+    isValidManoeuvre(roadLinks)(manoeuvre)
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
@@ -156,7 +170,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val allRoadLinks = roadLinks ++ additionalRoadLinks
 
-    if(manoeuvre.elements.head.elementType != ElementTypes.FirstElement ||
+    if(manoeuvre.elements.isEmpty ||
+      manoeuvre.elements.head.elementType != ElementTypes.FirstElement ||
       manoeuvre.elements.last.elementType != ElementTypes.LastElement)
       return false
 
@@ -173,7 +188,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre) = {
     withDynTransaction {
-        dao.createManoeuvre(userName, manoeuvre)
+      dao.createManoeuvre(userName, manoeuvre)
     }
   }
 

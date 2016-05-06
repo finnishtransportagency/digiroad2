@@ -582,9 +582,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
       val linkIds = manoeuvres.flatMap(_.linkIds)
-      roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
-        .map(_.municipalityCode)
+      val roadlinks = roadLinkService.getRoadLinksFromVVH(linkIds.toSet)
+
+      roadlinks.map(_.municipalityCode)
         .foreach(validateUserMunicipalityAccess(user))
+
+      if(!manoeuvreService.isValid(manoeuvre, roadlinks))
+        halt(BadRequest("Invalid 'manouevre'"))
 
       manoeuvreService.createManoeuvre(user.username, manoeuvre)
     }
