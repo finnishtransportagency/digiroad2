@@ -95,7 +95,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     if(manoeuvreSortedByElementType.head.elementType != ElementTypes.FirstElement ||
       manoeuvreSortedByElementType.last.elementType != ElementTypes.LastElement)
-      false
+      return false
 
     manoeuvreSortedByElementType.forall{ manoeuvreElement =>
       manoeuvreElement.elementType match {
