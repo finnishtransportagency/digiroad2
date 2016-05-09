@@ -150,4 +150,30 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     newIntermediates.head.sourceLinkId should be (start.destLinkId)
     newIntermediates.last.destLinkId should be (end.sourceLinkId)
   }
+
+  test("Validate a Manoeuvre") {
+    val roadLinksSeq : Seq[Long] = Seq(123, 124)
+    val roadLinksSeq2 : Seq[Long] = Seq(123, 124, 125, 126)
+    var result : Boolean = false
+
+    val roadLinksNoValid = Seq(vvhRoadLink(123,235), vvhRoadLink(124,235,Seq(Point(25, 0), Point(30, 0))))
+    val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq)
+    result = manoeuvreService.isValid(manoeuvreNoValid, roadLinksNoValid)
+    result should be (false)
+
+    val roadLinksValid = Seq(vvhRoadLink(123,235), vvhRoadLink(124,235))
+    val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq)
+    result = manoeuvreService.isValid(manoeuvreValid, roadLinksValid)
+    result should be (true)
+
+    val roadLinksValid2 = Seq(vvhRoadLink(123,235), vvhRoadLink(124,235), vvhRoadLink(125,235), vvhRoadLink(126,235))
+    val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2)
+    result = manoeuvreService.isValid(manoeuvreValid2, roadLinksValid2)
+    result should be (true)
+
+    val roadLinksNoValid2 = Seq(vvhRoadLink(123,235), vvhRoadLink(124,235,Seq(Point(25, 0), Point(30, 0))), vvhRoadLink(125,235), vvhRoadLink(126,235))
+    val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2)
+    result = manoeuvreService.isValid(manoeuvreNoValid2, roadLinksNoValid2)
+    result should be (false)
+  }
 }

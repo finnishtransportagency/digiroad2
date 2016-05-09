@@ -106,12 +106,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
     val intermediateLinkIds = linkPairs.tail
     val intermediateElements = intermediateLinkIds.map( linkPair =>
-      ManoeuvreElement(0, startingElement._1, startingElement._2, ElementTypes.LastElement)
+      ManoeuvreElement(0, linkPair._1, linkPair._2, ElementTypes.IntermediateElement)
     )
 
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
-    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, null, null, newManoeuvre.additionalInfo.get)
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, null, null, newManoeuvre.additionalInfo.getOrElse(null))
 
     isValidManoeuvre(roadLinks)(manoeuvre)
   }
