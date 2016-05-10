@@ -178,6 +178,20 @@ object NumericalLimitFiller {
     (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
+  /**
+    * Remove recursively all overlapping linear assets or adjust the measures if the overlap is smaller than the allowed tolerance.
+    * Keeping the order of the sorted sequence parameter.
+    * 1) Find a overlaped linear asset between the first linear asset of the sorted sequence and the tail
+    *   a) Split the overlaped linear asset and pick the linear assets minor than the allowed tolerence
+    *     If
+    *       the side code of the first linear asset and the overlaped linear asset are equal
+    *     OR
+    *       the first linear asset have both directions
+    *
+    * @param sorted Sorted sequence of Persisted Liner Assets
+    * @param result Recursive result of each iteration
+    * @return Sequence without overlapping linear assets
+    */
   private def sortAndDrop(sorted: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
     val keeperOpt = sorted.headOption
     if (keeperOpt.nonEmpty) {
@@ -203,14 +217,22 @@ object NumericalLimitFiller {
   }
 
   private def dropOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    def haveChanged()(p : PersistedLinearAsset) : Boolean = {
+      return segments.exists(s => p.id == s.id && (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))
+    }
+
     if (segments.size >= 2) {
-      val (alteredSegments, newSegments) = sortAndDrop(segments.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis), Seq()).
-        partition(_.id != 0)
-      val mValueChanges = alteredSegments.filter(s => segments.exists(p => p.id == s.id &&
-        (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))).map(s => MValueAdjustment(s.id, s.linkId,s.startMeasure,s.endMeasure))
+      val sortedSegments = sortAndDrop(segments.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis), Seq())
+      val alteredSegments = sortedSegments.filterNot(_.id == 0)
+
+      // Creates for each linear asset a new MValueAjustment if the start or end measure have changed
+      val mValueChanges = alteredSegments.filter(haveChanged()).
+        map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
+
       val droppedIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.droppedAssetIds
-      (alteredSegments ++ newSegments, changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => droppedIds.contains(mvc.assetId)),
-        expiredAssetIds = droppedIds))
+      (sortedSegments,
+        changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => droppedIds.contains(mvc.assetId)),
+          expiredAssetIds = droppedIds))
     } else
       (segments, changeSet)
   }
