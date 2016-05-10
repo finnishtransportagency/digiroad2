@@ -151,7 +151,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     newIntermediates.last.destLinkId should be (end.sourceLinkId)
   }
 
-  test("Validate a Manoeuvre") {
+  test("Validate a New Manoeuvre") {
     val roadLinksSeq : Seq[Long] = Seq(123, 124)
     val roadLinksSeq2 : Seq[Long] = Seq(123, 124, 125, 126)
     var result : Boolean = false
