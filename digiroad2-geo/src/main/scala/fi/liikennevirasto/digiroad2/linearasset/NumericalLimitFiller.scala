@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, ChangeSet, MValueAdjustment}
-import fi.liikennevirasto.digiroad2.{GeometryUtils}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.GeometryUtils
+import org.joda.time.DateTime
 
 object NumericalLimitFiller {
   private val AllowedTolerance = 0.5
@@ -57,6 +58,7 @@ object NumericalLimitFiller {
 
   /**
     * Try to find assets that start/end adjacent to the keeper asset and merge them to the keeper
+    *
     * @param asset keeper
     * @param candidates merging candidates
     * @param changeSet current changeset
@@ -83,6 +85,7 @@ object NumericalLimitFiller {
 
   /**
     * Adjust two way segments and combine them if possible using tail recursion functions above
+    *
     * @param roadLink
     * @param assets
     * @param changeSet
@@ -124,7 +127,7 @@ object NumericalLimitFiller {
   private def adjustSegmentSideCodes(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
-      (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
+        (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
 
     if (!oneWayTrafficDirection) {
       (segments, changeSet)
@@ -171,10 +174,53 @@ object NumericalLimitFiller {
     }
   }
 
+  private def toSegment(persistedLinearAsset: PersistedLinearAsset) = {
+    (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
+  }
+
+  private def sortAndDrop(sorted: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    val keeperOpt = sorted.headOption
+    if (keeperOpt.nonEmpty) {
+      val keeper = keeperOpt.get
+      val (overlapping) = sorted.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
+        case Some(overlap) =>
+          if (keeper.sideCode == asset.sideCode || keeper.sideCode == SideCode.BothDirections.value) {
+            Seq(
+              asset.copy(startMeasure = asset.startMeasure, endMeasure = overlap._1),
+              asset.copy(id = 0L, startMeasure = overlap._2, endMeasure = asset.endMeasure)
+            ).filter(a => a.endMeasure - a.startMeasure >= AllowedTolerance)
+          } else {
+            Seq(asset)
+          }
+        case None =>
+          Seq(asset)
+      }
+      )
+      sortAndDrop(overlapping, result ++ Seq(keeper))
+    } else {
+      result
+    }
+  }
+
+  private def dropOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    if (segments.size >= 2) {
+      val (alteredSegments, newSegments) = sortAndDrop(segments.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis), Seq()).
+        partition(_.id != 0)
+      val mValueChanges = alteredSegments.filter(s => segments.exists(p => p.id == s.id &&
+        (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))).map(s => MValueAdjustment(s.id, s.linkId,s.startMeasure,s.endMeasure))
+      val droppedIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.droppedAssetIds
+      (alteredSegments ++ newSegments, changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => droppedIds.contains(mvc.assetId)),
+        expiredAssetIds = droppedIds))
+    } else
+      (segments, changeSet)
+  }
+
+
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
+      dropOverlappingSegments,
       adjustTwoWaySegments,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
