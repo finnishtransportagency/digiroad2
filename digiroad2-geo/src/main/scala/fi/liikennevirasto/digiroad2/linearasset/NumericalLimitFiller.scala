@@ -182,8 +182,6 @@ object NumericalLimitFiller {
     assets.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis)
   }
 
-  private def dropOverlappedRecursively(sortedAssets: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
-    val keeperOpt = sortedAssets.headOption
   /**
     * Remove recursively all overlapping linear assets or adjust the measures if the overlap is smaller than the allowed tolerance.
     * Keeping the order of the sorted sequence parameter.
@@ -194,12 +192,12 @@ object NumericalLimitFiller {
     *     OR
     *       the first linear asset have both directions
     *
-    * @param sorted Sorted sequence of Persisted Liner Assets
+    * @param sortedAssets Sorted sequence of Persisted Liner Assets
     * @param result Recursive result of each iteration
     * @return Sequence without overlapping linear assets
     */
-  private def sortAndDrop(sorted: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
-    val keeperOpt = sorted.headOption
+  private def dropOverlappedRecursively(sortedAssets: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    val keeperOpt = sortedAssets.headOption
     if (keeperOpt.nonEmpty) {
       val keeper = keeperOpt.get
       val (overlapping) = sortedAssets.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
@@ -223,16 +221,16 @@ object NumericalLimitFiller {
   }
 
   private def dropOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    def haveChanged()(p : PersistedLinearAsset) : Boolean = {
-      return segments.exists(s => p.id == s.id && (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))
+    def isChanged(p : PersistedLinearAsset) : Boolean = {
+      segments.exists(s => p.id == s.id && (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))
     }
 
     if (segments.size >= 2) {
-      val sortedSegments = sortAndDrop(segments.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis), Seq())
+      val sortedSegments = dropOverlappedRecursively(sortNewestFirst(segments), Seq())
       val alteredSegments = sortedSegments.filterNot(_.id == 0)
 
-      // Creates for each linear asset a new MValueAjustment if the start or end measure have changed
-      val mValueChanges = alteredSegments.filter(haveChanged()).
+      // Creates for each linear asset a new MValueAdjustment if the start or end measure have changed
+      val mValueChanges = alteredSegments.filter(isChanged).
         map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
 
       val droppedIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.droppedAssetIds
