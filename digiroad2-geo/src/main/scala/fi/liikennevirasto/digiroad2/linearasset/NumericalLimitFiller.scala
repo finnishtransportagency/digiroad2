@@ -178,6 +178,12 @@ object NumericalLimitFiller {
     (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
+  private def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
+    assets.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis)
+  }
+
+  private def dropOverlappedRecursively(sortedAssets: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    val keeperOpt = sortedAssets.headOption
   /**
     * Remove recursively all overlapping linear assets or adjust the measures if the overlap is smaller than the allowed tolerance.
     * Keeping the order of the sorted sequence parameter.
@@ -196,7 +202,7 @@ object NumericalLimitFiller {
     val keeperOpt = sorted.headOption
     if (keeperOpt.nonEmpty) {
       val keeper = keeperOpt.get
-      val (overlapping) = sorted.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
+      val (overlapping) = sortedAssets.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
         case Some(overlap) =>
           if (keeper.sideCode == asset.sideCode || keeper.sideCode == SideCode.BothDirections.value) {
             Seq(
@@ -210,7 +216,7 @@ object NumericalLimitFiller {
           Seq(asset)
       }
       )
-      sortAndDrop(overlapping, result ++ Seq(keeper))
+      dropOverlappedRecursively(overlapping, result ++ Seq(keeper))
     } else {
       result
     }
