@@ -94,8 +94,9 @@ trait LinearAssetOperations {
 
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds =
-      existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet))
+    val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
+      changeSet.expiredAssetIds
+    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
@@ -121,9 +122,12 @@ trait LinearAssetOperations {
   private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                                         changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
-    val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId))
+    val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId)).groupBy(_.linkId)
+    val changeMap = changes.filterNot(c => c.newId.isEmpty || c.oldId.isEmpty).map(c => (c.oldId.get, c.newId.get)).groupBy(_._1)
+    val targetRoadLinks = changeMap.mapValues(a => a.flatMap(b => newRoadLinks.getOrElse(b._2, Seq())))
+
     oldLinearAssets.flatMap{limit =>
-      newRoadLinks.map(newRoadLink =>
+      targetRoadLinks.getOrElse(limit.linkId, Seq()).map(newRoadLink =>
         (limit,
           getRoadLinkAndProjection(roadLinks, changes, limit.linkId, newRoadLink.linkId, oldLinearAssets, currentLinearAssets))
       )}

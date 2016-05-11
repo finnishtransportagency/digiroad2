@@ -396,6 +396,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAsset3.head.startMeasure should be (0)
       linearAsset3.head.endMeasure should be (5)
 
+      linearAsset1.forall(a => a.vvhTimeStamp > 0L) should be (true)
+      linearAsset2.forall(a => a.vvhTimeStamp > 0L) should be (true)
+      linearAsset3.forall(a => a.vvhTimeStamp > 0L) should be (true)
       dynamicSession.rollback()
     }
   }
