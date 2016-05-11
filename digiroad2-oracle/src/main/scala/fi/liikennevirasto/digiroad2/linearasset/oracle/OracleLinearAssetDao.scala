@@ -833,7 +833,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long  = {
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String, vvhTimeStamp: Long = 0L): Long  = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
@@ -842,8 +842,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to)
         values ($id, $typeId, $username, sysdate, #$validTo)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

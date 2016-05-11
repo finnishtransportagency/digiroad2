@@ -252,10 +252,11 @@ trait LinearAssetOperations {
    * Creates new linear assets. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
+    // TODO check if asset already exists (it has an id if it does) and update if it does.
     withDynTransaction{
       newLinearAssets.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated))
+          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp)
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
