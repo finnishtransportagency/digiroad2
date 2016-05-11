@@ -185,8 +185,8 @@ object NumericalLimitFiller {
   /**
     * Remove recursively all overlapping linear assets or adjust the measures if the overlap is smaller than the allowed tolerance.
     * Keeping the order of the sorted sequence parameter.
-    * 1) Find a overlaped linear asset between the first linear asset of the sorted sequence and the tail
-    *   a) Split the overlaped linear asset and pick the linear assets minor than the allowed tolerence
+    * 1) Find a overlapped linear asset between the first linear asset of the sorted sequence and the tail
+    *   a) Split the overlapped linear asset and pick the linear assets minor than the allowed tolerance
     *     If
     *       the side code of the first linear asset and the overlaped linear asset are equal
     *     OR
