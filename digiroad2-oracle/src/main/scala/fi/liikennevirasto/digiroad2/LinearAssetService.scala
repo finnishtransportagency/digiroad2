@@ -266,9 +266,12 @@ trait LinearAssetOperations {
     }
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
-      // TODO: Prohibitions (here with "" key)
       val grouped = toUpdate.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-      val persisted = grouped.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq.groupBy(_.id)
+      val prohibitions = toUpdate.filter(a =>
+        Set(LinearAssetTypes.ProhibitionAssetTypeId, LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
+      val persisted = (grouped.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
+        dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
+        dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
       updateProjected(toUpdate, persisted)
 
       toInsert.foreach{ linearAsset =>
@@ -308,17 +311,13 @@ trait LinearAssetOperations {
             dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, LinearAssetTypes.VvhGenerated)
           case Some(TextualValue(textValue)) =>
             dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
-          // TODO: Prohibitions
-          // case Some(prohibitions: Prohibitions) =>
-          //   dao.insertProhibitionValue(id, prohibitions)
+          case Some(prohibitions: Prohibitions) =>
+            dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
-      if (mValueChanged(linearAsset, persistedLinearAsset))
-        dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
-
-      if (sideCodeChanged(linearAsset, persistedLinearAsset))
-        dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
+      if (mValueChanged(linearAsset, persistedLinearAsset)) dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
+      if (sideCodeChanged(linearAsset, persistedLinearAsset)) dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
     }
   }
   /**

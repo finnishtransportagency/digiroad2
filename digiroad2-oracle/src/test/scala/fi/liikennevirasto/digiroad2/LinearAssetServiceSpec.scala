@@ -910,4 +910,62 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("Should not create prohibitions on actor update") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 1234
+    val oldLinkId2 = 1235
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 190
+    val vvhTimeStamp = 14440000
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values (1,1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (1,1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, 1, 10)""".execute
+
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values (2,2,25)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (2,2,2,12,13)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, 2, 10)""".execute
+
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values (3,3,24)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, 3, 10)""".execute
+
+
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(1L)).head
+      val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
+
+      service.persistProjectedLinearAssets(projectedProhibitions)
+      val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(1,2,3), false)
+      all.size should be (3)
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
+      persisted.size should be (1)
+      val head = persisted.head
+      head.id should be (original.id)
+      head.vvhTimeStamp should be (vvhTimeStamp)
+      head.startMeasure should be (0.1)
+      head.endMeasure should be (10.1)
+      head.expired should be (false)
+
+      dynamicSession.rollback()
+    }
+  }
 }
