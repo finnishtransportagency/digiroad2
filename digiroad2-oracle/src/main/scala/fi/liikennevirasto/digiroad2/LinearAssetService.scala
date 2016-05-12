@@ -47,6 +47,7 @@ trait LinearAssetOperations {
 
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
+    *
     * @param typeId
     * @param bounds
     * @param municipalities
@@ -60,6 +61,7 @@ trait LinearAssetOperations {
 
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
+    *
     * @param typeId
     * @param municipality
     * @return
@@ -249,12 +251,27 @@ trait LinearAssetOperations {
   }
 
   /*
-   * Creates new linear assets. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
+   * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
-    // TODO check if asset already exists (it has an id if it does) and update if it does.
-    withDynTransaction{
-      newLinearAssets.foreach{ linearAsset =>
+    def getValuePropertyId(value: Option[Value], typeId: Int) = {
+      value match {
+        case Some(NumericValue(intValue)) =>
+          LinearAssetTypes.numericValuePropertyId
+        case Some(TextualValue(textValue)) =>
+          LinearAssetTypes.getValuePropertyId(typeId)
+        case Some(prohibitions: Prohibitions) => ""
+        case None => ""
+      }
+    }
+    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
+    withDynTransaction {
+      // TODO: Prohibitions (here with "" key)
+      val grouped = toUpdate.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+      val persisted = grouped.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq.groupBy(_.id)
+      updateProjected(toUpdate, persisted)
+
+      toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
           linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp)
         linearAsset.value match {
@@ -270,6 +287,40 @@ trait LinearAssetOperations {
     }
   }
 
+  private def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
+    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
+      !persistedLinearAsset.exists(_.value.eq(assetToPersist.value))
+    }
+    def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
+      !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&
+        pl.endMeasure == assetToPersist.endMeasure &&
+        pl.vvhTimeStamp == assetToPersist.vvhTimeStamp)
+    }
+    def sideCodeChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
+      !persistedLinearAsset.exists(_.sideCode == assetToPersist.sideCode)
+    }
+    toUpdate.foreach { linearAsset =>
+      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
+      val id = linearAsset.id
+      if (valueChanged(linearAsset, persistedLinearAsset)) {
+        linearAsset.value match {
+          case Some(NumericValue(intValue)) =>
+            dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, LinearAssetTypes.VvhGenerated)
+          case Some(TextualValue(textValue)) =>
+            dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
+          // TODO: Prohibitions
+          // case Some(prohibitions: Prohibitions) =>
+          //   dao.insertProhibitionValue(id, prohibitions)
+          case _ => None
+        }
+      }
+      if (mValueChanged(linearAsset, persistedLinearAsset))
+        dao.updateMValues(linearAsset.id, (linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.vvhTimeStamp)
+
+      if (sideCodeChanged(linearAsset, persistedLinearAsset))
+        dao.updateSideCode(linearAsset.id, SideCode(linearAsset.sideCode))
+    }
+  }
   /**
     * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
     */

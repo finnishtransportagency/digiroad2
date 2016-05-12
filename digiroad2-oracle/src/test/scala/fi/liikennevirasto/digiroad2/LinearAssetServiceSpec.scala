@@ -323,7 +323,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
       verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:update"), captor.capture())
-      captor.getValue().expiredAssetIds should be (Set(1,2,3))
+      captor.getValue.expiredAssetIds should be (Set(1,2,3))
 
       dynamicSession.rollback()
     }
@@ -869,4 +869,45 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Should not create new assets on update") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 1234
+    val oldLinkId2 = 1235
+    val assetTypeId = 100
+    val vvhTimeStamp = 14440000
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),50)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
+
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(1L)).head
+      val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
+
+      service.persistProjectedLinearAssets(projectedLinearAssets)
+      val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
+      all.size should be (3)
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
+      persisted.size should be (1)
+      val head = persisted.head
+      head.id should be (original.id)
+      head.vvhTimeStamp should be (vvhTimeStamp)
+      head.startMeasure should be (0.1)
+      head.endMeasure should be (10.1)
+      head.expired should be (false)
+      dynamicSession.rollback()
+    }
+  }
 }
