@@ -2,16 +2,20 @@ package fi.liikennevirasto.digiroad2.util
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
   private val assetDataImporter = new AssetDataImporter {
@@ -189,7 +193,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val result: Seq[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil)
 
     val expectedValue = Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty))))
-    result should be(Seq(Right(PersistedLinearAsset(0l, 1l, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190))))
+    result should be(Seq(Right(PersistedLinearAsset(0l, 1l, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190, 0, None))))
   }
 
   test("Two prohibition segments on the same link with different side codes produces two assets with one prohibition value") {
@@ -201,8 +205,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -215,8 +219,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -250,7 +254,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1))
   }
 
@@ -263,7 +267,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1))
   }
 
@@ -276,7 +280,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     val conversionResult2 = Left("No prohibition found on mml id 2. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -290,7 +294,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -304,7 +308,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -319,8 +323,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -333,8 +337,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -348,8 +352,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -362,7 +366,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
     val expectedValidityPeriods = Set(ValidityPeriod(8, 15, ValidityPeriodDayOfWeek.Weekday))
-    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190))
+    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None))
     result should be(Set(expectedConversionResult))
   }
 
@@ -376,6 +380,249 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val expectedConversionError = Left("Parsing time domain string [[(h8){h7 failed with message: end of input. Dropped prohibition 1.")
     result should be(Set(expectedConversionError))
+  }
+
+  /*
+  * Teste cases of the Unfloating obstacles
+  */
+
+  //case 1
+  test("Should unfloat the obstacle when exists just one roadlink inside a radius of 10 meters"){
+    val oldLinkId = 521232
+    val linkId = 5170455
+    val municipality = 853
+    val obstaclePoint = Point(20, 20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(VVHRoadlink(5170455, 853, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle.floating should be (false)
+    resultObstacle.linkId should be (linkId)
+    resultObstacle.lat should be (20)
+    resultObstacle.lon should be (15)
+    resultObstacle.municipalityCode should be (municipality)
+    resultObstacle.modifiedBy should be (Some("automatic_correction"))
+    resultObstacle.modifiedAt should not be empty
+    resultObstacle.modifiedAt.get.getMillis should be >= beforeCallMethodDatetime.getMillis
+
+  }
+
+  //case 2
+  test("Should not unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters"){
+    val oldLinkId = 521232
+    val linkId = 5170455
+    val municipality = 853
+    val obstaclePoint = Point(20, 20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    )
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle should be === (floatingObstacle)
+
+  }
+
+  //case 3
+  test("Should unfloat the obstacle when exists one roadlink inside a radius of 10 meters and one inside a radius of 0.5 meters but with more than 5th the shorter distance"){
+    val oldLinkId = 521232
+    val linkId = 5170458
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(linkId, municipality, Seq(Point(20.333,0), Point(20.333,20), Point(20.333,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle.floating should be (false)
+    resultObstacle.linkId should be (linkId)
+    resultObstacle.lat should be (20)
+    resultObstacle.lon should be (20.333)
+    resultObstacle.municipalityCode should be (municipality)
+    resultObstacle.modifiedBy should be (Some("automatic_correction"))
+    resultObstacle.modifiedAt should not be empty
+    resultObstacle.modifiedAt.get.getMillis should be >= beforeCallMethodDatetime.getMillis
+
+  }
+
+  //case 4
+  test("Should not unfloat the obstacle when exists one or more roadlinks outside a radius of 10 meters"){
+    val oldLinkId = 521232
+    val municipality = 853
+    val obstaclePoint = Point(20, 20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(5170458, municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    )
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle should be === (floatingObstacle)
+
+  }
+
+  //case 5
+  test("Should unfloat the obstacle when exists one roadlink inside a radius of 0.5 meters and one or more with more than 5th the shorter distance"){
+    val oldLinkId = 521232
+    val linkId = 5170458
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(linkId, municipality, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath),
+      VVHRoadlink(5170456, municipality, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle.floating should be (false)
+    resultObstacle.linkId should be (linkId)
+    resultObstacle.lat should be (20)
+    resultObstacle.lon should be (20.02)
+    resultObstacle.municipalityCode should be (municipality)
+    resultObstacle.modifiedBy should be (Some("automatic_correction"))
+    resultObstacle.modifiedAt should not be empty
+    resultObstacle.modifiedAt.get.getMillis should be >= beforeCallMethodDatetime.getMillis
+
+  }
+
+  //case 6
+  test("Should not unfloat the obstacle when exists one roadlink inside a radius of 0.5 meters but with less than 5th the shorter distance"){
+    val oldLinkId = 521232
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(5170458, municipality, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath),
+      VVHRoadlink(5170456, municipality, Seq(Point(20.09,0), Point(20.09,20), Point(20.09,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle should be === (floatingObstacle)
+
+  }
+
+  //case 7
+  test("Should not unfloat the obstacle when exists one roadlink when in the limit of a radius of 10 meters and one in the limit of 0.5 meters"){
+    val oldLinkId = 521232
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170458, municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath),
+      VVHRoadlink(5170456, municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle should be === (floatingObstacle)
+
+  }
+
+  //case 8
+  test("Should not unfloat the obstacle when exists just one roadlink and it's in the limit a radius of 10 meters"){
+    val oldLinkId = 521232
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170458, municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle should be === (floatingObstacle)
+
+  }
+
+  //case 9
+  test("Should unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters but one have a feature class equals to AllOthers "){
+    val oldLinkId = 521232
+    val linkId = 5170455
+    val municipality = 853
+    val obstaclePoint = Point(20,20)
+    val obstacleType = 2
+    val mValue = 10
+    val vvhRoadLinks = Seq(
+      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    )
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
+
+    val beforeCallMethodDatetime = DateTime.now()
+    val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
+
+    resultObstacle.floating should be (false)
+    resultObstacle.linkId should be (linkId)
+    resultObstacle.lat should be (20)
+    resultObstacle.lon should be (15)
+    resultObstacle.municipalityCode should be (municipality)
+    resultObstacle.modifiedBy should be (Some("automatic_correction"))
+    resultObstacle.modifiedAt should not be empty
+    resultObstacle.modifiedAt.get.getMillis should be >= beforeCallMethodDatetime.getMillis
+
   }
 
   case class LinearAssetSegment(linkId: Option[Long], startMeasure: Double, endMeasure: Double)

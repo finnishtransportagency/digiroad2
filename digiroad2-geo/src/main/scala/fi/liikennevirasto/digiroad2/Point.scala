@@ -6,7 +6,11 @@ case class Vector3d(x: Double, y: Double, z: Double) {
   }
 
   def normalize(): Vector3d = {
-    scale(1 / length())
+    if (length() != 0) {
+      scale(1 / length())
+    } else {
+      scale(0.0)
+    }
   }
 
   def scale(scalar: Double): Vector3d = {

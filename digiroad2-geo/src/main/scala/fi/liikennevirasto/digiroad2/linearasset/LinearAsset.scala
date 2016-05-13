@@ -9,6 +9,8 @@ trait LinearAsset extends PolyLine {
   val linkId: Long
   val sideCode: SideCode
   val value: Option[Value]
+  val vvhTimeStamp: Long
+  val geomModifiedDate: Option[DateTime]
 }
 
 sealed trait Value {
@@ -44,7 +46,7 @@ case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayO
   }
   private def hoursOverlap(b: ValidityPeriod): Boolean = {
     liesInBetween(startHour, (b.startHour, b.endHour)) ||
-    liesInBetween(b.startHour, (startHour, endHour))
+      liesInBetween(b.startHour, (startHour, endHour))
   }
   private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
     hour >= interval._1 && hour <= interval._2
@@ -89,10 +91,13 @@ object ValidityPeriodDayOfWeek {
 case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Value], geometry: Seq[Point], expired: Boolean,
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
-                                createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection) extends LinearAsset
+                                createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime]) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
-                         startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
-                         modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int)
+                                startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
+                                modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
 
-case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int)
+case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
+                          vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])

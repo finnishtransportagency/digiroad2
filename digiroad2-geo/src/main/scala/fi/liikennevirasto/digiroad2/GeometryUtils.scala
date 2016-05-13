@@ -161,4 +161,38 @@ object GeometryUtils {
     val projection = segment._1 + segmentVector.scale(t)
     point.distanceTo(projection)
   }
+
+
+  /**
+    * Check if segments overlap (not just barely touching)
+    * @param segment1
+    * @param segment2
+    * @return
+    */
+  def overlaps(segment1: (Double, Double), segment2: (Double, Double)) = {
+    val (s1start, s1end) = order(segment1)
+    val (s2start, s2end) = order(segment2)
+    !(s1end <= s2start || s1start >= s2end) && // end of s1 is smaller than s2 or end of s1 is after start of s2 => false
+      (s1start < s2end || s1end > s2start)                  // start of s1 is smaller => s1 must start before s2 ends
+  }
+  private def order(segment: (Double, Double)) = {
+    segment._1 > segment._2 match {
+      case true => segment.swap
+      case _ => segment
+    }
+  }
+
+  def overlap(segment1: (Double, Double), segment2: (Double, Double)): Option[(Double, Double)] = {
+    val (seg1, seg2) = (order(segment1), order(segment2))
+    overlaps(seg1, seg2) match {
+      case false => None
+      case true => Option(Math.max(seg1._1, seg2._1), Math.min(seg1._2, seg2._2))
+    }
+  }
+
+  def isDirectionChangeProjection(projection: Projection): Boolean = {
+    ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
+  }
+
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

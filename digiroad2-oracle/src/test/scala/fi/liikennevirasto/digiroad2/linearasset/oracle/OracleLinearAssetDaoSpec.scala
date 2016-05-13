@@ -359,4 +359,48 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       sortedPersistedAssets(3).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues4)
     }
   }
+
+  test("speed limit mass query") {
+    val ids = Seq.range(1L, 500L).toSet
+    val dao = new OracleLinearAssetDao(null)
+    runWithRollback {
+      dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
+    }
+  }
+
+  test("speed limit mass query gives correct amount of results") {
+    val ids = Seq.range(1610929L, 1611759L).toSet // in test fixture this contains > 400 speed limits
+    val dao = new OracleLinearAssetDao(null)
+    ids.size >= dao.MassQueryThreshold should be (true) // This should be high number enough
+    runWithRollback {
+      val count = dao.getCurrentSpeedLimitsByLinkIds(Option(ids)).size
+      val grouped = ids.grouped(dao.MassQueryThreshold - 1).toSet
+      grouped.size > 1 should be (true)
+      val checked = grouped.map(i => dao.getCurrentSpeedLimitsByLinkIds(Option(i)).count(s => true)).sum
+      count should be (checked) // number using mass query should be equal to those queried without using mass query
+    }
+  }
+
+  test("speed limit no mass query") {
+    val ids = Seq.range(1L, 2L).toSet
+    val dao = new OracleLinearAssetDao(null)
+    runWithRollback {
+      dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
+    }
+  }
+
+  test("speed limit empty set must not crash") {
+    val ids = Set():Set[Long]
+    val dao = new OracleLinearAssetDao(null)
+    runWithRollback {
+      dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
+    }
+  }
+
+  test("speed limit no set must not crash") {
+    val dao = new OracleLinearAssetDao(null)
+    runWithRollback {
+      dao.getCurrentSpeedLimitsByLinkIds(None)
+    }
+  }
 }

@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -28,6 +28,14 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     linearAssetService.drop(changeSet.droppedAssetIds)
     linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
     linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
+    linearAssetService.expire(changeSet.expiredAssetIds.toSeq, LinearAssetTypes.VvhGenerated)
+  }
+}
+
+class LinearAssetSaveProjected[T](linearAssetProvider: LinearAssetService) extends Actor {
+  def receive = {
+    case x: Seq[T] => linearAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("linearAssetSaveProjected: Received unknown message")
   }
 }
 
@@ -36,6 +44,13 @@ class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Act
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
     case _      => println("speedLimitFiller: Received unknown message")
+  }
+}
+
+class SpeedLimitSaveProjected[T](speedLimitProvider: SpeedLimitService) extends Actor {
+  def receive = {
+    case x: Seq[T] => speedLimitProvider.persistProjectedLimit(x.asInstanceOf[Seq[SpeedLimit]])
+    case _             => println("speedLimitSaveProjected: Received unknown message")
   }
 }
 
@@ -61,6 +76,12 @@ object Digiroad2Context {
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
+
+  val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
+  eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
+
+  val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
+  eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit]], speedLimitService), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")

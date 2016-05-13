@@ -177,4 +177,16 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
       segmentByMinimumDistance(Point(0,0,0), Seq(Point(-1,1,0), Point(0,.9,0), Point(1,1,0))))
     distance should be(0.9)
   }
+
+  test("overlap cases") {
+    overlaps((0.0, 0.1), (0.1,0.2)) should be(false)
+    overlaps((0.0, 0.15), (0.1,0.2)) should be(true)
+    overlaps((0.11, 0.15), (0.1,0.2)) should be(true)
+    overlaps((0.15, 0.11), (0.1,0.2)) should be(true)
+    overlaps((0.15, 0.21), (0.2,0.1)) should be(true)
+    overlaps((0.21, 0.01), (0.1,0.2)) should be(true)
+    overlaps((0.21, 0.01), (0.1,0.2)) should be(true)
+    overlaps((0.21, 0.22), (0.1,0.2)) should be(false)
+    overlaps((0.22, 0.21), (0.1,0.2)) should be(false)
+  }
 }

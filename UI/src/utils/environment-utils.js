@@ -7,7 +7,7 @@
   var name = function() {
     var environmentName = {
       'extranet.liikennevirasto.fi': 'production',
-      'testiextranet.liikennevirasto.fi': 'production', // TODO: change to 'integration' once new production in use
+      'testiextranet.liikennevirasto.fi': 'integration',
       'apptest.liikennevirasto.fi': 'training',
       'devtest.liikennevirasto.fi': 'staging'
     };
@@ -23,7 +23,7 @@
   // Environment name shown next to Digiroad logo
   var localizedName = function() {
     var localizedEnvironmentName = {
-      integration: '',  // TODO: change to 'Integraatiotestiympäristö' once new production in use
+      integration: 'Integraatiotestiympäristö',
       production: '',
       training: 'Koulutusympäristö',
       staging: 'Testiympäristö',

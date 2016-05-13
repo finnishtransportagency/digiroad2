@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{SideCode, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset.{SideCode}
 
 object LinearAssetFiller {
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimit, adjustedMValue: Option[Double])
@@ -8,5 +8,6 @@ object LinearAssetFiller {
   case class SideCodeAdjustment(assetId: Long, sideCode: SideCode)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
-                       adjustedSideCodes: Seq[SideCodeAdjustment])
+                       adjustedSideCodes: Seq[SideCodeAdjustment],
+                       expiredAssetIds: Set[Long])
 }
