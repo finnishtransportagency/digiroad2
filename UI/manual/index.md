@@ -529,18 +529,21 @@ Jos tallennuksen j&auml;lkeen yhteen suuntaan voimassa oleville nopeusrajoituksi
 
 ###Tuntemattomat nopeusrajoitukset###
 
-Jos nopeusrajoitus ko. linkill&auml; ei ole tiedossa, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena. Tuntemattomia nopeusrajoituksia on kahdenlaisia:
+Tuntemattomat nopeusrajoitukset
 
-1. Nopeusrajoitustieto on poistunut, kun alla olevan tielinkin geometria on p&auml;ivittynyt.
-1. Nopeusrajoitustietoa ei ole koskaan toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n.
+Jos nopeusrajoitus ko. linkill&auml; ei ole tiedossa, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena.
+
+Nopeusrajoitus on tuntematon, jos nopeusrajoitustietoa ei ole toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n. Uusille, j&auml;rjestelm&auml;&auml;n lis&auml;tyille tielinkeille, tulee lis&auml;t&auml; nopeusrajoitus.
 
 Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&auml; voi muokata my&ouml;s monivalintaty&ouml;kalun avulla. Tuntemattomia nopeusrajoituksia ei kuitenkaan voi katkaista katkaisuty&ouml;kalulla, eik&auml; niit&auml; voi jakaa yksisuuntaisiksi. Tuntemattomille nopeusrajoituksille tulee antaa ensin arvo, jotta niiden muokkaus t&auml;ydellisesti onnistuu.
+
 
 ![Tuntematon nopeusrajoitus.](k48.jpg)
 
 _Tuntematon nopeusrajoitus._
 
 Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (1). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listan pituus on rajoitettu kymmeneen nopeusrajoitukseen, mutta kunkin hallinnollisen luokan vieress&auml; lukee my&ouml;s korjattavien nopeusrajoitusten kokonaism&auml;&auml;r&auml;. Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusrajoituksen kohdalle sovelluksessa ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen klikkaamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
+
 
 ![Tuntematon nopeusrajoitus.](k49.JPG)
 
