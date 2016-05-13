@@ -529,8 +529,6 @@ Jos tallennuksen j&auml;lkeen yhteen suuntaan voimassa oleville nopeusrajoituksi
 
 ###Tuntemattomat nopeusrajoitukset###
 
-Tuntemattomat nopeusrajoitukset
-
 Jos nopeusrajoitus ko. linkill&auml; ei ole tiedossa, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena.
 
 Nopeusrajoitus on tuntematon, jos nopeusrajoitustietoa ei ole toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n. Uusille, j&auml;rjestelm&auml;&auml;n lis&auml;tyille tielinkeille, tulee lis&auml;t&auml; nopeusrajoitus.
