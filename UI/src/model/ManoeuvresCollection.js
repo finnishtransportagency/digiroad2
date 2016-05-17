@@ -6,14 +6,18 @@
     var updatedInfo = {};
     var dirty = false;
 
-    var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
-      return _.map(roadLinks, function(roadLink) {
-        var filteredManoeuvres = _.filter(manoeuvres, function(manoeuvre) {
-          return manoeuvre.sourceLinkId === roadLink.linkId;
+    var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
+      return _.map(roadLinks, function (roadLink) {
+        var filteredManoeuvres = _.filter(manoeuvres, function (manoeuvre) {
+          return _.some(manoeuvre.elements, function (element) {
+            return element.sourceLinkId === roadLink.linkId;
+          });
         });
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
-            return manoeuvre.destLinkId === roadLink.linkId;
+            return _.some(manoeuvre.elements, function (element) {
+              return element.destLinkId === roadLink.linkId;
+            });
           })
           .pluck('id')
           .value();
