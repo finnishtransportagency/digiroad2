@@ -42,9 +42,9 @@
 
         // Add sourceLinkId and destLinkId from elements to manoeuvre level
         var formattedManoeuvres = _.map(filteredManoeuvres, function(manoeuvre){
-          var sourceLinkId = manoeuvre.elements[0].sourceLinkId
-          var lastElementIndex = manoeuvre.elements.length-1
-          var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId
+          var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
+          var lastElementIndex = manoeuvre.elements.length-1;
+          var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
           return _.merge({}, manoeuvre, {
             sourceLinkId: sourceLinkId,
             destLinkId: destLinkId
