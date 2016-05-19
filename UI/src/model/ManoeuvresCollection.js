@@ -40,11 +40,22 @@
         // Used to show road link as blue or grey on map
         var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
 
+        // Add sourceLinkId and destLinkId from elements to manoeuvre level
+        var formattedManoeuvres = _.map(filteredManoeuvres, function(manoeuvre){
+          var sourceLinkId = manoeuvre.elements[0].sourceLinkId
+          var lastElementIndex = manoeuvre.elements.length-1
+          var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId
+          return _.merge({}, manoeuvre, {
+            sourceLinkId: sourceLinkId,
+            destLinkId: destLinkId
+          });
+        });
+
         return _.merge({}, roadLink, {
           manoeuvreSource: manoeuvreSource,
           destinationOfManoeuvres: destinationOfManoeuvres,
           intermediateManoeuvres : intermediateManoeuvres,
-          manoeuvres: filteredManoeuvres,
+          manoeuvres: formattedManoeuvres,
           type: 'normal'
         });
       });
