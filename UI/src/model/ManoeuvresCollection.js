@@ -14,16 +14,23 @@
         // Filter manoeuvres whose sourceLinkId matches road link's id
         var filteredManoeuvres = _.filter(manoeuvres, function (manoeuvre) {
           return _.some(manoeuvre.elements, function (element) {
-            return element.sourceLinkId === roadLink.linkId;
+            return element.sourceLinkId === roadLink.linkId && element.elementType === 1;
           });
         });
-
+        var intermediateManoeuvres  = _.chain(manoeuvres)
+            .filter(function(manoeuvre) {
+              return _.some(manoeuvre.elements, function (element) {
+                return element.sourceLinkId === roadLink.linkId && element.elementType === 2;
+              });
+            })
+            .pluck('id')
+            .value();
         // Check if road link is destination link of some manoeuvre
         // Used to show road link dashed on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
             return _.some(manoeuvre.elements, function (element) {
-              return element.destLinkId === roadLink.linkId;
+              return element.sourceLinkId === roadLink.linkId && element.elementType === 3;
             });
           })
           .pluck('id')
@@ -36,6 +43,7 @@
         return _.merge({}, roadLink, {
           manoeuvreSource: manoeuvreSource,
           destinationOfManoeuvres: destinationOfManoeuvres,
+          intermediateManoeuvres : intermediateManoeuvres,
           manoeuvres: filteredManoeuvres,
           type: 'normal'
         });
