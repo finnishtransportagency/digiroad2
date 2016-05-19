@@ -6,13 +6,20 @@
     var updatedInfo = {};
     var dirty = false;
 
+
+    //Attach manoeuvre data to road link
     var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
       return _.map(roadLinks, function (roadLink) {
+
+        // Filter manoeuvres whose sourceLinkId matches road link's id
         var filteredManoeuvres = _.filter(manoeuvres, function (manoeuvre) {
           return _.some(manoeuvre.elements, function (element) {
             return element.sourceLinkId === roadLink.linkId;
           });
         });
+
+        // Check if road link is destination link of some manoeuvre
+        // Used to show road link dashed on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
             return _.some(manoeuvre.elements, function (element) {
@@ -22,8 +29,12 @@
           .pluck('id')
           .value();
 
+        // Check if road link is source link of some manoeuvre
+        // Used to show road link as blue or grey on map
+        var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
+
         return _.merge({}, roadLink, {
-          manoeuvreSource: _.isEmpty(filteredManoeuvres) ? 0 : 1,
+          manoeuvreSource: manoeuvreSource,
           destinationOfManoeuvres: destinationOfManoeuvres,
           manoeuvres: filteredManoeuvres,
           type: 'normal'
