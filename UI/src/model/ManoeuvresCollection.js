@@ -6,7 +6,6 @@
     var updatedInfo = {};
     var dirty = false;
 
-
     //Attach manoeuvre data to road link
     var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
       return _.map(roadLinks, function (roadLink) {
@@ -17,6 +16,9 @@
             return element.sourceLinkId === roadLink.linkId && element.elementType === 1;
           });
         });
+
+        // Check if road link is intermediate link of some manoeuvre
+        // Used to visualize road link on map
         var intermediateManoeuvres  = _.chain(manoeuvres)
             .filter(function(manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -25,8 +27,9 @@
             })
             .pluck('id')
             .value();
+
         // Check if road link is destination link of some manoeuvre
-        // Used to show road link dashed on map
+        // Used to visualize road link on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
             return _.some(manoeuvre.elements, function (element) {
@@ -37,25 +40,14 @@
           .value();
 
         // Check if road link is source link of some manoeuvre
-        // Used to show road link as blue or grey on map
+        // Used to visualize road link on map
         var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
-
-        // Add sourceLinkId and destLinkId from elements to manoeuvre level
-        var formattedManoeuvres = _.map(filteredManoeuvres, function(manoeuvre){
-          var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
-          var lastElementIndex = manoeuvre.elements.length-1;
-          var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
-          return _.merge({}, manoeuvre, {
-            sourceLinkId: sourceLinkId,
-            destLinkId: destLinkId
-          });
-        });
 
         return _.merge({}, roadLink, {
           manoeuvreSource: manoeuvreSource,
           destinationOfManoeuvres: destinationOfManoeuvres,
           intermediateManoeuvres : intermediateManoeuvres,
-          manoeuvres: formattedManoeuvres,
+          manoeuvres: filteredManoeuvres,
           type: 'normal'
         });
       });
@@ -65,10 +57,24 @@
       backend.getManoeuvres(extent, callback);
     };
 
+    // Extract manoeuvre sourceLinkId and destLinkId from first and last element to manoeuvre level
+    var formatManoeuvres = function(manoeuvres) {
+      return _.map(manoeuvres, function (manoeuvre) {
+        var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
+        var lastElementIndex = manoeuvre.elements.length - 1;
+        var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
+        return _.merge({}, manoeuvre, {
+          sourceLinkId: sourceLinkId,
+          destLinkId: destLinkId
+        });
+      })
+    };
+
     var fetch = function(extent, zoom, callback) {
       eventbus.once('roadLinks:fetched', function() {
         fetchManoeuvres(extent, function(ms) {
           manoeuvres = ms;
+          manoeuvres = formatManoeuvres(manoeuvres);
           callback();
           eventbus.trigger('manoeuvres:fetched');
         });
