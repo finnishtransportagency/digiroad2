@@ -5,6 +5,10 @@
         '<button class="save btn btn-primary" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+    var continueChainButton = '' +
+        '<div class="continue button">' +
+        '<button class="new btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
+        '</div>';
     var template = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -44,12 +48,10 @@
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
-          '<div class="checkbox" >' +
-            '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
-          '</div>' +
-          '<p class="form-control-static">LINK ID <%= linkId %> <span class="marker"><%= marker %></span></p>' +
+          '<p class="form-control-static">LINK ID <%= linkId %> <span class="marker"><%= marker %></span>' +
+          '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
-        '<div class="manoeuvre-details <% print(checked ? "" : "hidden") %>">' +
+        '<div class="manoeuvre-details" hidden>' +
           '<div class="validity-period-group">' +
           ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
           ' <ul>' +
@@ -76,6 +78,12 @@
                                  'placeholder="Muu tarkenne" <% print(checked ? "" : "disabled") %> ' +
                                  '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
             '</div>' +
+            '<div class="form-group form-notification">' +
+              ' <p>Jos kääntymisrajoitus koskee kahta linkkiä, paina Tallenna. Jos haluat lisätä kääntymisrajoitukseen linkkejä, valitse Jatka kääntymisrajoitusta.</p>' +
+            '</div>' +
+            '<div class="form-group continue">' +
+              continueChainButton +
+            '</div>'+
           '<div>' +
         '<div>' +
       '</div>';
@@ -98,6 +106,17 @@
         '    <option value="Sunday">Su</option>' +
         '  </select>' +
         '</div></li>';
+    }
+    function renderEditButtons(){
+        return '' +
+            '<div class="edit buttons group">' +
+              '<div <% print(checked ? "hidden" : "") %>>'+
+                '<button class="new btn btn-new">Uusi rajoitus</button>' +
+              '</div>'+
+              '<div <% print(checked ? "" : "hidden") %>>'+
+                '<button class="modify btn btn-modify">Muokkaa</button>' +
+              '</div>'+
+            '</div>';
     }
 
     var bindEvents = function() {
@@ -210,14 +229,19 @@
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
 
-        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
-          var eventTarget = $(event.currentTarget);
+        rootElement.find('.adjacent-link').on('click', '.edit button.new', function(event){
+          var selects = $(event.delegateTarget).find('select');
+          var button = $(event.delegateTarget).find('button');
+          var text = $(event.delegateTarget).find('input[type="text"]');
+          var group = $(event.delegateTarget).find('.manoeuvre-details');
+
+          selects.prop('disabled', false);
+          button.prop('disabled', false);
+          text.prop('disabled', false);
+          group.slideDown('fast');
+
           var manoeuvre = manoeuvreData($(event.delegateTarget));
-          if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.addManoeuvre(manoeuvre);
-          } else {
-            selectedManoeuvreSource.removeManoeuvre(manoeuvre);
-          }
+          selectedManoeuvreSource.addManoeuvre(manoeuvre);
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
@@ -259,25 +283,6 @@
           updateValidityPeriods($(event.delegateTarget));
         });
 
-        rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
-          var isChecked = $(event.target).is(':checked');
-          var selects = $(event.delegateTarget).find('select');
-          var button = $(event.delegateTarget).find('button');
-          var text = $(event.delegateTarget).find('input[type="text"]');
-          var group = $(event.delegateTarget).find('.manoeuvre-details');
-          if(isChecked){
-            selects.prop('disabled', false);
-            button.prop('disabled', false);
-            text.prop('disabled', false);
-            group.slideDown('fast');
-          } else {
-            selects.prop('disabled', 'disabled');
-            button.prop('disabled', 'disabled');
-            text.prop('disabled', 'disabled');
-            group.slideUp('fast');
-          }
-        });
-
         rootElement.find('.adjacent-link').on('click', '.exception button.delete', function(event) {
           deleteException($(event.target).parent(), $(event.delegateTarget));
         });
@@ -316,6 +321,10 @@
 
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
+      });
+      rootElement.on('click', '.edit button.new', function(event) {
+        var button = $(event.delegateTarget).find('.edit');
+        button.prop('hidden',true);
       });
     };
 

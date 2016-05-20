@@ -76,7 +76,7 @@
           intermediateLinkIds: intermediateLinkIds,
           destLinkId: destLinkId
         });
-      })
+      });
     };
 
     var fetch = function(extent, zoom, callback) {
