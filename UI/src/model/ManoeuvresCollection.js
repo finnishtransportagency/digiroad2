@@ -61,10 +61,12 @@
     var formatManoeuvres = function(manoeuvres) {
       return _.map(manoeuvres, function (manoeuvre) {
         var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
+        var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
         var lastElementIndex = manoeuvre.elements.length - 1;
         var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
         return _.merge({}, manoeuvre, {
           sourceLinkId: sourceLinkId,
+          firstTargetLinkId: firstTargetLinkId,
           destLinkId: destLinkId
         });
       })
@@ -99,7 +101,7 @@
         .filter(function(manoeuvre) {
           return manoeuvre.sourceLinkId === linkId;
         })
-        .pluck('destLinkId')
+        .pluck('firstTargetLinkId')
         .value();
     };
 
