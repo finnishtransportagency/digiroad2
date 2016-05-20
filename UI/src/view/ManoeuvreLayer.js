@@ -93,6 +93,49 @@
       default: selectionDefaultStyle
     });
 
+    //----------------------------------
+    // Public methods
+    //----------------------------------
+
+    var show = function(map) {
+      map.addLayer(indicatorLayer);
+      me.show(map);
+    };
+
+    var hideLayer = function() {
+      unselectManoeuvre();
+      me.stop();
+      me.hide();
+      map.removeLayer(indicatorLayer);
+    };
+
+    // Override Layer.js method
+    this.layerStarted = function(eventListener) {
+      indicatorLayer.setZIndex(1000);
+      var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
+      var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
+      var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
+      eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
+      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
+      eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
+    };
+
+    // Override Layer.js method
+    this.refreshView = function() {
+      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
+    };
+
+    // Override Layer.js method
+    this.removeLayerFeatures = function() {
+      indicatorLayer.clearMarkers();
+    };
+
+    //---------------------------------------
+    // Utility functions
+    //---------------------------------------
+
     var unselectManoeuvre = function() {
       selectedManoeuvreSource.close();
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
@@ -231,22 +274,6 @@
       }
     };
 
-    this.refreshView = function() {
-      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
-    };
-
-    var show = function(map) {
-      map.addLayer(indicatorLayer);
-      me.show(map);
-    };
-
-    var hideLayer = function() {
-      unselectManoeuvre();
-      me.stop();
-      me.hide();
-      map.removeLayer(indicatorLayer);
-    };
-
     var handleManoeuvreChanged = function(eventListener) {
       draw();
       selectControl.deactivate();
@@ -326,22 +353,6 @@
       } else {
         indicatorLayer.clearMarkers();
       }
-    };
-
-    this.removeLayerFeatures = function() {
-      indicatorLayer.clearMarkers();
-    };
-
-    this.layerStarted = function(eventListener) {
-      indicatorLayer.setZIndex(1000);
-      var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
-      var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
-      var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
-      eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
-      eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
-      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
-      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
-      eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
     };
 
     return {
