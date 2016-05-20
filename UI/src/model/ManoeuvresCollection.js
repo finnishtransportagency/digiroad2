@@ -4,6 +4,7 @@
     var addedManoeuvres = [];
     var removedManoeuvres = [];
     var updatedInfo = {};
+    var multipleSourceManoeuvresHMap = {};
     var dirty = false;
 
     //----------------------------------
@@ -173,6 +174,20 @@
             .pluck('id')
             .value();
 
+        // Check if road link is source link for multiple manoeuvres
+        // Used to visualize road link on map
+        //var multipleSourceManoeuvres = _.filter(filteredManoeuvres, function (manoeuvre) {
+        var multipleSourceManoeuvres = _.chain(filteredManoeuvres)
+            .filter(function (manoeuvre) {
+              return _.some(manoeuvre.elements, function (element) {
+                multipleSourceManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in multipleSourceManoeuvresHMap ? multipleSourceManoeuvresHMap[element.sourceLinkId] += 1 : 1;
+                return multipleSourceManoeuvresHMap[element.sourceLinkId] >= 2 && element.elementType === 1;
+              });
+            })
+            .pluck('id')
+            .value();
+        //}
+
         // Check if road link is destination link of some manoeuvre
         // Used to visualize road link on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
@@ -192,6 +207,7 @@
           manoeuvreSource: manoeuvreSource,
           destinationOfManoeuvres: destinationOfManoeuvres,
           intermediateManoeuvres : intermediateManoeuvres,
+          multipleSourceManoeuvres: multipleSourceManoeuvres,
           manoeuvres: filteredManoeuvres,
           type: 'normal'
         });
