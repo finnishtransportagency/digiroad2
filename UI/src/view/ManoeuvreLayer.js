@@ -263,6 +263,7 @@
         return !_.isEmpty(roadLink.multipleSourceManoeuvres);
       });
       roadLayer.layer.addFeatures(createMultipleSourceFeatures(multipleSourceRoadLinks));
+      manoeuvresCollection.cleanHMapManoeuvres();
     };
 
     var reselectManoeuvre = function() {

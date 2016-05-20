@@ -104,6 +104,7 @@
       addedManoeuvres = [];
       removedManoeuvres = [];
       updatedInfo = {};
+      multipleSourceManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -148,6 +149,11 @@
       unwindBackendCallStack(backendCallStack, successCallback, failureCallback);
     };
 
+    var cleanHMapManoeuvres = function() {
+      multipleSourceManoeuvresHMap = {};
+      dirty = false;
+    };
+
     //---------------------------------------
     // Utility functions
     //---------------------------------------
@@ -176,7 +182,6 @@
 
         // Check if road link is source link for multiple manoeuvres
         // Used to visualize road link on map
-        //var multipleSourceManoeuvres = _.filter(filteredManoeuvres, function (manoeuvre) {
         var multipleSourceManoeuvres = _.chain(filteredManoeuvres)
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -186,7 +191,6 @@
             })
             .pluck('id')
             .value();
-        //}
 
         // Check if road link is destination link of some manoeuvre
         // Used to visualize road link on map
@@ -300,7 +304,8 @@
       setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
-      save: save
+      save: save,
+      cleanHMapManoeuvres: cleanHMapManoeuvres
     };
   };
 })(this);
