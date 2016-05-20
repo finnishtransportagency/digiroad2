@@ -64,9 +64,16 @@
         var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
         var lastElementIndex = manoeuvre.elements.length - 1;
         var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
+        var intermediateLinkIds = _.chain(manoeuvre.elements)
+          .filter(function(element) {
+            return element.elementType === 2;
+          })
+          .pluck('sourceLinkId')
+          .value();
         return _.merge({}, manoeuvre, {
           sourceLinkId: sourceLinkId,
           firstTargetLinkId: firstTargetLinkId,
+          intermediateLinkIds: intermediateLinkIds,
           destLinkId: destLinkId
         });
       })
