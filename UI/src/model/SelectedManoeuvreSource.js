@@ -2,6 +2,10 @@
   root.SelectedManoeuvreSource = function(collection) {
     var current = null;
 
+    //----------------------------------
+    // Public methods
+    //----------------------------------
+
     var close = function() {
       if (current) {
         current.unselect();
@@ -23,14 +27,6 @@
 
     var get = function() {
       return current;
-    };
-
-    var refresh = function() {
-      if (current) {
-        var linkId = current.linkId;
-        current = null;
-        open(linkId);
-      }
     };
 
     var getLinkId = function() {
@@ -77,6 +73,14 @@
 
     var isDirty = function() {
       return collection.isDirty();
+    };
+
+    var refresh = function() {
+      if (current) {
+        var linkId = current.linkId;
+        current = null;
+        open(linkId);
+      }
     };
 
     return {
