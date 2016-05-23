@@ -95,8 +95,12 @@ trait LinearAssetOperations {
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
+    val timing = System.currentTimeMillis
     val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       existingAssets, assetsOnChangedLinks, changes)
+    if (newAssets.nonEmpty) {
+      logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+    }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
@@ -163,13 +167,14 @@ trait LinearAssetOperations {
         case _ => false
       }
     }
-    // Test if these change infos extend each other
+    // Test if these change infos extend each other. Then take the small little piece just after tolerance value to test if it is true there
     val (mStart, mEnd) = (givenAndEqualDoubles(replacementChangeInfo.newStartMeasure, extensionChangeInfo.newEndMeasure),
       givenAndEqualDoubles(replacementChangeInfo.newEndMeasure, extensionChangeInfo.newStartMeasure)) match {
       case (true, false) =>
-        (replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance, replacementChangeInfo.oldStartMeasure.get + 2 * NumericalLimitFiller.AllowedTolerance)
+        (replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance,
+          replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance + NumericalLimitFiller.MaxAllowedError)
       case (false, true) =>
-        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - 2 * NumericalLimitFiller.AllowedTolerance),
+        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance - NumericalLimitFiller.MaxAllowedError),
           Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance))
       case (_, _) => (0.0, 0.0)
     }
@@ -238,11 +243,9 @@ trait LinearAssetOperations {
         condition(assets, targetId, oldStart, oldEnd, vvhTimeStamp.getOrElse(0L)) match {
           case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
           case false =>
-            println("false")
             None
         }
       case _ =>
-        println("no match")
         None
     }
   }
@@ -301,6 +304,7 @@ trait LinearAssetOperations {
     * Expires linear asset. Used by Digiroad2Api /linearassets DELETE endpoint and Digiroad2Context.LinearAssetUpdater actor.
     */
   def expire(ids: Seq[Long], username: String): Seq[Long] = {
+    logger.info("Expiring ids " + ids.mkString(", "))
     withDynTransaction {
       ids.foreach(dao.updateExpiration(_, expired = true, username))
       ids
@@ -320,6 +324,7 @@ trait LinearAssetOperations {
    * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
+    logger.info("Saving projected linear assets")
     def getValuePropertyId(value: Option[Value], typeId: Int) = {
       value match {
         case Some(NumericValue(intValue)) =>
@@ -339,6 +344,7 @@ trait LinearAssetOperations {
         dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
       updateProjected(toUpdate, persisted)
+      logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
@@ -353,6 +359,7 @@ trait LinearAssetOperations {
           case None => None
         }
       }
+      logger.info("Added assets for linkids " + toInsert.map(_.linkId))
     }
   }
 

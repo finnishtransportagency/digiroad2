@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 
 object NumericalLimitFiller {
   val AllowedTolerance = 0.5
-  private val MaxAllowedError = 0.01
+  val MaxAllowedError = 0.01
 
   private def modifiedSort(left: PersistedLinearAsset, right: PersistedLinearAsset) = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
