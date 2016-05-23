@@ -5,6 +5,9 @@
     var removedManoeuvres = [];
     var updatedInfo = {};
     var multipleSourceManoeuvresHMap = {};
+    var multipleIntermidiateManoeuvresHMap = {};
+    var multipleDestinationManoeuvresHMap = {};
+    var sourceDestinationManoeuvresHMap = {};
     var dirty = false;
 
     //----------------------------------
@@ -105,6 +108,9 @@
       removedManoeuvres = [];
       updatedInfo = {};
       multipleSourceManoeuvresHMap = {};
+      multipleIntermidiateManoeuvresHMap = {};
+      multipleDestinationManoeuvresHMap = {};
+      sourceDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -149,8 +155,23 @@
       unwindBackendCallStack(backendCallStack, successCallback, failureCallback);
     };
 
-    var cleanHMapManoeuvres = function() {
+    var cleanHMapSourceManoeuvres = function() {
       multipleSourceManoeuvresHMap = {};
+      dirty = false;
+    };
+
+    var cleanHMapIntermidiateManoeuvres = function() {
+      multipleIntermidiateManoeuvresHMap = {};
+      dirty = false;
+    };
+
+    var cleanHMapDestinationManoeuvres = function() {
+      multipleDestinationManoeuvresHMap = {};
+      dirty = false;
+    };
+
+    var cleanHMapSourceDestinationManoeuvres = function() {
+      sourceDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -192,6 +213,20 @@
             .pluck('id')
             .value();
 
+        // Check if road link is intermediate link for multiple manoeuvres
+        // Used to visualize road link on map
+        var multipleIntermediateManoeuvres = _.chain(manoeuvres)
+            .filter(function (manoeuvre) {
+              return _.some(manoeuvre.elements, function (element) {
+                if (element.sourceLinkId === roadLink.linkId && element.elementType === 2){
+                  multipleIntermidiateManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in multipleIntermidiateManoeuvresHMap ? multipleIntermidiateManoeuvresHMap[element.sourceLinkId] += 1 : 1;
+                  return multipleIntermidiateManoeuvresHMap[element.sourceLinkId] >= 2;
+                }
+              });
+            })
+            .pluck('id')
+            .value();
+
         // Check if road link is destination link of some manoeuvre
         // Used to visualize road link on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
@@ -203,6 +238,34 @@
           .pluck('id')
           .value();
 
+        // Check if road link is destination link for multiple manoeuvres
+        // Used to visualize road link on map
+        var multipleDestinationManoeuvres = _.chain(manoeuvres)
+            .filter(function (manoeuvre) {
+              return _.some(manoeuvre.elements, function (element) {
+                if (element.sourceLinkId === roadLink.linkId && element.elementType === 3) {
+                  multipleDestinationManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in multipleDestinationManoeuvresHMap ? multipleDestinationManoeuvresHMap[element.sourceLinkId] += 1 : 1;
+                  return multipleDestinationManoeuvresHMap[element.sourceLinkId] >= 2;
+                }
+              });
+            })
+            .pluck('id')
+            .value();
+
+        // Check if road link is source and destination link for manoeuvres
+        // Used to visualize road link on map
+        var sourceDestinationManoeuvres = _.chain(manoeuvres)
+            .filter(function (manoeuvre) {
+              return _.some(manoeuvre.elements, function (element) {
+                if (element.sourceLinkId === roadLink.linkId && (element.elementType === 1 || element.elementType === 3)) {
+                  sourceDestinationManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in sourceDestinationManoeuvresHMap ? sourceDestinationManoeuvresHMap[element.sourceLinkId] += 1 : 1;
+                  return sourceDestinationManoeuvresHMap[element.sourceLinkId] >= 2;
+                }
+              });
+            })
+            .pluck('id')
+            .value();
+
         // Check if road link is source link of some manoeuvre
         // Used to visualize road link on map
         var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
@@ -212,6 +275,9 @@
           destinationOfManoeuvres: destinationOfManoeuvres,
           intermediateManoeuvres : intermediateManoeuvres,
           multipleSourceManoeuvres: multipleSourceManoeuvres,
+          multipleIntermediateManoeuvres: multipleIntermediateManoeuvres,
+          multipleDestinationManoeuvres: multipleDestinationManoeuvres,
+          sourceDestinationManoeuvres: sourceDestinationManoeuvres,
           manoeuvres: filteredManoeuvres,
           type: 'normal'
         });
@@ -305,7 +371,10 @@
       cancelModifications: cancelModifications,
       isDirty: isDirty,
       save: save,
-      cleanHMapManoeuvres: cleanHMapManoeuvres
+      cleanHMapSourceManoeuvres: cleanHMapSourceManoeuvres,
+      cleanHMapIntermidiateManoeuvres: cleanHMapIntermidiateManoeuvres,
+      cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
+      cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres
     };
   };
 })(this);
