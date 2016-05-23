@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -61,7 +62,14 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                     "length" -> link.length
                   )
                 ),
-                "sideCode" -> speedLimit.sideCode.value,
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    speedLimit.sideCode.value
+                }),
                 "startMeasure" -> speedLimit.startMeasure,
                 "endMeasure" -> speedLimit.endMeasure,
                 "createdBy" -> speedLimit.createdBy,
@@ -102,7 +110,14 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                     "length" -> link.length
                   )
                 ),
-                "sideCode" -> linearAsset.sideCode.value,
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    linearAsset.sideCode.value
+                }),
                 "startMeasure" -> linearAsset.startMeasure,
                 "endMeasure" -> linearAsset.endMeasure,
                 "createdBy" -> linearAsset.createdBy,
