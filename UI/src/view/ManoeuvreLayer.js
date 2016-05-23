@@ -10,9 +10,11 @@
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
 
-    //----------------------------------
-    // Public methods
-    //----------------------------------
+    /*
+     * ------------------------------------------
+     *  Public methods
+     * ------------------------------------------
+     */
 
     var show = function(map) {
       map.addLayer(indicatorLayer);
@@ -26,7 +28,10 @@
       map.removeLayer(indicatorLayer);
     };
 
-    // Override Layer.js method
+    /**
+     * Sets up indicator layer for adjacent markers. Attaches event handlers to events listened by the eventListener.
+     * Overrides the Layer.js layerStarted method
+     */
     this.layerStarted = function(eventListener) {
       indicatorLayer.setZIndex(1000);
       var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
@@ -39,20 +44,48 @@
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
     };
 
-    // Override Layer.js method
+    /**
+     * Fetches the road links and manoeuvres again on the layer.
+     * Overrides the Layer.js refreshView method
+     */
     this.refreshView = function() {
       manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
     };
 
-    // Override Layer.js method
+    /**
+     * Overrides the Layer.js removeLayerFeatures method
+     */
     this.removeLayerFeatures = function() {
       indicatorLayer.clearMarkers();
     };
 
-    //---------------------------------------
-    // Utility functions
-    //---------------------------------------
+    /*
+     * ------------------------------------------
+     *  Utility functions
+     * ------------------------------------------
+     */
 
+    /**
+     * Selects a manoeuvre on the map. First checks that road link is a car traffic road.
+     * Sets up the selection style and redraws the road layer. Sets up the selectedManoeuvreSource.
+     * This variable is set as onSelect property in selectControl.
+     * @param feature Selected OpenLayers feature (road link)
+       */
+    var selectManoeuvre = function(feature) {
+      if (roadCollection.get([feature.attributes.linkId])[0].isCarTrafficRoad()) {
+        roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
+        roadLayer.redraw();
+        selectedManoeuvreSource.open(feature.attributes.linkId);
+      } else {
+        unselectManoeuvre();
+      }
+    };
+
+    /**
+     * Closes the current selectedManoeuvreSource. Sets up the default style and redraws the road layer.
+     * Empties all the highlight functions. Cleans up the adjacent link markers on indicator layer.
+     * This variable is set as onUnselect property in selectControl.
+     */
     var unselectManoeuvre = function() {
       selectedManoeuvreSource.close();
       roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
@@ -63,19 +96,13 @@
       indicatorLayer.clearMarkers();
     };
 
+    /**
+     * Creates an OpenLayers selectControl and defines onSelect and onUnselect properties for it.
+     * The selectControl is then added as Layer.js this.selectControl value and as a control to the OpenLayers map.
+     */
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect: function(feature) {
-        if (roadCollection.get([feature.attributes.linkId])[0].isCarTrafficRoad()) {
-          roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
-          roadLayer.redraw();
-          selectedManoeuvreSource.open(feature.attributes.linkId);
-        } else {
-          unselectManoeuvre();
-        }
-      },
-      onUnselect: function() {
-        unselectManoeuvre();
-      }
+      onSelect: selectManoeuvre,
+      onUnselect: unselectManoeuvre
     });
     this.selectControl = selectControl;
     map.addControl(selectControl);
@@ -318,6 +345,13 @@
       indicatorLayer.setZIndex(1000);
     };
 
+    /**
+     * Sets up manoeuvre visualization when manoeuvre source road link is selected.
+     * Fetches adjacent links. Visualizes source link and its one way sign. Fetches first target links of manoeuvres starting from source link.
+     * Sets the shown branching link set as first target links in view mode and adjacent links in edit mode.
+     * Redraws the layer. Shows adjacent link markers in edit mode.
+     * @param roadLink
+     */
     var handleManoeuvreSelected = function(roadLink) {
       var aLinks = adjacentLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
