@@ -131,7 +131,7 @@ trait LinearAssetOperations {
             Some(NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection))
           case (_, (_, _)) =>
             None
-        }).filter(a => Math.abs(a.startMeasure - a.endMeasure) > 0) // Remove zero-length or invalid length parts
+        })
     linearAssets
   }
 
@@ -141,10 +141,12 @@ trait LinearAssetOperations {
     val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId)).groupBy(_.linkId)
     val changeMap = changes.filterNot(c => c.newId.isEmpty || c.oldId.isEmpty).map(c => (c.oldId.get, c.newId.get)).groupBy(_._1)
     val targetRoadLinks = changeMap.mapValues(a => a.flatMap(b => newRoadLinks.getOrElse(b._2, Seq())).distinct)
+    val groupedLinearAssets = currentLinearAssets.groupBy(_.linkId)
+    val groupedOldLinearAssets = oldLinearAssets.groupBy(_.linkId)
     oldLinearAssets.flatMap{asset =>
       targetRoadLinks.getOrElse(asset.linkId, Seq()).map(newRoadLink =>
         (asset,
-          getRoadLinkAndProjection(roadLinks, changes, asset.linkId, newRoadLink.linkId, oldLinearAssets, currentLinearAssets))
+          getRoadLinkAndProjection(roadLinks, changes, asset.linkId, newRoadLink.linkId, groupedOldLinearAssets, groupedLinearAssets))
       )}
   }
 
@@ -180,14 +182,15 @@ trait LinearAssetOperations {
   }
 
   private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
-                                       linearAssetsToUpdate: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset]): (Option[RoadLink], Option[Projection]) = {
+                                       linearAssetsToUpdate: Map[Long, Seq[PersistedLinearAsset]],
+                                       currentLinearAssets: Map[Long, Seq[PersistedLinearAsset]]): (Option[RoadLink], Option[Projection]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
       case Some(changedPart) =>
         // ChangeInfo object related assets; either mentioned in oldId or in newId
-        val linearAssets = (linearAssetsToUpdate.filter(_.linkId == changedPart.oldId.getOrElse(0L)) ++
-          currentLinearAssets.filter(_.linkId == changedPart.newId.getOrElse(0L))).distinct
+        val linearAssets = (linearAssetsToUpdate.getOrElse(changedPart.oldId.getOrElse(0L), Seq()) ++
+          currentLinearAssets.getOrElse(changedPart.newId.getOrElse(0L), Seq())).distinct
         mapChangeToProjection(changedPart, linearAssets)
       case _ => None
     }
