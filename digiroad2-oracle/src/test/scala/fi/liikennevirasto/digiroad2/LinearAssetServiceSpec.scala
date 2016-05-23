@@ -545,6 +545,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
+      after.foreach(println)
       after.length should be(1)
       after.head.value should be(Some(NumericValue(1)))
       after.head.sideCode should be (SideCode.BothDirections)
@@ -691,7 +692,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
+      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
       after.count(l => l.startMeasure == 0.0 && l.endMeasure == 10.0) should be (2)
@@ -765,6 +766,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
+      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
 
@@ -851,7 +853,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
+      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
 
