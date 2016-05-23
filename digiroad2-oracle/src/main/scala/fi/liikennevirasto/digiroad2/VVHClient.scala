@@ -61,6 +61,75 @@ object ChangeType {
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
   case object ReplacedNewPart extends ChangeType { def value = 14 }
   case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+
+  /**
+    * Return true if this is a replacement where segment or part of it replaces another, older one
+    * All changes should be of form (old_id, new_id, old_start, old_end, new_start, new_end) with non-null values
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a replacement
+    */
+  def isReplacementChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+    ChangeType.apply(changeInfo.changeType) match {
+      case CombinedModifiedPart => true
+      case CombinedRemovedPart => true
+      case LenghtenedCommonPart => true
+      case DividedModifiedPart => true
+      case DividedNewPart => true
+      case ShortenedCommonPart => true
+      case ReplacedCommonPart => true
+      case Unknown => false
+      case LengthenedNewPart => false
+      case ShortenedRemovedPart => false
+      case Removed => false
+      case New => false
+      case ReplacedNewPart => false
+      case ReplacedRemovedPart => false
+    }
+  }
+
+  /**
+    * Return true if this is an extension where segment or part of it has no previous entry
+    * All changes should be of form (new_id, new_start, new_end) with non-null values and old_* fields must be null
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is an extension
+    */
+  def isExtensionChange(changeInfo: ChangeInfo) = { // Where asset geo location is a new extension (non-existing)
+    ChangeType.apply(changeInfo.changeType) match {
+      case LengthenedNewPart => true
+      case ReplacedNewPart => true
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true if this is a removed segment or a piece of it. Only old id and m-values should be populated.
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a removed segment
+    */
+  def isRemovalChange(changeInfo: ChangeInfo) = { // Where asset should be removed completely or partially
+    ChangeType.apply(changeInfo.changeType) match {
+      case Removed => true
+      case ReplacedRemovedPart => true
+      case ShortenedRemovedPart => true
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true if this is a new segment. Only new id and m-values should be populated.
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a new segment
+    */
+  def isCreationChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+    ChangeType.apply(changeInfo.changeType) match {
+      case New => true
+      case _ => false
+    }
+  }
+
+  def isUnknownChange(changeInfo: ChangeInfo) = {
+    ChangeType.Unknown.value == changeInfo.changeType
+  }
 }
 
 class VVHClient(vvhRestApiEndPoint: String) {

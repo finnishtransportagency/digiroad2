@@ -109,43 +109,6 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  private def isReplacementChange(changeInfo: ChangeInfo) = {
-    ChangeType.apply(changeInfo.changeType) match {
-      case Unknown => false
-      case CombinedModifiedPart => true
-      case CombinedRemovedPart => false
-      case LenghtenedCommonPart => true
-      case LengthenedNewPart => false
-      case DividedModifiedPart => true
-      case DividedNewPart => true
-      case ShortenedCommonPart => true
-      case ShortenedRemovedPart => false
-      case Removed => false
-      case New => false
-      case ReplacedCommonPart => true
-      case ReplacedNewPart => false
-      case ReplacedRemovedPart => false
-    }
-  }
-
-  private def isExtensionChange(changeInfo: ChangeInfo) = {
-    ChangeType.apply(changeInfo.changeType) match {
-      case Unknown => false
-      case CombinedModifiedPart => false
-      case CombinedRemovedPart => false
-      case LenghtenedCommonPart => false
-      case LengthenedNewPart => true
-      case DividedModifiedPart => false
-      case DividedNewPart => false
-      case ShortenedCommonPart => false
-      case ShortenedRemovedPart => false
-      case Removed => false
-      case New => false
-      case ReplacedCommonPart => false
-      case ReplacedNewPart => true
-      case ReplacedRemovedPart => false
-    }
-  }
   /**
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
@@ -250,7 +213,6 @@ trait LinearAssetOperations {
 
   private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
                                      vvhTimeStamp: Long): Boolean = {
-    assets.foreach(println)
     !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
