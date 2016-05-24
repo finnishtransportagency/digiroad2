@@ -210,5 +210,20 @@ object GeometryUtils {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }
 
+  /**
+    * Creates a pseudo VVH Timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
+    * if less than offsetHours have passed since or 0:00 on previous day if not.
+    * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
+    */
+  def createVVHTimeStamp(offsetHours: Int): Long = {
+    val oneHourInMs = 60 * 60 * 1000L
+    val curr = System.currentTimeMillis
+    val offset = curr % 86400000L
+    if (offset < offsetHours * oneHourInMs)
+      curr - offset - 24*oneHourInMs
+    else
+      curr - offset
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
