@@ -64,7 +64,7 @@
           return manoeuvresEqual(x, newManoeuvre);
         });
       }
-      eventbus.trigger('manoeuvre:changed');
+      eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
 
     var removeManoeuvre = function(manoeuvre) {
@@ -76,7 +76,7 @@
       } else {
         removedManoeuvres.push(manoeuvre);
       }
-      eventbus.trigger('manoeuvre:changed');
+      eventbus.trigger('manoeuvre:changed', manoeuvre);
     };
 
     var setExceptions = function(manoeuvreId, exceptions) {
@@ -84,7 +84,7 @@
       var info = updatedInfo[manoeuvreId] || {};
       info.exceptions = exceptions;
       updatedInfo[manoeuvreId] = info;
-      eventbus.trigger('manoeuvre:changed');
+      eventbus.trigger('manoeuvre:changed', exceptions);
     };
 
     var setValidityPeriods = function(manoeuvreId, validityPeriods) {
@@ -92,7 +92,7 @@
       var info = updatedInfo[manoeuvreId] || {};
       info.validityPeriods = validityPeriods;
       updatedInfo[manoeuvreId] = info;
-      eventbus.trigger('manoeuvre:changed');
+      eventbus.trigger('manoeuvre:changed', validityPeriods);
     };
 
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
@@ -100,7 +100,7 @@
       var info = updatedInfo[manoeuvreId] || {};
       info.additionalInfo = additionalInfo;
       updatedInfo[manoeuvreId] = info;
-      eventbus.trigger('manoeuvre:changed');
+      eventbus.trigger('manoeuvre:changed', additionalInfo);
     };
 
     var cancelModifications = function() {
