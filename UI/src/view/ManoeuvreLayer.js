@@ -40,7 +40,7 @@
       eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
-      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
+      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSourceLinkSelected);
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
     };
 
@@ -254,8 +254,8 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
-        var destinationLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceLinkId(selectedManoeuvreSource.getLinkId());
-        markAdjacentFeatures(application.isReadOnly() ? destinationLinkIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'linkId'));
+        var firstTargetLinkIds = manoeuvresCollection.getFirstTargetRoadLinksBySourceLinkId(selectedManoeuvreSource.getLinkId());
+        markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'linkId'));
         redrawRoadLayer();
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.linkId === selectedManoeuvreSource.getLinkId();
@@ -264,7 +264,7 @@
           selectControl.select(feature);
         }
         highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
-        highlightOverlayFeatures(destinationLinkIds);
+        highlightOverlayFeatures(firstTargetLinkIds);
         indicatorLayer.clearMarkers();
         updateAdjacentLinkIndicators();
       }
@@ -352,14 +352,14 @@
      * Redraws the layer. Shows adjacent link markers in edit mode.
      * @param roadLink
      */
-    var handleManoeuvreSelected = function(roadLink) {
+    var handleManoeuvreSourceLinkSelected = function(roadLink) {
       var aLinks = adjacentLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
       highlightFeatures(roadLink.linkId);
-      var destinationLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceLinkId(roadLink.linkId);
+      var firstTargetLinkIds = manoeuvresCollection.getFirstTargetRoadLinksBySourceLinkId(roadLink.linkId);
       highlightOneWaySigns([roadLink.linkId]);
-      highlightOverlayFeatures(destinationLinkIds);
-      markAdjacentFeatures(application.isReadOnly() ? destinationLinkIds : adjacentLinkIds);
+      highlightOverlayFeatures(firstTargetLinkIds);
+      markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       if (!application.isReadOnly()) {
         drawIndicators(aLinks);

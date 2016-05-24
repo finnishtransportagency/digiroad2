@@ -1,18 +1,24 @@
 (function (root) {
   root.ManoeuvreForm = function(selectedManoeuvreSource) {
-    var buttons = '' +
+
+    /*
+    * HTML Templates
+    */
+    var saveAndCancelButtons = '' +
       '<div class="manoeuvres form-controls">' +
         '<button class="save btn btn-primary" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+
     var continueChainButton = '' +
         '<div class="continue button">' +
         '<button class="new btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
-    var template = '' +
+
+    var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
-        buttons +
+        saveAndCancelButtons +
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
@@ -23,8 +29,9 @@
           '<div></div>' +
         '</div>' +
       '</div>' +
-      '<footer>' + buttons + '</footer>';
-    var manouvreTemplate = '' +
+      '<footer>' + saveAndCancelButtons + '</footer>';
+
+    var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
         '<p class="form-control-static">LINK ID: <%= destLinkId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
@@ -45,6 +52,7 @@
       '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
+
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
@@ -61,7 +69,6 @@
           '</div>' +
           '<div>' +
             '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
-
             '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
               '<div class="form-group exception">' +
                 '<%= deleteButtonTemplate %>' +
@@ -87,6 +94,7 @@
           '<div>' +
         '<div>' +
       '</div>';
+
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
         '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
@@ -94,34 +102,17 @@
           '<% _.forEach(exceptionOptions, function(exception) { %> <option value="<%- exception.typeId %>"><%- exception.title %></option> <% }) %>' +
         '</select>' +
       '</div>';
+
     var deleteButtonTemplate = '<button class="btn-delete delete">x</button>';
 
-    function newValidityPeriodElement() {
-      return '' +
-        '<li><div class="form-group new-validity-period">' +
-        '  <select class="form-control select">' +
-        '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-        '    <option value="Weekday">Ma–Pe</option>' +
-        '    <option value="Saturday">La</option>' +
-        '    <option value="Sunday">Su</option>' +
-        '  </select>' +
-        '</div></li>';
-    }
-    function renderEditButtons(){
-        return '' +
-            '<div class="edit buttons group">' +
-              '<div <% print(checked ? "hidden" : "") %>>'+
-                '<button class="new btn btn-new">Uusi rajoitus</button>' +
-              '</div>'+
-              '<div <% print(checked ? "" : "hidden") %>>'+
-                '<button class="modify btn btn-modify">Muokkaa</button>' +
-              '</div>'+
-            '</div>';
-    }
-
+    /**
+     * Bind events and HTML templates
+     */
     var bindEvents = function() {
+      // Get form root element into variable by div id 'feature-attributes'
       var rootElement = $('#feature-attributes');
 
+      // Show and hide form elements according to readOnly value
       function toggleMode(readOnly) {
         rootElement.find('.adjacent-link').toggle(!readOnly);
         rootElement.find('.manoeuvre').toggle(readOnly);
@@ -132,14 +123,19 @@
           rootElement.find('.wrapper').removeClass('read-only');
         }
       }
+
+      // Listen to view/edit mode button
       eventbus.on('application:readOnly', toggleMode);
 
+      // Listen to road link selection on map
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
-        rootElement.html(_.template(template)(roadLink));
+        rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));
+
+        // Create html elements for view mode
         _.each(roadLink.manoeuvres, function(manoeuvre) {
-          rootElement.find('.form').append(_.template(manouvreTemplate)(_.merge({}, manoeuvre, {
+          rootElement.find('.form').append(_.template(manouvresViewModeTemplate)(_.merge({}, manoeuvre, {
             localizedExceptions: localizeExceptions(manoeuvre.exceptions),
             validityPeriodElements: _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
@@ -330,6 +326,33 @@
 
     bindEvents();
   };
+
+  /*
+   * Utility functions
+   */
+
+  function newValidityPeriodElement() {
+    return '' +
+        '<li><div class="form-group new-validity-period">' +
+        '  <select class="form-control select">' +
+        '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+        '    <option value="Weekday">Ma–Pe</option>' +
+        '    <option value="Saturday">La</option>' +
+        '    <option value="Sunday">Su</option>' +
+        '  </select>' +
+        '</div></li>';
+  }
+  function renderEditButtons(){
+    return '' +
+        '<div class="edit buttons group">' +
+        '<div <% print(checked ? "hidden" : "") %>>'+
+        '<button class="new btn btn-new">Uusi rajoitus</button>' +
+        '</div>'+
+        '<div <% print(checked ? "" : "hidden") %>>'+
+        '<button class="modify btn btn-modify">Muokkaa</button>' +
+        '</div>'+
+        '</div>';
+  }
 
   var dayLabels = {
     Weekday: "Ma–Pe",
