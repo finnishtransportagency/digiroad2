@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.tz.DateTimeZoneBuilder
+
 object GeometryUtils {
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
@@ -165,6 +168,7 @@ object GeometryUtils {
 
   /**
     * Check if segments overlap (not just barely touching)
+    *
     * @param segment1
     * @param segment2
     * @return
@@ -184,6 +188,7 @@ object GeometryUtils {
 
   /**
     * Test if one segment is completely covered by another, either way
+    *
     * @param segment1 segment 1 to test
     * @param segment2 segment 2 to test
     * @return true, if segment 1 is inside segment 2 or the other way around
@@ -213,16 +218,14 @@ object GeometryUtils {
   /**
     * Creates a pseudo VVH Timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
     * if less than offsetHours have passed since or 0:00 on previous day if not.
+    *
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
   def createVVHTimeStamp(offsetHours: Int): Long = {
     val oneHourInMs = 60 * 60 * 1000L
-    val curr = System.currentTimeMillis
-    val offset = curr % 86400000L
-    if (offset < offsetHours * oneHourInMs)
-      curr - offset - 24*oneHourInMs
-    else
-      curr - offset
+    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+    curr - (curr % (24L*oneHourInMs))
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
