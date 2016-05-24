@@ -601,10 +601,46 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   /**
+    * Get the link end points depending on the road link directions
+    * @param roadlink The Roadlink
+    * @return End points of the road link directions
+    */
+  def getRoadLinkEndDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
+    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry);
+    roadlink.trafficDirection match {
+      case TrafficDirection.TowardsDigitizing =>
+        Seq(endPoints._2)
+      case TrafficDirection.AgainstDigitizing =>
+        Seq(endPoints._1)
+      case _ =>
+        Seq(endPoints._1, endPoints._2)
+    }
+  }
+
+  /**
+    * Get the link start points depending on the road link directions
+    * @param roadlink The Roadlink
+    * @return Start points of the road link directions
+    */
+  def getRoadLinkStartDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
+    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry);
+    roadlink.trafficDirection match {
+      case TrafficDirection.TowardsDigitizing =>
+        Seq(endPoints._1)
+      case TrafficDirection.AgainstDigitizing =>
+        Seq(endPoints._2)
+      case _ =>
+        Seq(endPoints._1, endPoints._2)
+    }
+  }
+
+  /**
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */
   def getAdjacent(linkId: Long): Seq[RoadLink] = {
-    val sourceLinkGeometryOption = getRoadLinkGeometry(linkId)
+    val sourceRoadLink = getRoadLinksFromVVH(Set(linkId)).headOption
+    val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
+    val sourceDirectionPoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
@@ -616,6 +652,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         .filter(roadLink => {
           val targetLinkGeometry = roadLink.geometry
           GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
+        })
+        .filter(roadlink => {
+          //It's a valid destination link to turn if the end point of the source exists on the
+          //start points of the destination links
+          val pointDirections = getRoadLinkStartDirectionPoints(roadlink)
+          (sourceDirectionPoints.exists(sourcePoint => pointDirections.contains(sourcePoint)))
         })
     }).getOrElse(Nil)
   }
