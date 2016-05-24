@@ -117,7 +117,7 @@ trait LinearAssetOperations {
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
   private def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
-                                                         currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
+                                                     currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
     val (replacementChanges, otherChanges) = changes.partition(isReplacementChange)
     val reverseLookupMap = replacementChanges.filterNot(c=>c.oldId.isEmpty || c.newId.isEmpty).map(c => c.newId.get -> c).groupBy(_._1).mapValues(_.map(_._2))
 
@@ -220,12 +220,12 @@ trait LinearAssetOperations {
   }
 
   private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
-                                     vvhTimeStamp: Long): Boolean = {
+                                        vvhTimeStamp: Long): Boolean = {
     !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
   private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
-                                     vvhTimeStamp: Long): Boolean = {
+                                vvhTimeStamp: Long): Boolean = {
     val targetAssets = assets.filter(a => a.linkId == linkId)
     targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp)
   }
@@ -292,7 +292,7 @@ trait LinearAssetOperations {
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
-          persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate)
+            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate)
           ,
           link = roadLink
         )
@@ -304,7 +304,8 @@ trait LinearAssetOperations {
     * Expires linear asset. Used by Digiroad2Api /linearassets DELETE endpoint and Digiroad2Context.LinearAssetUpdater actor.
     */
   def expire(ids: Seq[Long], username: String): Seq[Long] = {
-    logger.info("Expiring ids " + ids.mkString(", "))
+    if (ids.nonEmpty)
+      logger.info("Expiring ids " + ids.mkString(", "))
     withDynTransaction {
       ids.foreach(dao.updateExpiration(_, expired = true, username))
       ids
@@ -324,7 +325,8 @@ trait LinearAssetOperations {
    * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
   def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
-    logger.info("Saving projected linear assets")
+    if (newLinearAssets.nonEmpty)
+      logger.info("Saving projected linear assets")
     def getValuePropertyId(value: Option[Value], typeId: Int) = {
       value match {
         case Some(NumericValue(intValue)) =>
@@ -344,7 +346,8 @@ trait LinearAssetOperations {
         dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
       updateProjected(toUpdate, persisted)
-      logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+      if (newLinearAssets.nonEmpty)
+        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
@@ -359,7 +362,8 @@ trait LinearAssetOperations {
           case None => None
         }
       }
-      logger.info("Added assets for linkids " + toInsert.map(_.linkId))
+      if (newLinearAssets.nonEmpty)
+        logger.info("Added assets for linkids " + toInsert.map(_.linkId))
     }
   }
 
@@ -397,6 +401,8 @@ trait LinearAssetOperations {
     * Updates start and end measures after geometry change in VVH. Used by Digiroad2Context.LinearAssetUpdater actor.
     */
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
+    if (adjustments.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + adjustments.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
     withDynTransaction {
       adjustments.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
@@ -421,7 +427,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, System.currentTimeMillis)
       }
     }
   }
@@ -445,7 +451,7 @@ trait LinearAssetOperations {
         case Some(value) => updateWithoutTransaction(Seq(id), value, username)
       }
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username))
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp))
 
       Seq(id) ++ Seq(createdIdOption).flatten
     }
@@ -476,7 +482,7 @@ trait LinearAssetOperations {
 
       dao.updateSideCode(id, SideCode.TowardsDigitizing)
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username))
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp))
 
       Seq(existing.id) ++ created
     }
@@ -504,7 +510,7 @@ trait LinearAssetOperations {
     ids
   }
 
-  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): Long = {
+  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String, vvhTimeStamp: Long): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username)
     value match {
       case NumericValue(intValue) =>
