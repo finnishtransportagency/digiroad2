@@ -117,16 +117,18 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
-    withDynTransaction {
-      dao.getByRoadLinks(roadLinks.map(_.linkId)).map{ manoeuvre =>
-        val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
-        val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
-        val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
+    val manoeuvres =
+      withDynTransaction {
+        dao.getByRoadLinks(roadLinks.map(_.linkId)).map{ manoeuvre =>
+          val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
+          val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
+          val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)
 
-        manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
+          manoeuvre.copy(elements = cleanChain(firstElement, lastElement, intermediateElements))
 
-      }.filter(isValidManoeuvre(roadLinks))
-    }
+        }
+      }
+    manoeuvres.filter(isValidManoeuvre(roadLinks))
   }
 
   private def sourceLinkId(manoeuvre: Manoeuvre) = {
