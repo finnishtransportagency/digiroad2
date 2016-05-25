@@ -4,6 +4,7 @@ set :repo_url, 'https://github.com/finnishtransportagency/digiroad2.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'master'
 set :deploy_to, "/home/web/digiroad2"
 set :pty, true
+set :log_level, :info
 
 namespace :deploy do
   task :start do
