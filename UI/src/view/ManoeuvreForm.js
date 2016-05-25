@@ -225,18 +225,49 @@
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
 
+        // Listen to 'new manoeuvre' button click
         rootElement.find('.adjacent-link').on('click', '.edit button.new', function(event){
-          var selects = $(event.delegateTarget).find('select');
-          var button = $(event.delegateTarget).find('button');
-          var text = $(event.delegateTarget).find('input[type="text"]');
-          var group = $(event.delegateTarget).find('.manoeuvre-details');
+          var formGroupElement = $(event.delegateTarget);
+
+          var selects = formGroupElement.find('select');
+          var button = formGroupElement.find('button');
+          var text = formGroupElement.find('input[type="text"]');
+          var group = formGroupElement.find('.manoeuvre-details');
+          var editButton = formGroupElement.find('.edit');
+          editButton.prop('hidden',true);
+
+          formGroupElement.siblings('.adjacent-link').remove();
+          formGroupElement.find('.marker').remove();
 
           selects.prop('disabled', false);
           button.prop('disabled', false);
           text.prop('disabled', false);
           group.slideDown('fast');
 
-          var manoeuvre = manoeuvreData($(event.delegateTarget));
+          var manoeuvre = manoeuvreData(formGroupElement);
+          selectedManoeuvreSource.addManoeuvre(manoeuvre);
+        });
+
+        // Listen to 'modify manoeuvre' button click
+        rootElement.find('.adjacent-link').on('click', '.edit button.modify', function(event){
+          var formGroupElement = $(event.delegateTarget);
+
+          var selects = formGroupElement.find('select');
+          var button = formGroupElement.find('button');
+          var text = formGroupElement.find('input[type="text"]');
+          var group = formGroupElement.find('.manoeuvre-details');
+          var editButton = formGroupElement.find('.edit');
+          editButton.prop('hidden',true);
+
+          formGroupElement.siblings('.adjacent-link').remove();
+          formGroupElement.find('.marker').remove();
+
+          selects.prop('disabled', false);
+          button.prop('disabled', false);
+          text.prop('disabled', false);
+          group.slideDown('fast');
+
+          var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
         });
 
@@ -317,10 +348,6 @@
 
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
-      });
-      rootElement.on('click', '.edit button.new', function(event) {
-        var button = $(event.delegateTarget).find('.edit');
-        button.prop('hidden',true);
       });
     };
 
