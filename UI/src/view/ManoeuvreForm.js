@@ -33,7 +33,7 @@
 
     var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<p class="form-control-static">LINK ID: <%= destLinkId %></p>' +
+        '<p class="form-control-static">LINK ID: <%= destLinkId %> <%print(isIntermidiate ? "+" : "")%> </p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -56,7 +56,7 @@
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
-          '<p class="form-control-static">LINK ID <%= linkId %> <span class="marker"><%= marker %></span>' +
+          '<p class="form-control-static">LINK ID <%= linkId %> <%print(isIntermidiate ? "+" : "")%> <span class="marker"><%= marker %></span>' +
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
         '<div class="manoeuvre-details" hidden>' +
@@ -134,8 +134,17 @@
         rootElement.html(_.template(templateWithHeaderAndFooter)(roadLink));
 
         // Create html elements for view mode
-        _.each(roadLink.manoeuvres, function(manoeuvre) {
+        _.each(roadLink.manoeuvres, function (manoeuvre) {
+          // Verify if Manoeuvre have intermediate Links to show the plus sign
+          var isIntermidiate = _.some(manoeuvre.elements, function (element) {
+            if (element.elementType == 2) {
+              return true;
+            } else {
+              return false;
+            }
+          });
           rootElement.find('.form').append(_.template(manouvresViewModeTemplate)(_.merge({}, manoeuvre, {
+            isIntermidiate: isIntermidiate,
             localizedExceptions: localizeExceptions(manoeuvre.exceptions),
             validityPeriodElements: _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
@@ -156,6 +165,16 @@
                 .map(validityPeriodElement)
                 .join('') :
               '';
+          // Verify if Manoeuvre have intermediate Links to show the plus sign
+          var isIntermidiate = _.find(roadLink.manoeuvres, function (manoeuvre) {
+            return _.some(manoeuvre.elements, function (element) {
+              if (element.elementType == 2) {
+                return true;
+              } else {
+                return false;
+              }
+            });
+          });
 
           rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
             checked: checked,
@@ -165,7 +184,8 @@
             additionalInfo: additionalInfo,
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
-            existingValidityPeriodElements: existingValidityPeriodElements
+            existingValidityPeriodElements: existingValidityPeriodElements,
+            isIntermidiate: isIntermidiate
           })));
         });
 
