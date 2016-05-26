@@ -33,7 +33,7 @@
 
     var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<p class="form-control-static">LINK ID: <%= destLinkId %> <%print(isIntermidiate ? "+" : "")%> </p>' +
+        '<p class="form-control-static">LINK ID: <%= destLinkId %> <%print(isIntermediate ? "+" : "")%> </p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -56,7 +56,9 @@
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
-          '<p class="form-control-static">LINK ID <%= linkId %> <%print(isIntermidiate ? "+" : "")%> <span class="marker"><%= marker %></span>' +
+          '<p class="form-control-static">LINK ID <%= linkId %> ' +
+          "<%print(isIntermediate ? '<span class=marker>+</span> ' : '')%>" +
+          '<span class="marker"><%= marker %></span>' +
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
         '<div class="manoeuvre-details" hidden>' +
@@ -136,15 +138,11 @@
         // Create html elements for view mode
         _.each(roadLink.manoeuvres, function (manoeuvre) {
           // Verify if Manoeuvre have intermediate Links to show the plus sign
-          var isIntermidiate = _.some(manoeuvre.elements, function (element) {
-            if (element.elementType == 2) {
-              return true;
-            } else {
-              return false;
-            }
+          var isIntermediate = _.some(manoeuvre.elements, function (element) {
+            return element.elementType == 2;
           });
           rootElement.find('.form').append(_.template(manouvresViewModeTemplate)(_.merge({}, manoeuvre, {
-            isIntermidiate: isIntermidiate,
+            isIntermediate: isIntermediate,
             localizedExceptions: localizeExceptions(manoeuvre.exceptions),
             validityPeriodElements: _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
@@ -166,16 +164,11 @@
                 .join('') :
               '';
           // Verify if Manoeuvre have intermediate Links to show the plus sign
-          var isIntermidiate = _.find(roadLink.manoeuvres, function (manoeuvre) {
+          var isIntermediate = _.some(roadLink.manoeuvres, function (manoeuvre) {
             return _.some(manoeuvre.elements, function (element) {
-              if (element.elementType == 2) {
-                return true;
-              } else {
-                return false;
-              }
+              return element.sourceLinkId == adjacentLink.linkId && element.elementType == 2;
             });
-          });
-
+          }); // False if no manoeuvre for road link or no intermediates found
           rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
@@ -185,7 +178,7 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermidiate: isIntermidiate
+            isIntermediate: isIntermediate
           })));
         });
 

@@ -5,7 +5,7 @@
     var removedManoeuvres = [];
     var updatedInfo = {};
     var multipleSourceManoeuvresHMap = {};
-    var multipleIntermidiateManoeuvresHMap = {};
+    var multipleIntermediateManoeuvresHMap = {};
     var multipleDestinationManoeuvresHMap = {};
     var sourceDestinationManoeuvresHMap = {};
     var dirty = false;
@@ -108,7 +108,7 @@
       removedManoeuvres = [];
       updatedInfo = {};
       multipleSourceManoeuvresHMap = {};
-      multipleIntermidiateManoeuvresHMap = {};
+      multipleIntermediateManoeuvresHMap = {};
       multipleDestinationManoeuvresHMap = {};
       sourceDestinationManoeuvresHMap = {};
       dirty = false;
@@ -160,8 +160,8 @@
       dirty = false;
     };
 
-    var cleanHMapIntermidiateManoeuvres = function() {
-      multipleIntermidiateManoeuvresHMap = {};
+    var cleanHMapIntermediateManoeuvres = function() {
+      multipleIntermediateManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -219,8 +219,8 @@
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
                 if (element.sourceLinkId === roadLink.linkId && element.elementType === 2){
-                  multipleIntermidiateManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in multipleIntermidiateManoeuvresHMap ? multipleIntermidiateManoeuvresHMap[element.sourceLinkId] += 1 : 1;
-                  return multipleIntermidiateManoeuvresHMap[element.sourceLinkId] >= 2;
+                  multipleIntermediateManoeuvresHMap[element.sourceLinkId] = element.sourceLinkId in multipleIntermediateManoeuvresHMap ? multipleIntermediateManoeuvresHMap[element.sourceLinkId] += 1 : 1;
+                  return multipleIntermediateManoeuvresHMap[element.sourceLinkId] >= 2;
                 }
               });
             })
@@ -372,7 +372,7 @@
       isDirty: isDirty,
       save: save,
       cleanHMapSourceManoeuvres: cleanHMapSourceManoeuvres,
-      cleanHMapIntermidiateManoeuvres: cleanHMapIntermidiateManoeuvres,
+      cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
       cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres
     };

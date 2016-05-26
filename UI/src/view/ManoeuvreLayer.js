@@ -229,7 +229,7 @@
         return !_.isEmpty(roadLink.multipleIntermediateManoeuvres);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
-      manoeuvresCollection.cleanHMapIntermidiateManoeuvres();
+      manoeuvresCollection.cleanHMapIntermediateManoeuvres();
     };
 
     var drawMultipleDestinationFeatures = function(roadLinks) {
