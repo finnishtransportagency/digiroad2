@@ -205,8 +205,16 @@
     // Utility functions
     //---------------------------------------
 
-    //Attach manoeuvre data to road link
-    var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
+    /**
+     * Attaches manoeuvre data to road link.
+     * - Manoeuvres with road link as source link
+     * - Road link visualization information
+     *
+     * @param roadLinks
+     * @param manoeuvres
+     * @returns {Array} Roadlinks enriched with manoeuvre related data.
+     */
+     var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
       return _.map(roadLinks, function (roadLink) {
 
         // Filter manoeuvres whose sourceLinkId matches road link's id
@@ -217,7 +225,6 @@
         });
 
         // Check if road link is intermediate link of some manoeuvre
-        // Used to visualize road link on map
         var intermediateManoeuvres  = _.chain(manoeuvres)
             .filter(function(manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -228,7 +235,6 @@
             .value();
 
         // Check if road link is source link for multiple manoeuvres
-        // Used to visualize road link on map
         var multipleSourceManoeuvres = _.chain(filteredManoeuvres)
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -240,7 +246,6 @@
             .value();
 
         // Check if road link is intermediate link for multiple manoeuvres
-        // Used to visualize road link on map
         var multipleIntermediateManoeuvres = _.chain(manoeuvres)
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -254,7 +259,6 @@
             .value();
 
         // Check if road link is destination link of some manoeuvre
-        // Used to visualize road link on map
         var destinationOfManoeuvres = _.chain(manoeuvres)
           .filter(function(manoeuvre) {
             return _.some(manoeuvre.elements, function (element) {
@@ -265,7 +269,6 @@
           .value();
 
         // Check if road link is destination link for multiple manoeuvres
-        // Used to visualize road link on map
         var multipleDestinationManoeuvres = _.chain(manoeuvres)
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -279,7 +282,6 @@
             .value();
 
         // Check if road link is source and destination link for manoeuvres
-        // Used to visualize road link on map
         var sourceDestinationManoeuvres = _.chain(manoeuvres)
             .filter(function (manoeuvre) {
               return _.some(manoeuvre.elements, function (element) {
@@ -293,7 +295,6 @@
             .value();
 
         // Check if road link is source link of some manoeuvre
-        // Used to visualize road link on map
         var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
 
         return _.merge({}, roadLink, {
@@ -314,13 +315,19 @@
       backend.getManoeuvres(extent, callback);
     };
 
-    // Extract manoeuvre sourceLinkId and destLinkId from first and last element to manoeuvre level
+    /**
+     * Extract manoeuvre element data to manoeuvre level.
+     *
+     * @param manoeuvres
+     * @returns {Array} Manoeuvres with data to be used in UI functionality.
+    */
     var formatManoeuvres = function(manoeuvres) {
       return _.map(manoeuvres, function (manoeuvre) {
         var sourceLinkId = manoeuvre.elements[0].sourceLinkId;
         var firstTargetLinkId = manoeuvre.elements[0].destLinkId;
         var lastElementIndex = manoeuvre.elements.length - 1;
         var destLinkId = manoeuvre.elements[lastElementIndex].sourceLinkId;
+        var linkIds = _.chain(manoeuvre.elements).pluck('sourceLinkId').value();
         var intermediateLinkIds = _.chain(manoeuvre.elements)
           .filter(function(element) {
             return element.elementType === 2;
@@ -330,6 +337,7 @@
         return _.merge({}, manoeuvre, {
           sourceLinkId: sourceLinkId,
           firstTargetLinkId: firstTargetLinkId,
+          linkIds: linkIds,
           intermediateLinkIds: intermediateLinkIds,
           destLinkId: destLinkId
         });
