@@ -334,6 +334,17 @@
         .value();
     };
 
+    var nonAdjacentTargetLinks = function(roadLink) {
+      return _.chain(roadLink.nonAdjacentTargets)
+        .map(function(adjacent) {
+          return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
+            return link.linkId === adjacent.linkId;
+          }));
+        })
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .value();
+    };
+
     var markAdjacentFeatures = function(adjacentLinkIds) {
       _.forEach(roadLayer.layer.features, function(feature) {
         feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.linkId);
@@ -354,7 +365,9 @@
      */
     var handleManoeuvreSourceLinkSelected = function(roadLink) {
       var aLinks = adjacentLinks(roadLink);
+      var tLinks = nonAdjacentTargetLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
+      var targetLinkIds = _.pluck(tLinks, 'linkId');
       highlightFeatures(roadLink.linkId);
       var firstTargetLinkIds = manoeuvresCollection.getFirstTargetRoadLinksBySourceLinkId(roadLink.linkId);
       highlightOneWaySigns([roadLink.linkId]);
@@ -362,6 +375,7 @@
       markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       if (!application.isReadOnly()) {
+        drawIndicators(tLinks);
         drawIndicators(aLinks);
       }
     };
@@ -370,6 +384,7 @@
       if (!application.isReadOnly()) {
         if(selectedManoeuvreSource.exists()) {
           drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
+          drawIndicators(nonAdjacentTargetLinks(selectedManoeuvreSource.get()));
         }
       } else {
         indicatorLayer.clearMarkers();

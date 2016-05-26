@@ -39,18 +39,39 @@
           .value();
     };
 
+    var getNonAdjacentTargetRoadLinksBySourceLinkId = function(linkId) {
+      return _.chain(manoeuvresWithModifications())
+        .filter(function(manoeuvre) {
+          return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds.length > 0;
+        })
+        .pluck('destLinkId')
+        .value();
+    };
+
     var get = function(linkId, callback) {
       var roadLink = _.find(getAll(), {linkId: linkId});
+      var nonAdj = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
+      var targets = _.map(roadCollection.get(nonAdj), function (t) {
+        return t.getData();
+      });
       backend.getAdjacent(roadLink.linkId, function(adjacent) {
         var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
-        var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+          "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
+          "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
+          "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
         var sortedAdjacentWithMarker = _.chain(adjacent)
             .sortBy('id')
             .map(function(a, i){
               return _.merge({}, a, { marker: markers[i] });
             }).value();
+        var sortedTargetsWithMarker = _.chain(targets)
+          .sortBy('id')
+          .map(function(a, i){
+            return _.merge({}, a, { marker: markers[i+adjacent.length] });
+          }).value();
         var sourceRoadLinkModel = roadCollection.get([linkId])[0];
-        callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
+        callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
       });
     };
 
