@@ -310,6 +310,9 @@
 
     var drawIndicators = function(links) {
       var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+      var visibleLinks = _.filter(links, function (link) {
+        return typeof link.points != 'undefined';
+      });
       var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
         var box = new OpenLayers.Marker.Box(bounds, "00000000");

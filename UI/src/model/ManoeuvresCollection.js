@@ -51,8 +51,13 @@
     var get = function(linkId, callback) {
       var roadLink = _.find(getAll(), {linkId: linkId});
       var nonAdj = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
-      var targets = _.map(roadCollection.get(nonAdj), function (t) {
-        return t.getData();
+      var targets = _.map(nonAdj, function (t) {
+        var link = roadCollection.get([t])[0];
+        var data = link ? link.getData() : 
+        {
+          linkId: t
+        };
+        return data;
       });
       backend.getAdjacent(roadLink.linkId, function(adjacent) {
         var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
