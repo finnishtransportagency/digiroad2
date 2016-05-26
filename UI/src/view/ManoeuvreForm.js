@@ -12,7 +12,7 @@
 
     var continueChainButton = '' +
         '<div class="continue button">' +
-        '<button class="new btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
+        '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
     var templateWithHeaderAndFooter = '' +
@@ -353,6 +353,17 @@
 
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
+        });
+
+        // Listen to 'continue manoeuvre' button click
+        rootElement.find('.adjacent-link').on('click', '.continue button.continue', function(event){
+          var formGroupElement = $(event.delegateTarget);
+
+          var notification = formGroupElement.find('.form-notification');
+          var continueButton = formGroupElement.find('.continue');
+
+          notification.prop('hidden', true);
+          continueButton.prop('hidden',true);
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
