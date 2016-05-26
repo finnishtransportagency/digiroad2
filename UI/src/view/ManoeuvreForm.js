@@ -259,9 +259,13 @@
           var destLinkId = parseInt(formGroupElement.attr('linkId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
+          // TODO: Add link id chain here instead of destLinkId when chain radio button functionality is implemented.
+          // SourceLinkId is added as the first item in list in SelectedManoeuvreSource.addManoeuvre.
+          var linkIds = [destLinkId];
           return {
             manoeuvreId: manoeuvreId,
             destLinkId: destLinkId,
+            linkIds: linkIds,
             exceptions: manoeuvreExceptions(formGroupElement),
             validityPeriods: manoeuvreValidityPeriods(formGroupElement),
             additionalInfo: additionalInfo

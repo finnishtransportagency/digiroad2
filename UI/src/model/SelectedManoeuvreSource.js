@@ -38,7 +38,9 @@
     };
 
     var addManoeuvre = function(manoeuvre) {
-      var newManoeuvre = _.merge({}, { sourceLinkId: current.linkId }, manoeuvre);
+      var sourceLinkId = current.linkId;
+      var linkIdsWithSourceLinkId = manoeuvre.linkIds.unshift(sourceLinkId);
+      var newManoeuvre = _.merge({}, { sourceLinkId: sourceLinkId, linkIds: linkIdsWithSourceLinkId }, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
