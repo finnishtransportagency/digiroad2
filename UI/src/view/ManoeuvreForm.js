@@ -34,7 +34,7 @@
     var manouvresViewModeTemplate = '' +
       '<div class="form-group manoeuvre">' +
         '<p class="form-control-static">LINK ID: <%= destLinkId %>' +
-        "<%print(isIntermediate ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">+</span> ' : '')%>" +
+        "<%print(isIntermediate ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">✚</span> ' : '')%>" +
         ' </p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
@@ -102,7 +102,7 @@
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
       '<div class="form-group">' +
       '<p class="form-control-static">LINK ID <%= linkId %> ' +
-      "<%print(isIntermediate ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">+</span> ' : '')%>" +
+      "<%print(isIntermediate ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">✚</span> ' : '')%>" +
       '<span class="marker"><%= marker %></span>' +
       '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
       '</div>' +
