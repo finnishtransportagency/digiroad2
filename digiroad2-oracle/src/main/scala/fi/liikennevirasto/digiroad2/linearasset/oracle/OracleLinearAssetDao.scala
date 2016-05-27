@@ -591,21 +591,22 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Returns m-values and side code by asset id. Used by OracleLinearAssetDao.splitSpeedLimit.
     */
-  def getLinkGeometryData(id: Long): (Double, Double, SideCode) = {
+  def getLinkGeometryData(id: Long): (Double, Double, SideCode, Long) = {
     sql"""
-      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
+      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE, lrm.ADJUSTED_TIMESTAMP
         from asset a
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
         where a.id = $id
-    """.as[(Double, Double, SideCode)].first
+    """.as[(Double, Double, SideCode, Long)].first
   }
 
   /**
     * Creates new speed limit with municipality validation. Returns id of new speed limit.
     * Used by SpeedLimitService.create.
     */
-  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
+  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,
+                       vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
     municipalityValidation(vvhClient.fetchVVHRoadlink(linkId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
@@ -769,7 +770,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       vvhLinks
     }
 
-    val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id)
+    val (startMeasure, endMeasure, sideCode, vvhTimeStamp) = getLinkGeometryData(id)
     val link: (Long, Double, (Point, Point)) =
       withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).headOption.map { case (linkId, length, geometry, _) =>
         (linkId, length, GeometryUtils.geometryEndpoints(geometry))
@@ -779,7 +780,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
     updateMValues(id, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value, None, None, None, None).get
+    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value, Option(vvhTimeStamp), None, None, None).get
     createdId
   }
 

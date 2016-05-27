@@ -13,7 +13,7 @@ object LinearAssetUtils {
     * @return true if speed limit may be outdated
     */
   def newChangeInfoDetected(asset : LinearAsset, change: Seq[ChangeInfo]) = {
-    change.map(c => (c.oldId.getOrElse(0), c.newId.getOrElse(0), c.vvhTimeStamp.getOrElse(0))).exists {
+    change.map(c => (c.oldId.getOrElse(0), c.newId.getOrElse(0), c.vvhTimeStamp)).exists {
       case (oldId: Long, newId: Long, vvhTimeStamp: Long) => (oldId == asset.linkId || newId == asset.linkId) &&
         vvhTimeStamp > asset.vvhTimeStamp
       case _ => false
@@ -35,7 +35,7 @@ object LinearAssetUtils {
   def isNewProjection(roadLink: RoadLink, changeInfo: Seq[ChangeInfo], assets: Seq[LinearAsset]) = {
     changeInfo.exists(_.newId == roadLink.linkId) &&
       assets.exists(asset => (asset.linkId == roadLink.linkId) &&
-        (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp.getOrElse(0: Long)))
+        (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp))
   }
 
   /* Filter to only those Ids that are no longer present on map and not referred to in change information

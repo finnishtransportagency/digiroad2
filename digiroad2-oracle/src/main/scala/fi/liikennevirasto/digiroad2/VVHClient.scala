@@ -5,7 +5,7 @@ import java.net.URLEncoder
 import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -24,15 +24,9 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-case class ChangeInfo(oldId: Option[Long],
-                      newId: Option[Long],
-                      mmlId: Long,
-                      changeType: Int,
-                      oldStartMeasure: Option[Double],
-                      oldEndMeasure: Option[Double],
-                      newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double],
-                      vvhTimeStamp: Option[Long])
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
+                      oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
+                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -61,6 +55,75 @@ object ChangeType {
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
   case object ReplacedNewPart extends ChangeType { def value = 14 }
   case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+
+  /**
+    * Return true if this is a replacement where segment or part of it replaces another, older one
+    * All changes should be of form (old_id, new_id, old_start, old_end, new_start, new_end) with non-null values
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a replacement
+    */
+  def isReplacementChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+    ChangeType.apply(changeInfo.changeType) match {
+      case CombinedModifiedPart => true
+      case CombinedRemovedPart => true
+      case LenghtenedCommonPart => true
+      case DividedModifiedPart => true
+      case DividedNewPart => true
+      case ShortenedCommonPart => true
+      case ReplacedCommonPart => true
+      case Unknown => false
+      case LengthenedNewPart => false
+      case ShortenedRemovedPart => false
+      case Removed => false
+      case New => false
+      case ReplacedNewPart => false
+      case ReplacedRemovedPart => false
+    }
+  }
+
+  /**
+    * Return true if this is an extension where segment or part of it has no previous entry
+    * All changes should be of form (new_id, new_start, new_end) with non-null values and old_* fields must be null
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is an extension
+    */
+  def isExtensionChange(changeInfo: ChangeInfo) = { // Where asset geo location is a new extension (non-existing)
+    ChangeType.apply(changeInfo.changeType) match {
+      case LengthenedNewPart => true
+      case ReplacedNewPart => true
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true if this is a removed segment or a piece of it. Only old id and m-values should be populated.
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a removed segment
+    */
+  def isRemovalChange(changeInfo: ChangeInfo) = { // Where asset should be removed completely or partially
+    ChangeType.apply(changeInfo.changeType) match {
+      case Removed => true
+      case ReplacedRemovedPart => true
+      case ShortenedRemovedPart => true
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true if this is a new segment. Only new id and m-values should be populated.
+    * @param changeInfo changeInfo object to check
+    * @return true, if this is a new segment
+    */
+  def isCreationChange(changeInfo: ChangeInfo) = { // Where asset geo location should be replaced with another
+    ChangeType.apply(changeInfo.changeType) match {
+      case New => true
+      case _ => false
+    }
+  }
+
+  def isUnknownChange(changeInfo: ChangeInfo) = {
+    ChangeType.Unknown.value == changeInfo.changeType
+  }
 }
 
 class VVHClient(vvhRestApiEndPoint: String) {
@@ -187,7 +250,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
-    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue())
+    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue()).getOrElse(0L)
     val oldStartMeasure = extractMeasure(attributes("OLD_START"))
     val oldEndMeasure = extractMeasure(attributes("OLD_END"))
     val newStartMeasure = extractMeasure(attributes("NEW_START"))
@@ -411,6 +474,19 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case null => None
       case _ => Some(value.toString.toDouble)
     }
+  }
+
+  /**
+    * Creates a pseudo VVH Timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
+    * if less than offsetHours have passed since or 0:00 on previous day if not.
+    *
+    * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
+    */
+  def createVVHTimeStamp(offsetHours: Int): Long = {
+    val oneHourInMs = 60 * 60 * 1000L
+    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+    curr - (curr % (24L*oneHourInMs))
   }
 }
 
