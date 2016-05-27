@@ -24,15 +24,9 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
-case class ChangeInfo(oldId: Option[Long],
-                      newId: Option[Long],
-                      mmlId: Long,
-                      changeType: Int,
-                      oldStartMeasure: Option[Double],
-                      oldEndMeasure: Option[Double],
-                      newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double],
-                      vvhTimeStamp: Option[Long])
+case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
+                      oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
+                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -256,7 +250,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.longValue())
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
-    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue())
+    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue()).getOrElse(0L)
     val oldStartMeasure = extractMeasure(attributes("OLD_START"))
     val oldEndMeasure = extractMeasure(attributes("OLD_END"))
     val newStartMeasure = extractMeasure(attributes("NEW_START"))

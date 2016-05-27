@@ -179,9 +179,8 @@ trait LinearAssetOperations {
       case (_, _) => (0.0, 0.0)
     }
 
-    if (mStart != mEnd && givenAndEqualLongs(extensionChangeInfo.vvhTimeStamp, replacementChangeInfo.vvhTimeStamp))
-      Option(extensionChangeInfo.copy(oldId = replacementChangeInfo.oldId, oldStartMeasure = Option(mStart),
-        oldEndMeasure = Option(mEnd)))
+    if (mStart != mEnd && extensionChangeInfo.vvhTimeStamp == replacementChangeInfo.vvhTimeStamp)
+      Option(extensionChangeInfo.copy(oldId = replacementChangeInfo.oldId, oldStartMeasure = Option(mStart), oldEndMeasure = Option(mEnd)))
     else
       None
   }
@@ -240,8 +239,8 @@ trait LinearAssetOperations {
     (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(targetId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(assets, targetId, oldStart, oldEnd, vvhTimeStamp.getOrElse(0L)) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
+        condition(assets, targetId, oldStart, oldEnd, vvhTimeStamp) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
           case false =>
             None
         }

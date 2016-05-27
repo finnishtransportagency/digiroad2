@@ -185,9 +185,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
@@ -242,9 +242,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 25.000, ${SideCode.TowardsDigitizing.value})""".execute
@@ -323,9 +323,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
@@ -404,9 +404,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), Some(144000000)),
-      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
+      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
@@ -466,8 +466,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 3, Some(0), Some(10), Some(5), Some(15), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 4, null, null, Some(0), Some(5), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 3, Some(0), Some(10), Some(5), Some(15), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 4, null, null, Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
@@ -518,8 +518,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(0), Some(20), Some(0), Some(15), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(15), Some(20), null, null, Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(0), Some(20), Some(0), Some(15), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(15), Some(20), null, null, 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
@@ -570,8 +570,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(5), Some(20), Some(0), Some(15), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(0), Some(5), null, null, Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(5), Some(20), Some(0), Some(15), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(0), Some(5), null, null, 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
@@ -626,9 +626,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), Some(144000000)),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), Some(144000000)),
-      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
+      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
@@ -740,8 +740,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(50.0, 0.0)), 50.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 13, Some(0), Some(30), Some(0), Some(20), Some(144000000)),
-      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 14, null, null, Some(20), Some(50), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 13, Some(0), Some(30), Some(0), Some(20), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 14, null, null, Some(20), Some(50), 144000000))
 
     OracleDatabase.withDynTransaction {
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, null, 0.000, 30.000, ${SideCode.BothDirections.value})""".execute
@@ -919,8 +919,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val newLinkId = 3055879L
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
-    val changeInfo = Seq(ChangeInfo(None, Option(oldLinkId), 0, 4, None, None, Option(0.0), Option(2.5802222500000003), Option(1461325625000L)),
-      ChangeInfo(Option(oldLinkId), Option(oldLinkId), 0, 3, Option(0.0), Option(422.63448371), Option(2.5802222500000003), Option(424.55709429), Option(1461325625000L)))
+    val changeInfo = Seq(ChangeInfo(None, Option(oldLinkId), 0, 4, None, None, Option(0.0), Option(2.5802222500000003), 1461325625000L),
+      ChangeInfo(Option(oldLinkId), Option(oldLinkId), 0, 3, Option(0.0), Option(422.63448371), Option(2.5802222500000003), Option(424.55709429), 1461325625000L))
 
     OracleDatabase.withDynTransaction {
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute

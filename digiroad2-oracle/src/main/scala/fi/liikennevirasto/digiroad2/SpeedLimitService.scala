@@ -190,8 +190,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(limits, newId, newStart, newEnd, vvhTimeStamp.getOrElse(0L)) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
+        condition(limits, newId, newStart, newEnd, vvhTimeStamp) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
           case false => None
         }
       case _ => None
