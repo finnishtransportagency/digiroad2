@@ -291,6 +291,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinkService.getAdjacent(id).map(roadLinkToApi)
   }
 
+  get("/roadlinks/adjacents/:ids") {
+    val ids = params("ids").split(',').map(_.toLong)
+    roadLinkService.getAdjacents(ids.toSet).mapValues(_.map(roadLinkToApi))
+  }
+
   get("/roadLinks/incomplete") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {

@@ -58,6 +58,12 @@
       });
     };
 
+    this.getAdjacents = _.throttle(function(ids, callback) {
+      $.getJSON('api/roadlinks/adjacents/' + ids, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
     this.getAdjacent = _.throttle(function(id, callback) {
       $.getJSON('api/roadlinks/adjacent/' + id, function(data) {
         callback(data);

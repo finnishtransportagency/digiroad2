@@ -48,35 +48,51 @@
         .value();
     };
 
+    var setMarkersToRoadLinks= function(roadLink, adjacent, targets, callback) {
+      var linkId = roadLink.linkId;
+      var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
+      var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+        "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
+        "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
+        "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
+      var sortedAdjacentWithMarker = _.chain(adjacent)
+        .sortBy('id')
+        .map(function(a, i){
+          return _.merge({}, a, { marker: markers[i] });
+        }).value();
+      var sortedTargetsWithMarker = _.chain(targets)
+        .sortBy('id')
+        .map(function(a, i){
+          var adjData = _.map(a.adjacentLinks, function (adj, i) {
+            return _.merge({}, adj, { marker: markers[adjacent.length + targets.length + i]});
+          });
+          return _.merge({}, a, { marker: markers[i+adjacent.length] }, {adjacentLinks: adjData});
+        }).value();
+      var sourceRoadLinkModel = roadCollection.get([linkId])[0];
+      callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
+    };
+    
+    var fillTargetAdjacents = function(roadLink, targets, adjacentLinks, callback) {
+      var alteredTargets = _.map(targets, function (t) {
+        var targetAdjacent = adjacentLinks[t.linkId];
+        return _.merge({}, t, { adjacentLinks: targetAdjacent });
+      });
+      backend.getAdjacent(roadLink.linkId, function(adjacent) {
+        setMarkersToRoadLinks(roadLink, adjacent, alteredTargets, callback);
+      });
+    };
+
     var get = function(linkId, callback) {
       var roadLink = _.find(getAll(), {linkId: linkId});
       var nonAdj = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
       var targets = _.map(nonAdj, function (t) {
         var link = roadCollection.get([t])[0];
-        var data = link ? link.getData() : 
-        {
+        return link ? link.getData() : {
           linkId: t
         };
-        return data;
       });
-      backend.getAdjacent(roadLink.linkId, function(adjacent) {
-        var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
-        var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-          "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
-          "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
-          "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
-        var sortedAdjacentWithMarker = _.chain(adjacent)
-            .sortBy('id')
-            .map(function(a, i){
-              return _.merge({}, a, { marker: markers[i] });
-            }).value();
-        var sortedTargetsWithMarker = _.chain(targets)
-          .sortBy('id')
-          .map(function(a, i){
-            return _.merge({}, a, { marker: markers[i+adjacent.length] });
-          }).value();
-        var sourceRoadLinkModel = roadCollection.get([linkId])[0];
-        callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
+      backend.getAdjacents(nonAdj.join(), function(adjacents) {
+        fillTargetAdjacents(roadLink, targets, adjacents, callback);
       });
     };
 

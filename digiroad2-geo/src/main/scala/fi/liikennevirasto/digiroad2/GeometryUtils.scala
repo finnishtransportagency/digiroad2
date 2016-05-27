@@ -137,6 +137,11 @@ object GeometryUtils {
       geometry2Endpoints._2.distanceTo(geometry1EndPoints._2) < epsilon
   }
 
+  def areAdjacent(point1: Point, point2: Point): Boolean = {
+    val epsilon = 0.01
+    point1.distanceTo(point2) < epsilon
+  }
+
   def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
     val partitions = segments.init.zip(segments.tail)
     partitions.minBy { p => minimumDistance(point, p) }
