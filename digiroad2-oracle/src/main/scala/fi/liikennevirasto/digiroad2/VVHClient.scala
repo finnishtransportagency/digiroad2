@@ -5,7 +5,7 @@ import java.net.URLEncoder
 import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -480,6 +480,19 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case null => None
       case _ => Some(value.toString.toDouble)
     }
+  }
+
+  /**
+    * Creates a pseudo VVH Timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
+    * if less than offsetHours have passed since or 0:00 on previous day if not.
+    *
+    * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
+    */
+  def createVVHTimeStamp(offsetHours: Int): Long = {
+    val oneHourInMs = 60 * 60 * 1000L
+    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+    curr - (curr % (24L*oneHourInMs))
   }
 }
 

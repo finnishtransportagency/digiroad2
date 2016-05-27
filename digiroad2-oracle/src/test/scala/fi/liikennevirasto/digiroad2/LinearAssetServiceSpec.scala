@@ -1044,4 +1044,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("pseudo vvh timestamp is correctly created") {
+    val vvhClient = new VVHClient("")
+    val hours = DateTime.now().getHourOfDay
+    val yesterday = vvhClient.createVVHTimeStamp(hours + 1)
+    val today = vvhClient.createVVHTimeStamp(hours)
+
+    (today % 24*60*60*1000L) should be (0L)
+    (yesterday % 24*60*60*1000L) should be (0L)
+    today should be > yesterday
+    (yesterday + 24*60*60*1000L) should be (today)
+  }
+
 }

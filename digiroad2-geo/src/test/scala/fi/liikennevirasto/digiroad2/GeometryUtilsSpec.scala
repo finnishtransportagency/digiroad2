@@ -191,14 +191,4 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     overlaps((0.22, 0.21), (0.1,0.2)) should be(false)
   }
 
-  test("pseudo vvh timestamp is correctly created") {
-    val hours = DateTime.now().getHourOfDay
-    val yesterday = GeometryUtils.createVVHTimeStamp(hours + 1)
-    val today = GeometryUtils.createVVHTimeStamp(hours)
-
-    (today % 24*60*60*1000L) should be (0L)
-    (yesterday % 24*60*60*1000L) should be (0L)
-    today should be > yesterday
-    (yesterday + 24*60*60*1000L) should be (today)
-  }
 }
