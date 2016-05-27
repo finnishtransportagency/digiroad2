@@ -339,20 +339,29 @@
         rootElement.find('.adjacent-link').on('click', '.edit button.new', function(event){
           var formGroupElement = $(event.delegateTarget);
 
-          var selects = formGroupElement.find('select');
-          var button = formGroupElement.find('button');
-          var text = formGroupElement.find('input[type="text"]');
-          var group = formGroupElement.find('.manoeuvre-details');
-          var editButton = formGroupElement.find('.edit');
-          editButton.prop('hidden',true);
-
+          // Hide other adjacent links and their markers
           formGroupElement.siblings('.adjacent-link').remove();
           formGroupElement.find('.marker').remove();
 
+          // Show select menus (validity period and exceptions)
+          var selects = formGroupElement.find('select');
           selects.prop('disabled', false);
-          button.prop('disabled', false);
+
+          // Show additional info textbox
+          var text = formGroupElement.find('input[type="text"]');
           text.prop('disabled', false);
+
+          // Show continue link chain button
+          var continueButton = formGroupElement.find('button .continue');
+          continueButton.prop('hidden', false);
+
+          // Slide down manoeuvre details part
+          var group = formGroupElement.find('.manoeuvre-details');
           group.slideDown('fast');
+
+          // Hide new/modify buttons
+          var editButton = formGroupElement.find('.edit');
+          editButton.prop('hidden',true);
 
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
@@ -362,20 +371,33 @@
         rootElement.find('.adjacent-link').on('click', '.edit button.modify', function(event){
           var formGroupElement = $(event.delegateTarget);
 
-          var selects = formGroupElement.find('select');
-          var button = formGroupElement.find('button');
-          var text = formGroupElement.find('input[type="text"]');
-          var group = formGroupElement.find('.manoeuvre-details');
-          var editButton = formGroupElement.find('.edit');
-          editButton.prop('hidden',true);
-
+          // Hide other adjacent links and their markers
           formGroupElement.siblings('.adjacent-link').remove();
           formGroupElement.find('.marker').remove();
 
+          // Show select menus (validity period and exceptions)
+          var selects = formGroupElement.find('select');
           selects.prop('disabled', false);
-          button.prop('disabled', false);
+
+          // Show additional info textbox
+          var text = formGroupElement.find('input[type="text"]');
           text.prop('disabled', false);
+
+          // Slide down manoeuvre details part
+          var group = formGroupElement.find('.manoeuvre-details');
           group.slideDown('fast');
+
+          // Hide new/modify buttons
+          var editButton = formGroupElement.find('.edit');
+          editButton.prop('hidden',true);
+
+          // Hide continue link chain button
+          var continueButton = formGroupElement.find('.continue');
+          continueButton.prop('hidden', true);
+
+          // Hide continue link chain notification
+          var notification = formGroupElement.find('.form-notification');
+          notification.prop('hidden', true);
 
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
