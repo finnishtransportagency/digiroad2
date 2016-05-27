@@ -15,6 +15,18 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
+    // Generate template for every linkId in chain
+    // WIP: testId only for debugging
+    var newIntermediateTemplate = '' +
+        '<li><input type="radio" name="radio" value=""> LINK ID <%= testId %></input></li>';
+
+    var manoeuvreOptionsGroup = '' +
+        '<label>Jatka kääntymisrajoitusta</label>' +
+          '<ul>' +
+            '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
+             newIntermediateTemplate +
+          '</ul>';
+
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -93,7 +105,10 @@
             '</div>' +
             '<div class="form-group continue">' +
               continueChainButton +
-            '</div>'+
+            '</div>' +
+            '<div class="form-group continue-option-group" hidden>' +
+              manoeuvreOptionsGroup +
+            '</div>' +
           '<div>' +
         '<div>' +
       '</div>';
@@ -138,6 +153,9 @@
       '<div class="form-group continue">' +
       continueChainButton +
       '</div>'+
+        '<div class="form-group continue-option-group" hidden>' +
+        manoeuvreOptionsGroup +
+        '</div>' +
       '<div>' +
       '<div>' +
       '</div>';
@@ -208,6 +226,7 @@
               .join('');
           // Verify if Manoeuvre have intermediate Links to show the plus sign
           var isIntermediate = true;
+          //TODO: replace testId
           rootElement.find('.form').append(_.template(targetLinkTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             checked: checked,
@@ -218,7 +237,8 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermediate: isIntermediate
+            isIntermediate: isIntermediate,
+            testId: target.linkId
           })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
@@ -240,6 +260,7 @@
               return element.sourceLinkId == adjacentLink.linkId && element.elementType == 2;
             });
           }); // False if no manoeuvre for road link or no intermediates found
+          //TODO: replace testId
           rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
@@ -249,7 +270,8 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermediate: isIntermediate
+            isIntermediate: isIntermediate,
+            testId: manoeuvreId
           })));
         });
 
@@ -365,9 +387,11 @@
 
           var notification = formGroupElement.find('.form-notification');
           var continueButton = formGroupElement.find('.continue');
+          var optionsGroup = formGroupElement.find('.continue-option-group');
 
           notification.prop('hidden', true);
           continueButton.prop('hidden',true);
+          optionsGroup.prop('hidden',false);
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
