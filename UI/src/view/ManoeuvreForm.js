@@ -15,17 +15,12 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
-    // Generate template for every linkId in chain
+    /* Generate template for next possible linkIds when making chain
+    *  for nonAdjacentTargets and Adjacent
+    * */
     // WIP: testId only for debugging
     var newIntermediateTemplate = '' +
-        '<li><input type="radio" name="radio" value=""> LINK ID <%= testId %></input></li>';
-
-    var manoeuvreOptionsGroup = '' +
-        '<label>Jatka kääntymisrajoitusta</label>' +
-          '<ul>' +
-            '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
-             newIntermediateTemplate +
-          '</ul>';
+        '<li><input type="radio" name="radio" value=""> LINK ID <%= testAdjacentId %></input></li>';
 
     var templateWithHeaderAndFooter = '' +
       '<header>' +
@@ -107,7 +102,11 @@
               continueChainButton +
             '</div>' +
             '<div class="form-group continue-option-group" hidden>' +
-              manoeuvreOptionsGroup +
+              '<label>Jatka kääntymisrajoitusta</label>' +
+               '<ul>' +
+                  '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
+                  newIntermediateTemplate +
+               '</ul>' +
             '</div>' +
           '<div>' +
         '<div>' +
@@ -154,7 +153,11 @@
       continueChainButton +
       '</div>'+
         '<div class="form-group continue-option-group" hidden>' +
-        manoeuvreOptionsGroup +
+          '<label>Jatka kääntymisrajoitusta</label>' +
+            '<ul>' +
+              '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
+              newIntermediateTemplate +
+            '</ul>' +
         '</div>' +
       '<div>' +
       '<div>' +
@@ -238,7 +241,7 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isIntermediate: isIntermediate,
-            testId: target.linkId
+            testAdjacentId: 9999
           })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
@@ -271,7 +274,7 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isIntermediate: isIntermediate,
-            testId: manoeuvreId
+            testAdjacentId: 9999
           })));
         });
 
