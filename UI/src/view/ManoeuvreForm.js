@@ -98,6 +98,12 @@
             '<div class="form-group form-notification">' +
               ' <p>Jos kääntymisrajoitus koskee kahta linkkiä, paina Tallenna. Jos haluat lisätä kääntymisrajoitukseen linkkejä, valitse Jatka kääntymisrajoitusta.</p>' +
             '</div>' +
+            '<div class="form-remove">' +
+              '<div class="checkbox" >' +
+                '<input type="checkbox"/>' +
+              '</div>' +
+              '<p class="form-control-static">Poista</p>' +
+            '</div>' +
             '<div class="form-group continue">' +
               continueChainButton +
             '</div>' +
@@ -338,6 +344,16 @@
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
 
+        // Verify value of checkBox for remove the manoeuvres
+        // If the checkBox was checked remove the manoeuvre
+        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
+          var eventTarget = $(event.currentTarget);
+          var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
+          if (eventTarget.attr('checked') === 'checked') {
+            selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
+          }
+        });
+
         // Listen to 'new manoeuvre' button click
         rootElement.find('.adjacent-link').on('click', '.edit button.new', function(event){
           var formGroupElement = $(event.delegateTarget);
@@ -365,6 +381,10 @@
           // Hide new/modify buttons
           var editButton = formGroupElement.find('.edit');
           editButton.prop('hidden',true);
+
+          // Hide CheckBox to remove manoeuvre
+          var checkBoxHide = formGroupElement.find('.form-remove');
+          checkBoxHide.prop('hidden', true);
 
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
