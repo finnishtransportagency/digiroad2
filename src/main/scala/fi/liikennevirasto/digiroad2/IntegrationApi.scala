@@ -162,6 +162,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
+        geometryWKT(speedLimit.geometry),
         "value" -> speedLimit.value.fold(0)(_.value),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
@@ -265,6 +266,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+  def geometryWKT(geometry: Seq[Point]): (String, String) = {
+      val geometryWKT =
+        if (geometry.nonEmpty)
+          "LINESTRING(" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
+        else
+          ""
+    "geometryWKT" -> geometryWKT
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {

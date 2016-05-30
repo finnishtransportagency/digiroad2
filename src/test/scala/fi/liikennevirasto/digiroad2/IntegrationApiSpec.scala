@@ -67,6 +67,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
+      "geometryWKT" -> "",
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
