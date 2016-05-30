@@ -91,9 +91,15 @@
           linkId: t
         };
       });
-      backend.getAdjacents(nonAdj.join(), function(adjacents) {
-        fillTargetAdjacents(roadLink, targets, adjacents, callback);
-      });
+      if (nonAdj.length > 0) {
+        backend.getAdjacents(nonAdj.join(), function (adjacents) {
+          fillTargetAdjacents(roadLink, targets, adjacents, callback);
+        });
+      } else {
+        backend.getAdjacent(roadLink.linkId, function(adjacent) {
+          setMarkersToRoadLinks(roadLink, adjacent, targets, callback);
+        });
+      }
     };
 
     var addManoeuvre = function(newManoeuvre) {
