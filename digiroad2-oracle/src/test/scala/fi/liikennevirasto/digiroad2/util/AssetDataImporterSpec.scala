@@ -418,13 +418,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   //case 2
   test("Should not unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters"){
     val oldLinkId = 521232
-    val linkId = 5170455
     val municipality = 853
     val obstaclePoint = Point(20, 20)
     val obstacleType = 2
     val mValue = 10
     val vvhRoadLinks = Seq(
       VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
+      VVHRoadlink(5170459, municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
       VVHRoadlink(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
     )
 
@@ -435,7 +435,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle should === (floatingObstacle)
 
   }
 
@@ -526,7 +526,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   //case 6
-  test("Should not unfloat the obstacle when exists one roadlink inside a radius of 0.5 meters but with less than 5th the shorter distance"){
+  test("Should unfloat the obstacle when two roadlinks inside a radius of 0.5 meters and they extend one another"){
     val oldLinkId = 521232
     val municipality = 853
     val obstaclePoint = Point(20,20)
@@ -534,18 +534,17 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
     val vvhRoadLinks = Seq(
       VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad),
-      VVHRoadlink(5170458, municipality, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath),
-      VVHRoadlink(5170456, municipality, Seq(Point(20.09,0), Point(20.09,20), Point(20.09,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+      VVHRoadlink(5170458, municipality, Seq(Point(20.02,0), Point(20.02,10), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath),
+      VVHRoadlink(5170456, municipality, Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath)
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
-    val beforeCallMethodDatetime = DateTime.now()
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockVVHClient)
 
-    resultObstacle should be === (floatingObstacle)
+    resultObstacle.floating should be (false)
 
   }
 

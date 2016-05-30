@@ -817,7 +817,7 @@ class AssetDataImporter {
         } else {
           val closestOther = otherLinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry)).sorted.headOption
           val rl3 = roadLinksByDistance.tail.tail.headOption.map(_._1)
-          if (closestOther.getOrElse(10.0) > 0.5 && rl3.getOrElse(10.0) > 0.5) {
+          if (rl1._1 <= .5 && rl2._1 <= .5 && closestOther.getOrElse(10.0) > 0.5 && rl3.getOrElse(10.0) > 0.5) {
             println("* Accepted closest in joining segments for obstacle id=" + obstacle.id + ": road links and distances are " +
               "%d -> %2.3f m, %d -> %2.3f m, next links (1-5): %2.3f m, (6-8): %2.3f m".format(
                 rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1, closestOther.getOrElse(10.0), rl3.getOrElse(10.0)))
