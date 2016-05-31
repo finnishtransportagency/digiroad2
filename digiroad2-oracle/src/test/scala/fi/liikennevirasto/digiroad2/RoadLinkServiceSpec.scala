@@ -169,11 +169,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some(DateTimePropertyFormat.print(DateTime.now())), Some("automatic_generation")))
-
+      val result = service.getRoadLinksFromVVH(boundingBox)
+      val exactModifiedAtValue = result.head.modifiedAt
+      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation")))
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
-
-      service.getRoadLinksFromVVH(boundingBox)
 
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
