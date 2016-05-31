@@ -6,7 +6,7 @@ import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleObstacleDao
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -226,12 +226,16 @@ object DataFixture {
     var processedCount = 0
     var updatedCount = 0
 
+    var updateList: List[Obstacle] = List()
+
     do {
-      withDynTransaction {
         //Send "1" for get all floating Obstacles assets
         //lastIdUpdate - Id where to start the fetch
         //batchSize - Max number of obstacles to fetch at a time
-        val floatingObstaclesAssets = obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
+        val floatingObstaclesAssets =
+          withDynTransaction {
+            obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
+          }
         obstaclesFound = floatingObstaclesAssets.nonEmpty
         lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
         for (obstacleData <- floatingObstaclesAssets) {
@@ -241,13 +245,15 @@ object DataFixture {
           val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, roadLinkService)
           //Save updated assets to database
           if (!obstacleData.equals(obstacleToUpdate)){
-            obstacleService.updateFloatingAsset(obstacleToUpdate)
+            updateList = updateList :+ obstacleToUpdate
             updatedCount += 1
           }
           processedCount += 1
         }
-      }
     } while (obstaclesFound)
+    withDynTransaction {
+      updateList.foreach(o => obstacleService.updateFloatingAsset(o))
+    }
 
     println("\n")
     println("Processed "+processedCount+" obstacles")
