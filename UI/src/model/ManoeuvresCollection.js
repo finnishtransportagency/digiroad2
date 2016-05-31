@@ -56,8 +56,8 @@
         "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
         "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
 
-      var adjacentIds = adjacentLinks.map(function(l) { return l.linkId; })
-      var targetIds = targetLinks.map(function(l) { return l.linkId; })
+      var adjacentIds = adjacentLinks.map(function(l) { return l.linkId; });
+      var targetIds = targetLinks.map(function(l) { return l.linkId; });
 
       var sortedNextTargetLinksWithMarker = _.chain(nextTargetLinks)
         .mapValues(function(a){

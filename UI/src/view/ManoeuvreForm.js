@@ -74,7 +74,24 @@
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
         '<div class="manoeuvre-details-edit-mode">' +
-        '<label>Ei rajoitusta</label>' +
+        '<% if(localizedExceptions.length > 0) { %>' +
+        '<div class="form-group exception-group">' +
+        '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
+        '<ul>' +
+        '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e.title %></li> <% }) %>' +
+        '</ul>' +
+        '</div>' +
+        '<% } %>' +
+        '<% if(validityPeriodElements.length > 0) { %>' +
+        '<div class="form-group validity-period-group">' +
+        '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+        '<ul>' +
+        '<%= validityPeriodElements %>' +
+        '</ul>' +
+        '</div>' +
+        '<% } %>' +
+        '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
+        '<% if( (_.isEmpty(additionalInfo)) && (localizedExceptions.length == 0) && (validityPeriodElements.length == 0) ) { %> <label>Ei rajoitusta</label> <% } %>' +
         '</div>' +
         '<div class="manoeuvre-details" hidden>' +
           '<div class="validity-period-group">' +
@@ -180,6 +197,12 @@
       '</div>' +
       '<div class="form-group form-notification">' +
       ' <p>Jos kääntymisrajoitus koskee kahta linkkiä, paina Tallenna. Jos haluat lisätä kääntymisrajoitukseen linkkejä, valitse Jatka kääntymisrajoitusta.</p>' +
+      '</div>' +
+      '<div class="form-remove">' +
+        '<div class="checkbox" >' +
+          '<input type="checkbox"/>' +
+        '</div>' +
+        '<p class="form-control-static">Poista</p>' +
       '</div>' +
       '<div class="form-group continue">' +
       continueChainButton +
@@ -302,7 +325,12 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermediate: isIntermediate
+            isIntermediate: isIntermediate,
+            validityPeriodElements: manoeuvre ? _(manoeuvre.validityPeriods)
+                .sortByAll(dayOrder, 'startHour', 'endHour')
+                .map(validityPeriodDisplayElement)
+                .join('') :
+                ''
           })));
         });
 
