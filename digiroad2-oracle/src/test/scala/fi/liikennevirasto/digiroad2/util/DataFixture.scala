@@ -3,9 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.IncomingObstacle
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{IncomingObstacle, VVHClient, Point, ObstacleService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleObstacleDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
@@ -220,6 +219,7 @@ object DataFixture {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -238,7 +238,7 @@ object DataFixture {
           println("Processing obstacle id "+obstacleData.id)
 
           //Call filtering operations according to rules where
-          val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, vvhClient)
+          val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, roadLinkService)
           //Save updated assets to database
           if (!obstacleData.equals(obstacleToUpdate)){
             obstacleService.updateFloatingAsset(obstacleToUpdate)

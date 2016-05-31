@@ -26,7 +26,8 @@ import slick.jdbc._
 
 import scala.collection.mutable
 
-object AssetDataImporter {
+object
+AssetDataImporter {
   case class SimpleBusStop(shelterType: Int,
                            assetId: Option[Long] = None,
                            busStopId: Option[Long],
@@ -776,11 +777,11 @@ class AssetDataImporter {
     * - at most 10 meters away
     * - at most .5 meters away and no other candidate locations within 5 times the distance if there are multiple
     * @param obstacle A floating obstacle to update
-    * @param vvhClient VVHClient to use (reusing for speed)
+    * @param roadLinkService RoadLinkService to use (reusing for speed)
     * @return
     */
-  def updateObstacleToRoadLink(obstacle : Obstacle, vvhClient: VVHClient) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: VVHRoadlink) = {
+  def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
+    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
       val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
       obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
@@ -790,15 +791,15 @@ class AssetDataImporter {
     //FunctionalClass 7 equal to FeatureClass TractorRoad
     //FunctionalClass 6 equal to FeatureClass DrivePath
     //FunctionalClass 8 equal to FeatureClass CycleOrPedestrianPath
-    val allowedFeatureClasses = Set(FeatureClass.TractorRoad, FeatureClass.DrivePath, FeatureClass.CycleOrPedestrianPath)
+    val allowedFunctionalClasses = Set(6,7,8)
 
     val diagonal = Vector3d(10, 10, 0)
 
     val obstaclePoint = Point(obstacle.lon, obstacle.lat, 0)
     //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
-    val (roadLinks, otherLinks) = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+    val (roadLinks, otherLinks) = roadLinkService.getRoadLinksFromVVH(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
       filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0).
-      partition(rl => allowedFeatureClasses.exists(_.equals(rl.featureClass)))
+      partition(rl => allowedFunctionalClasses.contains(rl.functionalClass))
 
     roadLinks.length match {
       case 0 =>
