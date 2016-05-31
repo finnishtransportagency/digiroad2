@@ -56,6 +56,9 @@
         "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
         "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
 
+      var adjacentIds = adjacentLinks.map(function(l) { return l.linkId; })
+      var targetIds = targetLinks.map(function(l) { return l.linkId; })
+
       var sortedNextTargetLinksWithMarker = _.chain(nextTargetLinks)
         .mapValues(function(a){
           return _.merge({}, _.map(a, function (b, i) {
@@ -64,12 +67,18 @@
         }).value();
 
       var alteredTargets = _.map(targetLinks, function (t) {
-        var targetAdjacent = sortedNextTargetLinksWithMarker[t.linkId];
+        var targetAdjacent = _.chain(sortedNextTargetLinksWithMarker[t.linkId]).filter(function (rl) {
+          console.log("" + rl.linkId + " -> " + _.contains(targetIds, rl.linkId) + " & " + _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId) || _.contains(adjacentIds, rl.linkId));
+        }).value;
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
 
       var alteredAdjacents = _.map(adjacentLinks, function (t) {
-        var targetAdjacent = sortedNextTargetLinksWithMarker[t.linkId];
+        var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
+          console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
+        });
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
 
