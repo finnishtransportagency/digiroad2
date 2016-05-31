@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -225,6 +226,38 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     def apply(r: PositionedResult) = {
       new DateTime(r.nextTimestamp())
     }
+  }
+
+  private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
+    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
+    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
+          f.link_id, f.functional_class, f.modified_date, f.modified_by,
+          l.link_id, l.link_type, l.modified_date, l.modified_by
+            from #$idTableName i
+            left join traffic_direction t on i.id = t.link_id
+            left join functional_class f on i.id = f.link_id
+            left join link_type l on i.id = l.link_id
+
+      """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
+      Option[Long], Option[Int], Option[DateTime], Option[String],
+      Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
+      {
+        val td = (row._2, row._3, row._4, row._5) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        val fc = (row._6, row._7, row._8, row._9) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        val lt = (row._10, row._11, row._12, row._13) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        row._1 ->(td, fc, lt)
+      }
+    ).toMap
+
   }
 
   private def fetchTrafficDirections(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
@@ -546,17 +579,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   private def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
-    def makeMap(propertyRows: Seq[RoadLinkPropertyRow]): Map[RoadLinkId, RoadLinkPropertyRow] = {
-      propertyRows.groupBy(_._1)
-        .filter { case (linkId, propertyRows) => propertyRows.nonEmpty }
-        .mapValues { _.head }
+    def cleanMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)])]): Map[RoadLinkId, RoadLinkPropertyRow] = {
+      parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
     }
-
-    MassQuery.withIds(linkIds) { idTableName =>
-      RoadLinkPropertyRows(
-        makeMap(fetchTrafficDirections(idTableName)),
-        makeMap(fetchFunctionalClasses(idTableName)),
-        makeMap(fetchLinkTypes(idTableName)))
+    def splitMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)],
+      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])]) = {
+      (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
+        cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
+        cleanMap(parameterMap.map(i => i._1 -> i._2._3)))
+    }
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val (td, fc, lt) = splitMap(fetchOverrides(idTableName))
+        RoadLinkPropertyRows(td, fc, lt)
     }
   }
 
