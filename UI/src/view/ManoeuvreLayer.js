@@ -42,6 +42,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSourceLinkSelected);
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
+      eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
     };
 
     /**
@@ -309,7 +310,7 @@
     };
 
     var drawIndicators = function(links) {
-      var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+      var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
       var visibleLinks = _.filter(links, function (link) {
         return typeof link.points != 'undefined';
       });
@@ -335,6 +336,13 @@
         })
         .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
         .value();
+    };
+
+    var targetLinksAdjacents = function(manoeuvre) {
+      var ret = _.find(roadCollection.getAll(), function(link) {
+        return link.linkId === manoeuvre.destLinkId;
+      });
+      return ret.adjacentLinks;
     };
 
     var nonAdjacentTargetLinks = function(roadLink) {
@@ -388,6 +396,17 @@
         if(selectedManoeuvreSource.exists()) {
           drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
           drawIndicators(nonAdjacentTargetLinks(selectedManoeuvreSource.get()));
+        }
+      } else {
+        indicatorLayer.clearMarkers();
+      }
+    };
+
+    var handleManoeuvreExtensionBuilding = function(targetRoadLink) {
+      if (!application.isReadOnly()) {
+        if(targetRoadLink) {
+          indicatorLayer.clearMarkers();
+          drawIndicators(targetRoadLink.adjacentLinks);
         }
       } else {
         indicatorLayer.clearMarkers();

@@ -48,58 +48,68 @@
         .value();
     };
 
-    var setMarkersToRoadLinks= function(roadLink, adjacent, targets, callback) {
+    var setMarkersToRoadLinks= function(roadLink, adjacentLinks, targetLinks, nextTargetLinks, callback) {
       var linkId = roadLink.linkId;
       var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
       var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
         "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
         "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
         "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
-      var sortedAdjacentWithMarker = _.chain(adjacent)
+
+      var sortedNextTargetLinksWithMarker = _.chain(nextTargetLinks)
+        .mapValues(function(a){
+          return _.merge({}, _.map(a, function (b, i) {
+            return _.merge({}, b, { marker: markers[adjacentLinks.length + targetLinks.length + i] });
+          }));
+        }).value();
+
+      var alteredTargets = _.map(targetLinks, function (t) {
+        var targetAdjacent = sortedNextTargetLinksWithMarker[t.linkId];
+        return _.merge({}, t, { adjacentLinks: targetAdjacent });
+      });
+
+      var alteredAdjacents = _.map(adjacentLinks, function (t) {
+        var targetAdjacent = sortedNextTargetLinksWithMarker[t.linkId];
+        return _.merge({}, t, { adjacentLinks: targetAdjacent });
+      });
+
+      var sortedAdjacentWithMarker = _.chain(alteredAdjacents)
         .sortBy('id')
         .map(function(a, i){
-          return _.merge({}, a, { marker: markers[i] });
+          return _.merge({}, a, { marker: markers[i]} );
         }).value();
-      var sortedTargetsWithMarker = _.chain(targets)
+
+      var sortedTargetsWithMarker = _.chain(alteredTargets)
         .sortBy('id')
         .map(function(a, i){
-          var adjData = _.map(a.adjacentLinks, function (adj, i) {
-            return _.merge({}, adj, { marker: markers[adjacent.length + targets.length + i]});
-          });
-          return _.merge({}, a, { marker: markers[i+adjacent.length] }, {adjacentLinks: adjData});
+          return _.merge({}, a, { marker: markers[i+adjacentLinks.length] } );
         }).value();
+
       var sourceRoadLinkModel = roadCollection.get([linkId])[0];
       callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
     };
-    
-    var fillTargetAdjacents = function(roadLink, targets, adjacentLinks, callback) {
-      var alteredTargets = _.map(targets, function (t) {
-        var targetAdjacent = adjacentLinks[t.linkId];
-        return _.merge({}, t, { adjacentLinks: targetAdjacent });
-      });
-      backend.getAdjacent(roadLink.linkId, function(adjacent) {
-        setMarkersToRoadLinks(roadLink, adjacent, alteredTargets, callback);
+
+    var fillTargetAdjacents = function(roadLink, targets, linkIds, adjacentLinks, callback) {
+      backend.getAdjacents(linkIds.join(), function (nextTargets) {
+        setMarkersToRoadLinks(roadLink, adjacentLinks, targets, nextTargets, callback);
       });
     };
 
     var get = function(linkId, callback) {
       var roadLink = _.find(getAll(), {linkId: linkId});
-      var nonAdj = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
-      var targets = _.map(nonAdj, function (t) {
+      var linkIds = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
+      var targets = _.map(linkIds, function (t) {
         var link = roadCollection.get([t])[0];
         return link ? link.getData() : {
           linkId: t
         };
       });
-      if (nonAdj.length > 0) {
-        backend.getAdjacents(nonAdj.join(), function (adjacents) {
-          fillTargetAdjacents(roadLink, targets, adjacents, callback);
-        });
-      } else {
-        backend.getAdjacent(roadLink.linkId, function(adjacent) {
-          setMarkersToRoadLinks(roadLink, adjacent, targets, callback);
-        });
-      }
+      backend.getAdjacent(roadLink.linkId, function(adjacents) {
+        linkIds = linkIds.concat(_.map(adjacents, function (rl) {
+          return rl.linkId;
+        }));
+        fillTargetAdjacents(roadLink, targets, linkIds, adjacents, callback);
+      });
     };
 
     var addManoeuvre = function(newManoeuvre) {

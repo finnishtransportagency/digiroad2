@@ -20,7 +20,11 @@
     * */
     // WIP: testId only for debugging
     var newIntermediateTemplate = '' +
-        '<li><input type="radio" name="radio" value=""> LINK ID <%= testAdjacentId %></input></li>';
+      '<% _.forEach(adjacentLinks, function(l) { %>' +
+      '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
+      '</input>' +
+      '<span class="marker"><%= l.marker %></span></li>' +
+      ' <% }) %>';
 
     var templateWithHeaderAndFooter = '' +
       '<header>' +
@@ -257,7 +261,6 @@
               .join('');
           // Verify if Manoeuvre have intermediate Links to show the plus sign
           var isIntermediate = true;
-          //TODO: replace testId
           rootElement.find('.form').append(_.template(targetLinkTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             checked: checked,
@@ -268,8 +271,7 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermediate: isIntermediate,
-            testAdjacentId: 9999
+            isIntermediate: isIntermediate
           })));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
@@ -291,7 +293,6 @@
               return element.sourceLinkId == adjacentLink.linkId && element.elementType == 2;
             });
           }); // False if no manoeuvre for road link or no intermediates found
-          //TODO: replace testId
           rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
@@ -301,8 +302,7 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isIntermediate: isIntermediate,
-            testAdjacentId: 9999
+            isIntermediate: isIntermediate
           })));
         });
 
@@ -463,6 +463,17 @@
           var notification = formGroupElement.find('.form-notification');
           var continueButton = formGroupElement.find('.continue');
           var optionsGroup = formGroupElement.find('.continue-option-group');
+
+          var manoeuvre = manoeuvreData(formGroupElement);
+          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
+            return rl.linkId == manoeuvre.destLinkId;
+          });
+          if (!target) {
+            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+              return rl.linkId == manoeuvre.destLinkId;
+            });
+          }
+          eventbus.trigger('manoeuvre:showExtension', target);
 
           notification.prop('hidden', true);
           continueButton.prop('hidden',true);
