@@ -69,6 +69,9 @@
           '<span class="marker"><%= marker %></span>' +
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
+        '<div class="manoeuvre-details-edit-mode">' +
+        '<label>Ei rajoitusta</label>' +
+        '</div>' +
         '<div class="manoeuvre-details" hidden>' +
           '<div class="validity-period-group">' +
           ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
@@ -125,6 +128,25 @@
       "<%print(isIntermediate ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">✚</span> ' : '')%>" +
       '<span class="marker"><%= marker %></span>' +
       '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
+      '</div>' +
+      '<div class="manoeuvre-details-edit-mode">' +
+        '<% if(localizedExceptions.length > 0) { %>' +
+        '<div class="form-group exception-group">' +
+          '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
+          '<ul>' +
+          '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e.title %></li> <% }) %>' +
+          '</ul>' +
+        '</div>' +
+        '<% } %>' +
+        '<% if(existingValidityPeriodElements.length > 0) { %>' +
+        '<div class="form-group validity-period-group">' +
+          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
+          '<ul>' +
+          '<%= existingValidityPeriodElements %>' +
+          '</ul>' +
+        '</div>' +
+        '<% } %>' +
+        '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>' +
       '<div class="manoeuvre-details" hidden>' +
       '<div class="validity-period-group">' +
@@ -386,6 +408,10 @@
           var checkBoxHide = formGroupElement.find('.form-remove');
           checkBoxHide.prop('hidden', true);
 
+          // Hide manoeuvre data under the first link
+          var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
+          manoeuvreDataUnderLink.prop('hidden', true);
+
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
         });
@@ -421,6 +447,10 @@
           // Hide continue link chain notification
           var notification = formGroupElement.find('.form-notification');
           notification.prop('hidden', true);
+
+          // Hide manoeuvre data under the first link
+          var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
+          manoeuvreDataUnderLink.prop('hidden', true);
 
           var manoeuvre = manoeuvreData(formGroupElement);
           selectedManoeuvreSource.addManoeuvre(manoeuvre);
