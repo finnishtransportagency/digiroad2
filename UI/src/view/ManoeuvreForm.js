@@ -15,16 +15,16 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
-    /* Generate template for next possible linkIds when making chain
-    *  for nonAdjacentTargets and Adjacent
-    * */
-    // WIP: testId only for debugging
+    // Generate template for next possible linkIds when making chain for nonAdjacentTargets and Adjacent */
     var newIntermediateTemplate = '' +
-      '<% _.forEach(adjacentLinks, function(l) { %>' +
-      '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
-      '</input>' +
-      '<span class="marker"><%= l.marker %></span></li>' +
-      ' <% }) %>';
+      '<ul>' +
+        '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
+        '<% _.forEach(adjacentLinks, function(l) { %>' +
+          '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
+          '</input>' +
+          '<span class="marker"><%= l.marker %></span></li>' +
+        ' <% }) %>' +
+      '</ul>';
 
     var templateWithHeaderAndFooter = '' +
       '<header>' +
@@ -133,10 +133,7 @@
             '</div>' +
             '<div class="form-group continue-option-group" hidden>' +
               '<label>Jatka kääntymisrajoitusta</label>' +
-               '<ul>' +
-                  '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
-                  newIntermediateTemplate +
-               '</ul>' +
+              newIntermediateTemplate +
             '</div>' +
           '<div>' +
         '<div>' +
@@ -209,10 +206,7 @@
       '</div>'+
         '<div class="form-group continue-option-group" hidden>' +
           '<label>Jatka kääntymisrajoitusta</label>' +
-            '<ul>' +
-              '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
-              newIntermediateTemplate +
-            '</ul>' +
+            newIntermediateTemplate +
         '</div>' +
       '<div>' +
       '<div>' +
