@@ -15,7 +15,7 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
-    // Generate template for next possible linkIds when making chain for nonAdjacentTargets and Adjacent */
+    // Generate template for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
     var newIntermediateTemplate = '' +
       '<ul>' +
         '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
@@ -500,6 +500,15 @@
           notification.prop('hidden', true);
           continueButton.prop('hidden',true);
           optionsGroup.prop('hidden',false);
+        });
+
+        // Listen to link chain radio button click
+        rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
+          var formGroupElement = $(event.delegateTarget);
+          var checkedLinkId = formGroupElement.find(':checked').val();
+          console.log("Checked link id: " + checkedLinkId);
+          // TODO: Use checkedLinkId to show nested radio buttons for new branches
+          // Note: Viimeinen linkki (last link) radio button has value 0
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
