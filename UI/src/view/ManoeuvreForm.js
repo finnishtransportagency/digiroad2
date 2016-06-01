@@ -134,7 +134,7 @@
             '<div class="form-group continue-option-group" hidden>' +
               '<label>Jatka kääntymisrajoitusta</label>' +
                '<ul>' +
-                  '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
+                  '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
                   newIntermediateTemplate +
                '</ul>' +
             '</div>' +
@@ -210,7 +210,7 @@
         '<div class="form-group continue-option-group" hidden>' +
           '<label>Jatka kääntymisrajoitusta</label>' +
             '<ul>' +
-              '<li><input type="radio" name="radio" value="" checked> Viimeinen linkki</input></li>' +
+              '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
               newIntermediateTemplate +
             '</ul>' +
         '</div>' +
@@ -410,7 +410,7 @@
 
           // Hide other adjacent links and their markers
           formGroupElement.siblings('.adjacent-link').remove();
-          formGroupElement.find('.marker').remove();
+          formGroupElement.find('.form-control-static .marker').remove();
 
           // Show select menus (validity period and exceptions)
           var selects = formGroupElement.find('select');
@@ -450,7 +450,7 @@
 
           // Hide other adjacent links and their markers
           formGroupElement.siblings('.adjacent-link').remove();
-          formGroupElement.find('.marker').remove();
+          formGroupElement.find('.form-control-static .marker').remove();
 
           // Show select menus (validity period and exceptions)
           var selects = formGroupElement.find('select');
@@ -480,8 +480,8 @@
           var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
           manoeuvreDataUnderLink.prop('hidden', true);
 
-          var manoeuvre = manoeuvreData(formGroupElement);
-          selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          //var manoeuvre = manoeuvreData(formGroupElement);
+          //selectedManoeuvreSource.addManoeuvre(manoeuvre);
         });
 
         // Listen to 'continue manoeuvre' button click
