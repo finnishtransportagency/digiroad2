@@ -72,6 +72,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
+  def clearCache() = {
+    roadLinkService.clearCache()
+  }
+
   before() {
     basicAuth
   }

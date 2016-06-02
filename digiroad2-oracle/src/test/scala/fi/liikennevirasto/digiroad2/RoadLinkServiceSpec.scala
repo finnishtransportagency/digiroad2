@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -18,7 +19,7 @@ import scala.concurrent.Promise
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(vvhClient, eventBus) {
+  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -103,7 +104,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
-    val service = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Option("testuser"), { _ => })
     roadLink.map(_.linkType) should be(None)
   }

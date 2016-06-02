@@ -53,7 +53,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
 //  1621077551  1611374
 
-  val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+  val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
   val testObstacleService = new ObstacleService(mockVVHClient)
   val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockVVHClient)

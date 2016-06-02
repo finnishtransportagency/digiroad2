@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 
 class ValluActor extends Actor {
@@ -119,7 +120,7 @@ object Digiroad2Context {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus)
+    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
