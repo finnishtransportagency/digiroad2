@@ -497,12 +497,16 @@
           var checkedLinkId = formGroupElement.find(':checked').val();
           console.log("Checked link id: " + checkedLinkId);
 
-          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
-            return rl.linkId === checkedLinkId;
-          });
+            var target = _.filter(selectedManoeuvreSource.get().adjacent, function (manoeuvreSourceAdjacent) {
+                return _.some(manoeuvreSourceAdjacent.adjacentLinks, function (adjacentLink) {
+                    return adjacentLink.linkId == checkedLinkId;
+                });
+            });
           if (!target) {
-            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
-              return rl.linkId === checkedLinkId;
+            target = _.filter(selectedManoeuvreSource.get().nonAdjacentTargets, function (manoeuvreSourceNonAdjacent) {
+                return _.some(manoeuvreSourceNonAdjacent.adjacentLinks, function (adjacentLink) {
+                    return adjacentLink.linkId == checkedLinkId;
+                });
             });
           }
 
