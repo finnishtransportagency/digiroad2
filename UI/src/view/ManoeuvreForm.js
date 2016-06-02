@@ -15,17 +15,6 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
-    // Generate template for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
-    var newIntermediateTemplate = '' +
-      '<ul>' +
-        '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
-        '<% _.forEach(adjacentLinks, function(l) { %>' +
-          '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
-          '</input>' +
-          '<span class="marker"><%= l.marker %></span></li>' +
-        ' <% }) %>' +
-      '</ul>';
-
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -133,7 +122,7 @@
             '</div>' +
             '<div class="form-group continue-option-group" hidden>' +
               '<label>Jatka kääntymisrajoitusta</label>' +
-              newIntermediateTemplate +
+                linkChainRadioButtons() +
             '</div>' +
           '<div>' +
         '<div>' +
@@ -206,7 +195,7 @@
       '</div>'+
         '<div class="form-group continue-option-group" hidden>' +
           '<label>Jatka kääntymisrajoitusta</label>' +
-            newIntermediateTemplate +
+            linkChainRadioButtons() +
         '</div>' +
       '<div>' +
       '<div>' +
@@ -507,6 +496,18 @@
           var formGroupElement = $(event.delegateTarget);
           var checkedLinkId = formGroupElement.find(':checked').val();
           console.log("Checked link id: " + checkedLinkId);
+
+          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
+            return rl.linkId === checkedLinkId;
+          });
+          if (!target) {
+            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+              return rl.linkId === checkedLinkId;
+            });
+          }
+
+          eventbus.trigger('manoeuvre:showExtension', target);
+
           // TODO: Use checkedLinkId to show nested radio buttons for new branches
           // Note: Viimeinen linkki (last link) radio button has value 0
         });
@@ -597,6 +598,19 @@
   /*
    * Utility functions
    */
+
+  // Generate radio buttons for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
+  function linkChainRadioButtons() {
+    return '' +
+      '<ul>' +
+      '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
+      '<% _.forEach(adjacentLinks, function(l) { %>' +
+      '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
+      '</input>' +
+      '<span class="marker"><%= l.marker %></span></li>' +
+      ' <% }) %>' +
+      '</ul>';
+  }
 
   function newValidityPeriodElement() {
     return '' +
