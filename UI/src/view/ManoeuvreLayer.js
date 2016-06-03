@@ -43,6 +43,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSourceLinkSelected);
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
       eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
+      eventListener.listenTo(eventbus, 'manoeuvre:extend', extendManoeuvre);
     };
 
     /**
@@ -212,14 +213,15 @@
 
     var drawIntermediateFeatures = function(roadLinks) {
       var intermediateRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return !_.isEmpty(roadLink.intermediateManoeuvres);
+        return !_.isEmpty(roadLink.intermediateManoeuvres) && _.isEmpty(roadLink.destinationOfManoeuvres) &&
+          _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createIntermediateFeatures(intermediateRoadLinks));
     };
 
     var drawMultipleSourceFeatures = function(roadLinks) {
       var multipleSourceRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return !_.isEmpty(roadLink.multipleSourceManoeuvres);
+        return !_.isEmpty(roadLink.multipleSourceManoeuvres) && _.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleSourceRoadLinks));
       manoeuvresCollection.cleanHMapSourceManoeuvres();
@@ -227,7 +229,8 @@
 
     var drawMultipleIntermediateFeatures = function(roadLinks) {
       var multipleIntermediateRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return !_.isEmpty(roadLink.multipleIntermediateManoeuvres);
+        return !_.isEmpty(roadLink.multipleIntermediateManoeuvres) && _.isEmpty(roadLink.destinationOfManoeuvres) &&
+          _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
       manoeuvresCollection.cleanHMapIntermediateManoeuvres();
@@ -235,7 +238,8 @@
 
     var drawMultipleDestinationFeatures = function(roadLinks) {
       var multipleDestinationRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return !_.isEmpty(roadLink.multipleDestinationManoeuvres);
+        return !_.isEmpty(roadLink.multipleDestinationManoeuvres) &&
+          _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleDestinationRoadLinks));
       manoeuvresCollection.cleanHMapDestinationManoeuvres();
@@ -408,6 +412,17 @@
           indicatorLayer.clearMarkers();
           drawIndicators(targetRoadLink.adjacentLinks);
         }
+      } else {
+        indicatorLayer.clearMarkers();
+      }
+    };
+
+    var extendManoeuvre = function(data) {
+      var oldDestLinkId = data.target;
+      var destLinkId = data.newTargetId;
+      var source = selectedManoeuvreSource.get();
+      // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
+      if (!application.isReadOnly()) {
       } else {
         indicatorLayer.clearMarkers();
       }

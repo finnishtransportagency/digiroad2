@@ -120,7 +120,7 @@
             '<div class="form-group continue">' +
               continueChainButton +
             '</div>' +
-            '<div class="form-group continue-option-group" hidden>' +
+            '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" hidden>' +
               '<label>Jatka kääntymisrajoitusta</label>' +
                 linkChainRadioButtons() +
             '</div>' +
@@ -193,7 +193,7 @@
       '<div class="form-group continue">' +
       continueChainButton +
       '</div>'+
-        '<div class="form-group continue-option-group" hidden>' +
+        '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" hidden>' +
           '<label>Jatka kääntymisrajoitusta</label>' +
             linkChainRadioButtons() +
         '</div>' +
@@ -494,24 +494,12 @@
         // Listen to link chain radio button click
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
           var formGroupElement = $(event.delegateTarget);
+          var targetLinkId = formGroupElement.attr('linkId');
           var checkedLinkId = formGroupElement.find(':checked').val();
-          console.log("Checked link id: " + checkedLinkId);
 
-            var target = _.filter(selectedManoeuvreSource.get().adjacent, function (manoeuvreSourceAdjacent) {
-                return _.some(manoeuvreSourceAdjacent.adjacentLinks, function (adjacentLink) {
-                    return adjacentLink.linkId == checkedLinkId;
-                });
-            });
-          if (!target) {
-            target = _.filter(selectedManoeuvreSource.get().nonAdjacentTargets, function (manoeuvreSourceNonAdjacent) {
-                return _.some(manoeuvreSourceNonAdjacent.adjacentLinks, function (adjacentLink) {
-                    return adjacentLink.linkId == checkedLinkId;
-                });
-            });
+          if (targetLinkId && checkedLinkId) {
+            eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId });
           }
-
-          eventbus.trigger('manoeuvre:showExtension', target);
-
           // TODO: Use checkedLinkId to show nested radio buttons for new branches
           // Note: Viimeinen linkki (last link) radio button has value 0
         });

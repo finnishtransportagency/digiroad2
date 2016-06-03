@@ -42,7 +42,8 @@
     var getNonAdjacentTargetRoadLinksBySourceLinkId = function(linkId) {
       return _.chain(manoeuvresWithModifications())
         .filter(function(manoeuvre) {
-          return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds.length > 0;
+          return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds &&
+            manoeuvre.intermediateLinkIds.length > 0;
         })
         .pluck('destLinkId')
         .value();
