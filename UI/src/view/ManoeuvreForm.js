@@ -496,9 +496,10 @@
           var formGroupElement = $(event.delegateTarget);
           var targetLinkId = formGroupElement.attr('linkId');
           var checkedLinkId = formGroupElement.find(':checked').val();
+          var manoeuvre = manoeuvreData(formGroupElement);
 
           if (targetLinkId && checkedLinkId) {
-            eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId });
+            eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
           }
           // TODO: Use checkedLinkId to show nested radio buttons for new branches
           // Note: Viimeinen linkki (last link) radio button has value 0

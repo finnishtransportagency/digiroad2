@@ -421,6 +421,18 @@
       var oldDestLinkId = data.target;
       var destLinkId = data.newTargetId;
       var source = selectedManoeuvreSource.get();
+      var manoeuvreToRewrite = data.manoeuvre;
+
+      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
+
+        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
+
+        manoeuvreToRewrite.destLinkId = destLinkId;
+        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
+
+        selectedManoeuvreSource.open(source.linkId);
+      }
+
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
       } else {
