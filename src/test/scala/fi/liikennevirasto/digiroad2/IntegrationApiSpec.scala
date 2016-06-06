@@ -62,7 +62,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Should use cached data on second search") {
+  // run manually if required, will take a long time or will not work reliably on CI
+  ignore("Should use cached data on second search") {
     var result = ""
     var timing = 0L
     val startTimeMs = System.currentTimeMillis
