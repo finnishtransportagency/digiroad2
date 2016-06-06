@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode, Modification}
+import fi.liikennevirasto.digiroad2.asset.{Modification, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset._
-import org.json4s.{Formats, DefaultFormats}
+import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Tag, FunSuite}
+import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
 import org.json4s.jackson.JsonMethods._
 
 
-class IntegrationApiSpec extends FunSuite with ScalatraSuite {
+class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
     PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, false, Modification(None, None), Modification(None, None), Seq())
@@ -26,6 +26,13 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
     val authorizationToken = "Basic " + encodedCredentials + "="
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
+  }
+
+  before {
+    integrationApi.clearCache()
+  }
+  after {
+    integrationApi.clearCache()
   }
 
   test("Should require correct authentication", Tag("db")) {
@@ -55,6 +62,24 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("Should use cached data on second search") {
+    var result = ""
+    var timing = 0L
+    val startTimeMs = System.currentTimeMillis
+    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
+      status should equal(200)
+      result = body
+      timing =  System.currentTimeMillis - startTimeMs
+    }
+    // Second request should use cache and be less than half of the time spent (in dev testing, approx 2/5ths)
+    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
+      status should equal(200)
+      body should equal(result)
+      val elapsed = System.currentTimeMillis - startTimeMs - timing
+      elapsed shouldBe < (timing / 2)
+    }
+  }
+
   test("Returns mml id of the road link that the stop refers to") {
     getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
       val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
@@ -67,6 +92,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
+      "geometryWKT" -> "",
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
