@@ -15,6 +15,17 @@
         '<button class="continue btn btn-continue"  enabled>Jatka kääntymisrajoitusta</button>' +
         '</div>';
 
+    // Generate template for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
+    var newIntermediateTemplate = '' +
+        '<ul>' +
+        '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
+        '<% _.forEach(adjacentLinks, function(l) { %>' +
+        '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
+        '</input>' +
+        '<span class="marker"><%= l.marker %></span></li>' +
+        ' <% }) %>' +
+        '</ul>';
+
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -122,7 +133,7 @@
             '</div>' +
             '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" hidden>' +
               '<label>Jatka kääntymisrajoitusta</label>' +
-                linkChainRadioButtons() +
+                newIntermediateTemplate +
             '</div>' +
           '<div>' +
         '<div>' +
@@ -320,14 +331,19 @@
         toggleMode(applicationModel.isReadOnly());
 
         var manoeuvreData = function(formGroupElement) {
-          var destLinkId = parseInt(formGroupElement.attr('linkId'), 10);
+          var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
+          var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
-          // TODO: Add link id chain here instead of destLinkId when chain radio button functionality is implemented.
-          // SourceLinkId is added as the first item in list in SelectedManoeuvreSource.addManoeuvre.
-          var linkIds = [destLinkId];
+          // TODO: Works only for three link manoeuvre. Need to store previously checked intermediate link ids hidden somewhere in the form?
+          var linkChainId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val());
+          var linkIds = [firstTargetLinkId];
+          if (linkChainId && linkChainId !== 0) {
+            linkIds.push(linkChainId);
+          }
           return {
             manoeuvreId: manoeuvreId,
+            firstTargetLinkId: firstTargetLinkId,
             destLinkId: destLinkId,
             linkIds: linkIds,
             exceptions: manoeuvreExceptions(formGroupElement),
@@ -592,8 +608,9 @@
    * Utility functions
    */
 
+  // TODO: Remove this function if not needed. Content is the same as in newIntermediateTemplate
   // Generate radio buttons for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
-  function linkChainRadioButtons() {
+  function linkChainRadioButtons(adjacentLinks) {
     return '' +
       '<ul>' +
       '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
