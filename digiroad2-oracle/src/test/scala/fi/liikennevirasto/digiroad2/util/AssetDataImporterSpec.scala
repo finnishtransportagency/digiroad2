@@ -408,7 +408,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle.floating should be (false)
@@ -441,7 +441,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -467,7 +467,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle.floating should be (false)
@@ -498,7 +498,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchChangesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should be === (floatingObstacle)
@@ -525,7 +525,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle.floating should be (false)
@@ -554,7 +554,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.fetchChangesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
@@ -582,7 +582,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should be === (floatingObstacle)
@@ -606,7 +606,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should be === (floatingObstacle)
@@ -632,7 +632,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, obstacleType, Some("unit_test"))
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle.floating should be (false)
