@@ -411,6 +411,24 @@
         if(targetRoadLink) {
           indicatorLayer.clearMarkers();
           drawIndicators(targetRoadLink.adjacentLinks);
+
+          selectControl.deactivate();
+          roadLayer.layer.addFeatures(createDashedLineFeatures(targetRoadLink.adjacentLinks));
+          roadLayer.layer.addFeatures(createIntermediateFeatures([targetRoadLink]));
+
+          var targetMarkers = _.chain(targetRoadLink.adjacentLinks)
+              .filter(function (adjacentLink) {
+                return adjacentLink.linkId;
+              })
+              .pluck('linkId')
+              .value();
+
+          highlightOverlayFeatures(targetMarkers);
+          redrawRoadLayer();
+          if (selectedManoeuvreSource.isDirty()) {
+            selectControl.deactivate();
+          }
+
         }
       } else {
         indicatorLayer.clearMarkers();
@@ -423,15 +441,14 @@
       var source = selectedManoeuvreSource.get();
       var manoeuvreToRewrite = data.manoeuvre;
 
-      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
+//      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
+//        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
+//        manoeuvreToRewrite.destLinkId = destLinkId;
+//        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
+//        selectedManoeuvreSource.open(source.linkId);
+//      }
 
-        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
-
-        manoeuvreToRewrite.destLinkId = destLinkId;
-        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
-
-        selectedManoeuvreSource.open(source.linkId);
-      }
+      selectedManoeuvreSource.open(oldDestLinkId);
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
