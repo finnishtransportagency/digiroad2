@@ -303,10 +303,6 @@ object NumericalLimitFiller {
       case _ => 0
     }
     val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
-    val geometry = GeometryUtils.truncateGeometry(
-      Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
-        GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
-      0, to.length)
 
     PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
