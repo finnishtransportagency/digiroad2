@@ -76,8 +76,8 @@ object SpeedLimitFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, s.startMeasure, linkLength), endMeasure = linkLength),
-        MValueAdjustment(s.id, roadLink.linkId, s.startMeasure, linkLength))
+      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
+        MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
