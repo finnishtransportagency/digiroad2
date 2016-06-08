@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.GeometryUtils._
+import org.joda.time.DateTime
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
@@ -189,4 +190,5 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     overlaps((0.21, 0.22), (0.1,0.2)) should be(false)
     overlaps((0.22, 0.21), (0.1,0.2)) should be(false)
   }
+
 }

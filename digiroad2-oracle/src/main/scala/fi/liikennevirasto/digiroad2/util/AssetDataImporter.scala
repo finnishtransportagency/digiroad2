@@ -26,7 +26,8 @@ import slick.jdbc._
 
 import scala.collection.mutable
 
-object AssetDataImporter {
+object
+AssetDataImporter {
   case class SimpleBusStop(shelterType: Int,
                            assetId: Option[Long] = None,
                            busStopId: Option[Long],
@@ -776,11 +777,11 @@ class AssetDataImporter {
     * - at most 10 meters away
     * - at most .5 meters away and no other candidate locations within 5 times the distance if there are multiple
     * @param obstacle A floating obstacle to update
-    * @param vvhClient VVHClient to use (reusing for speed)
+    * @param roadLinkService RoadLinkService to use (reusing for speed)
     * @return
     */
-  def updateObstacleToRoadLink(obstacle : Obstacle, vvhClient: VVHClient) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: VVHRoadlink) = {
+  def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
+    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
       val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
       obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
@@ -790,25 +791,24 @@ class AssetDataImporter {
     //FunctionalClass 7 equal to FeatureClass TractorRoad
     //FunctionalClass 6 equal to FeatureClass DrivePath
     //FunctionalClass 8 equal to FeatureClass CycleOrPedestrianPath
-    val allowedFeatureClasses = Set(FeatureClass.TractorRoad, FeatureClass.DrivePath, FeatureClass.CycleOrPedestrianPath)
+    val allowedFunctionalClasses = Set(6,7,8)
 
     val diagonal = Vector3d(10, 10, 0)
 
     val obstaclePoint = Point(obstacle.lon, obstacle.lat, 0)
     //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
-    val roadlinks = vvhClient.fetchVVHRoadlinks(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
-      filter(roadlink => allowedFeatureClasses.exists(_.equals(roadlink.featureClass))).
-      filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0)
+    val (roadLinks, otherLinks) = roadLinkService.getRoadLinksFromVVH(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+      filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0).
+      partition(rl => allowedFunctionalClasses.contains(rl.functionalClass))
 
-    roadlinks.length match {
-      case 0 => {
+    roadLinks.length match {
+      case 0 =>
         println("! No road link found for obstacle id=" + obstacle.id)
         obstacle // Let it float, then
-      }
-      case 1 => recalculateObstaclePosition(obstacle, roadlinks.head)
+      case 1 => recalculateObstaclePosition(obstacle, roadLinks.head)
       //If exists multiple road link get the closest with less than 0.5 meters distance
       case _ =>
-        val roadLinksByDistance = roadlinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) -> rl).sortBy(_._1)
+        val roadLinksByDistance = roadLinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) -> rl).sortBy(_._1)
         val (rl1, rl2) = (roadLinksByDistance.head, roadLinksByDistance.tail.head)
         // Has to be up to 50 cm away and the second closest at least 5 times this distance away
         if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
@@ -816,9 +816,18 @@ class AssetDataImporter {
             "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
           recalculateObstaclePosition(obstacle, rl1._2)
         } else {
-          println("! Rejected; multiple candidates for obstacle id=" + obstacle.id + ": road links and distances are " +
-            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
-          obstacle
+          val closestOther = otherLinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry)).sorted.headOption
+          val rl3 = roadLinksByDistance.tail.tail.headOption.map(_._1)
+          if (rl1._1 <= .5 && rl2._1 <= .5 && closestOther.getOrElse(10.0) > 0.5 && rl3.getOrElse(10.0) > 0.5) {
+            println("* Accepted closest in joining segments for obstacle id=" + obstacle.id + ": road links and distances are " +
+              "%d -> %2.3f m, %d -> %2.3f m, next links (1-5): %2.3f m, (6-8): %2.3f m".format(
+                rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1, closestOther.getOrElse(10.0), rl3.getOrElse(10.0)))
+            recalculateObstaclePosition(obstacle, rl1._2)
+          } else {
+            println("! Rejected; multiple candidates for obstacle id=" + obstacle.id + ": road links and distances are " +
+              "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
+            obstacle
+          }
         }
     }
 

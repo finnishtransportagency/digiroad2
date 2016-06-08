@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
-import java.sql.SQLException
+import java.io.{File, FilenameFilter, IOException}
+import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -21,7 +24,7 @@ import scala.concurrent.duration.Duration
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 
-class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) {
+class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
   val logger = LoggerFactory.getLogger(getClass)
 
   /**
@@ -227,6 +230,38 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
     }
   }
 
+  private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
+    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
+    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
+          f.link_id, f.functional_class, f.modified_date, f.modified_by,
+          l.link_id, l.link_type, l.modified_date, l.modified_by
+            from #$idTableName i
+            left join traffic_direction t on i.id = t.link_id
+            left join functional_class f on i.id = f.link_id
+            left join link_type l on i.id = l.link_id
+
+      """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
+      Option[Long], Option[Int], Option[DateTime], Option[String],
+      Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
+      {
+        val td = (row._2, row._3, row._4, row._5) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        val fc = (row._6, row._7, row._8, row._9) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        val lt = (row._10, row._11, row._12, row._13) match {
+          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+          case _ => None
+        }
+        row._1 ->(td, fc, lt)
+      }
+    ).toMap
+
+  }
+
   private def fetchTrafficDirections(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select t.link_id, t.traffic_direction, t.modified_date, t.modified_by
             from traffic_direction t
@@ -288,9 +323,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   /**
-    * Returns road links and change data by municipality. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    * Gets road links and change data by municipality from VVH. Used to update cache
     */
-  def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
+  def reloadRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesF(municipality).zip(vvhClient.fetchVVHRoadlinksF(municipality)), atMost = Duration.Inf)
 
     withDynTransaction {
@@ -299,10 +334,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   /**
+    * Returns road links and change data by municipality. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
+    getCachedRoadLinksAndChanges(municipality)
+  }
+
+  /**
     * Returns road links by municipality. Used by IntegrationApi road_link_properties endpoint, UpdateIncompleteLinkList.runUpdate, LinearAssetService.get and ManoeuvreService.getByMunicipality.
     */
-  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] =
-    getRoadLinksAndChangesFromVVH(municipality)._1
+  def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+    getCachedRoadLinksAndChanges(municipality)._1
+  }
 
   /**
     * Returns road link by link id. Used by Digiroad2Api.updatePointAsset, Digiroad2Api.createNewPointAsset, ManoeuvreService.isValidManoeuvre and SpeedLimitService.toSpeedLimit.
@@ -546,17 +589,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
   }
 
   private def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
-    def makeMap(propertyRows: Seq[RoadLinkPropertyRow]): Map[RoadLinkId, RoadLinkPropertyRow] = {
-      propertyRows.groupBy(_._1)
-        .filter { case (linkId, propertyRows) => propertyRows.nonEmpty }
-        .mapValues { _.head }
+    def cleanMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)])]): Map[RoadLinkId, RoadLinkPropertyRow] = {
+      parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
     }
-
-    MassQuery.withIds(linkIds) { idTableName =>
-      RoadLinkPropertyRows(
-        makeMap(fetchTrafficDirections(idTableName)),
-        makeMap(fetchFunctionalClasses(idTableName)),
-        makeMap(fetchLinkTypes(idTableName)))
+    def splitMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)],
+      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])]) = {
+      (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
+        cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
+        cleanMap(parameterMap.map(i => i._1 -> i._2._3)))
+    }
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val (td, fc, lt) = splitMap(fetchOverrides(idTableName))
+        RoadLinkPropertyRows(td, fc, lt)
     }
   }
 
@@ -627,6 +672,102 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus) 
         })
     }).getOrElse(Nil)
   }
+
+  private val cacheDirectory = {
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    properties.getProperty("digiroad2.cache.directory", "/tmp/digiroad.cache")
+  }
+
+  private def getCacheDirectory: Option[File] = {
+    val file = new File(cacheDirectory)
+    try {
+      if ((file.exists || file.mkdir()) && file.isDirectory) {
+        return Option(file)
+      } else {
+        logger.error("Unable to create cache directory " + cacheDirectory)
+      }
+    } catch {
+      case ex: SecurityException =>
+        logger.error("Unable to create cache directory due to security", ex)
+      case ex: IOException =>
+        logger.error("Unable to create cache directory due to I/O error", ex)
+    }
+    None
+  }
+
+  private val geometryCacheFileNames = "geom_%d_%d.cached"
+  private val changeCacheFileNames = "changes_%d_%d.cached"
+  private val geometryCacheStartsMatch = "geom_%d_"
+  private val changeCacheStartsMatch = "changes_%d_"
+  private val allCacheEndsMatch = ".cached"
+
+
+  private def getCacheFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File)]) = {
+    val twentyHours = 20L * 60 * 60 * 1000
+    val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
+
+    val cachedChangesFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
+    if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead &&
+      cachedChangesFile.nonEmpty && cachedChangesFile.get.nonEmpty && cachedChangesFile.get.head.canRead) {
+      Some(cachedGeometryFile.get.head, cachedChangesFile.get.head)
+    } else {
+      None
+    }
+  }
+
+  private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val dir = getCacheDirectory
+    val cachedFiles = getCacheFiles(municipalityCode, dir)
+    cachedFiles match {
+      case Some((geometryFile, changesFile)) =>
+        logger.info("Returning cached result")
+        (vvhSerializer.readCachedGeometry(geometryFile), vvhSerializer.readCachedChanges(changesFile))
+      case _ =>
+        val (roadLinks, changes) = reloadRoadLinksAndChangesFromVVH(municipalityCode)
+        if (dir.nonEmpty) {
+          try {
+            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
+              logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
+            } else {
+              logger.error("Writing cached geom file failed!")
+            }
+            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newChangeFile, changes)) {
+              logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
+            } else {
+              logger.error("Writing cached changes file failed!")
+            }
+          } catch {
+            case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
+          }
+        }
+        (roadLinks, changes)
+    }
+  }
+
+  def clearCache() = {
+    val dir = getCacheDirectory
+    var cleared = 0
+    dir.foreach(d => d.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.endsWith(allCacheEndsMatch)
+      }
+    }).foreach { f =>
+      logger.info("Clearing cache: " + f.getAbsolutePath)
+      f.delete()
+      cleared = cleared + 1
+    }
+    )
+    cleared
+  }
 }
-
-

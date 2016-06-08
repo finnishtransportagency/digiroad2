@@ -54,6 +54,9 @@ object FunctionalClass {
 
 sealed trait TrafficDirection {
   def value: Int
+  def isOneWay =
+    this == TrafficDirection.AgainstDigitizing ||
+    this == TrafficDirection.TowardsDigitizing
 }
 object TrafficDirection {
   val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, UnknownDirection)
@@ -74,6 +77,8 @@ object TrafficDirection {
   case object AgainstDigitizing extends TrafficDirection { def value = 3 }
   case object TowardsDigitizing extends TrafficDirection { def value = 4 }
   case object UnknownDirection extends TrafficDirection { def value = 99 }
+
+
 }
 
 sealed trait SideCode {

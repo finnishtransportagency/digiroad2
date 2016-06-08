@@ -165,6 +165,7 @@ object GeometryUtils {
 
   /**
     * Check if segments overlap (not just barely touching)
+    *
     * @param segment1
     * @param segment2
     * @return
@@ -179,6 +180,23 @@ object GeometryUtils {
     segment._1 > segment._2 match {
       case true => segment.swap
       case _ => segment
+    }
+  }
+
+  /**
+    * Test if one segment is completely covered by another, either way
+    *
+    * @param segment1 segment 1 to test
+    * @param segment2 segment 2 to test
+    * @return true, if segment 1 is inside segment 2 or the other way around
+    */
+  def covered(segment1: (Double, Double), segment2: (Double, Double)): Boolean = {
+    val o = overlap(segment1, segment2)
+    val (seg1, seg2) = (order(segment1), order(segment2))
+
+    o match {
+      case Some((p1, p2)) => seg1._1 == p1 && seg1._2 == p2 || seg2._1 == p1 && seg2._2 == p2
+      case None => false
     }
   }
 

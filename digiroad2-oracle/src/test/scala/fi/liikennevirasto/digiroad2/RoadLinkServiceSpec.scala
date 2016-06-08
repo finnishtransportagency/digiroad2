@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -18,7 +19,7 @@ import scala.concurrent.Promise
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends RoadLinkService(vvhClient, eventBus) {
+  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -103,7 +104,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
-    val service = new RoadLinkService(mockVVHClient, new DummyEventBus)
+    val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Option("testuser"), { _ => })
     roadLink.map(_.linkType) should be(None)
   }
@@ -169,11 +170,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchChangesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some(DateTimePropertyFormat.print(DateTime.now())), Some("automatic_generation")))
-
+      val result = service.getRoadLinksFromVVH(boundingBox)
+      val exactModifiedAtValue = result.head.modifiedAt
+      val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation")))
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
-
-      service.getRoadLinksFromVVH(boundingBox)
 
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
@@ -205,7 +205,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Should map link properties of old link to new link when one old link maps to one new link") {
     val oldLinkId = 1l
     val newLinkId = 2l
-    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000))
+    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -240,7 +240,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val oldLinkId1 = 1l
     val oldLinkId2 = 2l
     val newLinkId = 3l
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), 144000000))
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLinks = Seq(VVHRoadlink(oldLinkId1, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
       VVHRoadlink(oldLinkId2, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))))
@@ -282,7 +282,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val oldLinkId1 = 1l
     val oldLinkId2 = 2l
     val newLinkId = 3l
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), 144000000))
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLinks = Seq(
       VVHRoadlink(oldLinkId1, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
@@ -321,7 +321,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val oldLinkId1 = 1l
     val oldLinkId2 = 2l
     val newLinkId = 3l
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000), ChangeInfo(Some(oldLinkId2), Some(newLinkId), 345l, 5, Some(0), Some(1), Some(0), Some(1), 144000000))
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLinks = Seq(
       VVHRoadlink(oldLinkId1, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
@@ -358,7 +358,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val oldLinkId = 1l
     val newLinkId1 = 2l
     val newLinkId2 = 3l
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)), ChangeInfo(Some(oldLinkId), Some(newLinkId2), 345l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000)))
+    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000), ChangeInfo(Some(oldLinkId), Some(newLinkId2), 345l, 5, Some(0), Some(1), Some(0), Some(1), 144000000))
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newRoadLinks = Seq(
@@ -397,7 +397,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Should map link properties of old link to new link when one old link maps to one new link, old link has functional class but no link type") {
     val oldLinkId = 1l
     val newLinkId = 2l
-    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000))
+    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -437,7 +437,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
        and old link has both functional class and link type""".stripMargin) {
     val oldLinkId = 1l
     val newLinkId = 2l
-    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), Some(144000000))
+    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val oldRoadLink = VVHRoadlink(oldLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))

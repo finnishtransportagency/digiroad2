@@ -190,8 +190,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
       Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(limits, newId, newStart, newEnd, vvhTimeStamp.getOrElse(0L)) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp.getOrElse(0L)))
+        condition(limits, newId, newStart, newEnd, vvhTimeStamp) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
           case false => None
         }
       case _ => None
@@ -317,7 +317,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        dao.createSpeedLimit(username, limit.linkId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
+        dao.createSpeedLimit(username, limit.linkId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(5), municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
       createdIds
