@@ -510,7 +510,7 @@
         // Listen to link chain radio button click
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
           var formGroupElement = $(event.delegateTarget);
-          var targetLinkId = formGroupElement.attr('linkId');
+          var targetLinkId = Number(formGroupElement.attr('linkId'));
           var checkedLinkId = parseInt(formGroupElement.find(':checked').val(), 10);
           var manoeuvre = manoeuvreData(formGroupElement);
 

@@ -414,7 +414,7 @@
 
           selectControl.deactivate();
           roadLayer.layer.addFeatures(createDashedLineFeatures(targetRoadLink.adjacentLinks));
-          roadLayer.layer.addFeatures(createIntermediateFeatures([targetRoadLink]));
+          //roadLayer.layer.addFeatures(createIntermediateFeatures([targetRoadLink]));
 
           var targetMarkers = _.chain(targetRoadLink.adjacentLinks)
               .filter(function (adjacentLink) {
@@ -428,7 +428,6 @@
           if (selectedManoeuvreSource.isDirty()) {
             selectControl.deactivate();
           }
-
         }
       } else {
         indicatorLayer.clearMarkers();
@@ -444,8 +443,12 @@
      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
         selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
         manoeuvreToRewrite.destLinkId = destLinkId;
+        manoeuvreToRewrite.firstTargetLinkId = destLinkId;
         selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
-        //selectedManoeuvreSource.refresh();
+
+        roadLayer.redraw();
+        selectedManoeuvreSource.open(destLinkId);
+       //selectedManoeuvreSource.refresh();
       }
 
       eventbus.trigger('manoeuvre:refreshForm', manoeuvreToRewrite);
