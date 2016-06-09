@@ -511,14 +511,13 @@
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
           var formGroupElement = $(event.delegateTarget);
           var targetLinkId = formGroupElement.attr('linkId');
-          var checkedLinkId = formGroupElement.find(':checked').val();
+          var checkedLinkId = parseInt(formGroupElement.find(':checked').val(), 10);
           var manoeuvre = manoeuvreData(formGroupElement);
 
           if (targetLinkId && checkedLinkId) {
             eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
           }
-          // TODO: Use checkedLinkId to show nested radio buttons for new branches
-          // Note: Viimeinen linkki (last link) radio button has value 0
+
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {

@@ -448,7 +448,7 @@
 //        selectedManoeuvreSource.open(source.linkId);
 //      }
 
-      selectedManoeuvreSource.open(oldDestLinkId);
+      selectedManoeuvreSource.refresh();
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
