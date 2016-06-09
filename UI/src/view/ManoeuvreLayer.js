@@ -448,6 +448,7 @@
 
         roadLayer.redraw();
         selectedManoeuvreSource.open(destLinkId);
+
        //selectedManoeuvreSource.refresh();
       }
 
