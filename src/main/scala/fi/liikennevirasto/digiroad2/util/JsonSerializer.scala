@@ -67,6 +67,7 @@ class JsonSerializer extends VVHSerializer {
 
     try {
       copy(Paths.get(tmpFile.getAbsolutePath), Paths.get(file.getAbsolutePath))
+      tmpFile.delete()
       return true
     } catch {
       case ex: Exception => logger.warn("Copy failed", ex)
