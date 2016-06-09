@@ -39,13 +39,16 @@
 
     var addManoeuvre = function(manoeuvre) {
       var sourceLinkId = current.linkId;
-      var linkIdsWithSourceLinkId = manoeuvre.linkIds.unshift(sourceLinkId);
-      var newManoeuvre = _.merge({}, { sourceLinkId: sourceLinkId, linkIds: linkIdsWithSourceLinkId }, manoeuvre);
+      // Add sourceLinkId as first element in linkIds list if it's not there already
+      var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
+      var newManoeuvre = _.merge({}, { sourceLinkId: sourceLinkId, linkIds: linkIds }, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
     var removeManoeuvre = function(manoeuvre) {
-      var manoeuvreToBeRemoved = _.merge({}, { sourceLinkId: current.linkId }, manoeuvre);
+      var sourceLinkId = current.linkId;
+      var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
+      var manoeuvreToBeRemoved = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);
       collection.removeManoeuvre(manoeuvreToBeRemoved);
     };
 
