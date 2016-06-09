@@ -702,9 +702,27 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private val changeCacheStartsMatch = "changes_%d_"
   private val allCacheEndsMatch = ".cached"
 
+  private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
+    val oldCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
+
+    oldCacheFiles.getOrElse(Array()).foreach(f =>
+      try {
+        f.delete()
+      } catch {
+        case ex: Exception => logger.warn("Unable to delete old cache file " + f.toPath, ex)
+      }
+    )
+  }
 
   private def getCacheFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File)]) = {
     val twentyHours = 20L * 60 * 60 * 1000
+
+    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
+
     val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
         name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
