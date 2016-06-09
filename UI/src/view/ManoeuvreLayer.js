@@ -441,14 +441,14 @@
       var source = selectedManoeuvreSource.get();
       var manoeuvreToRewrite = data.manoeuvre;
 
-//      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
-//        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
-//        manoeuvreToRewrite.destLinkId = destLinkId;
-//        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
-//        selectedManoeuvreSource.open(source.linkId);
-//      }
+     if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
+        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
+        manoeuvreToRewrite.destLinkId = destLinkId;
+        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
+        //selectedManoeuvreSource.refresh();
+      }
 
-      selectedManoeuvreSource.refresh();
+      eventbus.trigger('manoeuvre:refreshForm', manoeuvreToRewrite);
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {

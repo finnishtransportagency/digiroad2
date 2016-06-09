@@ -520,6 +520,11 @@
 
         });
 
+        // Listen to manoeuvre form refresh event
+        eventbus.on('manoeuvre:refreshForm', function(manoeuvre) {
+          rootElement.append('<div class="form form-horizontal form-dark form-manoeuvre"><label>Form after refresh event</label></div>');
+        });
+
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
