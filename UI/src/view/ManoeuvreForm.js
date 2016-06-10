@@ -336,14 +336,17 @@
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           // TODO: Works only for three link manoeuvre. Need to store previously checked intermediate link ids hidden somewhere in the form?
-          var linkChainId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val());
+          //var linkChainId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val());
+          //var linkIds = [firstTargetLinkId];
+          //if (linkChainId && linkChainId !== 0) {
+          //  linkIds.push(linkChainId);
+          //}
+          var nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
           var linkIds = [firstTargetLinkId];
-          if (linkChainId && linkChainId !== 0) {
-            linkIds.push(linkChainId);
-          }
           return {
             manoeuvreId: manoeuvreId,
             firstTargetLinkId: firstTargetLinkId,
+            nextTargetLinkId: nextTargetLinkId,
             destLinkId: destLinkId,
             linkIds: linkIds,
             exceptions: manoeuvreExceptions(formGroupElement),
@@ -518,11 +521,6 @@
             eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
           }
 
-        });
-
-        // Listen to manoeuvre form refresh event
-        eventbus.on('manoeuvre:refreshForm', function(manoeuvre) {
-          rootElement.append('<div class="form form-horizontal form-dark form-manoeuvre"><label>Form after refresh event</label></div>');
         });
 
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {

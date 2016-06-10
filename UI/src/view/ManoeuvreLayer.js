@@ -441,18 +441,17 @@
       var manoeuvreToRewrite = data.manoeuvre;
 
      if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
-        selectedManoeuvreSource.removeManoeuvre(manoeuvreToRewrite);
         manoeuvreToRewrite.destLinkId = destLinkId;
         manoeuvreToRewrite.firstTargetLinkId = destLinkId;
-        selectedManoeuvreSource.addManoeuvre(manoeuvreToRewrite);
+        //selectedManoeuvreSource.addLink(manoeuvreToRewrite, destLinkId);
+
+        selectedManoeuvreSource.updateAdjacents();
 
         roadLayer.redraw();
-        selectedManoeuvreSource.open(destLinkId);
 
-       //selectedManoeuvreSource.refresh();
       }
 
-      eventbus.trigger('manoeuvre:refreshForm', manoeuvreToRewrite);
+
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {

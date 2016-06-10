@@ -14,6 +14,13 @@
     // Public methods
     //----------------------------------
 
+    /**
+     * Fetches manoeuvres in map area and attached them to manoeuvres variable in ManoeuvresCollection. Used by ManoeuvreLayer.
+     *
+     * @param extent
+     * @param zoom
+     * @param callback
+     */
     var fetch = function(extent, zoom, callback) {
       eventbus.once('roadLinks:fetched', function() {
         fetchManoeuvres(extent, function(ms) {
@@ -26,10 +33,21 @@
       roadCollection.fetch(extent);
     };
 
+    /**
+     * Returns all road links with manoeuvres attached to their source road link. Used by ManoeuvresCollection.get and ManoeuvreLayer.
+     *
+     * @returns {Array}
+     */
     var getAll = function() {
       return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvresWithModifications());
     };
 
+    /**
+     * Returns a list of second link ids in manoeuvre link chain by source link id. Used by ManoeuvreLayer.
+     *
+     * @param linkId
+     * @returns {*}
+     */
     var getFirstTargetRoadLinksBySourceLinkId = function(linkId) {
       return _.chain(manoeuvresWithModifications())
           .filter(function(manoeuvre) {
@@ -39,72 +57,12 @@
           .value();
     };
 
-    var getNonAdjacentTargetRoadLinksBySourceLinkId = function(linkId) {
-      return _.chain(manoeuvresWithModifications())
-        .filter(function(manoeuvre) {
-          return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds &&
-            manoeuvre.intermediateLinkIds.length > 0;
-        })
-        .pluck('destLinkId')
-        .value();
-    };
-
-    var setMarkersToRoadLinks= function(roadLink, adjacentLinks, targetLinks, nextTargetLinks, callback) {
-      var linkId = roadLink.linkId;
-      var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
-      var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-        "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
-        "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
-        "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
-
-      var adjacentIds = adjacentLinks.map(function(l) { return l.linkId; });
-      var targetIds = targetLinks.map(function(l) { return l.linkId; });
-
-      var sortedNextTargetLinksWithMarker = _.chain(nextTargetLinks)
-        .mapValues(function(a){
-          return _.merge({}, _.map(a, function (b, i) {
-            return _.merge({}, b, { marker: markers[adjacentLinks.length + targetLinks.length + i] });
-          }));
-        }).value();
-
-      var alteredTargets = _.map(targetLinks, function (t) {
-        var targetAdjacent = _.chain(sortedNextTargetLinksWithMarker[t.linkId]).filter(function (rl) {
-          console.log("" + rl.linkId + " -> " + _.contains(targetIds, rl.linkId) + " & " + _.contains(adjacentIds, rl.linkId));
-          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId) || _.contains(adjacentIds, rl.linkId));
-        }).value;
-        return _.merge({}, t, { adjacentLinks: targetAdjacent });
-      });
-
-      var alteredAdjacents = _.map(adjacentLinks, function (t) {
-        var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
-          return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
-        });
-        return _.merge({}, t, { adjacentLinks: targetAdjacent });
-      });
-
-      var sortedAdjacentWithMarker = _.chain(alteredAdjacents)
-        .sortBy('id')
-        .map(function(a, i){
-          return _.merge({}, a, { marker: markers[i]} );
-        }).value();
-
-      var sortedTargetsWithMarker = _.chain(alteredTargets)
-        .sortBy('id')
-        .map(function(a, i){
-          return _.merge({}, a, { marker: markers[i+adjacentLinks.length] } );
-        }).value();
-
-      var sourceRoadLinkModel = roadCollection.get([linkId])[0];
-      callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
-    };
-
-    var fillTargetAdjacents = function(roadLink, targets, linkIds, adjacentLinks, callback) {
-      backend.getAdjacents(linkIds.join(), function (nextTargets) {
-        setMarkersToRoadLinks(roadLink, adjacentLinks, targets, nextTargets, callback);
-      });
-    };
-
+    /**
+     * Returns road link with adjacent links and their markers added. Used by SelectedManoeuvreSource.open.
+     *
+     * @param linkId    Source link id
+     * @param callback  What to do after asynchronous backend call
+     */
     var get = function(linkId, callback) {
       var roadLink = _.find(getAll(), {linkId: linkId});
       var linkIds = getNonAdjacentTargetRoadLinksBySourceLinkId(linkId);
@@ -122,6 +80,14 @@
       });
     };
 
+    /**
+     * Updates model after form changes.
+     * 1) If manoeuvre id doesn't exist, check if manoeuvre can be found in addedManoeuvres list and remove it from there. Then add new manoeuvre to addedManoeuvres list.
+     * 2) If manoeuvre id exists and it can be found in removedManoeuvres list, remove it from list so that manoeuvre is not removed from db.
+     * TODO: Do we need functionality 2 any more?
+     *
+     * @param newManoeuvre
+     */
     var addManoeuvre = function(newManoeuvre) {
       dirty = true;
       if (_.isNull(newManoeuvre.manoeuvreId)) {
@@ -135,6 +101,23 @@
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
 
+    /**
+     * TODO:
+     *
+     * @param manoeuvre
+     */
+    var updateManoeuvre = function(manoeuvre) {
+      dirty = true;
+    };
+
+      /**
+       * Updates model after form changes.
+       * 1) If manoeuvre id doesn't exist and it can be found in addedManoeuvres list, remove it from the list.
+       * 2) If manoeuvre id exists, add it to removedManoeuvres list.
+       * TODO: Do we need functionality 1 any more?
+       *
+       * @param manoeuvre
+       */
     var removeManoeuvre = function(manoeuvre) {
       dirty = true;
       if (_.isNull(manoeuvre.manoeuvreId)) {
@@ -147,6 +130,40 @@
       eventbus.trigger('manoeuvre:changed', manoeuvre);
     };
 
+    /**
+     * Add link id to manoeuvre link chain.
+     *
+     * @param manoeuvre
+     * @param linkId
+     */
+    var addLink = function(manoeuvre, linkId) {
+      dirty = true;
+      // TODO:
+      // Remove last id from linkIds list to get previous linkIds list
+      var manoeuvreWithOldLinkIds = manoeuvre.linkIds.pop();
+      if (_.isNull(manoeuvre.manoeuvreId)) {
+        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
+        addedManoeuvres.push(manoeuvre);
+      }
+    };
+
+    /**
+     * Remove link id from manoeuvre link chain.
+     *
+     * @param manoeuvre
+     * @param linkId
+     */
+    var removeLink = function(manoeuvre, linkId) {
+      dirty = true;
+      // TODO:
+    };
+
+    /**
+     * Update exception modifications to model.
+     *
+     * @param manoeuvreId
+     * @param exceptions
+     */
     var setExceptions = function(manoeuvreId, exceptions) {
       dirty = true;
       var info = updatedInfo[manoeuvreId] || {};
@@ -155,6 +172,12 @@
       eventbus.trigger('manoeuvre:changed', exceptions);
     };
 
+    /**
+     * Update validity period modifications to model.
+     *
+     * @param manoeuvreId
+     * @param validityPeriods
+       */
     var setValidityPeriods = function(manoeuvreId, validityPeriods) {
       dirty = true;
       var info = updatedInfo[manoeuvreId] || {};
@@ -163,6 +186,12 @@
       eventbus.trigger('manoeuvre:changed', validityPeriods);
     };
 
+    /**
+     * Update additional info modifications to model.
+     *
+     * @param manoeuvreId
+     * @param additionalInfo
+     */
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       dirty = true;
       var info = updatedInfo[manoeuvreId] || {};
@@ -171,6 +200,9 @@
       eventbus.trigger('manoeuvre:changed', additionalInfo);
     };
 
+    /**
+     * Revert model state after cancellation.
+     */
     var cancelModifications = function() {
       addedManoeuvres = [];
       removedManoeuvres = [];
@@ -182,10 +214,20 @@
       dirty = false;
     };
 
+    /**
+     * Mark model state to 'dirty' after form changes.
+     *
+     * @returns {boolean}
+       */
     var isDirty = function() {
       return dirty;
     };
 
+    /**
+     * Save model changes to database.
+     *
+     * @param callback
+       */
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
 
@@ -414,9 +456,22 @@
       };
     };
 
-    var manoeuvresEqual = function(x, y) {
-      return (x.sourceLinkId === y.sourceLinkId && x.destLinkId === y.destLinkId);
-    };
+
+    /**
+     * Check if manoeuvres are equal. Manoeuvres are equal if they have the same link chain.
+     *
+     * @param manoeuvreA
+     * @param manoeuvreB
+     * @returns {boolean}
+       */
+    var manoeuvresEqual = function(manoeuvreA, manoeuvreB) {
+      var linkIdsA = manoeuvreA.linkIds;
+      var linkIdsB = manoeuvreB.linkIds;
+      console.log("linkIdsA " + linkIdsA);
+      console.log("linkIdsB " + linkIdsB);
+      console.log(_.isEqual(linkIdsA, linkIdsB));
+      return _.isEqual(linkIdsA, linkIdsB);
+    }
 
     var unwindBackendCallStack = function(stack, callback, failureCallback) {
       if(_.isEmpty(stack)) {
@@ -434,6 +489,72 @@
       }
     };
 
+    var getNonAdjacentTargetRoadLinksBySourceLinkId = function(linkId) {
+      return _.chain(manoeuvresWithModifications())
+          .filter(function(manoeuvre) {
+            return manoeuvre.sourceLinkId === linkId && manoeuvre.intermediateLinkIds &&
+                manoeuvre.intermediateLinkIds.length > 0;
+          })
+          .pluck('destLinkId')
+          .value();
+    };
+
+    var setMarkersToRoadLinks= function(roadLink, adjacentLinks, targetLinks, nextTargetLinks, callback) {
+      var linkId = roadLink.linkId;
+      var modificationData = getLatestModificationDataBySourceRoadLink(linkId);
+      var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+        "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
+        "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
+        "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
+
+      var adjacentIds = adjacentLinks.map(function(l) { return l.linkId; });
+      var targetIds = targetLinks.map(function(l) { return l.linkId; });
+
+      var sortedNextTargetLinksWithMarker = _.chain(nextTargetLinks)
+          .mapValues(function(a){
+            return _.merge({}, _.map(a, function (b, i) {
+              return _.merge({}, b, { marker: markers[adjacentLinks.length + targetLinks.length + i] });
+            }));
+          }).value();
+
+      var alteredTargets = _.map(targetLinks, function (t) {
+        var targetAdjacent = _.chain(sortedNextTargetLinksWithMarker[t.linkId]).filter(function (rl) {
+          console.log("" + rl.linkId + " -> " + _.contains(targetIds, rl.linkId) + " & " + _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId) || _.contains(adjacentIds, rl.linkId));
+        }).value;
+        return _.merge({}, t, { adjacentLinks: targetAdjacent });
+      });
+
+      var alteredAdjacents = _.map(adjacentLinks, function (t) {
+        var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
+          console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
+          return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
+        });
+        return _.merge({}, t, { adjacentLinks: targetAdjacent });
+      });
+
+      var sortedAdjacentWithMarker = _.chain(alteredAdjacents)
+          .sortBy('id')
+          .map(function(a, i){
+            return _.merge({}, a, { marker: markers[i]} );
+          }).value();
+
+      var sortedTargetsWithMarker = _.chain(alteredTargets)
+          .sortBy('id')
+          .map(function(a, i){
+            return _.merge({}, a, { marker: markers[i+adjacentLinks.length] } );
+          }).value();
+
+      var sourceRoadLinkModel = roadCollection.get([linkId])[0];
+      callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { nonAdjacentTargets: sortedTargetsWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
+    };
+
+    var fillTargetAdjacents = function(roadLink, targets, linkIds, adjacentLinks, callback) {
+      backend.getAdjacents(linkIds.join(), function (nextTargets) {
+        setMarkersToRoadLinks(roadLink, adjacentLinks, targets, nextTargets, callback);
+      });
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -441,6 +562,9 @@
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
+      updateManoeuvre: updateManoeuvre,
+      addLink: addLink,
+      removeLink: removeLink,
       setExceptions: setExceptions,
       setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
