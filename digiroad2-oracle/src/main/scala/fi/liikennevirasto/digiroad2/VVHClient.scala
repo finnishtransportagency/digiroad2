@@ -379,13 +379,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
       Point(point(0), point(1))
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
 
   private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {

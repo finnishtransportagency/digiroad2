@@ -279,14 +279,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
       val geometryWKT =
         if (geometry.nonEmpty)
-          "LINESTRING(" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
+          "LINESTRING (" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
         else
           ""
     "geometryWKT" -> geometryWKT
   }
 
   def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
-    val geometryWKT = "POINT(" + lon + " " + lat + ")"
+    val geometryWKT = "POINT (" + lon + " " + lat + ")"
     "geometryWKT" -> geometryWKT
   }
 
