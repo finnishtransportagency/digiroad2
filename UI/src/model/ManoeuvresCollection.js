@@ -471,7 +471,7 @@
       console.log("linkIdsB " + linkIdsB);
       console.log(_.isEqual(linkIdsA, linkIdsB));
       return _.isEqual(linkIdsA, linkIdsB);
-    }
+    };
 
     var unwindBackendCallStack = function(stack, callback, failureCallback) {
       if(_.isEmpty(stack)) {
