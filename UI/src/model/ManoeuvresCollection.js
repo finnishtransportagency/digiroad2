@@ -99,6 +99,7 @@
         });
       }
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
+      showModelData();
     };
 
     /**
@@ -138,13 +139,12 @@
      */
     var addLink = function(manoeuvre, linkId) {
       dirty = true;
-      // TODO:
-      // Remove last id from linkIds list to get previous linkIds list
-      var manoeuvreWithOldLinkIds = manoeuvre.linkIds.pop();
       if (_.isNull(manoeuvre.manoeuvreId)) {
         _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
+        manoeuvre.linkIds.push(linkId);
         addedManoeuvres.push(manoeuvre);
       }
+      eventbus.trigger('manoeuvre:linkAdded', manoeuvre);
     };
 
     /**
@@ -555,6 +555,11 @@
       });
     };
 
+    var showModelData = function() {
+      console.log("addedManoeuvres:");
+      console.log("  " + JSON.stringify(addedManoeuvres));
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -574,7 +579,8 @@
       cleanHMapSourceManoeuvres: cleanHMapSourceManoeuvres,
       cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
       cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
-      cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres
+      cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
+      showModelData: showModelData
     };
   };
 })(this);

@@ -435,29 +435,38 @@
     };
 
     var extendManoeuvre = function(data) {
-      var oldDestLinkId = data.target;
-      var destLinkId = data.newTargetId;
-      var source = selectedManoeuvreSource.get();
+     // var oldDestLinkId = data.target;
+     // var destLinkId = data.newTargetId;
+     // var source = selectedManoeuvreSource.get();
+     // var manoeuvreToRewrite = data.manoeuvre;
+     //
+     //if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
+     //   manoeuvreToRewrite.destLinkId = destLinkId;
+     //   manoeuvreToRewrite.firstTargetLinkId = destLinkId;
+     //   selectedManoeuvreSource.addLink(manoeuvreToRewrite, destLinkId);
+     //
+     //   selectedManoeuvreSource.updateAdjacents();
+     //
+     //   roadLayer.redraw();
+     //
+     // }
+
       var manoeuvreToRewrite = data.manoeuvre;
+      var newDestLinkId = data.newTargetId;
+      selectedManoeuvreSource.addLink(manoeuvreToRewrite, newDestLinkId);
+      selectedManoeuvreSource.updateAdjacents();
 
-     if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
-        manoeuvreToRewrite.destLinkId = destLinkId;
-        manoeuvreToRewrite.firstTargetLinkId = destLinkId;
-        //selectedManoeuvreSource.addLink(manoeuvreToRewrite, destLinkId);
-
-        selectedManoeuvreSource.updateAdjacents();
-
-        roadLayer.redraw();
-
-      }
-
-
+      manoeuvresCollection.showModelData();
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
       } else {
         indicatorLayer.clearMarkers();
       }
+    };
+
+    var drawExtension = function() {
+
     };
 
     return {

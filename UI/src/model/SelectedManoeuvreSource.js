@@ -117,7 +117,10 @@
      * @param linkId
        */
     var addLink = function(manoeuvre, linkId) {
-      manoeuvresCollection.addLink(manoeuvre, linkId);
+      var sourceLinkId = current.linkId;
+      var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
+      var manoeuvreWithSourceLink = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);
+      manoeuvresCollection.addLink(manoeuvreWithSourceLink, linkId);
     };
 
     /**
