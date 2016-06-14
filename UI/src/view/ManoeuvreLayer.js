@@ -454,9 +454,9 @@
       var manoeuvreToRewrite = data.manoeuvre;
       var newDestLinkId = data.newTargetId;
       selectedManoeuvreSource.addLink(manoeuvreToRewrite, newDestLinkId);
-      selectedManoeuvreSource.updateAdjacents();
 
       manoeuvresCollection.showModelData();
+      selectedManoeuvreSource.updateAdjacents();
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
