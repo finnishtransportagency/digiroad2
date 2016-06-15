@@ -516,16 +516,23 @@
           }).value();
 
       var alteredTargets = _.map(targetLinks, function (t) {
+        var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
+          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId));
+        });
+        /*
+         TODO: Do we need this chain and filtering? It didn't return adjacent links for nonAdjacentTargets (adjacentLinks was empty)
+         Old implementation
         var targetAdjacent = _.chain(sortedNextTargetLinksWithMarker[t.linkId]).filter(function (rl) {
           console.log("" + rl.linkId + " -> " + _.contains(targetIds, rl.linkId) + " & " + _.contains(adjacentIds, rl.linkId));
           return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId) || _.contains(adjacentIds, rl.linkId));
         }).value;
+        */
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
 
       var alteredAdjacents = _.map(adjacentLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
+          //console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
           return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
         });
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
