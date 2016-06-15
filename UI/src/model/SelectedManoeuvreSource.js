@@ -1,6 +1,7 @@
 (function(root) {
   root.SelectedManoeuvreSource = function(manoeuvresCollection) {
     var current = null;
+    var targetRoadLinkSelected = null;
 
     //----------------------------------
     // Public methods
@@ -200,6 +201,29 @@
       }
     };
 
+    /**
+     * Save the target selected in the map to show radio buttons options
+     *
+     * @param targetRoadLink
+     */
+    var setTargetRoadLink = function(targetRoadLink) {
+      targetRoadLinkSelected = targetRoadLink;
+    };
+
+    /**
+     * Return the target selected in the map to show radio buttons options
+     */
+    var getTargetRoadLink = function() {
+      return targetRoadLinkSelected;
+    };
+
+    /**
+     * Returns true if Radio Buttons was showed. Used by ManoeuvreLayer to visualize if radio buttons options was showed before the redraw of the map.
+     */
+    var existTargetRoadLink = function() {
+      return targetRoadLinkSelected !== null;
+    };
+
     return {
       close: close,
       open: open,
@@ -218,7 +242,10 @@
       save: save,
       cancel: cancel,
       isDirty: isDirty,
-      refresh: refresh
+      refresh: refresh,
+      setTargetRoadLink: setTargetRoadLink,
+      getTargetRoadLink: getTargetRoadLink,
+      existTargetRoadLink: existTargetRoadLink
     };
   };
 })(this);
