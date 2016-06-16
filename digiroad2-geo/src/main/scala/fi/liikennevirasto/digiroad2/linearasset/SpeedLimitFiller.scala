@@ -241,7 +241,7 @@ object SpeedLimitFiller {
     def updateGeometry(limits: Seq[SpeedLimit], roadLink: RoadLink): (Seq[(SpeedLimit, Option[MValueAdjustment])]) = {
       limits.map { sl =>
         val newGeom = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, sl.endMeasure)
-        newGeom.equals(sl.geometry) match {
+        GeometryUtils.withinTolerance(newGeom, sl.geometry, MaxAllowedMValueError) match {
           case true => (sl, None)
           case false => (sl.copy(geometry = newGeom), Option(MValueAdjustment(sl.id, sl.linkId, sl.startMeasure, sl.endMeasure)))
         }

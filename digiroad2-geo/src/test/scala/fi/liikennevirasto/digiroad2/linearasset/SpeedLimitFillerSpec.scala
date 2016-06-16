@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{SideCodeAdjustment, MValueAdjustment, ChangeSet}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
+import org.joda.time.format.DateTimeFormat
 import org.scalatest._
 
 class SpeedLimitFillerSpec extends FunSuite with Matchers {
@@ -518,6 +519,81 @@ test("should not drop adjusted short speed limit") {
     val oldLink2 = filledTopology.find(_.startMeasure==26.74).get
     oldLink2.endMeasure should be (50.0)
     oldLink2.value.get should be (NumericValue(50))
+  }
+
+  def parse(string: String) = {
+    val dateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm")
+    DateTime.parse(string, dateTimePropertyFormat)
+  }
+
+  def printSL(speedLimit: SpeedLimit) = {
+    val ids = "%d (%d)".format(speedLimit.id, speedLimit.linkId)
+    val dir = speedLimit.sideCode match {
+      case SideCode.BothDirections => "⇅"
+      case SideCode.TowardsDigitizing => "↑"
+      case SideCode.AgainstDigitizing => "↓"
+      case _ => "?"
+    }
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    if (speedLimit.expired) {
+      println("N/A")
+    } else {
+      println("%s %s %s".format(ids, dir, details))
+    }
+  }
+
+  test("should return sensible geometry on combinable entries") {
+    val rLink = roadLink(2934609, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
+    val speedLimit = Seq(
+      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56"))),
+      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),Seq(),42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59"))),
+      SpeedLimit(1232110,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02"))),
+      SpeedLimit(1868563,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")))
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+//    speedLimit.foreach {sl =>
+//      printSL(sl)
+//      printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
+//      changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
+//      if (changeSet.expiredAssetIds.contains(sl.id))
+//        println("EXPIRED ID " + sl.id)
+//      changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
+//      if (changeSet.droppedAssetIds.contains(sl.id))
+//        println("DROPPED ID " + sl.id)
+//
+//    }
+    changeSet.droppedAssetIds should have size (2)
+    changeSet.adjustedSideCodes should have size (2)
+  }
+
+
+  test("should not combine entries that disagree") {
+    val rLink = roadLink(2934609, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
+    val geom1 = GeometryUtils.truncateGeometry(rLink.geometry, 42.545,66.463)
+    val geom2 = GeometryUtils.truncateGeometry(rLink.geometry, 0, 42.545)
+    val speedLimit = Seq(
+      SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56"))),
+      SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59"))),
+      SpeedLimit(1232110,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(100)),geom2,0,42.545,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02"))),
+      SpeedLimit(1868563,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(80)),geom2,0,42.545,Option("vvh_generated"),Option(parse("14.6.2016 16:10")),Option("split_speedlimit_1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")))
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+//    speedLimit.foreach {sl =>
+//      printSL(sl)
+//      printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
+//      changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
+//      if (changeSet.expiredAssetIds.contains(sl.id))
+//        println("EXPIRED ID " + sl.id)
+//      changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
+//      if (changeSet.droppedAssetIds.contains(sl.id))
+//        println("DROPPED ID " + sl.id)
+//
+//    }
+    changeSet.droppedAssetIds should have size (0)
+    changeSet.adjustedSideCodes should have size (0)
+    changeSet.adjustedMValues should have size (0)
   }
 
 

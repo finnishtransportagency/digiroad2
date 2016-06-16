@@ -212,5 +212,13 @@ object GeometryUtils {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }
 
+  def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double) = {
+    geom1.size == geom2.size &&
+      geom1.zip(geom2).forall {
+        case (p1, p2) => geometryLength(Seq(p1,p2)) <= tolerance
+        case _ => false
+      }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
