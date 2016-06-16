@@ -592,10 +592,12 @@
       });
 
       eventbus.on('manoeuvre:linkAdded', function(manoeuvre) {
-        var element = rootElement.find('.continue-option-group').filter(function(el) {
-          return (!el.manoeuvreid || el.manoeuvreid === manoeuvre.manoeuvreId) && el.linkid === el.destLinkId;
-        });
+        console.log("manoeuvre:linkAdded, data = ");
+        console.log(manoeuvre);
+        var element = rootElement.find('.continue-option-group');
         var link = selectedManoeuvreSource.get();
+        rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
+        element.attr('linkid', manoeuvre.destLinkId);
         element.find("ul").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks } )));
 
         // TODO Work in progress
