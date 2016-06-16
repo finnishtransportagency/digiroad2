@@ -44,6 +44,7 @@
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
       eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
       eventListener.listenTo(eventbus, 'manoeuvre:extend', extendManoeuvre);
+      eventListener.listenTo(eventbus, 'manoeuvre:linkAdded', manoeuvreChangeHandler);
     };
 
     /**
@@ -472,6 +473,7 @@
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
       if (!application.isReadOnly()) {
+        
       } else {
         indicatorLayer.clearMarkers();
       }

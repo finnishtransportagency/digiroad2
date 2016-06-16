@@ -292,7 +292,7 @@
         _.each(roadLink.nonAdjacentTargets, function(target) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return target.linkId === manoeuvre.destLinkId; });
           var manoeuvreExists = true;
-          var manoeuvreId = manoeuvre.id.toString(10);
+          var manoeuvreId = manoeuvre.id ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = localizeExceptions(manoeuvre.exceptions);
           var additionalInfo = (!_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var existingValidityPeriodElements =
@@ -589,6 +589,26 @@
 
       eventbus.on('manoeuvre:changed', function() {
         rootElement.find('.form-controls button').attr('disabled', false);
+      });
+
+      eventbus.on('manoeuvre:linkAdded', function(manoeuvre) {
+        var element = rootElement.find('.continue-option-group').filter(function(el) {
+          return (!el.manoeuvreid || el.manoeuvreid === manoeuvre.manoeuvreId) && el.linkid === el.destLinkId;
+        });
+        var link = selectedManoeuvreSource.get();
+        element.find("ul").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks } )));
+
+        // TODO Work in progress
+        element.find('input:radio[name="target"]').on('click', function(event) {
+          var formGroupElement = $(event.delegateTarget);
+          var targetLinkId = Number(formGroupElement.attr('linkId'));
+          var checkedLinkId = parseInt(formGroupElement.find(':checked').val(), 10);
+
+          if (targetLinkId && checkedLinkId) {
+            eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
+          }
+
+        });
       });
 
       rootElement.on('click', '.manoeuvres button.save', function() {

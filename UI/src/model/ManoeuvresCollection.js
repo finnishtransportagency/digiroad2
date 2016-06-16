@@ -151,7 +151,18 @@
         // Add enriched manoeuvre to addedManoeuvres list
         addedManoeuvres.push(manoeuvreIntermediateLinks);
       }
-      eventbus.trigger('manoeuvre:linkAdded', manoeuvre);
+
+      // Reload the source link and the manoeuvre data
+      get(manoeuvre.sourceLinkId, function(roadLink) {
+        console.log(roadLink);
+        var modified = roadLink.manoeuvres.find(function (m) {
+          return manoeuvresEqual(m, manoeuvre);
+        });
+        var targetLink = roadLink.nonAdjacentTargets.find(function (t) {
+          return t.linkId === linkId;
+        });
+        eventbus.trigger('manoeuvre:linkAdded', _.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
+      });
     };
 
     /**
