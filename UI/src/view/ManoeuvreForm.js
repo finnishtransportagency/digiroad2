@@ -465,9 +465,8 @@
               return rl.linkId == manoeuvre.destLinkId;
             });
           }
+          selectedManoeuvreSource.setDirty(true);
           eventbus.trigger('manoeuvre:showExtension', target);
-
-
         });
 
         // Listen to 'modify manoeuvre' button click
@@ -508,6 +507,8 @@
 
           //var manoeuvre = manoeuvreData(formGroupElement);
           //selectedManoeuvreSource.addManoeuvre(manoeuvre);
+
+          selectedManoeuvreSource.setDirty(true);
         });
 
         // Listen to 'continue manoeuvre' button click

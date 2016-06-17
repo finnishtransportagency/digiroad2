@@ -196,6 +196,14 @@
     };
 
     /**
+     * Set model like modified.
+     * @returns {*|boolean}
+     */
+    var setDirty = function(state) {
+      manoeuvresCollection.setDirty(state);
+    };
+
+    /**
      * Refresh source link after form save.
      */
     var refresh = function() {
@@ -247,6 +255,7 @@
       save: save,
       cancel: cancel,
       isDirty: isDirty,
+      setDirty: setDirty,
       refresh: refresh,
       setTargetRoadLink: setTargetRoadLink,
       getTargetRoadLink: getTargetRoadLink,

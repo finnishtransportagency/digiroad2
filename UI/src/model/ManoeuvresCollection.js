@@ -242,6 +242,16 @@
     };
 
     /**
+     * Set model state 'dirty'
+     *
+     * @returns {boolean}
+     */
+    var setDirty = function(state) {
+      dirty = state;
+    };
+
+
+    /**
      * Save model changes to database.
      *
      * @param callback
@@ -591,6 +601,7 @@
       setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
+      setDirty: setDirty,
       save: save,
       cleanHMapSourceManoeuvres: cleanHMapSourceManoeuvres,
       cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
