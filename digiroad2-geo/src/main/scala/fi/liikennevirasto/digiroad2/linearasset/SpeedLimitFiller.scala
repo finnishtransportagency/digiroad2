@@ -177,7 +177,7 @@ object SpeedLimitFiller {
       (seg1.value, seg2.value) match {
         case (Some(v1), Some(v2)) =>
           if (v1.equals(v2)) {
-            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortWith(modifiedSort).head
+            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(_.endMeasure).head
             Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
           } else {
             segmentPieces
@@ -419,7 +419,7 @@ object SpeedLimitFiller {
     (speedLimits, changeSet.copy(droppedAssetIds = droppedIds -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
   }
 
-    def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       combine,

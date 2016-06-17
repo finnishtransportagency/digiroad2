@@ -567,6 +567,29 @@ test("should not drop adjusted short speed limit") {
     changeSet.adjustedSideCodes should have size (2)
   }
 
+  test("should not break opposite directions") {
+    val rLink = roadLink(6189937, Seq(Point(0.0, 0.0), Point(323.203, 0.0)))
+    val speedLimit = Seq(
+      SpeedLimit(1271877,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,199.502,None, None, Option("dr1_conversion"),Option(parse("28.10.2014 15:11")),0,Option(parse("28.10.2014 15:11"))),
+      SpeedLimit(2102779,6189937,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(60)),Seq(),0,323.203,None,None,Option("split_speedlimit_1266969"),Option(parse("02.07.2015 12:12")),0,Option(parse("02.07.2015 12:12"))),
+      SpeedLimit(1988786,6189937,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),Seq(),199.502,323.203,None,None,Option("split_speedlimit_1228070"),Option(parse("02.07.2015 11:44")),0,Option(parse("02.07.2015 11:44")))
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+//        speedLimit.foreach {sl =>
+//          printSL(sl)
+//          printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
+//          changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
+//          if (changeSet.expiredAssetIds.contains(sl.id))
+//            println("EXPIRED ID " + sl.id)
+//          changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
+//          if (changeSet.droppedAssetIds.contains(sl.id))
+//            println("DROPPED ID " + sl.id)
+//
+//        }
+//    filledTopology.filter(_.id == 0).foreach( sl => printSL(sl))
+    changeSet.droppedAssetIds should have size (0)
+  }
 
   test("should not combine entries that disagree") {
     val rLink = roadLink(2934609, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
