@@ -40,12 +40,16 @@
      * ManoeuvresCollection.get fetches adjacent links of new target and attaches them to source road link.
      */
     var updateAdjacents = function() {
+      console.log("updateAdjacents");
+      console.log(current);
       if (current) {
         var linkId = current.linkId;
         current = null;
         manoeuvresCollection.get(linkId, function(roadLink){
           current = roadLink;
           current.select();
+          console.log("updated");
+          console.log(current);
           eventbus.trigger('adjacents:updated', roadLink);
         });
 
@@ -118,6 +122,7 @@
      * @param linkId
        */
     var addLink = function(manoeuvre, linkId) {
+      console.log("AddLink " + manoeuvre.linkIds + " ++ " + linkId);
       var sourceLinkId = current.linkId;
       var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
       var manoeuvreWithSourceLink = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);

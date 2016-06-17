@@ -596,7 +596,8 @@
       cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
       cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
-      showModelData: showModelData
+      showModelData: showModelData,
+      manoeuvresEqual: manoeuvresEqual
     };
   };
 })(this);

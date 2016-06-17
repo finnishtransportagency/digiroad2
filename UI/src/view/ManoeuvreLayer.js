@@ -45,6 +45,7 @@
       eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
       eventListener.listenTo(eventbus, 'manoeuvre:extend', extendManoeuvre);
       eventListener.listenTo(eventbus, 'manoeuvre:linkAdded', manoeuvreChangeHandler);
+      eventListener.listenTo(eventbus, 'adjacents:updated', drawExtension);
     };
 
     /**
@@ -466,7 +467,23 @@
 
       var manoeuvreToRewrite = data.manoeuvre;
       var newDestLinkId = data.newTargetId;
-      selectedManoeuvreSource.addLink(manoeuvreToRewrite, newDestLinkId);
+      var oldDestLinkId = data.target;
+
+      console.log("Storaged");
+      console.log(selectedManoeuvreSource.get());
+
+      var persisted = _.merge({}, manoeuvreToRewrite, selectedManoeuvreSource.get().manoeuvres.find(function (m) {
+        return m.destLinkId === oldDestLinkId && (!manoeuvreToRewrite.manoeuvreId ||
+          m.manoeuvreId === manoeuvreToRewrite.manoeuvreId); }));
+
+
+      console.log("manoeuvre extension");
+      console.log(persisted);
+      console.log("" + oldDestLinkId + " > " + newDestLinkId);
+
+      selectedManoeuvreSource.addLink(persisted, newDestLinkId);
+
+      selectedManoeuvreSource.setTargetRoadLink(newDestLinkId);
 
       manoeuvresCollection.showModelData();
       selectedManoeuvreSource.updateAdjacents();
@@ -479,8 +496,13 @@
       }
     };
 
-    var drawExtension = function() {
-
+    var drawExtension = function(roadLink) {
+      console.log("Draw Extension");
+      console.log(roadLink);
+      var targetId = selectedManoeuvreSource.getTargetRoadLink();
+      handleManoeuvreExtensionBuilding(_.find(roadLink.nonAdjacentTargets, function(l) {
+        return l.linkId === targetId;
+      }));
     };
 
     return {
