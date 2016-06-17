@@ -51,7 +51,6 @@
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-          setReadOnly(true);
         } else {
           eventbus.trigger('layer:' + selectedLayer + ':shown');
         }

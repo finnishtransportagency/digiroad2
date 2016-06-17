@@ -45,12 +45,13 @@
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
+      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
+
     }
 
     function hide() {
       element.hide();
-      editModeToggle.reset();
     }
 
     return {
