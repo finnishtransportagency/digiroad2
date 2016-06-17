@@ -11,14 +11,17 @@
       '</div>';
 
     var newIntermediateTemplate = '' +
-        '<ul>' +
+        '<div class="target-link-selection">' +
+        '<input type="hidden" class="old-link-ids" value="<%= oldLinkIds %>">' +
+        '<ul>' + '' +
         '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
         '<% _.forEach(adjacentLinks, function(l) { %>' +
         '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
         '</input>' +
         '<span class="marker"><%= l.marker %></span></li>' +
         ' <% }) %>' +
-        '</ul>';
+        '</ul>' +
+        '</div>';
 
     var templateWithHeaderAndFooter = '' +
       '<header>' +
@@ -285,7 +288,8 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            oldLinkIds: ''
           })));
         });
 
@@ -312,13 +316,36 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isLinkChain: isLinkChain
+            isLinkChain: isLinkChain,
+            oldLinkIds: ''
           })));
         });
 
         toggleMode(applicationModel.isReadOnly());
 
         var manoeuvreData = function(formGroupElement) {
+          /*
+          WIP: Possible new version of manoeuvreData
+           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
+           var destLinkId = null;
+           var linkIds = null;
+           var firstTargetLinkId = null;
+           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
+           var oldLinkIds = !_.isEmpty(formGroupElement.find('.old-link-ids').val()) ? formGroupElement.find('.old-link-ids').val() : null;
+           var linkIds = null;
+           var nextTargetLinkId = null;
+
+           if (oldLinkIds === null) {
+           firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
+           nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
+           linkIds = [firstTargetLinkId];  // source link and target link are added later to linkIds List
+           } else {
+           linkIds = oldLinkIds.split(",").map(Number);
+           console.log(linkIds);
+           firstTargetLinkId = linkIds[0];
+           nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
+           }
+           */
           var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
           var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
@@ -598,7 +625,7 @@
         var link = selectedManoeuvreSource.get();
         rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
         element.attr('linkid', manoeuvre.destLinkId);
-        element.find("ul").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks } )));
+        element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks,  "oldLinkIds": manoeuvre.linkIds.join()  } )));
 
         // TODO Work in progress
         element.find('input:radio[name="target"]').on('click', function(event) {
