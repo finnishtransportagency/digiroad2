@@ -37,12 +37,13 @@
     };
 
     function show() {
+      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
+
     }
 
     function hide() {
       element.hide();
-      editModeToggle.reset();
     }
   };
 })(this);
