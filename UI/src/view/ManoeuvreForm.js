@@ -150,7 +150,7 @@
         '<div class="form-group validity-period-group">' +
           '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
           '<ul>' +
-          '<%= existingValidityPeriodElements %>' +
+          '<%= validityPeriodElements %>' +
           '</ul>' +
         '</div>' +
         '<% } %>' +
@@ -304,6 +304,11 @@
                   .join('');
           // Verify if Manoeuvre have intermediate Links to show the plus sign
           var isLinkChain = true;
+          var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
+              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .map(validityPeriodDisplayElement)
+              .join('') :
+              '';
           rootElement.find('.form').append(_.template(targetLinkTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             manoeuvreExists: manoeuvreExists,
@@ -314,7 +319,8 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isLinkChain: isLinkChain
+            isLinkChain: isLinkChain,
+            validityPeriodElements: validityPeriodElements
           })));
         });
 
