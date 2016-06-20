@@ -12,7 +12,6 @@
 
     var newIntermediateTemplate = '' +
         '<div class="target-link-selection">' +
-        '<input type="hidden" class="old-link-ids" value="<%= oldLinkIds %>">' +
         '<ul>' + '' +
         '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
         '<% _.forEach(adjacentLinks, function(l) { %>' +
@@ -288,8 +287,7 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements,
-            oldLinkIds: ''
+            validityPeriodElements: validityPeriodElements
           })));
         });
 
@@ -316,46 +314,17 @@
             newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists }),
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
-            isLinkChain: isLinkChain,
-            oldLinkIds: ''
+            isLinkChain: isLinkChain
           })));
         });
 
         toggleMode(applicationModel.isReadOnly());
 
         var manoeuvreData = function(formGroupElement) {
-          /*
-          WIP: Possible new version of manoeuvreData
-           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
-           var destLinkId = null;
-           var linkIds = null;
-           var firstTargetLinkId = null;
-           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
-           var oldLinkIds = !_.isEmpty(formGroupElement.find('.old-link-ids').val()) ? formGroupElement.find('.old-link-ids').val() : null;
-           var linkIds = null;
-           var nextTargetLinkId = null;
-
-           if (oldLinkIds === null) {
-           firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
-           nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
-           linkIds = [firstTargetLinkId];  // source link and target link are added later to linkIds List
-           } else {
-           linkIds = oldLinkIds.split(",").map(Number);
-           console.log(linkIds);
-           firstTargetLinkId = linkIds[0];
-           nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
-           }
-           */
           var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
           var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
-          // TODO: Works only for three link manoeuvre. Need to store previously checked intermediate link ids hidden somewhere in the form?
-          //var linkChainId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val());
-          //var linkIds = [firstTargetLinkId];
-          //if (linkChainId && linkChainId !== 0) {
-          //  linkIds.push(linkChainId);
-          //}
           var nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
           var linkIds = [firstTargetLinkId];
           return {
@@ -511,30 +480,6 @@
           selectedManoeuvreSource.setDirty(true);
         });
 
-        // Listen to 'continue manoeuvre' button click
-        rootElement.find('.adjacent-link').on('click', '.continue button.continue', function(event){
-          var formGroupElement = $(event.delegateTarget);
-
-          var notification = formGroupElement.find('.form-notification');
-          var continueButton = formGroupElement.find('.continue');
-          var optionsGroup = formGroupElement.find('.continue-option-group');
-
-          var manoeuvre = manoeuvreData(formGroupElement);
-          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
-            return rl.linkId == manoeuvre.destLinkId;
-          });
-          if (!target) {
-            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
-              return rl.linkId == manoeuvre.destLinkId;
-            });
-          }
-          eventbus.trigger('manoeuvre:showExtension', target);
-
-          notification.prop('hidden', true);
-          continueButton.prop('hidden',true);
-          optionsGroup.prop('hidden',false);
-        });
-
         // Listen to link chain radio button click
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
           var formGroupElement = $(event.delegateTarget);
@@ -626,7 +571,7 @@
         var link = selectedManoeuvreSource.get();
         rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
         element.attr('linkid', manoeuvre.destLinkId);
-        element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks,  "oldLinkIds": manoeuvre.linkIds.join()  } )));
+        element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks  } )));
 
         // TODO Work in progress
         element.find('input:radio[name="target"]').on('click', function(event) {
@@ -656,20 +601,6 @@
   /*
    * Utility functions
    */
-
-  // TODO: Remove this function if not needed. Content is the same as in newIntermediateTemplate
-  // Generate radio buttons for next possible linkIds when making chain for nonAdjacentTargets and Adjacent
-  function linkChainRadioButtons(adjacentLinks) {
-    return '' +
-      '<ul>' +
-      '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
-      '<% _.forEach(adjacentLinks, function(l) { %>' +
-      '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
-      '</input>' +
-      '<span class="marker"><%= l.marker %></span></li>' +
-      ' <% }) %>' +
-      '</ul>';
-  }
 
   function newValidityPeriodElement() {
     return '' +
