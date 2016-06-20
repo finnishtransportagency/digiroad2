@@ -485,7 +485,6 @@
 
       selectedManoeuvreSource.setTargetRoadLink(newDestLinkId);
 
-      manoeuvresCollection.showModelData();
       selectedManoeuvreSource.updateAdjacents();
 
       // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form

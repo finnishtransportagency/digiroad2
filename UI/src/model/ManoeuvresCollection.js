@@ -82,9 +82,6 @@
 
     /**
      * Updates model after form changes.
-     * 1) If manoeuvre id doesn't exist, check if manoeuvre can be found in addedManoeuvres list and remove it from there. Then add new manoeuvre to addedManoeuvres list.
-     * 2) If manoeuvre id exists and it can be found in removedManoeuvres list, remove it from list so that manoeuvre is not removed from db.
-     * TODO: Do we need functionality 2 any more?
      *
      * @param newManoeuvre
      */
@@ -99,7 +96,6 @@
         });
       }
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
-      showModelData();
     };
 
     /**
@@ -113,9 +109,6 @@
 
       /**
        * Updates model after form changes.
-       * 1) If manoeuvre id doesn't exist and it can be found in addedManoeuvres list, remove it from the list.
-       * 2) If manoeuvre id exists, add it to removedManoeuvres list.
-       * TODO: Do we need functionality 1 any more?
        *
        * @param manoeuvre
        */
@@ -486,9 +479,6 @@
     var manoeuvresEqual = function(manoeuvreA, manoeuvreB) {
       var linkIdsA = manoeuvreA.linkIds;
       var linkIdsB = manoeuvreB.linkIds;
-      console.log("linkIdsA " + linkIdsA);
-      console.log("linkIdsB " + linkIdsB);
-      console.log(_.isEqual(linkIdsA, linkIdsB));
       return _.isEqual(linkIdsA, linkIdsB);
     };
 
@@ -581,11 +571,6 @@
       });
     };
 
-    var showModelData = function() {
-      console.log("addedManoeuvres:");
-      console.log("  " + JSON.stringify(addedManoeuvres));
-    };
-
     return {
       fetch: fetch,
       getAll: getAll,
@@ -607,7 +592,6 @@
       cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
       cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
-      showModelData: showModelData,
       manoeuvresEqual: manoeuvresEqual
     };
   };

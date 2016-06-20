@@ -78,7 +78,7 @@
     };
 
     /**
-     * Enrich manoeuvre and pass it to ManoeuvresCollection to update the model.
+     * Add source link id to manoeuvre and pass it to ManoeuvresCollection to update the model.
      *
      * @param manoeuvre
        */
@@ -104,7 +104,7 @@
     };
 
     /**
-     * Enrich manoeuvre and pass it to ManoeuvresCollection to update the model.
+     * Add source link id to manoeuvre and pass it to ManoeuvresCollection to update the model.
      *
      * @param manoeuvre
        */
