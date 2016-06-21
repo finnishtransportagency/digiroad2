@@ -407,10 +407,19 @@
           var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
           manoeuvreDataUnderLink.prop('hidden', true);
 
-          //var manoeuvre = manoeuvreData(formGroupElement);
-          //selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          var manoeuvre = manoeuvreData(formGroupElement);
 
+          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
+            return rl.linkId == manoeuvre.destLinkId;
+          });
+          if (!target) {
+            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+              return rl.linkId == manoeuvre.destLinkId;
+            });
+          }
           selectedManoeuvreSource.setDirty(true);
+          eventbus.trigger('manoeuvre:showExtension', target);
+
         });
 
         // Listen to link chain radio button click
