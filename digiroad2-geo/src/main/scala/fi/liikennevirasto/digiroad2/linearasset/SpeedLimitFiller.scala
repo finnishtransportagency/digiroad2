@@ -176,8 +176,11 @@ object SpeedLimitFiller {
       val seg2 = segmentPieces.last
       (seg1.value, seg2.value) match {
         case (Some(v1), Some(v2)) =>
-          if (v1.equals(v2)) {
-            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(_.endMeasure).head
+          val sl1 = limits.find(_.id == seg1.assetId).get
+          val sl2 = limits.find(_.id == seg2.assetId).get
+          if (v1.equals(v2) && GeometryUtils.withinTolerance(sl1.geometry, sl2.geometry, MaxAllowedMValueError)) {
+            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+              s.endMeasure - s.startMeasure).head
             Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
           } else {
             segmentPieces
