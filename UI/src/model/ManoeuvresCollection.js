@@ -149,8 +149,7 @@
         persisted.destLinkId = linkId;
         var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
         var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
-        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, persisted); });
-        addedManoeuvres.push(updatedPersistedManoeuvre);
+        addManoeuvre(updatedPersistedManoeuvre);
       }
 
       // Reload the source link and the manoeuvre data
