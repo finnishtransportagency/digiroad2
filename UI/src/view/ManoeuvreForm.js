@@ -70,7 +70,8 @@
           '<span class="marker"><%= marker %></span>' +
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
-        '<div class="manoeuvre-details-edit-mode">' +
+        '<div class="manoeuvre-details-select-mode">' +
+        '<% if (!manoeuvreExists) { %> <label>Ei rajoitusta</label> <% } %>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group exception-group">' +
         '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
@@ -88,7 +89,6 @@
         '</div>' +
         '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
-        '<% if (!manoeuvreExists) { %> <label>Ei rajoitusta</label> <% } %>' +
         '</div>' +
         '<div class="manoeuvre-details" hidden>' +
           '<div class="validity-period-group">' +
@@ -324,13 +324,30 @@
           }
         });
 
-        // Listen to 'new manoeuvre' button click
-        rootElement.find('.adjacent-link').on('click', '.edit button.new', function(event){
+        // Listen to 'new manoeuvre' or 'modify' button click
+        rootElement.find('.adjacent-link').on('click', '.edit', function(event){
           var formGroupElement = $(event.delegateTarget);
+
+          var manoeuvre = manoeuvreData(formGroupElement);
+          var manoeuvreId = isNaN(parseInt(manoeuvre.manoeuvreId, 10)) ? null : parseInt(manoeuvre.manoeuvreId, 10);
+
+          // Add new manoeuvre to collection
+          if (!manoeuvreId) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+            selectedManoeuvreSource.setDirty(true);
+          }
 
           // Hide other adjacent links and their markers
           formGroupElement.siblings('.adjacent-link').remove();
           formGroupElement.find('.form-control-static .marker').remove();
+
+          // Hide new/modify buttons
+          var editButton = formGroupElement.find('.edit');
+          editButton.prop('hidden',true);
+
+          // Hide manoeuvre data under new/modify buttons (selection mode)
+          var manoeuvreSelectionData = formGroupElement.find('.manoeuvre-details-select-mode');
+          manoeuvreSelectionData.prop('hidden', true);
 
           // Show select menus (validity period and exceptions)
           var selects = formGroupElement.find('select');
@@ -344,21 +361,14 @@
           var group = formGroupElement.find('.manoeuvre-details');
           group.slideDown('fast');
 
-          // Hide new/modify buttons
-          var editButton = formGroupElement.find('.edit');
-          editButton.prop('hidden',true);
+          // Show remove checkbox only for old manoeuvres
+          var removeCheckbox = formGroupElement.find('.form-remove');
+          removeCheckbox.prop('hidden', true);
+          if (manoeuvreId) {
+            removeCheckbox.prop('hidden', false);
+          }
 
-          // Hide CheckBox to remove manoeuvre
-          var checkBoxHide = formGroupElement.find('.form-remove');
-          checkBoxHide.prop('hidden', true);
-
-          // Hide manoeuvre data under the first link
-          var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
-          manoeuvreDataUnderLink.prop('hidden', true);
-
-          var manoeuvre = manoeuvreData(formGroupElement);
-          selectedManoeuvreSource.addManoeuvre(manoeuvre);
-
+          // Show possible manoeuvre extensions
           var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
             return rl.linkId == manoeuvre.destLinkId;
           });
@@ -367,57 +377,6 @@
               return rl.linkId == manoeuvre.destLinkId;
             });
           }
-          selectedManoeuvreSource.setDirty(true);
-          eventbus.trigger('manoeuvre:showExtension', target);
-        });
-
-        // Listen to 'modify manoeuvre' button click
-        rootElement.find('.adjacent-link').on('click', '.edit button.modify', function(event){
-          var formGroupElement = $(event.delegateTarget);
-
-          // Hide other adjacent links and their markers
-          formGroupElement.siblings('.adjacent-link').remove();
-          formGroupElement.find('.form-control-static .marker').remove();
-
-          // Show select menus (validity period and exceptions)
-          var selects = formGroupElement.find('select');
-          selects.prop('disabled', false);
-
-          // Show additional info textbox
-          var text = formGroupElement.find('input[type="text"]');
-          text.prop('disabled', false);
-
-          // Slide down manoeuvre details part
-          var group = formGroupElement.find('.manoeuvre-details');
-          group.slideDown('fast');
-
-          // Hide new/modify buttons
-          var editButton = formGroupElement.find('.edit');
-          editButton.prop('hidden',true);
-
-          // Hide continue link chain button
-          var continueButton = formGroupElement.find('.continue');
-          continueButton.prop('hidden', true);
-
-          // Hide continue link chain notification
-          var notification = formGroupElement.find('.form-notification');
-          notification.prop('hidden', true);
-
-          // Hide manoeuvre data under the first link
-          var manoeuvreDataUnderLink = formGroupElement.find('.manoeuvre-details-edit-mode');
-          manoeuvreDataUnderLink.prop('hidden', true);
-
-          var manoeuvre = manoeuvreData(formGroupElement);
-
-          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
-            return rl.linkId == manoeuvre.destLinkId;
-          });
-          if (!target) {
-            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
-              return rl.linkId == manoeuvre.destLinkId;
-            });
-          }
-          selectedManoeuvreSource.setDirty(true);
           eventbus.trigger('manoeuvre:showExtension', target);
 
         });
@@ -430,6 +389,7 @@
           var manoeuvre = manoeuvreData(formGroupElement);
 
           if (targetLinkId && checkedLinkId) {
+            selectedManoeuvreSource.setDirty(true);
             eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
           }
 
