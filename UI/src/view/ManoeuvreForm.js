@@ -62,10 +62,11 @@
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
 
-    var adjacentLinkTemplate = '' +
+    var manoeuvresEditModeTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
         '<div class="form-group">' +
           '<p class="form-control-static">LINK ID <%= linkId %> ' +
+          "<%print(isLinkChain ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">✚</span> ' : '')%>" +
           '<span class="marker"><%= marker %></span>' +
           '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
         '</div>' +
@@ -87,7 +88,7 @@
         '</div>' +
         '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
-        '<% if( (_.isEmpty(additionalInfo)) && (localizedExceptions.length == 0) && (validityPeriodElements.length == 0) ) { %> <label>Ei rajoitusta</label> <% } %>' +
+        '<% if (!manoeuvreExists) { %> <label>Ei rajoitusta</label> <% } %>' +
         '</div>' +
         '<div class="manoeuvre-details" hidden>' +
           '<div class="validity-period-group">' +
@@ -127,73 +128,6 @@
             '</div>' +
           '<div>' +
         '<div>' +
-      '</div>';
-
-    var targetLinkTemplate = '' +
-      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" style="display: none">' +
-      '<div class="form-group">' +
-      '<p class="form-control-static">LINK ID <%= linkId %> ' +
-      "<%print(isLinkChain ? '<span title=\"Kielletty välilinkin tai -linkkien kautta\" class=\"marker\">✚</span> ' : '')%>" +
-      '<span class="marker"><%= marker %></span>' +
-      '<span class="edit-buttons">'+renderEditButtons()+'</span></p>' +
-      '</div>' +
-      '<div class="manoeuvre-details-edit-mode">' +
-        '<% if(localizedExceptions.length > 0) { %>' +
-        '<div class="form-group exception-group">' +
-          '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
-          '<ul>' +
-          '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e.title %></li> <% }) %>' +
-          '</ul>' +
-        '</div>' +
-        '<% } %>' +
-        '<% if(existingValidityPeriodElements.length > 0) { %>' +
-        '<div class="form-group validity-period-group">' +
-          '<label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
-          '<ul>' +
-          '<%= validityPeriodElements %>' +
-          '</ul>' +
-        '</div>' +
-        '<% } %>' +
-        '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
-      '</div>' +
-      '<div class="manoeuvre-details" hidden>' +
-      '<div class="validity-period-group">' +
-      ' <label>Rajoituksen voimassaoloaika (lisäkilvessä):</label>' +
-      ' <ul>' +
-      '   <%= existingValidityPeriodElements %>' +
-      newValidityPeriodElement() +
-      ' </ul>' +
-      '</div>' +
-      '<div>' +
-      '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
-      '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-      '<div class="form-group exception">' +
-      '<%= deleteButtonTemplate %>' +
-      '<select class="form-control select">' +
-      '<% _.forEach(exceptionOptions, function(exception) { %> ' +
-      '<option value="<%- exception.typeId %>" <% if(selectedException.typeId === exception.typeId) { print(selected="selected")} %> ><%- exception.title %></option> ' +
-      '<% }) %>' +
-      '</select>' +
-      '</div>' +
-      '<% }) %>' +
-      '<%= newExceptionSelect %>' +
-      '<div class="form-group">' +
-      '<input type="text" class="form-control additional-info" ' +
-      'placeholder="Muu tarkenne" <% print(manoeuvreExists ? "" : "disabled") %> ' +
-      '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
-      '</div>' +
-      '<div class="form-remove">' +
-        '<div class="checkbox" >' +
-          '<input type="checkbox"/>' +
-        '</div>' +
-        '<p class="form-control-static">Poista</p>' +
-      '</div>' +
-        '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>" hidden>' +
-          '<label>Jatka kääntymisrajoitusta</label>' +
-            newIntermediateTemplate +
-        '</div>' +
-      '<div>' +
-      '<div>' +
       '</div>';
 
     var newExceptionTemplate = '' +
@@ -251,7 +185,7 @@
           })));
         });
 
-        // Create html elements for edit mode
+        // Create html elements for edit mode (adjacent links and non-adjacent targets)
         _.each(roadLink.adjacent, function(adjacentLink) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.linkId === manoeuvre.destLinkId; });
           var manoeuvreExists = manoeuvre ? true : false;
@@ -265,19 +199,14 @@
                 .map(validityPeriodElement)
                 .join('') :
               '';
-          var isLinkChain = _.some(roadLink.manoeuvres, function (manoeuvre) {
-            return _.some(manoeuvre.intermediateLinkIds, function (intermediateLinkId) {
-              return intermediateLinkId == adjacentLink.linkId;
-            });
-          });
+          var isLinkChain = (manoeuvre && manoeuvre.intermediateLinkIds.length) > 0 ? true : false;
           var newExceptionSelect = _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists });
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
-
-          rootElement.find('.form').append(_.template(adjacentLinkTemplate)(_.merge({}, adjacentLink, {
+          rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, adjacentLink, {
             manoeuvreExists: manoeuvreExists,
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptionOptions(),
@@ -290,7 +219,6 @@
             validityPeriodElements: validityPeriodElements
           })));
         });
-
         _.each(roadLink.nonAdjacentTargets, function(target) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return target.linkId === manoeuvre.destLinkId; });
           var manoeuvreExists = true;
@@ -309,7 +237,7 @@
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
-          rootElement.find('.form').append(_.template(targetLinkTemplate)(_.merge({}, target, {
+          rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             manoeuvreExists: manoeuvreExists,
             manoeuvreId: manoeuvreId,
@@ -393,7 +321,6 @@
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
-            // TODO: disable other form elements?
           }
         });
 
