@@ -143,6 +143,16 @@
         var manoeuvreIntermediateLinks = _.merge({}, { intermediateLinkIds: intermediateLinkIds }, manoeuvre);
         // Add enriched manoeuvre to addedManoeuvres list
         addedManoeuvres.push(manoeuvreIntermediateLinks);
+      } else {
+        var persisted = _.find(_.chain(manoeuvres).concat(addedManoeuvres).value(), {id: manoeuvre.manoeuvreId});
+        persisted.linkIds.push(linkId);
+        persisted.destLinkId = linkId;
+        var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
+        var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
+        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, persisted); });
+        addedManoeuvres.push(updatedPersistedManoeuvre);
+        console.log("Added link id " + linkId);
+        console.log(updatedPersistedManoeuvre)
       }
 
       // Reload the source link and the manoeuvre data
