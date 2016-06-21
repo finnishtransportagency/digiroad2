@@ -151,13 +151,10 @@
         var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
         _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, persisted); });
         addedManoeuvres.push(updatedPersistedManoeuvre);
-        console.log("Added link id " + linkId);
-        console.log(updatedPersistedManoeuvre)
       }
 
       // Reload the source link and the manoeuvre data
       get(manoeuvre.sourceLinkId, function(roadLink) {
-        console.log(roadLink);
         var modified = roadLink.manoeuvres.find(function (m) {
           return manoeuvresEqual(m, manoeuvre);
         });
