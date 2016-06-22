@@ -175,6 +175,7 @@
     var save = function() {
       eventbus.trigger('manoeuvres:saving');
       manoeuvresCollection.save(function() {
+        targetRoadLinkSelected = null;
         eventbus.trigger('manoeuvres:saved', current);
       });
     };
@@ -184,7 +185,10 @@
      */
     var cancel = function() {
       manoeuvresCollection.cancelModifications();
-      eventbus.trigger('manoeuvres:cancelled', current);
+      manoeuvresCollection.get(current.linkId, function(roadLink){
+        current = roadLink;
+        eventbus.trigger('manoeuvres:cancelled', current);
+      });
     };
 
     /**
