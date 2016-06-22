@@ -3,6 +3,7 @@
     var current = null;
     var targetRoadLinkSelected = null;
 
+
     //----------------------------------
     // Public methods
     //----------------------------------
@@ -136,6 +137,8 @@
      * @param linkId
        */
     var removeLink = function(manoeuvre, linkId) {
+      console.log("Remove " + linkId);
+      console.log(manoeuvre);
       manoeuvresCollection.removeLink(manoeuvre, linkId);
     };
 
@@ -241,6 +244,17 @@
       return targetRoadLinkSelected !== null;
     };
 
+    /**
+     * Fetch a given manoeuvre from collection: if id is given it is required, otherwise using destination
+     * @param manoeuvreId
+     * @param destinationLinkId
+     */
+    var fetchManoeuvre = function(manoeuvreId, destinationLinkId) {
+      return get().manoeuvres.find(function (m) {
+        return m.destLinkId === destinationLinkId && (!manoeuvreId ||
+          m.manoeuvreId === manoeuvreId); });
+    };
+
     return {
       close: close,
       open: open,
@@ -263,7 +277,8 @@
       refresh: refresh,
       setTargetRoadLink: setTargetRoadLink,
       getTargetRoadLink: getTargetRoadLink,
-      existTargetRoadLink: existTargetRoadLink
+      existTargetRoadLink: existTargetRoadLink,
+      fetchManoeuvre: fetchManoeuvre
     };
   };
 })(this);
