@@ -22,6 +22,9 @@
         '</ul>' +
         '</div>';
 
+    var dropIntermediateTemplate = '' +
+      '<button class="btn btn-drop" <%=isLinkChain ? "" : "hidden"%>>Palaa edelliselle linkille</button>';
+
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -123,6 +126,7 @@
               '<p class="form-control-static">Poista</p>' +
             '</div>' +
             '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>">' +
+              dropIntermediateTemplate +
               '<label>Jatka kääntymisrajoitusta</label>' +
                 newIntermediateTemplate +
             '</div>' +
@@ -171,7 +175,7 @@
         // Create html elements for view mode
         _.each(roadLink.manoeuvres, function (manoeuvre) {
           // Verify if Manoeuvre have intermediate Links to show the plus sign
-          var isLinkChain = manoeuvre.intermediateLinkIds.length > 0 ? true : false;
+          var isLinkChain = manoeuvre.intermediateLinkIds.length > 0;
           var localizedExceptions = localizeExceptions(manoeuvre.exceptions);
           var validityPeriodElements = _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
@@ -199,7 +203,7 @@
                 .map(validityPeriodElement)
                 .join('') :
               '';
-          var isLinkChain = (manoeuvre && manoeuvre.intermediateLinkIds.length) > 0 ? true : false;
+          var isLinkChain = (manoeuvre && manoeuvre.intermediateLinkIds.length) > 0;
           var newExceptionSelect = _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists });
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
@@ -446,6 +450,15 @@
           updateValidityPeriods($(event.delegateTarget));
         });
 
+        rootElement.find('.continue-option-group').on('click', '.btn-drop', function(event) {
+          var formGroupElement = $(event.delegateTarget);
+          console.log(formGroupElement);
+          var targetLinkId = Number(formGroupElement.attr('linkId'));
+          var manoeuvre = selectedManoeuvreSource.fetchManoeuvre(null, targetLinkId);
+          selectedManoeuvreSource.removeLink(manoeuvre, targetLinkId);
+
+        });
+
         var deleteException = function(exceptionRow, formGroupElement) {
           exceptionRow.remove();
           var manoeuvre = manoeuvreData(formGroupElement);
@@ -470,15 +483,35 @@
       });
 
       eventbus.on('manoeuvre:linkAdded', function(manoeuvre) {
-        console.log("manoeuvre:linkAdded, data = ");
-        console.log(manoeuvre);
         var element = rootElement.find('.continue-option-group');
         var link = selectedManoeuvreSource.get();
         rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
         element.attr('linkid', manoeuvre.destLinkId);
         element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks  } )));
 
-        // TODO Work in progress
+        element.find(".btn-drop").prop('hidden', "false");
+
+        element.find('input:radio[name="target"]').on('click', function(event) {
+          var formGroupElement = $(event.delegateTarget);
+          var targetLinkId = Number(formGroupElement.attr('linkId'));
+          var checkedLinkId = parseInt(formGroupElement.find(':checked').val(), 10);
+
+          if (targetLinkId && checkedLinkId) {
+            eventbus.trigger('manoeuvre:extend', {target: targetLinkId, newTargetId: checkedLinkId, manoeuvre: manoeuvre});
+          }
+
+        });
+      });
+
+      eventbus.on('manoeuvre:linkDropped', function(manoeuvre) {
+        var element = rootElement.find('.continue-option-group');
+        var link = selectedManoeuvreSource.get();
+        rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
+        element.attr('linkid', manoeuvre.destLinkId);
+        element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks  } )));
+
+        element.find(".btn-drop").prop('hidden', "false");
+
         element.find('input:radio[name="target"]').on('click', function(event) {
           var formGroupElement = $(event.delegateTarget);
           var targetLinkId = Number(formGroupElement.attr('linkId'));

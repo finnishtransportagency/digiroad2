@@ -248,6 +248,7 @@
      * @param destinationLinkId
      */
     var fetchManoeuvre = function(manoeuvreId, destinationLinkId) {
+      console.log(get());
       return get().manoeuvres.find(function (m) {
         return m.destLinkId === destinationLinkId && (!manoeuvreId ||
           m.manoeuvreId === manoeuvreId); });

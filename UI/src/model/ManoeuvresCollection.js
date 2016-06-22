@@ -151,17 +151,29 @@
         var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
         addManoeuvre(updatedPersistedManoeuvre);
       }
+      reload(manoeuvre, linkId, function(reloaded) {
+        eventbus.trigger('manoeuvre:linkAdded', reloaded);
+      });
+    };
 
+    var reload = function(manoeuvre, linkId, callback) {
       // Reload the source link and the manoeuvre data
       get(manoeuvre.sourceLinkId, function(roadLink) {
         var modified = roadLink.manoeuvres.find(function (m) {
           return manoeuvresEqual(m, manoeuvre);
         });
-        var targetLink = roadLink.nonAdjacentTargets.find(function (t) {
+        var searchBase;
+        if (modified.intermediateLinkIds && modified.intermediateLinkIds.length > 0) {
+          searchBase = roadLink.nonAdjacentTargets;
+        } else {
+          searchBase = roadLink.adjacent;
+        }
+        var targetLink = searchBase.find(function (t) {
           return t.linkId === linkId;
         });
-        eventbus.trigger('manoeuvre:linkAdded', _.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
+        callback(_.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
       });
+
     };
 
     /**
@@ -172,7 +184,28 @@
      */
     var removeLink = function(manoeuvre, linkId) {
       dirty = true;
-      // TODO:
+      var modified = manoeuvresWithModifications().find(function (m) {
+        return manoeuvresEqual(m, manoeuvre) && m.destLinkId === linkId;
+      });
+      if (modified) {
+        console.log("manoeuvre found!");
+        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
+        var newDestLinkId = manoeuvre.linkIds.pop();
+        manoeuvre.destLinkId = newDestLinkId;
+        var intermediateLinkIds = manoeuvre.linkIds.slice(1, manoeuvre.linkIds.length-2);
+        var manoeuvreIntermediateLinks = _.merge({}, manoeuvre);
+        manoeuvreIntermediateLinks.intermediateLinkIds = intermediateLinkIds;
+        manoeuvreIntermediateLinks.destLinkId = newDestLinkId;
+        addedManoeuvres.push(manoeuvreIntermediateLinks);
+        console.log(manoeuvreIntermediateLinks);
+        eventbus.trigger('manoeuvre:changed', manoeuvreIntermediateLinks);
+        reload(manoeuvreIntermediateLinks,
+          manoeuvreIntermediateLinks.linkIds[manoeuvreIntermediateLinks.linkIds.length-1], function(reloaded) {
+          eventbus.trigger('manoeuvre:linkDropped', reloaded);
+        });
+      } else {
+        console.log("Warning! Attempted to remove link but manoeuvre was not found!");
+      }
     };
 
     /**

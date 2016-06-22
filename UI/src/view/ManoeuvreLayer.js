@@ -45,6 +45,7 @@
       eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
       eventListener.listenTo(eventbus, 'manoeuvre:extend', extendManoeuvre);
       eventListener.listenTo(eventbus, 'manoeuvre:linkAdded', manoeuvreChangeHandler);
+      eventListener.listenTo(eventbus, 'manoeuvre:linkDropped', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'adjacents:updated', drawExtension);
     };
 
@@ -460,10 +461,12 @@
       } else {
         indicatorLayer.clearMarkers();
       }
-       targetRoadLink.adjacentLinks.forEach(function(adjacent, index) {
-         if(!_.contains(pastAdjacents,adjacent.linkId))
-           pastAdjacents.push(adjacent.linkId);
-       });
+      if (targetRoadLink) {
+        targetRoadLink.adjacentLinks.forEach(function (adjacent, index) {
+          if (!_.contains(pastAdjacents, adjacent.linkId))
+            pastAdjacents.push(adjacent.linkId);
+        });
+      }
     };
 
     var extendManoeuvre = function(data) {
