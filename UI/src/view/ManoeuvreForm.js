@@ -121,7 +121,7 @@
             '</div>' +
             '<div class="form-remove">' +
               '<div class="checkbox" >' +
-                '<input type="checkbox"/>' +
+                '<input type="checkbox" class="checkbox-remove"/>' +
               '</div>' +
               '<p class="form-control-static">Poista</p>' +
             '</div>' +
@@ -325,6 +325,9 @@
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
+            rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select').attr('disabled', true);
+          } else {
+            rootElement.find('.manoeuvre-details input, .manoeuvre-details select').attr('disabled', false);
           }
         });
 
