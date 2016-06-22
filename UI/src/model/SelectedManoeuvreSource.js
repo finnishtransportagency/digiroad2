@@ -137,8 +137,6 @@
      * @param linkId
        */
     var removeLink = function(manoeuvre, linkId) {
-      console.log("Remove " + linkId);
-      console.log(manoeuvre);
       manoeuvresCollection.removeLink(manoeuvre, linkId);
     };
 
