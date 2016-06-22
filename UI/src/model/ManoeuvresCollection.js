@@ -158,7 +158,7 @@
 
     var reload = function(manoeuvre, linkId, callback) {
       // Reload the source link and the manoeuvre data
-      get(manoeuvre.sourceLinkId, function(roadLink) {
+      get(manoeuvre.sourceLinkId, function (roadLink) {
         var modified = roadLink.manoeuvres.find(function (m) {
           return manoeuvresEqual(m, manoeuvre);
         });
@@ -171,9 +171,25 @@
         var targetLink = searchBase.find(function (t) {
           return t.linkId === linkId;
         });
-        callback(_.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
-      });
 
+        if (targetLink) {
+
+          if (modified.linkIds.length > 1) {
+            var secondLast = modified.linkIds[modified.linkIds.length - 2];
+            backend.getAdjacent(secondLast, function (adjacentLinksToRemove) {
+
+              // get array of ids from backend
+              var linkIdsToRemove = _.map(adjacentLinksToRemove, function(road) { return road.linkId; }).concat([secondLast]);
+              var filtered = _.filter(targetLink.adjacentLinks, function (link) {
+                return !_.contains(linkIdsToRemove, link.linkId);
+              });
+              callback(_.merge({}, modified, {"adjacentLinks": filtered}));
+            });
+          }
+          callback(_.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
+        }
+
+      });
     };
 
     /**
@@ -631,7 +647,8 @@
       cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
       cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
-      manoeuvresEqual: manoeuvresEqual
+      manoeuvresEqual: manoeuvresEqual,
+      reload: reload
     };
   };
 })(this);

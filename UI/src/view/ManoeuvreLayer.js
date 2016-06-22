@@ -423,35 +423,36 @@
 
     var pastAdjacents = [];
 
-    var handleManoeuvreExtensionBuilding = function(targetRoadLink) {
+    // TODO: ugly as hell. use one type of object, either roadlink or (preferably) manoeuvre
+    var handleManoeuvreExtensionBuilding = function(roadLinkOrManoeuvre) {
       if (!application.isReadOnly()) {
-        if(targetRoadLink) {
-          if(pastAdjacents.length !== 0){
-            var tempAdjacents = targetRoadLink.adjacentLinks;
-            for (var i = 0; i < targetRoadLink.adjacentLinks.length; i++){
-              if(_.contains(pastAdjacents,targetRoadLink.adjacentLinks[i].linkId))
-                tempAdjacents = _.intersection(tempAdjacents, _.without(targetRoadLink.adjacentLinks, targetRoadLink.adjacentLinks[i]));
-            }
-            targetRoadLink.adjacentLinks = tempAdjacents;
-          } else {
-            if(!_.contains(pastAdjacents,targetRoadLink.linkId))
-              pastAdjacents.push(targetRoadLink.linkId);
-          }
+        if(roadLinkOrManoeuvre) {
+          //if(pastAdjacents.length !== 0){
+          //  var tempAdjacents = targetRoadLink.adjacentLinks;
+          //  for (var i = 0; i < targetRoadLink.adjacentLinks.length; i++){
+          //    if(_.contains(pastAdjacents,targetRoadLink.adjacentLinks[i].linkId))
+          //      tempAdjacents = _.intersection(tempAdjacents, _.without(targetRoadLink.adjacentLinks, targetRoadLink.adjacentLinks[i]));
+          //  }
+          //  targetRoadLink.adjacentLinks = tempAdjacents;
+          //} else {
+          //  if(!_.contains(pastAdjacents,targetRoadLink.linkId))
+          //    pastAdjacents.push(targetRoadLink.linkId);
+          //}
           indicatorLayer.clearMarkers();
-          drawIndicators(targetRoadLink.adjacentLinks);
+          drawIndicators(roadLinkOrManoeuvre.adjacentLinks);
 
           selectControl.deactivate();
-          roadLayer.layer.addFeatures(createDashedLineFeatures(targetRoadLink.adjacentLinks));
-          roadLayer.layer.addFeatures(createIntermediateFeatures([targetRoadLink]));
+          roadLayer.layer.addFeatures(createDashedLineFeatures(roadLinkOrManoeuvre.adjacentLinks));
+          roadLayer.layer.addFeatures(createIntermediateFeatures([roadLinkOrManoeuvre]));
 
-          var targetMarkers = _.chain(targetRoadLink.adjacentLinks)
+          var targetMarkers = _.chain(roadLinkOrManoeuvre.adjacentLinks)
               .filter(function (adjacentLink) {
                 return adjacentLink.linkId;
               })
               .pluck('linkId')
               .value();
 
-          selectedManoeuvreSource.setTargetRoadLink(targetRoadLink.linkId);
+          selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.linkId);
           highlightOverlayFeatures(targetMarkers);
           redrawRoadLayer();
           if (selectedManoeuvreSource.isDirty()) {
@@ -461,12 +462,12 @@
       } else {
         indicatorLayer.clearMarkers();
       }
-      if (targetRoadLink) {
-        targetRoadLink.adjacentLinks.forEach(function (adjacent, index) {
-          if (!_.contains(pastAdjacents, adjacent.linkId))
-            pastAdjacents.push(adjacent.linkId);
-        });
-      }
+      //if (targetRoadLink) {
+      //  targetRoadLink.adjacentLinks.forEach(function (adjacent, index) {
+      //    if (!_.contains(pastAdjacents, adjacent.linkId))
+      //      pastAdjacents.push(adjacent.linkId);
+      //  });
+      //}
     };
 
     var extendManoeuvre = function(data) {
@@ -516,13 +517,10 @@
       }
     };
 
-    var drawExtension = function(roadLink) {
+    var drawExtension = function(manoeuvre) {
       console.log("Draw Extension");
-      console.log(roadLink);
-      var targetId = selectedManoeuvreSource.getTargetRoadLink();
-      handleManoeuvreExtensionBuilding(_.find(roadLink.nonAdjacentTargets, function(l) {
-        return l.linkId === targetId;
-      }));
+      console.log(manoeuvre);
+      handleManoeuvreExtensionBuilding(manoeuvre);
     };
 
     return {

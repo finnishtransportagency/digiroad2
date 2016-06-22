@@ -45,13 +45,9 @@
       console.log(current);
       if (current) {
         var linkId = current.linkId;
-        current = null;
-        manoeuvresCollection.get(linkId, function(roadLink){
-          current = roadLink;
-          current.select();
-          console.log("updated");
-          console.log(current);
-          eventbus.trigger('adjacents:updated', roadLink);
+        var mano = fetchManoeuvre(null, targetRoadLinkSelected);
+        manoeuvresCollection.reload(mano, targetRoadLinkSelected, function(manoeuvre) {
+          eventbus.trigger('adjacents:updated', manoeuvre);
         });
 
       }
@@ -248,7 +244,6 @@
      * @param destinationLinkId
      */
     var fetchManoeuvre = function(manoeuvreId, destinationLinkId) {
-      console.log(get());
       return get().manoeuvres.find(function (m) {
         return m.destLinkId === destinationLinkId && (!manoeuvreId ||
           m.manoeuvreId === manoeuvreId); });
