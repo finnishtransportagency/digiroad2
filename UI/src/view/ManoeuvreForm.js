@@ -345,6 +345,9 @@
           var editButton = formGroupElement.find('.edit');
           editButton.prop('hidden',true);
 
+          //Show Cancel button
+          rootElement.find('.form-controls button.cancel').attr('disabled', false);
+
           // Hide manoeuvre data under new/modify buttons (selection mode)
           var manoeuvreSelectionData = formGroupElement.find('.manoeuvre-details-select-mode');
           manoeuvreSelectionData.prop('hidden', true);
