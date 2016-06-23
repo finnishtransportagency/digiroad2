@@ -631,7 +631,7 @@
         if (addedManoeuvres[i].sourceLinkId === sourceLinkId)
           return addedManoeuvres[i];
       }
-    }
+    };
 
     return {
       fetch: fetch,
