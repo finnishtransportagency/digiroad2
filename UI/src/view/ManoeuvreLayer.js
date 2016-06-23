@@ -279,7 +279,6 @@
           var adjacentsToRedraw = _.find(selectedManoeuvreSource.get().adjacent, function(adjacents) {
             return adjacents.linkId === selectedManoeuvreSource.getTargetRoadLink();
           });
-          if(!adjacentsToRedraw)
             handleManoeuvreExtensionBuilding(adjacentsToRedraw);
         } else {
           highlightOverlayFeatures(firstTargetLinkIds);
@@ -427,17 +426,7 @@
     var handleManoeuvreExtensionBuilding = function(roadLinkOrManoeuvre) {
       if (!application.isReadOnly()) {
         if(roadLinkOrManoeuvre) {
-          //if(pastAdjacents.length !== 0){
-          //  var tempAdjacents = targetRoadLink.adjacentLinks;
-          //  for (var i = 0; i < targetRoadLink.adjacentLinks.length; i++){
-          //    if(_.contains(pastAdjacents,targetRoadLink.adjacentLinks[i].linkId))
-          //      tempAdjacents = _.intersection(tempAdjacents, _.without(targetRoadLink.adjacentLinks, targetRoadLink.adjacentLinks[i]));
-          //  }
-          //  targetRoadLink.adjacentLinks = tempAdjacents;
-          //} else {
-          //  if(!_.contains(pastAdjacents,targetRoadLink.linkId))
-          //    pastAdjacents.push(targetRoadLink.linkId);
-          //}
+
           indicatorLayer.clearMarkers();
           drawIndicators(roadLinkOrManoeuvre.adjacentLinks);
 
@@ -462,12 +451,7 @@
       } else {
         indicatorLayer.clearMarkers();
       }
-      //if (targetRoadLink) {
-      //  targetRoadLink.adjacentLinks.forEach(function (adjacent, index) {
-      //    if (!_.contains(pastAdjacents, adjacent.linkId))
-      //      pastAdjacents.push(adjacent.linkId);
-      //  });
-      //}
+
     };
 
     var extendManoeuvre = function(data) {

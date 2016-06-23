@@ -244,9 +244,14 @@
      * @param destinationLinkId
      */
     var fetchManoeuvre = function(manoeuvreId, destinationLinkId) {
-      return get().manoeuvres.find(function (m) {
-        return m.destLinkId === destinationLinkId && (!manoeuvreId ||
-          m.manoeuvreId === manoeuvreId); });
+      if(get().manoeuvres.length !== 0){
+        return get().manoeuvres.find(function (m) {
+          return m.destLinkId === destinationLinkId && (!manoeuvreId ||
+              m.manoeuvreId === manoeuvreId); });
+      }
+      else  {
+        return manoeuvresCollection.getManoeuvreBySourceLinkId(get().linkId);
+      }
     };
 
     return {
