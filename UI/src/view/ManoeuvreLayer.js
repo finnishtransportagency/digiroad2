@@ -420,8 +420,6 @@
       }
     };
 
-    var pastAdjacents = [];
-
     // TODO: ugly as hell. use one type of object, either roadlink or (preferably) manoeuvre
     var handleManoeuvreExtensionBuilding = function(roadLinkOrManoeuvre) {
       if (!application.isReadOnly()) {
@@ -437,11 +435,9 @@
           }
           else {
             var linkIdLists = _.without(roadLinkOrManoeuvre.linkIds, roadLinkOrManoeuvre.sourceLinkId);
-            var roadLinkList = [];
             for(var i = 0; i < linkIdLists.length; i++){
-              roadLinkList.push(roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData());
+              roadLayer.layer.addFeatures(createIntermediateFeatures(roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData()));
             }
-            roadLayer.layer.addFeatures(createIntermediateFeatures(roadLinkList));
           }
 
           var targetMarkers = _.chain(roadLinkOrManoeuvre.adjacentLinks)

@@ -126,5 +126,5 @@
     this.reset = function(){
       roadLinkGroups = [];
     };
-  }
+  };
 })(this);
