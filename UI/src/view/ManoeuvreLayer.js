@@ -432,7 +432,17 @@
 
           selectControl.deactivate();
           roadLayer.layer.addFeatures(createDashedLineFeatures(roadLinkOrManoeuvre.adjacentLinks));
-          roadLayer.layer.addFeatures(createIntermediateFeatures([roadLinkOrManoeuvre]));
+          if (!roadLinkOrManoeuvre.linkIds) {
+            roadLayer.layer.addFeatures(createIntermediateFeatures([roadLinkOrManoeuvre]));
+          }
+          else {
+            var linkIdLists = _.without(roadLinkOrManoeuvre.linkIds, roadLinkOrManoeuvre.sourceLinkId);
+            var roadLinkList = [];
+            for(var i = 0; i < linkIdLists.length; i++){
+              roadLinkList.push(roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData());
+            }
+            roadLayer.layer.addFeatures(createIntermediateFeatures(roadLinkList));
+          }
 
           var targetMarkers = _.chain(roadLinkOrManoeuvre.adjacentLinks)
               .filter(function (adjacentLink) {
