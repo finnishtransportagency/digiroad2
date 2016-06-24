@@ -276,10 +276,7 @@
         highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
 
         if (selectedManoeuvreSource.existTargetRoadLink()) {
-          var adjacentsToRedraw = _.find(selectedManoeuvreSource.get().adjacent, function(adjacents) {
-            return adjacents.linkId === selectedManoeuvreSource.getTargetRoadLink();
-          });
-            handleManoeuvreExtensionBuilding(adjacentsToRedraw);
+          selectedManoeuvreSource.updateAdjacents();
         } else {
           highlightOverlayFeatures(firstTargetLinkIds);
           indicatorLayer.clearMarkers();
@@ -432,12 +429,14 @@
           roadLayer.layer.addFeatures(createDashedLineFeatures(roadLinkOrManoeuvre.adjacentLinks));
           if (!roadLinkOrManoeuvre.linkIds) {
             roadLayer.layer.addFeatures(createIntermediateFeatures([roadLinkOrManoeuvre]));
+            selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.linkId);
           }
           else {
             var linkIdLists = _.without(roadLinkOrManoeuvre.linkIds, roadLinkOrManoeuvre.sourceLinkId);
             for(var i = 0; i < linkIdLists.length; i++){
-              roadLayer.layer.addFeatures(createIntermediateFeatures(roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData()));
+              roadLayer.layer.addFeatures(createIntermediateFeatures([roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData()]));
             }
+            selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.destLinkId);
           }
 
           var targetMarkers = _.chain(roadLinkOrManoeuvre.adjacentLinks)
@@ -447,7 +446,6 @@
               .pluck('linkId')
               .value();
 
-          selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.linkId);
           highlightOverlayFeatures(targetMarkers);
           redrawRoadLayer();
           if (selectedManoeuvreSource.isDirty()) {
