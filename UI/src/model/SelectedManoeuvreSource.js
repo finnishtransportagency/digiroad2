@@ -260,9 +260,9 @@
       }
       else  {
         foundManoeuvres = manoeuvresCollection.getManoeuvresBySourceLinkId(get().linkId);
-        for(var i = 0; i < foundManoeuvres.length; i++) {
-          if (foundManoeuvres[i].destLinkId === destinationLinkId) {
-            return foundManoeuvres[i];
+        for(var j = 0; j < foundManoeuvres.length; j++) {
+          if (foundManoeuvres[j].destLinkId === destinationLinkId) {
+            return foundManoeuvres[j];
           }
         }
       }

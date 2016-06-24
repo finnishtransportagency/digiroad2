@@ -458,8 +458,11 @@
           console.log(formGroupElement);
           var targetLinkId = Number(formGroupElement.attr('linkId'));
           var manoeuvre = selectedManoeuvreSource.fetchManoeuvre(null, targetLinkId);
-          selectedManoeuvreSource.removeLink(manoeuvre, targetLinkId);
-
+          if (manoeuvre.linkIds.length > 2) {
+            selectedManoeuvreSource.removeLink(manoeuvre, targetLinkId);
+          } else {
+            selectedManoeuvreSource.cancel();
+          }
         });
 
         var deleteException = function(exceptionRow, formGroupElement) {

@@ -205,6 +205,7 @@
      * @param manoeuvre
      * @param linkId
      */
+    //TODO Review the new Manoeuvre created after removed link of oldDestLinkId, I think the problem is at one of the triggers below or in reload function.
     var removeLink = function(manoeuvre, linkId) {
       dirty = true;
       var modified = manoeuvresWithModifications().find(function (m) {
@@ -212,13 +213,15 @@
       });
       if (modified) {
         console.log("manoeuvre found!");
-        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
-        var newDestLinkId = manoeuvre.linkIds.pop();
+        addedManoeuvres = [];
+        manoeuvre.linkIds.pop();
+        var newDestLinkId = manoeuvre.linkIds[manoeuvre.linkIds.length-1];
         manoeuvre.destLinkId = newDestLinkId;
         var intermediateLinkIds = manoeuvre.linkIds.slice(1, manoeuvre.linkIds.length-2);
         var manoeuvreIntermediateLinks = _.merge({}, manoeuvre);
         manoeuvreIntermediateLinks.intermediateLinkIds = intermediateLinkIds;
         manoeuvreIntermediateLinks.destLinkId = newDestLinkId;
+        manoeuvreIntermediateLinks.nextTargetLinkId = newDestLinkId;
         addedManoeuvres.push(manoeuvreIntermediateLinks);
         console.log(manoeuvreIntermediateLinks);
         eventbus.trigger('manoeuvre:changed', manoeuvreIntermediateLinks);
