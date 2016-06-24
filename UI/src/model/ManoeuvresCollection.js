@@ -634,11 +634,13 @@
       });
     };
 
-    var getManoeuvreBySourceLinkId = function(sourceLinkId){
+    var getManoeuvresBySourceLinkId = function(sourceLinkId){
+      var foundManoeuvres = [];
       for(var i = 0; i < addedManoeuvres.length; i++){
         if (addedManoeuvres[i].sourceLinkId === sourceLinkId)
-          return addedManoeuvres[i];
+          foundManoeuvres.push(addedManoeuvres[i]);
       }
+      return foundManoeuvres;
     };
 
     return {
@@ -664,7 +666,7 @@
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
       manoeuvresEqual: manoeuvresEqual,
       reload: reload,
-      getManoeuvreBySourceLinkId : getManoeuvreBySourceLinkId
+      getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId
     };
   };
 })(this);

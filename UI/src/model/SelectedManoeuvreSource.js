@@ -244,13 +244,27 @@
      * @param destinationLinkId
      */
     var fetchManoeuvre = function(manoeuvreId, destinationLinkId) {
+      var foundManoeuvres;
       if(get().manoeuvres.length !== 0){
-        return get().manoeuvres.find(function (m) {
+        var manoeuvreList = get().manoeuvres.find(function (m) {
           return m.destLinkId === destinationLinkId && (!manoeuvreId ||
               m.manoeuvreId === manoeuvreId); });
+        if (!manoeuvreList){
+          foundManoeuvres = manoeuvresCollection.getManoeuvresBySourceLinkId(get().linkId);
+          for(var i = 0; i < foundManoeuvres.length; i++) {
+            if (foundManoeuvres[i].destLinkId === destinationLinkId) {
+              return foundManoeuvres[i];
+            }
+          }
+        }
       }
       else  {
-        return manoeuvresCollection.getManoeuvreBySourceLinkId(get().linkId);
+        foundManoeuvres = manoeuvresCollection.getManoeuvresBySourceLinkId(get().linkId);
+        for(var i = 0; i < foundManoeuvres.length; i++) {
+          if (foundManoeuvres[i].destLinkId === destinationLinkId) {
+            return foundManoeuvres[i];
+          }
+        }
       }
     };
 
