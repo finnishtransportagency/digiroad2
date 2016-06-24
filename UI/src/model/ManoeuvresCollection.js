@@ -4,10 +4,6 @@
     var addedManoeuvres = [];
     var removedManoeuvres = [];
     var updatedInfo = {};
-    var multipleSourceManoeuvresHMap = {};
-    var multipleIntermediateManoeuvresHMap = {};
-    var multipleDestinationManoeuvresHMap = {};
-    var sourceDestinationManoeuvresHMap = {};
     var dirty = false;
 
     //----------------------------------
@@ -132,17 +128,28 @@
      */
     var addLink = function(manoeuvre, linkId) {
       dirty = true;
+
       if (_.isNull(manoeuvre.manoeuvreId)) {
-        // Remove old one if manoeuvre already exists in addedManoeuvres list
-        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
+
         // Add link id to list after removal comparison and update destLinkId
+        if(addedManoeuvres.length > 0){
+          manoeuvre.linkIds = addedManoeuvres[0].linkIds;
+        }
         manoeuvre.linkIds.push(linkId);
         manoeuvre.destLinkId = linkId;
+
+        // Remove old one if manoeuvre already exists in addedManoeuvres list
+        //_.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
+        //TODO remove addedManoeuvres as a array
+        addedManoeuvres = [];
+
         // Remove source link id and destination link id to get only intermediate link ids
         var intermediateLinkIds = manoeuvre.linkIds.slice(1, manoeuvre.linkIds.length-1);
         var manoeuvreIntermediateLinks = _.merge({}, { intermediateLinkIds: intermediateLinkIds }, manoeuvre);
+
         // Add enriched manoeuvre to addedManoeuvres list
         addedManoeuvres.push(manoeuvreIntermediateLinks);
+
       } else {
         var persisted = _.find(_.chain(manoeuvres).concat(addedManoeuvres).value(), {id: manoeuvre.manoeuvreId});
         persisted.linkIds.push(linkId);
@@ -273,10 +280,10 @@
       addedManoeuvres = [];
       removedManoeuvres = [];
       updatedInfo = {};
-      multipleSourceManoeuvresHMap = {};
-      multipleIntermediateManoeuvresHMap = {};
-      multipleDestinationManoeuvresHMap = {};
-      sourceDestinationManoeuvresHMap = {};
+      //multipleSourceManoeuvresHMap = {};
+      //multipleIntermediateManoeuvresHMap = {};
+      //multipleDestinationManoeuvresHMap = {};
+      //sourceDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -342,22 +349,18 @@
     };
 
     var cleanHMapSourceManoeuvres = function() {
-      multipleSourceManoeuvresHMap = {};
       dirty = false;
     };
 
     var cleanHMapIntermediateManoeuvres = function() {
-      multipleIntermediateManoeuvresHMap = {};
       dirty = false;
     };
 
     var cleanHMapDestinationManoeuvres = function() {
-      multipleDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
     var cleanHMapSourceDestinationManoeuvres = function() {
-      sourceDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -374,8 +377,13 @@
      * @param manoeuvres
      * @returns {Array} Roadlinks enriched with manoeuvre related data.
      */
-     var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
+    var combineRoadLinksWithManoeuvres = function (roadLinks, manoeuvres) {
       return _.map(roadLinks, function (roadLink) {
+
+        var multipleSourceManoeuvresHMap = {};
+        var multipleIntermediateManoeuvresHMap = {};
+        var multipleDestinationManoeuvresHMap = {};
+        var sourceDestinationManoeuvresHMap = {};
 
         // Filter manoeuvres whose sourceLinkId matches road link's id
         var filteredManoeuvres = _.filter(manoeuvres, function (manoeuvre) {
@@ -384,66 +392,66 @@
 
         // Check if road link is intermediate link of some manoeuvre
         var intermediateManoeuvres  = _.chain(manoeuvres)
-          .filter(function(manoeuvre) {
-            return _.some(manoeuvre.intermediateLinkIds, function (intermediateLinkId) {
-              return intermediateLinkId === roadLink.linkId;
-            });
-          })
-          .pluck('id')
-          .value();
+            .filter(function(manoeuvre) {
+              return _.some(manoeuvre.intermediateLinkIds, function (intermediateLinkId) {
+                return intermediateLinkId === roadLink.linkId;
+              });
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is source link for multiple manoeuvres
         var multipleSourceManoeuvres = _.chain(filteredManoeuvres)
-          .filter(function (manoeuvre) {
+            .filter(function (manoeuvre) {
               multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] = manoeuvre.sourceLinkId in multipleSourceManoeuvresHMap ? multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] += 1 : 1;
               return multipleSourceManoeuvresHMap[manoeuvre.sourceLinkId] >= 2;
-          })
-          .pluck('id')
-          .value();
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is intermediate link for multiple manoeuvres
         var multipleIntermediateManoeuvres = _.chain(manoeuvres)
-          .filter(function (manoeuvre) {
-            return _.some(manoeuvre.intermediateLinkIds, function (intermediateLinkId) {
-              if (intermediateLinkId === roadLink.linkId){
-                multipleIntermediateManoeuvresHMap[intermediateLinkId] = intermediateLinkId in multipleIntermediateManoeuvresHMap ? multipleIntermediateManoeuvresHMap[intermediateLinkId] += 1 : 1;
-                return multipleIntermediateManoeuvresHMap[intermediateLinkId] >= 2;
-              }
-            });
-          })
-          .pluck('id')
-          .value();
+            .filter(function (manoeuvre) {
+              return _.some(manoeuvre.intermediateLinkIds, function (intermediateLinkId) {
+                if (intermediateLinkId === roadLink.linkId){
+                  multipleIntermediateManoeuvresHMap[intermediateLinkId] = intermediateLinkId in multipleIntermediateManoeuvresHMap ? multipleIntermediateManoeuvresHMap[intermediateLinkId] += 1 : 1;
+                  return multipleIntermediateManoeuvresHMap[intermediateLinkId] >= 2;
+                }
+              });
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is destination link of some manoeuvre
         var destinationOfManoeuvres = _.chain(manoeuvres)
-          .filter(function(manoeuvre) {
-            return manoeuvre.destLinkId === roadLink.linkId;
-          })
-          .pluck('id')
-          .value();
+            .filter(function(manoeuvre) {
+              return manoeuvre.destLinkId === roadLink.linkId;
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is destination link for multiple manoeuvres
         var multipleDestinationManoeuvres = _.chain(manoeuvres)
-          .filter(function (manoeuvre) {
-            if (manoeuvre.destLinkId === roadLink.linkId) {
-              multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] = manoeuvre.destLinkId in multipleDestinationManoeuvresHMap ? multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] += 1 : 1;
-              return multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] >= 2;
-            }
-          })
-          .pluck('id')
-          .value();
+            .filter(function (manoeuvre) {
+              if (manoeuvre.destLinkId === roadLink.linkId) {
+                multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] = manoeuvre.destLinkId in multipleDestinationManoeuvresHMap ? multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] += 1 : 1;
+                return multipleDestinationManoeuvresHMap[manoeuvre.destLinkId] >= 2;
+              }
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is source and destination link for manoeuvres
         var sourceDestinationManoeuvres = _.chain(manoeuvres)
-          .filter(function (manoeuvre) {
-            if (manoeuvre.sourceLinkId === roadLink.linkId || manoeuvre.destLinkId === roadLink.linkId) {
-              var sourceOrDestLinkId = roadLink.linkId;
-              sourceDestinationManoeuvresHMap[sourceOrDestLinkId] = sourceOrDestLinkId in sourceDestinationManoeuvresHMap ? sourceDestinationManoeuvresHMap[sourceOrDestLinkId] += 1 : 1;
-              return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 2;
-            }
-          })
-          .pluck('id')
-          .value();
+            .filter(function (manoeuvre) {
+              if (!_.isEmpty(filteredManoeuvres) && manoeuvre.destLinkId === roadLink.linkId) {
+                var sourceOrDestLinkId = roadLink.linkId;
+                sourceDestinationManoeuvresHMap[sourceOrDestLinkId] = sourceOrDestLinkId in sourceDestinationManoeuvresHMap ? sourceDestinationManoeuvresHMap[sourceOrDestLinkId] += 1 : 1;
+                return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 2;
+              }
+            })
+            .pluck('id')
+            .value();
 
         // Check if road link is source link of some manoeuvre
         var manoeuvreSource = _.isEmpty(filteredManoeuvres) ? 0 : 1;
