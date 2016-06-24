@@ -325,9 +325,9 @@
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
-            rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select').attr('disabled', true);
+            rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select, .manoeuvre-details button').attr('disabled', true);
           } else {
-            rootElement.find('.manoeuvre-details input, .manoeuvre-details select').attr('disabled', false);
+            rootElement.find('.manoeuvre-details input, .manoeuvre-details select, .manoeuvre-details button').attr('disabled', false);
           }
         });
 
