@@ -156,7 +156,9 @@
         persisted.destLinkId = linkId;
         var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
         var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
-        addManoeuvre(updatedPersistedManoeuvre);
+        // addManoeuvre(updatedPersistedManoeuvre);
+        addedManoeuvres.push(updatedPersistedManoeuvre);
+        manoeuvre = updatedPersistedManoeuvre;
       }
       reload(manoeuvre, linkId, function(reloaded) {
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
@@ -646,6 +648,38 @@
       return foundManoeuvres;
     };
 
+    var getManoeuvreData = function(manoeuvreSource){
+      var manoeuvre;
+      for (var i = 0; i < addedManoeuvres.length; i++){
+        for(var j = 0; j < manoeuvreSource.manoeuvres.length; j++) {
+          if(addedManoeuvres[i].id == manoeuvreSource.manoeuvres[j].id){
+            manoeuvre = addedManoeuvres[i];
+          }
+          else {
+            if(this.manoeuvresEqual(addedManoeuvres[i], manoeuvreSource.manoeuvres[j])) {
+              manoeuvre = addedManoeuvres[i];
+            }
+          }
+        }
+      }
+      if (!manoeuvre) {
+        var allManoeuvres = _.flatten(_.pluck(this.getAll(), 'manoeuvres'));
+        manoeuvre = _.find(allManoeuvres, function(m) {
+          for(var i = 0; i < manoeuvreSource.manoeuvres.length; i++) {
+            if (m.id !== manoeuvreSource.manoeuvres[i].id){
+              if(manoeuvresEqual(m,manoeuvreSource.manoeuvres[i])){
+                return true;
+              }
+              else return false;
+            }
+            else return true;
+          }
+        });
+
+      }
+    return manoeuvre;
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -669,7 +703,8 @@
       cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
       manoeuvresEqual: manoeuvresEqual,
       reload: reload,
-      getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId
+      getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,
+      getManoeuvreData : getManoeuvreData
     };
   };
 })(this);

@@ -46,6 +46,9 @@
       if (current) {
         var linkId = current.linkId;
         var mano = fetchManoeuvre(null, targetRoadLinkSelected);
+        if(!mano){
+            mano = manoeuvresCollection.getManoeuvreData(current);
+        }
         manoeuvresCollection.reload(mano, targetRoadLinkSelected, function(manoeuvre) {
           eventbus.trigger('adjacents:updated', manoeuvre);
         });
