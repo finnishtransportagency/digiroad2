@@ -22,9 +22,6 @@
         '</ul>' +
         '</div>';
 
-    var dropIntermediateTemplate = '' +
-      '<button class="btn btn-drop" <%=isLinkChain ? "" : "hidden"%>>Palaa edelliselle linkille</button>';
-
     var templateWithHeaderAndFooter = '' +
       '<header>' +
         '<span>Linkin LINK ID: <%= linkId %></span>' +
@@ -126,7 +123,6 @@
               '<p class="form-control-static">Poista</p>' +
             '</div>' +
             '<div class="form-group continue-option-group" manoeuvreId="<%= manoeuvreId %>" linkId="<%= linkId %>">' +
-              dropIntermediateTemplate +
               '<label>Jatka kääntymisrajoitusta</label>' +
                 newIntermediateTemplate +
             '</div>' +
@@ -367,25 +363,29 @@
           var group = formGroupElement.find('.manoeuvre-details');
           group.slideDown('fast');
 
-          // Show remove checkbox only for old manoeuvres
-          var removeCheckbox = formGroupElement.find('.form-remove');
-          removeCheckbox.prop('hidden', true);
-          if (manoeuvreId) {
-            removeCheckbox.prop('hidden', false);
-          }
+          // Show remove checkbox only for old manoeuvres and only in creating manoeuvre mode
+          if(event.target.className=="new btn btn-new") {
+            rootElement.find('.continue-option-group').attr('hidden', false);
+            var removeCheckbox = formGroupElement.find('.form-remove');
+            removeCheckbox.prop('hidden', true);
+            if (manoeuvreId) {
+              removeCheckbox.prop('hidden', false);
+            }
 
-          // Show possible manoeuvre extensions
-          var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
-            return rl.linkId == manoeuvre.destLinkId;
-          });
-          if (!target) {
-            target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+            // Show possible manoeuvre extensions
+            var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
               return rl.linkId == manoeuvre.destLinkId;
             });
-          }
-          eventbus.trigger('manoeuvre:showExtension', target);
-
-        });
+            if (!target) {
+              target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+                return rl.linkId == manoeuvre.destLinkId;
+              });
+            }
+            eventbus.trigger('manoeuvre:showExtension', target);
+          } else {
+              rootElement.find('.continue-option-group').attr('hidden', true);
+            }
+          });
 
         // Listen to link chain radio button click
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
@@ -491,8 +491,6 @@
         element.attr('linkid', manoeuvre.destLinkId);
         element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks  } )));
 
-        element.find(".btn-drop").prop('hidden', "false");
-
         element.find('input:radio[name="target"]').on('click', function(event) {
           var formGroupElement = $(event.delegateTarget);
           var targetLinkId = Number(formGroupElement.attr('linkId'));
@@ -511,8 +509,6 @@
         rootElement.find('.adjacent-link').find('.form-control-static').text("LINK ID " + manoeuvre.destLinkId);
         element.attr('linkid', manoeuvre.destLinkId);
         element.find(".target-link-selection").replaceWith(_.template(newIntermediateTemplate)(_.merge({}, { "adjacentLinks": manoeuvre.adjacentLinks  } )));
-
-        element.find(".btn-drop").prop('hidden', "false");
 
         element.find('input:radio[name="target"]').on('click', function(event) {
           var formGroupElement = $(event.delegateTarget);
