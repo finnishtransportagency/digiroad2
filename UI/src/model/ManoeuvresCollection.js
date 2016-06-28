@@ -94,15 +94,6 @@
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
 
-    /**
-     * TODO:
-     *
-     * @param manoeuvre
-     */
-    var updateManoeuvre = function(manoeuvre) {
-      dirty = true;
-    };
-
       /**
        * Updates model after form changes.
        *
@@ -687,7 +678,6 @@
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
-      updateManoeuvre: updateManoeuvre,
       addLink: addLink,
       removeLink: removeLink,
       setExceptions: setExceptions,

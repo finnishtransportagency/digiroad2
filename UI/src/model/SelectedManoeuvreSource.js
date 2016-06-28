@@ -91,19 +91,6 @@
     };
 
     /**
-     * TODO:
-     *
-     * @param manoeuvre
-       */
-    var updateManoeuvre = function(manoeuvre) {
-      var sourceLinkId = current.linkId;
-      // Add sourceLinkId as first element in linkIds list if it's not there already
-      var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
-      var newManoeuvre = _.merge({}, { sourceLinkId: sourceLinkId, linkIds: linkIds }, manoeuvre);
-      manoeuvresCollection.updateManoeuvre(newManoeuvre);
-    };
-
-    /**
      * Add source link id to manoeuvre and pass it to ManoeuvresCollection to update the model.
      *
      * @param manoeuvre
@@ -279,7 +266,6 @@
       getLinkId: getLinkId,
       exists: exists,
       addManoeuvre: addManoeuvre,
-      updateManoeuvre: updateManoeuvre,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,
       removeLink: removeLink,
