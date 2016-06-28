@@ -235,10 +235,22 @@
      */
     var setExceptions = function(manoeuvreId, exceptions) {
       dirty = true;
-      var info = updatedInfo[manoeuvreId] || {};
-      info.exceptions = exceptions;
-      updatedInfo[manoeuvreId] = info;
-      eventbus.trigger('manoeuvre:changed', exceptions);
+      if(!manoeuvreId){
+        for(var i = 0; i< addedManoeuvres.length; i++){
+          if(addedManoeuvres[i].manoeuvreId === null){
+            for(var j = 0; j < exceptions.length; j++ ) {
+              if(!_.contains(addedManoeuvres[i].exceptions, exceptions[j]))
+                addedManoeuvres[i].exceptions.push(exceptions[j]);
+              }
+            }
+        }
+      }
+      else {
+        var info = updatedInfo[manoeuvreId] || {};
+        info.exceptions = exceptions;
+        updatedInfo[manoeuvreId] = info;
+        eventbus.trigger('manoeuvre:changed', exceptions);
+      }
     };
 
     /**
@@ -271,9 +283,18 @@
      */
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       dirty = true;
-      var info = updatedInfo[manoeuvreId] || {};
-      info.additionalInfo = additionalInfo;
-      updatedInfo[manoeuvreId] = info;
+      if(!manoeuvreId) {
+        for (var i = 0; i < addedManoeuvres.length; i++) {
+          if (addedManoeuvres[i].manoeuvreId === null) {
+            addedManoeuvres[i].additionalInfo = additionalInfo;
+          }
+        }
+      }
+      else {
+        var info = updatedInfo[manoeuvreId] || {};
+        info.additionalInfo = additionalInfo;
+        updatedInfo[manoeuvreId] = info;
+      }
       eventbus.trigger('manoeuvre:changed', additionalInfo);
     };
 

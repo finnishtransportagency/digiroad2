@@ -301,11 +301,7 @@
         var throttledAdditionalInfoHandler = _.throttle(function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
-          if (_.isNull(manoeuvreId)) {
-            selectedManoeuvreSource.addManoeuvre(manoeuvre);
-          } else {
             selectedManoeuvreSource.setAdditionalInfo(manoeuvreId, manoeuvre.additionalInfo || "");
-          }
         }, 1000);
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
@@ -404,11 +400,7 @@
         rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
-          if (_.isNull(manoeuvreId)) {
-            selectedManoeuvreSource.addManoeuvre(manoeuvre);
-          } else {
-            selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
-          }
+          selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
         });
 
         rootElement.find('.adjacent-link').on('change', '.existing-validity-period .select', function(event) {
