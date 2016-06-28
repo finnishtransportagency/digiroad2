@@ -299,11 +299,7 @@
         function updateValidityPeriods(element) {
           var manoeuvre = manoeuvreData(element);
           var manoeuvreId = manoeuvre.manoeuvreId;
-          if (_.isNull(manoeuvreId)) {
-            selectedManoeuvreSource.addManoeuvre(manoeuvre);
-          } else {
-            selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
-          }
+          selectedManoeuvreSource.setValidityPeriods(manoeuvreId, manoeuvre.validityPeriods);
         }
 
         var throttledAdditionalInfoHandler = _.throttle(function(event) {

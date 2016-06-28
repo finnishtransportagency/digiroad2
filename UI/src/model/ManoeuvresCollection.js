@@ -249,9 +249,17 @@
        */
     var setValidityPeriods = function(manoeuvreId, validityPeriods) {
       dirty = true;
-      var info = updatedInfo[manoeuvreId] || {};
-      info.validityPeriods = validityPeriods;
-      updatedInfo[manoeuvreId] = info;
+      if(!manoeuvreId){
+        for(var i = 0; i< addedManoeuvres.length; i++){
+          if(addedManoeuvres[i].manoeuvreId === null){
+            addedManoeuvres[i].ValidityPeriod = validityPeriods;
+          }
+        }
+      } else {
+        var info = updatedInfo[manoeuvreId] || {};
+        info.validityPeriods = validityPeriods;
+        updatedInfo[manoeuvreId] = info;
+      }
       eventbus.trigger('manoeuvre:changed', validityPeriods);
     };
 
@@ -324,6 +332,13 @@
         });
       });
 
+/*      for(var i = 0; i < addedManoeuvres.length; i++) {
+        if(!addedManoeuvres[i].manoeuvreId){
+          if(details[9999999999].validityPeriods.length > 0){
+            addedManoeuvres[i].validityPeriods = details[9999999999].validityPeriods;
+          }
+        }
+      }*/
       var backendCallStack = [];
       backendCallStack.push({
         data: removedManoeuvreIds,
