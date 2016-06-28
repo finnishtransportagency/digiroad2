@@ -1,7 +1,7 @@
 (function(root) {
   root.ManoeuvresCollection = function(backend, roadCollection) {
     var manoeuvres = [];
-    var addedManoeuvres = [];
+    var addedManoeuvre = {};
     var removedManoeuvres = [];
     var updatedInfo = {};
     var dirty = false;
@@ -84,8 +84,7 @@
     var addManoeuvre = function(newManoeuvre) {
       dirty = true;
       if (_.isNull(newManoeuvre.manoeuvreId)) {
-        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, newManoeuvre); });
-        addedManoeuvres.push(newManoeuvre);
+        addedManoeuvre = newManoeuvre;
       } else {
         _.remove(removedManoeuvres, function(x) {
           return manoeuvresEqual(x, newManoeuvre);
@@ -102,9 +101,7 @@
     var removeManoeuvre = function(manoeuvre) {
       dirty = true;
       if (_.isNull(manoeuvre.manoeuvreId)) {
-        _.remove(addedManoeuvres, function(x) {
-          return manoeuvresEqual(x, manoeuvre);
-        });
+        addedManoeuvre = {};
       } else {
         removedManoeuvres.push(manoeuvre);
       }
@@ -123,34 +120,30 @@
       if (_.isNull(manoeuvre.manoeuvreId)) {
 
         // Add link id to list after removal comparison and update destLinkId
-        if(addedManoeuvres.length > 0){
-          manoeuvre.linkIds = addedManoeuvres[0].linkIds;
+        if("linkIds" in addedManoeuvre){
+          manoeuvre.linkIds = addedManoeuvre.linkIds;
         }
         manoeuvre.linkIds.push(linkId);
         manoeuvre.destLinkId = linkId;
 
-        // Remove old one if manoeuvre already exists in addedManoeuvres list
-        //_.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, manoeuvre); });
-        //TODO remove addedManoeuvres as a array
-        addedManoeuvres = [];
-
         // Remove source link id and destination link id to get only intermediate link ids
         var intermediateLinkIds = manoeuvre.linkIds.slice(1, manoeuvre.linkIds.length-1);
-        var manoeuvreIntermediateLinks = _.merge({}, { intermediateLinkIds: intermediateLinkIds }, manoeuvre);
+        var manoeuvreIntermediateLinks = _.merge({}, addedManoeuvre, { intermediateLinkIds: intermediateLinkIds }, manoeuvre);
 
-        // Add enriched manoeuvre to addedManoeuvres list
-        addedManoeuvres.push(manoeuvreIntermediateLinks);
+        // Add enriched manoeuvre to addedManoeuvre
+        addedManoeuvre = manoeuvreIntermediateLinks;
 
-      } else {
-        var persisted = _.find(_.chain(manoeuvres).concat(addedManoeuvres).value(), {id: manoeuvre.manoeuvreId});
+      }
+      /*
+      else {
+        var persisted = _.find(_.chain(manoeuvres).concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])).value(), {id: manoeuvre.manoeuvreId});
         persisted.linkIds.push(linkId);
         persisted.destLinkId = linkId;
         var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
         var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
-        // addManoeuvre(updatedPersistedManoeuvre);
-        addedManoeuvres.push(updatedPersistedManoeuvre);
-        manoeuvre = updatedPersistedManoeuvre;
+        addedManoeuvre = updatedPersistedManoeuvre;
       }
+      */
       reload(manoeuvre, linkId, function(reloaded) {
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
       });
@@ -207,7 +200,7 @@
       });
       if (modified) {
         console.log("manoeuvre found!");
-        addedManoeuvres = [];
+        addedManoeuvre = {};
         manoeuvre.linkIds.pop();
         var newDestLinkId = manoeuvre.linkIds[manoeuvre.linkIds.length-1];
         manoeuvre.destLinkId = newDestLinkId;
@@ -216,7 +209,7 @@
         manoeuvreIntermediateLinks.intermediateLinkIds = intermediateLinkIds;
         manoeuvreIntermediateLinks.destLinkId = newDestLinkId;
         manoeuvreIntermediateLinks.nextTargetLinkId = newDestLinkId;
-        addedManoeuvres.push(manoeuvreIntermediateLinks);
+        addedManoeuvre = manoeuvreIntermediateLinks;
         console.log(manoeuvreIntermediateLinks);
         eventbus.trigger('manoeuvre:changed', manoeuvreIntermediateLinks);
         reload(manoeuvreIntermediateLinks,
@@ -237,21 +230,17 @@
     var setExceptions = function(manoeuvreId, exceptions) {
       dirty = true;
       if(!manoeuvreId){
-        for(var i = 0; i< addedManoeuvres.length; i++){
-          if(addedManoeuvres[i].manoeuvreId === null){
-            for(var j = 0; j < exceptions.length; j++ ) {
-              if(!_.contains(addedManoeuvres[i].exceptions, exceptions[j]))
-                addedManoeuvres[i].exceptions.push(exceptions[j]);
-              }
-            }
+        if(!("exceptions" in addedManoeuvre)) {
+          addedManoeuvre.exceptions = [];
         }
+        addedManoeuvre.exceptions = exceptions;
       }
       else {
         var info = updatedInfo[manoeuvreId] || {};
         info.exceptions = exceptions;
         updatedInfo[manoeuvreId] = info;
-        eventbus.trigger('manoeuvre:changed', exceptions);
       }
+      eventbus.trigger('manoeuvre:changed', exceptions);
     };
 
     /**
@@ -263,11 +252,7 @@
     var setValidityPeriods = function(manoeuvreId, validityPeriods) {
       dirty = true;
       if(!manoeuvreId){
-        for(var i = 0; i< addedManoeuvres.length; i++){
-          if(addedManoeuvres[i].manoeuvreId === null){
-            addedManoeuvres[i].validityPeriods = validityPeriods;
-          }
-        }
+        addedManoeuvre.validityPeriods = validityPeriods;
       } else {
         var info = updatedInfo[manoeuvreId] || {};
         info.validityPeriods = validityPeriods;
@@ -285,11 +270,7 @@
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       dirty = true;
       if(!manoeuvreId) {
-        for (var i = 0; i < addedManoeuvres.length; i++) {
-          if (addedManoeuvres[i].manoeuvreId === null) {
-            addedManoeuvres[i].additionalInfo = additionalInfo;
-          }
-        }
+        addedManoeuvre.additionalInfo = additionalInfo;
       }
       else {
         var info = updatedInfo[manoeuvreId] || {};
@@ -303,13 +284,9 @@
      * Revert model state after cancellation.
      */
     var cancelModifications = function() {
-      addedManoeuvres = [];
+      addedManoeuvre = {};
       removedManoeuvres = [];
       updatedInfo = {};
-      //multipleSourceManoeuvresHMap = {};
-      //multipleIntermediateManoeuvresHMap = {};
-      //multipleDestinationManoeuvresHMap = {};
-      //sourceDestinationManoeuvresHMap = {};
       dirty = false;
     };
 
@@ -361,9 +338,9 @@
         resetData: function() { removedManoeuvres = []; }
       });
       backendCallStack.push({
-        data: addedManoeuvres,
+        data: (_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre]),
         operation: backend.createManoeuvres,
-        resetData: function() { addedManoeuvres = []; }
+        resetData: function() { addedManoeuvre = {}; }
       });
       backendCallStack.push({
         data: details,
@@ -530,7 +507,7 @@
     };
 
     var manoeuvresWithModifications = function() {
-      return _.reject(manoeuvres.concat(addedManoeuvres), function(manoeuvre) {
+      return _.reject(manoeuvres.concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])), function(manoeuvre) {
         return _.some(removedManoeuvres, function(x) {
           return (manoeuvresEqual(x, manoeuvre));
         });
@@ -662,41 +639,27 @@
 
     var getManoeuvresBySourceLinkId = function(sourceLinkId){
       var foundManoeuvres = [];
-      for(var i = 0; i < addedManoeuvres.length; i++){
-        if (addedManoeuvres[i].sourceLinkId === sourceLinkId)
-          foundManoeuvres.push(addedManoeuvres[i]);
-      }
+
+      if("sourceLinkId" in addedManoeuvre && addedManoeuvre.sourceLinkId === sourceLinkId)
+        foundManoeuvres.push(addedManoeuvre);
+
       return foundManoeuvres;
     };
 
     var getManoeuvreData = function(manoeuvreSource){
-      var manoeuvre;
-      for (var i = 0; i < addedManoeuvres.length; i++){
-        for(var j = 0; j < manoeuvreSource.manoeuvres.length; j++) {
-          if(addedManoeuvres[i].id == manoeuvreSource.manoeuvres[j].id){
-            manoeuvre = addedManoeuvres[i];
-          }
-          else {
-            if(this.manoeuvresEqual(addedManoeuvres[i], manoeuvreSource.manoeuvres[j])) {
-              manoeuvre = addedManoeuvres[i];
-            }
-          }
-        }
-      }
+
+      var manoeuvre = _.find(manoeuvreSource.manoeuvres, function(item){
+        return item.id === addedManoeuvre.id || manoeuvresEqual(addedManoeuvre, item);
+      });
+
       if (!manoeuvre) {
         var allManoeuvres = _.flatten(_.pluck(this.getAll(), 'manoeuvres'));
-        manoeuvre = _.find(allManoeuvres, function(m) {
-          for(var i = 0; i < manoeuvreSource.manoeuvres.length; i++) {
-            if (m.id !== manoeuvreSource.manoeuvres[i].id){
-              if(manoeuvresEqual(m,manoeuvreSource.manoeuvres[i])){
-                return true;
-              }
-              else return false;
-            }
-            else return true;
-          }
-        });
 
+        manoeuvre = _.find(allManoeuvres, function(m) {
+          return _.some(manoeuvreSource.manoeuvres, function(item){
+            return m.id === item.id || manoeuvresEqual(m,item);
+          });
+        });
       }
     return manoeuvre;
     };
