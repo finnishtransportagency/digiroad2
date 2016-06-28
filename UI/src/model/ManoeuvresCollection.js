@@ -252,7 +252,7 @@
       if(!manoeuvreId){
         for(var i = 0; i< addedManoeuvres.length; i++){
           if(addedManoeuvres[i].manoeuvreId === null){
-            addedManoeuvres[i].ValidityPeriod = validityPeriods;
+            addedManoeuvres[i].validityPeriods = validityPeriods;
           }
         }
       } else {
@@ -332,13 +332,6 @@
         });
       });
 
-/*      for(var i = 0; i < addedManoeuvres.length; i++) {
-        if(!addedManoeuvres[i].manoeuvreId){
-          if(details[9999999999].validityPeriods.length > 0){
-            addedManoeuvres[i].validityPeriods = details[9999999999].validityPeriods;
-          }
-        }
-      }*/
       var backendCallStack = [];
       backendCallStack.push({
         data: removedManoeuvreIds,

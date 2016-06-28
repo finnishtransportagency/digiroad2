@@ -274,7 +274,7 @@
         };
 
         function manoeuvreValidityPeriods(element) {
-          var periodElements = element.find('.existing-validity-period');
+          var periodElements = element.find('.manoeuvre-details .existing-validity-period');
           return _.map(periodElements, function (element) {
             return {
               startHour: parseInt($(element).find('.start-hour').val(), 10),
