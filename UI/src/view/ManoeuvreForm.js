@@ -13,7 +13,7 @@
     var newIntermediateTemplate = '' +
         '<div class="target-link-selection">' +
         '<ul>' + '' +
-        '<li><input type="radio" name="target" value="0" checked> Viimeinen linkki</input></li>' +
+        '<li><input type="radio" name="target" value="0" checked="checked"> Viimeinen linkki</input></li>' +
         '<% _.forEach(adjacentLinks, function(l) { %>' +
         '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
         '</input>' +
@@ -377,6 +377,7 @@
                 return rl.linkId == manoeuvre.destLinkId;
               });
             }
+            rootElement.find('.target-link-selection > ul > li:first-child').find('input[name=target]').prop('checked', 'checked');
             eventbus.trigger('manoeuvre:showExtension', target);
           } else {
               rootElement.find('.continue-option-group').attr('hidden', true);
