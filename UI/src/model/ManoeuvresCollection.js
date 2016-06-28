@@ -158,12 +158,13 @@
 
     var reload = function(manoeuvre, linkId, callback) {
       // Reload the source link and the manoeuvre data
+      if(_.isUndefined(manoeuvre))return;
       get(manoeuvre.sourceLinkId, function (roadLink) {
         var modified = roadLink.manoeuvres.find(function (m) {
           return manoeuvresEqual(m, manoeuvre);
         });
         var searchBase;
-        if (modified.intermediateLinkIds && modified.intermediateLinkIds.length > 0) {
+        if (!_.isUndefined(modified) && modified.intermediateLinkIds && modified.intermediateLinkIds.length > 0) {
           searchBase = roadLink.nonAdjacentTargets;
         } else {
           searchBase = roadLink.adjacent;
@@ -174,7 +175,7 @@
 
         if (targetLink) {
 
-          if (modified.linkIds.length > 1) {
+          if (!_.isUndefined(modified) && modified.linkIds.length > 1) {
             var secondLast = modified.linkIds[modified.linkIds.length - 2];
             backend.getAdjacent(secondLast, function (adjacentLinksToRemove) {
 
