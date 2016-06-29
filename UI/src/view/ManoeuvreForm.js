@@ -381,7 +381,7 @@
             eventbus.trigger('manoeuvre:showExtension', target);
           } else {
             rootElement.find('.continue-option-group').attr('hidden', true);
-            eventbus.trigger('manoeuvre:removeMarkers', target);
+            eventbus.trigger('manoeuvre:removeMarkers');
             }
           });
 

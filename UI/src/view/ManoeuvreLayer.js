@@ -463,7 +463,7 @@
       if (!application.isReadOnly()) {
         indicatorLayer.clearMarkers();
       }
-    }
+    };
 
     var extendManoeuvre = function(data) {
      // var oldDestLinkId = data.target;
