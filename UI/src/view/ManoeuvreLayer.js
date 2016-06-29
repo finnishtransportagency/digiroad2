@@ -283,6 +283,13 @@
           indicatorLayer.clearMarkers();
           updateAdjacentLinkIndicators();
         }
+        var destinationRoadLinkList = [];
+        selectedManoeuvreSource.get().manoeuvres.forEach(function (m) {
+          if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
+            destinationRoadLinkList.push(_.last(m.linkIds));
+          }
+        });
+        highlightOverlayFeatures(destinationRoadLinkList);
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -401,6 +408,13 @@
       highlightOverlayFeatures(firstTargetLinkIds);
       markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
+      var destinationRoadLinkList = [];
+      selectedManoeuvreSource.get().manoeuvres.forEach(function (m) {
+        if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
+          destinationRoadLinkList.push(_.last(m.linkIds));
+        }
+      });
+      highlightOverlayFeatures(destinationRoadLinkList);
       if (!application.isReadOnly()) {
         drawIndicators(tLinks);
         drawIndicators(aLinks);
