@@ -47,6 +47,7 @@
       eventListener.listenTo(eventbus, 'manoeuvre:linkAdded', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvre:linkDropped', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'adjacents:updated', drawExtension);
+      eventListener.listenTo(eventbus, 'manoeuvre:removeMarkers', manoeuvreRemoveMarkers);
     };
 
     /**
@@ -457,6 +458,12 @@
       }
 
     };
+
+    var manoeuvreRemoveMarkers = function(data){
+      if (!application.isReadOnly()) {
+        indicatorLayer.clearMarkers();
+      }
+    }
 
     var extendManoeuvre = function(data) {
      // var oldDestLinkId = data.target;

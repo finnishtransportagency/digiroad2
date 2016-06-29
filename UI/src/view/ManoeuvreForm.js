@@ -380,7 +380,8 @@
             rootElement.find('.target-link-selection > ul > li:first-child').find('input[name=target]').prop('checked', 'checked');
             eventbus.trigger('manoeuvre:showExtension', target);
           } else {
-              rootElement.find('.continue-option-group').attr('hidden', true);
+            rootElement.find('.continue-option-group').attr('hidden', true);
+            eventbus.trigger('manoeuvre:removeMarkers', target);
             }
           });
 
