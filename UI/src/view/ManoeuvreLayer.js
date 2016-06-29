@@ -408,7 +408,7 @@
     };
 
     var updateAdjacentLinkIndicators = function() {
-      if (!application.isReadOnly()) {
+      if (!application.isReadOnly() && manoeuvresCollection.isCreateMode()) {
         if(selectedManoeuvreSource.exists()) {
           drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
           drawIndicators(nonAdjacentTargetLinks(selectedManoeuvreSource.get()));

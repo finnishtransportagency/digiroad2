@@ -93,6 +93,13 @@
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
 
+    /**
+     * Verifies if manoeuvre is in creating mode
+     */
+    var isCreateMode = function(){
+      return !_.isEmpty(addedManoeuvre);
+    }
+
       /**
        * Updates model after form changes.
        *
@@ -670,6 +677,7 @@
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
+      isCreateMode: isCreateMode,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,
       removeLink: removeLink,
