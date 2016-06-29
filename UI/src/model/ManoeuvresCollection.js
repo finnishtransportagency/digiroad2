@@ -128,7 +128,7 @@
 
         // Remove source link id and destination link id to get only intermediate link ids
         var intermediateLinkIds = manoeuvre.linkIds.slice(1, manoeuvre.linkIds.length-1);
-        var manoeuvreIntermediateLinks = _.merge({}, addedManoeuvre, { intermediateLinkIds: intermediateLinkIds }, manoeuvre);
+        var manoeuvreIntermediateLinks = _.merge({}, { intermediateLinkIds: intermediateLinkIds }, manoeuvre, { additionalInfo: addedManoeuvre.additionalInfo, exceptions: addedManoeuvre.exceptions, validityPeriods: addedManoeuvre.validityPeriods });
 
         // Add enriched manoeuvre to addedManoeuvre
         addedManoeuvre = manoeuvreIntermediateLinks;
