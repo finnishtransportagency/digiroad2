@@ -255,7 +255,6 @@
       var sourceDestinationRoadLinks = _.filter(roadLinks, function(roadLink) {
         return !_.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
-      //roadLinks.layer.removeFeatures(destroySourceDestinationFeatures(sourceDestinationRoadLinks));
       roadLayer.layer.addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
       manoeuvresCollection.cleanHMapSourceDestinationManoeuvres();
     };
@@ -283,12 +282,7 @@
           indicatorLayer.clearMarkers();
           updateAdjacentLinkIndicators();
         }
-        var destinationRoadLinkList = [];
-        selectedManoeuvreSource.get().manoeuvres.forEach(function (m) {
-          if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
-            destinationRoadLinkList.push(_.last(m.linkIds));
-          }
-        });
+        var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
         highlightOverlayFeatures(destinationRoadLinkList);
       }
       selectControl.onSelect = originalOnSelectHandler;
@@ -408,12 +402,7 @@
       highlightOverlayFeatures(firstTargetLinkIds);
       markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
-      var destinationRoadLinkList = [];
-      selectedManoeuvreSource.get().manoeuvres.forEach(function (m) {
-        if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
-          destinationRoadLinkList.push(_.last(m.linkIds));
-        }
-      });
+      var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       highlightOverlayFeatures(destinationRoadLinkList);
       if (!application.isReadOnly()) {
         drawIndicators(tLinks);
@@ -480,22 +469,6 @@
     };
 
     var extendManoeuvre = function(data) {
-     // var oldDestLinkId = data.target;
-     // var destLinkId = data.newTargetId;
-     // var source = selectedManoeuvreSource.get();
-     // var manoeuvreToRewrite = data.manoeuvre;
-     //
-     //if (manoeuvreToRewrite.destLinkId == oldDestLinkId) {
-     //   manoeuvreToRewrite.destLinkId = destLinkId;
-     //   manoeuvreToRewrite.firstTargetLinkId = destLinkId;
-     //   selectedManoeuvreSource.addLink(manoeuvreToRewrite, destLinkId);
-     //
-     //   selectedManoeuvreSource.updateAdjacents();
-     //
-     //   roadLayer.redraw();
-     //
-     // }
-
       var manoeuvreToRewrite = data.manoeuvre;
       var newDestLinkId = data.newTargetId;
       var oldDestLinkId = data.target;

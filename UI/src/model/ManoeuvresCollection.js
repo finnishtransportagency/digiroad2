@@ -671,6 +671,16 @@
     return manoeuvre;
     };
 
+    var getDestinationRoadLinksBySource = function (manoeuvreSource) {
+      var destinationRoadLinkList = [];
+      manoeuvreSource.manoeuvres.forEach(function (m) {
+        if(!_.contains(destinationRoadLinkList,_.last(m.linkIds))){
+          destinationRoadLinkList.push(_.last(m.linkIds));
+        }
+      });
+      return destinationRoadLinkList;
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -695,7 +705,8 @@
       manoeuvresEqual: manoeuvresEqual,
       reload: reload,
       getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,
-      getManoeuvreData : getManoeuvreData
+      getManoeuvreData : getManoeuvreData,
+      getDestinationRoadLinksBySource : getDestinationRoadLinksBySource
     };
   };
 })(this);
