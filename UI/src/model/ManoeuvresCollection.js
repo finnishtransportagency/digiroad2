@@ -145,11 +145,9 @@
 
       }
 
-      eventbus.trigger('manoeuvre:linkAdded', addedManoeuvre);
-      /*
       reload(manoeuvre, linkId, function(reloaded) {
-
-      });*/
+        eventbus.trigger('manoeuvre:linkAdded', reloaded);
+      });
     };
 
     var reload = function(manoeuvre, linkId, callback) {
