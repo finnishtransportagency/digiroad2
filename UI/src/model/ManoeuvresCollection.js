@@ -2,7 +2,7 @@
   root.ManoeuvresCollection = function(backend, roadCollection) {
     var manoeuvres = [];
     var addedManoeuvre = {};
-    var removedManoeuvres = [];
+    var removedManoeuvres = {};
     var updatedInfo = {};
     var dirty = false;
 
@@ -51,6 +51,16 @@
           })
           .pluck('firstTargetLinkId')
           .value();
+    }
+
+    var getNextTargetRoadLinksBySourceLinkId = function(linkId) {
+      return _.flatten(_.chain(manoeuvresWithModifications())
+          .filter(function(manoeuvre){
+            return manoeuvre.sourceLinkId === linkId;
+          })
+          .map(function(manoeuvre){
+            return manoeuvre.linkIds.slice(1);
+          }).value());
     };
 
     /**
@@ -86,9 +96,7 @@
       if (_.isNull(newManoeuvre.manoeuvreId)) {
         addedManoeuvre = newManoeuvre;
       } else {
-        _.remove(removedManoeuvres, function(x) {
-          return manoeuvresEqual(x, newManoeuvre);
-        });
+        removedManoeuvres = {};
       }
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
@@ -110,7 +118,7 @@
       if (_.isNull(manoeuvre.manoeuvreId)) {
         addedManoeuvre = {};
       } else {
-        removedManoeuvres.push(manoeuvre);
+        removedManoeuvres = manoeuvre;
       }
       eventbus.trigger('manoeuvre:changed', manoeuvre);
     };
@@ -292,7 +300,7 @@
      */
     var cancelModifications = function() {
       addedManoeuvre = {};
-      removedManoeuvres = [];
+      removedManoeuvres = {};
       updatedInfo = {};
       dirty = false;
     };
@@ -322,7 +330,7 @@
      * @param callback
        */
     var save = function(callback) {
-      var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
+      var removedManoeuvreIds = removedManoeuvres.manoeuvreId;
 
       var failureCallback = function() {
         dirty = true;
@@ -333,7 +341,7 @@
         callback();
       };
       var details = _.omit(updatedInfo, function(value, key) {
-        return _.some(removedManoeuvreIds, function(id) {
+        return _.some([removedManoeuvreIds], function(id) {
           return id === parseInt(key, 10);
         });
       });
@@ -342,7 +350,7 @@
       backendCallStack.push({
         data: removedManoeuvreIds,
         operation: backend.removeManoeuvres,
-        resetData: function() { removedManoeuvres = []; }
+        resetData: function() { removedManoeuvres = {}; }
       });
       backendCallStack.push({
         data: (_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre]),
@@ -515,7 +523,7 @@
 
     var manoeuvresWithModifications = function() {
       return _.reject(manoeuvres.concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])), function(manoeuvre) {
-        return _.some(removedManoeuvres, function(x) {
+        return _.some([removedManoeuvres], function(x) {
           return (manoeuvresEqual(x, manoeuvre));
         });
       });
@@ -685,6 +693,7 @@
       fetch: fetch,
       getAll: getAll,
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
+      getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
       isCreateMode: isCreateMode,
