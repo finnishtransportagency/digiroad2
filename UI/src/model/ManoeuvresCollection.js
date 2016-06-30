@@ -53,6 +53,16 @@
           .value();
     };
 
+    var getNextTargetRoadLinksBySourceLinkId = function(linkId) {
+      return _.flatten(_.chain(manoeuvresWithModifications())
+          .filter(function(manoeuvre){
+            return manoeuvre.sourceLinkId === linkId;
+          })
+          .map(function(manoeuvre){
+            return manoeuvre.linkIds.slice(1);
+          }).value());
+    };
+
     /**
      * Returns road link with adjacent links and their markers added. Used by SelectedManoeuvreSource.open.
      *
@@ -134,19 +144,12 @@
         addedManoeuvre = manoeuvreIntermediateLinks;
 
       }
+
+      eventbus.trigger('manoeuvre:linkAdded', addedManoeuvre);
       /*
-      else {
-        var persisted = _.find(_.chain(manoeuvres).concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])).value(), {id: manoeuvre.manoeuvreId});
-        persisted.linkIds.push(linkId);
-        persisted.destLinkId = linkId;
-        var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
-        var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
-        addedManoeuvre = updatedPersistedManoeuvre;
-      }
-      */
       reload(manoeuvre, linkId, function(reloaded) {
-        eventbus.trigger('manoeuvre:linkAdded', reloaded);
-      });
+
+      });*/
     };
 
     var reload = function(manoeuvre, linkId, callback) {
@@ -678,6 +681,7 @@
       fetch: fetch,
       getAll: getAll,
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
+      getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,

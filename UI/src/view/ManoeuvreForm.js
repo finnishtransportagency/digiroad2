@@ -381,7 +381,12 @@
             eventbus.trigger('manoeuvre:showExtension', target);
           } else {
             rootElement.find('.continue-option-group').attr('hidden', true);
-            eventbus.trigger('manoeuvre:removeMarkers');
+
+            var selectedManoeuvre = _.find(selectedManoeuvreSource.get().manoeuvres, function(item){
+              return item.id == manoeuvreId;
+            });
+
+            eventbus.trigger('manoeuvre:removeMarkers', selectedManoeuvre);
             }
           });
 

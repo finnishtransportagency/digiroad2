@@ -101,6 +101,7 @@
       highlightFeatures(null);
       highlightOneWaySigns([]);
       highlightOverlayFeatures([]);
+      highlightManoeuvreFeatures([]);
       indicatorLayer.clearMarkers();
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
@@ -145,6 +146,18 @@
     var highlightOverlayFeatures = function(linkIds) {
       _.each(roadLayer.layer.features, function(x) {
         if (x.attributes.type === 'overlay') {
+          if (_.contains(linkIds, x.attributes.linkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
+
+    var highlightManoeuvreFeatures = function(linkIds) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (x.attributes.type !== 'normal') {
           if (_.contains(linkIds, x.attributes.linkId)) {
             selectControl.highlight(x);
           } else {
@@ -398,11 +411,16 @@
       var tLinks = nonAdjacentTargetLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
       var targetLinkIds = _.pluck(tLinks, 'linkId');
+
       highlightFeatures(roadLink.linkId);
-      var firstTargetLinkIds = manoeuvresCollection.getFirstTargetRoadLinksBySourceLinkId(roadLink.linkId);
       highlightOneWaySigns([roadLink.linkId]);
-      highlightOverlayFeatures(firstTargetLinkIds);
-      markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : adjacentLinkIds);
+
+      if(application.isReadOnly()){
+        var allTargetLinkIds = manoeuvresCollection.getNextTargetRoadLinksBySourceLinkId(roadLink.linkId);
+        highlightManoeuvreFeatures(allTargetLinkIds);
+      }
+
+      markAdjacentFeatures(application.isReadOnly() ? targetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       highlightOverlayFeatures(destinationRoadLinkList);
@@ -469,6 +487,7 @@
       isEditMode=true;
       if (!application.isReadOnly()) {
         indicatorLayer.clearMarkers();
+        highlightManoeuvreFeatures(data.linkIds.slice(1));
       }
     };
 
