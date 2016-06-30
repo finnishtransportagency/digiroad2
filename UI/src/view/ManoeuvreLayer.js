@@ -9,6 +9,7 @@
 
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
+    var isEditMode = false;
 
     /*
      * ------------------------------------------
@@ -313,6 +314,7 @@
     };
 
     var concludeManoeuvreEdit = function(eventListener) {
+      isEditMode=false;
       selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       selectedManoeuvreSource.setTargetRoadLink(null);
@@ -411,7 +413,7 @@
     };
 
     var updateAdjacentLinkIndicators = function() {
-      if (!application.isReadOnly() && manoeuvresCollection.isCreateMode()) {
+        if (!application.isReadOnly() && !isEditMode) {
         if(selectedManoeuvreSource.exists()) {
           drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
           drawIndicators(nonAdjacentTargetLinks(selectedManoeuvreSource.get()));
@@ -423,6 +425,7 @@
 
     // TODO: ugly as hell. use one type of object, either roadlink or (preferably) manoeuvre
     var handleManoeuvreExtensionBuilding = function(roadLinkOrManoeuvre) {
+      isEditMode=false;
       if (!application.isReadOnly()) {
         if(roadLinkOrManoeuvre) {
 
@@ -463,6 +466,7 @@
     };
 
     var manoeuvreRemoveMarkers = function(data){
+      isEditMode=true;
       if (!application.isReadOnly()) {
         indicatorLayer.clearMarkers();
       }
