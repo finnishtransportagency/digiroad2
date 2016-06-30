@@ -53,16 +53,6 @@
           .value();
     };
 
-    var getNextTargetRoadLinksBySourceLinkId = function(linkId) {
-      return _.flatten(_.chain(manoeuvresWithModifications())
-          .filter(function(manoeuvre){
-            return manoeuvre.sourceLinkId === linkId;
-          })
-          .map(function(manoeuvre){
-            return manoeuvre.linkIds.slice(1);
-          }).value());
-    };
-
     /**
      * Returns road link with adjacent links and their markers added. Used by SelectedManoeuvreSource.open.
      *
@@ -102,6 +92,13 @@
       }
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
+
+    /**
+     * Verifies if manoeuvre is in creating mode
+     */
+    var isCreateMode = function(){
+      return !_.isEmpty(addedManoeuvre);
+    }
 
       /**
        * Updates model after form changes.
@@ -144,7 +141,16 @@
         addedManoeuvre = manoeuvreIntermediateLinks;
 
       }
-
+      /*
+      else {
+        var persisted = _.find(_.chain(manoeuvres).concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])).value(), {id: manoeuvre.manoeuvreId});
+        persisted.linkIds.push(linkId);
+        persisted.destLinkId = linkId;
+        var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
+        var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
+        addedManoeuvre = updatedPersistedManoeuvre;
+      }
+      */
       reload(manoeuvre, linkId, function(reloaded) {
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
       });
@@ -451,7 +457,7 @@
               if (!_.isEmpty(filteredManoeuvres) && manoeuvre.destLinkId === roadLink.linkId) {
                 var sourceOrDestLinkId = roadLink.linkId;
                 sourceDestinationManoeuvresHMap[sourceOrDestLinkId] = sourceOrDestLinkId in sourceDestinationManoeuvresHMap ? sourceDestinationManoeuvresHMap[sourceOrDestLinkId] += 1 : 1;
-                return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 2;
+                return sourceDestinationManoeuvresHMap[sourceOrDestLinkId] >= 1;
               }
             })
             .pluck('id')
@@ -679,9 +685,9 @@
       fetch: fetch,
       getAll: getAll,
       getFirstTargetRoadLinksBySourceLinkId: getFirstTargetRoadLinksBySourceLinkId,
-      getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
+      isCreateMode: isCreateMode,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,
       removeLink: removeLink,
