@@ -103,13 +103,6 @@
       eventbus.trigger('manoeuvre:changed', newManoeuvre);
     };
 
-    /**
-     * Verifies if manoeuvre is in creating mode
-     */
-    var isCreateMode = function(){
-      return !_.isEmpty(addedManoeuvre);
-    };
-
       /**
        * Updates model after form changes.
        *
@@ -335,7 +328,7 @@
      * @param callback
        */
     var save = function(callback) {
-      var removedManoeuvreIds = removedManoeuvres.manoeuvreId;
+      var removedManoeuvreIds = _.isEmpty(removedManoeuvres) ? [] : [removedManoeuvres.manoeuvreId];
 
       var failureCallback = function() {
         dirty = true;
@@ -346,7 +339,7 @@
         callback();
       };
       var details = _.omit(updatedInfo, function(value, key) {
-        return _.some([removedManoeuvreIds], function(id) {
+        return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
         });
       });
@@ -710,7 +703,6 @@
       getNextTargetRoadLinksBySourceLinkId: getNextTargetRoadLinksBySourceLinkId,
       get: get,
       addManoeuvre: addManoeuvre,
-      isCreateMode: isCreateMode,
       removeManoeuvre: removeManoeuvre,
       addLink: addLink,
       removeLink: removeLink,
