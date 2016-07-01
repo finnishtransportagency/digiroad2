@@ -4,7 +4,7 @@
     var addedManoeuvre = {};
     var removedManoeuvres = {};
     var updatedInfo = {};
-    var roadlinkAjacents = {};
+    var roadlinkAdjacents = {};
     var dirty = false;
 
     //----------------------------------
@@ -83,7 +83,7 @@
         linkIds = linkIds.concat(_.map(adjacents, function (rl) {
           return rl.linkId;
         }));
-        roadlinkAjacents[roadLink.linkId] = adjacents;
+        roadlinkAdjacents[roadLink.linkId] = adjacents;
         fillTargetAdjacents(roadLink, targets, linkIds, adjacents, callback);
       });
     };
@@ -142,7 +142,6 @@
 
         // Add enriched manoeuvre to addedManoeuvre
         addedManoeuvre = manoeuvreIntermediateLinks;
-
       }
 
       reload(manoeuvre, linkId, function(reloaded) {
@@ -174,7 +173,7 @@
 
           _.each(manoeuvre.linkIds, function(item){
             if(item != linkId)
-              previousAdjacentLinks = previousAdjacentLinks.concat(_.pluck(roadlinkAjacents[item], 'linkId'));
+              previousAdjacentLinks = previousAdjacentLinks.concat(_.pluck(roadlinkAdjacents[item], 'linkId'));
           });
 
           var nextAdjacentLinks = _.filter(targetLink.adjacentLinks, function(item){
@@ -314,7 +313,6 @@
     var setDirty = function(state) {
       dirty = state;
     };
-
 
     /**
      * Save model changes to database.
@@ -525,7 +523,6 @@
       };
     };
 
-
     /**
      * Check if manoeuvres are equal. Manoeuvres are equal if they have the same link chain.
      *
@@ -616,7 +613,7 @@
 
     var fillTargetAdjacents = function(roadLink, targets, linkIds, adjacentLinks, callback) {
       backend.getAdjacents(linkIds.join(), function (nextTargets) {
-        roadlinkAjacents = _.merge({}, roadlinkAjacents, nextTargets);
+        roadlinkAdjacents = _.merge({}, roadlinkAdjacents, nextTargets);
         setMarkersToRoadLinks(roadLink, adjacentLinks, targets, nextTargets, callback);
       });
     };

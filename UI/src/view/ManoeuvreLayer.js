@@ -1,14 +1,14 @@
 (function(root){
   root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
-    var layerName = 'manoeuvre';
-    Layer.call(this, layerName, roadLayer);
-    var me = this;
     this.minZoomForContent = zoomlevels.minZoomForAssets;
-    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+    Layer.call(this, layerName, roadLayer);
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
-
-    var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
+    
+    var me = this;
+    var layerName = 'manoeuvre';
+    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+    var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
 
     /*
@@ -501,7 +501,6 @@
       var persisted = _.merge({}, manoeuvreToRewrite, selectedManoeuvreSource.get().manoeuvres.find(function (m) {
         return m.destLinkId === oldDestLinkId && (!manoeuvreToRewrite.manoeuvreId ||
           m.manoeuvreId === manoeuvreToRewrite.manoeuvreId); }));
-
 
       console.log("manoeuvre extension");
       console.log(persisted);
