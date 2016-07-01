@@ -369,17 +369,18 @@
               removeCheckbox.prop('hidden', false);
             }
 
+            var manoeuvreSource = selectedManoeuvreSource.get();
             // Show possible manoeuvre extensions
-            var target = selectedManoeuvreSource.get().adjacent.find(function (rl) {
+            var target = manoeuvreSource.adjacent.find(function (rl) {
               return rl.linkId == manoeuvre.destLinkId;
             });
             if (!target) {
-              target = selectedManoeuvreSource.get().nonAdjacentTargets.find(function (rl) {
+              target = manoeuvreSource.nonAdjacentTargets.find(function (rl) {
                 return rl.linkId == manoeuvre.destLinkId;
               });
             }
             rootElement.find('.target-link-selection > ul > li:first-child').find('input[name=target]').prop('checked', 'checked');
-            eventbus.trigger('manoeuvre:showExtension', target);
+            eventbus.trigger('manoeuvre:showExtension', _.merge({}, target, { sourceLinkId: manoeuvreSource.linkId, linkIds: manoeuvre.linkIds }));
           } else {
             rootElement.find('.continue-option-group').attr('hidden', true);
 

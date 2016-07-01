@@ -441,30 +441,24 @@
       }
     };
 
-    // TODO: ugly as hell. use one type of object, either roadlink or (preferably) manoeuvre
-    var handleManoeuvreExtensionBuilding = function(roadLinkOrManoeuvre) {
+    var handleManoeuvreExtensionBuilding = function(manoeuvre) {
       mode="create";
       if (!application.isReadOnly()) {
-        if(roadLinkOrManoeuvre) {
+        if(manoeuvre) {
 
           indicatorLayer.clearMarkers();
-          drawIndicators(roadLinkOrManoeuvre.adjacentLinks);
-
+          drawIndicators(manoeuvre.adjacentLinks);
           selectControl.deactivate();
-          roadLayer.layer.addFeatures(createDashedLineFeatures(roadLinkOrManoeuvre.adjacentLinks));
-          if (!roadLinkOrManoeuvre.linkIds) {
-            roadLayer.layer.addFeatures(createIntermediateFeatures([roadLinkOrManoeuvre]));
-            selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.linkId);
-          }
-          else {
-            var linkIdLists = _.without(roadLinkOrManoeuvre.linkIds, roadLinkOrManoeuvre.sourceLinkId);
-            for(var i = 0; i < linkIdLists.length; i++){
-              roadLayer.layer.addFeatures(createIntermediateFeatures([roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData()]));
-            }
-            selectedManoeuvreSource.setTargetRoadLink(roadLinkOrManoeuvre.destLinkId);
-          }
 
-          var targetMarkers = _.chain(roadLinkOrManoeuvre.adjacentLinks)
+          roadLayer.layer.addFeatures(createDashedLineFeatures(manoeuvre.adjacentLinks));
+
+          var linkIdLists = _.without(manoeuvre.linkIds, manoeuvre.sourceLinkId);
+          for(var i = 0; i < linkIdLists.length; i++){
+            roadLayer.layer.addFeatures(createIntermediateFeatures([roadCollection.getRoadLinkByLinkId(linkIdLists[i]).getData()]));
+          }
+          selectedManoeuvreSource.setTargetRoadLink(manoeuvre.destLinkId);
+
+          var targetMarkers = _.chain(manoeuvre.adjacentLinks)
               .filter(function (adjacentLink) {
                 return adjacentLink.linkId;
               })
