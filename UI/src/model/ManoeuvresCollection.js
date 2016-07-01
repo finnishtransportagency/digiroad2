@@ -345,7 +345,7 @@
       backendCallStack.push({
         data: (_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre]),
         operation: backend.createManoeuvres,
-        resetData: function() { addedManoeuvre = {}; }
+        resetData: function() { addedManoeuvre = {}; roadlinkAdjacents = {}; }
       });
       backendCallStack.push({
         data: details,
