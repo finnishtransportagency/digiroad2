@@ -364,19 +364,7 @@
       unwindBackendCallStack(backendCallStack, successCallback, failureCallback);
     };
 
-    var cleanHMapSourceManoeuvres = function() {
-      dirty = false;
-    };
-
-    var cleanHMapIntermediateManoeuvres = function() {
-      dirty = false;
-    };
-
-    var cleanHMapDestinationManoeuvres = function() {
-      dirty = false;
-    };
-
-    var cleanHMapSourceDestinationManoeuvres = function() {
+    var cleanDirtyFlag = function() {
       dirty = false;
     };
 
@@ -713,10 +701,10 @@
       isDirty: isDirty,
       setDirty: setDirty,
       save: save,
-      cleanHMapSourceManoeuvres: cleanHMapSourceManoeuvres,
-      cleanHMapIntermediateManoeuvres: cleanHMapIntermediateManoeuvres,
-      cleanHMapDestinationManoeuvres: cleanHMapDestinationManoeuvres,
-      cleanHMapSourceDestinationManoeuvres: cleanHMapSourceDestinationManoeuvres,
+      cleanHMapSourceManoeuvres: cleanDirtyFlag,
+      cleanHMapIntermediateManoeuvres: cleanDirtyFlag,
+      cleanHMapDestinationManoeuvres: cleanDirtyFlag,
+      cleanHMapSourceDestinationManoeuvres: cleanDirtyFlag,
       manoeuvresEqual: manoeuvresEqual,
       reload: reload,
       getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,
