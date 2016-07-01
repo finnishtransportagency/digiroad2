@@ -51,7 +51,7 @@
           })
           .pluck('firstTargetLinkId')
           .value();
-    }
+    };
 
     var getNextTargetRoadLinksBySourceLinkId = function(linkId) {
       return _.flatten(_.chain(manoeuvresWithModifications())
@@ -106,7 +106,7 @@
      */
     var isCreateMode = function(){
       return !_.isEmpty(addedManoeuvre);
-    }
+    };
 
       /**
        * Updates model after form changes.
