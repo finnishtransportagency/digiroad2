@@ -1,15 +1,16 @@
 (function(root){
   root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
-    this.minZoomForContent = zoomlevels.minZoomForAssets;
-    Layer.call(this, layerName, roadLayer);
-    roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
-    roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
-    
     var me = this;
     var layerName = 'manoeuvre';
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
+
+    this.minZoomForContent = zoomlevels.minZoomForAssets;
+    Layer.call(this, layerName, roadLayer);
+    roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
+    roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
+
 
     /*
      * ------------------------------------------
