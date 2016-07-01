@@ -2,6 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
+import java.sql.SQLException
+import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.GeometryUtils._
@@ -18,7 +20,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, duration}
 import scala.concurrent.duration.Duration
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
@@ -290,6 +292,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  /**
+    * Returns road links and change data from VVH by bounding box and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val links1F = vvhClient.fetchVVHRoadlinksF(bounds, Set())
+    val links2F = vvhClient.fetchVVHRoadlinksF(bounds2, Set())
+    val changeF = vvhClient.fetchChangesF(bounds, Set())
+    val ((links, links2), changes) = Await.result(links1F.zip(links2F).zip(changeF), atMost = Duration.apply(60, TimeUnit.SECONDS))
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links ++ links2, changes), changes)
+    }
+  }
+
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle) : Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(bounds, bounds2)._1
 
   /**
     * Returns road links by bounding box and municipalities. Used by Digiroad2Api.getRoadLinksFromVVH (data passed to Digiroad2Api /roadlinks GET endpoint),
@@ -654,21 +672,63 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * Get the link end points depending on the road link directions
+    * @param roadlink The Roadlink
+    * @return End points of the road link directions
+    */
+  def getRoadLinkEndDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
+    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry);
+    roadlink.trafficDirection match {
+      case TrafficDirection.TowardsDigitizing =>
+        Seq(endPoints._2)
+      case TrafficDirection.AgainstDigitizing =>
+        Seq(endPoints._1)
+      case _ =>
+        Seq(endPoints._1, endPoints._2)
+    }
+  }
+
+  /**
+    * Get the link start points depending on the road link directions
+    * @param roadlink The Roadlink
+    * @return Start points of the road link directions
+    */
+  def getRoadLinkStartDirectionPoints(roadlink: RoadLink) : Seq[Point] = {
+    val endPoints = GeometryUtils.geometryEndpoints(roadlink.geometry);
+    roadlink.trafficDirection match {
+      case TrafficDirection.TowardsDigitizing =>
+        Seq(endPoints._1)
+      case TrafficDirection.AgainstDigitizing =>
+        Seq(endPoints._2)
+      case _ =>
+        Seq(endPoints._1, endPoints._2)
+    }
+  }
+
+  /**
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */
   def getAdjacent(linkId: Long): Seq[RoadLink] = {
-    val sourceLinkGeometryOption = getRoadLinkGeometry(linkId)
+    val sourceRoadLink = getRoadLinksFromVVH(Set(linkId)).headOption
+    val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
+    val sourceDirectionPoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
       val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
       val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
-      val roadLinks = getRoadLinksFromVVH(bounds) ++ getRoadLinksFromVVH(bounds2)
+      val roadLinks = getRoadLinksFromVVH(bounds, bounds2)
       roadLinks.filterNot(_.linkId == linkId)
         .filter(roadLink => roadLink.isCarTrafficRoad)
         .filter(roadLink => {
           val targetLinkGeometry = roadLink.geometry
           GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
+        })
+        .filter(roadlink => {
+          //It's a valid destination link to turn if the end point of the source exists on the
+          //start points of the destination links
+          val pointDirections = getRoadLinkStartDirectionPoints(roadlink)
+          (sourceDirectionPoints.exists(sourcePoint => pointDirections.contains(sourcePoint)))
         })
     }).getOrElse(Nil)
   }
@@ -677,6 +737,36 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     properties.getProperty("digiroad2.cache.directory", "/tmp/digiroad.cache")
+  }
+
+  def geometryToBoundingBox(s: Seq[Point], delta: Vector3d) = {
+    BoundingRectangle(Point(s.minBy(_.x).x, s.minBy(_.y).y) - delta, Point(s.maxBy(_.x).x, s.maxBy(_.y).y) + delta)
+  }
+
+  /**
+    * Returns adjacent road links for list of ids.
+    * Used by Digiroad2Api /roadlinks/adjacents/:ids GET endpoint
+    */
+  def getAdjacents(linkIds: Set[Long]): Map[Long, Seq[RoadLink]] = {
+    val roadLinks = getRoadLinksFromVVH(linkIds)
+    val sourceLinkGeometryMap = roadLinks.map(rl => rl -> rl.geometry).toMap
+    val delta: Vector3d = Vector3d(0.1, 0.1, 0)
+    val sourceLinkBoundingBox = geometryToBoundingBox(sourceLinkGeometryMap.values.flatten.toSeq, delta)
+    val sourceLinks = getRoadLinksFromVVH(sourceLinkBoundingBox).filter(roadLink => roadLink.isCarTrafficRoad)
+
+    val mapped = sourceLinks.map(rl => rl.linkId -> getRoadLinkEndDirectionPoints(rl)).toMap
+    val reverse = sourceLinks.map(rl => rl -> getRoadLinkStartDirectionPoints(rl)).flatMap {
+      case (k, v) =>
+        v.map(value => value -> k)
+    }
+    val reverseMap = reverse.groupBy(_._1).mapValues(s => s.map(_._2))
+
+    mapped.map( tuple =>
+        (tuple._1, tuple._2.flatMap(ep => {
+          reverseMap.keys.filter(p => GeometryUtils.areAdjacent(p, ep )).flatMap( p =>
+          reverseMap.getOrElse(p, Seq()).filterNot(rl => rl.linkId == tuple._1))
+        }))
+      )
   }
 
   private def getCacheDirectory: Option[File] = {

@@ -121,4 +121,21 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     integrationApi.toTimeDomain(ValidityPeriod(0, 1, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0){h1}]]")
     integrationApi.toTimeDomain(ValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0){h24}]]")
   }
+
+  test("encode manouvre") {
+    val manoeuvre = new Manoeuvre(1,
+        Seq(ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement),
+            ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)),
+        Set.empty,Nil, "","","");
+
+      val result = integrationApi.manouvresToApi(Seq(manoeuvre))
+
+      result.length should be(1)
+      result.head.get("elements") should be(Some(Seq(1,2,3,4,5)))
+      result.head.get("sourceLinkId") should equal(Some(1))
+      result.head.get("destLinkId") should equal(Some(5))
+  }
 }
