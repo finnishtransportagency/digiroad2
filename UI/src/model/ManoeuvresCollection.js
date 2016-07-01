@@ -351,10 +351,6 @@
       unwindBackendCallStack(backendCallStack, successCallback, failureCallback);
     };
 
-    var cleanDirtyFlag = function() {
-      dirty = false;
-    };
-
     //---------------------------------------
     // Utility functions
     //---------------------------------------
@@ -590,7 +586,6 @@
 
       var alteredAdjacents = _.map(adjacentLinks, function (t) {
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
-          //console.log("" + rl.linkId + " -> " + _.contains(adjacentIds, rl.linkId));
           return !(rl.linkId === roadLink.linkId || _.contains(adjacentIds, rl.linkId));
         });
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
@@ -681,10 +676,6 @@
       isDirty: isDirty,
       setDirty: setDirty,
       save: save,
-      cleanHMapSourceManoeuvres: cleanDirtyFlag,
-      cleanHMapIntermediateManoeuvres: cleanDirtyFlag,
-      cleanHMapDestinationManoeuvres: cleanDirtyFlag,
-      cleanHMapSourceDestinationManoeuvres: cleanDirtyFlag,
       manoeuvresEqual: manoeuvresEqual,
       reload: reload,
       getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,

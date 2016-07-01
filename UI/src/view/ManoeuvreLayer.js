@@ -244,7 +244,7 @@
         return !_.isEmpty(roadLink.multipleSourceManoeuvres) && _.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleSourceRoadLinks));
-      manoeuvresCollection.cleanHMapSourceManoeuvres();
+      manoeuvresCollection.setDirty(false);
     };
 
     var drawMultipleIntermediateFeatures = function(roadLinks) {
@@ -253,7 +253,7 @@
           _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
-      manoeuvresCollection.cleanHMapIntermediateManoeuvres();
+      manoeuvresCollection.setDirty(false);
     };
 
     var drawMultipleDestinationFeatures = function(roadLinks) {
@@ -262,7 +262,7 @@
           _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleDestinationRoadLinks));
-      manoeuvresCollection.cleanHMapDestinationManoeuvres();
+      manoeuvresCollection.setDirty(false);
     };
 
     var drawSourceDestinationFeatures = function(roadLinks) {
@@ -270,7 +270,7 @@
         return !_.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
-      manoeuvresCollection.cleanHMapSourceDestinationManoeuvres();
+      manoeuvresCollection.setDirty(false);
     };
 
     var reselectManoeuvre = function() {
