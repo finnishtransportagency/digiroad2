@@ -290,6 +290,13 @@
       dirty = false;
     };
 
+      /**
+       * Revert model state after cancelling the removal of a manoeuvre.
+       */
+    var cancelManoeuvreRemoval = function(){
+      removedManoeuvres = {};
+    };
+
     /**
      * Mark model state to 'dirty' after form changes.
      *
@@ -673,6 +680,7 @@
       setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
+      cancelManoeuvreRemoval: cancelManoeuvreRemoval,
       isDirty: isDirty,
       setDirty: setDirty,
       save: save,

@@ -315,6 +315,7 @@
             selectedManoeuvreSource.removeManoeuvre(manoeuvreToEliminate);
             rootElement.find('.manoeuvre-details input[class!="checkbox-remove"], .manoeuvre-details select, .manoeuvre-details button').attr('disabled', true);
           } else {
+            selectedManoeuvreSource.removeManoeuvre();
             rootElement.find('.manoeuvre-details input, .manoeuvre-details select, .manoeuvre-details button').attr('disabled', false);
           }
         });

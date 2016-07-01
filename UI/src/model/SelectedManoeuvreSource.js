@@ -92,14 +92,20 @@
 
     /**
      * Add source link id to manoeuvre and pass it to ManoeuvresCollection to update the model.
-     *
+     * If no manoeuvre is found it will cancel the removal.
+     * 
      * @param manoeuvre
        */
     var removeManoeuvre = function(manoeuvre) {
-      var sourceLinkId = current.linkId;
-      var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
-      var manoeuvreToBeRemoved = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);
-      manoeuvresCollection.removeManoeuvre(manoeuvreToBeRemoved);
+      if(manoeuvre){
+        var sourceLinkId = current.linkId;
+        var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
+        var manoeuvreToBeRemoved = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);
+        manoeuvresCollection.removeManoeuvre(manoeuvreToBeRemoved);
+      } else {
+        manoeuvresCollection.cancelManoeuvreRemoval();
+      }
+      
     };
 
     /**
