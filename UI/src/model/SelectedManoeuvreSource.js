@@ -113,6 +113,7 @@
       var sourceLinkId = current.linkId;
       var linkIds = (manoeuvre.linkIds[0] != sourceLinkId) ? manoeuvre.linkIds.unshift(sourceLinkId) : manoeuvre.linkIds;
       var manoeuvreWithSourceLink = _.merge({}, { sourceLinkId: current.linkId, linkIds: linkIds }, manoeuvre);
+      targetRoadLinkSelected = linkId;
       manoeuvresCollection.addLink(manoeuvreWithSourceLink, linkId);
     };
 

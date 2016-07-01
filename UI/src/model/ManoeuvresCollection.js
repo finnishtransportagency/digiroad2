@@ -4,6 +4,7 @@
     var addedManoeuvre = {};
     var removedManoeuvres = {};
     var updatedInfo = {};
+    var roadlinkAjacents = {};
     var dirty = false;
 
     //----------------------------------
@@ -82,6 +83,7 @@
         linkIds = linkIds.concat(_.map(adjacents, function (rl) {
           return rl.linkId;
         }));
+        roadlinkAjacents[roadLink.linkId] = adjacents;
         fillTargetAdjacents(roadLink, targets, linkIds, adjacents, callback);
       });
     };
@@ -161,6 +163,7 @@
       */
       reload(manoeuvre, linkId, function(reloaded) {
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
+        eventbus.trigger('adjacents:updated', reloaded);
       });
     };
 
@@ -183,19 +186,21 @@
 
         if (targetLink) {
 
-          if (!_.isUndefined(modified) && modified.linkIds.length > 1) {
-            var secondLast = modified.linkIds[modified.linkIds.length - 2];
-            backend.getAdjacent(secondLast, function (adjacentLinksToRemove) {
+          var previousAdjacentLinks = [];
 
-              // get array of ids from backend
-              var linkIdsToRemove = _.map(adjacentLinksToRemove, function(road) { return road.linkId; }).concat([secondLast]);
-              var filtered = _.filter(targetLink.adjacentLinks, function (link) {
-                return !_.contains(linkIdsToRemove, link.linkId);
-              });
-              callback(_.merge({}, modified, {"adjacentLinks": filtered}));
-            });
-          }
-          callback(_.merge({}, modified, {"adjacentLinks": targetLink.adjacentLinks}));
+          _.each(manoeuvre.linkIds, function(item){
+            if(item != linkId)
+              previousAdjacentLinks = previousAdjacentLinks.concat(_.pluck(roadlinkAjacents[item], 'linkId'));
+          });
+
+          var nextAdjacentLinks = _.filter(targetLink.adjacentLinks, function(item){
+            //Remove from adjacents the previous adjacents links, all links from the chain and
+            return !_.contains(previousAdjacentLinks, item.linkId);// && !_.contains(manoeuvre.linkIds, item.linkId);
+          });
+          callback(_.merge({}, modified, {"adjacentLinks": nextAdjacentLinks}));
+          //var linkIds = _.pluck(targetLink.adjacentLinks, 'linkId');
+
+          //previousAdjacentLinks = previousAdjacentLinks.concat(linkIds);
         }
 
       });
@@ -648,6 +653,7 @@
 
     var fillTargetAdjacents = function(roadLink, targets, linkIds, adjacentLinks, callback) {
       backend.getAdjacents(linkIds.join(), function (nextTargets) {
+        roadlinkAjacents = _.merge({}, roadlinkAjacents, nextTargets);
         setMarkersToRoadLinks(roadLink, adjacentLinks, targets, nextTargets, callback);
       });
     };
