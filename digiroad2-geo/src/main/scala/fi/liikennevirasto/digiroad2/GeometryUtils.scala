@@ -170,6 +170,7 @@ object GeometryUtils {
 
   /**
     * Check if segments overlap (not just barely touching)
+    *
     * @param segment1
     * @param segment2
     * @return
@@ -187,6 +188,23 @@ object GeometryUtils {
     }
   }
 
+  /**
+    * Test if one segment is completely covered by another, either way
+    *
+    * @param segment1 segment 1 to test
+    * @param segment2 segment 2 to test
+    * @return true, if segment 1 is inside segment 2 or the other way around
+    */
+  def covered(segment1: (Double, Double), segment2: (Double, Double)): Boolean = {
+    val o = overlap(segment1, segment2)
+    val (seg1, seg2) = (order(segment1), order(segment2))
+
+    o match {
+      case Some((p1, p2)) => seg1._1 == p1 && seg1._2 == p2 || seg2._1 == p1 && seg2._2 == p2
+      case None => false
+    }
+  }
+
   def overlap(segment1: (Double, Double), segment2: (Double, Double)): Option[(Double, Double)] = {
     val (seg1, seg2) = (order(segment1), order(segment2))
     overlaps(seg1, seg2) match {
@@ -197,6 +215,14 @@ object GeometryUtils {
 
   def isDirectionChangeProjection(projection: Projection): Boolean = {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
+  }
+
+  def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double) = {
+    geom1.size == geom2.size &&
+      geom1.zip(geom2).forall {
+        case (p1, p2) => geometryLength(Seq(p1,p2)) <= tolerance
+        case _ => false
+      }
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)

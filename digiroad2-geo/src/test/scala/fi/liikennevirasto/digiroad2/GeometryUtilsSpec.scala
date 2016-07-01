@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.GeometryUtils._
+import org.joda.time.DateTime
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
@@ -188,5 +189,23 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     overlaps((0.21, 0.01), (0.1,0.2)) should be(true)
     overlaps((0.21, 0.22), (0.1,0.2)) should be(false)
     overlaps((0.22, 0.21), (0.1,0.2)) should be(false)
+  }
+
+  test("within tolerance") {
+    val p1 = Point(0,0)
+    val p2 = Point(1,1)
+    val p3 = Point(1.5,1.5)
+    val p4 = Point(1.01,.99)
+    withinTolerance(Seq(p1, p2), Seq(p1, p2), 0.0001) should be (true)
+    withinTolerance(Seq(p1, p2), Seq(p1, p3), 0.0001) should be (false)
+    withinTolerance(Seq(p1, p2), Seq(p2, p1), 0.0001) should be (false)
+    withinTolerance(Seq(p1, p2), Seq(p1, p3), 1.0001) should be (true)
+    withinTolerance(Seq(p1, p2), Seq(p1, p4), .0001) should be (false)
+    withinTolerance(Seq(p1, p2), Seq(p1, p4), .015) should be (true)
+    withinTolerance(Seq(p1), Seq(p1, p4), .0001) should be (false)
+    withinTolerance(Seq(), Seq(p1, p4), .0001) should be (false)
+    withinTolerance(Seq(p1), Seq(p1), .0001) should be (true)
+    withinTolerance(Seq(p1), Seq(), .0001) should be (false)
+    withinTolerance(Seq(), Seq(), .0001) should be (true)
   }
 }

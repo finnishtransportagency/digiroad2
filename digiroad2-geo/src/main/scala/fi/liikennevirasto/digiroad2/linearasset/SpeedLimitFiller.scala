@@ -76,8 +76,8 @@ object SpeedLimitFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, s.startMeasure, linkLength), endMeasure = linkLength),
-        MValueAdjustment(s.id, roadLink.linkId, s.startMeasure, linkLength))
+      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
+        MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
@@ -176,8 +176,11 @@ object SpeedLimitFiller {
       val seg2 = segmentPieces.last
       (seg1.value, seg2.value) match {
         case (Some(v1), Some(v2)) =>
-          if (v1.equals(v2)) {
-            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortWith(modifiedSort).head
+          val sl1 = limits.find(_.id == seg1.assetId).get
+          val sl2 = limits.find(_.id == seg2.assetId).get
+          if (v1.equals(v2) && GeometryUtils.withinTolerance(sl1.geometry, sl2.geometry, MaxAllowedMValueError)) {
+            val winner = limits.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+              s.endMeasure - s.startMeasure).head
             Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
           } else {
             segmentPieces
@@ -241,7 +244,7 @@ object SpeedLimitFiller {
     def updateGeometry(limits: Seq[SpeedLimit], roadLink: RoadLink): (Seq[(SpeedLimit, Option[MValueAdjustment])]) = {
       limits.map { sl =>
         val newGeom = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, sl.endMeasure)
-        newGeom.equals(sl.geometry) match {
+        GeometryUtils.withinTolerance(newGeom, sl.geometry, MaxAllowedMValueError) match {
           case true => (sl, None)
           case false => (sl.copy(geometry = newGeom), Option(MValueAdjustment(sl.id, sl.linkId, sl.startMeasure, sl.endMeasure)))
         }
@@ -419,7 +422,7 @@ object SpeedLimitFiller {
     (speedLimits, changeSet.copy(droppedAssetIds = droppedIds -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
   }
 
-    def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       combine,

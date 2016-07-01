@@ -20,7 +20,7 @@ class LinearAssetUtilsSpec extends FunSuite with Matchers {
     // no change info for this link
     val speedlimit3 = SpeedLimit(1, 2, SideCode.BothDirections,TrafficDirection.BothDirections,Some(NumericValue(60)),
       Seq(Point(0.0,0.0),Point(1.0,0.0)), 0.0, 1.0, None, None, None, None, 14000000, None)
-    val changeinfo = Seq(ChangeInfo(Some(1), Some(1), 1, 9, Some(0), Some(1), Some(1), Some(0), Some(15000000)))
+    val changeinfo = Seq(ChangeInfo(Some(1), Some(1), 1, 9, Some(0), Some(1), Some(1), Some(0), 15000000))
     LinearAssetUtils.newChangeInfoDetected(speedlimit, changeinfo) should be (true)
     LinearAssetUtils.newChangeInfoDetected(speedlimit2, changeinfo) should be (false)
     LinearAssetUtils.newChangeInfoDetected(speedlimit3, changeinfo) should be (false)

@@ -72,6 +72,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
+  def clearCache() = {
+    roadLinkService.clearCache()
+  }
+
   before() {
     basicAuth
   }
@@ -162,6 +166,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
+        geometryWKTForLinearAssets(speedLimit.geometry),
         "value" -> speedLimit.value.fold(0)(_.value),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
@@ -217,6 +222,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     linearAssets.map { asset =>
       Map("id" -> asset.id,
         "points" -> asset.geometry,
+        geometryWKTForLinearAssets(asset.geometry),
         "value" -> valueToApi(asset.value),
         "side_code" -> asset.sideCode.value,
         "linkId" -> asset.linkId,
@@ -230,6 +236,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        geometryWKTForPointAssets(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt))
@@ -240,6 +247,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     trafficLights.filterNot(_.floating).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
+        geometryWKTForPointAssets(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt))
@@ -250,6 +258,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
         "bearing" -> directionalTrafficSign.bearing,
@@ -267,10 +276,25 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .getOrElse("")
   }
 
+  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
+      val geometryWKT =
+        if (geometry.nonEmpty)
+          "LINESTRING (" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
+        else
+          ""
+    "geometryWKT" -> geometryWKT
+  }
+
+  def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
+    val geometryWKT = "POINT (" + lon + " " + lat + ")"
+    "geometryWKT" -> geometryWKT
+  }
+
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
+        geometryWKTForPointAssets(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
@@ -283,6 +307,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     obstacles.filterNot(_.floating).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
+        geometryWKTForPointAssets(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
@@ -308,6 +333,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     servicePoints.map { asset =>
       Map("id" -> asset.id,
         "point" -> Point(asset.lon, asset.lat),
+        geometryWKTForPointAssets(asset.lon, asset.lat),
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt))
     }

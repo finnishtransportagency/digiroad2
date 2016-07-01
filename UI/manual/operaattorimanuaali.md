@@ -11,12 +11,12 @@ VVH:n testikanta --> OTH:n testikanta
 VVH:n tuotantokanta --> OTH:n koulutuskanta, integraatiotesti ja tuotantokanta
 
 OTH:n eri ymp&auml;rist&ouml;jen osoitteet selaimessa:
-Tuotantokanta (tuleva integraatiotesti) https://testiextranet.liikennevirasto.fi/digiroad/
+Integraatiotesti https://testiextranet.liikennevirasto.fi/digiroad/
 Testikanta https://devtest.liikennevirasto.fi/digiroad/
 Koulutuskanta https://apptest.liikennevirasto.fi/digiroad/
-Tuleva tuotanto https://extranet.liikennevirasto.fi/digiroad/ (ei toimi viel&auml;)
+Tuotanto https://extranet.liikennevirasto.fi/digiroad/
 
-Osa tietolajeista on tarkoitettu vain operaattorin yll&auml;pitoon toistaiseksi. N&auml;m&auml; saa n&auml;kyviin lis&auml;&auml;m&auml;ll&auml; osoitteeseen ?isExperimental=true, esim. https://testiextranet.liikennevirasto.fi/digiroad/?isExperimental=true
+Osa tietolajeista on tarkoitettu vain operaattorin yll&auml;pitoon toistaiseksi. N&auml;m&auml; saa n&auml;kyviin lis&auml;&auml;m&auml;ll&auml; osoitteeseen ?isExperimental=true, esim. https://extranet.liikennevirasto.fi/digiroad/?isExperimental=true
 
 Uudet versiot menev&auml;t ensin testikantaan, jossa testaaja tarkistaa version toimivuuden. T&auml;m&auml;n j&auml;lkeen uusi k&auml;ytt&ouml;ohje p&auml;ivitet&auml;&auml;n testikantaan. Toimiva versio vied&auml;&auml;n koulutuskantaan (my&ouml;hemmin my&ouml;s integraatiotestiin) ja tuotantokantaan, eli niiden versiot ovat aina identtiset.
 
@@ -55,7 +55,7 @@ Digiroad-yll&auml;pitosovelluksessa on viisi erilaista k&auml;ytt&auml;j&auml;ry
 1. Katselija. Katseluoikeudet m&auml;&auml;riteltyjen kuntien alueella kaikkiin tietolajeihin. M&auml;&auml;ritelty tietokannassa parametrilla "viewer" ja listattu kunnat, joihin katselu-oikeus. __Huom!__ Katseluoikeuksia ei lis&auml;t&auml; en&auml;&auml;. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia (ns. vierailija-rooli, k&auml;ytt&auml;j&auml;&auml; ei ole tallennettu Digiroad-yll&auml;pitosovelluksen tietokantaan). Katselemaan p&auml;&auml;see kirjautumalla sovellukseen extranet-tunnuksilla.
 1. Vierailija. P&auml;&auml;see l&auml;pi Livin k&auml;ytt&auml;j&auml;nhallinnasta extranet-tunnuksella, oikeus katsella Digiroadia koko Suomesta kaikkien tietolajien osalta. K&auml;ytt&auml;j&auml;&auml; ei ole Digiroad-yll&auml;pitosovelluksen tietokannassa.
 
-Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n [k&auml;ytt&auml;j&auml;nhallinnassa.](https://testiextranet.liikennevirasto.fi/digiroad/newuser.html ) K&auml;ytt&auml;j&auml;nhallinnassa lis&auml;tyt k&auml;ytt&auml;j&auml;t ovat Premium-k&auml;ytt&auml;ji&auml;, joilla on oikeudet muokata m&auml;&auml;ritellyill&auml; alueilla kaikkia aineistoja.
+Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n [k&auml;ytt&auml;j&auml;nhallinnassa.](https://extranet.liikennevirasto.fi/digiroad/newuser.html ) K&auml;ytt&auml;j&auml;nhallinnassa lis&auml;tyt k&auml;ytt&auml;j&auml;t ovat Premium-k&auml;ytt&auml;ji&auml;, joilla on oikeudet muokata m&auml;&auml;ritellyill&auml; alueilla kaikkia aineistoja.
 
 K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&auml; seuraavat tiedot:
 
@@ -117,7 +117,7 @@ Yll&auml;pitosovelluksen k&auml;ytt&auml;j&auml;nhallinnasta on backlogilla stor
 
 Importeilla tuodaan aineistoja j&auml;rjestelm&auml;&auml;n.
 
-Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta, tyyppi&auml; ja varusteita voi p&auml;ivitt&auml;&auml; tuomalla .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
+Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta, tyyppi&auml; ja varusteita voi p&auml;ivitt&auml;&auml; tuomalla .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://extranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
 
 ![CSV-tuonti](k23.JPG)
 
@@ -138,8 +138,8 @@ Huomioita csv-tiedostosta:
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
-Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&auml;pit&auml;j&auml;;Liikenn&ouml;intisuunta;Yll&auml;pit&auml;j&auml;n tunnus;LiVi-tunnus;Matkustajatunnus;Pys&auml;kin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Py&ouml;r&auml;teline;S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;;Valaistus;Saattomahdollisuus henkil&ouml;autolla;Lis&auml;tiedot
-165280;pys&auml;kin nimi;stops namn;1;etel&auml;&auml;n;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1; Lis&auml;tietokentt&auml;&auml;n saa sy&ouml;tt&auml;&auml; vapaata teksti&auml;, joka saa sis&auml;lt&auml;&auml; merkkej&auml;(;:!(&), numeroita(1234) ja kirjaimia(AMSKD).
+Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Tietojen ylläpitäjä;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Pyöräteline;Sähköinen aikataulunäyttö;Valaistus;Saattomahdollisuus henkilöautolla;Lisätiedot
+165280;pysäkin nimi;stops namn;1;etelään;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1; Lisätietokenttään saa syöttää vapaata tekstiä, joka saa sisältää merkkejä(;:!(&), numeroita(1234) ja kirjaimia(AMSKD).
 ```
 - Tiedot on eroteltu puolipisteell&auml; (;).
 - Nimi suomeksi ja ruotsiksi, liikenn&ouml;intisuunta, yll&auml;pit&auml;j&auml;n tunnus, LiVi-tunnus ja matkustajatunnus luetaan merkkijonona.
@@ -151,10 +151,8 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
 
 
-4. Pys&auml;kkien exportit
+4. Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n
 -----------
-
-##3.1 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n##
 
 Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee v&auml;litt&ouml;m&auml;sti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot. Vallu-XML:n skeema on luettavissa GitHubista https://github.com/finnishtransportagency/digiroad2/blob/77eed2b2e97210443bf40ca960e8831e01b80dc6/src/test/resources/StopChange.xsd
 
@@ -162,7 +160,7 @@ Vallu-XML-logiin eiv&auml;t mene raitiovaunupys&auml;keille tehdyt muutokset.
 
 Lis&auml;ksi Digiroadin ja Vallun Pys&auml;kkieditorin v&auml;lill&auml; on s&auml;&auml;nt&ouml;j&auml;, jotka est&auml;v&auml;t Vallu-XML:st&auml; tulevan muutoksen siirtymist&auml; Valluun. N&auml;ist&auml; voi tarvittaessa kysy&auml; operaattoripalvelun Hannele Komulaiselta (Blom Kartta) tai Liikenneviraston Teemu Peltoselta.
 
-Muuttuneita tietoja voi tarkastella lokista: https://testiextranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi). Vallu-XML-lokia ei ole koulutuskannassa.
+Muuttuneita tietoja voi tarkastella lokista: https://extranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi). Vallu-XML-lokia ei ole koulutuskannassa.
 
 Vallu l&auml;hetyksen konfiguraatio on ./conf/[ymp&auml;rist&ouml;]/digiroad2.properties tiedostossa.
 ```
@@ -187,7 +185,7 @@ Ohjeet kehitysymp&auml;rist&ouml;n asennukseen tarkemmin: https://github.com/fin
 6. Geckoboard
 -----------
 
-Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://digiroad.geckoboard.com/dashboards/BCEBEC757A01731C (ei vaadi kirjautumista). Geckoboardilta voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml; ja Google Analyticsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. New Reliciin on tunnukset operaattoripalvelussa Mika Lehtosella. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 8.
+Digiroadin tuotantoymp&auml;rist&ouml;n tilaa voi seurata Geckoboardilta https://digiroad.geckoboard.com/dashboards/BCEBEC757A01731C (ei vaadi kirjautumista). Geckoboardilta voi esimerkiksi etsi&auml; apua sovelluksen hitausongelmien selvityksess&auml;. Geckoboardin sis&auml;lt&ouml; on selitetty alempana kuvassa olevien numeroiden perusteella. Tiedot ker&auml;t&auml;&auml;n New Relicist&auml; ja Google Analyticsist&auml;. New Relic monitoroi Digiroadin testikannan ja tuotantokannan tilaa. Esimerkiksi suorituskykyongelmia voi tutkia tarkemmin New Relicin avulla. Google Analyticsist&auml; kerrotaan tarkemmin kappaleessa 8.
 
 ![Geckoboard.](k166.jpg)
 
@@ -247,7 +245,7 @@ __Sovelluksessa k&auml;ytetyt ID:t__
 -   Linkin ID - V&auml;yl&auml;verkon hallinnan yll&auml;pit&auml;m&auml; tielinkin id, jolla muut tietolajit sidotaan kyseiseen tielinkkiin.
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella.
- <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
+ <a href=https://extranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
 Tielinkkej&auml; voi my&ouml;s hakea MML ID:n avulla:
  <a href=https://devtest.liikennevirasto.fi/digiroad/#linkProperty/mml/911196591 target="_blank">https://devtest.liikennevirasto.fi/digiroad/#linkProperty/mml/911196591 </a>
@@ -332,9 +330,9 @@ Kalpa-APIn osoite on (Liikenneviraston verkon ulkopuolelta)
 
 Testikannassa: https://devtest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 Koulutuksessa: https://apptest.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
-Tuotannossa: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
+Tuotannossa: https://extranet.liikennevirasto.fi/digiroad/api/integration/tietolaji_tahan?municipality=kuntanumero_tahan
 
-Esim: https://testiextranet.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=5 (pys&auml;kit kunnasta 5)
+Esim: https://extranet.liikennevirasto.fi/digiroad/api/integration/mass_transit_stops?municipality=5 (pys&auml;kit kunnasta 5)
 
 ![Kalpa API.](k160.JPG)
 
@@ -391,7 +389,7 @@ Kuntaliitoksiin liittyv&auml;t muutokset on muistettava tehd&auml; kaikkiin ymp&
 Linkit:
 ------
 
-[Loppuk&auml;ytt&auml;j&auml;n ohje](https://testiextranet.liikennevirasto.fi/digiroad/manual)
+[Loppuk&auml;ytt&auml;j&auml;n ohje](https://extranet.liikennevirasto.fi/digiroad/manual)
  
 [L&auml;hdekoodi](https://github.com/finnishtransportagency/digiroad2)
 
