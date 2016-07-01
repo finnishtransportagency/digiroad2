@@ -297,6 +297,7 @@
           updateAdjacentLinkIndicators();
         }
         var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
+        manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
         highlightOverlayFeatures(destinationRoadLinkList);
       }
       selectControl.onSelect = originalOnSelectHandler;
@@ -423,6 +424,7 @@
       markAdjacentFeatures(application.isReadOnly() ? targetLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
+      manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
       highlightOverlayFeatures(destinationRoadLinkList);
       if (!application.isReadOnly()) {
         drawIndicators(tLinks);

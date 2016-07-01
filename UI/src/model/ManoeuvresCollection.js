@@ -689,6 +689,14 @@
       return destinationRoadLinkList;
     };
 
+    var getIntermediateRoadLinksBySource = function (manoeuvreSource) {
+      var intermediateRoadLinkList = [];
+      manoeuvreSource.manoeuvres.forEach(function (m){
+        intermediateRoadLinkList.push(_.difference(m.intermediateLinkIds, intermediateRoadLinkList));
+      });
+    return intermediateRoadLinkList;
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -715,7 +723,8 @@
       reload: reload,
       getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,
       getManoeuvreData : getManoeuvreData,
-      getDestinationRoadLinksBySource : getDestinationRoadLinksBySource
+      getDestinationRoadLinksBySource : getDestinationRoadLinksBySource,
+      getIntermediateRoadLinksBySource : getIntermediateRoadLinksBySource
     };
   };
 })(this);
