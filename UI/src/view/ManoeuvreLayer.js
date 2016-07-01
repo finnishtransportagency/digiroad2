@@ -289,13 +289,10 @@
         }
         highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
 
-        //if (selectedManoeuvreSource.existTargetRoadLink()) {
-        //  selectedManoeuvreSource.updateAdjacents();
-        //} else {
-          highlightOverlayFeatures(firstTargetLinkIds);
-          indicatorLayer.clearMarkers();
-          updateAdjacentLinkIndicators();
-        //}
+        highlightOverlayFeatures(firstTargetLinkIds);
+        indicatorLayer.clearMarkers();
+        updateAdjacentLinkIndicators();
+
         var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
         manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
         highlightOverlayFeatures(destinationRoadLinkList);
@@ -321,7 +318,6 @@
     };
 
     var handleManoeuvreChanged = function(eventListener) {
-      //draw();
       selectControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
@@ -513,14 +509,7 @@
 
       selectedManoeuvreSource.addLink(persisted, newDestLinkId);
 
-      //selectedManoeuvreSource.setTargetRoadLink(newDestLinkId);
-
-      //selectedManoeuvreSource.updateAdjacents();
-
-      // TODO: rewrite manoeuvre, refresh selected source, redraw screen, redraw form
-      if (!application.isReadOnly()) {
-        
-      } else {
+      if (application.isReadOnly()) {
         indicatorLayer.clearMarkers();
       }
     };

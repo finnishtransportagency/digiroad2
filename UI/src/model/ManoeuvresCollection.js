@@ -144,16 +144,7 @@
         addedManoeuvre = manoeuvreIntermediateLinks;
 
       }
-      /*
-      else {
-        var persisted = _.find(_.chain(manoeuvres).concat((_.isEmpty(addedManoeuvre) ? [] : [addedManoeuvre])).value(), {id: manoeuvre.manoeuvreId});
-        persisted.linkIds.push(linkId);
-        persisted.destLinkId = linkId;
-        var persistedIntermediateLinks = persisted.linkIds.slice(1, persisted.linkIds.length-1);
-        var updatedPersistedManoeuvre = _.merge({}, { intermediateLinkIds: persistedIntermediateLinks }, persisted);
-        addedManoeuvre = updatedPersistedManoeuvre;
-      }
-      */
+
       reload(manoeuvre, linkId, function(reloaded) {
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
         eventbus.trigger('adjacents:updated', reloaded);
@@ -191,9 +182,6 @@
             return !_.contains(previousAdjacentLinks, item.linkId);// && !_.contains(manoeuvre.linkIds, item.linkId);
           });
           callback(_.merge({}, modified, {"adjacentLinks": nextAdjacentLinks}));
-          //var linkIds = _.pluck(targetLink.adjacentLinks, 'linkId');
-
-          //previousAdjacentLinks = previousAdjacentLinks.concat(linkIds);
         }
 
       });
@@ -205,7 +193,6 @@
      * @param manoeuvre
      * @param linkId
      */
-    //TODO Review the new Manoeuvre created after removed link of oldDestLinkId, I think the problem is at one of the triggers below or in reload function.
     var removeLink = function(manoeuvre, linkId) {
       dirty = true;
       var modified = manoeuvresWithModifications().find(function (m) {
@@ -597,14 +584,7 @@
         var targetAdjacent = _.filter(sortedNextTargetLinksWithMarker[t.linkId], function (rl) {
           return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId));
         });
-        /*
-         TODO: Do we need this chain and filtering? It didn't return adjacent links for nonAdjacentTargets (adjacentLinks was empty)
-         Old implementation
-        var targetAdjacent = _.chain(sortedNextTargetLinksWithMarker[t.linkId]).filter(function (rl) {
-          console.log("" + rl.linkId + " -> " + _.contains(targetIds, rl.linkId) + " & " + _.contains(adjacentIds, rl.linkId));
-          return !(rl.linkId === roadLink.linkId || _.contains(targetIds, rl.linkId) || _.contains(adjacentIds, rl.linkId));
-        }).value;
-        */
+
         return _.merge({}, t, { adjacentLinks: targetAdjacent });
       });
 
