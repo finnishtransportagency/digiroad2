@@ -20,6 +20,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
+  def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
 
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))

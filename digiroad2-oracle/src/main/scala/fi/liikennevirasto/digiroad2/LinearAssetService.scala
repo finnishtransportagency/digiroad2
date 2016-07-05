@@ -110,7 +110,16 @@ trait LinearAssetOperations {
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
+    val ids = changes.map(_.newId).toSet.flatten
+    getPavingFromVVH(ids, roadLinks)
+
     filledTopology
+  }
+
+  private def getPavingFromVVH(ids: Set[Long], roadLinks: Seq[RoadLink]): Unit = {
+    println("IDS: " + ids)
+    println("ROADLINKS: " + roadLinks.foreach(roadLink => println(roadLink.linkId + " " + roadLink.attributes("SURFACETYPE"))))
+
   }
 
   /**
