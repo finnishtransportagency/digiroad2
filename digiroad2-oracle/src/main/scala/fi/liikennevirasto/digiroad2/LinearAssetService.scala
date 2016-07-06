@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -114,6 +114,36 @@ trait LinearAssetOperations {
     getPavingFromVVH(ids, roadLinks)
 
     filledTopology
+  }
+
+  private def getPavingLinearAssetChanges(existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], roadLinks: Seq[RoadLink]) : Seq[(Long, NewLinearAsset)] = {
+    def newPavingChangesDetected(asset: PersistedLinearAsset, changes: Seq[ChangeInfo]): Boolean = {
+      val lastChangeInformation = changes.filter(_.newId == asset.linkId).maxBy(_.vvhTimeStamp);
+      asset.vvhTimeStamp > lastChangeInformation.vvhTimeStamp
+    }
+    def getRoadLinkSurfaceType(linkId: Long) : Int = {
+      roadLinks.find(_.linkId == linkId).map(_.surfaceType).getOrElse(0)
+    }
+
+    existingAssets.filter(a => newPavingChangesDetected(a, changes)).map(a =>
+      //ExpiredAssets ids and new assets
+      (a.linkId, NewLinearAsset(a.linkId, a.startMeasure, a.endMeasure, TextualValue(""+getRoadLinkSurfaceType(a.linkId)), a.sideCode, 0, None))
+    )
+  }
+
+  private def getNewPavingLinearAssets(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]) : Seq[NewLinearAsset] = {
+    def getSideCode(tranfficDirection: TrafficDirection) : Int = {
+      tranfficDirection match {
+        case TrafficDirection.AgainstDigitizing =>
+        SideCode.AgainstDigitizing.value
+        case TrafficDirection.TowardsDigitizing =>
+        SideCode.TowardsDigitizing.value
+        case _ =>
+        SideCode.Unknown.value
+      }
+    }
+    roadLinks.filter(r => r.surfaceType != 0 && !existingAssets.exists(a => a.linkId == r.linkId)).
+      map(r => NewLinearAsset(r.linkId, 0, GeometryUtils.geometryLength(r.geometry), TextualValue(""+r.surfaceType), getSideCode(r.trafficDirection), 0, None));
   }
 
   private def getPavingFromVVH(ids: Set[Long], roadLinks: Seq[RoadLink]): Unit = {
