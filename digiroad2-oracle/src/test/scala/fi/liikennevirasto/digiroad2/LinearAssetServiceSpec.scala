@@ -1101,4 +1101,44 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Should create new paving assets from vvh roadlinks infromation through the actor") {
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val linkId = 5001
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110 //paving asset type
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      service.getByBoundingBox(assetTypeId, boundingBox)
+
+      val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
+      verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
+
+      val linearAssets = captor.getValue
+
+      linearAssets.length should be (1)
+
+      val linearAsset = linearAssets.filter(p => (p.linkId == linkId)).head
+
+      linearAsset.typeId should be (assetTypeId)
+      linearAsset.vvhTimeStamp should be (0)
+
+    }
+  }
+
 }
