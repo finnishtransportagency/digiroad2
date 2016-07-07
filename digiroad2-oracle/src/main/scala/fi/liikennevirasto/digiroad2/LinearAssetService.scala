@@ -19,6 +19,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
   val ProhibitionAssetTypeId = 190
+  val PavingAssetTypeId = 110
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
@@ -97,7 +98,8 @@ trait LinearAssetOperations {
 
     val timing = System.currentTimeMillis
     val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets, assetsOnChangedLinks, changes)
+      existingAssets, assetsOnChangedLinks, changes) ++ getNewPavingLinearAssets(existingAssets.map(_.linkId), roadLinks, changes)
+
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
@@ -116,34 +118,32 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  private def getPavingLinearAssetChanges(existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], roadLinks: Seq[RoadLink]) : Seq[(Long, NewLinearAsset)] = {
+  private def getPavingLinearAssetChanges(existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], roadLinks: Seq[RoadLink]) : Seq[(Long, PersistedLinearAsset)] = {
     def newPavingChangesDetected(asset: PersistedLinearAsset, changes: Seq[ChangeInfo]): Boolean = {
       val lastChangeInformation = changes.filter(_.newId == asset.linkId).maxBy(_.vvhTimeStamp);
       asset.vvhTimeStamp > lastChangeInformation.vvhTimeStamp
     }
-    def getRoadLinkSurfaceType(linkId: Long) : Int = {
-      roadLinks.find(_.linkId == linkId).map(_.surfaceType).getOrElse(0)
-    }
 
+    //TODO set the vvhtimestamp and verify if the surface type of roadlink have changed
     existingAssets.filter(a => newPavingChangesDetected(a, changes)).map(a =>
       //ExpiredAssets ids and new assets
-      (a.linkId, NewLinearAsset(a.linkId, a.startMeasure, a.endMeasure, TextualValue(""+getRoadLinkSurfaceType(a.linkId)), a.sideCode, 0, None))
+      (a.linkId, PersistedLinearAsset(0L, a.linkId, a.sideCode, Some(NumericValue(1)), 0, a.endMeasure, None, None, None, None, false, a.typeId, 0, None))
     )
   }
 
-  private def getNewPavingLinearAssets(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]) : Seq[NewLinearAsset] = {
-    def getSideCode(tranfficDirection: TrafficDirection) : Int = {
-      tranfficDirection match {
-        case TrafficDirection.AgainstDigitizing =>
-        SideCode.AgainstDigitizing.value
-        case TrafficDirection.TowardsDigitizing =>
-        SideCode.TowardsDigitizing.value
-        case _ =>
-        SideCode.Unknown.value
-      }
+  private def getNewPavingLinearAssets(existingLinearAssetIds: Seq[Long], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] = {
+    def getLastVvhTimestamp(linkId : Long, changes: Seq[ChangeInfo]) : Long = {
+      val changeInfo = changes.filter(_.newId == linkId)
+      if(changeInfo.isEmpty)
+        return 0
+
+      changeInfo.maxBy(_.vvhTimeStamp).vvhTimeStamp
     }
-    roadLinks.filter(r => r.surfaceType != 0 && !existingAssets.exists(a => a.linkId == r.linkId)).
-      map(r => NewLinearAsset(r.linkId, 0, GeometryUtils.geometryLength(r.geometry), TextualValue(""+r.surfaceType), getSideCode(r.trafficDirection), 0, None));
+    //TODO verify if we just need to create the asset when surface type it's equal to 2
+    roadLinks.filter(r => r.surfaceType == 2 && !existingLinearAssetIds.exists(linkId => linkId == r.linkId)).
+      map(roadlink =>
+        PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0, GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false, LinearAssetTypes.PavingAssetTypeId, getLastVvhTimestamp(roadlink.linkId, changes), None)
+      )
   }
 
   private def getPavingFromVVH(ids: Set[Long], roadLinks: Seq[RoadLink]): Unit = {
