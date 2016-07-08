@@ -1066,8 +1066,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-4: Paving from VVH
 
-  test("If there is no paving information for road link in OTH, create new asset with VVH paving information") {
-
+//  test("If there is no paving information for road link in OTH, create new asset with VVH paving information") {
+  test("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -1085,19 +1085,17 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
-
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
 
-      createdAsset.length should be (1)
-      createdAssetData.typeId should be (assetTypeId)
-      createdAssetData.vvhTimeStamp should be (0)
+      createdAsset.length should be (0)
 
-      dynamicSession.rollback()
+
     }
   }
 
@@ -1137,6 +1135,250 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       linearAsset.typeId should be (assetTypeId)
       linearAsset.vvhTimeStamp should be (0)
+
+    }
+  }
+
+  test("Should OTH return assets with pavement data and VVH returns no change information, no new assets should be created") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId = 5001
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+
+    runWithRollback {
+
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAsset)
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
+
+      createdAsset.length should be (1)
+      createdAssetData.typeId should be (assetTypeId)
+      createdAssetData.vvhTimeStamp should be (0)
+      createdAssetData.id should be (newAsset.head.id)
+    }
+  }
+
+  test("If there is no paving information for road link in OTH, but VVH returns 3 roadLinks with SurfaceType = (2,1,0) and" +
+    " a change for each roadLink then there should only be 1 asset created, the one for the roadLink with the SurfaceType = 2") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId2 = 5002
+    val newLinkId1 = 5001
+    val newLinkId0 = 5000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
+    val attributes0 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(0))
+    val vvhTimeStamp = 14440000
+
+    val newRoadLink2 = RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes2)
+    val newRoadLink1 = RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes1)
+    val newRoadLink0 = RoadLink(newLinkId0, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes0)
+
+    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
+      ChangeInfo(Some(newLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
+      ChangeInfo(Some(newLinkId0), Some(newLinkId0), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+      )
+
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId2)).head
+
+      createdAsset.length should be (1)
+      createdAssetData.typeId should be (assetTypeId)
+      createdAssetData.vvhTimeStamp should be (vvhTimeStamp)
+    }
+
+  }
+
+  test("If an asset is generated with a different assetTypeId than 110 then it should not be returned.") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId = 5001
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val differentAssetTypeId = 250
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
+
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
+
+
+      createdAsset.length should be (1)
+      createdAssetData.typeId should be (differentAssetTypeId)
+    }
+  }
+
+  test ("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId = 5001
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      createdAsset.length should be (0)
+    }
+  }
+
+
+  test ("Both OTH and VVH have existing assets and changeInfo then nothing the existing assets not mentioned on the changeInfo will be returned witout change," +
+    " the ones that the change info will be returned with the changes") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId2 = 5002
+    val newLinkId1 = 5001
+    val newLinkId0 = 5000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
+    val attributes0 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(0))
+    val vvhTimeStamp = 14440000
+
+    val newRoadLink2 = RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes2)
+    val newRoadLink1 = RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes1)
+    val newRoadLink0 = RoadLink(newLinkId0, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes0)
+
+    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+    )
+
+
+    runWithRollback {
+
+      val newAssetId2 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId2, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset2 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId2.toSet)
+      val newAssetId1 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId1, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset1 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId1.toSet)
+      val newAssetId0 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId0, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset0 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId0.toSet)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      val createdAssetData2 = createdAsset.filter(p => (p.linkId == newLinkId2)).head
+      val createdAssetData1 = createdAsset.filter(p => (p.linkId == newLinkId1)).head
+      val createdAssetData0 = createdAsset.filter(p => (p.linkId == newLinkId0)).head
+
+      createdAsset.length should be(3)
+
+      createdAssetData2.typeId should be(assetTypeId)
+      createdAssetData2.linkId should be(newLinkId2)
+      createdAssetData2.vvhTimeStamp should be(vvhTimeStamp)
+
+      createdAssetData1.typeId should be(assetTypeId)
+      createdAssetData1.linkId should be(newLinkId1)
+      createdAssetData1.vvhTimeStamp should be(0)
+
+      createdAssetData0.typeId should be(assetTypeId)
+      createdAssetData0.linkId should be(newLinkId0)
+      createdAssetData0.vvhTimeStamp should be(0)
+    }
+  }
+
+  test("Should OTH have an asset whose surfaceType = 1 and VVH gives a changeInfo regarding said asset then it should be expired and nothing should be returned") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val newLinkId = 5001
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val vvhTimeStamp = 14440000
+
+
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp))
+
+    runWithRollback {
+
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      createdAsset.length should be (0)
 
     }
   }

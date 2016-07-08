@@ -98,7 +98,7 @@ trait LinearAssetOperations {
 
     val timing = System.currentTimeMillis
     val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets, assetsOnChangedLinks, changes) ++ getNewPavingLinearAssets(existingAssets.map(_.linkId), roadLinks, changes)
+      existingAssets, assetsOnChangedLinks, changes) ++ getNewPavingLinearAssets(existingAssets.map(_.linkId), roadLinks, changes, typeId)
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -128,9 +128,9 @@ trait LinearAssetOperations {
     )
   }
 
-  private def getNewPavingLinearAssets(existingLinearAssetIds: Seq[Long], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] = {
+  private def getNewPavingLinearAssets(existingLinearAssetIds: Seq[Long], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], typeId: Int) : Seq[PersistedLinearAsset] = {
     def getLastVvhTimestamp(linkId : Long, changes: Seq[ChangeInfo]) : Long = {
-      val changeInfo = changes.filter(_.newId == linkId)
+      val changeInfo = changes.filter(_.newId.get == linkId)
       if(changeInfo.isEmpty)
         return 0
 
@@ -139,7 +139,9 @@ trait LinearAssetOperations {
     //TODO verify if we just need to create the asset when surface type it's equal to 2
     roadLinks.filter(r => r.surfaceType == 2 && !existingLinearAssetIds.exists(linkId => linkId == r.linkId)).
       map(roadlink =>
-        PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0, GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false, LinearAssetTypes.PavingAssetTypeId, getLastVvhTimestamp(roadlink.linkId, changes), None)
+        PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
+          GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false, if (typeId == LinearAssetTypes.PavingAssetTypeId ) LinearAssetTypes.PavingAssetTypeId else typeId,
+          getLastVvhTimestamp(roadlink.linkId, changes), None)
       )
   }
 
