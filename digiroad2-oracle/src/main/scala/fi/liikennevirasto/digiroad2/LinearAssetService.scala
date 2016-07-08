@@ -97,8 +97,11 @@ trait LinearAssetOperations {
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
     val timing = System.currentTimeMillis
-    val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets, assetsOnChangedLinks, changes) ++ getNewPavingLinearAssets(existingAssets.map(_.linkId), roadLinks, changes, typeId)
+    val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      existingAssets, assetsOnChangedLinks, changes)
+
+    val (expiredPavingAssetIds, newAssets) = getPavingAssetChanges(existingAssets.filter(a =>
+      removedLinkIds.exists(_ == a.linkId)) ++ filledNewAssets, roadLinks, changes, typeId)
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -107,7 +110,7 @@ trait LinearAssetOperations {
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-      changeSet.expiredAssetIds
+      changeSet.expiredAssetIds ++ expiredPavingAssetIds
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
@@ -115,34 +118,36 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  private def getPavingLinearAssetChanges(existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], roadLinks: Seq[RoadLink]) : Seq[(Long, PersistedLinearAsset)] = {
-    def newPavingChangesDetected(asset: PersistedLinearAsset, changes: Seq[ChangeInfo]): Boolean = {
-      val lastChangeInformation = changes.filter(_.newId == asset.linkId).maxBy(_.vvhTimeStamp);
-      asset.vvhTimeStamp > lastChangeInformation.vvhTimeStamp
-    }
+  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
 
-    //TODO set the vvhtimestamp and verify if the surface type of roadlink have changed
-    existingAssets.filter(a => newPavingChangesDetected(a, changes)).map(a =>
-      //ExpiredAssets ids and new assets
-      (a.linkId, PersistedLinearAsset(0L, a.linkId, a.sideCode, Some(NumericValue(1)), 0, a.endMeasure, None, None, None, None, false, a.typeId, 0, None))
-    )
-  }
+    if (typeId == LinearAssetTypes.PavingAssetTypeId)
+        return (Set(), List())
 
-  private def getNewPavingLinearAssets(existingLinearAssetIds: Seq[Long], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], typeId: Int) : Seq[PersistedLinearAsset] = {
-    def getLastVvhTimestamp(linkId : Long, changes: Seq[ChangeInfo]) : Long = {
-      val changeInfo = changes.filter(_.newId.get == linkId)
-      if(changeInfo.isEmpty)
-        return 0
-
-      changeInfo.maxBy(_.vvhTimeStamp).vvhTimeStamp
-    }
-    //TODO verify if we just need to create the asset when surface type it's equal to 2
-    roadLinks.filter(r => r.surfaceType == 2 && !existingLinearAssetIds.exists(linkId => linkId == r.linkId)).
-      map(roadlink =>
-        PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
-          GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false, if (typeId == LinearAssetTypes.PavingAssetTypeId ) LinearAssetTypes.PavingAssetTypeId else typeId,
-          getLastVvhTimestamp(roadlink.linkId, changes), None)
+    //merge change info with roadlinks
+    val roadlinkChangeInfos = changeInfos.
+      filter(_.newId.isDefined).
+      groupBy(_.newId).
+      map(info =>
+        ( roadLinks.find(_.linkId == info._1.get).head, existingLinearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
       )
+
+    val roadlinksAptos = roadLinks.filter(r => r.surfaceType == 2)
+
+    val newPavingAssets = roadlinkChangeInfos.
+      filter(roadlinkChangeInfo =>
+        roadlinkChangeInfo._1.surfaceType == 2 && roadlinkChangeInfo._2.isEmpty
+      ).
+      map(roadlinkChangeInfo =>
+        PersistedLinearAsset(0L, roadlinkChangeInfo._1.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0, GeometryUtils.geometryLength(roadlinkChangeInfo._1.geometry), None, None, None, None, false, LinearAssetTypes.PavingAssetTypeId, roadlinkChangeInfo._3.vvhTimeStamp, None)
+      ).toSeq
+
+    val expiredAssetIds = roadlinkChangeInfos.
+      filter(roadlinkChangeInfo =>
+        roadlinkChangeInfo._1.surfaceType != 2 && roadlinkChangeInfo._2.isDefined && roadlinkChangeInfo._2.get.vvhTimeStamp < roadlinkChangeInfo._3.vvhTimeStamp
+      ).
+      map(_._2.get.linkId).toSet
+
+    (expiredAssetIds, newPavingAssets)
   }
 
   /**
