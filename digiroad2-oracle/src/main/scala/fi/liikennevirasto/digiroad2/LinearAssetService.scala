@@ -112,9 +112,6 @@ trait LinearAssetOperations {
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
-    val ids = changes.map(_.newId).toSet.flatten
-    getPavingFromVVH(ids, roadLinks)
-
     filledTopology
   }
 
@@ -144,12 +141,6 @@ trait LinearAssetOperations {
       map(roadlink =>
         PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0, GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false, LinearAssetTypes.PavingAssetTypeId, getLastVvhTimestamp(roadlink.linkId, changes), None)
       )
-  }
-
-  private def getPavingFromVVH(ids: Set[Long], roadLinks: Seq[RoadLink]): Unit = {
-    println("IDS: " + ids)
-    println("ROADLINKS: " + roadLinks.foreach(roadLink => println(roadLink.linkId + " " + roadLink.attributes("SURFACETYPE"))))
-
   }
 
   /**
