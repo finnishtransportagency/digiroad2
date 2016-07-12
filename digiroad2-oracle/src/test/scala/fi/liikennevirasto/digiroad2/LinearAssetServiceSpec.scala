@@ -1091,11 +1091,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined))
 
-      createdAsset.length should be (0)
-
-
+      createdAssetData.length should be (0)
     }
   }
 
@@ -1172,7 +1170,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined)).head
 
       createdAsset.length should be (1)
       createdAssetData.typeId should be (assetTypeId)
@@ -1219,11 +1217,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId2)).head
+      val filteredCreatedAssets = createdAsset.filter(p => (p.linkId == newLinkId2 && p.value.isDefined))
 
-      createdAsset.length should be (1)
-      createdAssetData.typeId should be (assetTypeId)
-      createdAssetData.vvhTimeStamp should be (vvhTimeStamp)
+      createdAsset.length should be (3)
+      filteredCreatedAssets.length should be (1)
+
+      filteredCreatedAssets.head.typeId should be (assetTypeId)
+      filteredCreatedAssets.head.vvhTimeStamp should be (vvhTimeStamp)
     }
 
   }
@@ -1252,7 +1252,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId)).head
+      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined)).head
 
 
       createdAsset.length should be (1)
