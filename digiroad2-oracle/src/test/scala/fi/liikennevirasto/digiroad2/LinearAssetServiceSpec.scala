@@ -1115,11 +1115,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 110 //paving asset type
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val vvhTimeStamp = 11121;
 
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
+    val changeInfoSeq = Seq(
+      ChangeInfo(Some(linkId), Some(linkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+    )
+
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       service.getByBoundingBox(assetTypeId, boundingBox)
@@ -1134,7 +1139,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val linearAsset = linearAssets.filter(p => (p.linkId == linkId)).head
 
       linearAsset.typeId should be (assetTypeId)
-      linearAsset.vvhTimeStamp should be (0)
+      linearAsset.vvhTimeStamp should be (vvhTimeStamp)
 
     }
   }

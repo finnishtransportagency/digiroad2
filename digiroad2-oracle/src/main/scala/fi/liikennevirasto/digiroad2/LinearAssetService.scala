@@ -120,7 +120,7 @@ trait LinearAssetOperations {
 
   def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
 
-    if (typeId == LinearAssetTypes.PavingAssetTypeId)
+    if (typeId != LinearAssetTypes.PavingAssetTypeId)
         return (Set(), List())
 
     //merge change info with roadlinks
@@ -130,8 +130,6 @@ trait LinearAssetOperations {
       map(info =>
         ( roadLinks.find(_.linkId == info._1.get).head, existingLinearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
       )
-
-    val roadlinksAptos = roadLinks.filter(r => r.surfaceType == 2)
 
     val newPavingAssets = roadlinkChangeInfos.
       filter(roadlinkChangeInfo =>
