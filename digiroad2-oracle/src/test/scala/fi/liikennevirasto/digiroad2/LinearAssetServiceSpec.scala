@@ -1252,11 +1252,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined)).head
+      val filteredAssets = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined))
 
 
       createdAsset.length should be (1)
-      createdAssetData.typeId should be (differentAssetTypeId)
+      createdAsset.head.typeId should be (differentAssetTypeId)
+
+      filteredAssets.length should be (0)
     }
   }
 
@@ -1282,8 +1284,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+      val filteredAssets = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined))
 
-      createdAsset.length should be (0)
+      createdAsset.length should be (1)
+      filteredAssets.length should be (0)
     }
   }
 
