@@ -1292,8 +1292,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
 
-  test ("Both OTH and VVH have existing assets and changeInfo then nothing the existing assets not mentioned on the changeInfo will be returned witout change," +
-    " the ones that the change info will be returned with the changes") {
+  test ("Both OTH and VVH have existing assets and changeInfo then the existing assets not mentioned on the changeInfo will be returned without any change," +
+    " the ones that the change info mentions will be returned with the changes") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1324,21 +1324,22 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
 
-      val newAssetId2 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId2, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAssetId2 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId2, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset2 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId2.toSet)
-      val newAssetId1 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId1, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAssetId1 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId1, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset1 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId1.toSet)
-      val newAssetId0 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId0, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAssetId0 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId0, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset0 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId0.toSet)
+      val newAssetList = List(newAsset2.head, newAsset1.head,newAsset0.head)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAssetList)
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData2 = createdAsset.filter(p => (p.linkId == newLinkId2)).head
-      val createdAssetData1 = createdAsset.filter(p => (p.linkId == newLinkId1)).head
-      val createdAssetData0 = createdAsset.filter(p => (p.linkId == newLinkId0)).head
+      val createdAssetData2 = createdAsset.filter(p => (p.linkId == newLinkId2 && p.value.isDefined)).head
+      val createdAssetData1 = createdAsset.filter(p => (p.linkId == newLinkId1 && p.value.isDefined)).head
+      val createdAssetData0 = createdAsset.filter(p => (p.linkId == newLinkId0 && p.value.isDefined)).head
 
       createdAsset.length should be(3)
 
