@@ -925,5 +925,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       }
     }
   }
+
+  def expireAllAssetsByTypeId (typeId: Int): Unit = {
+    sqlu"update asset set valid_to = sysdate where asset_type_id = $typeId"
+  }
 }
 
