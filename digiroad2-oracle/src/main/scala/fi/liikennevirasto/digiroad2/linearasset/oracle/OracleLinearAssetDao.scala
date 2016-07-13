@@ -926,6 +926,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+  /**
+    * When invoked will expire all assets of a given type.
+    * It is required that the invoker takes care of the transaction.
+    * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
+    */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
     sqlu"update asset set valid_to = sysdate where asset_type_id = $typeId"
   }
