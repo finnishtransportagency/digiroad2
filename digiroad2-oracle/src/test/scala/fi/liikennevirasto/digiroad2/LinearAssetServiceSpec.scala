@@ -1113,7 +1113,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 110 //paving asset type
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val vvhTimeStamp = 11121;
+    val vvhTimeStamp = 11121
 
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
@@ -1142,7 +1142,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should OTH return assets with pavement data and VVH returns no change information, no new assets should be created") {
+  test("Should not create new paving assets and return the existing paving assets when VVH doesn't have change information") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1162,25 +1162,25 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
 
-      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAsset)
 
-      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+      val existingAssets = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val createdAssetData = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined)).head
+      val existingAssetData = existingAssets.filter(p => (p.linkId == newLinkId && p.value.isDefined)).head
 
-      createdAsset.length should be (1)
-      createdAssetData.typeId should be (assetTypeId)
-      createdAssetData.vvhTimeStamp should be (0)
-      createdAssetData.id should be (newAsset.head.id)
+      existingAssets.length should be (1)
+      existingAssetData.typeId should be (assetTypeId)
+      existingAssetData.vvhTimeStamp should be (0)
+      existingAssetData.value should be (Some(NumericValue(1)))
+      existingAssetData.id should be (newAsset.head.id)
     }
   }
 
-  test("If there is no paving information for road link in OTH, but VVH returns 3 roadLinks with SurfaceType = (2,1,0) and" +
-    " a change for each roadLink then there should only be 1 asset created, the one for the roadLink with the SurfaceType = 2") {
+  test("Should be created only 1 new paving asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1208,27 +1208,25 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
       ChangeInfo(Some(newLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
       ChangeInfo(Some(newLinkId0), Some(newLinkId0), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
-      )
-
+    )
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
-      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+      val existingAssets = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      val filteredCreatedAssets = createdAsset.filter(p => (p.linkId == newLinkId2 && p.value.isDefined))
+      val filteredCreatedAssets = existingAssets.filter(p => (p.linkId == newLinkId2 && p.value.isDefined))
 
-      createdAsset.length should be (3)
+      existingAssets.length should be (3)
       filteredCreatedAssets.length should be (1)
-
       filteredCreatedAssets.head.typeId should be (assetTypeId)
+      filteredCreatedAssets.head.value should be (Some(NumericValue(1)))
       filteredCreatedAssets.head.vvhTimeStamp should be (vvhTimeStamp)
     }
-
   }
 
-  test("If an asset is generated with a different assetTypeId than 110 then it should not be returned.") {
+  test("Should not create paving assets when it's requested a different asset type.") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1243,17 +1241,21 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val differentAssetTypeId = 250
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val vvhTimeStamp = 11121
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
+    val changeInfoSeq = Seq(
+      ChangeInfo(Some(newLinkId), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+    )
+
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
 
       val filteredAssets = createdAsset.filter(p => (p.linkId == newLinkId && p.value.isDefined))
-
 
       createdAsset.length should be (1)
       createdAsset.head.typeId should be (differentAssetTypeId)
@@ -1291,9 +1293,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-
-  test ("Both OTH and VVH have existing assets and changeInfo then the existing assets not mentioned on the changeInfo will be returned without any change," +
-    " the ones that the change info mentions will be returned with the changes") {
+  test ("Should replace the existing paving asset when the asset vvhtimestamp it's lower than change information vvhtimestamp") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1318,9 +1318,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val newRoadLink1 = RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes1)
     val newRoadLink0 = RoadLink(newLinkId0, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes0)
 
-    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
-    )
-
+    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp))
 
     runWithRollback {
 
@@ -1357,7 +1355,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should OTH have an asset whose surfaceType = 1 and VVH gives a changeInfo regarding said asset then it should be expired and nothing should be returned") {
+  test("Should expire the assets if vvh gives change informations and the roadlink surface type is equal to 1") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1371,7 +1369,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 110
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
     val vvhTimeStamp = 14440000
 
 
@@ -1380,13 +1378,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
 
-      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1000), 1, 0, None)), assetTypeId, "testuser")
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List(newAsset.head))
 
-      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten.filter(_.value.isDefined)
 
       createdAsset.length should be (0)
 

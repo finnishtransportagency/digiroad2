@@ -100,13 +100,13 @@ trait LinearAssetOperations {
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       existingAssets, assetsOnChangedLinks, changes)
 
-    val (expiredPavingAssetIds, newAssets) = getPavingAssetChanges(existingAssets.filter(a =>
-      removedLinkIds.exists(_ == a.linkId)) ++ filledNewAssets, roadLinks, changes, typeId)
+    val (expiredPavingAssetIds, newAssets) = getPavingAssetChanges(existingAssets.filterNot(a =>
+      removedLinkIds.exists(linkId => linkId == a.linkId)), filledNewAssets, roadLinks, changes, typeId)
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+    val groupedAssets = (existingAssets.filterNot(a => expiredPavingAssetIds.exists(_ == a.linkId)).filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
@@ -118,17 +118,19 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
+  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], filledNewAssets: Seq[PersistedLinearAsset],  roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
 
     if (typeId != LinearAssetTypes.PavingAssetTypeId)
-        return (Set(), List())
+        return (Set(), filledNewAssets)
+
+    val linearAssets = existingLinearAssets ++ filledNewAssets
 
     //merge change info with roadlinks
     val roadlinkChangeInfos = changeInfos.
       filter(_.newId.isDefined).
       groupBy(_.newId).
       map(info =>
-        ( roadLinks.find(_.linkId == info._1.get).head, existingLinearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
+        ( roadLinks.find(_.linkId == info._1.get).head, linearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
       )
 
     val newPavingAssets = roadlinkChangeInfos.
@@ -145,7 +147,15 @@ trait LinearAssetOperations {
       ).
       map(_._2.get.linkId).toSet
 
-    (expiredAssetIds, newPavingAssets)
+    val updatedAssets = roadlinkChangeInfos.
+      filter(roadlinkChangeInfo =>
+        roadlinkChangeInfo._1.surfaceType == 2 && roadlinkChangeInfo._2.isDefined && roadlinkChangeInfo._2.get.vvhTimeStamp < roadlinkChangeInfo._3.vvhTimeStamp
+      ).
+      map(roadlinkChangeInfo =>
+        (roadlinkChangeInfo._2.get.linkId, PersistedLinearAsset(0L, roadlinkChangeInfo._1.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0, GeometryUtils.geometryLength(roadlinkChangeInfo._1.geometry), None, None, None, None, false, LinearAssetTypes.PavingAssetTypeId, roadlinkChangeInfo._3.vvhTimeStamp, None))
+      ).toSet
+
+    (expiredAssetIds ++ updatedAssets.map(_._1), newPavingAssets ++ updatedAssets.map(_._2))
   }
 
   /**
