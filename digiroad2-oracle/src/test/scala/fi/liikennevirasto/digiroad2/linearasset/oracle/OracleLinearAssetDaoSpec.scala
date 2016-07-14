@@ -12,6 +12,8 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers, Tag}
 import org.scalatest.mock.MockitoSugar
+import org.scalatest._
+import Matchers._
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -401,6 +403,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
+    }
+  }
+
+  test("all entities should be expired") {
+    val dao = new OracleLinearAssetDao(null)
+    val typeId = 110;
+    runWithRollback {
+      val counting = sql"""select count(*) from asset where asset_type_id = $typeId And valid_to is not null""".as[Int].firstOption
+      counting.get should be > 0
+      dao.expireAllAssetsByTypeId(typeId)
+      val countingAfterExpire = sql"""select count(*) from asset where asset_type_id = $typeId And valid_to is null""".as[Int].firstOption
+      countingAfterExpire.get should be (0)
     }
   }
 }

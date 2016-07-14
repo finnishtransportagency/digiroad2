@@ -932,7 +932,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
     */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
-    sqlu"update asset set valid_to = sysdate where asset_type_id = $typeId"
+    sqlu"update asset set valid_to = sysdate where asset_type_id = $typeId".execute
   }
 }
 
