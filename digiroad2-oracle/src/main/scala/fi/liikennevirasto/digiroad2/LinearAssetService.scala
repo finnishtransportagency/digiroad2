@@ -97,11 +97,13 @@ trait LinearAssetOperations {
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
     val timing = System.currentTimeMillis
-    val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets, assetsOnChangedLinks, changes)
 
-    val (expiredPavingAssetIds, newAssets) = getPavingAssetChanges(existingAssets.filterNot(a =>
-      removedLinkIds.exists(linkId => linkId == a.linkId)), filledNewAssets, roadLinks, changes, typeId)
+    val (expiredPavingAssetIds, newPavingAssets) = getPavingAssetChanges(existingAssets, projectableTargetRoadLinks, changes, typeId)
+
+    val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      existingAssets.filterNot(a => expiredPavingAssetIds.exists(_ == a.linkId)) ++ newPavingAssets, assetsOnChangedLinks, changes)
+
+    val newAssets = newPavingAssets.filterNot(a => filledNewAssets.exists(_ == a.linkId)) ++ filledNewAssets
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -118,19 +120,17 @@ trait LinearAssetOperations {
     filledTopology
   }
 
-  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], filledNewAssets: Seq[PersistedLinearAsset],  roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
+  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset],  roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
 
     if (typeId != LinearAssetTypes.PavingAssetTypeId)
-        return (Set(), filledNewAssets)
-
-    val linearAssets = existingLinearAssets ++ filledNewAssets
+        return (Set(), List())
 
     //merge change info with roadlinks
     val roadlinkChangeInfos = changeInfos.
       filter(_.newId.isDefined).
       groupBy(_.newId).
       map(info =>
-        ( roadLinks.find(_.linkId == info._1.get).head, linearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
+        ( roadLinks.find(_.linkId == info._1.get).head, existingLinearAssets.find(_.linkId == info._1.get).headOption, info._2.maxBy(_.vvhTimeStamp))
       )
 
     val newPavingAssets = roadlinkChangeInfos.
