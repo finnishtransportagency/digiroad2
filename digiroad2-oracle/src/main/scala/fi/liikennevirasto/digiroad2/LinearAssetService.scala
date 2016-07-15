@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -566,6 +567,41 @@ trait LinearAssetOperations {
     }
     id
   }
+
+  /**
+    * Received a AssetTypeId and expire All RoadLinks for That AssetTypeId, create new assets based on VVH RoadLink data
+    *
+    * @param assetTypeId
+    */
+  def expireImportRoadLinksVVHtoOTH(assetTypeId: Int): Unit = {
+    //Get all municipalities for search VVH Roadlinks
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    withDynTransaction {
+      //Expire All RoadLinks
+      dao.expireAllAssetsByTypeId(assetTypeId)
+
+      //For each municipality get all VVH Roadlinks for pick link id and pavement data
+      municipalities.foreach { municipality =>
+        println("*** Processing municipality: " + municipality)
+
+        //Get All RoadLinks from VVH
+        val roadLinks = roadLinkService.getVVHRoadLinksF(municipality)
+
+        if (roadLinks != null) {
+          //Create new Assets for the RoadLinks from VVH
+          val newAssets = roadLinks.map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
+          newAssets.map { newAsset =>
+            createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+          }
+        }
+      }
+    }
+  }
+
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

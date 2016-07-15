@@ -4,9 +4,12 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -263,6 +266,24 @@ object DataFixture {
     println("\n")
   }
 
+  def importVVHRoadLinksByMunicipalities(): Unit = {
+    println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
+    println(DateTime.now())
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val assetTypeId = 110
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
+    linearAssetService.expireImportRoadLinksVVHtoOTH(assetTypeId)
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -321,11 +342,13 @@ object DataFixture {
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some ("link_float_obstacle_assets") =>
         linkFloatObstacleAssets()
+      case Some ("import_VVH_RoadLinks_by_municipalities") =>
+        importVVHRoadLinksByMunicipalities()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
-        " generate_floating_obstacles")
+        " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities")
     }
   }
 }

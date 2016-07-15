@@ -1391,4 +1391,77 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Expire OTH Assets and create new assets based on VVH RoadLink data") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+    }
+    val assetTypeId = 110
+    val municipalityCode = 564
+    val newLinkId1 = 5000
+    val newLinkId2 = 5001
+    val newLinkId3 = 5002
+    val newLinkId4 = 5003
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(0))
+    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
+    val attributes3 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+
+    //RoadLinks from VVH to compare at the end
+    val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes2)
+    val newRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
+    val newRoadLink4 = VVHRoadlink(newLinkId4, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
+
+
+    runWithRollback {
+      val newAssetId1 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId1, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset1 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId1.toSet)
+      val newAssetId2 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId2, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset2 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId2.toSet)
+      val newAssetId3 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId3, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
+      val newAsset3 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId3.toSet)
+      val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
+
+      when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAssetList)
+      when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
+
+      service.expireImportRoadLinksVVHtoOTH(assetTypeId)
+
+      val assetListAfterChanges = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(newLinkId1, newLinkId2, newLinkId3, newLinkId4), "mittarajoitus")
+
+      assetListAfterChanges.size should be (4)
+
+      //AssetId1 - Expired
+      var assetToVerifyNotExist = assetListAfterChanges.find(p => (p.id == newAssetId1(0).toInt) )
+      assetToVerifyNotExist.size should be (0)
+
+      //AssetId2 - Expired
+      assetToVerifyNotExist = assetListAfterChanges.find(p => (p.id == newAssetId2(0).toInt) )
+      assetToVerifyNotExist.size should be (0)
+
+      //AssetId3 - Expired
+      assetToVerifyNotExist = assetListAfterChanges.find(p => (p.id == newAssetId3(0).toInt))
+      assetToVerifyNotExist.size should be (0)
+
+      //AssetId3 - Update Asset
+      val assetToVerifyUpdated = assetListAfterChanges.find(p => (p.id != newAsset3 && p.linkId == newLinkId3)).get
+      assetToVerifyUpdated.id should not be (newAssetId3)
+      assetToVerifyUpdated.linkId should be (newLinkId3)
+      assetToVerifyUpdated.expired should be (false)
+
+      //AssetId4 - Create Asset
+      val assetToVerify = assetListAfterChanges.find(p => (p.linkId == newLinkId4)).get
+      assetToVerify.linkId should be (newLinkId4)
+      assetToVerify.expired should be (false)
+    }
+  }
+
 }

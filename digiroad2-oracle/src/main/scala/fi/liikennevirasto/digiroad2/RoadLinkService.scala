@@ -348,6 +348,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * Returns road links by municipality. Used by expireImportRoadLinksVVHtoOTH.
+    */
+  def getVVHRoadLinksF(municipality: Int) : Seq[VVHRoadlink] = {
+    Await.result(vvhClient.fetchVVHRoadlinksF(municipality), atMost = Duration.Inf)
+  }
+
+  /**
     * Returns road link by link id. Used by Digiroad2Api.updatePointAsset, Digiroad2Api.createNewPointAsset, ManoeuvreService.isValidManoeuvre and SpeedLimitService.toSpeedLimit.
     */
   def getRoadLinkFromVVH(linkId: Long): Option[RoadLink] = {
