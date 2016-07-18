@@ -578,6 +578,7 @@ trait LinearAssetOperations {
     withDynTransaction {
       //Expire All RoadLinks
       dao.expireAllAssetsByTypeId(assetTypeId)
+      println("*** All RoadLinks Expired by TypeId: " + assetTypeId)
 
       //For each municipality get all VVH Roadlinks for pick link id and pavement data
       municipalities.foreach { municipality =>
@@ -585,14 +586,20 @@ trait LinearAssetOperations {
 
         //Get All RoadLinks from VVH
         val roadLinks = roadLinkService.getVVHRoadLinksF(municipality)
+        println("*** Number of RoadsLinks from VVH with Municipality " + municipality + ": " + roadLinks.length)
 
+        var count = 0
         if (roadLinks != null) {
           //Create new Assets for the RoadLinks from VVH
-          val newAssets = roadLinks.map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
+          val newAssets = roadLinks.
+            filter(_.attributes.get("SURFACETYPE") == Some(2)).
+            map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.map { newAsset =>
             createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+            count = count + 1
           }
         }
+        println("*** Number of Assets Created for Municipality: " + municipality + ": " + count)
       }
     }
   }
