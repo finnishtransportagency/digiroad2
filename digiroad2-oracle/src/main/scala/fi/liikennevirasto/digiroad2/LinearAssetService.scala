@@ -99,7 +99,7 @@ trait LinearAssetOperations {
 
     val timing = System.currentTimeMillis
 
-    val (expiredPavingAssetIds, newPavingAssets) = getPavingAssetChanges(existingAssets, projectableTargetRoadLinks, changes, typeId)
+    val (expiredPavingAssetIds, newPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       existingAssets.filterNot(a => expiredPavingAssetIds.exists(_ == a.id)) ++ newPavingAssets, assetsOnChangedLinks, changes)
