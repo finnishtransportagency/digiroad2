@@ -1293,7 +1293,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test ("Should replace the existing paving asset when the asset vvhtimestamp it's lower than change information vvhtimestamp") {
+  ignore ("Should replace the existing paving asset when the asset vvhtimestamp it's lower than change information vvhtimestamp") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
