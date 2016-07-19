@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, FloatingAsset, Unknown}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
@@ -61,6 +62,10 @@ trait PointAssetOperations {
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
         val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId).map(link => (link.municipalityCode, link.geometry)))
+        if (floating && !persistedAsset.floating) {
+          val logger = LoggerFactory.getLogger(getClass)
+          logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))))
+        }
         AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating)
       }
 
@@ -168,6 +173,23 @@ trait PointAssetOperations {
   }
 
   protected def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
+
+  protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[VVHRoadlink]) = {
+    roadLinkOption match {
+      case None => "No road link found with id %d".format(persistedAsset.linkId)
+      case Some(roadLink) =>
+        if (roadLink.municipalityCode != persistedAsset.municipalityCode) {
+          "Road link and asset have differing municipality codes (%d vs %d)".format(roadLink.municipalityCode, persistedAsset.municipalityCode)
+        } else {
+          val point = Point(persistedAsset.lon, persistedAsset.lat)
+          val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, persistedAsset.mValue)
+          roadOption match {
+            case Some(value) => "Distance to road link is %.3f".format(value.distanceTo(point))
+            case _ => "Road link has no reference point for mValue %.3f".format(persistedAsset.mValue)
+          }
+        }
+    }
+  }
 }
 
 object PointAssetOperations {
