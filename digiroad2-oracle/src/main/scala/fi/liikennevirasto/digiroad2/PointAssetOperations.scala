@@ -132,7 +132,9 @@ trait PointAssetOperations {
     def findRoadlink(linkId: Long): Option[(Int, Seq[Point])] =
       roadLinks.find(_.linkId == linkId).map(x => (x.municipalityCode, x.geometry))
 
-    persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
+    withDynSession {
+      persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
+    }
   }
 
   def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
