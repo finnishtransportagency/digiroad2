@@ -7,7 +7,6 @@
     var className = toolName.toLowerCase();
     var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
       executeOrShowConfirmDialog(function() {
-        if (selectedMassTransitStopModel) selectedMassTransitStopModel.close();
         applicationModel.setSelectedTool(toolName);
       });
     });
