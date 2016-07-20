@@ -145,7 +145,7 @@ trait LinearAssetOperations {
 
     val expiredAssetsIds = changedAssets.map{
       case (roadlink, changeInfo, assets) =>
-        if(roadlink.surfaceType != 2 && !assets.isEmpty)
+        if(roadlink.surfaceType == 1 && !assets.isEmpty)
           assets.filter(_.vvhTimeStamp < changeInfo.vvhTimeStamp).map(_.id)
         else
           List()
@@ -586,10 +586,11 @@ trait LinearAssetOperations {
 
         //Get All RoadLinks from VVH
         val roadLinks = roadLinkService.getVVHRoadLinksF(municipality)
-        println("*** Number of RoadsLinks from VVH with Municipality " + municipality + ": " + roadLinks.length)
 
         var count = 0
         if (roadLinks != null) {
+          println("*** Number of RoadsLinks from VVH with Municipality " + municipality + ": " + roadLinks.length)
+
           //Create new Assets for the RoadLinks from VVH
           val newAssets = roadLinks.
             filter(_.attributes.get("SURFACETYPE") == Some(2)).
