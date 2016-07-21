@@ -1066,7 +1066,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-4: Paving from VVH
 
-//  test("If there is no paving information for road link in OTH, create new asset with VVH paving information") {
   test("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
@@ -1290,68 +1289,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       createdAsset.length should be (1)
       filteredAssets.length should be (0)
-    }
-  }
-
-  ignore ("Should replace the existing paving asset when the asset vvhtimestamp it's lower than change information vvhtimestamp") {
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-    val newLinkId2 = 5002
-    val newLinkId1 = 5001
-    val newLinkId0 = 5000
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 110
-    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
-    val attributes0 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(0))
-    val vvhTimeStamp = 14440000
-
-    val newRoadLink2 = RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes2)
-    val newRoadLink1 = RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes1)
-    val newRoadLink0 = RoadLink(newLinkId0, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes0)
-
-    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp))
-
-    runWithRollback {
-
-      val newAssetId2 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId2, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
-      val newAsset2 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId2.toSet)
-      val newAssetId1 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId1, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
-      val newAsset1 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId1.toSet)
-      val newAssetId0 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId0, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
-      val newAsset0 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId0.toSet)
-      val newAssetList = List(newAsset2.head, newAsset1.head,newAsset0.head)
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAssetList)
-
-      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-
-      val createdAssetData2 = createdAsset.filter(p => (p.linkId == newLinkId2 && p.value.isDefined)).head
-      val createdAssetData1 = createdAsset.filter(p => (p.linkId == newLinkId1 && p.value.isDefined)).head
-      val createdAssetData0 = createdAsset.filter(p => (p.linkId == newLinkId0 && p.value.isDefined)).head
-
-      createdAsset.length should be(3)
-
-      createdAssetData2.typeId should be(assetTypeId)
-      createdAssetData2.linkId should be(newLinkId2)
-      createdAssetData2.vvhTimeStamp should be(vvhTimeStamp)
-
-      createdAssetData1.typeId should be(assetTypeId)
-      createdAssetData1.linkId should be(newLinkId1)
-      createdAssetData1.vvhTimeStamp should be(0)
-
-      createdAssetData0.typeId should be(assetTypeId)
-      createdAssetData0.linkId should be(newLinkId0)
-      createdAssetData0.vvhTimeStamp should be(0)
     }
   }
 
