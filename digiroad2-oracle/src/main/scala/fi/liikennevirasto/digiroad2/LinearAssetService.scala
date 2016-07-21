@@ -102,14 +102,14 @@ trait LinearAssetOperations {
     val (expiredPavingAssetIds, newPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets.filterNot(a => expiredPavingAssetIds.exists(_ == a.id)) ++ newPavingAssets, assetsOnChangedLinks, changes)
+      existingAssets.filterNot(a => expiredPavingAssetIds.contains(a.id)) ++ newPavingAssets, assetsOnChangedLinks, changes)
 
-    val newAssets = newPavingAssets.filterNot(a => filledNewAssets.exists(_ == a.linkId)) ++ filledNewAssets
+    val newAssets = newPavingAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (existingAssets.filterNot(a => expiredPavingAssetIds.exists(_ == a.id)).filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+    val groupedAssets = (existingAssets.filterNot(a => expiredPavingAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
