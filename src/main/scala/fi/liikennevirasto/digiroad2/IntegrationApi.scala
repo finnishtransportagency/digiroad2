@@ -82,15 +82,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-    timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
-      .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
-      .getOrElse(""))
+      timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
+        .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
+          .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
     "muokannut_viimeksi" ->  massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
-      .getOrElse(""))
+        .getOrElse(""))
   }
 
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
@@ -276,13 +276,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .getOrElse("")
   }
 
-  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
-      val geometryWKT =
-        if (geometry.nonEmpty)
-          "LINESTRING (" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
-        else
-          ""
-    "geometryWKT" -> geometryWKT
+  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
+  {
+    var returntxt = "LINESTRING ZM ("
+    var previousM = 0.00
+    if (geometry.nonEmpty)
+    {
+      var previousP=geometry(0)
+      for (p <- geometry)
+      {
+        var newM=previousM+GeometryUtils.minimumDistance(p, Seq(previousP))
+        returntxt += (p.x +" " + p.y + " " + p.z + " " + newM + " ")
+        previousM=newM
+        previousP=p
+      }
+      returntxt=returntxt.dropRight(1) //removes last space
+      returntxt+=")"
+      "geometryWKT" -> returntxt
+    }
+    else
+      "geometryWKT" -> ""
   }
 
   def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
