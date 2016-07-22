@@ -380,6 +380,16 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Sets the linear asset value to None for numeric value properies.
+    * Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  def clearValue(ids: Seq[Long], username: String): Seq[Long] = {
+    withDynTransaction {
+      ids.flatMap(id => dao.clearValue(id, LinearAssetTypes.numericValuePropertyId, username))
+    }
+  }
+
   /*
    * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */

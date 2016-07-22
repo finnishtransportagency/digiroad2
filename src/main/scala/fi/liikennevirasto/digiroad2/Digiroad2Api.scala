@@ -428,7 +428,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedNumericalIds = valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+    val updatedNumericalIds =
+      valueOption.nonEmpty match {
+        case true =>
+          valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+        case false =>
+          linearAssetService.clearValue(existingAssets.toSeq, user.username)
+      }
+
     val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
 
     updatedNumericalIds ++ createdIds

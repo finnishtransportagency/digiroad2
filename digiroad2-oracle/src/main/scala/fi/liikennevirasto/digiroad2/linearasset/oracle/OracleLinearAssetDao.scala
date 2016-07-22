@@ -859,6 +859,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Updates number property value. Used by LinearAssetService.updateWithoutTransaction.
     */
+  def clearValue(id: Long, valuePropertyId: String, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated =
+      sqlu"update number_property_value set value = null where asset_id = $id and property_id = $propertyId".first
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Updates number property value. Used by LinearAssetService.updateWithoutTransaction.
+    */
   def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
