@@ -171,7 +171,7 @@
         // Create html elements for view mode
         _.each(roadLink.manoeuvres, function (manoeuvre) {
           // Verify if Manoeuvre have intermediate Links to show the plus sign
-          var isLinkChain = manoeuvre.intermediateLinkIds.length > 0;
+          var isLinkChain = manoeuvre.intermediateLinkIds && manoeuvre.intermediateLinkIds.length > 0;
           var localizedExceptions = localizeExceptions(manoeuvre.exceptions);
           var validityPeriodElements = _(manoeuvre.validityPeriods)
               .sortByAll(dayOrder, 'startHour', 'endHour')
