@@ -380,7 +380,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)
-      after.foreach(println)
+//      after.foreach(println)
       after.foreach(_.value should be (Some(NumericValue(1))))
       after.foreach(_.sideCode should be (SideCode.BothDirections))
 
@@ -548,7 +548,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      after.foreach(println)
+//      after.foreach(println)
       after.length should be(1)
       after.head.value should be(Some(NumericValue(1)))
       after.head.sideCode should be (SideCode.BothDirections)
@@ -697,7 +697,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-      after.foreach(println)
+//      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
       after.count(l => l.startMeasure == 0.0 && l.endMeasure == 10.0) should be (2)
@@ -772,7 +772,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      after.foreach(println)
+//      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
 
@@ -860,7 +860,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
-      after.foreach(println)
+//      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
 
@@ -1031,7 +1031,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
-      after.foreach(println)
+//      after.foreach(println)
       after.length should be(3)
       after.count(_.value.nonEmpty) should be (2)
 
@@ -1400,4 +1400,157 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  private def createService() = {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+    }
+    service
+  }
+
+  private def createRoadLinks(municipalityCode: Int) = {
+    val newLinkId1 = 5000
+    val newLinkId2 = 5001
+    val newLinkId3 = 5002
+    val newLinkId4 = 5003
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(0))
+    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(1))
+    val attributes3 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
+    val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
+      functionalClass, trafficDirection, linkType, None, None, attributes1)
+    val newRoadLink2 = newRoadLink1.copy(linkId=newLinkId2, attributes = attributes2)
+    val newRoadLink3 = newRoadLink1.copy(linkId=newLinkId3, attributes = attributes3)
+    val newRoadLink4 = newRoadLink1.copy(linkId=newLinkId4, attributes = attributes3)
+    List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4)
+  }
+
+  private def createChangeInfo(roadLinks: Seq[RoadLink], vvhTimeStamp: Long) = {
+    roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, vvhTimeStamp))
+  }
+
+  test("Paving asset changes: new roadlinks") {
+    val municipalityCode = 564
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assetTypeId = 110
+
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, updated) = service.getPavingAssetChanges(Seq(), roadLinks, changeInfo, assetTypeId)
+    expiredIds should have size (0)
+    updated.forall(_.vvhTimeStamp == 11L) should be (true)
+    updated.forall(_.value.isDefined) should be (true)
+    updated should have size (2)
+  }
+
+  test("Paving asset changes: outdated") {
+    def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
+      PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+    }
+    val municipalityCode = 564
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assetTypeId = 110
+    val newLinkId1 = 5000
+    val newLinkId2 = 5001
+    val newLinkId3 = 5002
+    val newLinkId4 = 5003
+    val unpaved1 = createPaving(1, newLinkId1, None, 10L)
+    val unpaved2 = createPaving(2, newLinkId2, None, 10L)
+    val unpaved3 = createPaving(3, newLinkId3, None, 10L)
+    val unpaved4 = createPaving(4, newLinkId4, None, 10L)
+    val paved1 = createPaving(1, newLinkId1, Some(NumericValue(1)), 10L)
+    val paved2 = createPaving(2, newLinkId2, Some(NumericValue(1)), 10L)
+    val paved3 = createPaving(3, newLinkId3, Some(NumericValue(1)), 10L)
+    val paved4 = createPaving(4, newLinkId4, Some(NumericValue(1)), 10L)
+
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, updated) = service.getPavingAssetChanges(Seq(unpaved1, unpaved2, unpaved3, unpaved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds should be (Set(2))
+    updated.forall(_.vvhTimeStamp == 11L) should be (true)
+//    updated.foreach(println)
+    updated.forall(_.value.isDefined) should be (true)
+    updated.exists(_.id == 1) should be (false)
+
+    val (expiredIds2, updated2) = service.getPavingAssetChanges(Seq(paved1, paved2, paved3, paved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds2 should be (Set(2))
+    updated2.forall(_.vvhTimeStamp == 11L) should be (true)
+    updated2.exists(_.id == 1) should be (false)
+  }
+
+  test("Paving asset changes: override not affected") {
+    def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
+      PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+    }
+    val municipalityCode = 564
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assetTypeId = 110
+    val newLinkId1 = 5000
+    val newLinkId2 = 5001
+    val newLinkId3 = 5002
+    val newLinkId4 = 5003
+    val unpaved1 = createPaving(1, newLinkId1, None, 12L)
+    val unpaved2 = createPaving(2, newLinkId2, None, 12L)
+    val unpaved3 = createPaving(3, newLinkId3, None, 12L)
+    val unpaved4 = createPaving(4, newLinkId4, None, 12L)
+    val paved1 = createPaving(1, newLinkId1, Some(NumericValue(1)), 12L)
+    val paved2 = createPaving(2, newLinkId2, Some(NumericValue(1)), 12L)
+    val paved3 = createPaving(3, newLinkId3, Some(NumericValue(1)), 12L)
+    val paved4 = createPaving(4, newLinkId4, Some(NumericValue(1)), 12L)
+
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, updated) = service.getPavingAssetChanges(Seq(unpaved1, unpaved2, unpaved3, unpaved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds should have size (0)
+    updated should have size (0)
+
+    val (expiredIds2, updated2) = service.getPavingAssetChanges(Seq(paved1, paved2, paved3, paved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds should have size (0)
+    updated should have size (0)
+  }
+
+  test("Paving asset changes: stability test") {
+    def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
+      PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+    }
+    val municipalityCode = 564
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
+
+    val assetTypeId = 110
+    val newLinkId1 = 5000
+    val newLinkId2 = 5001
+    val newLinkId3 = 5002
+    val newLinkId4 = 5003
+    val unpaved1 = createPaving(1, newLinkId1, None, 11L)
+    val unpaved2 = createPaving(2, newLinkId2, None, 11L)
+    val unpaved3 = createPaving(3, newLinkId3, None, 11L)
+    val unpaved4 = createPaving(4, newLinkId4, None, 11L)
+    val paved1 = createPaving(1, newLinkId1, Some(NumericValue(1)), 11L)
+    val paved2 = createPaving(2, newLinkId2, Some(NumericValue(1)), 11L)
+    val paved3 = createPaving(3, newLinkId3, Some(NumericValue(1)), 11L)
+    val paved4 = createPaving(4, newLinkId4, Some(NumericValue(1)), 11L)
+
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, updated) = service.getPavingAssetChanges(Seq(unpaved1, unpaved2, unpaved3, unpaved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds should have size (0)
+    updated should have size (0)
+
+    val (expiredIds2, updated2) = service.getPavingAssetChanges(Seq(paved1, paved2, paved3, paved4), roadLinks, changeInfo, assetTypeId)
+    expiredIds should have size (0)
+    updated should have size (0)
+  }
 }

@@ -140,7 +140,7 @@ trait LinearAssetOperations {
         (roadLinks.find(_.linkId == linkId).head, changeInfo, existingLinearAssets.filter(_.linkId == linkId))
     }
 
-    /* Note: This users isNotPaved that excludes "unknown" pavement status. In OTH unknown means
+    /* Note: This uses isNotPaved that excludes "unknown" pavement status. In OTH unknown means
     *  "no pavement" but in case OTH has pavement info with value 1 then VVH "unknown" should not affect OTH.
     *  Additionally, should there be an override that is later fixed we let the asset expire here as no
     *  override is needed anymore.
@@ -163,8 +163,9 @@ trait LinearAssetOperations {
               GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
               LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None))
           else
-            assets.filterNot(a => expiredAssetsIds.contains(a.id) &&
-            a.value.isDefined).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp))
+            assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
+              (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
+            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1))))
         else
           None
     }.toSeq
