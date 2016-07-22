@@ -408,8 +408,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("all entities should be expired") {
     val dao = new OracleLinearAssetDao(null)
-    val typeId = 110;
-    val linkId = 99999;
+    val typeId = 110
+    val linkId = 99999
     runWithRollback {
 
       val assetId = Sequences.nextPrimaryKeySeqValue
@@ -419,10 +419,10 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $linkId, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
 
-      val counting = sql"""select count(*) from asset where asset_type_id = $typeId And valid_to is not null""".as[Int].firstOption
+      val counting = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
       counting.get should be > 0
       dao.expireAllAssetsByTypeId(typeId)
-      val countingAfterExpire = sql"""select count(*) from asset where asset_type_id = $typeId And valid_to is null""".as[Int].firstOption
+      val countingAfterExpire = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
       countingAfterExpire.get should be (0)
     }
   }

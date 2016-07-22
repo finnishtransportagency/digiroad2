@@ -118,7 +118,7 @@ object NumericalLimitFiller {
   }
 
   private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length)
+    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length + MaxAllowedError)
     val cappedSegments = overflowingSegments.map { x => x.copy(endMeasure = roadLink.length)}
     val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.linkId, x.startMeasure, x.endMeasure) }
     (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
