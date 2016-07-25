@@ -105,7 +105,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
     def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
       val limitEndPoints = speedLimits.filter(sl => sl._3 == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end, _, _) => (start, end) }
-      limitEndPoints.foldLeft(Seq((0.0, roadLinkLength)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+      limitEndPoints.foldLeft(Seq((0.0, roadLinkLength)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.1}
     }
 
     val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
