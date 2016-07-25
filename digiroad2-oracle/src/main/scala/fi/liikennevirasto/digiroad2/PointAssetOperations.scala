@@ -206,7 +206,7 @@ object PointAssetOperations {
 
   def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
     (pt1, pt2) match {
-      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
+      case (Some(point1), Some(point2)) => point1.distance2DTo(point2) <= FLOAT_THRESHOLD_IN_METERS
       case _ => false
     }
   }

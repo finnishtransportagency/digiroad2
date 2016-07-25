@@ -278,21 +278,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
   {
-    var returntxt = "LINESTRING ZM ("
-    var previousM = 0.00
     if (geometry.nonEmpty)
     {
-      var previousP=geometry(0)
-      for (p <- geometry)
-      {
-        var newM=previousM+GeometryUtils.minimumDistance(p, Seq(previousP))
-        returntxt += (p.x +" " + p.y + " " + p.z + " " + newM + " ")
-        previousM=newM
-        previousP=p
-      }
-      returntxt=returntxt.dropRight(1) //removes last space
-      returntxt+=")"
-      "geometryWKT" -> returntxt
+      val segments = geometry.zip(geometry.tail)
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2))
+      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val wktString = mValuedGeometry.map {
+        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
+      }.mkString(", ")
+      "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
     }
     else
       "geometryWKT" -> ""

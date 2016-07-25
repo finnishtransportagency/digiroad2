@@ -138,4 +138,12 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       result.head.get("sourceLinkId") should equal(Some(1))
       result.head.get("destLinkId") should equal(Some(5))
   }
+
+  test("geometryWKTForLinearAssets provides proper geometry") {
+    val (header, returntxt) =
+      integrationApi.geometryWKTForLinearAssets(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)))
+    header should be ("geometryWKT")
+    returntxt should be ("LINESTRING ZM (0.0 0.0 0.0 0.0, 1.0 0.0 0.5 1.0, 4.0 4.0 1.5 6.0)")
+
+  }
 }
