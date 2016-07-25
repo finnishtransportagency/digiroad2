@@ -83,11 +83,11 @@
       pastAdjacents = [];
       if (roadCollection.get([feature.attributes.linkId])[0].isCarTrafficRoad()) {
         roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
-        roadLayer.redraw();
         selectedManoeuvreSource.open(feature.attributes.linkId);
       } else {
         unselectManoeuvre();
       }
+      roadLayer.redraw();
     };
 
     /**
@@ -405,6 +405,7 @@
      * @param roadLink
      */
     var handleManoeuvreSourceLinkSelected = function(roadLink) {
+      indicatorLayer.clearMarkers();
       var aLinks = adjacentLinks(roadLink);
       var tLinks = nonAdjacentTargetLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
@@ -419,7 +420,7 @@
       }
 
       markAdjacentFeatures(application.isReadOnly() ? targetLinkIds : adjacentLinkIds);
-      redrawRoadLayer();
+
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
       highlightOverlayFeatures(destinationRoadLinkList);
@@ -427,6 +428,10 @@
         drawIndicators(tLinks);
         drawIndicators(aLinks);
       }
+      redrawRoadLayer();
+
+      roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
+      roadLayer.redraw();
     };
 
     var updateAdjacentLinkIndicators = function() {
@@ -460,13 +465,11 @@
           markAdjacentFeatures(targetMarkers);
 
           var linkIdLists = _.without(manoeuvre.linkIds, manoeuvre.sourceLinkId);
-          if(manoeuvre.adjacentLinks.length > 0){
-            roadLayer.layer.addFeatures(createIntermediateFeatures(_.map(linkIdLists, function(linkId){
-              return roadCollection.getRoadLinkByLinkId(linkId).getData();
-            })));
-          }
-
           var destLinkId = _.last(linkIdLists);
+          roadLayer.layer.addFeatures(createIntermediateFeatures(_.map(_.without(linkIdLists, destLinkId), function(linkId){
+            return roadCollection.getRoadLinkByLinkId(linkId).getData();
+          })));
+
           roadLayer.layer.addFeatures(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]));
           highlightOverlayFeatures([destLinkId]);
 
