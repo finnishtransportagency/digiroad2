@@ -242,6 +242,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         dao.updateMValues(limit.id, (limit.startMeasure, limit.endMeasure), limit.vvhTimeStamp)
       }
     }
+    // Add them to checks to remove unknown limits
+    eventbus.publish("speedLimits:purgeUnknownLimits", limits.map(_.linkId).toSet)
   }
 
   /**
