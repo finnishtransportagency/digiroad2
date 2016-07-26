@@ -50,8 +50,8 @@
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
+          setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-          setReadOnly(true);
         } else {
           eventbus.trigger('layer:' + selectedLayer + ':shown');
         }

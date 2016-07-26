@@ -45,11 +45,11 @@
       .hide();
 
     function show() {
+      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       element.show();
     }
 
     function hide() {
-      editModeToggle.reset();
       element.hide();
     }
 

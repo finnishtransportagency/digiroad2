@@ -30,9 +30,14 @@
       toggleReadOnlyMode(true);
     };
 
+    var toggleEditMode = function(mode) {
+      toggleReadOnlyMode(mode);
+    };
+
     return {
       element: element,
-      reset: reset
+      reset: reset,
+      toggleEditMode: toggleEditMode
     };
   };
 }(this));
