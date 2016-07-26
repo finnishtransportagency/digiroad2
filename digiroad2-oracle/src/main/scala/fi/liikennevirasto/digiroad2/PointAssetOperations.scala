@@ -186,7 +186,7 @@ trait PointAssetOperations {
           val point = Point(persistedAsset.lon, persistedAsset.lat)
           val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, persistedAsset.mValue)
           roadOption match {
-            case Some(value) => "Distance to road link is %.3f".format(value.distanceTo(point))
+            case Some(value) => "Distance to road link is %.3f".format(value.distance2DTo(point))
             case _ => "Road link has no reference point for mValue %.3f".format(persistedAsset.mValue)
           }
         }
