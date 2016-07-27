@@ -145,6 +145,7 @@
       }
 
       reload(manoeuvre, linkId, function(reloaded) {
+        addedManoeuvre = reloaded;
         eventbus.trigger('manoeuvre:linkAdded', reloaded);
         eventbus.trigger('adjacents:updated', reloaded);
       });
@@ -663,6 +664,10 @@
     return intermediateRoadLinkList;
     };
 
+    var getAddedManoeuvre = function(){
+      return addedManoeuvre;
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -686,7 +691,8 @@
       getManoeuvresBySourceLinkId : getManoeuvresBySourceLinkId,
       getManoeuvreData : getManoeuvreData,
       getDestinationRoadLinksBySource : getDestinationRoadLinksBySource,
-      getIntermediateRoadLinksBySource : getIntermediateRoadLinksBySource
+      getIntermediateRoadLinksBySource : getIntermediateRoadLinksBySource,
+      getAddedManoeuvre: getAddedManoeuvre
     };
   };
 })(this);

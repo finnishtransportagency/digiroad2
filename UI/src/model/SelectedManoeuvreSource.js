@@ -265,9 +265,22 @@
       }
     };
 
+    var getAdjacents = function(destLinkId){
+      var target = current.adjacent.find(function (rl) {
+        return rl.linkId == destLinkId;
+      });
+      if (!target) {
+        target = current.nonAdjacentTargets.find(function (rl) {
+          return rl.linkId == destLinkId;
+        });
+      }
+      return target.adjacentLinks;
+    };
+
     return {
       close: close,
       open: open,
+      getAdjacents: getAdjacents,
       updateAdjacents: updateAdjacents,
       get: get,
       getLinkId: getLinkId,

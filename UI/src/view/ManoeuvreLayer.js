@@ -156,6 +156,18 @@
       });
     };
 
+    var highlightIntermediateFeatures = function(linkIds) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (x.attributes.type === 'intermediate') {
+          if (_.contains(linkIds, x.attributes.linkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
+
     var highlightManoeuvreFeatures = function(linkIds) {
       _.each(roadLayer.layer.features, function(x) {
         if (x.attributes.type !== 'normal') {
@@ -279,24 +291,40 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
-        var firstTargetLinkIds = manoeuvresCollection.getFirstTargetRoadLinksBySourceLinkId(selectedManoeuvreSource.getLinkId());
-        markAdjacentFeatures(application.isReadOnly() ? firstTargetLinkIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'linkId'));
-        redrawRoadLayer();
+        var manoeuvreSource = selectedManoeuvreSource.get();
+
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.linkId === selectedManoeuvreSource.getLinkId();
         });
+
         if (feature) {
           selectControl.select(feature);
         }
+
+        indicatorLayer.clearMarkers();
+
+        var addedManoeuvre = manoeuvresCollection.getAddedManoeuvre();
+
+        if(!application.isReadOnly()){
+
+          if(!_.isEmpty(addedManoeuvre)) {
+            if(!("adjacentLinks" in addedManoeuvre))
+              addedManoeuvre.adjacentLinks = selectedManoeuvreSource.getAdjacents(addedManoeuvre.destLinkId);
+
+            highlightOverlayFeatures([addedManoeuvre.firstTargetLinkId, addedManoeuvre.destLinkId]);
+            highlightIntermediateFeatures(addedManoeuvre.intermediateLinkIds);
+          }
+
+          var manoeuvreAdjacentLinks = _.isEmpty(addedManoeuvre) ?  adjacentLinks(manoeuvreSource) : addedManoeuvre.adjacentLinks;
+
+          markAdjacentFeatures(_.pluck(manoeuvreAdjacentLinks,'linkId'));
+          drawIndicators(manoeuvreAdjacentLinks);
+        }
+
+        redrawRoadLayer();
+
         highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
 
-        highlightOverlayFeatures(firstTargetLinkIds);
-        indicatorLayer.clearMarkers();
-        updateAdjacentLinkIndicators();
-
-        var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
-        manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
-        highlightOverlayFeatures(destinationRoadLinkList);
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -335,7 +363,7 @@
     var handleManoeuvreSaved = function(eventListener) {
       manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), function() {
         concludeManoeuvreEdit(eventListener);
-        selectedManoeuvreSource.refresh();
+        unselectManoeuvre();
       });
     };
 
