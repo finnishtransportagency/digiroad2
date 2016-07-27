@@ -18,8 +18,15 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
                     attributes: Map[String, Any] = Map()) extends PolyLine {
 
+  val Roadlink_SurfaceType_Unknown = 0
+  val Roadlink_SurfaceType_None = 1
+  val Roadlink_SurfaceType_Paved = 2
+
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
+  def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
+  def isPaved : Boolean = surfaceType == Roadlink_SurfaceType_Paved
+  def isNotPaved : Boolean = surfaceType == Roadlink_SurfaceType_None
 
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))

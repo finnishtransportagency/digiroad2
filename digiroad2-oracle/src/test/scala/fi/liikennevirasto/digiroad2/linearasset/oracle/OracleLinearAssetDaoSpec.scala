@@ -12,6 +12,8 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers, Tag}
 import org.scalatest.mock.MockitoSugar
+import org.scalatest._
+import Matchers._
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -401,6 +403,27 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
+    }
+  }
+
+  test("all entities should be expired") {
+    val dao = new OracleLinearAssetDao(null)
+    val typeId = 110
+    val linkId = 99999
+    runWithRollback {
+
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values ($assetId,$typeId,'dr2_test_data')""".execute
+      sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $linkId, 0, 100, 1)""".execute
+      sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
+
+      val counting = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
+      counting.get should be > 0
+      dao.expireAllAssetsByTypeId(typeId)
+      val countingAfterExpire = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
+      countingAfterExpire.get should be (0)
     }
   }
 }

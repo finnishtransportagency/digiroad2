@@ -859,6 +859,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Updates number property value. Used by LinearAssetService.updateWithoutTransaction.
     */
+  def clearValue(id: Long, valuePropertyId: String, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated =
+      sqlu"update number_property_value set value = null where asset_id = $id and property_id = $propertyId".first
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Updates number property value. Used by LinearAssetService.updateWithoutTransaction.
+    */
   def updateValue(id: Long, value: Int, valuePropertyId: String, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
@@ -924,6 +939,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         sqlu""" insert into PROHIBITION_EXCEPTION (ID, PROHIBITION_VALUE_ID, TYPE) values ($exceptionId, $prohibitionId, $exceptionType)""".execute
       }
     }
+  }
+
+  /**
+    * When invoked will expire all assets of a given type.
+    * It is required that the invoker takes care of the transaction.
+    * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
+    */
+  def expireAllAssetsByTypeId (typeId: Int): Unit = {
+    sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
   }
 }
 
