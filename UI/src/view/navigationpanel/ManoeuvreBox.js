@@ -1,7 +1,7 @@
 (function(root) {
   root.ManoeuvreBox = function() {
     var layerName = 'manoeuvre';
-    var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen lähde ja kohde'];
+    var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen lähde, useampi', 'Kääntymisrajoituksen välilinkki', 'Kääntymisrajoituksen välilinkki, useampi', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen kohde, useampi', 'Kääntymisrajoituksen lähde ja kohde'];
     var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
         '<div class="label">' + value + '</div>' +

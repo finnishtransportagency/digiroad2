@@ -212,11 +212,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
 
       dao.createSpeedLimit("test", linkId, (11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
       dao.createSpeedLimit("test", linkId, (20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
   }

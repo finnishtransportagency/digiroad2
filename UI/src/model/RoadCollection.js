@@ -99,6 +99,10 @@
         .value();
     };
 
+    this.getRoadLinkByLinkId = function (linkId) {
+      return _.find(_.flatten(roadLinkGroups), function(road) { return road.getId() === linkId; });
+    };
+
     this.getAll = function() {
       return _.map(roadLinks(), function(roadLink) {
         return roadLink.getData();
