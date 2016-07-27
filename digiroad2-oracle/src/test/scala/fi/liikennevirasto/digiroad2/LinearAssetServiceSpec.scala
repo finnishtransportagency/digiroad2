@@ -1553,4 +1553,50 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     expiredIds should have size (0)
     updated should have size (0)
   }
+  test("Should extend traffic count on segment") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(3456789L)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 3056622
+    val municipalityCode = 444
+    val administrativeClass = State
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 170
+    val geom = List(Point(346005.726,6688024.548),Point(346020.228,6688034.371),Point(346046.054,6688061.11),Point(346067.323,6688080.86))
+    val len = GeometryUtils.geometryLength(geom)
+//      [{"modifiedAt":"19.05.2016 14:16:23","linkId":3056622,"roadNameFi":"Lohjanharjuntie","roadPartNumber":1,"administrativeClass":"State","municipalityCode":444,"roadNumber":1125,"points":[{"x":346005.726,"y":6688024.548,"z":0.0},{"x":346020.228,"y":6688034.371,"z":0.0},{"x":346046.054,"y":6688061.11,"z":0.0},{"x":346067.323,"y":6688080.86,"z":0.0}],"verticalLevel":0,"maxAddressNumberRight":1365,"trafficDirection":"TowardsDigitizing","minAddressNumberRight":1361,"roadNameSe":"Lojoåsvägen","functionalClass":4,"linkType":2,"mmlId":1204467577,"modifiedBy":"k638654"}],
+
+    val roadLinks = Seq(RoadLink(oldLinkId1, geom, len, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 2.187, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,1474378,4779)""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
+
+      val newAsset = NewLinearAsset(oldLinkId1, 2.187, len, NumericValue(4779), 1, 234567, None)
+      val id = service.create(Seq(newAsset), assetTypeId, "KX2")
+
+      id should have size (1)
+      id.head should not be (0)
+
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head))
+      assets should have size (2)
+
+      service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode)).foreach(println)
+      dynamicSession.rollback()
+    }
+  }
 }

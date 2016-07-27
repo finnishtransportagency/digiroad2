@@ -24,7 +24,7 @@ object NumericalLimitFiller {
   private def adjustAsset(asset: PersistedLinearAsset, roadLink: RoadLink): (PersistedLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure > MaxAllowedError) Some(0.0) else None
-    val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
+    val endMeasureDifference: Double = Math.abs(roadLinkLength - asset.endMeasure)
     val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
@@ -103,7 +103,8 @@ object NumericalLimitFiller {
         val rest = twoWaySegments.tail
         val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
         val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
-        (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
+        val (removed, kept) = rest.partition(p => newChangeSet.expiredAssetIds.contains(p.id))
+        (kept ++ Seq(adjustedAsset),
           newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
       } else {
         (assets, changeSet)
