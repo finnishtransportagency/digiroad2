@@ -275,8 +275,8 @@ object DataFixture {
       mapped.foreach {
         case (_, x) =>
           x match {
-            case u: List[Long] =>
-              speedLimitService.purgeUnknown(u.toSet)
+            case u: List[Any] =>
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet)
             case _ =>
           }
         case _ =>
