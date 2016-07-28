@@ -1601,7 +1601,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head))
       assets should have size (2)
-      assets.map(asset => (asset.id, asset.startMeasure, asset.endMeasure, asset.vvhTimeStamp)).foreach(println)
+      assets.forall(_.vvhTimeStamp > 0L) should be (true)
 
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size(1)
