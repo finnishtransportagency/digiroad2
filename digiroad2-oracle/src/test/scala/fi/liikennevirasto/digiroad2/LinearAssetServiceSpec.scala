@@ -1584,7 +1584,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 83.715, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES (1, $oldLinkId1, 0.0, 83.715, ${SideCode.BothDirections.value}, 1)""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT 1, 1, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
