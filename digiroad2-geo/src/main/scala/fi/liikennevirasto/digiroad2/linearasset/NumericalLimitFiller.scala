@@ -103,8 +103,7 @@ object NumericalLimitFiller {
         val rest = twoWaySegments.tail
         val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
         val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
-        val (removed, kept) = rest.partition(p => newChangeSet.expiredAssetIds.contains(p.id))
-        (kept ++ Seq(adjustedAsset),
+        (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
           newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
       } else {
         (assets, changeSet)

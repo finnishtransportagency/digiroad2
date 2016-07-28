@@ -1591,10 +1591,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       val before = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
-
-      println("before")
-      before.foreach(s => s.map(asset => (asset.id, asset.startMeasure, asset.endMeasure, asset.vvhTimeStamp)).foreach(println))
-      println("^before")
+      before should have size(2)
 
       val newAsset = NewLinearAsset(oldLinkId1, 2.187, len, NumericValue(4779), 1, 234567, None)
       val id = service.create(Seq(newAsset), assetTypeId, "KX2")
@@ -1607,7 +1604,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       assets.map(asset => (asset.id, asset.startMeasure, asset.endMeasure, asset.vvhTimeStamp)).foreach(println)
 
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
-      after.foreach(s => s.map(asset => (asset.id, asset.startMeasure, asset.endMeasure, asset.vvhTimeStamp)).foreach(println))
       after should have size(1)
       after.flatten.forall(_.id != 0) should be (true)
       dynamicSession.rollback()
