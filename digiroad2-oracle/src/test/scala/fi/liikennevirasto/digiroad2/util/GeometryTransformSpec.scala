@@ -63,4 +63,14 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     roadAddress.road should be (110)
     roadAddress.roadPart should be >0
   }
+
+  test("Multiple VKM requests") {
+    assume(connectedToVKM)
+    val coords = Seq(Point(358813,6684163), Point(358832,6684148), Point(358770,6684181))
+    val roadAddresses = transform.coordsToAddresses(coords, Option(110))
+    roadAddresses.foreach(_.road should be (110))
+    roadAddresses.foreach(_.roadPart should be >0)
+    roadAddresses.foreach(_.municipalityCode.isEmpty should be (false))
+    roadAddresses.foreach(_.deviation.getOrElse(0.0) should be >20.0)
+  }
 }

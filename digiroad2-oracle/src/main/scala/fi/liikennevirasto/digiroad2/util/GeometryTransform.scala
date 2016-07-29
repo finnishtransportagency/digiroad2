@@ -162,13 +162,13 @@ class GeometryTransform {
     val indexedCoords = coords.zipWithIndex
     val params = indexedCoords.map { case (coord, index) => Map("tie" -> road, "osa" -> roadPart, "etaisyys" -> distance, "ajorata" -> track.map(_.value),
       "x" -> Option(coord.x), "y" -> Option(coord.y), "sade" -> searchDistance, "tunniste" -> Option(index) ) }
-    post(vkmUrl, jsonParams(params.toList)) match {
+    post(vkmPostUrl, jsonParams(params.toList)) match {
       case Left(addresses) => extractRoadAddresses(addresses)
       case Right(error) => throw new VKMClientException(error.toString)
     }
   }
   private def extractRoadAddresses(data: List[Map[String, Any]]) = {
-    data.map(mapFields)
+    data.sortBy(_.getOrElse("tunniste", Int.MaxValue).toString.toInt).map(mapFields)
   }
 
   private def mapFields(data: Map[String, Any]) = {
@@ -177,7 +177,7 @@ class GeometryTransform {
     val roadPart = validateAndConvertToInt("osa", data)
     val track = validateAndConvertToInt("ajorata", data)
     val mValue = validateAndConvertToInt("etaisyys", data)
-    val deviation = convertToDouble(data.get("valimatka")).getOrElse(None)
+    val deviation = convertToDouble(data.get("valimatka"))
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new VKMClientException("Invalid value for Track (ajorata): %d".format(track))
     }
@@ -199,16 +199,16 @@ class GeometryTransform {
   }
 
 
-  private def convertToDouble(value: Option[Any]) = {
+  private def convertToDouble(value: Option[Any]): Option[Double] = {
     value.map {
-      case Some(x: Object) =>
+      case x: Object =>
         try {
-          Option(x.toString.toDouble)
+          x.toString.toDouble
         } catch {
           case e: NumberFormatException =>
             throw new VKMClientException("Invalid value in response: Double expected, got '%s'".format(x))
         }
-      case _ => None
+      case _ => throw new VKMClientException("Invalid value in response: Double expected, got '%s'".format(value.get))
     }
   }
 }
