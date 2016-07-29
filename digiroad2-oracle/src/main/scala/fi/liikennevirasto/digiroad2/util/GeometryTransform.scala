@@ -4,7 +4,7 @@ import java.net.URLEncoder
 import java.util
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -78,9 +78,9 @@ object Lane {
 
 case class VKMError(content: Map[String, Any], url: String)
 case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, mValue: Int, deviation: Option[Double])
+class VKMClientException(response: String) extends RuntimeException(response)
 
 class GeometryTransform {
-  class VKMClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private def vkmUrl = {
@@ -167,11 +167,49 @@ class GeometryTransform {
       case Right(error) => throw new VKMClientException(error.toString)
     }
   }
+
+  /**
+    * Resolve side code, too.
+    *
+    * @param coord
+    * @param bearing Geographical bearing in degrees (North = 0, West = 90, ...)
+    * @param road
+    * @param roadPart
+    */
+  def resolveAddressAndLocation(coord: Point, bearing: Int, road: Option[Int] = None,
+                                roadPart: Option[Int] = None): (RoadAddress, RoadSide) = {
+    if (road.isEmpty || roadPart.isEmpty) {
+      val roadAddress = coordToAddress(coord, road, roadPart)
+      resolveAddressAndLocation(coord, bearing, Option(roadAddress.road), Option(roadAddress.roadPart))
+    } else {
+      val rad = (90-bearing)*Math.PI/180.0
+      val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
+      val behind = coord - stepVector
+      val front = coord + stepVector
+      val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart)
+      addresses.foreach(println)
+      val mValues = addresses.map(ra => ra.mValue)
+      val (first, second, third) = (mValues(0), mValues(1), mValues(2))
+      if (first <= second && second <= third && first != third) {
+        (addresses(1), RoadSide.Right)
+      } else if (first >= second && second >= third && first != third) {
+        (addresses(1), RoadSide.Left)
+      } else {
+        (addresses(1), RoadSide.Unknown)
+      }
+    }
+
+  }
+
   private def extractRoadAddresses(data: List[Map[String, Any]]) = {
     data.sortBy(_.getOrElse("tunniste", Int.MaxValue).toString.toInt).map(mapFields)
   }
 
   private def mapFields(data: Map[String, Any]) = {
+    val returnCode = data.getOrElse("palautusarvo", "1")
+    val error = data.get("virhe")
+    if (returnCode.toString.toInt == 0 || error.nonEmpty)
+      throw new VKMClientException("VKM returned an error: %s".format(data.getOrElse("virheteksti", error.getOrElse(""))))
     val municipalityCode = data.get("kuntanro")
     val road = validateAndConvertToInt("tie", data)
     val roadPart = validateAndConvertToInt("osa", data)
@@ -186,10 +224,11 @@ class GeometryTransform {
 
   private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
     def value = map.get(fieldName)
-    if (value.isEmpty)
+    if (value.isEmpty) {
       throw new VKMClientException(
         "Missing mandatory field in response: %s".format(
           fieldName))
+    }
     try {
       value.get.toString.toInt
     } catch {
