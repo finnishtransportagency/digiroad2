@@ -1,12 +1,18 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.net.URLEncoder
+import java.util
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.NameValuePair
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.message.BasicNameValuePair
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -80,14 +86,56 @@ class GeometryTransform {
   private def vkmUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl")
-  }
-  private def urlParams(paramMap: Map[String, Option[Any]]) = {
-    paramMap.filter(entry => entry._2.nonEmpty).map(entry => entry._1 + "=" + entry._2.get).mkString("&")
+    properties.getProperty("digiroad2.VKMUrl") + "/vkm/tieosoite?"
   }
 
-  private def request(url: String): Either[List[Map[String, Any]], VKMError] = {
+  private def vkmPostUrl = {
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    properties.getProperty("digiroad2.VKMUrl") + "/vkm/muunnos"
+  }
+
+  def urlParams(paramMap: Map[String, Option[Any]]) = {
+    paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
+       + "=" + URLEncoder.encode(entry._2.get.toString, "UTF-8")).mkString("&")
+  }
+
+  def jsonParams(paramMaps: List[Map[String, Option[Any]]]) = {
+    Serialization.write(Map("koordinaatit" -> paramMaps))
+  }
+
+  private def request(url: String): Either[Map[String, Any], VKMError] = {
     val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      if (response.getStatusLine.getStatusCode >= 400)
+        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      Left(content)
+    } catch {
+      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def createFormPost(json: String) = {
+    val urlParameters = new util.ArrayList[NameValuePair]()
+    urlParameters.add(new BasicNameValuePair("in", "koordinaatti"))
+    urlParameters.add(new BasicNameValuePair("out", "tieosoite"))
+    urlParameters.add(new BasicNameValuePair("callback", ""))
+    urlParameters.add(new BasicNameValuePair("tilannepvm", ""))
+    urlParameters.add(new BasicNameValuePair("kohdepvm", ""))
+    urlParameters.add(new BasicNameValuePair("alueetpois", ""))
+    urlParameters.add(new BasicNameValuePair("et_erotin", ""))
+    urlParameters.add(new BasicNameValuePair("json", json))
+    new UrlEncodedFormEntity(urlParameters)
+  }
+
+  private def post(url: String, json: String): Either[List[Map[String, Any]], VKMError] = {
+    val request = new HttpPost(url)
+    request.setEntity(createFormPost(json))
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
@@ -100,17 +148,27 @@ class GeometryTransform {
   }
 
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
-                     distance: Option[Int] = None, track: Option[Track]) = {
+                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None) = {
     val params = Map("tie" -> road, "osa" -> roadPart, "etaisyys" -> distance, "ajorata" -> track.map(_.value),
-    "x" -> Option(coord.x), "y" -> Option(coord.y))
+    "x" -> Option(coord.x), "y" -> Option(coord.y), "sade" -> searchDistance)
     request(vkmUrl + urlParams(params)) match {
-      case Left(address) => address.map(mapFields)
+      case Left(address) => mapFields(address)
       case Right(error) => throw new VKMClientException(error.toString)
     }
   }
 
+  def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
+                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None) = {
+    val indexedCoords = coords.zipWithIndex
+    val params = indexedCoords.map { case (coord, index) => Map("tie" -> road, "osa" -> roadPart, "etaisyys" -> distance, "ajorata" -> track.map(_.value),
+      "x" -> Option(coord.x), "y" -> Option(coord.y), "sade" -> searchDistance, "tunniste" -> Option(index) ) }
+    post(vkmUrl, jsonParams(params.toList)) match {
+      case Left(addresses) => extractRoadAddresses(addresses)
+      case Right(error) => throw new VKMClientException(error.toString)
+    }
+  }
   private def extractRoadAddresses(data: List[Map[String, Any]]) = {
-    data.map(x => )
+    data.map(mapFields)
   }
 
   private def mapFields(data: Map[String, Any]) = {
@@ -119,7 +177,7 @@ class GeometryTransform {
     val roadPart = validateAndConvertToInt("osa", data)
     val track = validateAndConvertToInt("ajorata", data)
     val mValue = validateAndConvertToInt("etaisyys", data)
-    val deviation = convertToDouble(data.get("valimatka")).get
+    val deviation = convertToDouble(data.get("valimatka")).getOrElse(None)
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new VKMClientException("Invalid value for Track (ajorata): %d".format(track))
     }
@@ -132,16 +190,24 @@ class GeometryTransform {
       throw new VKMClientException(
         "Missing mandatory field in response: %s".format(
           fieldName))
-    value.get match {
-      case Some(x: Int) => x
-      case _ => throw new VKMClientException("Invalid value in response: %s, Int expected, got '%s'".format(
-        fieldName, value.get))
+    try {
+      value.get.toString.toInt
+    } catch {
+      case e: NumberFormatException =>
+        throw new VKMClientException("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
     }
   }
 
+
   private def convertToDouble(value: Option[Any]) = {
     value.map {
-      case Some(x: Double) => Option(x)
+      case Some(x: Object) =>
+        try {
+          Option(x.toString.toDouble)
+        } catch {
+          case e: NumberFormatException =>
+            throw new VKMClientException("Invalid value in response: Double expected, got '%s'".format(x))
+        }
       case _ => None
     }
   }
