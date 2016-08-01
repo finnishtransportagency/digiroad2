@@ -22,13 +22,35 @@
     };
   };
 
+  var InvalidCombinationError = function() {
+    var element = $('<span class="validation-error"><center><font size=2, color="#ff704d"> Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkilajeihin</font><center></span>');
+
+    var updateVisibility = function() {
+      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.mixedVirtualAndRealStops()) {
+        element.show();
+      } else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
       selectedMassTransitStopModel.save();
     });
     var updateStatus = function() {
-      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing()) {
+      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.mixedVirtualAndRealStops()){
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
@@ -73,7 +95,7 @@
         var wrapper = $('<div />').addClass('wrapper edit-mode');
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render())
-          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
+            .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
         var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
@@ -96,9 +118,9 @@
 
         function busStopHeader(asset) {
           var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-            .append(new ValidationErrorLabel().element)
-            .append(new SaveButton().element)
-            .append(new CancelButton().element);
+              .append(new ValidationErrorLabel().element)
+              .append(new SaveButton().element)
+              .append(new CancelButton().element);
 
           var header = $('<header/>');
 
@@ -190,7 +212,7 @@
           }
         } else {
           elementType = property.propertyType === 'long_text' ?
-            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
+              $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
           });
@@ -305,20 +327,21 @@
       };
 
       var multiChoiceHandler = function(property, choices){
-        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
+        var choiceValidation = new InvalidCombinationError();
+        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
         var currentValue = _.cloneDeep(property);
         var enumValues = _.chain(choices)
-          .filter(function(choice){
-            return choice.publicId === property.publicId;
-          })
-          .pluck('values')
-          .flatten()
-          .filter(function(x) { return x.propertyValue !== '99'; })
-          .value();
+            .filter(function(choice){
+              return choice.publicId === property.publicId;
+            })
+            .pluck('values')
+            .flatten()
+            .filter(function(x) { return x.propertyValue !== '99'; })
+            .value();
 
         if (readOnly) {
           element = $('<ul />');
@@ -345,13 +368,13 @@
             var input = $('<input type="checkbox" />').change(function (evt) {
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
-                .filter(function (value) {
-                  return value.checked;
-                })
-                .map(function (value) {
-                  return { propertyValue: parseInt(value.propertyValue, 10) };
-                })
-                .value();
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return { propertyValue: parseInt(value.propertyValue, 10) };
+                  })
+                  .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
               selectedMassTransitStopModel.setProperty(property.publicId, values);
             });
@@ -418,8 +441,8 @@
       var getAssetForm = function() {
         var properties = sortProperties(selectedMassTransitStopModel.getProperties());
         var contents = _.take(properties, 2)
-          .concat(floatingStatus(selectedMassTransitStopModel))
-          .concat(_.drop(properties, 2));
+            .concat(floatingStatus(selectedMassTransitStopModel))
+            .concat(_.drop(properties, 2));
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
@@ -453,9 +476,9 @@
           '</a>');
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
-        '<div class="formLabels"><%= localizedName %></div>' +
-        '<div class="featureAttributeNA"><%= propertyValue %></div>' +
-        '</div>');
+          '<div class="formLabels"><%= localizedName %></div>' +
+          '<div class="featureAttributeNA"><%= propertyValue %></div>' +
+          '</div>');
 
       var closeAsset = function() {
         $("#feature-attributes").html('');
@@ -466,9 +489,9 @@
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
           $('#information-content').append('' +
-            '<div class="form form-horizontal">' +
-            '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
-            '</div>');
+              '<div class="form form-horizontal">' +
+              '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
+              '</div>');
         }
       };
 

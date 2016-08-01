@@ -15,9 +15,9 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int]) extends FloatingAsset
 
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
-                              validityDirection: Option[Int], bearing: Option[Int],
-                              validityPeriod: Option[String], floating: Boolean,
-                              propertyData: Seq[Property]) extends FloatingAsset
+                                         validityDirection: Option[Int], bearing: Option[Int],
+                                         validityPeriod: Option[String], floating: Boolean,
+                                         propertyData: Seq[Property]) extends FloatingAsset
 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
@@ -86,7 +86,7 @@ trait MassTransitStopService extends PointAssetOperations {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-      """
+                """
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
@@ -141,8 +141,23 @@ trait MassTransitStopService extends PointAssetOperations {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
 
+  private def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
+  {/**Checks that virtualTransitStop doesn't have any other types selected*/
+    val ssproperty= stopProperties.map(_.values)
+    val typeset= ssproperty.flatten
+    val propertiesselected = typeset.map(_.propertyValue)
+    val stopcount=propertiesselected.size
+    (stopcount>1 && propertiesselected.contains("5"))
+  }
+
+
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
+
+      if (mixedStoptypes(properties)==true)
+      {
+        throw new IllegalArgumentException
+      }
       val persistedStop = fetchPointAssets(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       val linkId = optionalPosition match {
@@ -189,9 +204,15 @@ trait MassTransitStopService extends PointAssetOperations {
       insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
-      massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
-      getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
-      assetId
+      if (!mixedStoptypes(asset.properties.toSet))
+      {
+
+        massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
+        getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
+        assetId
+      }
+      else
+        throw new IllegalArgumentException
     }
   }
 
