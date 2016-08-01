@@ -23,7 +23,7 @@
   };
 
   var InvalidCombinationError = function() {
-    var element = $('<span class="validation-error"><center><font size=2, color="#ff704d"> Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkilajeihin</font><center></span>');
+    var element = $('<span class="validation-error"><center><font size=2, color="#ff704d"> Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</font><center></span>');
 
     var updateVisibility = function() {
       if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.mixedVirtualAndRealStops()) {

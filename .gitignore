@@ -1,3 +1,4 @@
+*.properties
 node_modules
 /dist
 .idea*
@@ -10,3 +11,4 @@ logs/
 bower_components/
 stops.txt
 UI/index.html
+/conf/dev/

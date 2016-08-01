@@ -157,7 +157,7 @@
 
     var mixedVirtualAndRealStops = function()
     {
-      /*var isVirtualStopsMixed = function (property)
+       var isVirtualStopsMixed = function (property)
        {
        var arraysize = property.values.length;
        for (var n = 0; arraysize > n; n++)
@@ -179,7 +179,6 @@
        }
        });
        return mixed;
-       */ return false;
     };
 
     var requiredPropertiesMissing = function() {
