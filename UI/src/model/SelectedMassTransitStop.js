@@ -41,11 +41,11 @@
       };
       var transformProperty = function(property) {
         return _.merge(
-            {},
-            _.pick(property, 'publicId', 'propertyType', 'required'),
-            {
-              values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
-            });
+          {},
+          _.pick(property, 'publicId', 'propertyType', 'required'),
+          {
+            values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
+          });
       };
       return {
         properties: _.map(propertyData, transformProperty)
@@ -66,11 +66,11 @@
 
     var payloadWithProperties = function(payload, publicIds) {
       return _.merge(
-          {},
-          _.pick(payload, function(value, key) { return key != 'properties'; }),
-          {
-            properties: pickProperties(payload.properties, publicIds)
-          });
+        {},
+        _.pick(payload, function(value, key) { return key != 'properties'; }),
+        {
+          properties: pickProperties(payload.properties, publicIds)
+        });
     };
 
     var place = function(asset) {
@@ -121,7 +121,7 @@
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
       if (currentAsset && (!_.contains(validityPeriods, currentAsset.validityPeriod) &&
-          currentAsset.validityPeriod !== undefined)) {
+        currentAsset.validityPeriod !== undefined)) {
         close();
       }
     });
@@ -157,28 +157,28 @@
 
     var mixedVirtualAndRealStops = function()
     {
-       var isVirtualStopsMixed = function (property)
-       {
-       var arraysize = property.values.length;
-       for (var n = 0; arraysize > n; n++)
-       {
-       var test = property.values[n].propertyValue;
-       if (test == 5)
-       {
-       return  (arraysize > 1);
-       }
-       }
-       return false;
-       };
-       var mixed=false;
-       _.some(currentAsset.payload.properties, function(property)
-       {
-       if (property.publicId == "pysakin_tyyppi")
-       {
-       mixed=isVirtualStopsMixed(property);
-       }
-       });
-       return mixed;
+      var isVirtualStopsMixed = function (property)
+      {
+        var arraysize = property.values.length;
+        for (var n = 0; arraysize > n; n++)
+        {
+          var currentPropertyValue = property.values[n].propertyValue;
+          if (currentPropertyValue == 5)
+          {
+            return  (arraysize > 1);
+          }
+        }
+        return false;
+      };
+      var mixed=false;
+      _.some(currentAsset.payload.properties, function(property)
+      {
+        if (property.publicId == "pysakin_tyyppi")
+        {
+          mixed=isVirtualStopsMixed(property);
+        }
+      });
+      return mixed;
     };
 
     var requiredPropertiesMissing = function() {
@@ -192,9 +192,9 @@
 
       return _.some(currentAsset.payload.properties, function(property) {
         return isRequiredProperty(property.publicId) && (
-                isChoicePropertyWithUnknownValue(property) ||
-                _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
-            );
+            isChoicePropertyWithUnknownValue(property) ||
+            _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
+          );
       });
     };
 
@@ -274,13 +274,13 @@
 
     function getPropertyValue(asset, propertyName) {
       return _.chain(asset.propertyData)
-          .find(function (property) { return property.publicId === propertyName; })
-          .pick('values')
-          .values()
-          .flatten()
-          .map(extractDisplayValue)
-          .value()
-          .join(', ');
+        .find(function (property) { return property.publicId === propertyName; })
+        .pick('values')
+        .values()
+        .flatten()
+        .map(extractDisplayValue)
+        .value()
+        .join(', ');
     }
 
     function extractDisplayValue(value) {

@@ -211,7 +211,7 @@
           }
         } else {
           elementType = property.propertyType === 'long_text' ?
-              $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
+            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
           });
@@ -440,8 +440,8 @@
       var getAssetForm = function() {
         var properties = sortProperties(selectedMassTransitStopModel.getProperties());
         var contents = _.take(properties, 2)
-            .concat(floatingStatus(selectedMassTransitStopModel))
-            .concat(_.drop(properties, 2));
+          .concat(floatingStatus(selectedMassTransitStopModel))
+          .concat(_.drop(properties, 2));
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
@@ -475,9 +475,9 @@
           '</a>');
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
-          '<div class="formLabels"><%= localizedName %></div>' +
-          '<div class="featureAttributeNA"><%= propertyValue %></div>' +
-          '</div>');
+        '<div class="formLabels"><%= localizedName %></div>' +
+        '<div class="featureAttributeNA"><%= propertyValue %></div>' +
+        '</div>');
 
       var closeAsset = function() {
         $("#feature-attributes").html('');
@@ -488,9 +488,9 @@
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
           $('#information-content').append('' +
-              '<div class="form form-horizontal">' +
-              '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
-              '</div>');
+            '<div class="form form-horizontal">' +
+            '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
+            '</div>');
         }
       };
 
