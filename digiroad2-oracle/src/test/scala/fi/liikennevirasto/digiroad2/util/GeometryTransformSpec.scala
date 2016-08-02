@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.net.ConnectException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.HttpHostConnectException
+import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.scalatest.{FunSuite, Matchers}
 
@@ -24,6 +25,10 @@ class GeometryTransformSpec extends FunSuite with Matchers {
       response.getStatusLine.getStatusCode >= 200
     } catch {
       case e: HttpHostConnectException =>
+        false
+      case e: ConnectTimeoutException =>
+        false
+      case e: ConnectException =>
         false
     } finally {
       response.close()
