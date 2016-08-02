@@ -20,9 +20,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val url = properties.getProperty("digiroad2.VKMUrl")
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
     try {
-      response.getStatusLine.getStatusCode >= 200
+      val response = client.execute(request)
+      try {
+        response.getStatusLine.getStatusCode >= 200
+      } finally {
+        response.close()
+      }
     } catch {
       case e: HttpHostConnectException =>
         false
@@ -30,8 +34,6 @@ class GeometryTransformSpec extends FunSuite with Matchers {
         false
       case e: ConnectException =>
         false
-    } finally {
-      response.close()
     }
   }
 
