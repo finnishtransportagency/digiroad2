@@ -374,6 +374,8 @@
           'muokattu_viimeksi',
           'nimi_suomeksi',
           'nimi_ruotsiksi',
+          'osoite_suomeksi',
+          'osoite_ruotsiksi',
           'tietojen_yllapitaja',
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
