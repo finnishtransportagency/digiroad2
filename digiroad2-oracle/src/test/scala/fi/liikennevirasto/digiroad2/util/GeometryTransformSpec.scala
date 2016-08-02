@@ -4,6 +4,7 @@ import java.net.ConnectException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -19,6 +20,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     val url = properties.getProperty("digiroad2.VKMUrl")
     val request = new HttpGet(url)
+    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()
     try {
       val response = client.execute(request)
