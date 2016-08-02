@@ -1225,6 +1225,32 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("should do anything when change information link id doesn't exists on vvh roadlinks"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val newLinkId = 5001
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val vvhTimeStamp = 11121
+
+    val changeInfoSeq = Seq(
+      ChangeInfo(Some(newLinkId), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+    )
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), changeInfoSeq))
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+
+      val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
+
+      createdAsset.length should be (0)
+
+    }
+  }
+
   test("Should not create paving assets when it's requested a different asset type.") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
