@@ -94,7 +94,7 @@
         var wrapper = $('<div />').addClass('wrapper edit-mode');
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render())
-            .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
+          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
         var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
@@ -117,9 +117,9 @@
 
         function busStopHeader(asset) {
           var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-              .append(new ValidationErrorLabel().element)
-              .append(new SaveButton().element)
-              .append(new CancelButton().element);
+            .append(new ValidationErrorLabel().element)
+            .append(new SaveButton().element)
+            .append(new CancelButton().element);
 
           var header = $('<header/>');
 
@@ -367,13 +367,13 @@
             var input = $('<input type="checkbox" />').change(function (evt) {
               value.checked = evt.currentTarget.checked;
               var values = _.chain(enumValues)
-                  .filter(function (value) {
-                    return value.checked;
-                  })
-                  .map(function (value) {
-                    return { propertyValue: parseInt(value.propertyValue, 10) };
-                  })
-                  .value();
+                .filter(function (value) {
+                  return value.checked;
+                })
+                .map(function (value) {
+                  return { propertyValue: parseInt(value.propertyValue, 10) };
+                })
+                .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
               selectedMassTransitStopModel.setProperty(property.publicId, values);
             });
