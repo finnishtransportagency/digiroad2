@@ -143,11 +143,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
   {/**Checks that virtualTransitStop doesn't have any other types selected*/
-    val ssproperty= stopProperties.map(_.values)
-    val typeset= ssproperty.flatten
-    val propertiesselected = typeset.map(_.propertyValue)
-    val stopcount=propertiesselected.size
-    (stopcount>1 && propertiesselected.contains("5"))
+    val propertiesSelected = stopProperties.map(_.values).flatten.map(_.propertyValue)
+    val stopcount=propertiesSelected.size
+    (stopcount>1 && propertiesSelected.contains("5"))
   }
 
 
