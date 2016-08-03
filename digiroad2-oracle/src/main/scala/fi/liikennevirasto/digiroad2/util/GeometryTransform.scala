@@ -191,17 +191,17 @@ class GeometryTransform {
     * Resolve side code as well as road address
     *
     * @param coord Coordinates of location
-    * @param bearing Geographical bearing in degrees (North = 0, West = 90, ...)
+    * @param heading Geographical heading in degrees (North = 0, West = 90, ...)
     * @param road Road we want to find (optional)
     * @param roadPart Road part we want to find (optional)
     */
-  def resolveAddressAndLocation(coord: Point, bearing: Int, road: Option[Int] = None,
+  def resolveAddressAndLocation(coord: Point, heading: Int, road: Option[Int] = None,
                                 roadPart: Option[Int] = None): (RoadAddress, RoadSide) = {
     if (road.isEmpty || roadPart.isEmpty) {
       val roadAddress = coordToAddress(coord, road, roadPart)
-      resolveAddressAndLocation(coord, bearing, Option(roadAddress.road), Option(roadAddress.roadPart))
+      resolveAddressAndLocation(coord, heading, Option(roadAddress.road), Option(roadAddress.roadPart))
     } else {
-      val rad = (90-bearing)*Math.PI/180.0
+      val rad = (90-heading)*Math.PI/180.0
       val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
       val behind = coord - stepVector
       val front = coord + stepVector
