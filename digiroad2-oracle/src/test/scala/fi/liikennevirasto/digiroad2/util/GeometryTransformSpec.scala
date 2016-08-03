@@ -85,7 +85,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.coordToAddress(coord, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
   }
 
   test("missing results for multiple query") {
@@ -94,7 +94,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.coordsToAddresses(coords, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
   }
 
   test("Resolve location on left") {
@@ -139,7 +139,28 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.resolveAddressAndLocation(coord, 190, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
 
+  }
+
+  test("Resolve location close to pedestrian walkway") {
+    assume(connectedToVKM)
+    val coord = Point(378847,6677884)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270)
+    roadAddress.road should be (110)
+  }
+
+  test("Resolve location close to pedestrian walkway, allow pedestrian as result") {
+    assume(connectedToVKM)
+    val coord = Point(378847,6677884)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
+    roadAddress.road should be >= (69999)
+  }
+
+  test("Resolve location far from pedestrian walkway, allow pedestrian as result") {
+    assume(connectedToVKM)
+    val coord = Point(378817,6677914)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
+    roadAddress.road should be (110)
   }
 }

@@ -99,8 +99,12 @@ class GeometryTransform {
   private def VkmOffsetToGivenCoordinates = "valimatka"
   private def VkmReturnErrorMessage = "virheteksti"
   private def VkmReturnCode = "palautusarvo"
+  private def VkmRoadNumberInterval = "tievali"
   private def VkmReturnCodeOk = 1
   private def VkmReturnCodeError = 0
+  // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
+  private def NonPedestrianRoadNumbers = "1-62999"
+  private def AllRoadNumbers = "1-99999"
 
   private def vkmUrl = {
     val properties = new Properties()
@@ -166,10 +170,21 @@ class GeometryTransform {
     }
   }
 
+  private def roadNumberInterval(pedestrianIncluded: Option[Boolean], road: Option[Int]) = {
+    if (road.nonEmpty)
+      road.map(_.toString)
+    else if (pedestrianIncluded.getOrElse(false))
+      Option(AllRoadNumbers)
+    else
+      Option(NonPedestrianRoadNumbers)
+  }
+
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
-                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None) = {
+                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                     includePedestrian: Option[Boolean] = Option(false)) = {
     val params = Map(VkmRoad -> road, VkmRoadPart -> roadPart, VkmDistance -> distance, VkmTrackCode -> track.map(_.value),
-    "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> searchDistance)
+    "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> searchDistance,
+      VkmRoadNumberInterval -> roadNumberInterval(includePedestrian, road))
     request(vkmUrl + urlParams(params)) match {
       case Left(address) => mapFields(address)
       case Right(error) => throw new VKMClientException(error.toString)
@@ -177,10 +192,13 @@ class GeometryTransform {
   }
 
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
-                     distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None) = {
+                        distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
+                        includePedestrian: Option[Boolean] = Option(false)) = {
     val indexedCoords = coords.zipWithIndex
     val params = indexedCoords.map { case (coord, index) => Map(VkmRoad -> road, VkmRoadPart -> roadPart, VkmDistance -> distance, VkmTrackCode -> track.map(_.value),
-      "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> searchDistance, VkmQueryIdentifier -> Option(index) ) }
+      "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> searchDistance, VkmQueryIdentifier -> Option(index),
+      VkmRoadNumberInterval -> roadNumberInterval(includePedestrian, road))
+    }
     post(vkmPostUrl, jsonParams(params.toList)) match {
       case Left(addresses) => extractRoadAddresses(addresses)
       case Right(error) => throw new VKMClientException(error.toString)
@@ -196,16 +214,17 @@ class GeometryTransform {
     * @param roadPart Road part we want to find (optional)
     */
   def resolveAddressAndLocation(coord: Point, heading: Int, road: Option[Int] = None,
-                                roadPart: Option[Int] = None): (RoadAddress, RoadSide) = {
+                                roadPart: Option[Int] = None,
+                                includePedestrian: Option[Boolean] = Option(false)): (RoadAddress, RoadSide) = {
     if (road.isEmpty || roadPart.isEmpty) {
-      val roadAddress = coordToAddress(coord, road, roadPart)
+      val roadAddress = coordToAddress(coord, road, roadPart, includePedestrian = includePedestrian)
       resolveAddressAndLocation(coord, heading, Option(roadAddress.road), Option(roadAddress.roadPart))
     } else {
       val rad = (90-heading)*Math.PI/180.0
       val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
       val behind = coord - stepVector
       val front = coord + stepVector
-      val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart)
+      val addresses = coordsToAddresses(Seq(behind, coord, front), road, roadPart, includePedestrian = includePedestrian)
       val mValues = addresses.map(ra => ra.mValue)
       val (first, second, third) = (mValues(0), mValues(1), mValues(2))
       if (first <= second && second <= third && first != third) {
@@ -227,7 +246,7 @@ class GeometryTransform {
     val returnCode = data.getOrElse(VkmReturnCode, VkmReturnCodeOk)
     val error = data.get(VkmError)
     if (returnCode.toString.toInt == VkmReturnCodeError || error.nonEmpty)
-      throw new VKMClientException("VKM returned an error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
+      throw new VKMClientException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
     val municipalityCode = data.get(VkmMunicipalityCode)
     val road = validateAndConvertToInt(VkmRoad, data)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data)
