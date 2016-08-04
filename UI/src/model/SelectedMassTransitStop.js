@@ -157,8 +157,7 @@
 
     var mixedVirtualAndRealStops = function()
     {
-      return false;
-      /*return _.some(currentAsset.payload.properties, function(property)
+      return _.some(currentAsset.payload.properties, function(property)
       {
         if (property.publicId == "pysakin_tyyppi") {
           return _.some(property.values, function(propertyValue){
@@ -166,7 +165,7 @@
           });
         }
         return false;
-      });*/
+      });
     };
 
     var requiredPropertiesMissing = function() {
