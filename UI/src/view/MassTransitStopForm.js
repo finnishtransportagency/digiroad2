@@ -103,11 +103,11 @@
         var validationErrorLabel = new ValidationErrorLabel();
 
         featureAttributesElement.append($('<footer />')
-          .addClass('mass-transit-stop')
-          .addClass('form-controls')
-          .append(validationErrorLabel.element)
-          .append(saveBtn.element)
-          .append(cancelBtn.element));
+            .addClass('mass-transit-stop')
+            .addClass('form-controls')
+            .append(validationErrorLabel.element)
+            .append(saveBtn.element)
+            .append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -469,10 +469,10 @@
       };
 
       var streetViewTemplate  = _.template(
-        '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
-        '<img alt="Google StreetView-n&auml;kym&auml;" src="//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=<%= wgs84Y %>' +
-        ', <%= wgs84X %>&fov=110&heading=<%= heading %>&pitch=-10&sensor=false">' +
-        '</a>');
+          '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
+          '<img alt="Google StreetView-n&auml;kym&auml;" src="//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=<%= wgs84Y %>' +
+          ', <%= wgs84X %>&fov=110&heading=<%= heading %>&pitch=-10&sensor=false">' +
+          '</a>');
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
         '<div class="formLabels"><%= localizedName %></div>' +

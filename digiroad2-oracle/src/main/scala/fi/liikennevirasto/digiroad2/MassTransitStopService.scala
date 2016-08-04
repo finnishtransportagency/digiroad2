@@ -128,9 +128,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
-      .filter { row => row.property.publicId.equals(MassTransitStopTypePublicId) }
-      .filterNot { row => row.property.propertyValue.isEmpty }
-      .map { row => row.property.propertyValue.toInt }
+    .filter { row => row.property.publicId.equals(MassTransitStopTypePublicId) }
+    .filterNot { row => row.property.propertyValue.isEmpty }
+    .map { row => row.property.propertyValue.toInt }
   }
 
   private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {
@@ -153,7 +153,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
   {
     val propertiesSelected = stopProperties.filter(p => MassTransitStopTypePublicId.equalsIgnoreCase(p.publicId))
-      .flatMap(_.values).map(_.propertyValue)
+    .flatMap(_.values).map(_.propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
 
@@ -163,10 +163,10 @@ trait MassTransitStopService extends PointAssetOperations {
 
       if (mixedStoptypes(properties))
         throw new IllegalArgumentException
-
       val persistedStop = fetchPointAssets(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      val linkId = optionalPosition match {
+      val linkId = optionalPosition match
+      {
         case Some(position) => position.linkId
         case _ => persistedStop.get.linkId
       }
@@ -200,7 +200,6 @@ trait MassTransitStopService extends PointAssetOperations {
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int): Long = {
     val point = Point(asset.lon, asset.lat)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
-
     withDynTransaction {
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -212,7 +211,6 @@ trait MassTransitStopService extends PointAssetOperations {
       val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
       if (!mixedStoptypes(asset.properties.toSet))
       {
-
         massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
         getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
         assetId

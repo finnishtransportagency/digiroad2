@@ -157,28 +157,16 @@
 
     var mixedVirtualAndRealStops = function()
     {
-      var isVirtualStopsMixed = function (property)
+      return false;
+      /*return _.some(currentAsset.payload.properties, function(property)
       {
-        var arraysize = property.values.length;
-        for (var n = 0; arraysize > n; n++)
-        {
-          var currentPropertyValue = property.values[n].propertyValue;
-          if (currentPropertyValue == 5)
-          {
-            return  (arraysize > 1);
-          }
+        if (property.publicId == "pysakin_tyyppi") {
+          return _.some(property.values, function(propertyValue){
+            return (propertyValue.propertyValue == 5 && property.values.length>1) ;
+          });
         }
         return false;
-      };
-      var mixed=false;
-      _.some(currentAsset.payload.properties, function(property)
-      {
-        if (property.publicId == "pysakin_tyyppi")
-        {
-          mixed=isVirtualStopsMixed(property);
-        }
-      });
-      return mixed;
+      });*/
     };
 
     var requiredPropertiesMissing = function() {
