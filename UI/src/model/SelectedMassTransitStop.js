@@ -155,7 +155,7 @@
       });
     };
 
-    var mixedVirtualAndRealStops = function()
+    var hasMixedVirtualAndRealStops = function()
     {
       return _.some(currentAsset.payload.properties, function(property)
       {
@@ -296,7 +296,7 @@
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
       place: place,
-      mixedVirtualAndRealStops:mixedVirtualAndRealStops
+      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops
     };
   };
 

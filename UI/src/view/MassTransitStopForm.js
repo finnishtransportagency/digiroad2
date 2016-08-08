@@ -25,7 +25,7 @@
   var InvalidCombinationError = function() {
     var element = $('<span class="validation-fatal-error">Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</span>');
     var updateVisibility = function() {
-      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.mixedVirtualAndRealStops()) {
+      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.hasMixedVirtualAndRealStops()) {
         element.show();
       } else {
         element.hide();
@@ -49,7 +49,7 @@
       selectedMassTransitStopModel.save();
     });
     var updateStatus = function() {
-      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.mixedVirtualAndRealStops()){
+      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops()){
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
