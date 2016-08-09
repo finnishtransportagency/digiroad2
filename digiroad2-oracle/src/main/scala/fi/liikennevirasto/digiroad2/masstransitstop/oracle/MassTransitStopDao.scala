@@ -6,7 +6,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{FloatingReason, MassTransitStopRow, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
@@ -208,6 +208,28 @@ class MassTransitStopDao {
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+  }
+
+  def getAssetAdministrationClass(assetId : Long): Option[AdministrativeClass] ={
+    //TODO put the name os the property as a constant
+    val propertyValueOption = getTextPropertyValue(assetId, "linkin_hallinnollinen_luokka")
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) =>
+        Some(AdministrativeClass.apply(propertyValue.toInt))
+    }
+  }
+
+  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] ={
+    //TODO put the name os the property as a constant
+    val propertyValueOption = getTextPropertyValue(assetId, "kellumisen_syy")
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) =>
+        Some(FloatingReason.apply(propertyValue.toInt))
+    }
   }
 
 }

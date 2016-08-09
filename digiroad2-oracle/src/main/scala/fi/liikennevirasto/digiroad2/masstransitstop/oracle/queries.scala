@@ -170,6 +170,14 @@ object Queries {
     }.toSeq
   }
 
+  def getTextPropertyValue(assetId: Long, publicId: String): Option[String] ={
+    sql"""
+            select v.value_fi from text_property_value v
+            join property p on v.property_id = p.id
+            where v.asset_id = $assetId and p.public_id = $publicId
+      """.as[String].firstOption
+  }
+
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
@@ -177,7 +185,7 @@ object Queries {
       }
     }
     sql"""
-      select p.id, p.public_id, p.property_type, p.required from property p where p.asset_type_id = $assetTypeId
+      select p.id, p.public_id, p.property_type, p.required from property p where p.is_visible = 1 and p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
 
