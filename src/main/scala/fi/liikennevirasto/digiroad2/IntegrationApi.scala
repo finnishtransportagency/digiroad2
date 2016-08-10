@@ -197,13 +197,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
   }
 
-  def toTimeDomainWithMinutes(validityPeriodMinutes: ValidityPeriodMinutes): String = {
-    val daySpec = validityPeriodMinutes.days match {
+  def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {
+    val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
       case Sunday => "(t1){d1}"
       case _ => "(t2){d5}"
     }
-    s"[[$daySpec]*[(h${validityPeriodMinutes.startHour}m${validityPeriodMinutes.startMinute}){h${validityPeriodMinutes.preciseDuration()._1}m${validityPeriodMinutes.preciseDuration()._2}}]]"
+    s"[[$daySpec]*[(h${validityPeriod.startHour}m${validityPeriod.startMinute}){h${validityPeriod.preciseDuration()._1}m${validityPeriod.preciseDuration()._2}}]]"
   }
 
   def valueToApi(value: Option[Value]) = {

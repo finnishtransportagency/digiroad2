@@ -25,7 +25,7 @@ case class TextualValue(value: String) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriodMinutes], exceptions: Set[Int])
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
 
 //case class ProhibitionsMinutes(prohibitions: Seq[ProhibitionValueMinutes]) extends Value {
 //  override def toJson: Any = prohibitions
@@ -38,11 +38,15 @@ trait ValidityPeriodsData{
   def endHour: Int
   def days: ValidityPeriodDayOfWeek
   def duration(): Int
+  def startMinute: Int
+  def endMinute: Int
 }
 
-case class ValidityPeriod(override val startHour: Int, override val endHour: Int, override val days: ValidityPeriodDayOfWeek) extends ValidityPeriodsData{
+case class ValidityPeriod(override val startHour: Int, override val endHour: Int, override val days: ValidityPeriodDayOfWeek,
+                          override val startMinute: Int = 0, override val endMinute: Int = 0) extends ValidityPeriodsData{
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
+      //TODO: do an operation that includes minutes
       Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
     } else {
       None
@@ -53,30 +57,6 @@ case class ValidityPeriod(override val startHour: Int, override val endHour: Int
       endHour - startHour
     } else {
       24 - startHour + endHour
-    }
-  }
-  private def overlaps(b: ValidityPeriod): Boolean = {
-    ValidityPeriodDayOfWeek.overlap(days, b.days) && hoursOverlap(b)
-  }
-  private def hoursOverlap(b: ValidityPeriod): Boolean = {
-    liesInBetween(startHour, (b.startHour, b.endHour)) ||
-      liesInBetween(b.startHour, (startHour, endHour))
-  }
-  private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
-    hour >= interval._1 && hour <= interval._2
-  }
-}
-
-case class ValidityPeriodMinutes(override val startHour: Int, startMinute: Int, override val endHour: Int, endMinute: Int, override val days: ValidityPeriodDayOfWeek) extends ValidityPeriodsData {
-
-  def duration(): Int = {
-    val startHourAndMinutes = (startMinute / 60) + startHour
-    val endHourAndMinutes = (endMinute / 60) + endHour
-
-    if (endHourAndMinutes > startHourAndMinutes) {
-      Math.round(endHourAndMinutes - startHourAndMinutes)
-    } else {
-      Math.round(24 - startHourAndMinutes + endHourAndMinutes)
     }
   }
 
@@ -93,6 +73,19 @@ case class ValidityPeriodMinutes(override val startHour: Int, startMinute: Int, 
     }
   }
 
+  //TODO: do a check that includes minutes
+  private def overlaps(b: ValidityPeriod): Boolean = {
+    ValidityPeriodDayOfWeek.overlap(days, b.days) && hoursOverlap(b)
+  }
+  //TODO: do a check that includes minutes
+  private def hoursOverlap(b: ValidityPeriod): Boolean = {
+    liesInBetween(startHour, (b.startHour, b.endHour)) ||
+      liesInBetween(b.startHour, (startHour, endHour))
+  }
+  //TODO: do a check that includes minutes
+  private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
+    hour >= interval._1 && hour <= interval._2
+  }
 }
 
 sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }

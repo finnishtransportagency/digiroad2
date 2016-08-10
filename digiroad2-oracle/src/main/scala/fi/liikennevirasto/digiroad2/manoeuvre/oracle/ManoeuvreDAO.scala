@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.manoeuvre.oracle
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodMinutes, ValidityPeriod, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -87,8 +87,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     }
   }
 
-  def addManoeuvreValidityPeriods(manoeuvreId: Long, validityPeriods: Set[ValidityPeriodMinutes]) {
-    validityPeriods.foreach { case ValidityPeriodMinutes(startHour, startMinute, endHour, endMinute, days) =>
+  def addManoeuvreValidityPeriods(manoeuvreId: Long, validityPeriods: Set[ValidityPeriod]) {
+    validityPeriods.foreach { case ValidityPeriod(startHour, endHour, days, startMinute, endMinute) =>
       sqlu"""
         insert into manoeuvre_validity_period (id, manoeuvre_id, start_hour, end_hour, type, start_minute, end_minute)
         values (primary_key_seq.nextval, $manoeuvreId, $startHour, $endHour, ${days.value}, $startMinute, $endMinute)
@@ -97,7 +97,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   private def manoeuvreRowsToManoeuvre(manoeuvreExceptionsById: Map[Long, Seq[Int]],
-                               manoeuvreValidityPeriodsById: Map[Long, Set[ValidityPeriodMinutes]])
+                               manoeuvreValidityPeriodsById: Map[Long, Set[ValidityPeriod]])
                               (manoeuvreRowsForId: (Long, Seq[PersistedManoeuvreRow])): Manoeuvre = {
     val (id, manoeuvreRows) = manoeuvreRowsForId
     val manoeuvreRow = manoeuvreRows.head
@@ -114,7 +114,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   private def manoeuvreRowsToManoeuvre(manoeuvreRows: Seq[PersistedManoeuvreRow], manoeuvreExceptions: Seq[Int],
-                               manoeuvreValidityPeriods: Set[ValidityPeriodMinutes])
+                               manoeuvreValidityPeriods: Set[ValidityPeriod])
   : Manoeuvre = {
     val manoeuvreRow = manoeuvreRows.head
     val modifiedTimeStamp = DateTimePropertyFormat.print(manoeuvreRow.modifiedDate)
@@ -163,7 +163,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     manoeuvreExceptionsById
   }
 
-  private def fetchManoeuvreValidityPeriodsByIds(manoeuvreIds: Set[Long]):  Map[Long, Set[ValidityPeriodMinutes]] = {
+  private def fetchManoeuvreValidityPeriodsByIds(manoeuvreIds: Set[Long]):  Map[Long, Set[ValidityPeriod]] = {
     val manoeuvreValidityPeriods = MassQuery.withIds(manoeuvreIds) { idTableName =>
       sql"""SELECT m.manoeuvre_id, m.type, m.start_hour, m.end_hour, m.start_minute, m.end_minute
             FROM MANOEUVRE_VALIDITY_PERIOD m
@@ -173,7 +173,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
 
     manoeuvreValidityPeriods.groupBy(_._1).mapValues { periods =>
       periods.map { case (_, dayOfWeek, startHour, endHour, startMinute, endMinute) =>
-        ValidityPeriodMinutes(startHour, startMinute, endHour, endMinute, ValidityPeriodDayOfWeek(dayOfWeek))
+        ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek), startMinute, endMinute)
       }.toSet
     }
   }
@@ -185,7 +185,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     addManoeuvreExceptions(manoeuvreId, exceptions)
   }
 
-  def setManoeuvreValidityPeriods(manoeuvreId: Long)(validityPeriods: Set[ValidityPeriodMinutes]) = {
+  def setManoeuvreValidityPeriods(manoeuvreId: Long)(validityPeriods: Set[ValidityPeriod]) = {
     sqlu"""
            delete from manoeuvre_validity_period where manoeuvre_id = $manoeuvreId
         """.execute
