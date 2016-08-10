@@ -771,6 +771,23 @@ class AssetDataImporter {
     """.execute
   }
 
+  def getPropertyTypeByPublicId(publicId : String): Long ={
+    sql"select p.id from property p where p.public_id = $publicId".as[Long].first
+  }
+
+  def getNonFloatingAssetsWithTextPropertyValueByTypeId(assetTypeId: Long, publicId: String): Seq[(Long, Long, Option[String])] ={
+    sql"""
+      select a.id, lrm.link_id
+      from
+      asset a
+      join asset_link al on al.asset_id = a.id
+      join lrm_position lrm on al.position_id  = lrm.id
+      join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
+      left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
+      where a.asset_type_id = $assetTypeId and a.floating = 0
+      """.as[(Long, Long, Option[String])].list
+  }
+
   /**
     * Finds closest road link from classes 6-8 for an obstacle and updates the location and clears the floating
     * if one is found according to the rules:

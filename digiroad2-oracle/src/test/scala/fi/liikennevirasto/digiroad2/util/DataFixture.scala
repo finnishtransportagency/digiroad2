@@ -284,6 +284,53 @@ object DataFixture {
     }
   }
 
+  def setAssetsWithRoadLinkAdministrationClass() : Unit = {
+    println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+    }
+
+    val administrationClassPublicId = "linkin_hallinnollinen_luokka"
+    val adminstrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
+
+    withDynTransaction{
+      municipalities.foreach { municipality =>
+        println("Start processing municipality %d".format(municipality))
+        //Get all not floating mass transit stops by municipality id
+        val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValueByTypeId(10, administrationClassPublicId)
+
+        println("Processing %d assets not floating".format(assets.length))
+
+        //Get All RoadLinks from VVH by asset link ids
+        val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+
+        assets.foreach{
+          _ match {
+            case (assetId, linkId, None) =>
+                roadLinks.find(_.linkId == assetId) match {
+                case Some(roadlink) =>
+                  dataImporter.insertTextPropertyData(adminstrationClassPropertyId, assetId, roadlink.administrativeClass.toString)
+                case _ =>
+                  println("The roadlink with id %d was not found".format(linkId))
+              }
+            case (assetId, linkId, Some(value)) =>
+              println("The administration class property already exists on the asset with id %d ".format(assetId))
+          }
+        }
+
+        println("End processing municipality %d".format(municipality))
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
@@ -364,6 +411,8 @@ object DataFixture {
         checkUnknownSpeedlimits()
       case Some ("import_VVH_RoadLinks_by_municipalities") =>
         importVVHRoadLinksByMunicipalities()
+      case Some("set_transitStops_with_roadlink_administrationClass") =>
+        setAssetsWithRoadLinkAdministrationClass()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
