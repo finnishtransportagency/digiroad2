@@ -38,6 +38,7 @@ trait ValidityPeriodsData{
   def endHour: Int
   def days: ValidityPeriodDayOfWeek
   def duration(): Int
+  def preciseDuration(): (Int, Int)
   def startMinute: Int
   def endMinute: Int
 }
