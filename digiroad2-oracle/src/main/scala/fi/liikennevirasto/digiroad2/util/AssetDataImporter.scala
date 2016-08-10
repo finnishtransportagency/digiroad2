@@ -775,16 +775,16 @@ class AssetDataImporter {
     sql"select p.id from property p where p.public_id = $publicId".as[Long].first
   }
 
-  def getNonFloatingAssetsWithTextPropertyValueByTypeId(assetTypeId: Long, publicId: String): Seq[(Long, Long, Option[String])] ={
+  def getNonFloatingAssetsWithTextPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[String])] ={
     sql"""
-      select a.id, lrm.link_id
+      select a.id, lrm.link_id, tp.value_fi
       from
       asset a
       join asset_link al on al.asset_id = a.id
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
-      where a.asset_type_id = $assetTypeId and a.floating = 0
+      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
       """.as[(Long, Long, Option[String])].list
   }
 

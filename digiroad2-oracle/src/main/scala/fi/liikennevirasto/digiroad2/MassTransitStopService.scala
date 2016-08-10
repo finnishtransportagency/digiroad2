@@ -153,14 +153,6 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  //TODO Probably this method is to remove
-  private def extractFloatingReason(rows: Seq[MassTransitStopRow]) : Option[FloatingReason] = {
-    rows
-      .filter { row => row.property.publicId.equals("kellumisen_syy") }
-      .map{ row => FloatingReason.apply(row.property.propertyValue.toInt) }
-      .headOption
-  }
-
   private def updateFloatingReasonProperty(assetId: Long, floatingReason: FloatingReason): Unit ={
     massTransitStopDao.updateAssetProperties(assetId,
       Seq(SimpleProperty("kellumisen_syy", Seq(PropertyValue(floatingReason.value.toString)))))
@@ -249,8 +241,6 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def fetchRoadLink(linkId: Long): Option[VVHRoadlink] = {
-    //vvhClient.fetchVVHRoadlink(linkId).map{ x => (x.municipalityCode, x.geometry) }
-    //TODO remove this method if we don't need him any where else
     vvhClient.fetchVVHRoadlink(linkId)
   }
 

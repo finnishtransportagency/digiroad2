@@ -285,7 +285,7 @@ object DataFixture {
   }
 
   def setAssetsWithRoadLinkAdministrationClass() : Unit = {
-    println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
+    println("\nSet mass transit stop asset with roadlink administrator class")
     println(DateTime.now())
 
     val municipalities: Seq[Int] =
@@ -294,30 +294,34 @@ object DataFixture {
     }
 
     val administrationClassPublicId = "linkin_hallinnollinen_luokka"
-    val adminstrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
 
-    withDynTransaction{
+    OracleDatabase.withDynTransaction{
+
+      val adminstrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
+
       municipalities.foreach { municipality =>
         println("Start processing municipality %d".format(municipality))
         //Get all not floating mass transit stops by municipality id
-        val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValueByTypeId(10, administrationClassPublicId)
+        val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValue(10, administrationClassPublicId, municipality)
 
         println("Processing %d assets not floating".format(assets.length))
 
-        //Get All RoadLinks from VVH by asset link ids
-        val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+        if(assets.length > 0){
+          //Get All RoadLinks from VVH by asset link ids
+          val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
-        assets.foreach{
-          _ match {
-            case (assetId, linkId, None) =>
-                roadLinks.find(_.linkId == assetId) match {
-                case Some(roadlink) =>
-                  dataImporter.insertTextPropertyData(adminstrationClassPropertyId, assetId, roadlink.administrativeClass.toString)
-                case _ =>
-                  println("The roadlink with id %d was not found".format(linkId))
-              }
-            case (assetId, linkId, Some(value)) =>
-              println("The administration class property already exists on the asset with id %d ".format(assetId))
+          assets.foreach{
+            _ match {
+              case (assetId, linkId, None) =>
+                roadLinks.find(_.linkId == linkId) match {
+                  case Some(roadlink) =>
+                    dataImporter.insertTextPropertyData(adminstrationClassPropertyId, assetId, roadlink.administrativeClass.value.toString)
+                  case _ =>
+                    println("The roadlink with id %d was not found".format(linkId))
+                }
+              case (assetId, linkId, Some(value)) =>
+                println("The administration class property already exists on the asset with id %d ".format(assetId))
+            }
           }
         }
 
