@@ -122,6 +122,26 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     integrationApi.toTimeDomain(ValidityPeriod(0, 24, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0){h24}]]")
   }
 
+  test("encode validity period to time domain With Minutes") {
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(6, 30, 10, 15, ValidityPeriodDayOfWeek.Weekday))  should be("[[(t2){d5}]*[(h6m30){h3m45}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(23, 45, 24, 0, ValidityPeriodDayOfWeek.Weekday)) should be("[[(t2){d5}]*[(h23m45){h0m15}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(21, 55, 7, 20, ValidityPeriodDayOfWeek.Weekday)) should be("[[(t2){d5}]*[(h21m55){h9m25}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 5, 1, 25, ValidityPeriodDayOfWeek.Weekday)) should be("[[(t2){d5}]*[(h0m5){h1m20}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 0, 24, 0, ValidityPeriodDayOfWeek.Weekday)) should be("[[(t2){d5}]*[(h0m0){h24m0}]]")
+
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(6, 30, 10, 15, ValidityPeriodDayOfWeek.Saturday))  should be("[[(t7){d1}]*[(h6m30){h3m45}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(23, 45, 24, 0, ValidityPeriodDayOfWeek.Saturday)) should be("[[(t7){d1}]*[(h23m45){h0m15}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(21, 55, 7, 20, ValidityPeriodDayOfWeek.Saturday)) should be("[[(t7){d1}]*[(h21m55){h9m25}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 5, 1, 25, ValidityPeriodDayOfWeek.Saturday)) should be("[[(t7){d1}]*[(h0m5){h1m20}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 0, 24, 0, ValidityPeriodDayOfWeek.Saturday)) should be("[[(t7){d1}]*[(h0m0){h24m0}]]")
+
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(6, 30, 10, 15, ValidityPeriodDayOfWeek.Sunday))  should be("[[(t1){d1}]*[(h6m30){h3m45}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(23, 45, 24, 0, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h23m45){h0m15}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(21, 55, 7, 20, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h21m55){h9m25}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 5, 1, 25, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0m5){h1m20}]]")
+    integrationApi.toTimeDomainWithMinutes(ValidityPeriodMinutes(0, 0, 24, 0, ValidityPeriodDayOfWeek.Sunday)) should be("[[(t1){d1}]*[(h0m0){h24m0}]]")
+  }
+
   test("encode manouvre") {
     val manoeuvre = new Manoeuvre(1,
         Seq(ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement),

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodMinutes, ValidityPeriod, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -60,7 +60,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday)), Nil, None, Seq(123, 124)))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriodMinutes(0, 30, 21, 45, Saturday)), Nil, None, Seq(123, 124)))
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
@@ -72,7 +72,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     manoeuvre.elements.head.sourceLinkId should equal(123)
     manoeuvre.elements.head.destLinkId should equal(124)
-    manoeuvre.validityPeriods should equal(Set(ValidityPeriod(0, 21, Saturday)))
+    manoeuvre.validityPeriods should equal(Set(ValidityPeriodMinutes(0, 30, 21, 45, Saturday)))
   }
 
   test("Delete manoeuvre") {

@@ -328,7 +328,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+          ValidityPeriodMinutes(row._7.get, 0, row._8.get, 0, ValidityPeriodDayOfWeek(row._6.get))
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
@@ -375,7 +375,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+          ValidityPeriodMinutes(row._7.get, 0, row._8.get, 0, ValidityPeriodDayOfWeek(row._6.get))
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
@@ -931,8 +931,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val startHour = validityPeriod.startHour
         val endHour = validityPeriod.endHour
         val daysOfWeek = validityPeriod.days.value
-        sqlu"""insert into PROHIBITION_VALIDITY_PERIOD (ID, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR)
-               values ($validityId, $prohibitionId, $daysOfWeek, $startHour, $endHour)""".execute
+        val startMinute = validityPeriod.startMinute
+        val endMinute = validityPeriod.endMinute
+        sqlu"""insert into PROHIBITION_VALIDITY_PERIOD (ID, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE, END_MINUTE)
+               values ($validityId, $prohibitionId, $daysOfWeek, $startHour, $endHour, $startMinute, $endMinute)""".execute
       }
       prohibition.exceptions.foreach { exceptionType =>
         val exceptionId = Sequences.nextPrimaryKeySeqValue

@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod, RoadLink, ValidityPeriodMinutes}
 import fi.liikennevirasto.digiroad2.manoeuvre.oracle.{PersistedManoeuvreRow, ManoeuvreDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriodMinutes], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
-case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriodMinutes], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long])
+case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriodMinutes]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 object ElementTypes {
   val FirstElement = 1

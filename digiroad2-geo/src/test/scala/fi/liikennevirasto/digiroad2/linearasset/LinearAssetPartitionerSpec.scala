@@ -27,10 +27,10 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
   test("doesn't group assets with different prohibition validity periods") {
     val prohibitionAssets = Seq(
       TestProhibitionAsset(1, 1, SideCode.BothDirections,
-        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 2, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriodMinutes(1, 5, 2, 30, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
         Seq(Point(0, 0), Point(10, 0))),
       TestProhibitionAsset(2, 2, SideCode.BothDirections,
-        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriodMinutes(1, 5, 3, 30, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
         Seq(Point(10, 0), Point(20, 0))))
     val links = Map(
       1l -> roadLinkForAsset(Left(1)),
@@ -44,10 +44,10 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
   test("groups assets with equal prohibition validity periods") {
     val prohibitionAssets = Seq(
       TestProhibitionAsset(1, 1, SideCode.BothDirections,
-        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriodMinutes(1, 0, 3, 0, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
         Seq(Point(0, 0), Point(10, 0))),
       TestProhibitionAsset(2, 2, SideCode.BothDirections,
-        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriodMinutes(1, 0, 3, 0, ValidityPeriodDayOfWeek.Weekday)), Set.empty)))),
         Seq(Point(10, 0), Point(20, 0))))
     val links = Map(
       1l -> roadLinkForAsset(Left(1)),

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.manoeuvre.oracle
 
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod}
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod, ValidityPeriodMinutes}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2._
 import org.scalatest.{FunSuite, Matchers, Tag}
@@ -51,7 +51,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
-      val validityPeriod = Set(ValidityPeriod(12,13, ValidityPeriodDayOfWeek("Sunday")), ValidityPeriod(8,12, ValidityPeriodDayOfWeek("Saturday")))
+      val validityPeriod = Set(ValidityPeriodMinutes(12, 30, 13, 15, ValidityPeriodDayOfWeek("Sunday")), ValidityPeriodMinutes(8, 0, 12, 10, ValidityPeriodDayOfWeek("Saturday")))
       dao.updateManoueuvre("updater", id, ManoeuvreUpdates(Option(validityPeriod),
         Option(Seq(2)), Option("Additional Info")))
       val updated = dao.find(id).get
@@ -89,12 +89,12 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       id > 0 should be (true)
       val persisted = dao.find(id).get
       persisted.validityPeriods should be(Set())
-      val validityPeriod = Set(ValidityPeriod(12,13, ValidityPeriodDayOfWeek("Sunday")))
+      val validityPeriod = Set(ValidityPeriodMinutes(12, 30, 13, 45, ValidityPeriodDayOfWeek("Sunday")))
       dao.addManoeuvreValidityPeriods(id, validityPeriod)
       val updated = dao.find(id).get
       updated shouldNot be(persisted)
       updated.validityPeriods should be(validityPeriod)
-      val validityPeriod2 = Set(ValidityPeriod(9,15, ValidityPeriodDayOfWeek("Weekday")))
+      val validityPeriod2 = Set(ValidityPeriodMinutes(9, 0, 15, 55, ValidityPeriodDayOfWeek("Weekday")))
       dao.addManoeuvreValidityPeriods(id, validityPeriod2)
       val updated2 = dao.find(id).get
       updated2.validityPeriods should be(validityPeriod ++ validityPeriod2)

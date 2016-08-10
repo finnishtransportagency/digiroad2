@@ -174,7 +174,7 @@
           var isLinkChain = manoeuvre.intermediateLinkIds && manoeuvre.intermediateLinkIds.length > 0;
           var localizedExceptions = localizeExceptions(manoeuvre.exceptions);
           var validityPeriodElements = _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('');
 
@@ -195,14 +195,14 @@
           var existingValidityPeriodElements =
             manoeuvre ?
               _(manoeuvre.validityPeriods)
-                .sortByAll(dayOrder, 'startHour', 'endHour')
+                .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
                 .map(validityPeriodElement)
                 .join('') :
               '';
           var isLinkChain = (manoeuvre && manoeuvre.intermediateLinkIds.length) > 0;
           var newExceptionSelect = _.template(newExceptionTemplate)({ exceptionOptions: exceptionOptions(), manoeuvreExists: manoeuvreExists });
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
@@ -227,13 +227,13 @@
           var additionalInfo = (!_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var existingValidityPeriodElements =
               _(manoeuvre.validityPeriods)
-                  .sortByAll(dayOrder, 'startHour', 'endHour')
+                  .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
                   .map(validityPeriodElement)
                   .join('');
           // Verify if Manoeuvre have intermediate Links to show the plus sign
           var isLinkChain = true;
           var validityPeriodElements = manoeuvre ? _(manoeuvre.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
@@ -278,7 +278,9 @@
           return _.map(periodElements, function (element) {
             return {
               startHour: parseInt($(element).find('.start-hour').val(), 10),
+              startMinute: parseInt($(element).find('.start-minute').val(), 10),
               endHour: parseInt($(element).find('.end-hour').val(), 10),
+              endMinute: parseInt($(element).find('.end-minute').val(), 10),
               days: $(element).data('days')
             };
           });
@@ -436,7 +438,9 @@
           $(event.target).parent().parent().replaceWith(validityPeriodElement({
             days: $(event.target).val(),
             startHour: 0,
-            endHour: 24
+            startMinute: 0,
+            endHour: 24,
+            endMinute: 0
           }));
           updateValidityPeriods($(event.delegateTarget));
         });
@@ -575,15 +579,19 @@
            dayLabels[period.days] +
       '  </label>' +
          hourElement(period.startHour, 'start') +
+      '  <span class="minute-separator"></span>' +
+         minutesElement(period.startMinute, 'start') +
       '  <span class="hour-separator"> - </span>' +
          hourElement(period.endHour, 'end') +
+      '  <span class="minute-separator"></span>' +
+        minutesElement(period.endMinute, 'end') +
       '</div></li>';
   }
 
   function validityPeriodDisplayElement(period) {
     return '' +
       '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
-        dayLabels[period.days] + ' ' + period.startHour + '–' + period.endHour +
+        dayLabels[period.days] + ' ' + period.startHour + ':' + (period.startMinute<10 ? '0' + period.startMinute : period.startMinute) + ' – ' + period.endHour + ':' + (period.endMinute<10 ? '0' + period.endMinute : period.endMinute) +
       '</div></li>';
   }
 
@@ -595,11 +603,27 @@
       '</select>';
   }
 
+  function minutesElement(selectedMinute, type) {
+    var className = type + '-minute';
+    return '' +
+        '<select class="form-control sub-control select ' + className + '">' +
+        minutesOptions(selectedMinute) +
+        '</select>';
+  }
+
   function hourOptions(selectedOption, type) {
     var range = type === 'start' ? _.range(0, 24) : _.range(1, 25);
     return _.map(range, function (hour) {
       var selected = hour === selectedOption ? 'selected' : '';
       return '<option value="' + hour + '" ' + selected + '>' + hour + '</option>';
+    }).join('');
+  }
+
+  function minutesOptions(selectedOption) {
+    var range = _.range(0, 60, 5);
+    return _.map(range, function (minute) {
+      var selected = minute === selectedOption ? 'selected' : '';
+      return '<option value="' + minute + '" ' + selected + '>' + (minute<10 ? '0' + minute : minute) + '</option>';
     }).join('');
   }
 

@@ -25,8 +25,22 @@ case class TextualValue(value: String) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
-case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriodMinutes], exceptions: Set[Int])
+
+//case class ProhibitionsMinutes(prohibitions: Seq[ProhibitionValueMinutes]) extends Value {
+//  override def toJson: Any = prohibitions
+//}
+//case class ProhibitionValueMinutes(typeId: Int, validityPeriods: Set[ValidityPeriodMinutes], exceptions: Set[Int])
+
+
+trait ValidityPeriodsData{
+  def startHour: Int
+  def endHour: Int
+  def days: ValidityPeriodDayOfWeek
+  def duration(): Int
+}
+
+case class ValidityPeriod(override val startHour: Int, override val endHour: Int, override val days: ValidityPeriodDayOfWeek) extends ValidityPeriodsData{
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
       Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
@@ -51,6 +65,34 @@ case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayO
   private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
     hour >= interval._1 && hour <= interval._2
   }
+}
+
+case class ValidityPeriodMinutes(override val startHour: Int, startMinute: Int, override val endHour: Int, endMinute: Int, override val days: ValidityPeriodDayOfWeek) extends ValidityPeriodsData {
+
+  def duration(): Int = {
+    val startHourAndMinutes = (startMinute / 60) + startHour
+    val endHourAndMinutes = (endMinute / 60) + endHour
+
+    if (endHourAndMinutes > startHourAndMinutes) {
+      Math.round(endHourAndMinutes - startHourAndMinutes)
+    } else {
+      Math.round(24 - startHourAndMinutes + endHourAndMinutes)
+    }
+  }
+
+  def preciseDuration(): (Int, Int) = {
+    val startTotalMinutes = startMinute + (startHour * 60)
+    val endTotalMinutes = endMinute + (endHour * 60)
+
+    if (endTotalMinutes > startTotalMinutes) {
+      val duration = endTotalMinutes - startTotalMinutes
+      ((duration / 60).toInt, duration % 60)
+    } else {
+      val duration = 1440 - startTotalMinutes + endTotalMinutes
+      ((duration / 60).toInt, duration % 60)
+    }
+  }
+
 }
 
 sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }

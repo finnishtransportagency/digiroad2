@@ -45,9 +45,9 @@ class CsvGenerator(vvhServiceHost: String) {
       droppedManoeuvres.mapValues { rows =>
         OracleDatabase.withDynSession {
           val exceptions = sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list
-          val validityPeriods = sql"""select type, start_hour, end_hour from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
-           """.as[(Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour) =>
-            ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
+          val validityPeriods = sql"""select type, start_hour, end_hour, start_minute, end_minute from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
+           """.as[(Int, Int, Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour, startMinute, endMinute) =>
+            ValidityPeriodMinutes(startHour, startMinute, endHour, endMinute, ValidityPeriodDayOfWeek(dayOfWeek))
           }
           rows.map { x => (x._1, x._2, x._3, x._4, x._5, exceptions, validityPeriods) }
         }
@@ -174,7 +174,7 @@ class CsvGenerator(vvhServiceHost: String) {
     }
   }
 
-  private def generateValidityPeriodString(validityPeriods: Seq[ValidityPeriod]): String = {
+  private def generateValidityPeriodString(validityPeriods: Seq[ValidityPeriodMinutes]): String = {
     val daysMap = Map(
       1 -> "Ma - Pe",
       2 -> "La",
@@ -266,7 +266,7 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
   }
 
-  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Int, Seq[Int], Seq[ValidityPeriodMinutes])]]): Unit = {
     val headerLine = "manoeuvre_id; additional_info; source_link_link_id; dest_link_link_id; exceptions; validity_periods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>

@@ -188,13 +188,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def toTimeDomain(validityPeriod: ValidityPeriod): String = {
+  def toTimeDomain(validityPeriod: ValidityPeriodsData): String = {
     val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
       case Sunday => "(t1){d1}"
       case _ => "(t2){d5}"
     }
     s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
+  }
+
+  def toTimeDomainWithMinutes(validityPeriodMinutes: ValidityPeriodMinutes): String = {
+    val daySpec = validityPeriodMinutes.days match {
+      case Saturday => "(t7){d1}"
+      case Sunday => "(t1){d1}"
+      case _ => "(t2){d5}"
+    }
+    s"[[$daySpec]*[(h${validityPeriodMinutes.startHour}m${validityPeriodMinutes.startMinute}){h${validityPeriodMinutes.preciseDuration()._1}m${validityPeriodMinutes.preciseDuration()._2}}]]"
   }
 
   def valueToApi(value: Option[Value]) = {
@@ -331,6 +340,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "destLinkId" -> manoeuvre.elements.last.sourceLinkId,
         "exceptions" -> manoeuvre.exceptions,
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
+        "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
         "modifiedDateTime" -> manoeuvre.modifiedDateTime)
     }
