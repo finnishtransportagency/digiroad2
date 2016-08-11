@@ -155,6 +155,19 @@
       });
     };
 
+    var hasMixedVirtualAndRealStops = function()
+    {
+      return _.some(currentAsset.payload.properties, function(property)
+      {
+        if (property.publicId == "pysakin_tyyppi") {
+          return _.some(property.values, function(propertyValue){
+            return (propertyValue.propertyValue == 5 && property.values.length>1) ;
+          });
+        }
+        return false;
+      });
+    };
+
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
         return getPropertyMetadata(publicId).required;
@@ -282,7 +295,8 @@
       switchDirection: switchDirection,
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
-      place: place
+      place: place,
+      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops
     };
   };
 

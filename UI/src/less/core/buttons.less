@@ -76,6 +76,57 @@
   	}		
 }
 
+.btn-new {
+	border-color: @blue-darker;
+	background-color: @blue;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+	margin-top:6px !important;
+
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
+	}
+}
+.btn-modify {
+	border-color: @blue-darker;
+	background-color: @blue;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+	margin-top:6px !important;
+
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
+	}
+}
+.btn-continue {
+	border-color: @blue-darker;
+	background-color: @blue;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+	float:right !important;
+
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
+	}
+}
 .btn-tertiary {
 	border-color: @gray;
 	color: @gray-darker;
@@ -126,4 +177,22 @@
   width: 100%;
   padding-left: 0;
   padding-right: 0;
+}
+
+.btn-drop {
+	border-color: @blue-darker;
+	background-color: @blue;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+	margin-top:6px !important;
+
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
+	}
 }

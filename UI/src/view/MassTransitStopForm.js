@@ -22,13 +22,34 @@
     };
   };
 
+  var InvalidCombinationError = function() {
+    var element = $('<span class="validation-fatal-error">Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</span>');
+    var updateVisibility = function() {
+      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.hasMixedVirtualAndRealStops()) {
+        element.show();
+      } else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
       selectedMassTransitStopModel.save();
     });
     var updateStatus = function() {
-      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing()) {
+      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops()){
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
@@ -305,7 +326,8 @@
       };
 
       var multiChoiceHandler = function(property, choices){
-        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
+        var choiceValidation = new InvalidCombinationError();
+        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
@@ -374,6 +396,8 @@
           'muokattu_viimeksi',
           'nimi_suomeksi',
           'nimi_ruotsiksi',
+          'osoite_suomeksi',
+          'osoite_ruotsiksi',
           'tietojen_yllapitaja',
           'yllapitajan_tunnus',
           'yllapitajan_koodi',

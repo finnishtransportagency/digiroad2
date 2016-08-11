@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, NumericValue, RoadLink, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
@@ -945,5 +945,90 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
 
 
+  }
+
+  test("Must be able to split one sided speedlimits and keep new speed limit") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val speedLimitAssetTypeId = 20
+    val linkId = 2934660L
+    val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
+    val vvhRoadLink = VVHRoadlink(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+
+    val changeInfo = Seq()
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
+      sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050501',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
+      sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050503',null,'20',to_timestamp('20.04.2016 13:16:02','DD.MM.RRRR HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
+
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ('46647958',null,'2','0','424',null,$linkId,'1460044024000',to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'))""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ('46647960',null,'3','0','424',null,$linkId,'1460044024000',to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'))""".execute
+
+      sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ('18050499','46647958')""".execute
+      sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ('18050501','46647960')""".execute
+
+      sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 100 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+      sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+
+      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+
+      val before = service.get(boundingBox, Set(municipalityCode)).toList
+
+//      println("Before split")
+//      before.foreach(_.foreach(printSL))
+
+      val split = service.split(18050499, 419.599, 100, 80, "split", { x: Int => })
+
+      split should have size(2);
+
+//      println("Split")
+//      split.foreach(printSL)
+
+      val after = service.get(boundingBox, Set(municipalityCode)).toList
+
+//      println("After split")
+//      after.foreach(_.foreach(printSL))
+
+      after.forall(_.forall(_.id != 0)) should be (true)
+
+//      provider.get(BoundingRectangle(Point(0.0, 0.0), Point(425.0, 1.0)), Set(235))
+//
+//      verify(eventBus, times(0)).publish("linearAssets:update", ChangeSet(Set(), Seq(), Seq(), Set()))
+
+      dynamicSession.rollback()
+    }
+
+
+  }
+
+
+  def printSL(speedLimit: SpeedLimit) = {
+    val ids = "%d (%d)".format(speedLimit.id, speedLimit.linkId)
+    val dir = speedLimit.sideCode match {
+      case SideCode.BothDirections => "⇅"
+      case SideCode.TowardsDigitizing => "↑"
+      case SideCode.AgainstDigitizing => "↓"
+      case _ => "?"
+    }
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    if (speedLimit.expired) {
+      println("N/A")
+    } else {
+      println("%s %s %s".format(ids, dir, details))
+    }
   }
 }

@@ -291,6 +291,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinkService.getAdjacent(id).map(roadLinkToApi)
   }
 
+  get("/roadlinks/adjacents/:ids") {
+    val ids = params("ids").split(',').map(_.toLong)
+    roadLinkService.getAdjacents(ids.toSet).mapValues(_.map(roadLinkToApi))
+  }
+
   get("/roadLinks/incomplete") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
@@ -428,7 +433,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedNumericalIds = valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+    val updatedNumericalIds =
+      valueOption.nonEmpty match {
+        case true =>
+          valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+        case false =>
+          linearAssetService.clearValue(existingAssets.toSeq, user.username)
+      }
+
     val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
 
     updatedNumericalIds ++ createdIds
@@ -581,10 +593,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
-      val linkIds = manoeuvres.map(_.sourceLinkId)
-      roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
-        .map(_.municipalityCode)
+      val linkIds = manoeuvres.flatMap(_.linkIds)
+      val roadlinks = roadLinkService.getRoadLinksFromVVH(linkIds.toSet)
+
+      roadlinks.map(_.municipalityCode)
         .foreach(validateUserMunicipalityAccess(user))
+
+      if(!manoeuvreService.isValid(manoeuvre, roadlinks))
+        halt(BadRequest("Invalid 'manouevre'"))
 
       manoeuvreService.createManoeuvre(user.username, manoeuvre)
     }

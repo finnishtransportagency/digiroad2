@@ -160,7 +160,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -376,16 +376,17 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   private def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1))
+      Point(point(0), point(1), extractMeasure(point(2)).get)
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
 
   private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -413,7 +414,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "MUNICIPALITYCODE",
       "MTKHEREFLIP",
       "VALIDFROM",
-      "GEOMETRY_EDITED_DATE").contains(x)
+      "GEOMETRY_EDITED_DATE",
+      "SURFACETYPE").contains(x)
     }.filter { case (_, value) =>
       value != null
     }

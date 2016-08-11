@@ -3,12 +3,13 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -19,6 +20,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
   val ProhibitionAssetTypeId = 190
+  val PavingAssetTypeId = 110
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
@@ -96,21 +98,88 @@ trait LinearAssetOperations {
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
     val timing = System.currentTimeMillis
-    val newAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      existingAssets, assetsOnChangedLinks, changes)
+
+    val (expiredPavingAssetIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
+
+    val combinedAssets = existingAssets.filterNot(
+      a => expiredPavingAssetIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id)
+    ) ++ newAndUpdatedPavingAssets
+
+    val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
+      combinedAssets, assetsOnChangedLinks, changes)
+
+    val newAssets = newAndUpdatedPavingAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
+
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
-    val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+    val groupedAssets = (existingAssets.filterNot(a => expiredPavingAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId)
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
-      changeSet.expiredAssetIds
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
+      changeSet.expiredAssetIds ++ expiredPavingAssetIds
+    val mValueAdjustments = newAndUpdatedPavingAssets.filter(_.id != 0).map( a =>
+      MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
+    )
+    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L),
+      adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
     filledTopology
+  }
+
+  def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
+                            changeInfos: Seq[ChangeInfo], typeId: Long): (Set[Long], Seq[PersistedLinearAsset]) = {
+
+    if (typeId != LinearAssetTypes.PavingAssetTypeId)
+        return (Set(), List())
+
+    //Group last vvhchanges by link id
+    val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
+
+    //Map all existing assets by roadlink and changeinfo
+    val changedAssets = lastChanges.map{
+      case (linkId, changeInfo) =>
+        (roadLinks.find(_.linkId == linkId), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
+    }
+
+    /* Note: This uses isNotPaved that excludes "unknown" pavement status. In OTH unknown means
+    *  "no pavement" but in case OTH has pavement info with value 1 then VVH "unknown" should not affect OTH.
+    *  Additionally, should there be an override that is later fixed we let the asset expire here as no
+    *  override is needed anymore.
+    */
+    val expiredAssetsIds = changedAssets.flatMap {
+      case (Some(roadlink), changeInfo, assets) =>
+        if (roadlink.isNotPaved && assets.nonEmpty)
+          assets.filter(_.vvhTimeStamp < changeInfo.vvhTimeStamp).map(_.id)
+        else
+          List()
+      case _ =>
+        List()
+    }.toSet[Long]
+
+    /* Note: This will not change anything if asset is stored using value None (null in database)
+    *  This is the intended consequence as it enables the UI to write overrides to VVH pavement info */
+    val newAndUpdatedAssets = changedAssets.flatMap{
+      case (Some(roadlink), changeInfo, assets) =>
+        if(roadlink.isPaved)
+          if (assets.isEmpty)
+            Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
+              GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
+              LinearAssetTypes.PavingAssetTypeId, changeInfo.vvhTimeStamp, None))
+          else
+            assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
+              (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
+            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1)),
+              startMeasure=0.0, endMeasure=roadlink.length))
+        else
+          None
+      case _ =>
+        None
+    }.toSeq
+
+    (expiredAssetsIds, newAndUpdatedAssets)
   }
 
   /**
@@ -320,6 +389,16 @@ trait LinearAssetOperations {
     }
   }
 
+  /**
+    * Sets the linear asset value to None for numeric value properies.
+    * Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  def clearValue(ids: Seq[Long], username: String): Seq[Long] = {
+    withDynTransaction {
+      ids.flatMap(id => dao.clearValue(id, LinearAssetTypes.numericValuePropertyId, username))
+    }
+  }
+
   /*
    * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
    */
@@ -510,7 +589,7 @@ trait LinearAssetOperations {
   }
 
   private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String, vvhTimeStamp: Long): Long = {
-    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username)
+    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username, vvhTimeStamp)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -521,6 +600,49 @@ trait LinearAssetOperations {
     }
     id
   }
+
+  /**
+    * Received a AssetTypeId and expire All RoadLinks for That AssetTypeId, create new assets based on VVH RoadLink data
+    *
+    * @param assetTypeId
+    */
+  def expireImportRoadLinksVVHtoOTH(assetTypeId: Int): Unit = {
+    //Get all municipalities for search VVH Roadlinks
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    withDynTransaction {
+      //Expire All RoadLinks
+      dao.expireAllAssetsByTypeId(assetTypeId)
+      println("*** All RoadLinks Expired by TypeId: " + assetTypeId)
+
+      //For each municipality get all VVH Roadlinks for pick link id and pavement data
+      municipalities.foreach { municipality =>
+        println("*** Processing municipality: " + municipality)
+
+        //Get All RoadLinks from VVH
+        val roadLinks = roadLinkService.getVVHRoadLinksF(municipality)
+
+        var count = 0
+        if (roadLinks != null) {
+          println("*** Number of RoadsLinks from VVH with Municipality " + municipality + ": " + roadLinks.length)
+
+          //Create new Assets for the RoadLinks from VVH
+          val newAssets = roadLinks.
+            filter(_.attributes.get("SURFACETYPE").contains(2)).
+            map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
+          newAssets.foreach{ newAsset =>
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+            count = count + 1
+          }
+        }
+        println("*** Number of Assets Created for Municipality: " + municipality + ": " + count)
+      }
+    }
+  }
+
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

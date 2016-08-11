@@ -60,6 +60,8 @@ class JsonSerializer extends VVHSerializer {
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
 
     val tmpFile = File.createTempFile("tmp", "cached")
+    tmpFile.deleteOnExit()
+
     write(objects, new FileWriter(tmpFile))
 
     if (file.exists())
@@ -70,6 +72,12 @@ class JsonSerializer extends VVHSerializer {
       return true
     } catch {
       case ex: Exception => logger.warn("Copy failed", ex)
+    } finally {
+      try {
+        if (tmpFile != null) tmpFile.delete()
+      } catch {
+        case ex: Exception => logger.info("Deleting tmp file failed", ex)
+      }
     }
     false
 

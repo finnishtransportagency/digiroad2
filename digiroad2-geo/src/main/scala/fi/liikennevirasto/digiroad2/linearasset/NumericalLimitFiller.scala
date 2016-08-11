@@ -41,7 +41,7 @@ object NumericalLimitFiller {
     maybeAsset match {
       case Some(extension) =>
         extendHead(extension.startMeasure, candidates.diff(Seq(extension)),
-          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ Set(extension.id)))
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ Set(extension.id)))
       case None => (mStart, changeSet)
 
     }
@@ -51,7 +51,7 @@ object NumericalLimitFiller {
     maybeAsset match {
       case Some(extension) =>
         extendTail(extension.endMeasure, candidates.diff(Seq(extension)),
-          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ Set(extension.id)))
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ Set(extension.id)))
       case None => (mEnd, changeSet)
     }
   }
@@ -103,7 +103,7 @@ object NumericalLimitFiller {
         val rest = twoWaySegments.tail
         val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
         val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
-        (rest.filterNot(p => newChangeSet.droppedAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
+        (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
           newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
       } else {
         (assets, changeSet)
@@ -111,14 +111,14 @@ object NumericalLimitFiller {
     }
   }
 
-  private def dropSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  private def expireSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
-    val droppedAssetIds = segmentsOutsideGeometry.map(_.id).toSet
-    (segmentsWithinGeometry, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+    val expiredAssetIds = segmentsOutsideGeometry.map(_.id).toSet
+    (segmentsWithinGeometry, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
   }
 
   private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length)
+    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length + MaxAllowedError)
     val cappedSegments = overflowingSegments.map { x => x.copy(endMeasure = roadLink.length)}
     val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.linkId, x.startMeasure, x.endMeasure) }
     (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
@@ -196,7 +196,7 @@ object NumericalLimitFiller {
     * @param result Recursive result of each iteration
     * @return Sequence without overlapping linear assets
     */
-  private def dropOverlappedRecursively(sortedAssets: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+  private def expireOverlappedRecursively(sortedAssets: Seq[PersistedLinearAsset], result: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
     val keeperOpt = sortedAssets.headOption
     if (keeperOpt.nonEmpty) {
       val keeper = keeperOpt.get
@@ -214,29 +214,29 @@ object NumericalLimitFiller {
           Seq(asset)
       }
       )
-      dropOverlappedRecursively(overlapping, result ++ Seq(keeper))
+      expireOverlappedRecursively(overlapping, result ++ Seq(keeper))
     } else {
       result
     }
   }
 
-  private def dropOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  private def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     def isChanged(p : PersistedLinearAsset) : Boolean = {
       segments.exists(s => p.id == s.id && (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))
     }
 
     if (segments.size >= 2) {
-      val sortedSegments = dropOverlappedRecursively(sortNewestFirst(segments), Seq())
+      val sortedSegments = expireOverlappedRecursively(sortNewestFirst(segments), Seq())
       val alteredSegments = sortedSegments.filterNot(_.id == 0)
 
       // Creates for each linear asset a new MValueAdjustment if the start or end measure have changed
       val mValueChanges = alteredSegments.filter(isChanged).
         map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
 
-      val droppedIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.droppedAssetIds
+      val expiredIds = segments.map(_.id).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredAssetIds
       (sortedSegments,
-        changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => droppedIds.contains(mvc.assetId)),
-          expiredAssetIds = droppedIds))
+        changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => expiredIds.contains(mvc.assetId)),
+          expiredAssetIds = expiredIds))
     } else
       (segments, changeSet)
   }
@@ -244,9 +244,9 @@ object NumericalLimitFiller {
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
-      dropSegmentsOutsideGeometry,
+      expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
-      dropOverlappingSegments,
+      expireOverlappingSegments,
       adjustTwoWaySegments,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),

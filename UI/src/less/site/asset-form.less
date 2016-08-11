@@ -85,6 +85,24 @@
     }
   }
 
+  .continue-option-group{
+    margin-top: 20px;
+
+    label{
+      display: inline-block !important;
+      margin-bottom: 2.5px !important;
+      font-size: 11px !important;
+      font-weight: bold !important;
+      text-transform: uppercase !important;
+    }
+
+    ul{
+      padding-top: 10px;
+      font-size:12px;
+    }
+
+  }
+
   .form-manoeuvre {
     .control-label {
       width: 100%;
@@ -179,6 +197,15 @@
     padding-right: (@line-height-modifier*2) * 1px;
     font-size: @font-size-small;
   }
+
+  span.validation-fatal-error {
+    text-align: center;
+    color: @failure;
+    font-size: @font-size-xl;
+    margin: auto;
+    display:block
+  }
+
 }
 
 .form {

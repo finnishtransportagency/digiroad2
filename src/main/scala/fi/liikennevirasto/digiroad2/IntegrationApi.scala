@@ -82,15 +82,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-    timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
-      .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
-      .getOrElse(""))
+      timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
+        .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
+          .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
     "muokannut_viimeksi" ->  massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
-      .getOrElse(""))
+        .getOrElse(""))
   }
 
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
@@ -276,17 +276,24 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .getOrElse("")
   }
 
-  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) = {
-      val geometryWKT =
-        if (geometry.nonEmpty)
-          "LINESTRING(" + geometry.map(p => p.x + " " + p.y).mkString(", ") + ")"
-        else
-          ""
-    "geometryWKT" -> geometryWKT
+  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
+  {
+    if (geometry.nonEmpty)
+    {
+      val segments = geometry.zip(geometry.tail)
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2))
+      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val wktString = mValuedGeometry.map {
+        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
+      }.mkString(", ")
+      "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
+    }
+    else
+      "geometryWKT" -> ""
   }
 
   def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
-    val geometryWKT = "POINT(" + lon + " " + lat + ")"
+    val geometryWKT = "POINT (" + lon + " " + lat + ")"
     "geometryWKT" -> geometryWKT
   }
 
@@ -318,12 +325,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
     manoeuvres.map { manoeuvre =>
       Map("id" -> manoeuvre.id,
-      "sourceLinkId" -> manoeuvre.sourceLinkId,
-      "destLinkId" -> manoeuvre.destLinkId,
-      "exceptions" -> manoeuvre.exceptions,
-      "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
-      "additionalInfo" -> manoeuvre.additionalInfo,
-      "modifiedDateTime" -> manoeuvre.modifiedDateTime)
+        //DROTH-177: add intermediate links -> check the element structure
+        "elements" -> manoeuvre.elements.map(_.sourceLinkId),
+        "sourceLinkId" -> manoeuvre.elements.head.sourceLinkId,
+        "destLinkId" -> manoeuvre.elements.last.sourceLinkId,
+        "exceptions" -> manoeuvre.exceptions,
+        "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
+        "additionalInfo" -> manoeuvre.additionalInfo,
+        "modifiedDateTime" -> manoeuvre.modifiedDateTime)
     }
   }
 

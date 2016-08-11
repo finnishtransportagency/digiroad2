@@ -58,6 +58,12 @@
       });
     };
 
+    this.getAdjacents = _.throttle(function(ids, callback) {
+      $.getJSON('api/roadlinks/adjacents/' + ids, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
     this.getAdjacent = _.throttle(function(id, callback) {
       $.getJSON('api/roadlinks/adjacent/' + id, function(data) {
         callback(data);
@@ -202,15 +208,27 @@
     }, 1000);
 
     this.deleteLinearAssets = _.throttle(function(data, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "DELETE",
-        url: "api/linearassets",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
+      if (data.typeId == 110) { // Pavement must be set to null value, not deleted
+        $.ajax({
+          contentType: "application/json",
+          type: "POST",
+          url: "api/linearassets",
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: failure
+        });
+      } else {
+        $.ajax({
+          contentType: "application/json",
+          type: "DELETE",
+          url: "api/linearassets",
+          data: JSON.stringify(data),
+          dataType: "json",
+          success: success,
+          error: failure
+        });
+      }
     }, 1000);
 
     this.splitLinearAssets = function(id, splitMeasure, createdValue, existingValue, success, failure) {

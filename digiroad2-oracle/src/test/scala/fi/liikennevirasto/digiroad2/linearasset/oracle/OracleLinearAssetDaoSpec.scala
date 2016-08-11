@@ -12,6 +12,8 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers, Tag}
 import org.scalatest.mock.MockitoSugar
+import org.scalatest._
+import Matchers._
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -43,8 +45,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleLinearAssetDao) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
     val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(20, speedLimitId).find { link => link._1 == linkId }.get._3)
-    expectedEndPoints._1.distanceTo(limitEndPoints._1) should be(0.0 +- 0.01)
-    expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
+    expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
+    expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
 
   def passingMunicipalityValidation(code: Int): Unit = {}
@@ -210,11 +212,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
 
       dao.createSpeedLimit("test", linkId, (11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
       dao.createSpeedLimit("test", linkId, (20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
-      dao.purgeFromUnknownSpeedLimits(linkId, 86.123)
+      dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
   }
@@ -401,6 +403,27 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
+    }
+  }
+
+  test("all entities should be expired") {
+    val dao = new OracleLinearAssetDao(null)
+    val typeId = 110
+    val linkId = 99999
+    runWithRollback {
+
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY) values ($assetId,$typeId,'dr2_test_data')""".execute
+      sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, $linkId, 0, 100, 1)""".execute
+      sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
+
+      val counting = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
+      counting.get should be > 0
+      dao.expireAllAssetsByTypeId(typeId)
+      val countingAfterExpire = sql"""select count(*) from asset where asset_type_id = $typeId and (valid_to >= sysdate or valid_to is null)""".as[Int].firstOption
+      countingAfterExpire.get should be (0)
     }
   }
 }

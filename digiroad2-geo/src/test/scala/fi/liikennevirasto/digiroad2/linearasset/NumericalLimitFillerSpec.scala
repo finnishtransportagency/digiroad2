@@ -23,7 +23,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
 
-  test("drop assets that fall completely outside topology") {
+  test("expire assets that fall completely outside topology") {
     val topology = Seq(
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
@@ -39,7 +39,8 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.linkId) should be(Seq(1))
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    changeSet.droppedAssetIds should be(Set(1l))
+    changeSet.expiredAssetIds should be(Set(1l))
+    changeSet.droppedAssetIds should be(Set())
   }
 
   test("cap assets that go over roadlink geometry") {
@@ -59,6 +60,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.droppedAssetIds should be(Set())
+    changeSet.expiredAssetIds should be(Set())
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1l, 1l, 0.0, 10.0)))
   }
 
@@ -268,7 +270,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     changeSet.adjustedMValues.length should be (1)
     changeSet.adjustedMValues.head.endMeasure should be (10.0)
     changeSet.adjustedMValues.head.startMeasure should be (0.0)
-    changeSet.droppedAssetIds should be (Set(2,3))
+    changeSet.expiredAssetIds should be (Set(2,3))
   }
 
   private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
