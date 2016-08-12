@@ -274,7 +274,10 @@
           return rl.linkId == destLinkId;
         });
       }
-      return target.adjacentLinks;
+      if (target) {
+        return target.adjacentLinks;
+      }
+      return {};
     };
 
     return {
