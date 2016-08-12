@@ -368,7 +368,7 @@
         return element;
       };
 
-      var sortProperties = function(properties) {
+      var sortAndFilterProperties = function(properties) {
         var propertyOrdering = [
           'lisatty_jarjestelmaan',
           'muokattu_viimeksi',
@@ -404,19 +404,38 @@
 
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);
+        }).filter(function(property){
+          return _.indexOf(propertyOrdering, property.publicId) >= 0
         });
       };
 
       var floatingStatus = function(selectedAssetModel) {
+        var text;
+        switch (selectedMassTransitStopModel.getFloatingReason()){
+          case '2':
+          case '4':
+          case '5':
+            text = 'Kadun tai tien geometria on muuttunut...';
+            break;
+          case '1':
+            text = 'Kadun tai tien hallinnollinen luokka on muuttunut. Tarkista ja korjaa pysäkin sijainti.';
+            break;
+          case '3':
+            text = 'Kadun tai tien omistava kunta on vaihtunut. Tarkista ja korjaa pysäkin sijainti.';
+            break;
+          default:
+            text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
+        }
+
         return [{
           propertyType: 'notification',
           enabled: selectedMassTransitStopModel.get('floating'),
-          text: 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.'
+          text: text
         }];
       };
 
       var getAssetForm = function() {
-        var properties = sortProperties(selectedMassTransitStopModel.getProperties());
+        var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));

@@ -185,7 +185,7 @@ object Queries {
       }
     }
     sql"""
-      select p.id, p.public_id, p.property_type, p.required from property p where p.is_visible = 1 and p.asset_type_id = $assetTypeId
+      select p.id, p.public_id, p.property_type, p.required from property p where p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
 

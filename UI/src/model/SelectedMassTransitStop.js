@@ -240,6 +240,10 @@
       return getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
     };
 
+    var getFloatingReason = function(){
+      return getPropertyValue({ propertyData: getProperties() }, 'kellumisen_syy');
+    }
+
     var get = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
@@ -277,6 +281,7 @@
       getId: getId,
       getName: getName,
       getDirection: getDirection,
+      getFloatingReason: getFloatingReason,
       get: get,
       getProperties: getProperties,
       switchDirection: switchDirection,

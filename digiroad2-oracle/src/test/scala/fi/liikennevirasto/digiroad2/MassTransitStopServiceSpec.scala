@@ -108,7 +108,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
       val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      val boundingBox = BoundingRectangle(Point(370000,6677000), Point(374800,6677600))
       //Set administration class of the asset with State value
       massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
@@ -121,7 +121,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
       val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      val boundingBox = BoundingRectangle(Point(370000,6677000), Point(374800,6677600))
       //Set administration class of the asset with State value
       massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
@@ -139,7 +139,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(false))
+      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set()), Some(false))
       //Get all external ids from the working list
       val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
 
@@ -154,7 +154,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback {
       val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      val boundingBox = BoundingRectangle(Point(370000,6677000), Point(374800,6677600))
       //Set administration class of the asset with State value
       massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
       //GetBoundingBox will set assets  to floating

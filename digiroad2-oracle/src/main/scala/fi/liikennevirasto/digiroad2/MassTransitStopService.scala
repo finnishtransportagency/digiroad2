@@ -81,7 +81,7 @@ trait MassTransitStopService extends PointAssetOperations {
         from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-        join property p on a.asset_type_id = p.asset_type_id and p.is_visible = 1
+        join property p on a.asset_type_id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
