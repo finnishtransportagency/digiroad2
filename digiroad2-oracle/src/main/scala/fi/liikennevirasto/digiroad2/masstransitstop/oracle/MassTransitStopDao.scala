@@ -211,7 +211,6 @@ class MassTransitStopDao {
   }
 
   def getAssetAdministrationClass(assetId : Long): Option[AdministrativeClass] ={
-    //TODO put the name os the property as a constant
     val propertyValueOption = getTextPropertyValue(assetId, "linkin_hallinnollinen_luokka")
 
     propertyValueOption match {
@@ -222,7 +221,6 @@ class MassTransitStopDao {
   }
 
   def getAssetFloatingReason(assetId: Long): Option[FloatingReason] ={
-    //TODO put the name os the property as a constant
     val propertyValueOption = getTextPropertyValue(assetId, "kellumisen_syy")
 
     propertyValueOption match {

@@ -106,7 +106,7 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
         val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
-        if(administrationClass.isDefined && roadLink.administrativeClass.value != administrationClass.get.value){
+        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return (true, Some(FloatingReason.RoadOwnerChanged))
         }
     }
@@ -120,7 +120,7 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
         val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
-        if(administrationClass.isDefined && roadLink.administrativeClass.value != administrationClass.get.value){
+        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
         }
     }
@@ -144,7 +144,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kellumisen_syy'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
-          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate) and tp.value_fi <> ${FloatingReason.RoadOwnerChanged.value}"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and tp.value_fi <> ${FloatingReason.RoadOwnerChanged.value}"""
 
         StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
 

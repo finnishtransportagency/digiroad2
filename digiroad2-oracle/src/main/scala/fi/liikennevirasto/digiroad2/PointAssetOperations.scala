@@ -116,7 +116,7 @@ trait PointAssetOperations {
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
 
-      val municipalityFilter = optionalMunicipalities match {
+      val municipalityFilter =  optionalMunicipalities match {
         case Some(municipalities) => s" and municipality_code in ($municipalities)"
         case _ => ""
       }
