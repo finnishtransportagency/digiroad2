@@ -858,4 +858,26 @@ class AssetDataImporter {
     }
     props
   }
+
+  /**
+    * Get address information to mass transit stop assets from VVH road link (DROTH-221).
+    *
+    * @param vvhHost
+    */
+  def getMassTransitStopAddressesFromVVH(vvhHost: String) = {
+    val vvhClient = new VVHClient(vvhHost)
+    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+
+    withDynTransaction {
+      municipalities.foreach { municipalityCode =>
+        val startTime = DateTime.now()
+
+        println(s"*** Processing municipality: $municipalityCode")
+
+        val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+
+        // TODO: Loop through road links and mass transit stop assets
+      }
+    }
+  }
 }

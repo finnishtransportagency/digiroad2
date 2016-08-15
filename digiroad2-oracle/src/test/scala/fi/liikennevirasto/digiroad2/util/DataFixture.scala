@@ -207,8 +207,8 @@ object DataFixture {
     println(DateTime.now())
     dataImporter.adjustToNewDigitization(dr2properties.getProperty("digiroad2.VVHServiceHost"))
     println("complete at time: ")
-    println("\n")
     println(DateTime.now())
+    println("\n")
   }
 
   private def createAndFloat(incomingObstacle: IncomingObstacle) = {
@@ -223,13 +223,14 @@ object DataFixture {
     */
   private def getMassTransitStopAddressesFromVVH(): Unit =
   {
-    //ToDo call method that has or creates list of MTstops and then asks addresses to them from vvh.
-  
+    println("\nCommencing address information import from VVH road links to mass transit stops at time: ")
+    println(DateTime.now())
+    dataImporter.getMassTransitStopAddressesFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
   }
-
-
-
-
 
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
