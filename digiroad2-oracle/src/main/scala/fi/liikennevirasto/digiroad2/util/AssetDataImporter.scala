@@ -862,9 +862,9 @@ class AssetDataImporter {
   /**
     * Get address information to mass transit stop assets from VVH road link (DROTH-221).
     *
-    * @param vvhHost
+    * @param vvhRestApiEndPoint
     */
-  def getMassTransitStopAddressesFromVVH(vvhHost: String) = {
+  def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
 
     /**
       * Retrives Masstransitstops which do not have finnish and swedish name (street name with out numbers)
@@ -891,7 +891,7 @@ class AssetDataImporter {
       println(getMTStopswithoutaddress(235))// TODO: remove println & replace 235 with loop value from minicipality list
     }
 
-    val vvhClient = new VVHClient(vvhHost)
+    val vvhClient = new VVHClient(vvhRestApiEndPoint)
     val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
 
       municipalities.foreach { municipalityCode =>

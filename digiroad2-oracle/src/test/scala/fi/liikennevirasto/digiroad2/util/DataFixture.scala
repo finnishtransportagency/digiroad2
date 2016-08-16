@@ -225,7 +225,7 @@ object DataFixture {
   {
     println("\nCommencing address information import from VVH road links to mass transit stops at time: ")
     println(DateTime.now())
-    dataImporter.getMassTransitStopAddressesFromVVH(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    dataImporter.getMassTransitStopAddressesFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
