@@ -865,16 +865,27 @@ class AssetDataImporter {
     * @param vvhRestApiEndPoint
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
+    val vvhClient = new VVHClient(vvhRestApiEndPoint)
+    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
 
-    /**
-      * Retrives Masstransitstops which do not have finnish and swedish name (street name with out numbers)
-      * "Ei tiedossa" values are considered "with out values"
-      * Returns list of |Asset ID, Link-ID, Finnish Street Name (w/o number), Swedish Street Name (w/o number), finnish txt_property id, swedish txt_property id|
-      */
-    withDynTransaction {
-      def getMTStopswithoutaddress(municipalityNumber: Int) = {
+      municipalities.foreach { municipalityCode =>
+        val startTime = DateTime.now()
+        withDynTransaction {
+          println(s"*** Processing municipality: $municipalityCode")
+          val listofStops = getMTStopswithoutaddress(municipalityCode)
+          println (listofStops) //TODO remove print from release version
+          //val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+        }
+      }
+  }
+  /**
+    * Retrives Masstransitstops which do not have finnish and swedish name (street name with out numbers)
+    * "Ei tiedossa" values are considered "with out values"
+    * Returns list of |Asset ID, Link-ID, Finnish Street Name (w/o number), Swedish Street Name (w/o number), finnish txt_property id, swedish txt_property id|
+    */
+  def getMTStopswithoutaddress(municipalityNumber: Int) = {
 
-        sql"""
+      sql"""
            Select distinct a.id, l.link_ID, fiv.value_fi, sev.value_fi, fiv.id, sev.id
           From Asset a, Text_property_value v, Text_property_value fiv, Text_property_value sev, ASSET_LINK lt, LRM_POSITION l
           WHERE
@@ -886,20 +897,5 @@ class AssetDataImporter {
           OR
           ( a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE ASSET_ID=a.id AND (PROPERTY_ID=80 OR PROPERTY_ID=300000) ) ))
           ORDER BY a.ID""".as[(Int, Int, String, String,Int, Int)].list
-
-      }
-      println(getMTStopswithoutaddress(235))// TODO: remove println & replace 235 with loop value from minicipality list
     }
-
-    val vvhClient = new VVHClient(vvhRestApiEndPoint)
-    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
-
-      municipalities.foreach { municipalityCode =>
-        val startTime = DateTime.now()
-
-        println(s"*** Processing municipality: $municipalityCode")
-
-        val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
-      }
-  }
 }
