@@ -4,10 +4,10 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, intintstringstringProperty}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, Obstacle}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -865,19 +865,41 @@ class AssetDataImporter {
     * @param vvhHost
     */
   def getMassTransitStopAddressesFromVVH(vvhHost: String) = {
+
+    /**
+      * Retrives Masstransitstops which do not have finnish and swedish name (street name with out numbers)
+      * "Ei tiedossa" values are considered "with out values"
+      * Returns list of |Asset ID, Link-ID, Finnish Street Name (w/o number), Swedish Street Name (w/o number), finnish txt_property id, swedish txt_property id|
+      */
+    withDynTransaction {
+      def getMTStopswithoutaddress(municipalityNumber: Int) = {
+
+        sql"""
+           Select distinct a.id, l.link_ID, fiv.value_fi, sev.value_fi, fiv.id, sev.id
+          From Asset a, Text_property_value v, Text_property_value fiv, Text_property_value sev, ASSET_LINK lt, LRM_POSITION l
+          WHERE
+          a.Asset_Type_ID=10 AND fiv.Asset_ID =a.ID AND sev.Asset_ID =a.ID AND a.MUNICIPALITY_CODE=$municipalityNumber AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID
+          AND
+          (fiv.PROPERTY_ID=80 AND sev.PROPERTY_ID=300000 AND ((fiv.VALUE_FI IS NULL OR fiv.VALUE_FI=' ') OR ((sev.VALUE_FI IS NULL OR sev.VALUE_FI=' ')))
+          OR
+          ((fiv.PROPERTY_ID <>300000 AND sev.PROPERTY_ID<>80) AND ((fiv.VALUE_FI='Ei tiedossa') AND fiv.PROPERTY_ID=80) OR (sev.VALUE_FI='Ei tiedossa' AND fiv.PROPERTY_ID=80))
+          OR
+          ( a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE ASSET_ID=a.id AND (PROPERTY_ID=80 OR PROPERTY_ID=300000) ) ))
+          ORDER BY a.ID""".as[(Int, Int, String, String,Int, Int)].list
+
+      }
+      println(getMTStopswithoutaddress(235))// TODO: remove println & replace 235 with loop value from minicipality list
+    }
+
     val vvhClient = new VVHClient(vvhHost)
     val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
 
-    withDynTransaction {
       municipalities.foreach { municipalityCode =>
         val startTime = DateTime.now()
 
         println(s"*** Processing municipality: $municipalityCode")
 
         val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
-
-        // TODO: Loop through road links and mass transit stop assets
       }
-    }
   }
 }
