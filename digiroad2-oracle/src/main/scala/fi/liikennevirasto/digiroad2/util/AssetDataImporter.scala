@@ -14,8 +14,7 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.insertSingleChoiceProperty
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
@@ -773,6 +772,20 @@ class AssetDataImporter {
 
   def getPropertyTypeByPublicId(publicId : String): Long ={
     sql"select p.id from property p where p.public_id = $publicId".as[Long].first
+  }
+
+  def getFloatingAssetsWithTextPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[String])] = {
+    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    sql"""
+      select a.id, lrm.link_id, geometry, lrm.start_measure, tp.value_fi
+      from
+      asset a
+      join asset_link al on al.asset_id = a.id
+      join lrm_position lrm on al.position_id  = lrm.id
+      join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
+      left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
+      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      """.as[(Long, Long, Point, Double, Option[String])].list
   }
 
   def getNonFloatingAssetsWithTextPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[String])] ={

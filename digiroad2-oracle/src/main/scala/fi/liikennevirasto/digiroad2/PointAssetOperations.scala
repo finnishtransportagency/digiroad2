@@ -218,23 +218,8 @@ trait PointAssetOperations {
   }
 
   def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
-    roadLink match {
-      case None => return (true, Some(FloatingReason.NoRoadLinkFound))
-      case Some(roadLink) =>
-        if (roadLink.municipalityCode != persistedAsset.municipalityCode) {
-          return (true, Some(FloatingReason.DifferentMunicipalityCode))
-        } else {
-          val point = Point(persistedAsset.lon, persistedAsset.lat)
-          val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, persistedAsset.mValue)
-          if(!PointAssetOperations.coordinatesWithinThreshold(Some(point), roadOption)){
-            roadOption match {
-              case Some(value) => return (true, Some(FloatingReason.DistanceToRoad))
-              case _ => return (true, Some(FloatingReason.NoReferencePointForMValue))
-            }
-          }
-        }
-    }
-    return (false, None)
+    PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
+      lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
   }
 }
 
@@ -245,6 +230,26 @@ object PointAssetOperations {
       case Some(roadLink) =>
         Some(calculateBearing(persistedPointAsset, roadLink.geometry))
     }
+  }
+
+  def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+    roadLink match {
+      case None => return (true, Some(FloatingReason.NoRoadLinkFound))
+      case Some(roadLink) =>
+        if (roadLink.municipalityCode != municipalityCode) {
+          return (true, Some(FloatingReason.DifferentMunicipalityCode))
+        } else {
+          val point = Point(lon, lat)
+          val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue)
+          if(!coordinatesWithinThreshold(Some(point), roadOption)){
+            roadOption match {
+              case Some(value) => return (true, Some(FloatingReason.DistanceToRoad))
+              case _ => return (true, Some(FloatingReason.NoReferencePointForMValue))
+            }
+          }
+        }
+    }
+    return (false, None)
   }
 
   def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {

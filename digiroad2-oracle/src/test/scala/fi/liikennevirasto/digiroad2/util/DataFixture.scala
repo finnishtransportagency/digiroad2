@@ -284,7 +284,7 @@ object DataFixture {
     }
   }
 
-  def setAssetsWithRoadLinkAdministrationClass() : Unit = {
+  def transisStopAssetsFloatingReason() : Unit = {
     println("\nSet mass transit stop asset with roadlink administrator class")
     println(DateTime.now())
 
@@ -293,37 +293,22 @@ object DataFixture {
         Queries.getMunicipalities
     }
 
+    val floatingReasonPublicId = "kellumisen_syy"
     val administrationClassPublicId = "linkin_hallinnollinen_luokka"
 
     OracleDatabase.withDynTransaction{
 
-      val adminstrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
+      val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
+      val administrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
 
       municipalities.foreach { municipality =>
         println("Start processing municipality %d".format(municipality))
-        //Get all not floating mass transit stops by municipality id
-        val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValue(10, administrationClassPublicId, municipality)
 
-        println("Processing %d assets not floating".format(assets.length))
+        println("Start setting floating reason")
+        setTransitStopAssetFloatingReason(floatingReasonPublicId, floatingReasonPropertyId, municipality)
 
-        if(assets.length > 0){
-          //Get All RoadLinks from VVH by asset link ids
-          val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
-
-          assets.foreach{
-            _ match {
-              case (assetId, linkId, None) =>
-                roadLinks.find(_.linkId == linkId) match {
-                  case Some(roadlink) =>
-                    dataImporter.insertTextPropertyData(adminstrationClassPropertyId, assetId, roadlink.administrativeClass.value.toString)
-                  case _ =>
-                    println("The roadlink with id %d was not found".format(linkId))
-                }
-              case (assetId, linkId, Some(value)) =>
-                println("The administration class property already exists on the asset with id %d ".format(assetId))
-            }
-          }
-        }
+        println("Start setting the administration class")
+        setTransitStopAssetAdministrationClass(administrationClassPublicId, administrationClassPropertyId, municipality)
 
         println("End processing municipality %d".format(municipality))
       }
@@ -333,6 +318,62 @@ object DataFixture {
     println("Complete at time: ")
     println(DateTime.now())
     println("\n")
+  }
+
+  private def setTransitStopAssetFloatingReason(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
+    //Get all floating mass transit stops by municipality id
+    val assets = dataImporter.getFloatingAssetsWithTextPropertyValue(10, propertyPublicId, municipality)
+
+    println("Processing %d assets floating".format(assets.length))
+
+    if(assets.length > 0){
+
+      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+
+      assets.foreach {
+        _ match {
+          case (assetId, linkId, point, mValue, None) =>
+            val roadlink = roadLinks.find(_.linkId == linkId)
+            //val point = bytesToPoint(geometry)
+            PointAssetOperations.isFloating(municipalityCode = municipality, lon = point.x, lat = point.y,
+              mValue = mValue, roadLink = roadlink) match {
+              case (isFloating, Some(reason)) =>
+                dataImporter.insertTextPropertyData(propertyId, assetId, reason.value.toString)
+              case _ =>
+                dataImporter.insertTextPropertyData(propertyId, assetId, FloatingReason.Unknown.value.toString)
+            }
+          case (assetId, linkId, point, mValue, Some(floatingReason)) =>
+            println("The asset with id %d already have a floating reason".format(assetId))
+        }
+      }
+    }
+
+  }
+
+  private def setTransitStopAssetAdministrationClass(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
+    //Get all no floating mass transit stops by municipality id
+    val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValue(10, propertyPublicId, municipality)
+
+    println("Processing %d assets not floating".format(assets.length))
+
+    if(assets.length > 0){
+      //Get All RoadLinks from VVH by asset link ids
+      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+
+      assets.foreach{
+        _ match {
+          case (assetId, linkId, None) =>
+            roadLinks.find(_.linkId == linkId) match {
+              case Some(roadlink) =>
+                dataImporter.insertTextPropertyData(propertyId, assetId, roadlink.administrativeClass.value.toString)
+              case _ =>
+                println("The roadlink with id %d was not found".format(linkId))
+            }
+          case (assetId, linkId, Some(value)) =>
+            println("The administration class property already exists on the asset with id %d ".format(assetId))
+        }
+      }
+    }
   }
 
   def importVVHRoadLinksByMunicipalities(): Unit = {
@@ -415,14 +456,14 @@ object DataFixture {
         checkUnknownSpeedlimits()
       case Some ("import_VVH_RoadLinks_by_municipalities") =>
         importVVHRoadLinksByMunicipalities()
-      case Some("set_transitStops_with_roadlink_administrationClass") =>
-        setAssetsWithRoadLinkAdministrationClass()
+      case Some("set_transitStops_floating_reason") =>
+        transisStopAssetsFloatingReason()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits")
+        " check_unknown_speedlimits | set_transitStops_floating_reason")
     }
   }
 }
