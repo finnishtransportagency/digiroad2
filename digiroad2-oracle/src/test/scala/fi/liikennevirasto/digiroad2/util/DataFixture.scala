@@ -285,7 +285,7 @@ object DataFixture {
   }
 
   def transisStopAssetsFloatingReason() : Unit = {
-    println("\nSet mass transit stop asset with roadlink administrator class")
+    println("\nSet mass transit stop asset with roadlink administrator class and floating reason")
     println(DateTime.now())
 
     val municipalities: Seq[Int] =
@@ -322,7 +322,7 @@ object DataFixture {
 
   private def setTransitStopAssetFloatingReason(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     //Get all floating mass transit stops by municipality id
-    val assets = dataImporter.getFloatingAssetsWithTextPropertyValue(10, propertyPublicId, municipality)
+    val assets = dataImporter.getFloatingAssetsWithNumberPropertyValue(10, propertyPublicId, municipality)
 
     println("Processing %d assets floating".format(assets.length))
 
@@ -338,11 +338,11 @@ object DataFixture {
             PointAssetOperations.isFloating(municipalityCode = municipality, lon = point.x, lat = point.y,
               mValue = mValue, roadLink = roadlink) match {
               case (isFloating, Some(reason)) =>
-                dataImporter.insertTextPropertyData(propertyId, assetId, reason.value.toString)
+                dataImporter.insertNumberPropertyData(propertyId, assetId, reason.value)
               case _ =>
-                dataImporter.insertTextPropertyData(propertyId, assetId, FloatingReason.Unknown.value.toString)
+                dataImporter.insertNumberPropertyData(propertyId, assetId, FloatingReason.Unknown.value)
             }
-          case (assetId, linkId, point, mValue, Some(floatingReason)) =>
+          case (assetId, linkId, point, mValue, Some(value)) =>
             println("The asset with id %d already have a floating reason".format(assetId))
         }
       }
@@ -352,7 +352,7 @@ object DataFixture {
 
   private def setTransitStopAssetAdministrationClass(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     //Get all no floating mass transit stops by municipality id
-    val assets = dataImporter.getNonFloatingAssetsWithTextPropertyValue(10, propertyPublicId, municipality)
+    val assets = dataImporter.getNonFloatingAssetsWithNumberPropertyValue(10, propertyPublicId, municipality)
 
     println("Processing %d assets not floating".format(assets.length))
 
@@ -365,7 +365,7 @@ object DataFixture {
           case (assetId, linkId, None) =>
             roadLinks.find(_.linkId == linkId) match {
               case Some(roadlink) =>
-                dataImporter.insertTextPropertyData(propertyId, assetId, roadlink.administrativeClass.value.toString)
+                dataImporter.insertNumberPropertyData(propertyId, assetId, roadlink.administrativeClass.value)
               case _ =>
                 println("The roadlink with id %d was not found".format(linkId))
             }

@@ -405,22 +405,22 @@
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);
         }).filter(function(property){
-          return _.indexOf(propertyOrdering, property.publicId) >= 0
+          return _.indexOf(propertyOrdering, property.publicId) >= 0;
         });
       };
 
       var floatingStatus = function(selectedAssetModel) {
         var text;
         switch (selectedMassTransitStopModel.getFloatingReason()){
-          case '2':
-          case '4':
-          case '5':
+          case '2': //NoRoadLinkFound
+          case '4': //DistanceToRoad
+          case '5': //NoReferencePointForMValue
             text = 'Kadun tai tien geometria on muuttunut...';
             break;
-          case '1':
+          case '1': //RoadOwnerChanged
             text = 'Kadun tai tien hallinnollinen luokka on muuttunut. Tarkista ja korjaa pysäkin sijainti.';
             break;
-          case '3':
+          case '3': //DifferentMunicipalityCode
             text = 'Kadun tai tien omistava kunta on vaihtunut. Tarkista ja korjaa pysäkin sijainti.';
             break;
           default:

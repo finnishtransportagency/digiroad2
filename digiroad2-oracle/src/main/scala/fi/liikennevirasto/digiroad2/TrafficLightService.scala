@@ -26,7 +26,7 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username)

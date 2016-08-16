@@ -755,6 +755,13 @@ class AssetDataImporter {
     """.execute
   }
 
+def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """.execute
+  }
+
   def insertMultipleChoiceValue(propertyId: Long, assetId: Long, value: Int) {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
@@ -774,31 +781,31 @@ class AssetDataImporter {
     sql"select p.id from property p where p.public_id = $publicId".as[Long].first
   }
 
-  def getFloatingAssetsWithTextPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[String])] = {
+  def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
     implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
     sql"""
-      select a.id, lrm.link_id, geometry, lrm.start_measure, tp.value_fi
+      select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
       from
       asset a
       join asset_link al on al.asset_id = a.id
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
-      left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
+      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
       where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
-      """.as[(Long, Long, Point, Double, Option[String])].list
+      """.as[(Long, Long, Point, Double, Option[Int])].list
   }
 
-  def getNonFloatingAssetsWithTextPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[String])] ={
+  def getNonFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[Int])] ={
     sql"""
-      select a.id, lrm.link_id, tp.value_fi
+      select a.id, lrm.link_id, np.value
       from
       asset a
       join asset_link al on al.asset_id = a.id
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
-      left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and p.property_type = 'text'
+      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
       where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
-      """.as[(Long, Long, Option[String])].list
+      """.as[(Long, Long, Option[Int])].list
   }
 
   /**

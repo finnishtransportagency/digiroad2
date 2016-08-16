@@ -17,7 +17,7 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OracleObstacleDao.create(asset, mValue, username, municipality)

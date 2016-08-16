@@ -17,7 +17,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OracleRailwayCrossingDao.create(asset, mValue, municipality, username)

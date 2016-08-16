@@ -69,7 +69,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Get stops by bounding box") {
     runWithRollback {
-      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", List(Point(0.0,0.0), Point(120.0, 0.0)), 235)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink))
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
       stops.map(_.id) should be(Seq(id))
@@ -110,7 +111,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
+      RollbackMassTransitStopService.updateAdministrationClassValue(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -123,7 +124,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
+      RollbackMassTransitStopService.updateAdministrationClassValue(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -136,7 +137,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
+      RollbackMassTransitStopService.updateAdministrationClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(false))
@@ -156,7 +157,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      massTransitStopDao.updateAssetProperties(assetId, Seq(SimpleProperty("linkin_hallinnollinen_luokka", Seq(PropertyValue(State.value.toString)))))
+      RollbackMassTransitStopService.updateAdministrationClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(true))
@@ -291,7 +292,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val service = new TestMassTransitStopService(eventbus)
       val values = List(PropertyValue("1"))
       val properties = List(SimpleProperty("pysakin_tyyppi", values))
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", List(Point(0.0,0.0), Point(120.0, 0.0)), 91)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink))
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)

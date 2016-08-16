@@ -127,6 +127,22 @@ object Queries {
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
 
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """
+  }
+
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Int) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
+
+  def deleteNumberProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from number_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def existsNumberProperty =
+    "select id from number_property_value where asset_id = ? and property_id = ?"
+
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
@@ -170,12 +186,12 @@ object Queries {
     }.toSeq
   }
 
-  def getTextPropertyValue(assetId: Long, publicId: String): Option[String] ={
+  def getNumberPropertyValue(assetId: Long, publicId: String): Option[Int] ={
     sql"""
-            select v.value_fi from text_property_value v
+            select v.value from number_property_value v
             join property p on v.property_id = p.id
             where v.asset_id = $assetId and p.public_id = $publicId
-      """.as[String].firstOption
+      """.as[Int].firstOption
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {

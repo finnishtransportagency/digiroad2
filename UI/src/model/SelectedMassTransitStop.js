@@ -242,7 +242,7 @@
 
     var getFloatingReason = function(){
       return getPropertyValue({ propertyData: getProperties() }, 'kellumisen_syy');
-    }
+    };
 
     var get = function(key) {
       if (exists()) {

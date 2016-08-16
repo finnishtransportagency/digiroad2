@@ -24,7 +24,7 @@ class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOper
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username)

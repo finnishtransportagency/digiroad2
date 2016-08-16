@@ -65,7 +65,7 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink]): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
