@@ -128,6 +128,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
