@@ -25,7 +25,7 @@ case class TextualValue(value: String) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
