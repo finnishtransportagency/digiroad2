@@ -413,6 +413,8 @@
           'katos',
           'mainoskatos',
           'penkki',
+          'roska_astia',
+          'koroke',
           'pyorateline',
           'sahkoinen_aikataulunaytto',
           'valaistus',

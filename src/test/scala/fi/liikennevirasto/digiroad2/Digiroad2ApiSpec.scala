@@ -107,7 +107,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(12)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(14)
     }
   }
 
@@ -171,7 +171,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(31)
+      ps.size should equal(33)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
