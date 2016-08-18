@@ -43,6 +43,10 @@ trait MassTransitStopService extends PointAssetOperations {
   val VirtualBusStopPropertyValue: String = "5"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
 
+  val CentralELYPropertyValue = "2"
+  val AdministratorInfoPublicId = "tietojen_yllapitaja"
+  val LiViIdentifierPublicId = "yllapitajan_koodi"
+
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
@@ -140,7 +144,6 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = stop.propertyData)
   }
 
-
   override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
@@ -156,7 +159,6 @@ trait MassTransitStopService extends PointAssetOperations {
     .flatMap(_.values).map(_.propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
-
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
@@ -211,12 +213,46 @@ trait MassTransitStopService extends PointAssetOperations {
       val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
       if (!mixedStoptypes(asset.properties.toSet))
       {
-        massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
+        massTransitStopDao.updateAssetProperties(assetId, overridePropertyValue(assetId, asset.properties ++ defaultValues.toSet, nationalId))
         getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
         assetId
       }
       else
         throw new IllegalArgumentException
+    }
+  }
+
+  private def setLiViIdentifier(nationalId: Long, properties: Seq[SimpleProperty])(assetId: Long, property: SimpleProperty): SimpleProperty = {
+
+    if(property.publicId == LiViIdentifierPublicId)
+    {
+      val administrationPropertyValue = properties.find(_.publicId == AdministratorInfoPublicId).getOrElse(throw new NoSuchElementException).values.headOption
+      if(administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue)
+        return SimpleProperty(property.publicId, Seq(PropertyValue("OTHJ%d".format(nationalId))))
+    }
+    property
+  }
+
+  /**
+    * Override the properties values passed as parameter using override operations
+    *
+    * @param assetId Asset identifier
+    * @param properties Asset properties
+    * @param nationalId  Asset national identifier
+    * @return Sequence of overridden properties
+    */
+  private def overridePropertyValue(assetId: Long, properties: Seq[SimpleProperty], nationalId: Long): Seq[SimpleProperty] = {
+    val overridePropertyValueOperations: Seq[(Long, SimpleProperty) => SimpleProperty] = Seq(
+      setLiViIdentifier(nationalId, properties)
+      //In the future if we need to override some property just add here the operation
+    )
+
+    properties.map{ property =>
+      var overriddenProperty = property
+      overridePropertyValueOperations.foreach{ operation =>
+        overriddenProperty = operation(assetId, overriddenProperty)
+      }
+      overriddenProperty
     }
   }
 
