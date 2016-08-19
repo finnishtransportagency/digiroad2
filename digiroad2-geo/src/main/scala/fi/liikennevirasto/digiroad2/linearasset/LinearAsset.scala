@@ -27,19 +27,8 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
 }
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
 
-
-trait ValidityPeriodsData{
-  def startHour: Int
-  def endHour: Int
-  def days: ValidityPeriodDayOfWeek
-  def duration(): Int
-  def preciseDuration(): (Int, Int)
-  def startMinute: Int
-  def endMinute: Int
-}
-
-case class ValidityPeriod(override val startHour: Int, override val endHour: Int, override val days: ValidityPeriodDayOfWeek,
-                          override val startMinute: Int = 0, override val endMinute: Int = 0) extends ValidityPeriodsData{
+case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
+                          val startMinute: Int = 0, val endMinute: Int = 0) {
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
       Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days), math.min(startMinute, b.startMinute), math.min(endMinute, b.endMinute)))
