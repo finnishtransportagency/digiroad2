@@ -866,13 +866,13 @@ class AssetDataImporter {
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
     val vvhClient = new VVHClient(vvhRestApiEndPoint)
-    val nonacceptedvalues = Set("Ei tiedossa", " ", null)
     withDynTransaction {
-      val municipalities = getMTStopsMunicipalitycode()
+      println("Phase 1 out of 2. Getting stops with both names missing")
+      val municipalities = getMTStopsMunicipalitycodeBothMissing()
       municipalities.foreach { municipalityCode =>
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
-        val listOfStops = getMTStopsWONames(municipalityCode)
+        val listOfStops = getMTStopsWOAddresses(municipalityCode)
         val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
@@ -891,13 +891,57 @@ class AssetDataImporter {
           }
         }
       }
+      println("Phase 2 out of 2. Getting stops with one address missing.")
+      println("Adding other languages street address name to db only if address in db corresponds to VVH address")
+      val municipalitiesone=getMTStopsMunicipalitycodeOneMissing()
+      municipalitiesone.foreach { municipalityCode =>
+        println(s"*** Processing municipality: $municipalityCode")
+        val listOfStops = getMTStopsMissingOneAddress(municipalityCode)
+        val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+        val finstops=getFinnishStopAddressRSe(municipalityCode)
+        val swedishstops= getSwedishStopAddressRFi(municipalityCode)
+        listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id
+          roadLinks.foreach { rlinks =>
+            if (rlinks.linkId == stops._2) //stop's link if found from vvh list
+              {
+                var sweAddressAdded=false;
+                finstops.foreach{finstop=> //finstop  _1:asset_id, _2:address,_3:link-id
+                {
+                if (finstop._3==stops._2)
+                  {
+                    val swedishaddress=rlinks.attributes.getOrElse("ROADNAME_SE","none").toString
+                    if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("ROADNAME_FI","null").toString==finstop._2)
+                     {
+                       createTextPropertyValue(stops._1, 300096, swedishaddress)
+                       sweAddressAdded=true;
+                     }
+                  }
+                }
+                  if (!sweAddressAdded)
+                  swedishstops.foreach{swestop=> //swestop  _1:asset_id, _2:address,_3:link-id
+                    if (swestop._3==rlinks.linkId)
+                    {
+                      val finAddress=rlinks.attributes.getOrElse("ROADNAME_FI","none").toString
+                      if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("ROADNAME_SE","null").toString==swestop._2)
+                      {
+                        createTextPropertyValue(stops._1, 300095, finAddress)
+                      }
+                    }
+
+                  }
+                }
+              }
+          }
+        }
+      }
     }
   }
     /**
-      * Gets municipalitycodes which have updated masstransitstops
+      * Gets municipalitycodes of stops which have updateable masstransitstops
       * returns list of int
       */
-    def getMTStopsMunicipalitycode() = {
+    def getMTStopsMunicipalitycodeBothMissing() =
+    {
 
       sql"""
               Select distinct MUNICIPALITY_CODE
@@ -910,11 +954,30 @@ class AssetDataImporter {
                     )
                ORDER BY MUNICIPALITY_CODE DESC""".as[(Int)].list
     }
+
+
+
+  def getMTStopsMunicipalitycodeOneMissing() =
+  {
+
+    sql"""
+                    Select distinct a.MUNICIPALITY_CODE
+                    From Asset a, Text_property_value v, Text_property_value fiv
+                    WHERE
+                     a.Asset_Type_ID=10
+                      AND
+                      ((fiv.PROPERTY_ID =300096  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID=300095)  AND a.ID=fiv.ASSET_ID))
+                      OR
+                      (fiv.PROPERTY_ID =300095  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID=300096)  AND a.ID=fiv.ASSET_ID)))
+               ORDER BY MUNICIPALITY_CODE DESC""".as[(Int)].list
+  }
+
       /**
       * Retrives Masstransitstops which do not have BOTH finnish AND swedish name (street name with out numbers)
       * Returns list of |Asset ID, Link-ID, Finnish Street Name (w/o number), Swedish Street Name (w/o number), finnish txt_property id, swedish txt_property id|
       */
-    def getMTStopsWONames(municipalityNumber: Long) = {
+    def getMTStopsWOAddresses(municipalityNumber: Long) =
+    {
 
       sql"""
               Select distinct a.id, l.link_ID
@@ -922,12 +985,65 @@ class AssetDataImporter {
               WHERE
               a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
                AND
-               (
-               ( a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID=300096 OR PROPERTY_ID=300095 ))
-               )
+               ( a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID=300096 OR PROPERTY_ID=300095))
               ORDER BY a.id""".as[(Long, Long)].list
     }
 
+  /**
+    * Retrives Masstransitstops which do not have either finnish or swedish name (street name with out numbers)
+    * Returns list of |Asset ID, Link-ID, Finnish Street Name (w/o number), Swedish Street Name (w/o number), finnish txt_property id, swedish txt_property id|
+    */
+  def getMTStopsMissingOneAddress(municipalityNumber: Long) = {
+
+    sql"""
+              Select distinct a.id, l.link_ID
+              From Asset a, Text_property_value v, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
+              WHERE
+              a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
+               AND ((fiv.PROPERTY_ID =300096  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID=300095)  AND a.ID=fiv.ASSET_ID))
+               OR
+               (fiv.PROPERTY_ID =300095  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID=300096)  AND a.ID=fiv.ASSET_ID)))
+               ORDER BY a.id""".as[(Long, Long)].list
+  }
+/**
+  * Gets masstransitstop asset_id, street name and link-id for stops that have ONLY swedish address
+*/
+  def getSwedishStopAddressRFi(municipalityNumber: Int) =
+  {
+    sql"""
+                Select distinct a.id, se.Value_FI, l.link_ID
+                From Asset a,  Text_property_value se, ASSET_LINK lt, LRM_POSITION l
+                WHERE
+                a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND se.PROPERTY_ID =300096 AND lt.ASSET_ID=a.id AND lt.POSITION_ID=l.ID
+                AND se.Asset_ID = a.ID
+                AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID=300095))
+         """.as[(Long, String,Long)].list
+    //asset_id,stop's street name,link-id
+  }
+
+  /**
+    * Gets masstransitstop asset_id, street name and link-id for stops that have ONLY finnish address
+    */
+  def getFinnishStopAddressRSe(municipalityNumber: Int) =
+    {
+      sql"""
+                  Select distinct a.id, fiv.Value_FI, l.link_ID
+                  From Asset a, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
+                  WHERE
+                  a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND fiv.PROPERTY_ID =300095 AND lt.ASSET_ID=a.id AND lt.POSITION_ID=l.ID
+                  AND fiv.Asset_ID =a.ID
+                  AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID=300096))
+         """.as[(Long, String,Long)].list
+      //asset_id,stop's street name,link-id
+    }
+
+  /**
+    * Adds text property to TEXT_PROPERTY_VALUE table. Created for getMassTransitStopAddressesFromVVH
+    * to create address information for missing mass transit stops
+    * @param assetId
+    * @param propertyVal
+    * @param vname
+    */
     def createTextPropertyValue(assetId: Long, propertyVal: Int, vname : String) = {
       sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
