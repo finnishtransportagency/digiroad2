@@ -91,7 +91,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
         join property p on a.asset_type_id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
                 """
@@ -177,6 +177,7 @@ trait MassTransitStopService extends PointAssetOperations {
       massTransitStopDao.updateAssetLastModified(id, username)
       if (properties.nonEmpty) {
         massTransitStopDao.updateAssetProperties(id, properties.toSeq)
+        updateLiViIdentifierProperty(id, persistedStop.get.nationalId, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -213,7 +214,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
       if (!mixedStoptypes(asset.properties.toSet))
       {
-        massTransitStopDao.updateAssetProperties(assetId, overridePropertyValue(assetId, asset.properties ++ defaultValues.toSet, nationalId))
+        massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
+        updateLiViIdentifierProperty(assetId, nationalId, asset.properties)
         getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry)
         assetId
       }
@@ -222,37 +224,16 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def setLiViIdentifier(nationalId: Long, properties: Seq[SimpleProperty])(assetId: Long, property: SimpleProperty): SimpleProperty = {
-
-    if(property.publicId == LiViIdentifierPublicId)
-    {
-      val administrationPropertyValue = properties.find(_.publicId == AdministratorInfoPublicId).getOrElse(throw new NoSuchElementException).values.headOption
-      if(administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue)
-        return SimpleProperty(property.publicId, Seq(PropertyValue("OTHJ%d".format(nationalId))))
-    }
-    property
-  }
-
-  /**
-    * Override the properties values passed as parameter using override operations
-    *
-    * @param assetId Asset identifier
-    * @param properties Asset properties
-    * @param nationalId  Asset national identifier
-    * @return Sequence of overridden properties
-    */
-  private def overridePropertyValue(assetId: Long, properties: Seq[SimpleProperty], nationalId: Long): Seq[SimpleProperty] = {
-    val overridePropertyValueOperations: Seq[(Long, SimpleProperty) => SimpleProperty] = Seq(
-      setLiViIdentifier(nationalId, properties)
-      //In the future if we need to override some property just add here the operation
-    )
-
-    properties.map{ property =>
-      var overriddenProperty = property
-      overridePropertyValueOperations.foreach{ operation =>
-        overriddenProperty = operation(assetId, overriddenProperty)
+  private def updateLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
+    properties.foreach{ property =>
+      if(property.publicId == AdministratorInfoPublicId){
+        val administrationPropertyValue = property.values.headOption
+        if(administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
+        }else{
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
+        }
       }
-      overriddenProperty
     }
   }
 

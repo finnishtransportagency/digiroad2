@@ -183,7 +183,7 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text') {
+        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
           outer.append(createLabelElement(property));

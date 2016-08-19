@@ -161,6 +161,44 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update asset liVi identifier property when is Central ELY administration"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val assetId = 300000
+      val properties = List(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+      val massTransitStop = service.getById(assetId).get
+
+      //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+
+    }
+  }
+
+  test("Update asset liVi identifier property when is NOT Central ELY administration"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val assetId = 300000
+      val properties = List(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+      val massTransitStop = service.getById(assetId).get
+
+      //The property yllapitajan_koodi should not have values
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.size should be(0)
+
+    }
+  }
+
   test("Update last modified info") {
     runWithRollback {
       RollbackMassTransitStopService.updateExistingById(300000, None, Set.empty, "user", _ => Unit)
@@ -230,9 +268,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
 
-      //The property yllapitajan_koodi should not be overridden
+      //The property yllapitajan_koodi should not have values
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("livi")
+      liviIdentifierProperty.values.size should be(0)
 
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
