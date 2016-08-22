@@ -188,7 +188,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  def toTimeDomain(validityPeriod: ValidityPeriodsData): String = {
+  def toTimeDomain(validityPeriod: ValidityPeriod): String = {
     val daySpec = validityPeriod.days match {
       case Saturday => "(t7){d1}"
       case Sunday => "(t1){d1}"
