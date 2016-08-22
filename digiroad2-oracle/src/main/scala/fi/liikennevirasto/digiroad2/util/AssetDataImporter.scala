@@ -910,19 +910,19 @@ class AssetDataImporter {
                 if (finstop._3==stops._2)
                   {
                     val swedishaddress=rlinks.attributes.getOrElse("ROADNAME_SE","none").toString
-                    if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("ROADNAME_FI","null").toString==finstop._2)
+                    if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("ROADNAME_FI","null").toString.toUpperCase()==finstop._2.toUpperCase())
                      {
                        createTextPropertyValue(stops._1, 300096, swedishaddress)
                        sweAddressAdded=true;
                      }
                   }
-                }
+                }}
                   if (!sweAddressAdded)
                   swedishstops.foreach{swestop=> //swestop  _1:asset_id, _2:address,_3:link-id
                     if (swestop._3==rlinks.linkId)
                     {
                       val finAddress=rlinks.attributes.getOrElse("ROADNAME_FI","none").toString
-                      if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("ROADNAME_SE","null").toString==swestop._2)
+                      if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("ROADNAME_SE","null").toString.toUpperCase()==swestop._2.toUpperCase())
                       {
                         createTextPropertyValue(stops._1, 300095, finAddress)
                       }
@@ -935,7 +935,7 @@ class AssetDataImporter {
         }
       }
     }
-  }
+
     /**
       * Gets municipalitycodes of stops which have updateable masstransitstops
       * returns list of int
@@ -955,7 +955,10 @@ class AssetDataImporter {
                ORDER BY MUNICIPALITY_CODE DESC""".as[(Int)].list
     }
 
-
+  /**
+    * Retrives distinct int list filled with  municipalitycodes of mass transit stops which have only finnish OR swedish address
+    * @return
+    */
 
   def getMTStopsMunicipalitycodeOneMissing() =
   {
