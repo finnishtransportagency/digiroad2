@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
@@ -17,7 +18,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink] = None): Long = {
+  override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OracleRailwayCrossingDao.create(asset, mValue, municipality, username)

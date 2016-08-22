@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, FloatingAsset, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -65,7 +65,7 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink]): Long
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {

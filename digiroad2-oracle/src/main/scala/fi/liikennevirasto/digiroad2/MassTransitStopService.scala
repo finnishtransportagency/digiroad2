@@ -219,7 +219,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val id = persistedStop.get.id
       massTransitStopDao.updateAssetLastModified(id, username)
       massTransitStopDao.updateAssetProperties(id, properties.toSeq)
-      updateAdministrationClassValue(id, roadLink.get.administrativeClass)
+      updateAdministrativeClassValue(id, roadLink.get.administrativeClass)
 
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -238,7 +238,7 @@ trait MassTransitStopService extends PointAssetOperations {
     updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
   }
 
-  def updateAdministrationClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
+  def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
     massTransitStopDao.updateNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka", administrativeClass.value)
   }
 
@@ -254,7 +254,7 @@ trait MassTransitStopService extends PointAssetOperations {
     vvhClient.fetchVVHRoadlink(linkId)
   }
 
-  override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, roadlink: Option[VVHRoadlink]): Long = {
+  override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long = {
     val point = Point(asset.lon, asset.lat)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
@@ -268,7 +268,7 @@ trait MassTransitStopService extends PointAssetOperations {
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
       massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
-      updateAdministrationClassValue(assetId, roadlink.getOrElse(throw new IllegalArgumentException("Roadlink argument is mandatory")).administrativeClass)
+      updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
 
       getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink)
       assetId
