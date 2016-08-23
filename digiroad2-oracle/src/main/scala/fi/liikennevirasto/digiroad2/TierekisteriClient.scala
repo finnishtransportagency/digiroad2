@@ -225,6 +225,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   * A class to transform data between the interface bus stop format and OTH internal bus stop format
   */
 class TierekisteriBusStopMarshaller {
+
+  private val tnLiviId = "livitunnus"
+
   // TODO: Or variable type: persisted mass transit stop?
   def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
