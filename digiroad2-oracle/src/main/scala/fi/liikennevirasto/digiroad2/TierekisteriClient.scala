@@ -4,11 +4,16 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import org.apache.http.message.BasicNameValuePair
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
+import org.apache.http.NameValuePair
+import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut}
+import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 
 sealed trait StopType {
@@ -115,6 +120,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private val trStopType = "pysakin_tyyppi"
   private val trIsExpress = "pikavuoro"
   private val trStartDate = "alkupvm"
+  private val trEndDate = "loppupvm"
+  private val trRemovalDate = "lakkautuspvm"
   private val trLiviId = "livitunnus"
   private val trNameSe = "nimi_se"
   private val trEquipment = "varusteet"
@@ -207,10 +214,13 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     * Creates a new mass transit stop to Tierekisteri from OTH document.
     * Tierekisteri POST /pysakit/
     *
-    * @param tnMassTransitStop
+    * @param trMassTransitStop
     */
-  def create(tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    throw new NotImplementedError
+  def createMassTransitStop(url: String, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    post(url, trMassTransitStop) match {
+      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case _ => ; // do nothing
+    }
   }
 
   /**
@@ -249,19 +259,49 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     }
   }
 
-  //TODO change the parameters as we need
-  private def createFormPost() ={
-    throw new NotImplementedError
+  private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
+
+    val jsonObj = List(
+      Map(trNationalId -> trMassTransitStop.nationalId),
+      Map(trLiviId -> trMassTransitStop.liViId),
+      Map(trRoadNumber -> trMassTransitStop.roadAddress.road),
+      Map(trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart),
+      Map(trSide -> trMassTransitStop.roadSide.value),
+      Map(trLane -> trMassTransitStop.roadAddress.track.value),
+      Map(trDistance -> trMassTransitStop.roadAddress.mValue),
+      Map(trStopId -> trMassTransitStop.stopCode),
+      Map(trIsExpress -> trMassTransitStop.express),
+      Map(trNameFi -> trMassTransitStop.nameFi),
+      Map(trNameSe -> trMassTransitStop.nameSe),
+      Map(trUser -> trMassTransitStop.modifiedBy),
+      Map(trStartDate -> convertDateToString(trMassTransitStop.operatingFrom)),
+      Map(trEndDate -> convertDateToString(trMassTransitStop.operatingTo)),
+      Map(trRemovalDate -> convertDateToString(trMassTransitStop.removalDate))
+      //TODO add equipments
+      /*Map(trEquipment -> trMassTransitStop.equipments.map{
+        case (equipment, existence) =>
+          Map(equipment.value, existence.value)
+      })*/
+    )
+
+      if(trMassTransitStop.stopType == StopType.Unknown)
+        jsonObj++Map(trStopType -> trMassTransitStop.stopType)
+
+    new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
   }
 
-  //TODO change the parameters and the return as we need
-  private def post(url: String): Either[Map[String, Any], TierekisteriError] = {
+  private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPost(url)
-    request.setEntity(createFormPost())
+    request.setEntity(createJson(trMassTransitStop))
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
-     throw new NotImplementedError
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+     None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
@@ -275,7 +315,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   //TODO change the parameters and the return as we need
   private def put(url: String): Either[Map[String, Any], TierekisteriError] = {
     val request = new HttpPut(url)
-    request.setEntity(createFormPost())
+    request.setEntity(createFormPut())
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
