@@ -106,7 +106,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
 
     request(serviceUrl(id)) match {
-      case Left(content) =>
+      case Left(content) => throw new NotImplementedError
 
       case Right(error) => throw new TierekisteriClientException(error.toString)
     }
