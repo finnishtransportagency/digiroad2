@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.ParseException
+import java.text.SimpleDateFormat
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
@@ -11,6 +13,7 @@ import org.json4s.{DefaultFormats, Formats, StreamInput}
 
 sealed trait StopType {
   def value: String
+  def propertyValues: Set[Int]
 }
 object StopType {
   val values = Set(Commuter, LongDistance, Combined, Virtual, Unknown)
@@ -19,11 +22,15 @@ object StopType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Commuter extends StopType { def value = "paikallis" }
-  case object LongDistance extends StopType { def value = "kauko" }
-  case object Combined extends StopType { def value = "molemmat" }
-  case object Virtual extends StopType { def value = "virtuaali" }
-  case object Unknown extends StopType { def value = "tuntematon" }  // Should not be passed on interface
+  def propertyValues() : Set[Int] = {
+    values.flatMap(_.propertyValues)
+  }
+
+  case object Commuter extends StopType { def value = "paikallis"; def propertyValues = Set(2); }
+  case object LongDistance extends StopType { def value = "kauko"; def propertyValues = Set(3); }
+  case object Combined extends StopType { def value = "molemmat"; def propertyValues = Set(2,3); }
+  case object Virtual extends StopType { def value = "virtuaali"; def propertyValues = Set(5); }
+  case object Unknown extends StopType { def value = "tuntematon"; def propertyValues = Set(99); }  // Should not be passed on interface
 }
 
 sealed trait Existence {
@@ -64,7 +71,6 @@ object Equipment {
     values.find(_.publicId == value).getOrElse(Unknown)
   }
 
-
   case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
   case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska-astia"; }
   case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
@@ -95,6 +101,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   class TierekisteriClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
+  private val dateFormat = "yyyy-MM-dd"
   private val serviceName = "pysakit"
 
   private val trNationalId = "valtakunnallinen_id"
@@ -113,12 +120,72 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
 
-  private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
-  private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
+  private def serviceUrl() : String = tierekisteriRestApiEndPoint + serviceName
+  private def serviceUrl(id: Long) : String = serviceUrl + "/" + id
 
-  private def serviceUrl(id: Long) : String = tierekisteriRestApiEndPoint + serviceName + "/" + id
+  /**
+    * Returns all active mass transit stops.
+    * Tierekisteri GET /pysakit/
+    *
+    * @return
+    */
+  def fetchActiveMassTransitStops(): Seq[TierekisteriMassTransitStop] = {
+    request[List[Map[String, Any]]](serviceUrl) match {
+      case Left(content) =>
+        content.map{
+          asset =>
+            null
+        }
+      case Right(error) => throw new TierekisteriClientException(error.toString)
+    }
+  }
 
-  // TODO: Method for returning all active mass transit stops
+  private def convertToInt(value: Option[Any]): Option[Int] = {
+    value.map {
+      case x: Object =>
+        try {
+          x.toString.toInt
+        } catch {
+          case e: NumberFormatException =>
+            throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(x))
+        }
+      case _ => throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value.get))
+    }
+  }
+
+  private def convertToDouble(value: Option[Any]): Option[Double] = {
+    value.map {
+      case x: Object =>
+        try {
+          x.toString.toDouble
+        } catch {
+          case e: NumberFormatException =>
+            throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(x))
+        }
+      case _ => throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(value.get))
+    }
+  }
+
+  private def convertToDate(value: Option[Any]): Option[Date] = {
+    value.map {
+      case x: Object =>
+        try {
+          new SimpleDateFormat(dateFormat).parse(x.toString)
+        } catch {
+          case e: ParseException =>
+            throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(x))
+        }
+      case _ => throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value.get))
+    }
+  }
+
+  private def convertDateToString(date: Date): String = {
+    new SimpleDateFormat(dateFormat).format(date);
+  }
+
+  private def mapFields(): Unit ={
+
+  }
 
   /**
     * Returns mass transit stop data by livitunnus.
@@ -129,7 +196,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     */
   def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
 
-    request(serviceUrl(id)) match {
+    request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) => throw new NotImplementedError
 
       case Right(error) => throw new TierekisteriClientException(error.toString)
@@ -165,7 +232,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     throw new NotImplementedError
   }
 
-  private def request(url: String): Either[Map[String, Any], TierekisteriError] = {
+  private def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -174,8 +241,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode >= 400)
         return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
-      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-      Left(content)
+      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage), url))
     } finally {
@@ -226,12 +292,14 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 class TierekisteriBusStopMarshaller {
 
   private val liviIdPublicId = "yllapitajan_koodi"
+  private val expressPropertyValue = 4
 
   // TODO: Or variable type: persisted mass transit stop?
   def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
-      RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes), false,
-      mapEquipments(massTransitStop.propertyData), "", "", "", "", new Date, new Date, new Date)
+      RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes),
+      massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
+      "", "", "", "", new Date, new Date, new Date)
   }
 
   // TODO: Implementation
@@ -260,6 +328,7 @@ class TierekisteriBusStopMarshaller {
     properties.find(p => p.publicId.equals(liviIdPublicId)).map(_.values.head.propertyValue)
   }
 
+  // TODO: Implementation
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
     MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, Seq())
   }
