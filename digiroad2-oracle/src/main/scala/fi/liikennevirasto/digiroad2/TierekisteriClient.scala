@@ -9,62 +9,76 @@ sealed trait StopType {
   def value: Int
 }
 object StopType {
-  val values = Set(Tram, LocalTransport, LongDistance, Express, Virtual, Unknown)
+  val values = Set(Commuter, LongDistance, LongDistanceAndCommuter, Virtual, Unknown)
 
   def apply(value: Int): StopType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  //TODO validate those objects
-  case object Tram extends StopType { def value = 1 } //not sure Raitiovaunu
-  case object LocalTransport extends StopType { def value = 2 }
-  case object LongDistance extends StopType { def value = 3 }
-  case object Express extends StopType { def value = 4 }
-  case object Virtual extends StopType { def value = 5 }
-  case object Unknown extends StopType { def value = 99 }
+
+  // TODO: Stop type should have values 'kauko', 'paikallis', 'molemmat' or 'virtual', no number values
+  case object Commuter extends StopType { def value = 2 }               // paikallis
+  case object LongDistance extends StopType { def value = 3 }           // kauko
+  case object LongDistanceAndCommuter extends StopType { def value = 4 }// molemmat (paikkallis ja kauko)
+  case object Virtual extends StopType { def value = 5 }                // virtuaali
+  case object Unknown extends StopType { def value = 99 }               // ei tietoa
 }
 
-case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, stopType: Set[StopType], equipments: Map[String, Any] = Map())
+case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, stopType: StopType, equipment: Map[String, Any] = Map())
+
 case class TierekisteriError(content: Map[String, Any], url: String)
 
+/**
+  * Utility for using Tierekisteri mass transit stop interface in OTH.
+  *
+  * @param tierekisteriRestApiEndPoint
+  */
 class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   class TierekisteriClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  private val ServiceName = "pysakit"
+  private val serviceName = "pysakit"
 
-  //TODO validate the property names
-  private val TnNationalId = "valtakunnallinen_id"
-  private val TnRoadLinkId = "tienumero" //Not sure
-  private val TnQuestion = "tieosanumero"
-  private val TnRoad = "ajorata" //Not sure
-  private val TnDistance = "etaisyys"
-  private val TnSide = "puoli"
-  private val TnStopId = "pysakin_tunnus"
-  private val TnNameFi = "nimi_fi"
-  private val TnStopType = "pysakin_tyyppi"
-  private val TnIsExpress = "pikavuoro"
-  private val TnStartDate = "alkupvm"
-  private val TnLiViId = "livitunnus"
-  private val TnNameSw = "nimi_se"
-  private val TnEquipement = "varusteet"
-  private val TnSchedule = "aikataulu" //Not sure
-  private val TnSeats = "penkki"
-  private val TnQuestion2 = "pyorateline"
-  private val TnQuestion3 = "sahkoinen_aikataulunaytto"
-  private val TnTrash = "roskis"
-  private val TnQuestion4 = "katos"
-  private val TnQuestion5 = "mainoskatos"
-  private val TnQuestion6 = "saattomahd"
-  private val TnQuestion7 = "korotus"
-  private val TnLight = "valaistus"
-  private val TnUser = "kayttajatunnus"
+  private val tnNationalId = "valtakunnallinen_id"
+  private val tnRoadNumber = "tienumero" //Not sure
+  private val tnRoadPartNumber = "tieosanumero"
+  private val tnLane = "ajorata" //Not sure
+  private val tnDistance = "etaisyys"
+  private val tnSide = "puoli"
+  private val tnStopId = "pysakin_tunnus"
+  private val tnNameFi = "nimi_fi"
+  private val tnStopType = "pysakin_tyyppi"
+  private val tnIsExpress = "pikavuoro"
+  private val tnStartDate = "alkupvm"
+  private val tnLiviId = "livitunnus"
+  private val tnNameSe = "nimi_se"
+  private val tnEquipment = "varusteet"
+  private val tnSchedule = "aikataulu"
+  private val tnSeat = "penkki"
+  private val tnBicycleStand = "pyorateline"
+  private val tnElectronicScheduleScreen = "sahkoinen_aikataulunaytto"
+  private val tnTrashBin = "roskis"
+  private val tnShelter = "katos"
+  private val tnAdvertisementShelter = "mainoskatos"
+  private val tnEscortOption = "saattomahd"
+  private val tnPlatform = "korotus"
+  private val tnLightning = "valaistus"
+  private val tnUser = "kayttajatunnus"
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
-  private def booleanToBooleanCodee: Map[Boolean, String] = Map(true -> "on", false -> "ei")
+  private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
-  private def serviceUrl(id: Long) : String = tierekisteriRestApiEndPoint + ServiceName + "/" + id
+  private def serviceUrl(id: Long) : String = tierekisteriRestApiEndPoint + serviceName + "/" + id
 
+  // TODO: Method for returning all active mass transit stops
+
+  /**
+    * Returns mass transit stop data by livitunnus.
+    * Tierekisteri GET /pysakit/{livitunn}
+    *
+    * @param id   livitunnus
+    * @return
+    */
   def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
 
     request(serviceUrl(id)) match {
@@ -74,20 +88,37 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     }
   }
 
+  /**
+    * Creates a new mass transit stop to Tierekisteri from OTH document.
+    * Tierekisteri POST /pysakit/
+    *
+    * @param tnMassTransitStop
+    */
   def create(tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
     throw new NotImplementedError
   }
 
+  /**
+    * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
+    * Tierekisteri PUT /pysakit/{livitunn}
+    *
+    * @param tnMassTransitStop
+    */
   def update(tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
     throw new NotImplementedError
   }
 
+  /**
+    * Deletes mass transit stop from Tierekisteri by livitunnus. Used for
+    *
+    * @param tnMassTransitStopId
+    */
   def delete(tnMassTransitStopId: String): Unit ={
     throw new NotImplementedError
   }
 
-  private def extractEquipement(data: Map[String, Any]) = {
-    val equipements = data.get(TnEquipement).asInstanceOf[Map[String, Any]]
+  private def extractEquipment(data: Map[String, Any]) = {
+    val equipment = data.get(tnEquipment).asInstanceOf[Map[String, Any]]
 
 
   }
