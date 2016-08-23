@@ -97,22 +97,21 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
   private val serviceName = "pysakit"
 
-  //TODO validate the property names
-  private val tnNationalId = "valtakunnallinen_id"
-  private val tnRoadNumber = "tienumero" //Not sure
-  private val tnRoadPartNumber = "tieosanumero"
-  private val tnLane = "ajorata" //Not sure
-  private val tnDistance = "etaisyys"
-  private val tnSide = "puoli"
-  private val tnStopId = "pysakin_tunnus"
-  private val tnNameFi = "nimi_fi"
-  private val tnStopType = "pysakin_tyyppi"
-  private val tnIsExpress = "pikavuoro"
-  private val tnStartDate = "alkupvm"
-  private val tnLiviId = "livitunnus"
-  private val tnNameSe = "nimi_se"
-  private val tnEquipment = "varusteet"
-  private val tnUser = "kayttajatunnus"
+  private val trNationalId = "valtakunnallinen_id"
+  private val trRoadNumber = "tienumero"
+  private val trRoadPartNumber = "tieosanumero"
+  private val trLane = "ajorata"
+  private val trDistance = "etaisyys"
+  private val trSide = "puoli"
+  private val trStopId = "pysakin_tunnus"
+  private val trNameFi = "nimi_fi"
+  private val trStopType = "pysakin_tyyppi"
+  private val trIsExpress = "pikavuoro"
+  private val trStartDate = "alkupvm"
+  private val trLiviId = "livitunnus"
+  private val trNameSe = "nimi_se"
+  private val trEquipment = "varusteet"
+  private val trUser = "kayttajatunnus"
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -226,7 +225,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   */
 class TierekisteriBusStopMarshaller {
 
-  private val tnLiviId = "livitunnus"
+  private val liviIdPublicId = "yllapitajan_koodi"
 
   // TODO: Or variable type: persisted mass transit stop?
   def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
@@ -258,7 +257,7 @@ class TierekisteriBusStopMarshaller {
   }
 
   private def findLiViId(properties: Seq[Property]) = {
-    properties.find(p => p.publicId.equals(tnLiviId)).map(_.values.head.propertyValue)
+    properties.find(p => p.publicId.equals(liviIdPublicId)).map(_.values.head.propertyValue)
   }
 
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
