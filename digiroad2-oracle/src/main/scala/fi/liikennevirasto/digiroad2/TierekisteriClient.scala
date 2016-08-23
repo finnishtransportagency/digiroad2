@@ -4,12 +4,9 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import org.apache.http.message.BasicNameValuePair
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
-import org.apache.http.NameValuePair
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut, HttpDelete}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.JsonMethods._
@@ -66,7 +63,7 @@ sealed trait Equipment {
   def publicId: String
 }
 object Equipment {
-  val values = Set(Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
+  val values = Set[Equipment](Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
 
   def apply(value: String): Equipment = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -87,6 +84,23 @@ object Equipment {
   case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
   case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
+}
+
+sealed trait RoadSide {
+  def value: String
+}
+
+object RoadSide {
+  val values = Set(Right, Left, Off, Unknown)
+
+  def apply(value: String): RoadSide = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object Right extends RoadSide { def value = "oikea" }
+  case object Left extends RoadSide { def value = "vasen" }
+  case object Off extends RoadSide { def value = "paassa" }
+  case object Unknown extends RoadSide { def value = "ei_tietoa" }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, roadAddress: RoadAddress,
@@ -115,12 +129,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private val trLane = "ajorata"
   private val trDistance = "etaisyys"
   private val trSide = "puoli"
-  private val trStopId = "pysakin_tunnus"
+  private val trStopCode = "pysakin_tunnus"
   private val trNameFi = "nimi_fi"
   private val trStopType = "pysakin_tyyppi"
   private val trIsExpress = "pikavuoro"
-  private val trStartDate = "alkupvm"
-  private val trEndDate = "loppupvm"
+  private val trOperatingFrom = "alkupvm"
+  private val trOperatingTo = "loppupvm"
   private val trRemovalDate = "lakkautuspvm"
   private val trLiviId = "livitunnus"
   private val trNameSe = "nimi_se"
@@ -129,6 +143,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
   private def serviceUrl() : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: Long) : String = serviceUrl + "/" + id
+
+  private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
+  private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
   /**
     * Returns all active mass transit stops.
@@ -140,10 +157,208 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     request[List[Map[String, Any]]](serviceUrl) match {
       case Left(content) =>
         content.map{
-          asset =>
-            null
+          stopAsset =>
+            mapFields(stopAsset)
         }
       case Right(error) => throw new TierekisteriClientException(error.toString)
+    }
+  }
+
+  /**
+    * Returns mass transit stop data by livitunnus.
+    * Tierekisteri GET /pysakit/{livitunn}
+    *
+    * @param id   livitunnus
+    * @return
+    */
+  def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
+    request[Map[String, Any]](serviceUrl(id)) match {
+      case Left(content) =>
+        mapFields(content)
+      case Right(error) => throw new TierekisteriClientException(error.toString)
+    }
+  }
+
+  /**
+    * Creates a new mass transit stop to Tierekisteri from OTH document.
+    * Tierekisteri POST /pysakit/
+    *
+    * @param trMassTransitStop
+    */
+  def createMassTransitStop(url: String, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    post(url, trMassTransitStop) match {
+      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case _ => ; // do nothing
+    }
+  }
+
+  /**
+    * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
+    * Tierekisteri PUT /pysakit/{livitunn}
+    *
+    * @param id
+    * @param trMassTransitStop
+    */
+  def updateMassTransitStop(id: Long, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    put(serviceUrl(id), trMassTransitStop) match {
+      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case _ => ;
+    }
+  }
+
+  /**
+    * Deletes mass transit stop from Tierekisteri by livitunnus.
+    * Tierekisteri DELETE /pysakit/{livitunn}
+    *
+    * @param trMassTransitStop
+    */
+  def deleteMassTransitStop(trMassTransitStop: String): Unit ={
+    delete(serviceUrl()) match {
+      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case _ => ;
+    }
+  }
+
+  private def request[T](url: String): Either[T, TierekisteriError] = {
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
+    } catch {
+      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
+    val request = new HttpPost(url)
+    request.setEntity(createJson(trMassTransitStop))
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+     None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
+    val request = new HttpPut(url)
+    request.setEntity(createJson(tnMassTransitStop))
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def delete(url: String): Option[TierekisteriError] = {
+    val request = new HttpDelete(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
+
+    val jsonObj = Map(
+      trNationalId -> trMassTransitStop.nationalId,
+      trLiviId -> trMassTransitStop.liViId,
+      trRoadNumber -> trMassTransitStop.roadAddress.road,
+      trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart,
+      trSide -> trMassTransitStop.roadSide.value,
+      trLane -> trMassTransitStop.roadAddress.track.value,
+      trDistance -> trMassTransitStop.roadAddress.mValue,
+      trStopCode -> trMassTransitStop.stopCode,
+      trIsExpress -> trMassTransitStop.express,
+      trNameFi -> trMassTransitStop.nameFi,
+      trNameSe -> trMassTransitStop.nameSe,
+      trUser -> trMassTransitStop.modifiedBy,
+      trOperatingFrom -> convertDateToString(trMassTransitStop.operatingFrom),
+      trOperatingTo -> convertDateToString(trMassTransitStop.operatingTo),
+      trRemovalDate -> convertDateToString(trMassTransitStop.removalDate),
+      trEquipment -> trMassTransitStop.equipments.map{
+        case (equipment, existence) =>
+          equipment.value -> existence.value
+      }
+    )
+
+    if(trMassTransitStop.stopType == StopType.Unknown)
+      jsonObj++trStopType -> trMassTransitStop.stopType
+
+    new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
+  }
+
+  private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
+    //TODO need to be confirmed and validations
+    val nationalId = convertToLong(data.get(trNationalId)).get
+    val liviId = data.get(trLiviId).toString
+    val roadAddress = RoadAddress(None, convertToInt(data.get(trRoadNumber)).get, convertToInt(data.get(trRoadPartNumber)).get,Track.Combined,1,None)
+    val roadSide = RoadSide.apply(data.get(trSide).toString)
+    val stopType = StopType.apply(data.get(trStopType).toString)
+    val express = booleanCodeToBoolean.get(trIsExpress).get
+    val equipments = extractEquipment(data)
+    val stopCode = data.get(trStopCode).toString
+    val nameFi = data.get(trNameFi).toString
+    val nameSe = data.get(trNameSe).toString
+    val modifiedBy = data.get(trUser).toString
+    val operatingFrom = convertToDate(data.get(trOperatingFrom)).get
+    val operatingTo = convertToDate(data.get(trOperatingTo)).get
+    val removalDate = convertToDate(data.get(trRemovalDate)).get
+    TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
+      stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate)
+  }
+
+  private def extractEquipment(data: Map[String, Any]) : Map[Equipment, Existence] = {
+    val equipmentData = data.get(trEquipment).asInstanceOf[Map[String, String]]
+
+    Equipment.values.flatMap{ equipment =>
+      equipmentData.get(equipment.value) match{
+        case Some(value) =>
+          Some(equipment -> Existence.apply(value))
+        case None =>
+          None
+      }
+    }.toMap
+  }
+
+  private def convertToLong(value: Option[Any]): Option[Long] = {
+    value.map {
+      case x: Object =>
+        try {
+          x.toString.toLong
+        } catch {
+          case e: NumberFormatException =>
+            throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(x))
+        }
+      case _ => throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value.get))
     }
   }
 
@@ -188,143 +403,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
   private def convertDateToString(date: Date): String = {
     new SimpleDateFormat(dateFormat).format(date);
-  }
-
-  private def mapFields(): Unit ={
-
-  }
-
-  /**
-    * Returns mass transit stop data by livitunnus.
-    * Tierekisteri GET /pysakit/{livitunn}
-    *
-    * @param id   livitunnus
-    * @return
-    */
-  def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
-
-    request[Map[String, Any]](serviceUrl(id)) match {
-      case Left(content) => throw new NotImplementedError
-
-      case Right(error) => throw new TierekisteriClientException(error.toString)
-    }
-  }
-
-  /**
-    * Creates a new mass transit stop to Tierekisteri from OTH document.
-    * Tierekisteri POST /pysakit/
-    *
-    * @param trMassTransitStop
-    */
-  def createMassTransitStop(url: String, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    post(url, trMassTransitStop) match {
-      case Some(error) => throw new TierekisteriClientException(error.toString)
-      case _ => ; // do nothing
-    }
-  }
-
-  /**
-    * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
-    * Tierekisteri PUT /pysakit/{livitunn}
-    *
-    * @param id
-    * @param tnMassTransitStop
-    */
-  def updateMassTransitStop(id: Long, tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    put(serviceUrl(id), tnMassTransitStop) match {
-      case Some(error) => throw new TierekisteriClientException(error.toString)
-      case _ => ;
-    }
-  }
-
-  /**
-    * Deletes mass transit stop from Tierekisteri by livitunnus. Used for
-    *
-    * @param tnMassTransitStopId
-    */
-  def delete(tnMassTransitStopId: String): Unit ={
-    throw new NotImplementedError
-  }
-
-  private def request[T](url: String): Either[T, TierekisteriError] = {
-    val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
-        return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
-      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
-    } catch {
-      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
-
-    val jsonObj = Map(
-      trNationalId -> trMassTransitStop.nationalId,
-      trLiviId -> trMassTransitStop.liViId,
-      trRoadNumber -> trMassTransitStop.roadAddress.road,
-      trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart,
-      trSide -> trMassTransitStop.roadSide.value,
-      trLane -> trMassTransitStop.roadAddress.track.value,
-      trDistance -> trMassTransitStop.roadAddress.mValue,
-      trStopId -> trMassTransitStop.stopCode,
-      trIsExpress -> trMassTransitStop.express,
-      trNameFi -> trMassTransitStop.nameFi,
-      trNameSe -> trMassTransitStop.nameSe,
-      trUser -> trMassTransitStop.modifiedBy,
-      trStartDate -> convertDateToString(trMassTransitStop.operatingFrom),
-      trEndDate -> convertDateToString(trMassTransitStop.operatingTo),
-      trRemovalDate -> convertDateToString(trMassTransitStop.removalDate),
-      trEquipment -> trMassTransitStop.equipments.map{
-        case (equipment, existence) =>
-          equipment.value -> existence.value
-      }
-    )
-
-      if(trMassTransitStop.stopType == StopType.Unknown)
-        jsonObj++trStopType -> trMassTransitStop.stopType
-
-    new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
-  }
-
-  private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPost(url)
-    request.setEntity(createJson(trMassTransitStop))
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
-        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
-     None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPut(url)
-    request.setEntity(createJson(tnMassTransitStop))
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
-        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
-      None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
   }
 }
 
