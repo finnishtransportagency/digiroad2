@@ -261,31 +261,30 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
   private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
 
-    val jsonObj = List(
-      Map(trNationalId -> trMassTransitStop.nationalId),
-      Map(trLiviId -> trMassTransitStop.liViId),
-      Map(trRoadNumber -> trMassTransitStop.roadAddress.road),
-      Map(trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart),
-      Map(trSide -> trMassTransitStop.roadSide.value),
-      Map(trLane -> trMassTransitStop.roadAddress.track.value),
-      Map(trDistance -> trMassTransitStop.roadAddress.mValue),
-      Map(trStopId -> trMassTransitStop.stopCode),
-      Map(trIsExpress -> trMassTransitStop.express),
-      Map(trNameFi -> trMassTransitStop.nameFi),
-      Map(trNameSe -> trMassTransitStop.nameSe),
-      Map(trUser -> trMassTransitStop.modifiedBy),
-      Map(trStartDate -> convertDateToString(trMassTransitStop.operatingFrom)),
-      Map(trEndDate -> convertDateToString(trMassTransitStop.operatingTo)),
-      Map(trRemovalDate -> convertDateToString(trMassTransitStop.removalDate))
-      //TODO add equipments
-      /*Map(trEquipment -> trMassTransitStop.equipments.map{
+    val jsonObj = Map(
+      trNationalId -> trMassTransitStop.nationalId,
+      trLiviId -> trMassTransitStop.liViId,
+      trRoadNumber -> trMassTransitStop.roadAddress.road,
+      trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart,
+      trSide -> trMassTransitStop.roadSide.value,
+      trLane -> trMassTransitStop.roadAddress.track.value,
+      trDistance -> trMassTransitStop.roadAddress.mValue,
+      trStopId -> trMassTransitStop.stopCode,
+      trIsExpress -> trMassTransitStop.express,
+      trNameFi -> trMassTransitStop.nameFi,
+      trNameSe -> trMassTransitStop.nameSe,
+      trUser -> trMassTransitStop.modifiedBy,
+      trStartDate -> convertDateToString(trMassTransitStop.operatingFrom),
+      trEndDate -> convertDateToString(trMassTransitStop.operatingTo),
+      trRemovalDate -> convertDateToString(trMassTransitStop.removalDate),
+      trEquipment -> trMassTransitStop.equipments.map{
         case (equipment, existence) =>
-          Map(equipment.value, existence.value)
-      })*/
+          equipment.value -> existence.value
+      }
     )
 
       if(trMassTransitStop.stopType == StopType.Unknown)
-        jsonObj++Map(trStopType -> trMassTransitStop.stopType)
+        jsonObj++trStopType -> trMassTransitStop.stopType
 
     new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
   }
