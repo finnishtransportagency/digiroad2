@@ -103,19 +103,25 @@ object GeometryUtils {
     }
   }
 
+  private def to2DGeometry(p: Point) = {
+    p.copy(z = 0.0)
+  }
+
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
     case class Projection(distance: Double, segmentIndex: Int, segmentLength: Double, mValue: Double)
-    val lineSegments: Seq[((Point, Point), Int)] = points.zip(points.tail).zipWithIndex
+    val point2D = to2DGeometry(point)
+    val points2D = points.map(to2DGeometry)
+    val lineSegments: Seq[((Point, Point), Int)] = points2D.zip(points2D.tail).zipWithIndex
     val projections: Seq[Projection] = lineSegments.map { case((p1: Point, p2: Point), segmentIndex: Int) =>
       val segmentLength = (p2 - p1).length()
       val directionVector = (p2 - p1).normalize()
-      val negativeMValue = (p1 - point).dot(directionVector)
+      val negativeMValue = (p1 - point2D).dot(directionVector)
       val clampedNegativeMValue =
         if (negativeMValue > 0) 0
         else if (negativeMValue < (-1 * segmentLength)) -1 * segmentLength
         else negativeMValue
       val projectionVectorOnLineSegment: Vector3d = directionVector.scale(clampedNegativeMValue)
-      val pointToLineSegment: Vector3d = (p1 - point) - projectionVectorOnLineSegment
+      val pointToLineSegment: Vector3d = (p1 - point2D) - projectionVectorOnLineSegment
       Projection(
         distance = pointToLineSegment.length(),
         segmentIndex = segmentIndex,

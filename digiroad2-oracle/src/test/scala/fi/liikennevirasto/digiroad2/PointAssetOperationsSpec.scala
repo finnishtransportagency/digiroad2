@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.PointAssetOperations._
+import fi.liikennevirasto.digiroad2.asset.Modification
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
@@ -58,5 +59,26 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       Point(679168.803,6900107.1623))
     val bearing = PointAssetOperations.calculateBearing(point, segment)
     bearing should be (103)
+  }
+
+  test("Check floating status when using three-dimensional road data") {
+    val persistedAsset = PersistedMassTransitStop(22668828, 1234, 1234, Seq(2), 172, 453487.304243636, 6845919.0252246,
+      17.292, Option(2), Option(78), None, true, Modification(None, None),
+      Modification(None, None), Seq())
+
+    val roadLink = Some((172,List(Point(453466.069,6845915.849,108.81900000000314),
+      Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
+      Point(453503.379,6845924.05,110.27499999999418), Point(453516.924,6845931.413,110.72000000000116),
+      Point(453529.99,6845939.093,111.24300000000221), Point(453544.01,6845948.531,111.84100000000035),
+      Point(453552.295,6845953.492,112.22000000000116), Point(453563.45,6845959.573,112.68300000000454),
+      Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
+      Point(453638.671,6845997.516,114.12300000000687), Point(453650.524,6846003.514,114.4030000000057))))
+
+    PointAssetOperations.isFloating(persistedAsset, roadLink) should be (true)
+
+    val point = Point(persistedAsset.lon, persistedAsset.lat)
+    val updatedAsset = persistedAsset.copy(mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.get._2))
+
+    PointAssetOperations.isFloating(updatedAsset, roadLink) should be (false)
   }
 }
