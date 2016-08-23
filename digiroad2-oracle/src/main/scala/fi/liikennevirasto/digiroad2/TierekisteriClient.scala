@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.JsonMethods._
@@ -75,7 +78,11 @@ object Equipment {
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
 }
 
-case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, stopType: StopType, equipments: Map[Equipment, Existence] = Map())
+case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, roadAddress: RoadAddress,
+                                       roadSide: RoadSide, stopType: StopType, express: Boolean,
+                                       equipments: Map[Equipment, Existence] = Map(),
+                                       stopCode: String, nameFi: String, nameSe: String, modifiedBy: String,
+                                       operatingFrom: Date, operatingTo: Date, removalDate: Date)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -89,6 +96,23 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private val serviceName = "pysakit"
+
+  //TODO validate the property names
+  private val tnNationalId = "valtakunnallinen_id"
+  private val tnRoadNumber = "tienumero" //Not sure
+  private val tnRoadPartNumber = "tieosanumero"
+  private val tnLane = "ajorata" //Not sure
+  private val tnDistance = "etaisyys"
+  private val tnSide = "puoli"
+  private val tnStopId = "pysakin_tunnus"
+  private val tnNameFi = "nimi_fi"
+  private val tnStopType = "pysakin_tyyppi"
+  private val tnIsExpress = "pikavuoro"
+  private val tnStartDate = "alkupvm"
+  private val tnLiviId = "livitunnus"
+  private val tnNameSe = "nimi_se"
+  private val tnEquipment = "varusteet"
+  private val tnUser = "kayttajatunnus"
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -201,30 +225,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   * A class to transform data between the interface bus stop format and OTH internal bus stop format
   */
 class TierekisteriBusStopMarshaller {
-  //TODO validate the property names
-  private val tnNationalId = "valtakunnallinen_id"
-  private val tnRoadNumber = "tienumero" //Not sure
-  private val tnRoadPartNumber = "tieosanumero"
-  private val tnLane = "ajorata" //Not sure
-  private val tnDistance = "etaisyys"
-  private val tnSide = "puoli"
-  private val tnStopId = "pysakin_tunnus"
-  private val tnNameFi = "nimi_fi"
-  private val tnStopType = "pysakin_tyyppi"
-  private val tnIsExpress = "pikavuoro"
-  private val tnStartDate = "alkupvm"
-  private val tnLiviId = "livitunnus"
-  private val tnNameSe = "nimi_se"
-  private val tnEquipment = "varusteet"
-  private val tnUser = "kayttajatunnus"
-
-  private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
-  private def booleanToBooleanCodee: Map[Boolean, String] = Map(true -> "on", false -> "ei")
-
   // TODO: Or variable type: persisted mass transit stop?
   def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
-      findStopType(massTransitStop.stopTypes), mapEquipments(massTransitStop.propertyData))
+      RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes), false,
+      mapEquipments(massTransitStop.propertyData), "", "", "", "", new Date, new Date, new Date)
   }
 
   // TODO: Implementation
