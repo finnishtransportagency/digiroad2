@@ -227,10 +227,14 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
     * Tierekisteri PUT /pysakit/{livitunn}
     *
+    * @param id
     * @param tnMassTransitStop
     */
-  def update(tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    throw new NotImplementedError
+  def updateMassTransitStop(id: Long, tnMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    put(serviceUrl(id), tnMassTransitStop) match {
+      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case _ => ;
+    }
   }
 
   /**
@@ -306,19 +310,18 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     }
   }
 
-  //TODO change the parameters as we need
-  private def createFormPut() ={
-    throw new NotImplementedError
-  }
-
-  //TODO change the parameters and the return as we need
-  private def put(url: String): Either[Map[String, Any], TierekisteriError] = {
+  private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPut(url)
-    request.setEntity(createFormPut())
+    request.setEntity(createJson(tnMassTransitStop))
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
-      throw new NotImplementedError
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode >= 400)
+        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
