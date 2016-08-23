@@ -51,7 +51,7 @@ sealed trait Equipment {
   def publicId: String
 }
 object Equipment {
-  val values = Set(Schedule, TrashBin, BicycleStand, Lighting, Seat, Shelter, AdvertisementShelter, ElectronicScheduleScreen, EscortOption, Platform)
+  val values = Set(Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
 
   def apply(value: String): Equipment = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -61,16 +61,17 @@ object Equipment {
     values.find(_.publicId == value).getOrElse(Unknown)
   }
 
-  case object Schedule extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
+
+  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
   case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska-astia"; }
-  case object BicycleStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
+  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
   case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; }
   case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
-  case object Shelter extends Equipment { def value = "katos"; def publicId = "katos"; }
-  case object AdvertisementShelter extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
-  case object ElectronicScheduleScreen extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
-  case object EscortOption extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
-  case object Platform extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
+  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; }
+  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
+  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
+  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
+  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
 }
 
