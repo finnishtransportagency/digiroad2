@@ -1,30 +1,80 @@
 package fi.liikennevirasto.digiroad2
 
-import org.apache.http.client.methods.{HttpPut, HttpPost, HttpGet}
+import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
+import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{StreamInput, DefaultFormats, Formats}
+import org.json4s.{DefaultFormats, Formats, StreamInput}
 
 sealed trait StopType {
-  def value: Int
+  def value: String
 }
 object StopType {
-  val values = Set(Commuter, LongDistance, LongDistanceAndCommuter, Virtual, Unknown)
+  val values = Set(Commuter, LongDistance, Combined, Virtual, Unknown)
 
-  def apply(value: Int): StopType = {
+  def apply(value: String): StopType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-
-  // TODO: Stop type should have values 'kauko', 'paikallis', 'molemmat' or 'virtual', no number values
-  case object Commuter extends StopType { def value = 2 }               // paikallis
-  case object LongDistance extends StopType { def value = 3 }           // kauko
-  case object LongDistanceAndCommuter extends StopType { def value = 4 }// molemmat (paikkallis ja kauko)
-  case object Virtual extends StopType { def value = 5 }                // virtuaali
-  case object Unknown extends StopType { def value = 99 }               // ei tietoa
+  case object Commuter extends StopType { def value = "paikallis" }
+  case object LongDistance extends StopType { def value = "kauko" }
+  case object Combined extends StopType { def value = "molemmat" }
+  case object Virtual extends StopType { def value = "virtuaali" }
+  case object Unknown extends StopType { def value = "tuntematon" }  // Should not be passed on interface
 }
 
-case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, stopType: StopType, equipment: Map[String, Any] = Map())
+sealed trait Existence {
+  def value: String
+}
+object Existence {
+  val values = Set(Yes, No, Unknown)
+
+  def apply(value: String): Existence = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromPropertyValue(value: String): Existence = {
+    value match {
+      case "1" => No
+      case "2" => Yes
+      case _ => Unknown
+    }
+  }
+
+  case object Yes extends Existence { def value = "on" }
+  case object No extends Existence { def value = "ei" }
+  case object Unknown extends Existence { def value = "ei_tietoa" }
+}
+
+sealed trait Equipment {
+  def value: String
+  def publicId: String
+}
+object Equipment {
+  val values = Set(Schedule, TrashBin, BicycleStand, Lighting, Seat, Shelter, AdvertisementShelter, ElectronicScheduleScreen, EscortOption, Platform)
+
+  def apply(value: String): Equipment = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromPublicId(value: String): Equipment = {
+    values.find(_.publicId == value).getOrElse(Unknown)
+  }
+
+  case object Schedule extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
+  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska-astia"; }
+  case object BicycleStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
+  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; }
+  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
+  case object Shelter extends Equipment { def value = "katos"; def publicId = "katos"; }
+  case object AdvertisementShelter extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
+  case object ElectronicScheduleScreen extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
+  case object EscortOption extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
+  case object Platform extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
+  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
+}
+
+case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, stopType: StopType, equipments: Map[Equipment, Existence] = Map())
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -38,32 +88,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private val serviceName = "pysakit"
-
-  private val tnNationalId = "valtakunnallinen_id"
-  private val tnRoadNumber = "tienumero" //Not sure
-  private val tnRoadPartNumber = "tieosanumero"
-  private val tnLane = "ajorata" //Not sure
-  private val tnDistance = "etaisyys"
-  private val tnSide = "puoli"
-  private val tnStopId = "pysakin_tunnus"
-  private val tnNameFi = "nimi_fi"
-  private val tnStopType = "pysakin_tyyppi"
-  private val tnIsExpress = "pikavuoro"
-  private val tnStartDate = "alkupvm"
-  private val tnLiviId = "livitunnus"
-  private val tnNameSe = "nimi_se"
-  private val tnEquipment = "varusteet"
-  private val tnTimetable = "aikataulu"
-  private val tnBench = "penkki"
-  private val tnBikeStand = "pyorateline"
-  private val tnElectronicTimetables = "sahkoinen_aikataulunaytto"
-  private val tnTrashBin = "roskis"
-  private val tnRoof = "katos"
-  private val tnRoofMaintainedByAdvertiser = "mainoskatos"
-  private val tnCarParkForTakingPassengers = "saattomahd"
-  private val tnRaisedBusStop = "korotus"
-  private val tnLighting = "valaistus"
-  private val tnUser = "kayttajatunnus"
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -115,12 +139,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     */
   def delete(tnMassTransitStopId: String): Unit ={
     throw new NotImplementedError
-  }
-
-  private def extractEquipment(data: Map[String, Any]) = {
-    val equipment = data.get(tnEquipment).asInstanceOf[Map[String, Any]]
-
-
   }
 
   private def request(url: String): Either[Map[String, Any], TierekisteriError] = {
@@ -175,5 +193,66 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     } finally {
       response.close()
     }
+  }
+}
+
+/**
+  * A class to transform data between the interface bus stop format and OTH internal bus stop format
+  */
+class TierekisteriBusStopMarshaller {
+  //TODO validate the property names
+  private val tnNationalId = "valtakunnallinen_id"
+  private val tnRoadNumber = "tienumero" //Not sure
+  private val tnRoadPartNumber = "tieosanumero"
+  private val tnLane = "ajorata" //Not sure
+  private val tnDistance = "etaisyys"
+  private val tnSide = "puoli"
+  private val tnStopId = "pysakin_tunnus"
+  private val tnNameFi = "nimi_fi"
+  private val tnStopType = "pysakin_tyyppi"
+  private val tnIsExpress = "pikavuoro"
+  private val tnStartDate = "alkupvm"
+  private val tnLiviId = "livitunnus"
+  private val tnNameSe = "nimi_se"
+  private val tnEquipment = "varusteet"
+  private val tnUser = "kayttajatunnus"
+
+  private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
+  private def booleanToBooleanCodee: Map[Boolean, String] = Map(true -> "on", false -> "ei")
+
+  // TODO: Or variable type: persisted mass transit stop?
+  def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
+    TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
+      findStopType(massTransitStop.stopTypes), mapEquipments(massTransitStop.propertyData))
+  }
+
+  // TODO: Implementation
+  private def findStopType(stopTypes: Seq[Int]): StopType = {
+    StopType.Unknown
+  }
+
+  private def mapEquipments(properties: Seq[Property]): Map[Equipment, Existence] = {
+    properties.map(p => mapPropertyToEquipment(p) -> mapPropertyValueToExistence(p.values)).
+      filterNot(p => p._1.equals(Equipment.Unknown)).toMap
+  }
+
+  private def mapPropertyToEquipment(p: Property) = {
+    Equipment.fromPublicId(p.publicId)
+  }
+
+  private def mapPropertyValueToExistence(values: Seq[PropertyValue]) = {
+    val v = values.map(pv => Existence.fromPropertyValue(pv.propertyValue)).distinct
+    v.size match {
+      case 1 => v.head
+      case _ => Existence.Unknown // none or mismatching
+    }
+  }
+
+  private def findLiViId(properties: Seq[Property]) = {
+    properties.find(p => p.publicId.equals(tnLiviId)).map(_.values.head.propertyValue)
+  }
+
+  def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
+    MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, Seq())
   }
 }
