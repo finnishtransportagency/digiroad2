@@ -472,6 +472,13 @@ class TierekisteriBusStopMarshaller {
   }
 
   private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean): Unit ={
-    Property(0L, stopTypePublicId, "", false, Seq())
+
+    val propertyValues = stopType.propertyValues.map{ value =>
+      PropertyValue(value.toString)
+    }
+
+    //TODO if(isExpress) Add a new property value with value 4!?
+
+    Property(0L, stopTypePublicId, "", false, propertyValues.toSeq)
   }
 }
