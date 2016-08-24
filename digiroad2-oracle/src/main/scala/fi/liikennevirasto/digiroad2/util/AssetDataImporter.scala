@@ -873,7 +873,7 @@ class AssetDataImporter {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode)
-        val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+        val roadLinks = vvhClient.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -897,7 +897,7 @@ class AssetDataImporter {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode)
-        val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+        val roadLinks = vvhClient.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id
