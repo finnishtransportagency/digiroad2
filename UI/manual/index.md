@@ -562,7 +562,7 @@ _K&auml;&auml;ntymisrajoitusten valinta._
 
 Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
 
-![K&auml;&auml;ntymisrajoituksen visualisointi](K44.PNG)
+![K&auml;&auml;ntymisrajoituksen visualisointi](KR_kohdat_5.PNG)
 
 _K&auml;&auml;ntymisrajoituksen tietojen katselu._
 
