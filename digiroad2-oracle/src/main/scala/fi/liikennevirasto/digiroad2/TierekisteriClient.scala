@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
-
+import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut, HttpDelete}
@@ -24,8 +24,10 @@ object StopType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  def propertyValues() : Set[Int] = {
+//  def propertyValues() : Unit = {
+    def propertyValues() : Set[Int] = {
     values.flatMap(_.propertyValues)
+//    values.map(_.propertyValues)
   }
 
   case object Commuter extends StopType { def value = "paikallis"; def propertyValues = Set(2); }
@@ -471,14 +473,17 @@ class TierekisteriBusStopMarshaller {
     }
   }
 
-  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean): Unit ={
+  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean): Property ={
 
-    val propertyValues = stopType.propertyValues.map{ value =>
+//    val stopTypeProperties = allProperties.find(p => p.publicId.equals(stopTypePublicId)).get
+
+    var propertyValues = stopType.propertyValues.map{ value =>
       PropertyValue(value.toString)
     }
-
-    //TODO if(isExpress) Add a new property value with value 4!?
+    if(isExpress)
+      propertyValues+=PropertyValue(expressPropertyValue.toString)
 
     Property(0L, stopTypePublicId, "", false, propertyValues.toSeq)
+//    Property(stopTypeProperties.publicId, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq)
   }
 }
