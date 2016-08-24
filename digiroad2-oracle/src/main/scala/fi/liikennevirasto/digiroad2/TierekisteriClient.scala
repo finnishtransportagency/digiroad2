@@ -18,7 +18,7 @@ sealed trait StopType {
   def propertyValues: Set[Int]
 }
 object StopType {
-  val values = Set(Commuter, LongDistance, Combined, Virtual, Unknown)
+  val values = Set[StopType](Commuter, LongDistance, Combined, Virtual, Unknown)
 
   def apply(value: String): StopType = {
     values.find(_.value == value).getOrElse(Unknown)
@@ -37,6 +37,7 @@ object StopType {
 
 sealed trait Existence {
   def value: String
+  def propertyValue: Int
 }
 object Existence {
   val values = Set(Yes, No, Unknown)
@@ -52,10 +53,10 @@ object Existence {
       case _ => Unknown
     }
   }
-
-  case object Yes extends Existence { def value = "on" }
-  case object No extends Existence { def value = "ei" }
-  case object Unknown extends Existence { def value = "ei_tietoa" }
+  //TODO CONFIRM THE PROPERTY VALUES
+  case object Yes extends Existence { def value = "on"; def propertyValue = 1; }
+  case object No extends Existence { def value = "ei"; def propertyValue = 1; }
+  case object Unknown extends Existence { def value = "ei_tietoa"; def propertyValue = 1; }
 }
 
 sealed trait Equipment {
@@ -89,7 +90,6 @@ object Equipment {
 sealed trait RoadSide {
   def value: String
 }
-
 object RoadSide {
   val values = Set(Right, Left, Off, Unknown)
 
@@ -99,7 +99,7 @@ object RoadSide {
 
   case object Right extends RoadSide { def value = "oikea" }
   case object Left extends RoadSide { def value = "vasen" }
-  case object Off extends RoadSide { def value = "paassa" }
+  case object Off extends RoadSide { def value = "paassa" } // Not supported by OTH
   case object Unknown extends RoadSide { def value = "ei_tietoa" }
 }
 
@@ -142,7 +142,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private val trUser = "kayttajatunnus"
 
   private def serviceUrl() : String = tierekisteriRestApiEndPoint + serviceName
-  private def serviceUrl(id: Long) : String = serviceUrl + "/" + id
+  private def serviceUrl(id: String) : String = serviceUrl + "/" + id
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
@@ -171,7 +171,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     * @param id   livitunnus
     * @return
     */
-  def fetchMassTransitStop(id: Long): TierekisteriMassTransitStop = {
+  def fetchMassTransitStop(id: String): TierekisteriMassTransitStop = {
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
         mapFields(content)
@@ -185,8 +185,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     *
     * @param trMassTransitStop
     */
-  def createMassTransitStop(url: String, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    post(url, trMassTransitStop) match {
+  def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    post(serviceUrl(trMassTransitStop.liViId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException(error.toString)
       case _ => ; // do nothing
     }
@@ -196,11 +196,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
     * Tierekisteri PUT /pysakit/{livitunn}
     *
-    * @param id
     * @param trMassTransitStop
     */
-  def updateMassTransitStop(id: Long, trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    put(serviceUrl(id), trMassTransitStop) match {
+  def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    put(serviceUrl(trMassTransitStop.liViId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException(error.toString)
       case _ => ;
     }
@@ -210,10 +209,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     * Deletes mass transit stop from Tierekisteri by livitunnus.
     * Tierekisteri DELETE /pysakit/{livitunn}
     *
-    * @param trMassTransitStop
+    * @param id livitunnus
     */
-  def deleteMassTransitStop(trMassTransitStop: String): Unit ={
-    delete(serviceUrl()) match {
+  def deleteMassTransitStop(id: String): Unit ={
+    delete(serviceUrl(id)) match {
       case Some(error) => throw new TierekisteriClientException(error.toString)
       case _ => ;
     }
@@ -412,6 +411,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 class TierekisteriBusStopMarshaller {
 
   private val liviIdPublicId = "yllapitajan_koodi"
+  private val stopTypePublicId = "pysakin_tyyppi"
   private val expressPropertyValue = 4
 
   // TODO: Or variable type: persisted mass transit stop?
@@ -422,9 +422,19 @@ class TierekisteriBusStopMarshaller {
       "", "", "", "", new Date, new Date, new Date)
   }
 
-  // TODO: Implementation
+
   private def findStopType(stopTypes: Seq[Int]): StopType = {
-    StopType.Unknown
+    // remove from OTH stoptypes the values that are not supported by tierekisteri
+    val avaibleStopTypes = StopType.values.flatMap(_.propertyValues).intersect(stopTypes.toSet)
+    //TODO try to improve that. Maybe just use a match
+    val stopTypeOption = StopType.values.find(st => st.propertyValues.size == avaibleStopTypes.size && avaibleStopTypes.diff(st.propertyValues).isEmpty)
+
+    stopTypeOption match {
+      case Some(stopType) =>
+        stopType
+      case None =>
+        StopType.Unknown
+    }
   }
 
   private def mapEquipments(properties: Seq[Property]): Map[Equipment, Existence] = {
@@ -451,5 +461,17 @@ class TierekisteriBusStopMarshaller {
   // TODO: Implementation
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
     MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, Seq())
+  }
+
+  private def mapEquipmentProperties(equipments: Map[Equipment, Existence]) = {
+    equipments.map{
+      case (equipment, existence) =>
+        //TODO problems with id and property type and required!?
+        Property(0L, equipment.publicId,"", false, Seq(PropertyValue(existence.propertyValue.toString)))
+    }
+  }
+
+  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean): Unit ={
+    Property(0L, stopTypePublicId, "", false, Seq())
   }
 }
