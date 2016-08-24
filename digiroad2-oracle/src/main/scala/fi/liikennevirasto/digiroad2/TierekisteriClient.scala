@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut, HttpDelete}
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -415,6 +416,11 @@ class TierekisteriBusStopMarshaller {
   private val liviIdPublicId = "yllapitajan_koodi"
   private val stopTypePublicId = "pysakin_tyyppi"
   private val expressPropertyValue = 4
+  private val typeId: Int = 10
+
+  def getAllPropertiesAvailable(AssetTypeId : Int): Seq[Property] = {
+    Queries.availableProperties(AssetTypeId)
+  }
 
   // TODO: Or variable type: persisted mass transit stop?
   def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
@@ -462,28 +468,33 @@ class TierekisteriBusStopMarshaller {
 
   // TODO: Implementation
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
-    MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, Seq())
+    val allPropertiesAvailable = getAllPropertiesAvailable(typeId)
+
+    val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
+    val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
+
+    MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, equipmentsProperty++stopTypeProperty)
   }
 
-  private def mapEquipmentProperties(equipments: Map[Equipment, Existence]) = {
-    equipments.map{
+  private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
+    equipments.map {
       case (equipment, existence) =>
-        //TODO problems with id and property type and required!?
-        Property(0L, equipment.publicId,"", false, Seq(PropertyValue(existence.propertyValue.toString)))
+        val equipmentProperties = allProperties.find(p => p.publicId.equals(equipment.publicId)).get
+        Property(equipmentProperties.id, equipment.publicId, equipmentProperties.propertyType, equipmentProperties.required, Seq(PropertyValue(existence.propertyValue.toString)))
     }
+    Seq()
   }
 
-  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean): Property ={
-
-//    val stopTypeProperties = allProperties.find(p => p.publicId.equals(stopTypePublicId)).get
-
-    var propertyValues = stopType.propertyValues.map{ value =>
+  // TODO: PARA RICARDO, pff analisa o que eu fiz em baixo e vê se falta algo sff, vê se está tudo ok e a funcionar, fiz parecido ao meu de cima
+  private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean, allProperties: Seq[Property]): Seq[Property] = {
+    var propertyValues = stopType.propertyValues.map { value =>
       PropertyValue(value.toString)
     }
-    if(isExpress)
-      propertyValues+=PropertyValue(expressPropertyValue.toString)
+    if (isExpress)
+      propertyValues += PropertyValue(expressPropertyValue.toString)
 
-    Property(0L, stopTypePublicId, "", false, propertyValues.toSeq)
-//    Property(stopTypeProperties.publicId, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq)
+    val stopTypeProperties = allProperties.find(p => p.publicId.equals(stopTypePublicId)).get
+
+    List (Property(stopTypeProperties.id, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq))
   }
 }
