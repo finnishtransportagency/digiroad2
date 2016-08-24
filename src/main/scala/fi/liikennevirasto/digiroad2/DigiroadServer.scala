@@ -17,8 +17,7 @@ import org.eclipse.jetty.client.api.Request
 trait DigiroadServer {
   val contextPath : String
 
-  def startServer() {
-    val server = new Server(8080)
+  protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
     context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
     context.setResourceBase("src/main/webapp")
@@ -32,6 +31,13 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
+    context
+  }
+
+  def startServer() {
+    println("testesad asd adasd asdasdas nd ahjdb ajhdjasdhg as  hdga jgdasgjdgasdjasgdjagssdg asdga jsdgj")
+    val server = new Server(8080)
+    val context = setupWebContext()
     server.setHandler(context)
     server.start()
     server.join()
