@@ -35,7 +35,6 @@ trait DigiroadServer {
   }
 
   def startServer() {
-    println("testesad asd adasd asdasdas nd ahjdb ajhdjasdhg as  hdga jgdasgjdgasdjasgdjagssdg asdga jsdgj")
     val server = new Server(8080)
     val context = setupWebContext()
     server.setHandler(context)
