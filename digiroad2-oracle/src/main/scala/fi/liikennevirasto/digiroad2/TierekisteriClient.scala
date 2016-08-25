@@ -420,6 +420,7 @@ class TierekisteriBusStopMarshaller {
 
   private val liviIdPublicId = "yllapitajan_koodi"
   private val stopTypePublicId = "pysakin_tyyppi"
+  private val nationalIdPublicId = "valtakunnallinen_id"
   private val expressPropertyValue = 4
   private val typeId: Int = 10
 
@@ -484,8 +485,10 @@ class TierekisteriBusStopMarshaller {
 
     val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
     val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
+    val nationalIdProperty = mapNationalIdProperties(massTransitStop.nationalId, allPropertiesAvailable)
+    val allProperties = nationalIdProperty++equipmentsProperty++stopTypeProperty
 
-    MassTransitStopWithProperties(1, nationalId, stopTypes.toSeq, 0.0, 0.0, Option(validityDirection.head), Option(bearing), Option(validityPeriod), floating, equipmentsProperty++stopTypeProperty)
+    MassTransitStopWithProperties(1, nationalId, stopTypes.toSeq, 0.0, 0.0, Option(validityDirection.head), Option(bearing), Option(validityPeriod), floating, allProperties)
   }
 
   private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
@@ -493,11 +496,9 @@ class TierekisteriBusStopMarshaller {
       case (equipment, existence) =>
         val equipmentProperties = allProperties.find(p => p.publicId.equals(equipment.publicId)).get
         Property(equipmentProperties.id, equipment.publicId, equipmentProperties.propertyType, equipmentProperties.required, Seq(PropertyValue(existence.propertyValue.toString)))
-    }
-    Seq()
+    }.toSeq
   }
 
-  // TODO: PARA RICARDO, pff analisa o que eu fiz em baixo e vê se falta algo sff, vê se está tudo ok e a funcionar, fiz parecido ao meu de cima
   private def mapStopTypeProperties(stopType: StopType, isExpress: Boolean, allProperties: Seq[Property]): Seq[Property] = {
     var propertyValues = stopType.propertyValues.map { value =>
       PropertyValue(value.toString)
@@ -507,6 +508,13 @@ class TierekisteriBusStopMarshaller {
 
     val stopTypeProperties = allProperties.find(p => p.publicId.equals(stopTypePublicId)).get
 
-    List (Property(stopTypeProperties.id, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq))
+    Seq (Property(stopTypeProperties.id, stopTypePublicId, stopTypeProperties.propertyType, stopTypeProperties.required, propertyValues.toSeq))
   }
+
+  private def mapNationalIdProperties(nationalId: Long, allProperties: Seq[Property]): Seq[Property] = {
+    val nationalIdProperties = allProperties.find(p => p.publicId.equals(nationalIdPublicId)).get
+
+    Seq(Property(nationalIdProperties.id, stopTypePublicId, nationalIdProperties.propertyType, nationalIdProperties.required, Seq(PropertyValue(nationalId.toString))))
+  }
+
 }
