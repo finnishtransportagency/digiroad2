@@ -232,6 +232,10 @@ object PointAssetOperations {
     }
   }
 
+  def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) =
+    isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
+      lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
+
   def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
     roadLink match {
       case None => return (true, Some(FloatingReason.NoRoadLinkFound))
