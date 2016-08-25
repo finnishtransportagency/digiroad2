@@ -967,7 +967,7 @@ class AssetDataImporter {
 
     sql"""
                     Select distinct a.MUNICIPALITY_CODE
-                    From Asset a, Text_property_value v, Text_property_value fiv
+                    From Asset a,  Text_property_value fiv
                     WHERE
                      a.Asset_Type_ID=10
                       AND
@@ -986,7 +986,7 @@ class AssetDataImporter {
 
       sql"""
               Select distinct a.id, l.link_ID
-              From Asset a, Text_property_value v, Text_property_value fiv, Text_property_value sev, ASSET_LINK lt, LRM_POSITION l
+              From Asset a, Text_property_value fiv, Text_property_value sev, ASSET_LINK lt, LRM_POSITION l
               WHERE
               a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
                AND
@@ -1002,7 +1002,7 @@ class AssetDataImporter {
 
     sql"""
               Select distinct a.id, l.link_ID
-              From Asset a, Text_property_value v, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
+              From Asset a, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
               WHERE
               a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
                AND ((fiv.PROPERTY_ID = $idAddressSe  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID = $idAddressFi)  AND a.ID=fiv.ASSET_ID))
