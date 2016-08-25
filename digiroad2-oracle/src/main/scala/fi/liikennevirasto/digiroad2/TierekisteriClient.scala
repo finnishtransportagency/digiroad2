@@ -92,6 +92,7 @@ object Equipment {
 
 sealed trait RoadSide {
   def value: String
+  def propertyValues: Set[Int]
 }
 object RoadSide {
   val values = Set(Right, Left, Off, Unknown)
@@ -100,10 +101,14 @@ object RoadSide {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Right extends RoadSide { def value = "oikea" }
-  case object Left extends RoadSide { def value = "vasen" }
-  case object Off extends RoadSide { def value = "paassa" } // Not supported by OTH
-  case object Unknown extends RoadSide { def value = "ei_tietoa" }
+  def propertyValues() : Set[Int] = {
+    values.flatMap(_.propertyValues)
+  }
+
+  case object Right extends RoadSide { def value = "oikea"; def propertyValues = Set(1) }
+  case object Left extends RoadSide { def value = "vasen"; def propertyValues = Set(2) }
+  case object Off extends RoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
+  case object Unknown extends RoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, roadAddress: RoadAddress,
@@ -466,14 +471,21 @@ class TierekisteriBusStopMarshaller {
     properties.find(p => p.publicId.equals(liviIdPublicId)).map(_.values.head.propertyValue)
   }
 
-  // TODO: Implementation
+  // TODO: FROM: Guilherme Pedrosa - Please confirm if this is it
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
     val allPropertiesAvailable = getAllPropertiesAvailable(typeId)
+
+    val nationalId = massTransitStop.nationalId
+    val stopTypes = massTransitStop.stopType.propertyValues
+    val validityDirection = massTransitStop.roadSide.propertyValues
+    val bearing = massTransitStop.roadAddress.track.value
+    val validityPeriod = massTransitStop.operatingFrom.toString() + " " + massTransitStop.operatingTo.toString()
+    val floating = false
 
     val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
     val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
 
-    MassTransitStopWithProperties(1, 1, Seq(), 0.0, 0.0, None, None, None, false, equipmentsProperty++stopTypeProperty)
+    MassTransitStopWithProperties(1, nationalId, stopTypes.toSeq, 0.0, 0.0, Option(validityDirection.head), Option(bearing), Option(validityPeriod), floating, equipmentsProperty++stopTypeProperty)
   }
 
   private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
