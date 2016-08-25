@@ -60,7 +60,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday)), Nil, None, Seq(123, 124)))
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124)))
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
@@ -72,7 +72,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     manoeuvre.elements.head.sourceLinkId should equal(123)
     manoeuvre.elements.head.destLinkId should equal(124)
-    manoeuvre.validityPeriods should equal(Set(ValidityPeriod(0, 21, Saturday)))
+    manoeuvre.validityPeriods should equal(Set(ValidityPeriod(0, 21, Saturday, 30, 45)))
   }
 
   test("Delete manoeuvre") {

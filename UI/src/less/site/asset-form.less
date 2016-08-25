@@ -106,9 +106,16 @@
   .form-manoeuvre {
     .control-label {
       width: 100%;
-      margin-left: 10px;
       margin-bottom: 10px;
       text-align: left;
+    }
+
+    .exception .new-exception{
+      width: 245px;
+    }
+
+    .additional-info{
+      width: 245px;
     }
 
     .adjacent-link, .manoeuvre {
@@ -152,6 +159,9 @@
       .new-validity-period select {
         margin-left: 18px;
         color: @input-color-placeholder-dark;
+      }
+      .new-validity-period select{
+        width: 245px;
       }
       input[type="text"].additional-info {
         margin-left: 18px;
@@ -197,6 +207,15 @@
     padding-right: (@line-height-modifier*2) * 1px;
     font-size: @font-size-small;
   }
+
+  span.validation-fatal-error {
+    text-align: center;
+    color: @failure;
+    font-size: @font-size-xl;
+    margin: auto;
+    display:block
+  }
+
 }
 
 .form {

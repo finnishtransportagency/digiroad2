@@ -376,7 +376,7 @@ class AssetDataImporter {
                pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, pvp.start_minute, pvp.end_minute
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -387,20 +387,20 @@ class AssetDataImporter {
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           #$floatingFilter"""
-        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Int)].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, _, _) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get), 1, 0)
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }

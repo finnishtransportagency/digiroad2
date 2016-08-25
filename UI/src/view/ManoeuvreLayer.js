@@ -257,7 +257,6 @@
         return !_.isEmpty(roadLink.multipleSourceManoeuvres) && _.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleSourceRoadLinks));
-      manoeuvresCollection.setDirty(false);
     };
 
     var drawMultipleIntermediateFeatures = function(roadLinks) {
@@ -266,7 +265,6 @@
           _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
-      manoeuvresCollection.setDirty(false);
     };
 
     var drawMultipleDestinationFeatures = function(roadLinks) {
@@ -275,7 +273,6 @@
           _.isEmpty(roadLink.manoeuvreSource);
       });
       roadLayer.layer.addFeatures(createMultipleFeatures(multipleDestinationRoadLinks));
-      manoeuvresCollection.setDirty(false);
     };
 
     var drawSourceDestinationFeatures = function(roadLinks) {
@@ -283,11 +280,12 @@
         return !_.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
-      manoeuvresCollection.setDirty(false);
     };
 
     var reselectManoeuvre = function() {
-      selectControl.activate();
+      if (!selectedManoeuvreSource.isDirty()) {
+        selectControl.activate();
+      }
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
@@ -341,9 +339,6 @@
       drawSourceDestinationFeatures(linksWithManoeuvres);
       me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres);
       reselectManoeuvre();
-      if (selectedManoeuvreSource.isDirty()) {
-        selectControl.deactivate();
-      }
     };
 
     var handleManoeuvreChanged = function(eventListener) {

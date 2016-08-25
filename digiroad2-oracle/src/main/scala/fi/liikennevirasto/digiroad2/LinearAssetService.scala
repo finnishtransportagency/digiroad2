@@ -118,7 +118,11 @@ trait LinearAssetOperations {
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
       changeSet.expiredAssetIds ++ expiredPavingAssetIds
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
+    val mValueAdjustments = newAndUpdatedPavingAssets.filter(_.id != 0).map( a =>
+      MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
+    )
+    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L),
+      adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
@@ -167,7 +171,8 @@ trait LinearAssetOperations {
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
-            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1))))
+            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1)),
+              startMeasure=0.0, endMeasure=roadlink.length))
         else
           None
       case _ =>
