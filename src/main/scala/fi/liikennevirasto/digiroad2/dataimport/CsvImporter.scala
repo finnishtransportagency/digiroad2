@@ -152,10 +152,10 @@ trait CsvImporter {
 
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
-    def massTransitStopTransformation(stop: PersistedMassTransitStop): CsvImportMassTransitStop = {
+    def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
       val roadLink = vvhClient.fetchVVHRoadlink(stop.linkId)
-      val floating = PointAssetOperations.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })
-      new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown))
+      val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
+      (new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
     val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation, massTransitStopTransformation)

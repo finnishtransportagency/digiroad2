@@ -14,8 +14,7 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.updateAssetGeometry
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.insertSingleChoiceProperty
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
@@ -756,6 +755,13 @@ class AssetDataImporter {
     """.execute
   }
 
+def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """.execute
+  }
+
   def insertMultipleChoiceValue(propertyId: Long, assetId: Long, value: Int) {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
@@ -769,6 +775,37 @@ class AssetDataImporter {
       insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by)
       values ($propertyId, $assetId, (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
+  }
+
+  def getPropertyTypeByPublicId(publicId : String): Long ={
+    sql"select p.id from property p where p.public_id = $publicId".as[Long].first
+  }
+
+  def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
+    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    sql"""
+      select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
+      from
+      asset a
+      join asset_link al on al.asset_id = a.id
+      join lrm_position lrm on al.position_id  = lrm.id
+      join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
+      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
+      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      """.as[(Long, Long, Point, Double, Option[Int])].list
+  }
+
+  def getNonFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[Int])] ={
+    sql"""
+      select a.id, lrm.link_id, np.value
+      from
+      asset a
+      join asset_link al on al.asset_id = a.id
+      join lrm_position lrm on al.position_id  = lrm.id
+      join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
+      left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
+      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
+      """.as[(Long, Long, Option[Int])].list
   }
 
   /**

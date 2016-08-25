@@ -2,13 +2,32 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, FloatingAsset, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+
+sealed trait FloatingReason {
+  def value: Int
+}
+
+object FloatingReason{
+  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue)
+
+  def apply(intValue: Int): FloatingReason = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Unknown extends FloatingReason { def value = 0 }
+  case object RoadOwnerChanged extends FloatingReason { def value = 1 }
+  case object NoRoadLinkFound extends FloatingReason { def value = 2 }
+  case object DifferentMunicipalityCode extends FloatingReason { def value = 3 }
+  case object DistanceToRoad extends FloatingReason { def value = 4 }
+  case object NoReferencePointForMValue extends FloatingReason { def value = 5 }
+}
 
 trait IncomingPointAsset {
   val lon: Double
@@ -46,11 +65,11 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int): Long
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean)
+    case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
 
     val roadLinks: Seq[VVHRoadlink] = vvhClient.fetchVVHRoadlinks(bounds)
     withDynSession {
@@ -61,43 +80,48 @@ trait PointAssetOperations {
       val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.filter { persistedAsset =>
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
-        val floating = PointAssetOperations.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId).map(link => (link.municipalityCode, link.geometry)))
+        val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
         if (floating && !persistedAsset.floating) {
           val logger = LoggerFactory.getLogger(getClass)
-          logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))))
+          val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
+          logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
         }
-        AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating)
+        AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
       }
 
       assetsBeforeUpdate.foreach { asset =>
         if (asset.asset.floating != asset.persistedFloating) {
-          updateFloating(asset.asset.id, asset.asset.floating)
+          updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
         }
       }
-
       assetsBeforeUpdate.map(_.asset)
     }
   }
 
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long)] ={
+    var query = s"""
+          select a.$idField, m.name_fi, lrm.link_id
+          from asset a
+          join municipality m on a.municipality_code = m.id
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
+
+    StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
+  }
+
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Long]]] = {
     case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
 
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-      val allFloatingAssetsQuery = s"""
-        select a.$idField, m.name_fi, lrm.link_id
-        from asset a
-        join municipality m on a.municipality_code = m.id
-        join asset_link al on a.id = al.asset_id
-        join lrm_position lrm on al.position_id = lrm.id
-        where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
 
-      val sql = optionalMunicipalities match {
-        case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
-        case _ => allFloatingAssetsQuery
+      val municipalityFilter =  optionalMunicipalities match {
+        case Some(municipalities) => s" and municipality_code in ($municipalities)"
+        case _ => ""
       }
 
-      val result = StaticQuery.queryNA[(Long, String, Long)](sql).list
+      val result = fetchFloatingAssets(query => query + municipalityFilter, isOperator)
       val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
@@ -115,8 +139,8 @@ trait PointAssetOperations {
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
-    def findRoadlink(linkId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.linkId == linkId).map(x => (x.municipalityCode, x.geometry))
+    def findRoadlink(linkId: Long): Option[VVHRoadlink] =
+      roadLinks.find(_.linkId == linkId)
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
@@ -129,8 +153,8 @@ trait PointAssetOperations {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.linkId) }
 
-    def findRoadlink(linkId: Long): Option[(Int, Seq[Point])] =
-      roadLinks.find(_.linkId == linkId).map(x => (x.municipalityCode, x.geometry))
+    def findRoadlink(linkId: Long): Option[VVHRoadlink] =
+      roadLinks.find(_.linkId == linkId)
 
     withDynSession {
       persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
@@ -153,10 +177,10 @@ trait PointAssetOperations {
   }
 
   protected def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
-                                         roadLinkByLinkId: Long => Option[(Int, Seq[Point])])
-                                        (persistedStop: PersistedAsset): T = {
-    val floating = PointAssetOperations.isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
-    conversion(persistedStop, floating)
+                                         roadLinkByLinkId: Long => Option[VVHRoadlink])
+                                        (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
+    val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
+    (conversion(persistedStop, floating), floatingReason)
   }
 
   protected def withFilter(filter: String)(query: String): String = {
@@ -167,16 +191,16 @@ trait PointAssetOperations {
     withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
   }
 
-  protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => T)
+  protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))
                                                       (persistedAsset: PersistedAsset): T = {
-    val pointAsset = toPointAsset(persistedAsset)
-    if (persistedAsset.floating != pointAsset.floating) updateFloating(pointAsset.id, pointAsset.floating)
+    val (pointAsset, floatingReason) = toPointAsset(persistedAsset)
+    if (persistedAsset.floating != pointAsset.floating) updateFloating(pointAsset.id, pointAsset.floating, floatingReason)
     pointAsset
   }
 
-  protected def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
+  protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = sqlu"""update asset set floating = $floating where id = $id""".execute
 
-  protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[VVHRoadlink]) = {
+  protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[VVHRoadlink]) : String = {
     roadLinkOption match {
       case None => "No road link found with id %d".format(persistedAsset.linkId)
       case Some(roadLink) =>
@@ -192,6 +216,11 @@ trait PointAssetOperations {
         }
     }
   }
+
+  def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+    PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
+      lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
+  }
 }
 
 object PointAssetOperations {
@@ -201,6 +230,26 @@ object PointAssetOperations {
       case Some(roadLink) =>
         Some(calculateBearing(persistedPointAsset, roadLink.geometry))
     }
+  }
+
+  def isFloating(municipalityCode: Int, lon: Double, lat: Double, mValue: Double, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+    roadLink match {
+      case None => return (true, Some(FloatingReason.NoRoadLinkFound))
+      case Some(roadLink) =>
+        if (roadLink.municipalityCode != municipalityCode) {
+          return (true, Some(FloatingReason.DifferentMunicipalityCode))
+        } else {
+          val point = Point(lon, lat)
+          val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue)
+          if(!coordinatesWithinThreshold(Some(point), roadOption)){
+            roadOption match {
+              case Some(value) => return (true, Some(FloatingReason.DistanceToRoad))
+              case _ => return (true, Some(FloatingReason.NoReferencePointForMValue))
+            }
+          }
+        }
+    }
+    return (false, None)
   }
 
   def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {
@@ -215,15 +264,6 @@ object PointAssetOperations {
     }
     val closest = GeometryUtils.segmentByMinimumDistance(point, geometry)
     direction(closest._1, closest._2).toInt
-  }
-
-  def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[(Int, Seq[Point])]): Boolean = {
-    val point = Point(persistedAsset.lon, persistedAsset.lat)
-    roadLink match {
-      case None => true
-      case Some((municipalityCode, geometry)) => municipalityCode != persistedAsset.municipalityCode ||
-        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedAsset.mValue))
-    }
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
