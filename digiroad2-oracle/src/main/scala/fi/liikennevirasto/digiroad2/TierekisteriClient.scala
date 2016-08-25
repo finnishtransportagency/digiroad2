@@ -222,7 +222,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     */
   def deleteMassTransitStop(id: String): Unit ={
     delete(serviceUrl(id)) match {
-      case Some(error) => throw new TierekisteriClientException(error.toString)
+      case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
     }
   }

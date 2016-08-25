@@ -47,7 +47,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
-
   test("fetch from tierekisteri all active mass transit stop") {
     assume(testConnection)
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
@@ -115,11 +114,25 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   }
 
-  test("fetch from tierekisteri mass transit stop that doesn't exist"){
+  test("fetch should throw exception when mass transit stop doesn't exist"){
     assume(testConnection)
 
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.fetchMassTransitStop("")
+    }
+    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
+  }
+
+  test("delete tierekisteri mass transit stop"){
+    assume(testConnection)
+    tierekisteriClient.deleteMassTransitStop("OTHJ208914")
+  }
+
+  test("delete should throw exception when mass transit stop doesn't exist"){
+    assume(testConnection)
+
+    val thrown = intercept[TierekisteriClientException] {
+      val asset = tierekisteriClient.deleteMassTransitStop("")
     }
     thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
   }
