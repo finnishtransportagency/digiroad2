@@ -92,7 +92,7 @@ CREATE TABLE ROAD_ADDRESS
 (
   ID NUMBER NOT NULL
 , LINK_ID NUMBER NOT NULL
-, ROAD NUMBER NOT NULL
+, ROAD_NUMBER NUMBER NOT NULL
 , ROAD_PART_NUMBER NUMBER NOT NULL
 , TRACK_CODE NUMBER NOT NULL
 , ELY NUMBER NOT NULL
@@ -113,7 +113,7 @@ CREATE TABLE ROAD_ADDRESS
   ENABLE
 );
 
-CREATE INDEX ROAD_ADDRESS_ADDR ON ROAD_ADDRESS (ROAD, ROAD_PART_NUMBER, TRACK_CODE);
+CREATE INDEX ROAD_ADDRESS_ADDR ON ROAD_ADDRESS (ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE);
 
 CREATE INDEX ROAD_ADDRESS_LINK_ID ON ROAD_ADDRESS (LINK_ID, START_DATE, END_DATE);
 
@@ -130,15 +130,56 @@ CREATE OR REPLACE TRIGGER project_link_reserved
   FOR EACH ROW
 DECLARE
   ExistingId NUMBER;
-  CURSOR Project_cursor (lrm_id NUMBER) IS
+  CURSOR Project_cursor (lrm_id NUMBER, proj_id NUMBER) IS
     SELECT p.id FROM PROJECT p JOIN PROJECT_LINK pl on (p.id = pl.project_id) JOIN LRM_POSITION l on (l.id = pl.LRM_POSITION_ID)
-    WHERE l.link_id = (SELECT link_id FROM LRM_POSITION WHERE id = lrm_id) AND p.state in (0, 1);
+    WHERE p.id != proj_id AND l.link_id = (SELECT link_id FROM LRM_POSITION WHERE id = lrm_id) AND p.state in (0, 1);
 BEGIN
-  OPEN Project_cursor (:NEW.lrm_position_id);
+  OPEN Project_cursor (:NEW.lrm_position_id, :NEW.project_id);
   FETCH Project_cursor INTO ExistingId;
   IF Project_cursor%NOTFOUND THEN
     NULL;
   ELSE
-    Raise_application_error(-20000, 'link_id reserved to project ' || TO_CHAR(ExistingId));
+    Raise_application_error(-20000, 'link_id reserved to project id ' || TO_CHAR(ExistingId));
+  END IF;
+END;
+
+CREATE TABLE ROAD_ADDRESS_CHANGES
+(
+  PROJECT_ID NUMBER NOT NULL
+, CHANGE_TYPE NUMBER NOT NULL
+, OLD_ROAD_NUMBER NUMBER NOT NULL
+, NEW_ROAD_NUMBER NUMBER NOT NULL
+, OLD_ROAD_PART_NUMBER NUMBER NOT NULL
+, NEW_ROAD_PART_NUMBER NUMBER NOT NULL
+, OLD_TRACK_CODE NUMBER NOT NULL
+, NEW_TRACK_CODE NUMBER NOT NULL
+, OLD_START_ADDR_M NUMBER NOT NULL
+, NEW_START_ADDR_M NUMBER NOT NULL
+, OLD_END_ADDR_M NUMBER NOT NULL
+, NEW_END_ADDR_M NUMBER NOT NULL
+, NEW_DISCONTINUITY NUMBER NOT NULL
+, NEW_ROAD_TYPE NUMBER NOT NULL
+, NEW_ELY NUMBER NOT NULL
+);
+
+-- Check that within a project there are no overlapping new addresses
+CREATE OR REPLACE TRIGGER road_address_changes_no_overlap
+  BEFORE
+    INSERT
+  ON road_address_changes
+  FOR EACH ROW
+DECLARE
+  ExistingId NUMBER;
+  CURSOR Overlap_cursor (proj_id NUMBER, road_number NUMBER, road_part_number NUMBER, start_m NUMBER, end_m NUMBER, track_code NUMBER) IS
+    SELECT TO_CHAR(NEW_ROAD_NUMBER) || '/' || TO_CHAR(NEW_ROAD_PART_NUMBER) FROM ROAD_ADDRESS_CHANGES
+    WHERE project_id = proj_id AND (new_track_code = 0 OR track_code = 0 OR new_track_code = track_code) AND
+      (start_m < NEW_END_ADDR_M AND end_m > NEW_START_ADDR_M);
+BEGIN
+  OPEN Project_cursor (:NEW.lrm_position_id, :NEW.project_id);
+  FETCH Project_cursor INTO ExistingId;
+  IF Project_cursor%NOTFOUND THEN
+    NULL;
+  ELSE
+    Raise_application_error(-20000, 'Road address overlap for ' || TO_CHAR(ExistingId));
   END IF;
 END;
