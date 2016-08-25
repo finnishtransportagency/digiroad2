@@ -869,7 +869,6 @@ class AssetDataImporter {
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head
-
       println("Phase 1 out of 2. Getting stops with both names missing")
       val municipalities = getMTStopsMunicipalitycodeBothMissing(idAddressFi, idAddressSe)
       municipalities.foreach { municipalityCode =>
@@ -910,7 +909,7 @@ class AssetDataImporter {
                 var sweAddressAdded=false
                 finstops.foreach{finstop=> //finstop  _1:asset_id, _2:address,_3:link-id
                 {
-                if (finstop._3==stops._2)
+                if (finstop._1==stops._1 && finstop._3==rlinks.linkId )
                   {
                     val swedishaddress=rlinks.attributes.getOrElse("ROADNAME_SE","none").toString
                     if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("ROADNAME_FI","null").toString.toUpperCase()==finstop._2.toUpperCase())
@@ -922,7 +921,7 @@ class AssetDataImporter {
                 }}
                   if (!sweAddressAdded)
                   swedishstops.foreach{swestop=> //swestop  _1:asset_id, _2:address,_3:link-id
-                    if (swestop._3==rlinks.linkId)
+                    if (swestop._1==stops._1 && swestop._3==rlinks.linkId)
                     {
                       val finAddress=rlinks.attributes.getOrElse("ROADNAME_FI","none").toString
                       if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("ROADNAME_SE","null").toString.toUpperCase()==swestop._2.toUpperCase())
