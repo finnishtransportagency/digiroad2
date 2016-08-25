@@ -84,7 +84,7 @@ object Equipment {
   case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
   case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; }
   case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
-  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
+  case object ElectronicTimetables extends Equipment { def value = "sahkoinen_aikataulunaytto"; def publicId = "sahkoinen_aikataulunaytto"; }
   case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
   case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
@@ -118,6 +118,7 @@ case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, roadAdd
                                        operatingFrom: Date, operatingTo: Date, removalDate: Date)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
+class TierekisteriClientException(response: String) extends RuntimeException(response)
 
 /**
   * Utility for using Tierekisteri mass transit stop interface in OTH.
@@ -125,7 +126,7 @@ case class TierekisteriError(content: Map[String, Any], url: String)
   * @param tierekisteriRestApiEndPoint
   */
 class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
-  class TierekisteriClientException(response: String) extends RuntimeException(response)
+
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private val dateFormat = "yyyy-MM-dd"
@@ -168,7 +169,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
           stopAsset =>
             mapFields(stopAsset)
         }
-      case Right(error) => throw new TierekisteriClientException(error.toString)
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
 
@@ -183,7 +184,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
         mapFields(content)
-      case Right(error) => throw new TierekisteriClientException(error.toString)
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
 
@@ -324,18 +325,25 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
-    //TODO need to be confirmed and validations
+    def getMandatoryFieldValue(field: String): String = {
+      data.
+        get(field).
+        getOrElse(throw new TierekisteriClientException("The field '%s' is mandatory".format(field))).
+        toString
+    }
+
     val nationalId = convertToLong(data.get(trNationalId)).get
-    val liviId = data.get(trLiviId).toString
+    val liviId = data.get(trLiviId).get.toString
     val roadAddress = RoadAddress(None, convertToInt(data.get(trRoadNumber)).get, convertToInt(data.get(trRoadPartNumber)).get,Track.Combined,1,None)
-    val roadSide = RoadSide.apply(data.get(trSide).toString)
-    val stopType = StopType.apply(data.get(trStopType).toString)
-    val express = booleanCodeToBoolean.get(trIsExpress).get
+    val roadSide = RoadSide.apply(data.get(trSide).get.toString)
+    val stopType = StopType.apply(data.get(trStopType).get.toString)
+    //Not support exception
+    val express = booleanCodeToBoolean.get(getMandatoryFieldValue(trIsExpress)).get
     val equipments = extractEquipment(data)
-    val stopCode = data.get(trStopCode).toString
-    val nameFi = data.get(trNameFi).toString
-    val nameSe = data.get(trNameSe).toString
-    val modifiedBy = data.get(trUser).toString
+    val stopCode = data.get(trStopCode).get.toString
+    val nameFi = data.get(trNameFi).get.toString
+    val nameSe = data.get(trNameSe).get.toString
+    val modifiedBy = data.get(trUser).get.toString
     val operatingFrom = convertToDate(data.get(trOperatingFrom)).get
     val operatingTo = convertToDate(data.get(trOperatingTo)).get
     val removalDate = convertToDate(data.get(trRemovalDate)).get
@@ -344,7 +352,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   private def extractEquipment(data: Map[String, Any]) : Map[Equipment, Existence] = {
-    val equipmentData = data.get(trEquipment).asInstanceOf[Map[String, String]]
+    val equipmentData = data.get(trEquipment).get.asInstanceOf[Map[String, String]]
 
     Equipment.values.flatMap{ equipment =>
       equipmentData.get(equipment.value) match{

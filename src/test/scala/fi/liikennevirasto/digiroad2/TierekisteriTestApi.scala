@@ -25,6 +25,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "pysakin_tyyppi" -> "paikallis",
       "pikavuoro" -> "ei",
       "alkupvm" -> "2016-01-01",
+      "loppupvm" -> "2016-01-02",
+      "lakkautuspvm" -> "2016-01-03",
       "livitunnus" -> "OTHJ208914",
       "nimi_se" -> "Reso å",
       "varusteet" -> getEquipments,
