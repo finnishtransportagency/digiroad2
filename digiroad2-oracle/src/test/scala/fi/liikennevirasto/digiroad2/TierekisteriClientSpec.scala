@@ -215,4 +215,82 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     thrown.getMessage should be("Tierekisteri error: Request returned HTTP Error 409")
   }
 
+  test("updating bus stop information in Tierekisteri using PUT method (204 on successful update)") {
+    val equipmentsMap: Map[Equipment, Existence] = Map(
+      Equipment.Timetable -> Existence.Unknown,
+      Equipment.Seat -> Existence.Unknown,
+      Equipment.BikeStand -> Existence.Unknown,
+      Equipment.ElectronicTimetables -> Existence.Unknown,
+      Equipment.TrashBin -> Existence.Unknown,
+      Equipment.Roof -> Existence.Yes,
+      Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+      Equipment.CarParkForTakingPassengers -> Existence.No,
+      Equipment.RaisedBusStop -> Existence.Yes,
+      Equipment.Lighting -> Existence.Unknown
+    )
+
+    assume(testConnection)
+
+    val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914",
+      RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
+      false, equipmentsMap,
+      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+
+    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+  }
+
+  test("updating bus stop information in Tierekisteri using PUT method (400 (BAD REQUEST) malformed)") {
+    val equipmentsMap: Map[Equipment, Existence] = Map(
+      Equipment.Timetable -> Existence.Unknown,
+      Equipment.Seat -> Existence.Unknown,
+      Equipment.BikeStand -> Existence.Unknown,
+      Equipment.ElectronicTimetables -> Existence.Unknown,
+      Equipment.TrashBin -> Existence.Unknown,
+      Equipment.Roof -> Existence.Yes,
+      Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+      Equipment.CarParkForTakingPassengers -> Existence.No,
+      Equipment.RaisedBusStop -> Existence.Yes,
+      Equipment.Lighting -> Existence.Unknown
+    )
+
+    assume(testConnection)
+
+    val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499999999",
+      RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
+      false, equipmentsMap,
+      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+
+    val thrown = intercept[TierekisteriClientException] {
+      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+    }
+    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 400")
+  }
+
+  test("updating bus stop information in Tierekisteri using PUT method (500 (INTERNAL SERVER ERROR) error in Tierekisteri)") {
+    val equipmentsMap: Map[Equipment, Existence] = Map(
+      Equipment.Timetable -> Existence.Unknown,
+      Equipment.Seat -> Existence.Unknown,
+      Equipment.BikeStand -> Existence.Unknown,
+      Equipment.ElectronicTimetables -> Existence.Unknown,
+      Equipment.TrashBin -> Existence.Unknown,
+      Equipment.Roof -> Existence.Yes,
+      Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+      Equipment.CarParkForTakingPassengers -> Existence.No,
+      Equipment.RaisedBusStop -> Existence.Yes,
+      Equipment.Lighting -> Existence.Unknown
+    )
+
+    assume(testConnection)
+
+    val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499Err",
+      RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
+      false, equipmentsMap,
+      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+
+    val thrown = intercept[TierekisteriClientException] {
+      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+    }
+    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 500")
+  }
+
 }

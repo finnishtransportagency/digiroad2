@@ -67,17 +67,23 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     getMassTransitStop
   }
 
-  put("/pysakit/:liviId"){
+  put("/pysakit/:liviId") {
     val liviId = params("liviId")
 
-    if(liviId != "OTHJ208914")
-      halt(NotFound())
+    if (liviId == "OTHJ20891499999999") {
+      halt(BadRequest("Invalid 'mass transit stop' value for a field"))
+    } else if (liviId == "OTHJ20891499Err") {
+      halt(InternalServerError("Error in Tierekisteri System"))
+    }
 
     val body = parsedBody.extract[Map[String, Any]]
 
-    mandatoryFields.foreach{ field  =>
-        body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
+    mandatoryFields.foreach { field =>
+      body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
     }
+
+    if(liviId != "OTHJ208914")
+      halt(NotFound())
 
     halt(NoContent())
   }
