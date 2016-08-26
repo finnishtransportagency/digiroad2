@@ -523,13 +523,10 @@
         streetViewHandler.update();
       });
 
-      eventbus.on('assetPropertyValue:changed', function (env) {
-        var propertyData = _.find(env, function (propertyDataObj) {
-          return (propertyDataObj.publicId == 'tietojen_yllapitaja') && (_.find(propertyDataObj.values, function (value) {
-                return value.propertyValue == '2';
-              }));
-        });
-        if (!_.isEmpty(propertyData)) {
+      eventbus.on('assetPropertyValue:changed', function (event) {
+        var property = event.propertyData;
+
+        if(property.publicId == 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
           instructionsPopup.show('Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.', 5000);
         }
       });
