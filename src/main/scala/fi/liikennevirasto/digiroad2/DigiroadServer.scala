@@ -2,20 +2,22 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
 import java.util.logging.Logger
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import org.eclipse.jetty.client.{HttpClient, HttpProxy, ProxyConfiguration}
 
 import scala.collection.JavaConversions._
-import org.eclipse.jetty.http.{MimeTypes, HttpURI}
+import org.eclipse.jetty.http.{HttpURI, MimeTypes}
 import org.eclipse.jetty.proxy.ProxyServlet
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.client.api.Request
+import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
 
 
 trait DigiroadServer {
   val contextPath : String
+  val viiteContextPath: String
 
   def startServer() {
     val server = new Server(8080)
@@ -32,9 +34,26 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
+    val handler = new ContextHandlerCollection()
+    val handlers = Array(context, createViiteContext())
+    handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
     server.setHandler(context)
     server.start()
     server.join()
+  }
+
+  def createViiteContext() = {
+    val appContext = new WebAppContext()
+    appContext.setDescriptor("src/main/webapp/WEB-INF/viite_web.xml")
+    appContext.setResourceBase("src/main/webapp/viite")
+    appContext.setContextPath(viiteContextPath)
+    appContext.setParentLoaderPriority(true)
+    appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+    appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
+    appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
+    appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
+    appContext.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
+    appContext
   }
 }
 
