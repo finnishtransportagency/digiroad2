@@ -56,7 +56,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     val asset = assets.head
     asset.nationalId should be (208914)
-    asset.liViId should be ("OTHJ208914")
+    asset.liviId should be ("OTHJ208914")
     asset.roadAddress.road should be (25823)
     asset.roadAddress.roadPart should be (104)
     asset.roadSide should be (RoadSide.Right)
@@ -88,7 +88,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914")
 
     asset.nationalId should be (208914)
-    asset.liViId should be ("OTHJ208914")
+    asset.liviId should be ("OTHJ208914")
     asset.roadAddress.road should be (25823)
     asset.roadAddress.roadPart should be (104)
     asset.roadSide should be (RoadSide.Right)

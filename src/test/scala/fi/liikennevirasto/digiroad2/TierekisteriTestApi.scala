@@ -42,7 +42,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "aikataulu" -> "ei_tietoa",
       "penkki" -> "ei_tietoa",
       "pyorateline" -> "ei_tietoa",
-      "sahkoinen_aikataulunaytto" -> "ei_tietoa",
+      "sahk_aikataulu" -> "ei_tietoa",
       "roskis" -> "ei_tietoa",
       "katos" -> "on",
       "mainoskatos" -> "ei",

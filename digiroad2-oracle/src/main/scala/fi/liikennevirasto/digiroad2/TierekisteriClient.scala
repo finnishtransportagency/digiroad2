@@ -14,6 +14,9 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 
+/**
+  * Values for Stop type (Pysäkin tyyppi) enumeration
+  */
 sealed trait StopType {
   def value: String
   def propertyValues: Set[Int]
@@ -38,6 +41,9 @@ object StopType {
   case object Unknown extends StopType { def value = "tuntematon"; def propertyValues = Set(99); }  // Should not be passed on interface
 }
 
+/**
+  * Values for Existence (Olemassaolo) enumeration
+  */
 sealed trait Existence {
   def value: String
   def propertyValue: Int
@@ -62,6 +68,9 @@ object Existence {
   case object Unknown extends Existence { def value = "ei_tietoa"; def propertyValue = 1; }
 }
 
+/**
+  * Values for Equipment (Varuste) enumeration
+  */
 sealed trait Equipment {
   def value: String
   def publicId: String
@@ -78,18 +87,21 @@ object Equipment {
   }
 
   case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
-  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska-astia"; }
+  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; }
   case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
   case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; }
   case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
   case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; }
   case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
-  case object ElectronicTimetables extends Equipment { def value = "sahkoinen_aikataulunaytto"; def publicId = "sahkoinen_aikataulunaytto"; }
+  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
   case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
-  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "roska-astia"; }
+  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "koroke"; }
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
 }
 
+/**
+  * Values for Road side (Puoli) enumeration
+  */
 sealed trait RoadSide {
   def value: String
   def propertyValues: Set[Int]
@@ -111,17 +123,27 @@ object RoadSide {
   case object Unknown extends RoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
 }
 
-case class TierekisteriMassTransitStop(nationalId: Long, liViId: String, roadAddress: RoadAddress,
-                                       roadSide: RoadSide, stopType: StopType, express: Boolean,
+case class TierekisteriMassTransitStop(nationalId: Long,
+                                       liviId: String,
+                                       roadAddress: RoadAddress,
+                                       roadSide: RoadSide,
+                                       stopType: StopType,
+                                       express: Boolean,
                                        equipments: Map[Equipment, Existence] = Map(),
-                                       stopCode: String, nameFi: String, nameSe: String, modifiedBy: String,
-                                       operatingFrom: Date, operatingTo: Date, removalDate: Date)
+                                       stopCode: String,
+                                       nameFi: String,
+                                       nameSe: String,
+                                       modifiedBy: String,
+                                       operatingFrom: Date,
+                                       operatingTo: Date,
+                                       removalDate: Date)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
+
 class TierekisteriClientException(response: String) extends RuntimeException(response)
 
 /**
-  * Utility for using Tierekisteri mass transit stop interface in OTH.
+  * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
   *
   * @param tierekisteriRestApiEndPoint
   */
@@ -157,8 +179,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
   /**
-    * Returns all active mass transit stops.
-    * Tierekisteri GET /pysakit/
+    * Return all bus stops currently active from Tierekisteri
+    * Tierekisteri REST API endpoint: GET /pysakit/
     *
     * @return
     */
@@ -174,10 +196,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   /**
-    * Returns mass transit stop data by livitunnus.
-    * Tierekisteri GET /pysakit/{livitunn}
+    * Returns a bus stop based on OTH "yllapitajan_koodi" id
+    * Tierekisteri REST API endpoint: GET /pysakit/{livitunn}
     *
-    * @param id   livitunnus
+    * @param id
     * @return
     */
   def fetchMassTransitStop(id: String): TierekisteriMassTransitStop = {
@@ -189,36 +211,36 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   /**
-    * Creates a new mass transit stop to Tierekisteri from OTH document.
-    * Tierekisteri POST /pysakit/
+    * Creates a new bus stop to Tierekisteri.
+    * Tierekisteri REST API endpoint: POST /pysakit/
     *
     * @param trMassTransitStop
     */
   def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    post(serviceUrl(trMassTransitStop.liViId), trMassTransitStop) match {
+    post(serviceUrl(trMassTransitStop.liviId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException(error.toString)
       case _ => ; // do nothing
     }
   }
 
   /**
-    * Updates mass transit stop data and ends it, if there is valid to date in OTH JSON document.
-    * Tierekisteri PUT /pysakit/{livitunn}
+    * Updates and/or invalidates a stop. (If valid_to is set, the stop is invalidated. Other data may be updated at the time, too)
+    * Tierekisteri REST API endpoint: PUT /pysakit/{livitunn}
     *
     * @param trMassTransitStop
     */
   def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    put(serviceUrl(trMassTransitStop.liViId), trMassTransitStop) match {
+    put(serviceUrl(trMassTransitStop.liviId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException(error.toString)
       case _ => ;
     }
   }
 
   /**
-    * Deletes mass transit stop from Tierekisteri by livitunnus.
-    * Tierekisteri DELETE /pysakit/{livitunn}
+    * Marks a bus stop to be removed. Only for error correcting purposes, for example when bus stop was accidentally added.
+    * Tierekisteri REST API endpoint: DELETE /pysakit/{livitunn}
     *
-    * @param id livitunnus
+    * @param id
     */
   def deleteMassTransitStop(id: String): Unit ={
     delete(serviceUrl(id)) match {
@@ -298,7 +320,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
     val jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
-      trLiviId -> trMassTransitStop.liViId,
+      trLiviId -> trMassTransitStop.liviId,
       trRoadNumber -> trMassTransitStop.roadAddress.road,
       trRoadPartNumber -> trMassTransitStop.roadAddress.roadPart,
       trSide -> trMassTransitStop.roadSide.value,
@@ -494,7 +516,7 @@ class TierekisteriBusStopMarshaller {
 
     val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
     val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
-    val liViIdProperty = mapLiViIdProperties(massTransitStop.liViId, allPropertiesAvailable)
+    val liViIdProperty = mapLiViIdProperties(massTransitStop.liviId, allPropertiesAvailable)
     val nameFiProperty = mapNameFiProperties(massTransitStop.nameFi, allPropertiesAvailable)
     val nameSeProperty = mapNameSeProperties(massTransitStop.nameSe, allPropertiesAvailable)
     val allProperties = liViIdProperty++equipmentsProperty++stopTypeProperty++nameFiProperty++nameSeProperty
