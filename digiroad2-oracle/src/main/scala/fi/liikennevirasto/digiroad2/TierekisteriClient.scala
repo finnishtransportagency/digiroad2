@@ -354,21 +354,25 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
         toString
     }
 
+    //Mandatory Fields
     val nationalId = convertToLong(data.get(trNationalId)).get
-    val liviId = data.get(trLiviId).get.toString
-    val roadAddress = RoadAddress(None, convertToInt(data.get(trRoadNumber)).get, convertToInt(data.get(trRoadPartNumber)).get,Track.Combined,1,None)
-    val roadSide = RoadSide.apply(data.get(trSide).get.toString)
-    val stopType = StopType.apply(data.get(trStopType).get.toString)
+    val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide))
     //Not support exception
     val express = booleanCodeToBoolean.get(getMandatoryFieldValue(trIsExpress)).get
+    val liviId = getMandatoryFieldValue(trLiviId)
+    val stopType = StopType.apply(getMandatoryFieldValue(trStopType))
+    val modifiedBy = getMandatoryFieldValue(trUser)
+    val roadAddress = RoadAddress(None, convertToInt(data.get(trRoadNumber)).get, convertToInt(data.get(trRoadPartNumber)).get,Track.Combined,1,None)
+
+    //Not Mandatory Fields
     val equipments = extractEquipment(data)
     val stopCode = data.get(trStopCode).get.toString
     val nameFi = data.get(trNameFi).get.toString
     val nameSe = data.get(trNameSe).get.toString
-    val modifiedBy = data.get(trUser).get.toString
     val operatingFrom = convertToDate(data.get(trOperatingFrom)).get
     val operatingTo = convertToDate(data.get(trOperatingTo)).get
     val removalDate = convertToDate(data.get(trRemovalDate)).get
+
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate)
   }
