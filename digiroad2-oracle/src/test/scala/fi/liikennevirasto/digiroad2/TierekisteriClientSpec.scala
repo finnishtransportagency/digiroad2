@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import java.net.ConnectException
 import java.text.SimpleDateFormat
-import java.util.Properties
+import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2.util.DataFixture._
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 class TierekisteriClientSpec extends FunSuite with Matchers  {
 
@@ -135,6 +136,83 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       val asset = tierekisteriClient.deleteMassTransitStop("")
     }
     thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
+  }
+
+  test("post should throw nothing if the create TierekisteriMassTransitStop was successful"){
+    assume(testConnection)
+
+    val thrown = intercept[TierekisteriClientException] {
+
+    val equipments : Map[Equipment, Existence] = Map(
+      Equipment.Timetable -> Existence.Unknown,
+      Equipment.Seat -> Existence.Unknown,
+      Equipment.BikeStand -> Existence.Unknown,
+      Equipment.ElectronicTimetables -> Existence.Unknown,
+      Equipment.TrashBin -> Existence.Unknown,
+      Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+      Equipment.CarParkForTakingPassengers -> Existence.No,
+      Equipment.RaisedBusStop -> Existence.Yes,
+      Equipment.Lighting -> Existence.Unknown)
+
+
+      val dateFormat = "yyyy-MM-dd"
+
+      val tkMassTransitStop = TierekisteriMassTransitStop(208914,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),RoadSide.Right,StopType.Combined, false,
+        equipments,"681","Raisionjoki", "Reso å", "KX123456", new Date, new Date,new Date)
+
+
+      tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+    }
+  }
+
+  test("post should throw exception when mass transit data has errors") {
+    assume(testConnection)
+
+    val thrown = intercept[TierekisteriClientException] {
+
+      val equipments: Map[Equipment, Existence] = Map(
+        Equipment.Timetable -> Existence.Unknown,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.BikeStand -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Unknown,
+        Equipment.TrashBin -> Existence.Unknown,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+        Equipment.CarParkForTakingPassengers -> Existence.No,
+        Equipment.RaisedBusStop -> Existence.Yes,
+        Equipment.Lighting -> Existence.Unknown)
+
+      val tkMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914eeeeeeeeeeeee", RoadAddress(None, 25823, 104, Track.Combined, 150, None), RoadSide.Right, StopType.Combined, false,
+        equipments, "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+
+      tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+
+    }
+    thrown.getMessage should be("Tierekisteri error: Request returned HTTP Error 400")
+  }
+
+  test("post should throw exception when mass transit have one id that already exists"){
+    assume(testConnection)
+
+    val thrown = intercept[TierekisteriClientException] {
+
+      val equipments : Map[Equipment, Existence] = Map(
+        Equipment.Timetable -> Existence.Unknown,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.BikeStand -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Unknown,
+        Equipment.TrashBin -> Existence.Unknown,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+        Equipment.CarParkForTakingPassengers -> Existence.No,
+        Equipment.RaisedBusStop -> Existence.Yes,
+        Equipment.Lighting -> Existence.Unknown)
+
+      val tkMassTransitStop = TierekisteriMassTransitStop(208913,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),RoadSide.Right,StopType.Combined, false,
+        equipments,"681","Raisionjoki", "Reso å", "KX123456", new Date, new Date,new Date)
+
+      tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+
+    }
+    thrown.getMessage should be("Tierekisteri error: Request returned HTTP Error 409")
   }
 
 }
