@@ -416,7 +416,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (selectedAsset.massTransitStop.getMarker()) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
-      var busStopPoint = new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat);
+      var busStopPoint = new OpenLayers.LonLat(selectedAsset.data.originalLon, selectedAsset.data.originalLat);
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), lonlat.lon, lonlat.lat);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       var position = geometrycalculator.nearestPointOnLine(
@@ -430,26 +430,25 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
-    var movementLimit = 50;
-    //Assuming that the method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Kilometers so we multiply the result for this
-    var distanceMult = 1;
-    var distance = geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint) * distanceMult;
+    var movementLimit = 50; //50 meters
+    //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
+    var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
-    if (!(distance <= movementLimit)){
-      if (!movementPermission)
-      {
-        new GenericConfirmPopUp('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
-          successCallback: function(){
-            doMovement(angle, nearestLine, coordinates);
-            movementPermission = true;
-          },
-          closeCallback: function(){
+    console.log(distance);
 
-          }
-        });
-      } else {
-        doMovement(angle, nearestLine, coordinates);
-      }
+    if (distance > movementLimit && !movementPermission)
+    {
+      new GenericConfirmPopUp('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
+        successCallback: function(){
+          doMovement(angle, nearestLine, coordinates);
+          movementPermission = true;
+        },
+        closeCallback: function(){}
+      });
+    }
+    else
+    {
+      doMovement(angle, nearestLine, coordinates);
     }
   };
 

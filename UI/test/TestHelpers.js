@@ -70,6 +70,10 @@ define(['AssetsTestData',
     $('.edit-mode-btn:visible').click();
   };
 
+  var clickVisbleYesConfirmPopup = function(){
+    $('.btn.yes:visible').click();
+  };
+
   var clickMarker = function(id, map) {
     var markerBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
     var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
@@ -161,6 +165,7 @@ define(['AssetsTestData',
    defaultBackend: defaultBackend,
    fakeBackend: fakeBackend,
    clickVisibleEditModeButton: clickVisibleEditModeButton,
+   clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
    clickMarker: clickMarker,
    moveMarker: moveMarker,
    clickMap: clickMap,
