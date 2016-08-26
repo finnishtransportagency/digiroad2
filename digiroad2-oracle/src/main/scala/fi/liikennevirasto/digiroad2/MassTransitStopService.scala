@@ -228,7 +228,9 @@ trait MassTransitStopService extends PointAssetOperations {
     properties.foreach{ property =>
       if(property.publicId == AdministratorInfoPublicId){
         val administrationPropertyValue = property.values.headOption
-        if(administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+        val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+
+        if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
           massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
         }else{
           massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
