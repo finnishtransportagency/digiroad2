@@ -1,0 +1,63 @@
+//== Content box
+//## A wrapper box for forms etc.
+
+.content-box {
+	border-radius: @border-radius-base;
+	background-color: @gray-lighter;
+	box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+
+	header {
+	    padding: @line-height-modifier * 2;
+	    border-bottom: 1px solid @gray-darkest;
+	    border-top-left-radius: @border-radius-base;
+	    border-top-right-radius: @border-radius-base;
+	    font-size: @font-size-xl;
+	    color: #fff;
+	    background-color: @gray-darker-2;
+	}
+
+	.body {
+		padding: @line-height-modifier * 2;
+	}
+}
+
+//## Separate styles if the box is holding a form
+.form-box {
+	.form-group {
+		margin-bottom: 0;
+		padding: @line-height-modifier * 2;
+		border-bottom: 1px solid @gray-light-2;
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	.form-controls {
+		text-align: right;
+	}
+
+	.form-horizontal {
+		.control-label {
+			width: 25%;
+			padding-right: @line-height-modifier * 2;
+			.box-sizing(border-box);
+		}
+
+		.form-control {
+			width: 75%;
+		}
+
+		.checkbox,
+		.radio,
+		.help-block {
+			padding-left: 25%;
+		}
+	}
+
+	.form-dark {
+		.form-group {
+			border-color: @gray-darker-2;
+		}
+	}
+}

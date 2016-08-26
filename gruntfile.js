@@ -15,6 +15,10 @@ module.exports = function(grunt) {
         src: './UI/tmpl/index.html',
         dest: './UI/index.html'
       },
+      viite: {
+        src: './UI/tmpl/viite.html',
+        dest: './UI/viite/index.html'
+      },
       production: {
         src: './UI/tmpl/index.html',
         dest: './UI/index.html'
@@ -48,7 +52,7 @@ module.exports = function(grunt) {
         }
       },
       files: {
-        src: ['UI/index.html']
+        src: ['UI/index.html', 'UI/viite/index.html']
       }
     },
     clean: ['dist'],
@@ -105,6 +109,11 @@ module.exports = function(grunt) {
           "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
+      viite: {
+        files: {
+          "dist/viite/css/viite.css": "UI/src/less/main.less"
+        }
+      },
       production: {
         options: {
           cleancss: true
@@ -115,7 +124,7 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js'],
+      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/'],
       options: {
         // options here to override JSHint defaults
         globals: {
@@ -157,7 +166,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
+      tasks: ['jshint', 'env:development', 'preprocess:development', 'preprocess:viite', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -193,13 +202,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'less:development', 'watch']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'mocha:unit', 'mocha:integration']);
 
   grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'preprocess:viite', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:integration']);
 

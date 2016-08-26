@@ -1,0 +1,27 @@
+//== Loading spinner
+
+.spinner-overlay {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border-top-left-radius: 2px;
+  z-index: 1000;
+  
+  .spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 74px;
+    height: 74px;    
+    margin-top: -37px;
+    margin-left: -37px;
+    border-radius: 50px;
+    background-color: @gray-darker-2;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    .img-retina('../images/spinner.gif', '../images/spinner@2x.gif', 64px, 64px);
+  }
+}

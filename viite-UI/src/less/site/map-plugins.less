@@ -1,0 +1,270 @@
+//== Map plugin control component styles
+
+#map-plugins {
+	position: absolute;
+	left: 0;
+	bottom: 40px;
+	z-index: 15000;
+	width: 100%;
+	height: 39px;
+    border-top: 1px solid @gray-light-2;
+    background-color: @gray-lighter;
+}
+
+//** Zoom buttons
+
+#map-plugins {
+	.zoombar {
+		position: absolute;
+		right: @feature-attribute-panel-width + 20px;
+		bottom: @line-height-base * 2.5;
+		z-index: 15000;
+		width: auto;
+		margin: 0;
+
+		.plus,
+		.minus {
+			width: 30px;
+			height: 30px;
+			margin-left: auto;
+			border: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+			text-align: center;
+			background-color: @gray-lighter-2;
+			background-image: none;
+			cursor: pointer;
+			.icon-font;
+			.transition(all .2s @easing-swift-out);
+
+			&:before {
+				line-height: 30px;
+				color: @gray-darker-2;
+			}
+
+			&:hover {
+				background-color: @gray-lighter;
+			}
+
+			&:active {
+				background-color: @gray-light-2;
+
+				&:before {
+					color: @gray-darkest;
+				}
+			}
+		}
+
+		.plus {
+			&:before {
+				content: '\e800';
+			}
+		}
+
+		.minus {
+			margin-top: -1px;
+
+			&:before {
+				content: '\e801';
+			}
+		}		
+	}
+}
+
+//** Background layer select
+
+#map-plugins {
+	.tile-map-selector {
+        position: absolute;
+        top: 9px;
+        padding: 0 (@line-height-modifier * 2);
+
+		ul {
+            margin: 0;
+            padding: 0;
+			height: auto;
+
+			li {
+				.btn;
+				.btn-sm;
+				.btn-tertiary;
+				position: relative;
+				width: auto;
+				margin: 0 0 0 -1px;
+				border-radius: 0;
+
+				&.selected {
+					.btn-secondary;
+					z-index: 2;
+					color: #fff;
+				}
+
+				&:first-child {
+					margin-left: 0;
+					border-top-left-radius: @border-radius-base;
+					border-bottom-left-radius: @border-radius-base;
+				}
+
+				&:last-child {
+					border-top-right-radius: @border-radius-base;
+					border-bottom-right-radius: @border-radius-base;
+				}
+			}
+		}
+	}	
+}
+
+//** Scale
+
+#map-plugins {
+	.scalebar {
+		position: absolute;
+		right: @feature-attribute-panel-width + 70px;
+		bottom: @line-height-base * 2.5;
+		font-size: 9px;
+		line-height: @line-height-modifier * 3;
+		color: @gray-darker-2;
+
+		.olControlScaleLineTop,
+		.olControlScaleLineBottom {
+			border-color: @gray-darker-2;
+		}
+
+		.olControlScaleLineBottom {
+			display: none;
+		}
+	}	
+}
+
+//** Coordinates
+
+// TODO: Remove when search box is separated to own ui component
+#mark-coordinates {
+  margin-right: 10px;
+}
+#map-plugins {
+	.coordinates {
+        position: absolute;
+        top: 0;
+        right: 10px;
+		font-size: 0px;
+		color: @gray-darkest;
+		text-align: right;
+
+		.cbSpansWrapper {
+			display: inline-block;
+			vertical-align: middle;
+			width: auto;
+			padding: 0;
+
+			.cbRow {
+				display: inline-block;
+				height: @line-height-base * 2;
+				padding: (@line-height-modifier * 2) 0;
+				margin-right: @line-height-modifier;
+				.box-sizing(border-box);
+				.clearfix();
+
+				.cbCrsLabel {
+					font-size: @font-size-xs;
+					color: @gray;
+				}
+
+				.cbLabel {
+					display: inline-block;
+					float: none;
+					width: auto;
+					margin-right: 3px;
+					font-size: @font-size-xs;
+				}
+
+				.cbValue {
+					display: inline-block;
+					float: none;
+					width: auto;
+					padding: 0;
+					font-size: @font-size-xs;
+				}
+
+				&:last-child {
+					margin-right: @line-height-modifier * 2;
+				}
+			}
+
+			br {
+				display: none;
+			}
+		}
+
+		.crosshair-wrapper {
+			display: inline-block;
+			vertical-align: middle;
+			height: @line-height-base * 2;
+			padding: (@line-height-modifier * 2) 0 0 (@line-height-modifier * 2);
+			border-left: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+
+			label {
+				padding-left: @line-height-modifier * 3;
+				margin-top: 2px;
+				font-size: @font-size-xs;
+			}			
+
+			input {
+				margin-left: -15px;
+			}
+		}
+	}	
+}
+
+//** Crosshair
+
+.crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1000;
+    border-width: 0;
+    border-style: solid;
+    border-color: @gray-darker-2;
+    background-color: @gray-lighter-2;
+    background-color: rgba(red(@warning), green(@warning), blue(@warning), .85);
+    pointer-events: none;
+}
+
+.crosshair-center {
+    width: 2px;
+    height: 2px;
+    margin: -1px 0 0 -1px;
+}
+
+.crosshair-top {
+    width: 2px;
+    height: 14px;
+    margin: -16px 0 0 -2px;
+    border-width: 1px 1px 0 1px;
+    border-radius: 2px 2px 0 0;
+}
+
+.crosshair-bottom {
+    width: 2px;
+    height: 14px;
+    margin: 1px 0 0 -2px;
+    border-width: 0 1px 1px 1px;
+    border-radius: 0 0 2px 2px;
+}
+
+.crosshair-left {
+    width: 14px;
+    height: 2px;
+    margin: -2px 0 0 -16px;
+    border-width: 1px 0 1px 1px;
+    border-radius: 2px 0 0 2px;
+}
+
+.crosshair-right {
+    width: 14px;
+    height: 2px;
+    margin: -2px 0 0 1px;
+    border-width: 1px 1px 1px 0;
+    border-radius: 0 2px 2px 0;
+}
