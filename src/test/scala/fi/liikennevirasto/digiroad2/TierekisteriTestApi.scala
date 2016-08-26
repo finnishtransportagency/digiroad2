@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.{NotFound, NoContent, Ok, ScalatraServlet}
+import org.scalatra._
 
 class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
@@ -11,6 +11,9 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   before() {
     contentType = formats("json")
   }
+
+  def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tienumero", "tieosanumero", "puoli", "ajorata", "etaisyys",
+    "pysakin_tunnus", "pikavuoro", "nimi_fi", "nimi_se", "kayttajatunnus", "alkupvm", "loppupvm", "lakkautuspvm", "varusteet", "varusteet")
 
   def getMassTransitStop(): Map[String, Any] ={
     Map(
@@ -70,10 +73,23 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     if(liviId != "OTHJ208914")
       halt(NotFound())
 
+    val body = parsedBody.extract[Map[String, Any]]
+
+    mandatoryFields.foreach{ field  =>
+        body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
+    }
+
     halt(NoContent())
   }
 
   post("/pysakit"){
+
+    val body = parsedBody.extract[Map[String, Any]]
+
+    mandatoryFields.foreach{ field  =>
+      body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
+    }
+
     halt(NoContent())
   }
 
