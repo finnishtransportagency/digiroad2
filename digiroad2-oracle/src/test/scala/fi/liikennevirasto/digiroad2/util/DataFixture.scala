@@ -218,6 +218,20 @@ object DataFixture {
     }
   }
 
+  /**
+    * Gets list of masstransitstops and populates addresses field with street name found from VVH
+    */
+  private def getMassTransitStopAddressesFromVVH(): Unit =
+  {
+    println("\nCommencing address information import from VVH road links to mass transit stops at time: ")
+    println(DateTime.now())
+    dataImporter.getMassTransitStopAddressesFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    println("complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
@@ -450,6 +464,8 @@ object DataFixture {
         LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
       case Some("generate_floating_obstacles") =>
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
+      case Some("get_addresses_to_masstransitstops_from_vvh") =>
+        getMassTransitStopAddressesFromVVH()
       case Some ("link_float_obstacle_assets") =>
         linkFloatObstacleAssets()
       case Some ("check_unknown_speedlimits") =>
@@ -460,7 +476,7 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
-        " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
+        " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason")
