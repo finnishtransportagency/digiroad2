@@ -507,16 +507,11 @@ class TierekisteriBusStopMarshaller {
     properties.find(p => p.publicId.equals(liviIdPublicId)).map(_.values.head.propertyValue)
   }
 
-  // TODO: FROM: Guilherme Pedrosa - Please confirm if this is it
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
     val allPropertiesAvailable = getAllPropertiesAvailable(typeId)
 
     val nationalId = massTransitStop.nationalId
     val stopTypes = massTransitStop.stopType.propertyValues
-    val validityDirection = massTransitStop.roadSide.propertyValues
-    val bearing = massTransitStop.roadAddress.track.value
-    val validityPeriod = massTransitStop.operatingFrom.toString() + " " + massTransitStop.operatingTo.toString()
-    val floating = false
 
     val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
     val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
@@ -525,7 +520,7 @@ class TierekisteriBusStopMarshaller {
     val nameSeProperty = mapNameSeProperties(massTransitStop.nameSe, allPropertiesAvailable)
     val allProperties = liViIdProperty++equipmentsProperty++stopTypeProperty++nameFiProperty++nameSeProperty
 
-    MassTransitStopWithProperties(0L, nationalId, stopTypes.toSeq, 0.0, 0.0, Option(validityDirection.head), Option(bearing), Option(validityPeriod), floating, allProperties)
+    MassTransitStopWithProperties(0L, nationalId, stopTypes.toSeq, 0.0, 0.0, None, None, None, floating = false, allProperties)
   }
 
   private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
