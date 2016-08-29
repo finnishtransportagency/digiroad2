@@ -181,10 +181,12 @@
         function additionalInfomationField(prohibition) {
 
           return '' +
+              '<div class="additionalInfo-group">' +
               '<label>Tarkenne:</label>' +
-              '<div class="form-group existing-exception">' +
+              '<div class="form-group new-additionalInfo">' +
               '<input type="text" class="form-control additional-info" ' +
-              'placeholder="Muu tarkenne" value="'+ (_.isEmpty(prohibition.additionalInfo) ? '' : prohibition.additionalInfo)  +'"/>' +
+              'placeholder="Muu tarkenne" value="' + (_.isEmpty(prohibition.additionalInfo) ? '' : prohibition.additionalInfo) + '"/>' +
+              '</div>' +
               '</div>';
         }
 
@@ -339,7 +341,7 @@
           setValue(extractValue(rootElement, className));
         });
 
-        $(rootElement).on('change keyup paste', className + ' .existing-exception .additional-info', function (evt) {
+        $(rootElement).on('change keyup paste', className + ' .new-additionalInfo .additional-info', function (evt) {
           setValue(extractValue(rootElement, className));
         });
 
