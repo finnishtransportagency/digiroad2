@@ -28,10 +28,8 @@ object StopType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-//  def propertyValues() : Unit = {
-    def propertyValues() : Set[Int] = {
+  def propertyValues() : Set[Int] = {
     values.flatMap(_.propertyValues)
-//    values.map(_.propertyValues)
   }
 
   case object Commuter extends StopType { def value = "paikallis"; def propertyValues = Set(2); }
@@ -318,7 +316,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 
   private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
 
-    val jsonObj = Map(
+    var jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
       trLiviId -> trMassTransitStop.liviId,
       trRoadNumber -> trMassTransitStop.roadAddress.road,
@@ -340,8 +338,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
       }
     )
 
-    if(trMassTransitStop.stopType == StopType.Unknown)
-      jsonObj++trStopType -> trMassTransitStop.stopType
+    if(trMassTransitStop.stopType != StopType.Unknown)
+      jsonObj += trStopType -> trMassTransitStop.stopType
 
     new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
   }
@@ -349,8 +347,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
     def getFieldValue(field: String): String = {
       data.
-        get(field).
-        getOrElse(throw new TierekisteriClientException("Missing field in response '%s'".format(field))).
+        getOrElse(field,
+          throw new TierekisteriClientException("Missing field in response '%s'".format(field))).
         toString
     }
     def getMandatoryFieldValue(field: String): String = {
@@ -363,7 +361,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     //Mandatory fields
     val nationalId = convertToLong(getMandatoryFieldValue(trNationalId))
     val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide))
-    val express = booleanCodeToBoolean.get(getMandatoryFieldValue(trIsExpress)).getOrElse(throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
+    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress), throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
     val liviId = getMandatoryFieldValue(trLiviId)
     val stopType = StopType.apply(getMandatoryFieldValue(trStopType))
     val modifiedBy = getMandatoryFieldValue(trUser)
@@ -423,7 +421,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   private def convertDateToString(date: Date): String = {
-    new SimpleDateFormat(dateFormat).format(date);
+    new SimpleDateFormat(dateFormat).format(date)
   }
 }
 
