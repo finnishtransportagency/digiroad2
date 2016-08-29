@@ -56,7 +56,33 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+
+      if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
+        //TODO fetch information from Tierekisteri and enrish persisted mass transit object
+        //val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(getLiviIdentifier(persistedStop.get.nationalId))
+      }
+
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+    }
+  }
+
+  def getLiviIdentifier(nationalId: Long): String = "OTHJ%d".format(nationalId)
+
+  def isNotVirtualStopAndIsMantainedByELY(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
+    persistedStopOption match {
+      case Some(persistedStop) =>
+        persistedStop.propertyData.exists { property =>
+          property.publicId match {
+            case AdministratorInfoPublicId =>
+              val administrationPropertyValue = property.values.headOption
+              val isVirtualStop = persistedStop.propertyData.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+              !isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue
+            case _ =>
+              false
+          }
+        }
+      case _ =>
+          false
     }
   }
 
