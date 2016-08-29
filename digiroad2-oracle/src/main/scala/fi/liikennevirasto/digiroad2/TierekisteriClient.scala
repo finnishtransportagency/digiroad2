@@ -62,10 +62,10 @@ object Existence {
       case _ => Unknown
     }
   }
-  //TODO CONFIRM THE PROPERTY VALUES
-  case object Yes extends Existence { def value = "on"; def propertyValue = 1; }
+
+  case object Yes extends Existence { def value = "on"; def propertyValue = 2; }
   case object No extends Existence { def value = "ei"; def propertyValue = 1; }
-  case object Unknown extends Existence { def value = "ei_tietoa"; def propertyValue = 1; }
+  case object Unknown extends Existence { def value = "ei_tietoa"; def propertyValue = 99; }
 }
 
 /**
@@ -347,31 +347,36 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   }
 
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
-    def getMandatoryFieldValue(field: String): String = {
+    def getFieldValue(field: String): String = {
       data.
         get(field).
-        getOrElse(throw new TierekisteriClientException("The field '%s' is mandatory".format(field))).
+        getOrElse(throw new TierekisteriClientException("Missing field in response '%s'".format(field))).
         toString
     }
+    def getMandatoryFieldValue(field: String): String = {
+      val value = getFieldValue(field)
+      if(value.isEmpty)
+        throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+      value
+    }
 
-    //Mandatory Fields
-    val nationalId = convertToLong(data.get(trNationalId)).get
+    //Mandatory fields
+    val nationalId = convertToLong(getMandatoryFieldValue(trNationalId))
     val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide))
-    //Not support exception
-    val express = booleanCodeToBoolean.get(getMandatoryFieldValue(trIsExpress)).get
+    val express = booleanCodeToBoolean.get(getMandatoryFieldValue(trIsExpress)).getOrElse(throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
     val liviId = getMandatoryFieldValue(trLiviId)
     val stopType = StopType.apply(getMandatoryFieldValue(trStopType))
     val modifiedBy = getMandatoryFieldValue(trUser)
-    val roadAddress = RoadAddress(None, convertToInt(data.get(trRoadNumber)).get, convertToInt(data.get(trRoadPartNumber)).get,Track.Combined,1,None)
+    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)), convertToInt(getMandatoryFieldValue(trRoadPartNumber)),Track.Combined,1,None)
 
-    //Not Mandatory Fields
+    //Not mandatory fields
     val equipments = extractEquipment(data)
-    val stopCode = data.get(trStopCode).get.toString
-    val nameFi = data.get(trNameFi).get.toString
-    val nameSe = data.get(trNameSe).get.toString
-    val operatingFrom = convertToDate(data.get(trOperatingFrom)).get
-    val operatingTo = convertToDate(data.get(trOperatingTo)).get
-    val removalDate = convertToDate(data.get(trRemovalDate)).get
+    val stopCode = getFieldValue(trStopCode)
+    val nameFi = getFieldValue(trNameFi)
+    val nameSe = getFieldValue(trNameSe)
+    val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
+    val operatingTo = convertToDate(getFieldValue(trOperatingTo))
+    val removalDate = convertToDate(getFieldValue(trRemovalDate))
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate)
@@ -390,55 +395,30 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
     }.toMap
   }
 
-  private def convertToLong(value: Option[Any]): Option[Long] = {
-    value.map {
-      case x: Object =>
-        try {
-          x.toString.toLong
-        } catch {
-          case e: NumberFormatException =>
-            throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(x))
-        }
-      case _ => throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value.get))
+  private def convertToLong(value: Any): Long = {
+    try {
+      value.toString.toLong
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
     }
   }
 
-  private def convertToInt(value: Option[Any]): Option[Int] = {
-    value.map {
-      case x: Object =>
-        try {
-          x.toString.toInt
-        } catch {
-          case e: NumberFormatException =>
-            throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(x))
-        }
-      case _ => throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value.get))
+  private def convertToInt(value: Any): Int = {
+    try {
+      value.toString.toInt
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
     }
   }
 
-  private def convertToDouble(value: Option[Any]): Option[Double] = {
-    value.map {
-      case x: Object =>
-        try {
-          x.toString.toDouble
-        } catch {
-          case e: NumberFormatException =>
-            throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(x))
-        }
-      case _ => throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(value.get))
-    }
-  }
-
-  private def convertToDate(value: Option[Any]): Option[Date] = {
-    value.map {
-      case x: Object =>
-        try {
-          new SimpleDateFormat(dateFormat).parse(x.toString)
-        } catch {
-          case e: ParseException =>
-            throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(x))
-        }
-      case _ => throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value.get))
+  private def convertToDate(value: Any): Date = {
+    try {
+      new SimpleDateFormat(dateFormat).parse(value.toString)
+    } catch {
+      case e: ParseException =>
+        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
     }
   }
 
@@ -454,8 +434,8 @@ class TierekisteriBusStopMarshaller {
 
   private val liviIdPublicId = "yllapitajan_koodi"
   private val stopTypePublicId = "pysakin_tyyppi"
-  private val nameFiPublicId = "nimi suomeksi"
-  private val nameSePublicId = "nimi ruotsiksi"
+  private val nameFiPublicId = "nimi_suomeksi"
+  private val nameSePublicId = "nimi_ruotsiksi"
   private val expressPropertyValue = 4
   private val typeId: Int = 10
 
