@@ -526,7 +526,7 @@
       eventbus.on('assetPropertyValue:changed', function (event) {
         var property = event.propertyData;
 
-        if(property.publicId == 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
+        if(property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
           instructionsPopup.show('Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.', 5000);
         }
       });

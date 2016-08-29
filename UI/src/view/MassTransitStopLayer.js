@@ -443,7 +443,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           doMovement(angle, nearestLine, coordinates);
           movementPermission = true;
         },
-        closeCallback: function(){}
+        closeCallback: function(){
+          //Moves the stop to the original position
+          doMovement(angle, nearestLine, busStop);
+          movementPermission = false;
+        }
       });
     }
     else
