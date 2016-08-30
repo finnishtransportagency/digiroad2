@@ -33,43 +33,11 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
-    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, function(links) {
-      selectedLinkProperty.openMultiple(links);
-
-      LinkPropertyMassUpdateDialog.show({
-        linkCount: selectedLinkProperty.count(),
-        onCancel: cancelSelection,
-        onSave: function(functionalClass, linkType) {
-          if (functionalClass) {
-            selectedLinkProperty.setFunctionalClass(functionalClass);
-          }
-
-          if (linkType) {
-            selectedLinkProperty.setLinkType(linkType);
-          }
-
-          selectedLinkProperty.save();
-        }
-      });
-    });
-
     this.activateSelection = function() {
-      updateMassUpdateHandlerState();
       doubleClickSelectControl.activate();
     };
     this.deactivateSelection = function() {
-      updateMassUpdateHandlerState();
       doubleClickSelectControl.deactivate();
-    };
-
-    var updateMassUpdateHandlerState = function() {
-      if (!applicationModel.isReadOnly() &&
-          applicationModel.getSelectedTool() === 'Select' &&
-          applicationModel.getSelectedLayer() === layerName) {
-        massUpdateHandler.activate();
-      } else {
-        massUpdateHandler.deactivate();
-      }
     };
 
     var highlightFeatures = function() {
@@ -88,6 +56,7 @@
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };

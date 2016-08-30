@@ -37,7 +37,7 @@ trait DigiroadServer {
     val handler = new ContextHandlerCollection()
     val handlers = Array(context, createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
-    server.setHandler(context)
+    server.setHandler(handler)
     server.start()
     server.join()
   }
@@ -45,7 +45,7 @@ trait DigiroadServer {
   def createViiteContext() = {
     val appContext = new WebAppContext()
     appContext.setDescriptor("src/main/webapp/WEB-INF/viite_web.xml")
-    appContext.setResourceBase("src/main/webapp/viite")
+    appContext.setResourceBase("src/main/webapp/viite-UI")
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")

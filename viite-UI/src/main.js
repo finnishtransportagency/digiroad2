@@ -1,3 +1,4 @@
+DR2_LOGGING=true;
 var parseQueryParameters = function(queryString) {
   return _.chain(queryString.split('&'))
     .map(function(param) {

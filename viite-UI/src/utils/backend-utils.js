@@ -1,58 +1,33 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getEnumeratedPropertyValues = function() {
-      $.getJSON('api/enumeratedPropertyValues/10', function (enumeratedPropertyValues) {
-        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
-      })
-        .fail(function () {
-          console.log("error");
-        });
-    };
-
     this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
       return {
-        url: 'api/roadlinks?bbox=' + boundingBox
+        url: '/api/viite/roadlinks?bbox=' + boundingBox
       };
     });
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
-      return $.getJSON('api/roadlinks/' + linkId, function(data) {
+      return $.getJSON('/api/viite/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function(mmlId, callback) {
-      return $.getJSON('api/roadlinks/mml/' + mmlId, function(data) {
+      return $.getJSON('/api/viite/roadlinks/mml/' + mmlId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
-    this.updateLinkProperties = _.throttle(function(linkIds, data, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/linkproperties",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    }, 1000);
-
     this.getUserRoles = function () {
-      $.get('api/user/roles', function (roles) {
+      $.get('/api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
       });
     };
 
     this.getStartupParametersWithCallback = function(callback) {
-      var url = 'api/startupParameters';
+      var url = '/api/viite/startupParameters';
       $.getJSON(url, callback);
-    };
-
-    this.getIncompleteLinks = function() {
-      return $.getJSON('api/roadLinks/incomplete');
     };
 
     this.getGeocode = function(address) {

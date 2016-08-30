@@ -143,8 +143,22 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
+  private def withLimitFilter(attributeName: String, low: Int, high: Int): String = {
+    val filter =
+      if (low < 0 || high < 0 || low > high) {
+        ""
+      } else {
+        s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
+      }
+    filter
+  }
+
   private def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
+  }
+
+  private def withRoadNumberFilter(roadNumbers: (Int, Int)): String = {
+    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2)
   }
 
   private def withLinkIdFilter(linkIds: Set[Long]): String = {
@@ -153,6 +167,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   private def withMmlIdFilter(mmlIds: Set[Long]): String = {
     withFilter("MTKID", mmlIds)
+  }
+
+  private def combineFilters(filter1: String, filter2: String) = {
+    filter1.isEmpty match {
+      case true => filter2
+      case _ => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
+    }
   }
 
   private def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
@@ -177,6 +198,23 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
+  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: (Int, Int), municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFilters(withMunicipalityFilter(municipalities), withRoadNumberFilter(roadNumbers)))
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
+    * Returns VVH road links in bounding box area. Municipalities are optional.
+    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+    */
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
@@ -193,8 +231,16 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
-  def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[VVHRoadlink]] = {
+  def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(fetchVVHRoadlinks(bounds, municipalities))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
+  def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: (Int, Int)): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities))
   }
 
   /**
@@ -209,9 +255,30 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH change data. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     */
-  def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Future[Seq[ChangeInfo]] = {
+  def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
     val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
+
+    Future {
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHChangeInfo)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }
+  }
+
+  /**
+    * Returns VVH change data. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    */
+  def fetchChangesWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: (Int, Int)): Future[Seq[ChangeInfo]] = {
+    val municipalityFilter = withMunicipalityFilter(municipalities)
+    //val roadNumberFilter = withRoadNumberFilter(roadNumbers)
+    val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
+//    val definition = layerDefinition(combineFilters(municipalityFilter, roadNumberFilter), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)

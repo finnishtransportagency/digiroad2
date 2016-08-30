@@ -3,11 +3,8 @@
     initialize: initialize
   };
 
-  function initialize(container, searchBox, layerSelectBox, assetControlGroups) {
+  function initialize(container, assetControlGroups) {
     var navigationPanel = $('<div class="navigation-panel"></div>');
-
-    navigationPanel.append(searchBox.element);
-    navigationPanel.append(layerSelectBox.element);
 
     var assetControls = _.flatten(assetControlGroups);
 
@@ -24,8 +21,6 @@
       .zipObject()
       .value();
 
-    bindEvents();
-
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var previousControl = assetControlMap[previouslySelectedLayer];
       if (previousControl) previousControl.hide();
@@ -35,26 +30,5 @@
 
     container.append(navigationPanel);
     
-    function bindEvents() {
-      layerSelectBox.button.on('click', function() {
-        assetElementDiv.toggle();
-        layerSelectBox.toggle();
-      });
-
-      $(document).on('click', function(evt) {
-        var clickOutside = !$(evt.target).closest('.navigation-panel').length;
-        if (clickOutside) {
-          layerSelectBox.hide();
-          assetElementDiv.show();
-        }
-      });
-
-      $(document).keyup(function(evt) {
-        if (evt.keyCode === 27) {
-          layerSelectBox.hide();
-          assetElementDiv.show();
-        }
-      });
-    }
   }
 })(this);

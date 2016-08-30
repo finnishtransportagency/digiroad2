@@ -34,6 +34,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
+  get("/startupParameters") {
+    val (east, north, zoom) = {
+      val config = userProvider.getCurrentUser().configuration
+      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+    }
+    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+  }
+
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -54,7 +63,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -88,6 +97,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
+  }
+
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int)
+
+  get("/user/roles") {
+    userProvider.getCurrentUser().configuration.roles
   }
 
 }

@@ -1,9 +1,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" type="text/css" href="bower_components/openlayers/theme/default/style.css">
-  <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
-  <link rel="stylesheet" type="text/css" href="css/viite.css">
+  <link rel="stylesheet" type="text/css" href="../bower_components/openlayers/theme/default/style.css">
+  <link rel="stylesheet" type="text/css" href="../bower_components/pikaday/css/pikaday.css">
+  <link rel="stylesheet" type="text/css" href="/dist/viite/css/viite.css"> <!-- TODO: fix location -->
   <!-- Google Analytics loaded asynchronously -->
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -36,17 +36,17 @@
 
 <div id="work-list"></div>
 
-<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
-<script type="text/javascript" src="bower_components/momentjs/min/moment.min.js"></script>
-<script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
-<script type="text/javascript" src="bower_components/backbone/backbone.js"></script>
-<script type="text/javascript" src="bower_components/pikaday/pikaday.js"></script>
-<script type="text/javascript" src="bower_components/proj4/dist/proj4.js"></script>
-<script type="text/javascript" src="bower_components/bacon/dist/Bacon.js"></script>
-<script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
+<script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="../bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="../bower_components/momentjs/min/moment.min.js"></script>
+<script type="text/javascript" src="../bower_components/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="../bower_components/backbone/backbone.js"></script>
+<script type="text/javascript" src="../bower_components/pikaday/pikaday.js"></script>
+<script type="text/javascript" src="../bower_components/proj4/dist/proj4.js"></script>
+<script type="text/javascript" src="../bower_components/bacon/dist/Bacon.js"></script>
+<script type="text/javascript" src="../bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-<script type="text/javascript" src="bower_components/openlayers/lib/OpenLayers.js"></script>
+<script type="text/javascript" src="../bower_components/openlayers/lib/OpenLayers.js"></script>
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
@@ -75,34 +75,18 @@
 <script type="text/javascript" src="src/view/LinkPropertyLayerStyles.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/router.js"></script>
-<script type="text/javascript" src="src/asset-type-layer-specifications.js"></script>
 <script type="text/javascript" src="src/application.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/EditModeToggleButton.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/ActionPanelBoxes.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/LinearAssetBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/PointAssetBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/ManoeuvreBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/LayerSelectBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/SearchBox.js"></script>
-<script type="text/javascript" src="src/view/AssetSelectionMenu.js"></script>
 <script type="text/javascript" src="src/view/NavigationPanel.js"></script>
 <script type="text/javascript" src="src/model/ApplicationModel.js"></script>
-<script type="text/javascript" src="src/model/MassTransitStopsCollection.js"></script>
-<script type="text/javascript" src="src/model/SelectedMassTransitStop.js"></script>
-<script type="text/javascript" src="src/model/SpeedLimitsCollection.js"></script>
-<script type="text/javascript" src="src/model/LinearAssetsCollection.js"></script>
-<script type="text/javascript" src="src/model/PointAssetsCollection.js"></script>
-<script type="text/javascript" src="src/model/SelectedPointAsset.js"></script>
 <script type="text/javascript" src="src/model/RoadCollection.js"></script>
-<script type="text/javascript" src="src/model/SelectedSpeedLimit.js"></script>
-<script type="text/javascript" src="src/model/SelectedLinearAsset.js"></script>
 <script type="text/javascript" src="src/model/SelectedLinkProperty.js"></script>
-<script type="text/javascript" src="src/model/SelectedManoeuvreSource.js"></script>
 <script type="text/javascript" src="src/model/LinkPropertiesModel.js"></script>
-<script type="text/javascript" src="src/model/ManoeuvresCollection.js"></script>
 <script type="text/javascript" src="src/model/LocationSearch.js"></script>
-<script type="text/javascript" src="src/model/SelectedLinearAssetFactory.js"></script>
 <script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyForm.js"></script>

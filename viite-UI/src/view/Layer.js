@@ -68,6 +68,18 @@
 
       layer.addFeatures(oneWaySigns);
     };
+    this.drawRoadNumberMarkers = function(layer, roadLinks) {
+      var filteredLinks = _.filter(roadLinks, function(link) {
+        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      });
+      var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + 180.0 : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+      });
+
+      layer.addFeatures(oneWaySigns);
+    };
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);

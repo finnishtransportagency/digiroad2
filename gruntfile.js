@@ -16,8 +16,8 @@ module.exports = function(grunt) {
         dest: './UI/index.html'
       },
       viite: {
-        src: './UI/tmpl/viite.html',
-        dest: './UI/viite/index.html'
+        src: './viite-UI/tmpl/index.html',
+        dest: './viite-UI/index.html'
       },
       production: {
         src: './UI/tmpl/index.html',
@@ -60,7 +60,7 @@ module.exports = function(grunt) {
       server: {
         options: {
           port: 9001,
-          base: ['dist', '.', 'UI'],
+          base: ['dist', '.', 'UI', 'viite-UI'],
           middleware: function(connect, opts) {
             var config = [
               // Serve static files.
@@ -111,7 +111,7 @@ module.exports = function(grunt) {
       },
       viite: {
         files: {
-          "dist/viite/css/viite.css": "UI/src/less/main.less"
+          "dist/viite/css/viite.css": "viite-UI/src/less/main.less"
         }
       },
       production: {
@@ -124,7 +124,8 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/'],
+      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/',
+        'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ],
       options: {
         // options here to override JSHint defaults
         globals: {
@@ -165,7 +166,7 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
+      files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html', 'UI/src/**/*.less', 'viite-UI/**/*.html'],
       tasks: ['jshint', 'env:development', 'preprocess:development', 'preprocess:viite', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
       options: {
         livereload: true
@@ -202,7 +203,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'watch']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'less:viite', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'mocha:unit', 'mocha:integration']);
 
