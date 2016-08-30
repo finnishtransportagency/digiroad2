@@ -985,13 +985,15 @@ class AssetDataImporter {
     {
 
       sql"""
-              Select distinct a.id, l.link_ID
-              From Asset a, Text_property_value fiv, Text_property_value sev, ASSET_LINK lt, LRM_POSITION l
-              WHERE
-              a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
-               AND
-               ( a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressSe OR PROPERTY_ID = $idAddressFi))
-              ORDER BY a.id""".as[(Long, Long)].list
+         Select a.id, l.link_ID
+                      From Asset a
+                      join ASSET_LINK lt on (lt.asset_id=a.id) join LRM_POSITION l on (l.id=lt.position_id)
+                       WHERE
+                       asset_type_id = 10 and
+                       not exists (select 1 from Text_property_value fiv where a.id = fiv.asset_id and fiv.property_id=$idAddressFi)
+                       and
+                       not exists (select 1 from Text_property_value sev where a.id = sev.asset_id and sev.property_id=$idAddressSe)
+                       AND a.MUNICIPALITY_CODE=$municipalityNumber""".as[(Long, Long)].list
     }
 
   /**
