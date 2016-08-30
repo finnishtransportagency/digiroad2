@@ -62,6 +62,8 @@ object Queries {
 
   def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq.nextval from dual"
 
+  def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
+
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
       update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId

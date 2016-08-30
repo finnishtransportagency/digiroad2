@@ -776,6 +776,7 @@ class AssetDataImporter {
     * if one is found according to the rules:
     * - at most 10 meters away
     * - at most .5 meters away and no other candidate locations within 5 times the distance if there are multiple
+    *
     * @param obstacle A floating obstacle to update
     * @param roadLinkService RoadLinkService to use (reusing for speed)
     * @return
@@ -841,6 +842,58 @@ class AssetDataImporter {
     val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749)
     sqlu"""update asset set floating = 1 where id = $id""".execute
     id
+  }
+
+  def importRoadAddressData(conversionDatabase: DatabaseDef) = {
+    val roads = conversionDatabase.withDynSession {
+      sql"""select link_id, alku, loppu,
+            tie, aosa, ajr,
+            ely, tietyyppi,
+            jatkuu, aet, let,
+            alkupvm, loppupvm,
+            kayttaja, COALESCE(muutospvm, rekisterointipvm)
+            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, DateTime, DateTime, String, DateTime)].list
+    }
+
+    val lrmPositions = roads.map(r => (r._1, (r._2, r._3))).toMap
+    val addressList = roads.map(r => (r._1, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
+
+    OracleDatabase.withDynTransaction {
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+      val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
+        "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+        "created_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      lrmPositions.foreach { case (linkId, (startM, endM)) =>
+        val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        val addressId = Sequences.nextViitePrimaryKeySeqValue
+        val address = addressList.get(linkId).head
+        lrmPositionPS.setLong(1, lrmId)
+        lrmPositionPS.setLong(2, linkId)
+        lrmPositionPS.setLong(3, SideCode.BothDirections.value)
+        lrmPositionPS.setLong(4, startM)
+        lrmPositionPS.setLong(5, endM)
+        lrmPositionPS.addBatch()
+        addressPS.setLong(1, addressId)
+        addressPS.setLong(2, lrmId)
+        addressPS.setLong(3, address._1)
+        addressPS.setLong(4, address._2)
+        addressPS.setLong(5, address._3)
+        addressPS.setLong(6, address._4)
+        addressPS.setLong(7, address._5)
+        addressPS.setLong(8, address._6)
+        addressPS.setLong(9, address._7)
+        addressPS.setLong(10, address._8)
+        addressPS.setString(11, address._9.toString)
+        addressPS.setString(12, address._10.toString)
+        addressPS.setString(13, address._11.toString)
+        addressPS.setString(14, address._12.toString)
+        addressPS.addBatch()
+      }
+      lrmPositionPS.executeBatch()
+      addressPS.executeBatch()
+      lrmPositionPS.close()
+      addressPS.close()
+    }
   }
 
   private[this] def initDataSource: DataSource = {
