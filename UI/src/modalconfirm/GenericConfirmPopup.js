@@ -1,15 +1,18 @@
 window.GenericConfirmPopUp = function(message, options) {
 
     var defaultOptions = {
+        type: "confirm",
+        okButtonLbl: 'Kunnossa',
         yesButtonLbl: 'Kyllä',
         noButtonLbl: 'Ei',
+        okCallback: function() {},
         successCallback: function(){},
         closeCallback: function(){}
     };
 
     options = _.merge(defaultOptions, options);
 
-    var busStopMoveConfirmDiv =
+    var confirmDiv =
         '<div class="modal-overlay confirm-modal">' +
             '<div class="modal-dialog">' +
                 '<div class="content">' +
@@ -22,8 +25,24 @@ window.GenericConfirmPopUp = function(message, options) {
             '</div>' +
         '</div>';
 
+    var alertDiv =
+        '<div class="modal-overlay confirm-modal">' +
+            '<div class="modal-dialog">' +
+                '<div class="content">' +
+                    message +
+                '</div>' +
+                '<div class="actions">' +
+                    '<button class = "btn btn-primary ok">' + options.okButtonLbl + '</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
     var renderConfirmDialog = function() {
-        jQuery('.container').append(busStopMoveConfirmDiv);
+        var template = confirmDiv;
+        if(options.type === 'alert')
+            template = alertDiv;
+
+        jQuery('.container').append(template);
         var modal = $('.modal-dialog');
     };
 
@@ -35,6 +54,10 @@ window.GenericConfirmPopUp = function(message, options) {
         jQuery('.confirm-modal .yes').on('click', function() {
             purge();
             options.successCallback();
+        });
+        jQuery('.confirm-modal .ok').on('click', function() {
+            purge();
+            options.okCallback();
         });
     };
 

@@ -83,7 +83,7 @@
       assetGroups
     );
 
-    MassTransitStopForm.initialize(backend, instructionsPopup);
+    MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
     backend.getUserRoles();

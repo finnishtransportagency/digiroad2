@@ -9,6 +9,8 @@
       'nationalId',
       'validityDirection',
       'floating'];
+    var massTransitStopTypePublicId = "pysakin_tyyppi";
+    var administratorInfoPublicId = "tietojen_yllapitaja";
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
@@ -65,6 +67,10 @@
     };
 
     var payloadWithProperties = function(payload, publicIds) {
+
+      if(_.some(publicIds, function(publicId){ return publicId === massTransitStopTypePublicId || publicId === administratorInfoPublicId; }))
+        publicIds = _.union(publicIds, [massTransitStopTypePublicId, administratorInfoPublicId]) ;
+
       return _.merge(
         {},
         _.pick(payload, function(value, key) { return key != 'properties'; }),
@@ -159,7 +165,7 @@
     {
       return _.some(currentAsset.payload.properties, function(property)
       {
-        if (property.publicId == "pysakin_tyyppi") {
+        if (property.publicId == massTransitStopTypePublicId) {
           return _.some(property.values, function(propertyValue){
             return (propertyValue.propertyValue == 5 && property.values.length>1) ;
           });

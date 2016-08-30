@@ -434,8 +434,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
     var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
-    console.log(distance);
-
     if (distance > movementLimit && !movementPermission)
     {
       new GenericConfirmPopUp('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{

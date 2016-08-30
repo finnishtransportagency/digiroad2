@@ -83,7 +83,7 @@
   };
 
   root.MassTransitStopForm = {
-    initialize: function (backend, instructionsPopup) {
+    initialize: function (backend) {
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
@@ -526,8 +526,10 @@
       eventbus.on('assetPropertyValue:changed', function (event) {
         var property = event.propertyData;
 
-        if(property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
-          instructionsPopup.show('Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.', 5000);
+        if(event.id && property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
+          new GenericConfirmPopUp(
+              'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
+              {type: 'alert'});
         }
       });
 
