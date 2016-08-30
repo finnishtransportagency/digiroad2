@@ -1003,14 +1003,15 @@ class AssetDataImporter {
   def getMTStopsMissingOneAddress(municipalityNumber: Long, idAddressFi: Int, idAddressSe: Int) = {
 
     sql"""
-              Select distinct a.id, l.link_ID
-              From Asset a, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
-              WHERE
-              a.Asset_Type_ID=10  AND a.id=lt.ASSET_ID AND lt.POSITION_ID=l.ID AND a.MUNICIPALITY_CODE=$municipalityNumber
-               AND ((fiv.PROPERTY_ID = $idAddressSe  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID = $idAddressFi)  AND a.ID=fiv.ASSET_ID))
-               OR
-               (fiv.PROPERTY_ID = $idAddressFi  AND   (fiv.Asset_ID NOT IN (Select Asset_ID From Text_property_value Where PROPERTY_ID = $idAddressSe)  AND a.ID=fiv.ASSET_ID)))
-               ORDER BY a.id""".as[(Long, Long)].list
+       			   		 Select distinct a.id, l.link_ID
+                     From Asset a
+       			  join ASSET_LINK lt on (lt.asset_id = a.ID) join LRM_POSITION l on (l.id=lt.position_id) join Text_property_value fiv on (a.id=fiv.ASSET_ID)
+                     WHERE
+                     a.Asset_Type_ID=10 AND a.MUNICIPALITY_CODE=$municipalityNumber
+                      AND ((fiv.PROPERTY_ID = $idAddressSe)  AND   (not exists (select 1 from Text_property_value fiv where a.id = fiv.asset_id and fiv.property_id=$idAddressFi))
+                      OR
+                      (fiv.PROPERTY_ID = $idAddressFi  AND  ( not exists (select 1 from Text_property_value sev where a.id = sev.asset_id and sev.property_id=$idAddressSe))))
+                      ORDER BY a.id""".as[(Long, Long)].list
   }
 /**
   * Gets masstransitstop asset_id, street name and link-id for stops that have ONLY swedish address
