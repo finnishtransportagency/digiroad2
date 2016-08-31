@@ -126,10 +126,19 @@ class MassTransitStopDao {
       case MultipleChoice => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
-      case ReadOnly | ReadOnlyNumber => {
+      case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
+  def updateTextPropertyValue(assetId :Long, propertyPublicId: String, value: String): Unit ={
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+    if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+      insertTextProperty(assetId, propertyId, value).execute
+    } else {
+      updateTextProperty(assetId, propertyId, value).execute
     }
   }
 

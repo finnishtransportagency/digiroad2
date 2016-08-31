@@ -29,6 +29,7 @@
 
     return {
       insertAsset: function(asset, assetId) {
+        asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );
         assets[assetId] = asset;
       },
       getAsset: function(assetId) {
@@ -46,6 +47,7 @@
       refreshAssets: refreshAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
+          asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );
           assets[asset.data.id.toString()] = asset;
         });
       },

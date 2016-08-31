@@ -83,7 +83,7 @@
   };
 
   root.MassTransitStopForm = {
-    initialize: function(backend) {
+    initialize: function (backend) {
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
@@ -183,7 +183,7 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text') {
+        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
           outer.append(createLabelElement(property));
@@ -415,6 +415,8 @@
           'katos',
           'mainoskatos',
           'penkki',
+          'roska_astia',
+          'koroke',
           'pyorateline',
           'sahkoinen_aikataulunaytto',
           'valaistus',
@@ -540,6 +542,16 @@
 
       eventbus.on('asset:moved', function() {
         streetViewHandler.update();
+      });
+
+      eventbus.on('assetPropertyValue:changed', function (event) {
+        var property = event.propertyData;
+
+        if(event.id && property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
+          new GenericConfirmPopUp(
+              'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
+              {type: 'alert'});
+        }
       });
 
       backend.getEnumeratedPropertyValues();

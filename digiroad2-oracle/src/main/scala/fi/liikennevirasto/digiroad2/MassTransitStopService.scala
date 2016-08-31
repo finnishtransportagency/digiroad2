@@ -43,6 +43,10 @@ trait MassTransitStopService extends PointAssetOperations {
   val VirtualBusStopPropertyValue: String = "5"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
 
+  val CentralELYPropertyValue = "2"
+  val AdministratorInfoPublicId = "tietojen_yllapitaja"
+  val LiViIdentifierPublicId = "yllapitajan_koodi"
+
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
@@ -88,7 +92,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
         join property p on a.asset_type_id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
@@ -218,7 +222,6 @@ trait MassTransitStopService extends PointAssetOperations {
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
 
-
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
 
@@ -241,6 +244,7 @@ trait MassTransitStopService extends PointAssetOperations {
       if (properties.nonEmpty) {
         massTransitStopDao.updateAssetProperties(id, properties.toSeq)
         updateAdministrativeClassValue(id, roadLink.get.administrativeClass)
+        updateLiViIdentifierProperty(id, persistedStop.get.nationalId, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -292,12 +296,27 @@ trait MassTransitStopService extends PointAssetOperations {
       {
         massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
         updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-
+        updateLiViIdentifierProperty(assetId, nationalId, asset.properties)
         getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink)
         assetId
       }
       else
         throw new IllegalArgumentException
+    }
+  }
+
+  private def updateLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
+    properties.foreach{ property =>
+      if(property.publicId == AdministratorInfoPublicId){
+        val administrationPropertyValue = property.values.headOption
+        val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+
+        if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
+        }else{
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
+        }
+      }
     }
   }
 

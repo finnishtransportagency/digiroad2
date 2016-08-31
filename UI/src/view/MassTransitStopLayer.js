@@ -5,6 +5,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
+  var movementPermission = false;
 
   var selectedControl = 'Select';
 
@@ -68,6 +69,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return function() {
       var selectAsset = function() {
         selectedMassTransitStopModel.change(asset.data);
+        movementPermission = false;
       };
 
       if (selectedControl === 'Select') {
@@ -396,6 +398,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var deselectAsset = function(asset) {
     if (asset) {
+      movementPermission = false;
       unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
@@ -413,29 +416,60 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (selectedAsset.massTransitStop.getMarker()) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
+      var busStopPoint = new OpenLayers.LonLat(selectedAsset.data.originalLon, selectedAsset.data.originalLat);
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), lonlat.lon, lonlat.lat);
-      roadLayer.selectRoadLink(nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      selectedAsset.data.bearing = angle;
-      selectedAsset.data.roadDirection = angle;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
       var position = geometrycalculator.nearestPointOnLine(
         nearestLine,
         { x: lonlat.lon, y: lonlat.lat});
       lonlat.lon = position.x;
       lonlat.lat = position.y;
-      selectedAsset.roadLinkId = nearestLine.roadLinkId;
-      selectedAsset.data.lon = lonlat.lon;
-      selectedAsset.data.lat = lonlat.lat;
-      moveMarker(lonlat);
-      selectedMassTransitStopModel.move({
-        lon: lonlat.lon,
-        lat: lonlat.lat,
-        bearing: angle,
-        roadLinkId: nearestLine.roadLinkId,
-        linkId: nearestLine.linkId
-      });
+      restrictMovement(busStopPoint, lonlat, angle, nearestLine,lonlat);
+
    }
+  };
+
+  var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
+    var movementLimit = 50; //50 meters
+    //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
+    var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
+
+    if (distance > movementLimit && !movementPermission)
+    {
+      new GenericConfirmPopUp('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
+        successCallback: function(){
+          doMovement(angle, nearestLine, coordinates);
+          movementPermission = true;
+        },
+        closeCallback: function(){
+          //Moves the stop to the original position
+          doMovement(angle, nearestLine, busStop);
+          movementPermission = false;
+        }
+      });
+    }
+    else
+    {
+      doMovement(angle, nearestLine, coordinates);
+    }
+  };
+
+  var doMovement= function(angle, nearestLine, coordinates) {
+    roadLayer.selectRoadLink(nearestLine);
+    selectedAsset.data.bearing = angle;
+    selectedAsset.data.roadDirection = angle;
+    selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
+    selectedAsset.roadLinkId = nearestLine.roadLinkId;
+    selectedAsset.data.lon = coordinates.lon;
+    selectedAsset.data.lat = coordinates.lat;
+    moveMarker(coordinates);
+    selectedMassTransitStopModel.move({
+      lon: coordinates.lon,
+      lat: coordinates.lat,
+      bearing: angle,
+      roadLinkId: nearestLine.roadLinkId,
+      linkId: nearestLine.linkId
+    });
   };
 
   var moveMarker = function(lonlat) {
