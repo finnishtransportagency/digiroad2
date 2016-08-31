@@ -2,7 +2,7 @@ window.GenericConfirmPopUp = function(message, options) {
 
     var defaultOptions = {
         type: "confirm",
-        okButtonLbl: 'Kunnossa',
+        okButtonLbl: 'Sulje',
         yesButtonLbl: 'Kyllä',
         noButtonLbl: 'Ei',
         okCallback: function() {},
@@ -32,7 +32,7 @@ window.GenericConfirmPopUp = function(message, options) {
                     message +
                 '</div>' +
                 '<div class="actions">' +
-                    '<button class = "btn btn-primary ok">' + options.okButtonLbl + '</button>' +
+                    '<button class = "btn btn-secondary ok">' + options.okButtonLbl + '</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
