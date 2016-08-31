@@ -1,175 +1,79 @@
 (function(root) {
-  root.MassTransitMarker = function(data) {
+  root.RoadMarker = function(data) {
+    var cachedMarker = null;
+    var cachedDirectionArrow = null;
+    var cachedRoadMarker = null;
 
-    var GROUP_ASSET_PADDING = 8;
-    var IMAGE_HEIGHT = 17;
-    var EMPTY_IMAGE_TYPE = '99';
-    var getBounds = function(lon, lat) {
-      return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
+    var defaultDirectionArrowGraphics = {
+      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
+      graphicWidth: 30,
+      graphicHeight: 16,
+      graphicXOffset: -15,
+      graphicYOffset: -8
     };
 
-    var bounds = getBounds(data.group.lon, data.group.lat);
-    var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
-    box.id = data.id;
-
-    var configureMarkerDiv = function(id) {
-      $(box.div).css('overflow', 'visible !important')
-                .attr('data-asset-id', id);
+    var floatingDirectionArrowGraphics = {
+      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg',
+      graphicWidth: 34,
+      graphicHeight: 20,
+      graphicXOffset: -17,
+      graphicYOffset: -10
     };
 
-    var createMarker = function() {
-      configureMarkerDiv(data.id);
-      renderDefaultState();
-      return box;
+    var createDirectionArrow = function() {
+      var directionArrowGraphics = _.clone(data.floating ? floatingDirectionArrowGraphics : defaultDirectionArrowGraphics);
+      directionArrowGraphics.rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+      return new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),
+        null,
+        directionArrowGraphics
+      );
+    };
+
+    var getMarker = function(shouldCreate) {
+      if (shouldCreate || !cachedMarker) {
+        cachedRoadMarker = new CalibrationPoint(data);
+        cachedMarker = cachedRoadMarker.createMarker();
+      }
+      return cachedMarker;
     };
 
     var createNewMarker = function() {
-      configureMarkerDiv(data.id);
-      renderSelectedState();
-      return box;
+      cachedRoadMarker = new CalibrationPoint(data);
+      cachedMarker = cachedRoadMarker.createNewMarker();
+      return cachedMarker;
+    };
+
+    var getCalibrationPointMarker = function() {
+      return cachedRoadMarker;
+    };
+
+    var getDirectionArrow = function(shouldCreate) {
+      if (shouldCreate || !cachedDirectionArrow) {
+        cachedDirectionArrow = createDirectionArrow();
+      }
+      return cachedDirectionArrow;
     };
 
     var moveTo = function(lonlat) {
-      box.bounds = {
-        bottom: lonlat.lat,
-        left: lonlat.lon,
-        right: lonlat.lon,
-        top: lonlat.lat
-      };
-      if (!data.group.moved) {
-        detachAssetFromGroup();
-        setYPositionForAssetOnGroup();
-        $(box.div).find('.expanded-bus-stop').addClass('root');
-      }
+      getDirectionArrow().move(lonlat);
+      getCalibrationPointMarker().moveTo(lonlat);
     };
 
-    var getSelectedContent = function(asset, stopTypes) {
-      var busStopImages = mapBusStopTypesToImages(stopTypes);
-      var name = selectedMassTransitStopModel.getName();
-      var direction = selectedMassTransitStopModel.getDirection();
+    var select = function() { getCalibrationPointMarker().select(); };
 
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
+    var deselect = function() { getCalibrationPointMarker().deselect(); };
 
-      return $('<div class="expanded-bus-stop" />')
-        .addClass(groupIndex === 0 && 'root')
-        .addClass(data.floating ? 'floating' : '')
-        .append($('<div class="images field" />').html(busStopImages))
-        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.nationalId)))
-        .append($('<div class="bus-stop-name field"/>').text(name))
-        .append($('<div class="bus-stop-direction field"/>').text(direction));
+    var finalizeMove = function() {
+      getCalibrationPointMarker().finalizeMove();
     };
 
-    var filterByValidityPeriod = function(group) {
-      return _.filter(group, function(asset) {
-        return massTransitStopsCollection.selectedValidityPeriodsContain(asset.validityPeriod);
-      });
-    };
-
-    var findGroupIndexForAsset = function(group, asset) {
-      return Math.max(_.findIndex(group, { id: asset.id }), 0);
-    };
-
-    var calculateOffsetForMarker = function(dataForCalculation) {
-      var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, dataForCalculation);
-
-      return _.chain(filteredGroup)
-              .take(groupIndex)
-              .map(function(x) { return x.stopTypes.length * IMAGE_HEIGHT; })
-              .map(function(x) { return GROUP_ASSET_PADDING + x; })
-              .reduce(function(acc, x) { return acc + x; }, 0)
-              .value();
-    };
-
-    var setYPositionForAssetOnGroup = function() {
-      var yPositionInGroup = -1 * calculateOffsetForMarker(data);
-      $(box.div).css("-webkit-transform", "translate(0px," + yPositionInGroup + "px)")
-        .css("transform", "translate(0px," + yPositionInGroup + "px)");
-    };
-
-    var mapBusStopTypesToImages = function(stopTypes) {
-      stopTypes.sort();
-      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
-        return '<img src="images/mass-transit-stops/' + stopType + '.png">';
-      });
-    };
-
-    var extractStopTypes = function(properties) {
-      return _.chain(properties)
-              .where({ publicId: 'pysakin_tyyppi' })
-              .pluck('values')
-              .flatten()
-              .pluck('propertyValue')
-              .value();
-    };
-
-    var handleAssetPropertyValueChanged = function(simpleAsset) {
-      if (simpleAsset.id === data.id && _.contains(['pysakin_tyyppi', 'nimi_suomeksi'], simpleAsset.propertyData.publicId)) {
-        var properties = selectedMassTransitStopModel.getProperties();
-        var stopTypes = extractStopTypes(properties);
-        data.stopTypes = stopTypes;
-        var assetWithProperties = _.merge({}, data, {propertyData: properties});
-        $(box.div).html(getSelectedContent(assetWithProperties, stopTypes));
-      }
-    };
-
-    var renderDefaultState = function() {
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
-      var defaultMarker = $('<div class="bus-basic-marker" />')
-        .addClass(data.floating ? 'floating' : '')
-        .append($('<div class="images" />').append(mapBusStopTypesToImages(data.stopTypes)))
-        .addClass(groupIndex === 0 && 'root');
-      $(box.div).html(defaultMarker);
-      $(box.div).removeClass('selected-asset');
-      setYPositionForAssetOnGroup();
-    };
-
-    var renderSelectedState = function() {
-      var stopTypes = extractStopTypes(selectedMassTransitStopModel.getProperties());
-      $(box.div).html(getSelectedContent(data, stopTypes))
-                .addClass('selected-asset');
-      setYPositionForAssetOnGroup();
-    };
-
-    var select = function() { renderSelectedState(); };
-
-    var deselect = function() { renderDefaultState(); };
-
-    var detachAssetFromGroup = function() {
-      _.remove(data.group.assetGroup, function(asset) {
-        return asset.id == data.id;
-      });
-      data.group.moved = true;
-    };
-
-    var finalizeMove = function(asset) {
-      _.merge(data, asset);
-      if (data.group.moved) {
-        data.group.moved = false;
-        data.group.assetGroup = [data];
-        renderSelectedState();
-      }
-    };
-
-    var rePlaceInGroup = function() {
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
-      var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
-      $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
-      setYPositionForAssetOnGroup();
-    };
-
-    eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
-
-    eventbus.on('validityPeriod:changed', function() {
-      rePlaceInGroup();
-    });
+    var rePlaceInGroup = function() { getCalibrationPointMarker().rePlaceInGroup(); };
 
     return {
-      createMarker: createMarker,
+      getMarker: getMarker,
       createNewMarker: createNewMarker,
+      getDirectionArrow: getDirectionArrow,
       moveTo: moveTo,
       select: select,
       deselect: deselect,

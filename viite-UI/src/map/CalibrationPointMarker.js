@@ -1,8 +1,8 @@
 (function(root) {
-  root.MassTransitStop = function(data) {
+  root.CalibrationPoint = function(data) {
     var cachedMarker = null;
     var cachedDirectionArrow = null;
-    var cachedMassTransitMarker = null;
+    var cachedCalibrationPointMarker = null;
 
     var defaultDirectionArrowGraphics = {
       externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
@@ -32,20 +32,20 @@
 
     var getMarker = function(shouldCreate) {
       if (shouldCreate || !cachedMarker) {
-        cachedMassTransitMarker = new MassTransitMarker(data);
-        cachedMarker = cachedMassTransitMarker.createMarker();
+        cachedCalibrationPointMarker = new CalibrationPoint(data);
+        cachedMarker = cachedCalibrationPointMarker.createMarker();
       }
       return cachedMarker;
     };
 
     var createNewMarker = function() {
-      cachedMassTransitMarker = new MassTransitMarker(data);
-      cachedMarker = cachedMassTransitMarker.createNewMarker();
+      cachedCalibrationPointMarker = new CalibrationPoint(data);
+      cachedMarker = cachedCalibrationPointMarker.createNewMarker();
       return cachedMarker;
     };
 
-    var getMassTransitMarker = function() {
-      return cachedMassTransitMarker;
+    var getCalibrationPointMarker = function() {
+      return cachedCalibrationPointMarker;
     };
 
     var getDirectionArrow = function(shouldCreate) {
@@ -57,18 +57,18 @@
 
     var moveTo = function(lonlat) {
       getDirectionArrow().move(lonlat);
-      getMassTransitMarker().moveTo(lonlat);
+      getCalibrationPointMarker().moveTo(lonlat);
     };
 
-    var select = function() { getMassTransitMarker().select(); };
+    var select = function() { getCalibrationPointMarker().select(); };
 
-    var deselect = function() { getMassTransitMarker().deselect(); };
+    var deselect = function() { getCalibrationPointMarker().deselect(); };
 
     var finalizeMove = function() {
-      getMassTransitMarker().finalizeMove();
+      getCalibrationPointMarker().finalizeMove();
     };
 
-    var rePlaceInGroup = function() { getMassTransitMarker().rePlaceInGroup(); };
+    var rePlaceInGroup = function() { getCalibrationPointMarker().rePlaceInGroup(); };
 
     return {
       getMarker: getMarker,
