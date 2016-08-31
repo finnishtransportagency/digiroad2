@@ -1019,12 +1019,12 @@ class AssetDataImporter {
   def getSwedishStopAddressRFi(municipalityNumber: Int, idAddressFi: Int, idAddressSe: Int) =
   {
     sql"""
-                Select distinct a.id, se.Value_FI, l.link_ID
-                From Asset a,  Text_property_value se, ASSET_LINK lt, LRM_POSITION l
-                WHERE
-                a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND se.PROPERTY_ID = $idAddressSe AND lt.ASSET_ID=a.id AND lt.POSITION_ID=l.ID
-                AND se.Asset_ID = a.ID
-                AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressFi))
+       			    Select distinct a.id, se.Value_FI, l.link_ID
+                       From Asset a
+       			           join ASSET_LINK lt on (lt.asset_id = a.ID) join LRM_POSITION l on (l.id=lt.position_id) join Text_property_value se on (a.id=se.ASSET_ID)
+                       WHERE
+                       a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE =$municipalityNumber AND se.PROPERTY_ID = $idAddressSe
+                       AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressFi))
          """.as[(Long, String,Long)].list
     //asset_id,stop's street name,link-id
   }
@@ -1036,10 +1036,10 @@ class AssetDataImporter {
     {
       sql"""
                   Select distinct a.id, fiv.Value_FI, l.link_ID
-                  From Asset a, Text_property_value fiv, ASSET_LINK lt, LRM_POSITION l
+                  From Asset a
+                  join ASSET_LINK lt on (lt.asset_id = a.ID) join LRM_POSITION l on (l.id=lt.position_id) join Text_property_value fiv on (a.id=fiv.ASSET_ID)
                   WHERE
-                  a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND fiv.PROPERTY_ID = $idAddressFi AND lt.ASSET_ID=a.id AND lt.POSITION_ID=l.ID
-                  AND fiv.Asset_ID =a.ID
+                  a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND fiv.PROPERTY_ID = $idAddressFi
                   AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressSe))
          """.as[(Long, String,Long)].list
       //asset_id,stop's street name,link-id
