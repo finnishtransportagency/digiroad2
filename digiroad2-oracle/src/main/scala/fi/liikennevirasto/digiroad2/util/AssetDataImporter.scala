@@ -846,13 +846,13 @@ class AssetDataImporter {
 
   def importRoadAddressData(conversionDatabase: DatabaseDef) = {
     val roads = conversionDatabase.withDynSession {
-      sql"""select link_id, alku, loppu,
+      sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
             ely, tietyyppi,
             jatkuu, aet, let,
-            alkupvm, loppupvm,
-            kayttaja, COALESCE(muutospvm, rekisterointipvm)
-            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, DateTime, DateTime, String, DateTime)].list
+            TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
+            kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD')
+            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String)].list
     }
 
     val lrmPositions = roads.map(r => (r._1, (r._2, r._3))).toMap
@@ -862,7 +862,7 @@ class AssetDataImporter {
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-        "created_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        "created_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
       lrmPositions.foreach { case (linkId, (startM, endM)) =>
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
         val addressId = Sequences.nextViitePrimaryKeySeqValue
@@ -883,10 +883,10 @@ class AssetDataImporter {
         addressPS.setLong(8, address._6)
         addressPS.setLong(9, address._7)
         addressPS.setLong(10, address._8)
-        addressPS.setString(11, address._9.toString)
-        addressPS.setString(12, address._10.toString)
-        addressPS.setString(13, address._11.toString)
-        addressPS.setString(14, address._12.toString)
+        addressPS.setString(11, address._9)
+        addressPS.setString(12, address._10.getOrElse(""))
+        addressPS.setString(13, address._11)
+        addressPS.setString(14, address._12)
         addressPS.addBatch()
       }
       lrmPositionPS.executeBatch()

@@ -147,6 +147,13 @@ object DataFixture {
     println()
   }
 
+  def importRoadAddresses(): Unit = {
+    println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
+    dataImporter.importRoadAddressData(Conversion.database())
+    println(s"Prohibition import complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
@@ -364,12 +371,14 @@ object DataFixture {
         checkUnknownSpeedlimits()
       case Some ("import_VVH_RoadLinks_by_municipalities") =>
         importVVHRoadLinksByMunicipalities()
+      case Some ("import_road_addresses") =>
+        importRoadAddresses()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits")
+        " check_unknown_speedlimits | import_road_addresses")
     }
   }
 }
