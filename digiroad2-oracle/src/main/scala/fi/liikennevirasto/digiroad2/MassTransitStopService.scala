@@ -36,6 +36,7 @@ trait MassTransitStopService extends PointAssetOperations {
   type PersistedAsset = PersistedMassTransitStop
 
   val massTransitStopDao: MassTransitStopDao
+  val tierekisteriClient: TierekisteriClient
   override val idField = "external_id"
 
   override def typeId: Int = 10

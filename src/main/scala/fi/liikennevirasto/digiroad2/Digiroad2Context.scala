@@ -119,6 +119,10 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"))
+  }
+
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
@@ -128,6 +132,7 @@ object Digiroad2Context {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
     }
     new ProductionMassTransitStopService(eventbus)
