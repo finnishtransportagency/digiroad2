@@ -21,7 +21,7 @@ class RoadAddressService {
     * @param projectId
     * @return
     */
-  def getCalibrationPoints(roadNumber: Long, projectId: Long) = {
+  def getCalibrationPoints(roadNumber: Long, projectId: Long): Seq[CalibrationPoint] = {
     // TODO: Implementation
     getCalibrationPoints(roadNumber) ++ Seq(CalibrationPoint(2, 0.0, 0))
   }
