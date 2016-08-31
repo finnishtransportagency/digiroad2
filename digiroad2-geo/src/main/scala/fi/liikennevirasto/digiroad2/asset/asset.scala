@@ -130,6 +130,7 @@ object PropertyTypes {
   val Text = "text"
   val LongText = "long_text"
   val ReadOnlyText = "read_only_text"
+  val ReadOnlyNumber = "read_only_number"
   val Date = "date"
   val ReadOnly = "read-only"
 }

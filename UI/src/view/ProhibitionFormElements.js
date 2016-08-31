@@ -82,10 +82,10 @@
 
           function createValidityPeriodElement() {
             var validityPeriodItems = _(prohibition.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(function (period) {
                 var dayName = dayLabels[period.days];
-                return '<li>' + dayName + ' ' + period.startHour + '–' + period.endHour + '</li>';
+                return '<li>' + dayName + ' ' + period.startHour + ':' + (period.startMinute<10 ? '0' + period.startMinute : period.startMinute) + ' – ' + period.endHour + ':' + (period.endMinute<10 ? '0' + period.endMinute : period.endMinute) + '</li>';
               })
               .join('');
             return '' +
@@ -149,7 +149,7 @@
         function validityPeriodsElement() {
           var existingValidityPeriodElements =
             _(prohibition.validityPeriods)
-              .sortByAll(dayOrder, 'startHour', 'endHour')
+              .sortByAll(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodElement)
               .join('');
 
@@ -195,14 +195,34 @@
           '</select>';
       }
 
+      function minutesElement(selectedMinute, type) {
+        var className = type + '-minute';
+        return '' +
+            '<select class="form-control sub-control select ' + className + '">' +
+            minutesOptions(selectedMinute) +
+            '</select>';
+      }
+
+      function minutesOptions(selectedOption) {
+        var range = _.range(0, 60, 5);
+        return _.map(range, function (minute) {
+          var selected = minute === selectedOption ? 'selected' : '';
+          return '<option value="' + minute + '" ' + selected + '>' + (minute<10 ? '0' + minute : minute) + '</option>';
+        }).join('');
+      }
+
       function validityPeriodElement(period) {
         return '' +
           '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
           deleteButton() +
           validityPeriodLabel(period) +
           hourElement(period.startHour, 'start') +
+          '<span class="minute-separator"></span>' +
+          minutesElement(period.startMinute, 'start') +
           '<label class="hour-separator"> - </label>' +
           hourElement(period.endHour, 'end') +
+          '<span class="minute-separator"></span>' +
+          minutesElement(period.endMinute, 'end') +
           '</div></li>';
       }
 
@@ -308,7 +328,9 @@
           $(evt.target).parent().parent().replaceWith(validityPeriodElement({
             days: $(evt.target).val(),
             startHour: 0,
-            endHour: 24
+            startMinute: 0,
+            endHour: 24,
+            endMinute: 0
           }));
           setValue(extractValue(rootElement, className));
         });
@@ -370,7 +392,9 @@
         return _.map(periodElements, function (element) {
           return {
             startHour: parseInt($(element).find('.start-hour').val(), 10),
+            startMinute: parseInt($(element).find('.start-minute').val(), 10),
             endHour: parseInt($(element).find('.end-hour').val(), 10),
+            endMinute: parseInt($(element).find('.end-minute').val(), 10),
             days: $(element).data('days')
           };
         });

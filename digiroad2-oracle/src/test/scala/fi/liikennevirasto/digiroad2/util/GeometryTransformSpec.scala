@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.net.ConnectException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.Point
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.HttpHostConnectException
+import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.scalatest.{FunSuite, Matchers}
 
@@ -18,15 +20,22 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     val url = properties.getProperty("digiroad2.VKMUrl")
     val request = new HttpGet(url)
+    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
     try {
-      response.getStatusLine.getStatusCode >= 200
+      val response = client.execute(request)
+      try {
+        response.getStatusLine.getStatusCode >= 200
+      } finally {
+        response.close()
+      }
     } catch {
       case e: HttpHostConnectException =>
         false
-    } finally {
-      response.close()
+      case e: ConnectTimeoutException =>
+        false
+      case e: ConnectException =>
+        false
     }
   }
 
@@ -76,7 +85,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.coordToAddress(coord, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
   }
 
   test("missing results for multiple query") {
@@ -85,7 +94,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.coordsToAddresses(coords, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
   }
 
   test("Resolve location on left") {
@@ -130,7 +139,28 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val thrown = intercept[VKMClientException] {
       transform.resolveAddressAndLocation(coord, 190, Option(1), Option(0))
     }
-    thrown.getMessage should be ("VKM returned an error: Kohdetta ei löytynyt.")
+    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
 
+  }
+
+  test("Resolve location close to pedestrian walkway") {
+    assume(connectedToVKM)
+    val coord = Point(378847,6677884)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270)
+    roadAddress.road should be (110)
+  }
+
+  test("Resolve location close to pedestrian walkway, allow pedestrian as result") {
+    assume(connectedToVKM)
+    val coord = Point(378847,6677884)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
+    roadAddress.road should be >= (69999)
+  }
+
+  test("Resolve location far from pedestrian walkway, allow pedestrian as result") {
+    assume(connectedToVKM)
+    val coord = Point(378817,6677914)
+    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
+    roadAddress.road should be (110)
   }
 }

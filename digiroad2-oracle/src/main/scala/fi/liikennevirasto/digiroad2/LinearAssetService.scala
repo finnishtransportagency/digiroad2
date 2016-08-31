@@ -118,7 +118,11 @@ trait LinearAssetOperations {
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
       changeSet.expiredAssetIds ++ expiredPavingAssetIds
-    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
+    val mValueAdjustments = newAndUpdatedPavingAssets.filter(_.id != 0).map( a =>
+      MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
+    )
+    eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L),
+      adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
@@ -137,7 +141,7 @@ trait LinearAssetOperations {
     //Map all existing assets by roadlink and changeinfo
     val changedAssets = lastChanges.map{
       case (linkId, changeInfo) =>
-        (roadLinks.find(_.linkId == linkId).head, changeInfo, existingLinearAssets.filter(_.linkId == linkId))
+        (roadLinks.find(_.linkId == linkId), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
     }
 
     /* Note: This uses isNotPaved that excludes "unknown" pavement status. In OTH unknown means
@@ -146,17 +150,19 @@ trait LinearAssetOperations {
     *  override is needed anymore.
     */
     val expiredAssetsIds = changedAssets.flatMap {
-      case (roadlink, changeInfo, assets) =>
+      case (Some(roadlink), changeInfo, assets) =>
         if (roadlink.isNotPaved && assets.nonEmpty)
           assets.filter(_.vvhTimeStamp < changeInfo.vvhTimeStamp).map(_.id)
         else
           List()
+      case _ =>
+        List()
     }.toSet[Long]
 
     /* Note: This will not change anything if asset is stored using value None (null in database)
     *  This is the intended consequence as it enables the UI to write overrides to VVH pavement info */
     val newAndUpdatedAssets = changedAssets.flatMap{
-      case (roadlink, changeInfo, assets) =>
+      case (Some(roadlink), changeInfo, assets) =>
         if(roadlink.isPaved)
           if (assets.isEmpty)
             Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(1)), 0,
@@ -165,9 +171,12 @@ trait LinearAssetOperations {
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
-            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1))))
+            ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=Some(NumericValue(1)),
+              startMeasure=0.0, endMeasure=roadlink.length))
         else
           None
+      case _ =>
+        None
     }.toSeq
 
     (expiredAssetsIds, newAndUpdatedAssets)

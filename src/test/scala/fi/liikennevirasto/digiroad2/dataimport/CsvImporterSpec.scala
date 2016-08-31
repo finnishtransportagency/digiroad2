@@ -5,6 +5,7 @@ import java.io.{ByteArrayInputStream, InputStream}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.mockito.Matchers
@@ -267,23 +268,44 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    stops.foreach { case(id, administrativeClass) =>
+      when(mockVVHClient.fetchVVHRoadlink(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    }
+
+    val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
+    when(mockMassTransitStopDao.getAssetAdministrationClass(any[Long])).thenReturn(None)
+
+    class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def withDynSession[T](f: => T): T = f
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+      override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
+    }
+
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
       when(mockMassTransitStopService.getByNationalId(Matchers.eq(id), anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {
         override def answer(invocation: InvocationOnMock): Option[Object] = {
-          val transformation: PersistedMassTransitStop => Object = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => Object]
+          val transformation: PersistedMassTransitStop => (Object, Object) = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => (Object, Object)]
           val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, Modification(None, None), Modification(None, None), Nil)
-          Some(transformation(stop))
+          Some(transformation(stop)._1)
         }
       })
     }
 
-    val vvhClient = MockitoSugar.mock[VVHClient]
-    stops.foreach { case(id, administrativeClass) =>
-      when(vvhClient.fetchVVHRoadlink(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-    }
+    when(mockMassTransitStopService.isFloating(any[PersistedPointAsset], any[Option[VVHRoadlink]])).thenAnswer(new Answer[Object] {
+      override def answer(invocation: InvocationOnMock): Object = {
+        val persistedPointAsset: PersistedPointAsset  = invocation.getArguments()(0).asInstanceOf[PersistedPointAsset]
+        val vvhRoadlink: Option[VVHRoadlink]  = invocation.getArguments()(1).asInstanceOf[Option[VVHRoadlink]]
 
-    (mockMassTransitStopService, vvhClient)
+        val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus)
+        testMassTransitStopService.isFloating(persistedPointAsset, vvhRoadlink)
+      }
+    })
+
+    (mockMassTransitStopService, mockVVHClient)
   }
 
   test("ignore updates on other road types than streets when import is limited to streets") {

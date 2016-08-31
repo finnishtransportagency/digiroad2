@@ -128,6 +128,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
@@ -195,6 +197,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       case _ => "(t2){d5}"
     }
     s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
+  }
+
+  def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {
+    val daySpec = validityPeriod.days match {
+      case Saturday => "(t7){d1}"
+      case Sunday => "(t1){d1}"
+      case _ => "(t2){d5}"
+    }
+    s"[[$daySpec]*[(h${validityPeriod.startHour}m${validityPeriod.startMinute}){h${validityPeriod.preciseDuration()._1}m${validityPeriod.preciseDuration()._2}}]]"
   }
 
   def valueToApi(value: Option[Value]) = {
@@ -331,6 +342,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "destLinkId" -> manoeuvre.elements.last.sourceLinkId,
         "exceptions" -> manoeuvre.exceptions,
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
+        "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
         "modifiedDateTime" -> manoeuvre.modifiedDateTime)
     }
