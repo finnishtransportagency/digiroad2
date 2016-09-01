@@ -1,4 +1,4 @@
-window.GenericConfirmPopUp = function(message, options) {
+window.GenericConfirmPopup = function(message, options) {
 
     var defaultOptions = {
         type: "confirm",

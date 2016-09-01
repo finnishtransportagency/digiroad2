@@ -548,7 +548,7 @@
         var property = event.propertyData;
 
         if(event.id && property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
-          new GenericConfirmPopUp(
+          new GenericConfirmPopup(
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
         }

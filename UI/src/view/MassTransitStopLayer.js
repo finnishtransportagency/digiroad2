@@ -436,7 +436,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     if (distance > movementLimit && !movementPermission)
     {
-      new GenericConfirmPopUp('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
+      new GenericConfirmPopup('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates);
           movementPermission = true;
