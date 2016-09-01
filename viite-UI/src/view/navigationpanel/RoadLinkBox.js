@@ -1,23 +1,26 @@
 (function(root) {
   root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
-    var title = 'Tielinkki';
+    var title = 'Piirrettävät tietyypit';
 
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="functional-class" checked>Toiminnallinen luokka</input></label>' +
+          '<div class="checkbox">' +
+            '<label><input type="checkbox" name="ramps">Rampit ja kiertoliittymät</input></label>' +
           '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="link-type">Tielinkin tyyppi</input></label>' +
+          '<div class="checkbox">' +
+            '<label><input type="checkbox" name="pedestrian">Kevyen liikenteen väylät</input></label>' +
           '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="administrative-class">Hallinnollinen luokka</input></label>' +
+          '<div class="checkbox">' +
+            '<label><input type="checkbox" name="winter">Talvitiet</input></label>' +
           '</div>' +
-          '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="vertical-level">Silta, alikulku tai tunneli</input></label>' +
+          '<div class="checkbox">' +
+            '<label><input type="checkbox" name="paths">Polut</input></label>' +
+          '</div>' +
+          '<div class="checkbox">' +
+            '<label><input type="checkbox" name="constructionsite">Työmaiden väliaikaiset tiet</input></label>' +
           '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
@@ -43,24 +46,28 @@
         '</div>' +
       '</div>');
 
-    var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
-    var functionalClasses = [
-      [1, '1'],
-      [2, '2'],
-      [3, '3'],
-      [4, '4'],
-      [5, '5'],
-      [6, '6: Muu yksityistie'],
-      [7, '7: Ajopolku'],
-      [8, '8: Kevyen liikenteen väylä']
+    var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
+    var roadClasses = [
+      [1, 'Valtatie'],
+      [2, 'Kantatie'],
+      [3, 'Seututie'],
+      [4, 'Yhdystie (4)'],
+      [5, 'Yhdystie (5)'],
+      [6, 'Katu'],
+      [7, 'Rampit ja kiertoliittymät'],
+      [8, 'Kevyen liikenteen väylä'],
+      [9, 'Talvitie'],
+      [10, 'Polku'],
+      [11, 'Väliaikainen'],
+      [99, 'Tuntematon']
     ];
-    var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
+    var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
       return '<div class="legend-entry">' +
-        '<div class="label">Luokka ' + functionalClass[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
+        '<div class="label">' + roadClass[1] + '</div>' +
+        '<div class="symbol linear linear-asset-' + roadClass[0] + '" />' +
         '</div>';
     }).join('');
-    functionalClassLegend.append(functionalClassLegendEntries);
+    roadClassLegend.append(roadClassLegendEntries);
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
     var linkTypes = [
@@ -105,7 +112,7 @@
 
     var legends = {
       'administrative-class': administrativeClassLegend,
-      'functional-class': functionalClassLegend,
+      'functional-class': roadClassLegend,
       'link-type': linkTypeLegend,
       'vertical-level': verticalLevelLegend
     };
@@ -147,7 +154,7 @@
 
     bindExternalEventHandlers();
 
-    elements.expanded.find('.legend-container').append(functionalClassLegend);
+    elements.expanded.find('.legend-container').append(roadClassLegend);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {

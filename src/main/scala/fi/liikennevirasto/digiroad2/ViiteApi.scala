@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkPartitioner}
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.viite.RoadAddressService
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{NotFound, _}
 import org.scalatra.json.JacksonJsonSupport
@@ -12,7 +13,9 @@ import org.scalatra.json.JacksonJsonSupport
   * Created by venholat on 25.8.2016.
   */
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
-               val userProvider: UserProvider = Digiroad2Context.userProvider)
+               val roadAddressService: RoadAddressService,
+               val userProvider: UserProvider = Digiroad2Context.userProvider
+               )
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -81,6 +84,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
       "administrativeClass" -> roadLink.administrativeClass.toString,
+      "roadClass" -> roadAddressService.roadClass(roadLink),
       "linkType" -> roadLink.linkType.value,
       "functionalClass" -> roadLink.functionalClass,
       "trafficDirection" -> roadLink.trafficDirection.toString,

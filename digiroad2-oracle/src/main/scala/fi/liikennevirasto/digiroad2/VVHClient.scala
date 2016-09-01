@@ -59,6 +59,7 @@ object ChangeType {
   /**
     * Return true if this is a replacement where segment or part of it replaces another, older one
     * All changes should be of form (old_id, new_id, old_start, old_end, new_start, new_end) with non-null values
+    *
     * @param changeInfo changeInfo object to check
     * @return true, if this is a replacement
     */
@@ -84,6 +85,7 @@ object ChangeType {
   /**
     * Return true if this is an extension where segment or part of it has no previous entry
     * All changes should be of form (new_id, new_start, new_end) with non-null values and old_* fields must be null
+    *
     * @param changeInfo changeInfo object to check
     * @return true, if this is an extension
     */
@@ -97,6 +99,7 @@ object ChangeType {
 
   /**
     * Return true if this is a removed segment or a piece of it. Only old id and m-values should be populated.
+    *
     * @param changeInfo changeInfo object to check
     * @return true, if this is a removed segment
     */
@@ -111,6 +114,7 @@ object ChangeType {
 
   /**
     * Return true if this is a new segment. Only new id and m-values should be populated.
+    *
     * @param changeInfo changeInfo object to check
     * @return true, if this is a new segment
     */
@@ -143,12 +147,16 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
-  private def withLimitFilter(attributeName: String, low: Int, high: Int): String = {
+  private def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
     val filter =
       if (low < 0 || high < 0 || low > high) {
         ""
       } else {
-        s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
+        if (includeAllPublicRoads) {
+          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
+        } else {
+          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
+        }
       }
     filter
   }
@@ -157,8 +165,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
 
-  private def withRoadNumberFilter(roadNumbers: (Int, Int)): String = {
-    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2)
+  private def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
+    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
   private def withLinkIdFilter(linkIds: Set[Long]): String = {
@@ -198,8 +206,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: (Int, Int), municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(combineFilters(withMunicipalityFilter(municipalities), withRoadNumberFilter(roadNumbers)))
+  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: (Int, Int), municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = true): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFilters(withMunicipalityFilter(municipalities), withRoadNumberFilter(roadNumbers, includeAllPublicRoads)))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
