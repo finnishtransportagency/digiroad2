@@ -358,7 +358,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("5"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", List(Point(0.0,0.0), Point(120.0, 0.0)), 91)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
@@ -382,7 +383,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", List(Point(0.0,0.0), Point(120.0, 0.0)), 91)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
