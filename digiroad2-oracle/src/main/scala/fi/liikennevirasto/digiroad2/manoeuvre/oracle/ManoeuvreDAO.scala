@@ -88,10 +88,10 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   def addManoeuvreValidityPeriods(manoeuvreId: Long, validityPeriods: Set[ValidityPeriod]) {
-    validityPeriods.foreach { case ValidityPeriod(startHour, endHour, days) =>
+    validityPeriods.foreach { case ValidityPeriod(startHour, endHour, days, startMinute, endMinute) =>
       sqlu"""
-        insert into manoeuvre_validity_period (id, manoeuvre_id, start_hour, end_hour, type)
-        values (primary_key_seq.nextval, $manoeuvreId, $startHour, $endHour, ${days.value})
+        insert into manoeuvre_validity_period (id, manoeuvre_id, start_hour, end_hour, type, start_minute, end_minute)
+        values (primary_key_seq.nextval, $manoeuvreId, $startHour, $endHour, ${days.value}, $startMinute, $endMinute)
       """.execute
     }
   }
@@ -165,15 +165,15 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
 
   private def fetchManoeuvreValidityPeriodsByIds(manoeuvreIds: Set[Long]):  Map[Long, Set[ValidityPeriod]] = {
     val manoeuvreValidityPeriods = MassQuery.withIds(manoeuvreIds) { idTableName =>
-      sql"""SELECT m.manoeuvre_id, m.type, m.start_hour, m.end_hour
+      sql"""SELECT m.manoeuvre_id, m.type, m.start_hour, m.end_hour, m.start_minute, m.end_minute
             FROM MANOEUVRE_VALIDITY_PERIOD m
-            JOIN #$idTableName i on m.manoeuvre_id = i.id""".as[(Long, Int, Int, Int)].list
+            JOIN #$idTableName i on m.manoeuvre_id = i.id""".as[(Long, Int, Int, Int, Int, Int)].list
 
     }
 
     manoeuvreValidityPeriods.groupBy(_._1).mapValues { periods =>
-      periods.map { case (_, dayOfWeek, startHour, endHour) =>
-        ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
+      periods.map { case (_, dayOfWeek, startHour, endHour, startMinute, endMinute) =>
+        ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek), startMinute, endMinute)
       }.toSet
     }
   }

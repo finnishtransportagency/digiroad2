@@ -45,9 +45,9 @@ class CsvGenerator(vvhServiceHost: String) {
       droppedManoeuvres.mapValues { rows =>
         OracleDatabase.withDynSession {
           val exceptions = sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list
-          val validityPeriods = sql"""select type, start_hour, end_hour from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
-           """.as[(Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour) =>
-            ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek))
+          val validityPeriods = sql"""select type, start_hour, end_hour, start_minute, end_minute from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
+           """.as[(Int, Int, Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour, startMinute, endMinute) =>
+            ValidityPeriod(startHour, endHour, ValidityPeriodDayOfWeek(dayOfWeek), startMinute, endMinute)
           }
           rows.map { x => (x._1, x._2, x._3, x._4, x._5, exceptions, validityPeriods) }
         }

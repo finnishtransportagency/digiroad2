@@ -26,29 +26,55 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
-case class ValidityPeriod(startHour: Int, endHour: Int, days: ValidityPeriodDayOfWeek) {
+case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
+                          val startMinute: Int = 0, val endMinute: Int = 0) {
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
-      Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days)))
+      Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days), math.min(startMinute, b.startMinute), math.min(endMinute, b.endMinute)))
     } else {
       None
     }
   }
   def duration(): Int = {
-    if (endHour > startHour) {
-      endHour - startHour
+    val startHourAndMinutes: Double = (startMinute / 60.0) + startHour
+    val endHourAndMinutes: Double = (endMinute / 60.0) + endHour
+
+    if (endHourAndMinutes > startHourAndMinutes) {
+      Math.ceil(endHourAndMinutes - startHourAndMinutes).toInt
     } else {
-      24 - startHour + endHour
+      Math.ceil(24 - startHourAndMinutes + endHourAndMinutes).toInt
     }
   }
+
+  def preciseDuration(): (Int, Int) = {
+    val startTotalMinutes = startMinute + (startHour * 60)
+    val endTotalMinutes = endMinute + (endHour * 60)
+
+    if (endTotalMinutes > startTotalMinutes) {
+      val duration = endTotalMinutes - startTotalMinutes
+      ((duration / 60).toInt, duration % 60)
+    } else {
+      val duration = 1440 - startTotalMinutes + endTotalMinutes
+      ((duration / 60).toInt, duration % 60)
+    }
+  }
+
+
   private def overlaps(b: ValidityPeriod): Boolean = {
     ValidityPeriodDayOfWeek.overlap(days, b.days) && hoursOverlap(b)
   }
+
   private def hoursOverlap(b: ValidityPeriod): Boolean = {
-    liesInBetween(startHour, (b.startHour, b.endHour)) ||
-      liesInBetween(b.startHour, (startHour, endHour))
+    val startHourAndMinutes = (startMinute / 60.0) + startHour
+    val endHourAndMinutes = (endMinute / 60.0) + endHour
+    val startHourAndMinutesB = (b.startMinute / 60.0) + b.startHour
+    val endHourAndMinutesB = (b.endMinute / 60.0) + b.endHour
+
+    liesInBetween(startHourAndMinutes, (startHourAndMinutesB, endHourAndMinutesB)) ||
+      liesInBetween(startHourAndMinutesB, (startHourAndMinutes, endHourAndMinutes))
   }
-  private def liesInBetween(hour: Int, interval: (Int, Int)): Boolean = {
+
+  private def liesInBetween(hour: Double, interval: (Double, Double)): Boolean = {
     hour >= interval._1 && hour <= interval._2
   }
 }

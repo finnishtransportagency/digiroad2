@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
@@ -17,7 +18,7 @@ class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int): Long = {
+  override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
       OracleObstacleDao.create(asset, mValue, username, municipality)

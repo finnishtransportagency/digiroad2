@@ -22,6 +22,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
         testHelpers.clickVisibleEditModeButton();
         testHelpers.clickMarker(testAssetId, openLayersMap);
         testHelpers.moveMarker(testAssetId, openLayersMap, 1, 0);
+        testHelpers.clickVisbleYesConfirmPopup();
       });
       it('moves bus stop', function() {
         var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
