@@ -79,7 +79,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
       val limit = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(1610349)).head
 
-      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))))
       limit.expired should be (false)
     }
   }
@@ -95,7 +95,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create new prohibition") {
-    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1, 0, None)), 190, "testuser")
       newAssets.length should be(1)
@@ -149,8 +149,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 190, "test").head
-      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
-      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
       ServiceWithDao.separate(assetId, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
 
@@ -239,8 +239,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newProhibition), 190, "test").head
-      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))
-      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2))))
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), null)))
 
       ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i) => Unit)
 
@@ -777,11 +777,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       after.count(_.value.nonEmpty) should be (3)
 
       val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set.empty)))
+      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set.empty, null)))
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set.empty)))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set.empty, null)))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty)))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
 
       linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
@@ -865,11 +865,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       after.count(_.value.nonEmpty) should be (3)
 
       val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set(10))))
+      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set(10), null)))
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10))))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), null)))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10))))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), null)))
 
       linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
@@ -1036,9 +1036,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       after.count(_.value.nonEmpty) should be (2)
 
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10))))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), null)))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10))))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), null)))
 
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
       linearAssetAgainstDigitizing.value should be (Some(prohibitionAgainstDigitizing))
