@@ -1,5 +1,8 @@
 (function(root) {
   var linkSizeLookup = {
+    6: { strokeWidth: 1 },
+    7: { strokeWidth: 2 },
+    8: { strokeWidth: 3 },
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
     11: { strokeWidth: 8 },

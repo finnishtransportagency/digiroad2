@@ -9,8 +9,8 @@
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
-    minZoomForAssets: 9,
-    minZoomForRoadLinks: 10,
+    minZoomForAssets: 6,
+    minZoomForRoadLinks: 6,
     maxZoomLevel: 12
   };
 })();
