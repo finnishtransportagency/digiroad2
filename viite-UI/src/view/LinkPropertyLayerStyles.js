@@ -8,6 +8,7 @@
     ];
 
     var zoomLevelRules = [
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(8).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[8], { pointRadius: 0 })),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[9], { pointRadius: 0 })),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[10], { pointRadius: 10 })),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[11], { pointRadius: 12 })),
