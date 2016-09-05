@@ -359,9 +359,9 @@ trait LinearAssetOperations {
           Set(ep._1, ep._2)
         } catch {
           case ex: NoSuchElementException =>
-            logger.error("Error on " + roadLink.linkId + " " + roadLink.geometry)
-            logger.info("Asset id " + persistedLinearAsset.id)
-            Set()
+            logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
+            val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+            Set(wholeLinkPoints._1, wholeLinkPoints._2)
         }
         ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
