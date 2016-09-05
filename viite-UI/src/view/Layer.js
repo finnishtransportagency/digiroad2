@@ -69,17 +69,22 @@
       layer.addFeatures(oneWaySigns);
     };
     this.drawRoadNumberMarkers = function(layer, roadLinks) {
-      var filteredLinks = _.filter(roadLinks, function(link) {
-        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      var groupedLinks = _.groupBy(roadLinks, 'roadPartNumber');
+      var midpoint = _.map(groupedLinks, function(n, links) {
+        var x = _.flatMap(links, function(link) {
+          return link.points.x;
+        });
+        var y = _.flatMap(links, function(link) {
+          return link.points.x;
+        });
+        return {x: x, y: y, text: links[0].roadNumber + ' / ' + links[0].roadPartNumber };
       });
-      var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
-        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + 180.0 : middlePoint.angleFromNorth;
-        var attributes = _.merge({}, link, { rotation: rotation });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+      var markers = _.map(midpoint, function (rno, middlePoint) {
+        return new OpenLayers.Feature.Vector(OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), {label: middlePoint.text});
       });
-
-      layer.addFeatures(oneWaySigns);
+      layer.addFeatures(markers);
     };
+
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
