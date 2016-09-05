@@ -353,12 +353,14 @@ trait LinearAssetOperations {
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints: Set[Point] = points.isEmpty match {
-          case true => val ep = GeometryUtils.geometryEndpoints(points)
-            Set(ep._1, ep._2)
-          case _ =>
-            logger.warn("Empty geometry on asset id %d, link id %d", persistedLinearAsset.id, persistedLinearAsset.linkId)
-            logger.warn("Empty geometry on roadlink geometry " + roadLink.geometry)
+        val endPoints: Set[Point] =
+          try {
+          val ep = GeometryUtils.geometryEndpoints(points)
+          Set(ep._1, ep._2)
+        } catch {
+          case ex: NoSuchElementException =>
+            logger.error("Error on " + roadLink.linkId + " " + roadLink.geometry)
+            logger.info("Asset id " + persistedLinearAsset.id)
             Set()
         }
         ChangedLinearAsset(
