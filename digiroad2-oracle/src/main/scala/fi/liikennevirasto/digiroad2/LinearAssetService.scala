@@ -353,12 +353,19 @@ trait LinearAssetOperations {
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints = GeometryUtils.geometryEndpoints(points)
+        val endPoints: Set[Point] = points.isEmpty match {
+          case true => val ep = GeometryUtils.geometryEndpoints(points)
+            Set(ep._1, ep._2)
+          case _ =>
+            logger.warn("Empty geometry on asset id %d, link id %d", persistedLinearAsset.id, persistedLinearAsset.linkId)
+            logger.warn("Empty geometry on roadlink geometry " + roadLink.geometry)
+            Set()
+        }
         ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
             persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
-            Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
+            endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
             persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate)
           ,
