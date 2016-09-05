@@ -161,6 +161,19 @@
       });
     };
 
+    var pikavuoroIsAlone = function()
+    {
+      return _.some(currentAsset.payload.properties, function(property)
+      {
+        if (property.publicId == "pysakin_tyyppi") {
+          return _.some(property.values, function(propertyValue){
+            return (propertyValue.propertyValue == 4 && property.values.length<2) ;
+          });
+        }
+        return false;
+      });
+    };
+
     var hasMixedVirtualAndRealStops = function()
     {
       return _.some(currentAsset.payload.properties, function(property)
@@ -307,7 +320,8 @@
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
       place: place,
-      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops
+      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
+      pikavuoroIsAlone: pikavuoroIsAlone
     };
   };
 

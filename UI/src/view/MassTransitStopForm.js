@@ -23,9 +23,13 @@
   };
 
   var InvalidCombinationError = function() {
-    var element = $('<span class="validation-fatal-error">Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</span>');
+    var element = $('<span id="comboBoxErrors" class="validation-fatal-error">This should not appear</span>');
     var updateVisibility = function() {
       if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.hasMixedVirtualAndRealStops()) {
+        document.getElementById("comboBoxErrors").innerHTML = "Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin";
+        element.show();
+      } else if(selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && selectedMassTransitStopModel.pikavuoroIsAlone()){
+        document.getElementById("comboBoxErrors").innerHTML = "Pikavuoro tulee valita yhdessä toisen pysäkkityypin kanssa";
         element.show();
       } else {
         element.hide();
@@ -49,7 +53,10 @@
       selectedMassTransitStopModel.save();
     });
     var updateStatus = function() {
-      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops()){
+      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
+        element.prop('disabled', false);
+      }
+      else if(selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
