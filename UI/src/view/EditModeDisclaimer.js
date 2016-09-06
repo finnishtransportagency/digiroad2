@@ -17,6 +17,19 @@
       }
     }
 
+    function handleEditMessageTESTE(validateStatus) {
+      var editMessageTESTE = $(
+          '<div class="action-state">' +
+          '  MSG de TESTE.' +
+          '</div>');
+
+      if (validateStatus) {
+        editMessageTESTE.hide();
+      } else {
+        editMessageTESTE.show();
+      }
+    }
+
     function showEditInstructionsPopup(readOnly) {
       if(!readOnly) {
         instructionsPopup.show('Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle.', 4000);
@@ -26,6 +39,10 @@
     eventbus.on('application:readOnly', function(readOnly) {
       handleEditMessage(readOnly);
       showEditInstructionsPopup(readOnly);
+    });
+    
+    eventbus.on('application:controledTR', function(show) {
+      handleEditMessageTESTE(show);
     });
 
     $('#header').append(editMessage.hide());

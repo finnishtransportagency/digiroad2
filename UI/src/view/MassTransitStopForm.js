@@ -116,6 +116,15 @@
             .append(saveBtn.element)
             .append(cancelBtn.element));
 
+        var properties = selectedMassTransitStopModel.getProperties();
+        for (var i = 0; i < properties.length; i++){
+          var condition = properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
+          if (condition) {
+            readOnly = true;
+            eventbus.trigger('application:controledTR',condition);
+          }
+        }
+
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
           wrapper.addClass('read-only');
@@ -538,7 +547,16 @@
       });
 
       eventbus.on('application:readOnly', function(data) {
-        readOnly = data;
+        if(selectedMassTransitStopModel.getId() !== undefined) {
+          var properties = selectedMassTransitStopModel.getProperties();
+          for (var i = 0; i < properties.length; i++){
+            if (properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2") {
+              readOnly = true;
+            }
+          }
+        } else {
+          readOnly = data;
+        }
       });
 
       eventbus.on('asset:closed', closeAsset);
