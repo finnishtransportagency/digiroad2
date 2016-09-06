@@ -9,6 +9,11 @@
       '  Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle.' +
       '</div>');
 
+    var editMessageTESTE = $(
+        '<div class="controlTR">' +
+        '  MSG de TESTE.' +
+        '</div>');
+
     function handleEditMessage(readOnly) {
       if (readOnly) {
         editMessage.hide();
@@ -17,16 +22,11 @@
       }
     }
 
-    function handleEditMessageTESTE(validateStatus) {
-      var editMessageTESTE = $(
-          '<div class="action-state">' +
-          '  MSG de TESTE.' +
-          '</div>');
-
-      if (validateStatus) {
-        editMessageTESTE.hide();
-      } else {
+    function handleEditMessageTESTE(showMessage) {
+      if (showMessage) {
         editMessageTESTE.show();
+      } else {
+        editMessageTESTE.hide();
       }
     }
 
@@ -38,6 +38,7 @@
 
     eventbus.on('application:readOnly', function(readOnly) {
       handleEditMessage(readOnly);
+      //handleEditMessageTESTE(!readOnly);
       showEditInstructionsPopup(readOnly);
     });
     
@@ -46,5 +47,6 @@
     });
 
     $('#header').append(editMessage.hide());
+    $('#header').append(editMessageTESTE.hide());
   }
 })(this);

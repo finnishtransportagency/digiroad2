@@ -402,6 +402,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
+      eventbus.trigger('application:controledTR',false);
     }
   };
 

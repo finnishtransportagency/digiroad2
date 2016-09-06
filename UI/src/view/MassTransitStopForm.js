@@ -116,14 +116,7 @@
             .append(saveBtn.element)
             .append(cancelBtn.element));
 
-        var properties = selectedMassTransitStopModel.getProperties();
-        for (var i = 0; i < properties.length; i++){
-          var condition = properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-          if (condition) {
-            readOnly = true;
-            eventbus.trigger('application:controledTR',condition);
-          }
-        }
+        readOnly = controlledByTR();
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -532,6 +525,15 @@
             '</div>');
         }
       };
+      var controlledByTR = function () {
+        var properties = selectedMassTransitStopModel.getProperties();
+        var condition = false;
+        for (var i = 0; i < properties.length; i++){
+          condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
+        }
+         if(!applicationModel.isReadOnly()) eventbus.trigger('application:controledTR',condition);
+        return condition;
+      };
 
       eventbus.on('asset:modified', function(){
         renderAssetForm();
@@ -548,12 +550,7 @@
 
       eventbus.on('application:readOnly', function(data) {
         if(selectedMassTransitStopModel.getId() !== undefined) {
-          var properties = selectedMassTransitStopModel.getProperties();
-          for (var i = 0; i < properties.length; i++){
-            if (properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2") {
-              readOnly = true;
-            }
-          }
+          readOnly = controlledByTR();
         } else {
           readOnly = data;
         }
