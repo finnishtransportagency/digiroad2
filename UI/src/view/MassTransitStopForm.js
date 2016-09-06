@@ -529,7 +529,9 @@
         var properties = selectedMassTransitStopModel.getProperties();
         var condition = false;
         for (var i = 0; i < properties.length; i++){
-          condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
+          if(properties[i].values[0] !== undefined) {
+            condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
+          }
         }
          if(!applicationModel.isReadOnly()) {
            eventbus.trigger('application:controledTR',condition);
