@@ -381,6 +381,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var closeAsset = function() {
     deselectAsset(selectedAsset);
+    eventbus.trigger('application:controledTR',false);
   };
 
   var hideAssets = function() {
@@ -402,7 +403,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
-      eventbus.trigger('application:controledTR',false);
     }
   };
 

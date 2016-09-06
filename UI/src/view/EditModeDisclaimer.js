@@ -11,7 +11,7 @@
 
     var editMessageTESTE = $(
         '<div class="controlTR">' +
-        '  MSG de TESTE.' +
+        '  Pysäkin varustetietoja ylläpidetään Tierekisterissä.' +
         '</div>');
 
     function handleEditMessage(readOnly) {

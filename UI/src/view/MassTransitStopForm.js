@@ -531,7 +531,12 @@
         for (var i = 0; i < properties.length; i++){
           condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
         }
-         if(!applicationModel.isReadOnly()) eventbus.trigger('application:controledTR',condition);
+         if(!applicationModel.isReadOnly()) {
+           eventbus.trigger('application:controledTR',condition);
+         } else {
+           eventbus.trigger('application:controledTR',false);
+         }
+
         return condition;
       };
 
