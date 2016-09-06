@@ -337,10 +337,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     assetPropertyService.assetPropertyNames(lang)
   }
 
+  object TierekisteriInternalServerError {
+    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
+      ActionResult(ResponseStatus(555, reason), body, headers)
+  }
+
   error {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
+    case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)

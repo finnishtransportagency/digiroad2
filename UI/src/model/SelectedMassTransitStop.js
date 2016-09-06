@@ -206,8 +206,12 @@
 
     var save = function() {
       if (currentAsset.id === undefined) {
-        backend.createAsset(currentAsset.payload, function() {
-          eventbus.trigger('asset:creationFailed');
+        backend.createAsset(currentAsset.payload, function(errorObject) {
+          if (errorObject.status == 555) {
+            eventbus.trigger('asset:creationTierekisteriFailed');
+          }else{
+            eventbus.trigger('asset:creationFailed');
+          }
           close();
         });
       } else {
@@ -219,10 +223,14 @@
           assetHasBeenModified = false;
           open(asset);
           eventbus.trigger('asset:saved', asset, positionUpdated);
-        }, function() {
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+        }, function (errorObject) {
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
-            eventbus.trigger('asset:updateFailed', asset);
+            if (errorObject.status == 555) {
+              eventbus.trigger('asset:updateTierekisteriFailed');
+            } else {
+              eventbus.trigger('asset:updateFailed', asset);
+            }
           });
         });
       }

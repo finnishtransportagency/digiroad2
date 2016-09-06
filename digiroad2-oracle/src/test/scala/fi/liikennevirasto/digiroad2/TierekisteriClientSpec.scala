@@ -293,4 +293,15 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 500")
   }
 
+  test ("Convert MassTransitStopWithProperties into TierekisteriMassTransitStop") {
+    val MTSWithPropertiesToConvert = MassTransitStopWithProperties(2, 2, Nil, 373915.2020468317, 6677177.581940852, None, Some(73), None, false, Nil)
+
+    val tierekisteriMassTransitStopConverted = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(MTSWithPropertiesToConvert)
+
+    tierekisteriMassTransitStopConverted.nationalId should be(2)
+    tierekisteriMassTransitStopConverted.roadAddress.track should be(Track.Combined)
+    tierekisteriMassTransitStopConverted.roadSide.value should be("oikea")
+    tierekisteriMassTransitStopConverted.express should be(false)
+  }
+
 }

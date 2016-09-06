@@ -282,7 +282,7 @@ trait MassTransitStopService extends PointAssetOperations {
         updateMunicipality(id, municipalityCode)
         updateAssetGeometry(id, point)
       }
-      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => roadLink })
+      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => roadLink }, tierekisteriClient.updateMassTransitStop)
     }
   }
 
@@ -324,7 +324,7 @@ trait MassTransitStopService extends PointAssetOperations {
         massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
         updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
         updateLiViIdentifierProperty(assetId, nationalId, asset.properties)
-        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink)
+        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, tierekisteriClient.createMassTransitStop)
         assetId
       }
       else
@@ -347,8 +347,18 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
+  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink], createOrUpdateMassTransitStop: TierekisteriMassTransitStop => Unit) = {
     val persistedStop = fetchPointAssets(withId(assetId)).headOption
+    val relevantToTR = isNotVirtualStopAndIsMantainedByELY(Some(persistedStop.get))
+
+    if (relevantToTR) {
+      val newMTSWithProperties = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)
+
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(newMTSWithProperties)
+
+      createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
+    }
+
     persistedStop.foreach { stop =>
       val municipalityName = massTransitStopDao.getMunicipalityNameByCode(stop.municipalityCode)
       eventbus.publish("asset:saved", eventBusMassTransitStop(stop, municipalityName))

@@ -428,7 +428,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
 /**
   * A class to transform data between the interface bus stop format and OTH internal bus stop format
   */
-class TierekisteriBusStopMarshaller {
+object TierekisteriBusStopMarshaller {
 
   private val liviIdPublicId = "yllapitajan_koodi"
   private val stopTypePublicId = "pysakin_tyyppi"
