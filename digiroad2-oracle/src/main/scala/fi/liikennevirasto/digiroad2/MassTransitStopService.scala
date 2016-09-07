@@ -425,7 +425,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val relevantToTR = isNotVirtualStopAndIsMantainedByELY(Some(persistedStop.get))
 
     if (relevantToTR) {
-      val newMTSWithProperties = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)
+      val (newMTSWithProperties, floatingReason) = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
 
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(newMTSWithProperties)
 
