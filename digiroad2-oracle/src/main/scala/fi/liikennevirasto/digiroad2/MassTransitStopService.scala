@@ -48,6 +48,9 @@ trait MassTransitStopService extends PointAssetOperations {
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"
 
+  val nameFiPublicId = "nimi_suomeksi"
+  val nameSePublicId = "nimi_ruotsiksi"
+
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
@@ -59,16 +62,86 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
 
       if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
-        //TODO fetch information from Tierekisteri and enrish persisted mass transit object
-        //val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(getLiviIdentifier(persistedStop.get.nationalId))
+        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(generateLiviIdentifier(persistedStop.get.nationalId))
+        val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
+        return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
       }
 
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
   }
 
-  def getLiviIdentifier(nationalId: Long): String = "OTHJ%d".format(nationalId)
+  /**
+    * Override property values of all equipment properties
+    * @param tierekisteriStop Tierekisteri Asset
+    * @param property Asset property
+    * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
+    */
+  private def setEquipments(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
 
+    val equipmentProperty = tierekisteriStop.equipments.find(_._1.publicId == property.publicId)
+    equipmentProperty match {
+      case Some((equipment, existence)) =>
+        property.copy(values = Seq(PropertyValue(existence.propertyValue.toString)))
+      case _ =>
+        property
+    }
+  }
+
+  /**
+    * Override property value when the value is empty
+    * @param publidId The public id of the property
+    * @param getValue Function to get the property value from Tierekisteri Asset
+    * @param tierekisteriStop  Tierekisteri Asset
+    * @param property Asset property
+    * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
+    */
+  private def setPropertyValueIfEmpty(publidId: String, getValue: TierekisteriMassTransitStop => String)(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
+
+    if(property.publicId == publidId){
+      property.copy( values = property.values.map{
+        case value if(value.propertyValue.isEmpty) => PropertyValue(getValue(tierekisteriStop))
+        case value => value
+      })
+    }
+    property
+  }
+
+  /**
+    * Override the properties values passed as parameter using override operations
+    *
+    * @param tierekisteriStop Tierekisteri Asset
+    * @param persistedMassTransitStop Asset properties
+    * @return Sequence of overridden properties
+    */
+  private def enrichPersistedMassTransitStop(persistedMassTransitStop: Option[PersistedMassTransitStop], tierekisteriStop: TierekisteriMassTransitStop): Option[PersistedMassTransitStop] = {
+    val overridePropertyValueOperations: Seq[(TierekisteriMassTransitStop, Property) => Property] = Seq(
+      setEquipments,
+      setPropertyValueIfEmpty(nameFiPublicId, { ta => ta.nameFi }),
+      setPropertyValueIfEmpty(nameSePublicId, { ta => ta.nameSe })
+      //In the future if we need to override some property just add here the operation
+    )
+
+    persistedMassTransitStop match {
+      case Some(masstransitStop) =>
+        Some(masstransitStop.copy(propertyData = masstransitStop.propertyData.map { property =>
+          var overriddenProperty = property
+          overridePropertyValueOperations.foreach { operation =>
+            overriddenProperty = operation(tierekisteriStop, overriddenProperty)
+          }
+          overriddenProperty
+        }))
+      case massTransitStop => massTransitStop
+    }
+  }
+
+  def generateLiviIdentifier(nationalId: Long): String = "OTHJ%d".format(nationalId)
+
+  /**
+    * Verify if the stop is relevant to Tierekisteri
+    * @param persistedStopOption The persisted stops
+    * @return returns true if the stop is not vitual and is a ELY bus stop
+    */
   def isNotVirtualStopAndIsMantainedByELY(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
     persistedStopOption match {
       case Some(persistedStop) =>

@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Date
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{Track, RoadAddress, TestTransactions}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -183,6 +184,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
+    }
+  }
+
+  test("Fetch mass transit stop enrished by tierekisteri by national id"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Yes,
+        Equipment.CarParkForTakingPassengers -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Yes,
+        Equipment.RaisedBusStop -> Existence.No,
+        Equipment.Lighting -> Existence.Unknown,
+        Equipment.Roof -> Existence.Yes,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.Timetable -> Existence.No,
+        Equipment.TrashBin -> Existence.Yes,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, "", "TierekisteriFi", "TierekisteriSe", "test", new Date, new Date, new Date)
+      )
+      val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
+
+      equipments.foreach{
+        case (equipment, existence) =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+      }
     }
   }
 
