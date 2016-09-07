@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.viite.model.CalibrationPoint
+import fi.liikennevirasto.viite.model.{CalibrationPoint, RoadAddressLink}
 
 import scala.collection.SeqLike
 
@@ -57,7 +57,7 @@ class RoadAddressService {
 
   }
 
-  def roadClass(roadLink: RoadLink) = {
+  def roadClass(roadAddressLink: RoadAddressLink) = {
     val C1 = new Contains(1 to 49)
     val C2 = new Contains(40 to 99)
     val C3 = new Contains(100 to 999)
@@ -71,7 +71,7 @@ class RoadAddressService {
     val C10 = new Contains(62001 to 62999)
     val C11 = new Contains(9900 to 9999)
     try {
-      val roadNumber = roadLink.attributes.getOrElse(RoadNumber, 0).toString.toInt
+      val roadNumber: Int = roadAddressLink.roadNumber.toInt
       roadNumber match {
         case C1() => HighwayClass
         case C2() => MainRoadClass
