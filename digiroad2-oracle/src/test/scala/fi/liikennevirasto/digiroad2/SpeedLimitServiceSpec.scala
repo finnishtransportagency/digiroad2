@@ -1016,6 +1016,129 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
 
+  test("Projecting and filling should return proper geometry on Integration API calls, too") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val municipalityCode = 286
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val geometries = Seq(
+      List(Point(249156.065, 6776941.738, 48.649999999994179), Point(249140.548, 6776951.891, 48.702999999994063), Point(249121.451, 6776963.018, 48.763000000006286), Point(249096.783, 6776976.871, 48.843999999997322), Point(249073.729, 6776989.653, 48.827000000004773), Point(249045.39, 6777005.322, 48.688999999998487), Point(249014.905, 6777022.54, 48.831999999994878), Point(248997.676, 6777033.343, 48.872000000003027)),
+      List(Point(372499.326, 7128159.101, 60.56699999999546), Point(372508.96, 7128177.363, 60.740000000005239), Point(372522.026, 7128199.654, 60.978000000002794), Point(372536.446, 7128223.17, 61.054000000003725), Point(372551.382, 7128244.076, 61.025999999998021), Point(372569.75, 7128269.012, 61.101999999998952), Point(372586.008, 7128290.497, 61.198000000003958), Point(372602.941, 7128312.597, 61.350999999995111), Point(372625.434, 7128342.497, 61.580000000001746), Point(372646.154, 7128369.253, 61.599000000001979), Point(372663.321, 7128390.462, 61.687000000005355), Point(372683.671, 7128416.267, 61.695999999996275), Point(372701.958, 7128439.591, 61.75800000000163), Point(372721.922, 7128464.124, 61.898000000001048), Point(372741.581, 7128482.533, 61.770000000004075), Point(372767.689, 7128504.746, 61.309999999997672)),
+      List(Point(402710.142, 6817081.47, 86.085000000006403), Point(402693.882, 6817088.352, 86.739000000001397), Point(402684.15, 6817092.608, 87.001999999993131), Point(402668.137, 6817099.745, 87.161999999996624), Point(402662.147, 6817102.129, 87.115000000005239), Point(402636.253, 6817109.544, 86.452000000004773), Point(402613.148, 6817114.9, 86.203999999997905), Point(402576.65, 6817119.035, 86.546000000002095), Point(402575.712, 6817119.132, 86.559999999997672), Point(402567.762, 6817120.005, 86.638000000006286)),
+      List(Point(400822.22, 6818919.299, 128.21499999999651), Point(400824.267, 6818928.907, 128.13800000000629), Point(400827.155, 6818939.945, 127.97900000000664), Point(400830.584, 6818952.859, 127.68499999999767), Point(400834.316, 6818967.193, 127.21899999999732), Point(400838.131, 6818980.289, 126.91000000000349), Point(400844.861, 6819001.987, 126.74800000000687), Point(400851.492, 6819030.669, 127.07600000000093), Point(400859.501, 6819063.655, 127.26499999999942), Point(400865.907, 6819088.293, 126.58699999999953), Point(400870.946, 6819107.391, 125.74499999999534)),
+      List(Point(400132.586, 6817557.582, 126.13300000000163), Point(400135.254, 6817559.85, 126.05400000000373), Point(400148.189, 6817571.617, 125.6710000000021), Point(400158.18, 6817581.975, 125.6420000000071), Point(400167.018, 6817591.656, 126.12600000000384), Point(400176.55, 6817603.374, 126.84799999999814), Point(400178.2, 6817605.574, 126.95799999999872), Point(400185.314, 6817615.536, 127.44700000000012), Point(400196.31, 6817631.607, 127.90499999999884), Point(400214.865, 6817657.183, 128.5399999999936), Point(400228.29, 6817675.907, 128.82099999999627), Point(400234.899, 6817685.126, 128.97999999999593), Point(400252.877, 6817710.361, 129.875), Point(400268.455, 6817730.702, 129.08400000000256), Point(400284.017, 6817753.098, 128.88899999999558), Point(400299.431, 6817772.663, 129.56699999999546), Point(400308.535, 6817784.047, 130.13800000000629)),
+      List(Point(373590.033, 7129915.211, 54.932000000000698), Point(373586.562, 7129926.819, 54.868000000002212), Point(373577.558, 7129943.771, 54.855999999999767), Point(373575.712, 7129947.075, 54.892000000007101), Point(373565.604, 7129961.472, 55.036999999996624), Point(373551.341, 7129975.889, 55.278000000005704), Point(373537.545, 7129989.334, 55.448999999993248), Point(373522.64, 7130004.795, 55.448999999993248), Point(373512.04, 7130017.585, 55.054000000003725), Point(373503.042, 7130034.454, 54.267000000007101), Point(373493.963, 7130053.66, 53.551999999996042), Point(373493.527, 7130054.618, 53.532000000006519), Point(373484.935, 7130073.167, 53.161999999996624), Point(373478.436, 7130085.438, 53.055999999996857), Point(373465.667, 7130105.838, 53.317999999999302), Point(373463.724, 7130108.646, 53.392000000007101)),
+      List(Point(383007.131, 7174034.401, 16.076000000000931), Point(382997.945, 7174043.118, 16.085999999995693), Point(382980.622, 7174053.428, 16.07499999999709), Point(382957.691, 7174062.279, 16.203999999997905))
+    )
+    val linkIds = Seq(
+      6798918, 6808127, 6808222, 6808234, 6808258, 6808324, 6808402
+    )
+
+    val roadLinks = geometries.zip(linkIds).map {
+      case (geometry, linkId) => RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry),
+        administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    }
+
+    val vvhRoadLinks = roadLinks.map(rl =>
+      VVHRoadlink(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
+
+    val changeInfo =
+      Seq(ChangeInfo(Option(5469033), Option(6798918), 6798918, 1, Option(0.0), Option(92.949498199999994), Option(2.35612749), Option(95.297583340000003), 1471647624000L),
+        ChangeInfo(Option(5469032), Option(6798918), 6798918, 2, Option(0.0), Option(97.350365389999993), Option(95.297583340000003), Option(183.0270462), 1471647624000L),
+        ChangeInfo(Option(22917), Option(6808127), 6808127, 1, Option(0.0), Option(256.77566583999999), Option(0), Option(256.77566583999999), 1472684413000L),
+        ChangeInfo(Option(22643), Option(6808127), 6808127, 2, Option(0.0), Option(182.62904929999999), Option(256.77566583999999), Option(439.40471513), 1472684413000L),
+        ChangeInfo(Option(2201030), Option(6808222), 6808222, 1, Option(0.0), Option(102.77169051), Option(45.80984256), Option(148.58153307000001), 1472684413000L),
+        ChangeInfo(Option(2201031), Option(6808222), 6808222, 2, Option(0.0), Option(45.80984256), Option(0), Option(45.80984256), 1472684413000L),
+        ChangeInfo(Option(2204342), Option(6808234), 6808234, 1, Option(0.0), Option(159.76164267999999), Option(34.594686179999997), Option(194.35632885999999), 1472684413000L),
+        ChangeInfo(Option(2204346), Option(6808234), 6808234, 2, Option(0.0), Option(34.594686179999997), Option(0), Option(34.594686179999997), 1472684413000L),
+        ChangeInfo(Option(2205372), Option(6808258), 6808258, 1, Option(0.0), Option(221.05559743000001), Option(66.343229129999997), Option(287.39882655999997), 1472684413000L),
+        ChangeInfo(Option(2205373), Option(6808258), 6808258, 2, Option(0.0), Option(66.343229129999997), Option(0), Option(66.343229129999997), 1472684413000L),
+        ChangeInfo(Option(3170857), Option(6808324), 6808324, 1, Option(0.0), Option(170.68020304000001), Option(0), Option(170.68020304000001), 1472684413000L),
+        ChangeInfo(Option(3170862), Option(6808324), 6808324, 2, Option(0.0), Option(62.86203708), Option(170.68020304000001), Option(233.54224012), 1472684413000L),
+        ChangeInfo(Option(4424920), Option(6808402), 6808402, 5, Option(0.0), Option(57.402494449999999), Option(0), Option(57.402494449999999), 1472684413000L))
+
+    val assetData = Seq(
+      ("1850798", "20", "02.07.2015 10:54:30", "split_speedlimit_1175012", "0"),
+      ("2224155", "20", "02.07.2015 12:43:13", "split_speedlimit_1288833", "0"),
+      ("2224613", "20", "02.07.2015 12:43:19", "split_speedlimit_1288879", "0"),
+      ("2244404", "20", "02.07.2015 12:48:09", "split_speedlimit_1291211", "0"),
+      ("2244414", "20", "02.07.2015 12:48:10", "split_speedlimit_1291211", "0"),
+      ("2257662", "20", "02.07.2015 12:51:25", "split_speedlimit_1292796", "0"),
+      ("2257665", "20", "02.07.2015 12:51:25", "split_speedlimit_1292796", "0"),
+      ("2290194", "20", "02.07.2015 12:59:28", "split_speedlimit_1298288", "0"),
+      ("2381817", "20", "02.07.2015 13:22:32", "split_speedlimit_1315437", "0"),
+      ("2381825", "20", "02.07.2015 13:22:32", "split_speedlimit_1315437", "0"),
+      ("2386962", "20", "02.07.2015 13:23:53", "split_speedlimit_1315942", "0"),
+      ("2392492", "20", "02.07.2015 13:25:13", "split_speedlimit_1316465", "0"),
+      ("2516235", "20", "02.07.2015 14:03:50", "split_speedlimit_1328525", "0"),
+      ("22696668", "20", "02.07.2015 10:54:30", "split_speedlimit_1175012", "0"),
+      ("22696716", "20", "02.07.2015 10:54:30", "split_speedlimit_1175012", "0"),
+      ("22696720", "20", "02.07.2015 10:54:30", "split_speedlimit_1175012", "0")
+    )
+
+    val lrmData = Seq(
+      ("1850798", "41635739", "", "1", "0", "97,35", "540089958", "5469032", "0", "02.07.2015 10:54:30"),
+      ("2224155", "42009096", "", "1", "0", "182,629", "420491248", "22643", "0", "09.08.2016 11:37:19"),
+      ("2224613", "42009554", "", "1", "0", "256,769", "818575129", "22917", "0", "02.07.2015 12:43:19"),
+      ("2244404", "42029345", "", "1", "0", "159,762", "68706862", "2204342", "0", "02.07.2015 12:48:09"),
+      ("2244414", "42029355", "", "1", "0", "34,595", "68706856", "2204346", "0", "02.07.2015 12:48:10"),
+      ("2257662", "42042603", "", "1", "0", "66,343", "68654169", "2205373", "0", "02.07.2015 12:51:25"),
+      ("2257665", "42042606", "", "1", "0", "210,106", "68654924", "2205372", "0", "09.08.2016 11:53:12"),
+      ("2290194", "42075135", "", "1", "210,106", "221,056", "68654924", "2205372", "0", "09.08.2016 11:53:12"),
+      ("2381817", "42166758", "", "1", "0,003", "45,81", "785898029", "2201031", "0", "02.07.2015 13:22:32"),
+      ("2381825", "42166766", "", "1", "0", "102,772", "68654511", "2201030", "0", "02.07.2015 13:22:32"),
+      ("2386962", "42171903", "", "1", "0,003", "306,088", "326195837", "4424920", "0", "02.07.2015 13:23:53"),
+      ("2392492", "42177433", "", "1", "0", "170,68", "398139531", "3170857", "0", "02.07.2015 13:25:13"),
+      ("2516235", "42301176", "", "1", "0,011", "62,862", "398161817", "3170862", "0", "02.07.2015 14:03:50"),
+      ("22696668", "46776579", "", "1", "2,356", "95,297", "", "6798918", "1471647624000", "25.08.2016 14:11:36"),
+      ("22696716", "46776627", "", "1", "95,298", "183,027", "", "6798918", "1471647624000", "25.08.2016 14:11:37"),
+      ("22696720", "46776631", "", "1", "0", "95,297", "", "6798918", "1471647624000", "25.08.2016 14:11:37")
+    )
+
+    val fifties = Seq("1850798", "22696668", "22696716", "22696720")
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""DELETE FROM ASSET_LINK""".execute
+      assetData.foreach {
+        case (id, _, createdDate, createdBy, _) =>
+          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+          if (fifties.contains(id)) {
+            sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 50 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+          } else {
+            sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+          }
+      }
+
+      lrmData.foreach {
+        case (assetId, id, _, sideCode, startM, endM, mmlId, linkId, adjTimeStamp, modDate) =>
+          sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ($id,null,$sideCode,$startM,$endM,$mmlId,$linkId,$adjTimeStamp,to_timestamp($modDate,'DD.MM.RRRR HH24:MI:SS'))""".execute
+          sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ($assetId,$id)""".execute
+      }
+
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+
+      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+
+      val topology = service.get(municipalityCode)
+      topology.foreach(printSL)
+      topology.forall(sl => sl.id == 22696720 || sl.id == 0)  should be (true)
+      topology.exists(_.id == 22696720) should be (true)
+      topology.find(_.id == 22696720).get.value.getOrElse(0) should be (NumericValue(50))
+      topology.forall(sl => sl.vvhTimeStamp > 0) should be (true)
+      dynamicSession.rollback()
+    }
+  }
+
   def printSL(speedLimit: SpeedLimit) = {
     val ids = "%d (%d)".format(speedLimit.id, speedLimit.linkId)
     val dir = speedLimit.sideCode match {
