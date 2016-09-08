@@ -425,7 +425,7 @@
           'mainoskatos',
           'penkki',
           'roska_astia',
-          'koroke',
+          'korotettu',
           'pyorateline',
           'sahkoinen_aikataulunaytto',
           'valaistus',

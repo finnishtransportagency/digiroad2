@@ -93,7 +93,7 @@ object Equipment {
   case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
   case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
   case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
-  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "koroke"; }
+  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; }
   case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
 }
 
