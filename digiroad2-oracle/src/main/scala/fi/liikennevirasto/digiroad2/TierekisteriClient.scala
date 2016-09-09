@@ -153,10 +153,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
   private val serviceName = "pysakit"
 
   private val trNationalId = "valtakunnallinen_id"
-  private val trRoadNumber = "tienumero"
-  private val trRoadPartNumber = "tieosanumero"
-  private val trLane = "ajorata"
-  private val trDistance = "etaisyys"
+  private val trRoadNumber = "tie"        // tienumero
+  private val trRoadPartNumber = "aosa"   // tieosanumero
+  private val trLane = "ajr"              // ajorata
+  private val trDistance = "aet"          // etaisyys
   private val trSide = "puoli"
   private val trStopCode = "pysakin_tunnus"
   private val trNameFi = "nimi_fi"
