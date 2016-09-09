@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
@@ -1130,11 +1132,151 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
 
       val topology = service.get(municipalityCode)
-      topology.foreach(printSL)
       topology.forall(sl => sl.id == 22696720 || sl.id == 0)  should be (true)
       topology.exists(_.id == 22696720) should be (true)
       topology.find(_.id == 22696720).get.value.getOrElse(0) should be (NumericValue(50))
       topology.forall(sl => sl.vvhTimeStamp > 0) should be (true)
+      val newLimits = topology.filter(_.id == 0).map(sl => {
+        val aId = Sequences.nextPrimaryKeySeqValue
+        val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        (sl.value.get.value, (
+          (aId.toString, "20", "09.09.2016 12:00:00", "test_generated", "0"),
+          (aId.toString, lrmId.toString, "", sl.sideCode.value.toString, sl.startMeasure.toString, sl.endMeasure.toString,
+            "0", sl.linkId.toString, sl.vvhTimeStamp.toString, "09.09.2016 12:00:00")))
+      }
+      )
+      val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))
+      save.foreach {
+        case (limit, data) => saveSpeedLimits(limit, data)
+        case _ => throw new InvalidArgumentException(Array("invalid data"))
+      }
+
+      // Stability check
+      val topologyAfterSave = service.get(municipalityCode)
+      topologyAfterSave.forall(sl =>
+        topology.count(x =>
+          x.linkId == sl.linkId && x.startMeasure == sl.startMeasure &&
+            x.endMeasure == sl.endMeasure && x.value.get == sl.value.get) == 1) should be (true)
+      dynamicSession.rollback()
+    }
+  }
+
+  /**
+    * Raw SQL table columns for asset (some removed), raw sql table columns for lrm position added with asset id
+    * @param speed
+    * @param data
+    */
+  private def saveSpeedLimits(speed: Int, data: Seq[((String, String, String, String, String),
+                              (String, String, String, String, String, String, String, String, String, String))]) = {
+    val assetData = data.map(_._1)
+    val lrmData = data.map(_._2)
+    assetData.foreach {
+      case (id, _, createdDate, createdBy, _) =>
+        sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+        sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = $speed and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+    }
+    lrmData.foreach {
+      case (assetId, id, _, sideCode, startM, endM, mmlId, linkId, adjTimeStamp, modDate) =>
+        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ($id,null,$sideCode,${startM.toDouble},${endM.toDouble},$mmlId,$linkId,$adjTimeStamp,to_timestamp($modDate,'DD.MM.RRRR HH24:MI:SS'))""".execute
+        sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ($assetId,$id)""".execute
+    }
+  }
+
+  test("Should stabilize on overlapping speed limits") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val municipalityCode = 286
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val geometries = Seq(
+      List(Point(381278.36,6726748.869,95.254000000000815),Point(381284.253,6726788.607,94.850999999995111),Point(381287.134,6726809.171,94.634999999994761),Point(381289.278,6726829.874,94.448000000003958),Point(381290.115,6726844.265,94.30899999999383))
+    )
+    val linkIds = Seq(
+      602156
+    )
+
+    val roadLinks = geometries.zip(linkIds).map {
+      case (geometry, linkId) => RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry),
+        administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    }
+
+    val vvhRoadLinks = roadLinks.map(rl =>
+      VVHRoadlink(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
+    val changeInfo =
+      Seq(ChangeInfo(Option(602156), Option(602156), 6798918, 7, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), 1459452603000L))
+
+    val assetData = Seq(
+      ("1300665", "20", "28.10.2014 15:32:25", "dr1_conversion", "0"),
+      ("2263876", "20", "02.07.2015 12:52:59", "split_speedlimit_1293482", "0"),
+      ("2317092", "20", "02.07.2015 13:06:27", "split_speedlimit_1302820", "0")
+    )
+
+    val lrmData = Seq(
+      ("1300665", "40744223", "", "2", "0", "78,106", "329512802", "602156", "1459452603000", "09.08.2016 11:38:49"),
+      ("2263876", "42048817", "", "2", "78,106", "85,704", "329512802", "602156", "1459452603000", "09.08.2016 11:38:49"),
+      ("2317092", "42102033", "", "3", "0", "96,166", "329512802", "602156", "1459452603000", "09.09.2016 09:04:05")
+    )
+
+    val eighties = Seq("2263876")
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""DELETE FROM ASSET_LINK""".execute
+      assetData.foreach {
+        case (id, _, createdDate, createdBy, _) =>
+          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+          if (eighties.contains(id)) {
+            sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+          } else {
+            sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 60 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
+          }
+      }
+
+      lrmData.foreach {
+        case (assetId, id, _, sideCode, startM, endM, mmlId, linkId, adjTimeStamp, modDate) =>
+          sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE) values ($id,null,$sideCode,$startM,$endM,$mmlId,$linkId,$adjTimeStamp,to_timestamp($modDate,'DD.MM.RRRR HH24:MI:SS'))""".execute
+          sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ($assetId,$id)""".execute
+      }
+
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+
+      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+
+      val topology = service.get(municipalityCode).sortBy(_.startMeasure).sortBy(_.linkId)
+      topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), sl.vvhTimeStamp))
+      val newLimits = topology.filter(_.id == 0).map(sl => {
+        val aId = Sequences.nextPrimaryKeySeqValue
+        val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
+        (sl.value.get.value, (
+          (aId.toString, "20", "09.09.2016 12:00:00", "test_generated", "0"),
+          (aId.toString, lrmId.toString, "", sl.sideCode.value.toString, sl.startMeasure.toString, sl.endMeasure.toString,
+            "0", sl.linkId.toString, sl.vvhTimeStamp.toString, "09.09.2016 12:00:00")))
+      }
+      )
+      val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))
+      save.foreach {
+        case (limit, data) => saveSpeedLimits(limit, data)
+        case _ => throw new InvalidArgumentException(Array("invalid data"))
+      }
+
+      // Stability check
+      val topologyAfterSave = service.get(municipalityCode)
+
+      topologyAfterSave.forall(_.id != 0) should be (true)
+
+      topologyAfterSave.forall(sl =>
+        topology.count(x =>
+          (x.id == sl.id || x.id == 0) &&
+          x.linkId == sl.linkId && x.startMeasure == sl.startMeasure &&
+            x.endMeasure == sl.endMeasure && x.value.get == sl.value.get) == 1) should be (true)
       dynamicSession.rollback()
     }
   }
@@ -1147,7 +1289,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    val details = "%d %.1f %.1f %d".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp)
     if (speedLimit.expired) {
       println("N/A")
     } else {
