@@ -525,9 +525,27 @@
             '</div>');
         }
       };
+
+      var isBusStopMaintainer = false;
+
+      var bindExternalEventHandlers = function () {
+        eventbus.on('roles:fetched', function (roles) {
+          if (_.contains(roles, 'busStopMaintainer')) {
+            isBusStopMaintainer = true;
+          }
+        });
+      };
+
+      bindExternalEventHandlers();
+
       var controlledByTR = function () {
         var properties = selectedMassTransitStopModel.getProperties();
         var condition = false;
+
+        if (isBusStopMaintainer === true) {
+          return false;
+        }
+
         for (var i = 0; i < properties.length; i++){
           if(properties[i].values[0] !== undefined) {
             condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";

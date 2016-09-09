@@ -482,7 +482,8 @@ object TierekisteriBusStopMarshaller {
   }
 
   private def findLiViId(properties: Seq[Property]) = {
-    properties.find(p => p.publicId.equals(liviIdPublicId)).map(_.values.head.propertyValue)
+    properties.find(p =>
+      p.publicId.equals(liviIdPublicId) && p.values.size > 0).map(_.values.head.propertyValue)
   }
 
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {

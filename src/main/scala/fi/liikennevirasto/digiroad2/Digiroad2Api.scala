@@ -172,6 +172,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    validateBusStopMaintainerUser(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
@@ -192,6 +193,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def validateUserRights(linkId: Long) = {
     val authorized: Boolean = vvhClient.fetchVVHRoadlink(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
+  }
+
+  private def validateBusStopMaintainerUser(properties: Seq[SimpleProperty]) = {
+    val user = userProvider.getCurrentUser()
+    val userValidate = properties.find {
+      property => property.publicId.equals("tietojen_yllapitaja") && property.values.head.propertyValue.equals("2")
+    }
+    if ((userValidate.size >= 1) && (!user.isBusStopMaintainer())) {
+      halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
+    }
   }
 
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
@@ -222,6 +233,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     validateUserRights(linkId)
+    validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
     massTransitStopService.getById(id)
