@@ -851,25 +851,29 @@ class AssetDataImporter {
             ely, tietyyppi,
             jatkuu, aet, let,
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
-            kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD')
-            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String)].list
+            kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), id
+            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)].list
     }
 
-    val lrmPositions = roads.map(r => (r._1, (r._2, r._3))).toMap
-    val addressList = roads.map(r => (r._1, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
+    val lrmPositions = roads.map(r => (r._16, (r._1, r._2, r._3))).toMap
+    val addressList = roads.map(r => (r._16, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
 
     OracleDatabase.withDynTransaction {
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
         "created_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
-      lrmPositions.foreach { case (linkId, (startM, endM)) =>
+      lrmPositions.foreach { case (id, (linkId, startM, endM)) =>
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
         val addressId = Sequences.nextViitePrimaryKeySeqValue
-        val address = addressList.get(linkId).head
+        val address = addressList.get(id).head
+        val (startAddrM, endAddrM, sideCode) = address._7 < address._8 match {
+          case true => (address._7, address._8, SideCode.TowardsDigitizing.value)
+          case false => (address._8, address._7, SideCode.AgainstDigitizing.value)
+        }
         lrmPositionPS.setLong(1, lrmId)
         lrmPositionPS.setLong(2, linkId)
-        lrmPositionPS.setLong(3, SideCode.BothDirections.value)
+        lrmPositionPS.setLong(3, sideCode)
         lrmPositionPS.setLong(4, startM)
         lrmPositionPS.setLong(5, endM)
         lrmPositionPS.addBatch()
@@ -881,8 +885,8 @@ class AssetDataImporter {
         addressPS.setLong(6, address._4)
         addressPS.setLong(7, address._5)
         addressPS.setLong(8, address._6)
-        addressPS.setLong(9, address._7)
-        addressPS.setLong(10, address._8)
+        addressPS.setLong(9, startAddrM)
+        addressPS.setLong(10, endAddrM)
         addressPS.setString(11, address._9)
         addressPS.setString(12, address._10.getOrElse(""))
         addressPS.setString(13, address._11)
