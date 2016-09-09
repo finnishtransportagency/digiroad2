@@ -1289,7 +1289,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.1f %.1f %d".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp)
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
     if (speedLimit.expired) {
       println("N/A")
     } else {
