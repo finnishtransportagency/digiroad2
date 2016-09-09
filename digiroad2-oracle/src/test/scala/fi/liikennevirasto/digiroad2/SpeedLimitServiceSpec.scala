@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -1148,7 +1147,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))
       save.foreach {
         case (limit, data) => saveSpeedLimits(limit, data)
-        case _ => throw new InvalidArgumentException(Array("invalid data"))
+        case _ => throw new RuntimeException("invalid data")
       }
 
       // Stability check
@@ -1264,7 +1263,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))
       save.foreach {
         case (limit, data) => saveSpeedLimits(limit, data)
-        case _ => throw new InvalidArgumentException(Array("invalid data"))
+        case _ => throw new RuntimeException("invalid data")
       }
 
       // Stability check
