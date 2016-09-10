@@ -356,7 +356,6 @@ trait MassTransitStopService extends PointAssetOperations {
         updateAssetGeometry(id, point)
       }
       getPersistedStopWithPropertiesAndPublishEvent(id, { _ => roadLink }, tierekisteriClient.updateMassTransitStop)
-      //getPersistedStopWithPropertiesAndPublishEvent(id, municipalityCode, geometry, tierekisteriClient.updateMassTransitStop)
     }
   }
 
@@ -399,7 +398,6 @@ trait MassTransitStopService extends PointAssetOperations {
         updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
         updateLiViIdentifierProperty(assetId, nationalId, asset.properties)
         getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, tierekisteriClient.createMassTransitStop)
-        //getPersistedStopWithPropertiesAndPublishEvent(assetId, municipality, geometry, tierekisteriClient.createMassTransitStop)
         assetId
       }
       else
@@ -423,13 +421,11 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink], createOrUpdateMassTransitStop: TierekisteriMassTransitStop => Unit) = {
-  //private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, municipalityCode: Int, geometry: Seq[Point], createOrUpdateMassTransitStop: TierekisteriMassTransitStop => Unit) = {
     val persistedStop = fetchPointAssets(withId(assetId)).headOption
     val relevantToTR = isNotVirtualStopAndIsMantainedByELY(Some(persistedStop.get))
 
     if (relevantToTR) {
       val (newMTSWithProperties, floatingReason) = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
-      //val newMTSWithProperties = persistedStopToMassTransitStopWithProperties({ _ => Some((municipalityCode, geometry)) })(persistedStop.get)
 
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(newMTSWithProperties)
 
