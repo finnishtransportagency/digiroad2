@@ -898,6 +898,19 @@ class AssetDataImporter {
       lrmPositionPS.close()
       addressPS.close()
     }
+
+    OracleDatabase.withDynTransaction {
+      // both dates are open-ended or there is overlap (checked with inverse logic)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET CALIBRATION_POINTS = 1
+        WHERE NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
+        RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
+        RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
+        RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
+        RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+        (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
+        NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
+    }
   }
 
   private[this] def initDataSource: DataSource = {

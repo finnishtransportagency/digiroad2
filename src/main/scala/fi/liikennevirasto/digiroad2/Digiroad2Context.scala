@@ -164,7 +164,7 @@ object Digiroad2Context {
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService()
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService)
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

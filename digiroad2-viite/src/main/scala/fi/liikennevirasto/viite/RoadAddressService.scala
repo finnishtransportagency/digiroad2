@@ -1,11 +1,18 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.RoadLinkService
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.viite.model.{CalibrationPoint, RoadAddressLink}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.model.{CalibrationPoint, RoadAddressLink, RoadAddressLinkPartitioner}
 
 import scala.collection.SeqLike
 
-class RoadAddressService {
+class RoadAddressService(roadLinkService: RoadLinkService) {
+
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
@@ -47,7 +54,7 @@ class RoadAddressService {
   }
 
   def getCalibrationPoints(linkIds: Set[Long]) = {
-    // TODO: Implementation
+
     linkIds.map(linkId => CalibrationPoint(linkId, 0.0, 0))
   }
 
@@ -55,6 +62,59 @@ class RoadAddressService {
     val linkIds = roadLinks.map(_.linkId).toSet
     val calibrationPoints = getCalibrationPoints(linkIds)
 
+  }
+
+  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: (Int, Int), municipalities: Set[Int]) = {
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
+    val addresses = withDynSession {
+      RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
+    }
+    println("Found " + addresses.size + " road address links")
+    val viiteRoadLinks = roadLinks.map { rl =>
+      val ra = addresses.get(rl.linkId)
+      ra match {
+        case Some(addr) =>
+          buildRoadAddressLink(rl, Option(addr), None, None)
+        case _ => buildRoadAddressLink(rl, None, None, None)
+      }
+    }
+    viiteRoadLinks
+  }
+  def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress],
+                           startCalibrationPoint: Option[CalibrationPoint],
+                           endCalibrationPoint: Option[CalibrationPoint]): RoadAddressLink =
+    roadAddr match {
+      case Some(ra) => new RoadAddressLink(rl.linkId, rl.geometry,
+        rl.length,  rl.administrativeClass,
+        rl.functionalClass,  rl.trafficDirection,
+        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
+        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.discontinuity.value,
+        ra.startAddrMValue, ra.endAddrMValue, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
+        startCalibrationPoint, endCalibrationPoint)
+      case _ => new RoadAddressLink(rl.linkId, rl.geometry,
+        rl.length,  rl.administrativeClass,
+        rl.functionalClass,  rl.trafficDirection,
+        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
+        rl.attributes, 0, 0, 0, 0,
+        0, 0, 0, 0, SideCode.Unknown,
+        startCalibrationPoint, endCalibrationPoint)
+    }
+
+  private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
+    track match {
+      case Track.Combined => SideCode.BothDirections
+      case Track.LeftSide => if (startMValue < endMValue) {
+        SideCode.TowardsDigitizing
+      } else {
+        SideCode.AgainstDigitizing
+      }
+      case Track.RightSide => if (startMValue > endMValue) {
+        SideCode.TowardsDigitizing
+      } else {
+        SideCode.AgainstDigitizing
+      }
+      case _ => SideCode.Unknown
+    }
   }
 
   def roadClass(roadAddressLink: RoadAddressLink) = {

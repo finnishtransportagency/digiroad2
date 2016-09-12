@@ -72,19 +72,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
-    val addresses = withDynSession {
-      RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
-    }
-    println("Found " + addresses.size + " road address links")
-    val viiteRoadLinks = roadLinks.map { rl =>
-      val ra = addresses.get(rl.linkId)
-      ra match {
-        case Some(addr) =>
-          buildRoadAddressLink(rl, Option(addr), None, None)
-        case _ => buildRoadAddressLink(rl, None, None, None)
-      }
-    }
+    val viiteRoadLinks = roadAddressService.getRoadAddressLinks(boundingRectangle, (1, 19999), municipalities)
+
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(roadAddressLinkToApi)
@@ -151,41 +140,5 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     userProvider.getCurrentUser().configuration.roles
   }
 
-  def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress],
-                           startCalibrationPoint: Option[CalibrationPoint],
-                           endCalibrationPoint: Option[CalibrationPoint]): RoadAddressLink =
-    roadAddr match {
-      case Some(ra) => new RoadAddressLink(rl.linkId, rl.geometry,
-        rl.length,  rl.administrativeClass,
-        rl.functionalClass,  rl.trafficDirection,
-        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.discontinuity.value,
-        ra.startAddrMValue, ra.endAddrMValue, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-        startCalibrationPoint, endCalibrationPoint)
-      case _ => new RoadAddressLink(rl.linkId, rl.geometry,
-        rl.length,  rl.administrativeClass,
-        rl.functionalClass,  rl.trafficDirection,
-        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, 0, 0, 0, 0,
-        0, 0, 0, 0, SideCode.Unknown,
-        startCalibrationPoint, endCalibrationPoint)
-    }
-
-  private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
-    track match {
-      case Track.Combined => SideCode.BothDirections
-      case Track.LeftSide => if (startMValue < endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case Track.RightSide => if (startMValue > endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case _ => SideCode.Unknown
-    }
-  }
 }
 

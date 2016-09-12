@@ -8,6 +8,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.model.CalibrationPoint
 import org.slf4j.LoggerFactory
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
@@ -48,14 +50,41 @@ object Discontinuity {
   case object Continuous extends Discontinuity { def value = 5 }
 }
 
+sealed trait CalibrationCode {
+  def value: Int
+}
+object CalibrationCode {
+  val values = Set(No, AtEnd, AtBeginning, AtBoth)
+
+  def apply(intValue: Int): CalibrationCode = {
+    values.find(_.value == intValue).getOrElse(No)
+  }
+
+  case object No extends CalibrationCode { def value = 0 }
+  case object AtEnd extends CalibrationCode { def value = 1 }
+  case object AtBeginning extends CalibrationCode { def value = 2 }
+  case object AtBoth extends CalibrationCode { def value = 3 }
+}
+
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, linkId: Long,
-                       startMValue: Double, endMValue: Double
+                       startMValue: Double, endMValue: Double, calibrationPoints: Seq[CalibrationPoint] = Seq()
                       )
 
 object RoadAddressDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
+
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long): Seq[CalibrationPoint] = {
+    calibrationCode match {
+      case No => Seq()
+      case AtEnd => Seq(CalibrationPoint(linkId, endMValue, endAddrMValue))
+      case AtBeginning => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue))
+      case AtBoth => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue),
+        CalibrationPoint(linkId, endMValue, endAddrMValue))
+    }
+  }
 
   def fetchByLinkId(linkIds: Set[Long]) = {
     val linkIdString = linkIds.mkString(",")
@@ -67,18 +96,18 @@ object RoadAddressDAO {
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
         ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where
       """
     val tuples = Q.queryNA[(Long, Long, Long, Track, Long, RoadType, Discontinuity, Long, Long, Long, Double, Double,
-      String, String, String, String)](query).list
+      String, String, String, String, CalibrationCode)](query).list
     tuples.map{
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
-        linkId, startMValue, endMValue, startDate, endDate, createdBy, createdDate) =>
+        linkId, startMValue, endMValue, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, track, elyCode, roadType,
-          discontinuity, startAddrMValue, endAddrMValue, linkId, startMValue, endMValue)
+          discontinuity, startAddrMValue, endAddrMValue, linkId, startMValue, endMValue, calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue))
     }
   }
 
@@ -102,4 +131,5 @@ object RoadAddressDAO {
 
   implicit val getTrack = GetResult[Track]( r=> Track.apply(r.nextInt()))
 
+  implicit val getCalibrationCode = GetResult[CalibrationCode]( r=> CalibrationCode.apply(r.nextInt()))
 }
