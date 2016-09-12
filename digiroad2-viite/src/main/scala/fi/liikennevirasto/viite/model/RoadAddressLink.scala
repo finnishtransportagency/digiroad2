@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.model
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkType, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
+import fi.liikennevirasto.viite.dao.CalibrationPoint
 
 /**
   * Created by venholat on 31.8.2016.

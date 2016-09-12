@@ -9,7 +9,6 @@ import slick.jdbc.{GetResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
-import fi.liikennevirasto.viite.model.CalibrationPoint
 import org.slf4j.LoggerFactory
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
@@ -65,6 +64,7 @@ object CalibrationCode {
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
 }
+case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, linkId: Long,
@@ -101,13 +101,14 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Track, Long, RoadType, Discontinuity, Long, Long, Long, Double, Double,
-      String, String, String, String, CalibrationCode)](query).list
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double,
+      String, String, String, String, Int)](query).list
     tuples.map{
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
         linkId, startMValue, endMValue, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, track, elyCode, roadType,
-          discontinuity, startAddrMValue, endAddrMValue, linkId, startMValue, endMValue, calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue))
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, linkId,
+          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue))
     }
   }
 

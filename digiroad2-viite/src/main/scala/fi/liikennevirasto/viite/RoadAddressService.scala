@@ -5,8 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.model.{CalibrationPoint, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 
 import scala.collection.SeqLike
 
