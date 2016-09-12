@@ -84,6 +84,18 @@
       // });
       // layer.addFeatures(markers);
     };
+    this.drawCalibrationMarkers = function(layer, roadLinks) {
+      var calibrationPoints = _.flatten(_.filter(roadLinks, function(roadLink) {
+        return roadLink.calibrationPoints.length > 0;
+      }).map(function(roadLink) {
+        return roadLink.calibrationPoints;
+      }));
+      var markers = _.map(calibrationPoints, function (cp) {
+        var calMarker = new CalibrationPoint(cp.point);
+        return calMarker.getMarker(false);
+      });
+      layer.addFeatures(markers);
+    };
 
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {

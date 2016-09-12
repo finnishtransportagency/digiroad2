@@ -72,17 +72,11 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
     println("Found " + addresses.size + " road address links")
     val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.get(rl.linkId)
-      ra match {
-        case Some(addr) =>
-          buildRoadAddressLink(rl, Option(addr), None, None)
-        case _ => buildRoadAddressLink(rl, None, None, None)
-      }
+      buildRoadAddressLink(rl, ra)
     }
     viiteRoadLinks
   }
-  def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress],
-                           startCalibrationPoint: Option[CalibrationPoint],
-                           endCalibrationPoint: Option[CalibrationPoint]): RoadAddressLink =
+  def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress]): RoadAddressLink =
     roadAddr match {
       case Some(ra) => new RoadAddressLink(rl.linkId, rl.geometry,
         rl.length,  rl.administrativeClass,
@@ -90,14 +84,14 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
         rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.discontinuity.value,
         ra.startAddrMValue, ra.endAddrMValue, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-        startCalibrationPoint, endCalibrationPoint)
+        ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
       case _ => new RoadAddressLink(rl.linkId, rl.geometry,
         rl.length,  rl.administrativeClass,
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
         rl.attributes, 0, 0, 0, 0,
         0, 0, 0, 0, SideCode.Unknown,
-        startCalibrationPoint, endCalibrationPoint)
+        None, None)
     }
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {

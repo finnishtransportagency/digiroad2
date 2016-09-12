@@ -114,6 +114,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
+      "calibrationPoints" -> Seq(calibrationPoint(roadLink.geometry, roadLink.startCalibrationPoint),
+        calibrationPoint(roadLink.geometry, roadLink.endCalibrationPoint)),
       "administrativeClass" -> roadLink.administrativeClass.toString,
       "roadClass" -> roadAddressService.roadClass(roadLink),
       "linkType" -> roadLink.linkType.value,
@@ -132,6 +134,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadPartNumber" -> roadLink.roadPartNumber,
       "roadNumber" -> roadLink.roadNumber)
+  }
+
+  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
+    calibrationPoint match {
+      case Some(point) =>
+        val mValue = point.mValue match {
+          case 0.0 => 0.0
+          case _ => Math.min(point.mValue, GeometryUtils.geometryLength(geometry))
+        }
+        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
+      case _ => None
+    }
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int)

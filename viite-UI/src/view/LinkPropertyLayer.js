@@ -57,6 +57,7 @@
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
+      me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
