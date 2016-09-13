@@ -7,6 +7,13 @@
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
+    // Layer for history data road links
+    var historyLayer = new OpenLayers.Layer.Vector('historyDataLayer', {transparent: "true"}, {isBaseLayer: false});
+    historyLayer.setVisibility(true);
+    map.addLayer(historyLayer);
+    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
+    map.setLayerIndex(historyLayer, roadLinksLayerIndex - 1);
+
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
