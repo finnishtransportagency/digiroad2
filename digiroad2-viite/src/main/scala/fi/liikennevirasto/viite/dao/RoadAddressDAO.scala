@@ -8,6 +8,8 @@ import fi.liikennevirasto.digiroad2.util.Track
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import org.slf4j.LoggerFactory
 
@@ -76,6 +78,16 @@ object RoadAddressDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): Seq[CalibrationPoint] = {
+    sideCode match {
+      case BothDirections => Seq() // Invalid choice
+      case TowardsDigitizing => calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue)
+      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue, startMValue, startAddrMValue, endAddrMValue)
+      case Unknown => Seq()  // Invalid choice
+    }
+  }
+
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
                            startAddrMValue: Long, endAddrMValue: Long): Seq[CalibrationPoint] = {
     calibrationCode match {
       case No => Seq()
@@ -96,19 +108,20 @@ object RoadAddressDAO {
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
         ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
         ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double,
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
       String, String, String, String, Int)](query).list
     tuples.map{
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
-        linkId, startMValue, endMValue, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+        linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
           Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, linkId,
-          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue))
+          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
   }
 

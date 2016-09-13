@@ -2,77 +2,58 @@
   root.RoadMarker = function(data) {
     var cachedMarker = null;
     var cachedDirectionArrow = null;
-    var cachedRoadMarker = null;
 
-    var defaultDirectionArrowGraphics = {
-      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
-      graphicWidth: 30,
-      graphicHeight: 16,
-      graphicXOffset: -15,
-      graphicYOffset: -8
+    var defaultMarkerGraphics = {
+      stroke: true,
+      strokeColor: '#000000',
+      fill: true
     };
 
-    var floatingDirectionArrowGraphics = {
-      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg',
-      graphicWidth: 34,
-      graphicHeight: 20,
-      graphicXOffset: -17,
-      graphicYOffset: -10
-    };
-
-    var createDirectionArrow = function() {
-      var directionArrowGraphics = _.clone(data.floating ? floatingDirectionArrowGraphics : defaultDirectionArrowGraphics);
-      directionArrowGraphics.rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+    var createRoadMarker = function() {
+      var markerGraphics = _.clone(defaultMarkerGraphics);
+//      markerGraphics.rotation = 90;
       return new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),
+        new OpenLayers.Geometry.Point(data.x, data.y),
         null,
-        directionArrowGraphics
+        _.merge(markerGraphics, {label: data.roadNumber + ' / ' + data.roadPartNumber})
       );
     };
 
     var getMarker = function(shouldCreate) {
       if (shouldCreate || !cachedMarker) {
-        cachedRoadMarker = new CalibrationPoint(data);
-        cachedMarker = cachedRoadMarker.createMarker();
+        cachedMarker = createRoadMarker();
       }
       return cachedMarker;
     };
 
-    var createNewMarker = function() {
-      cachedRoadMarker = new CalibrationPoint(data);
-      cachedMarker = cachedRoadMarker.createNewMarker();
+    var getRoadMarker = function() {
       return cachedMarker;
-    };
-
-    var getCalibrationPointMarker = function() {
-      return cachedRoadMarker;
     };
 
     var getDirectionArrow = function(shouldCreate) {
       if (shouldCreate || !cachedDirectionArrow) {
-        cachedDirectionArrow = createDirectionArrow();
+        cachedDirectionArrow = createRoadMarker();
       }
       return cachedDirectionArrow;
     };
 
     var moveTo = function(lonlat) {
       getDirectionArrow().move(lonlat);
-      getCalibrationPointMarker().moveTo(lonlat);
+      getRoadMarker().moveTo(lonlat);
     };
 
-    var select = function() { getCalibrationPointMarker().select(); };
+    var select = function() { getRoadMarker().select(); };
 
-    var deselect = function() { getCalibrationPointMarker().deselect(); };
+    var deselect = function() { getRoadMarker().deselect(); };
 
     var finalizeMove = function() {
-      getCalibrationPointMarker().finalizeMove();
+      getRoadMarker().finalizeMove();
     };
 
-    var rePlaceInGroup = function() { getCalibrationPointMarker().rePlaceInGroup(); };
+    var rePlaceInGroup = function() { getRoadMarker().rePlaceInGroup(); };
 
     return {
       getMarker: getMarker,
-      createNewMarker: createNewMarker,
       getDirectionArrow: getDirectionArrow,
       moveTo: moveTo,
       select: select,

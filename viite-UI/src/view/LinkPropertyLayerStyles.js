@@ -7,6 +7,27 @@
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#444', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
 
+    var typeFilter = function(type) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+    };
+
+    var zoomLevelFilter = function(zoomLevel) {
+      return new OpenLayers.Filter.Function({ evaluate: function() { return applicationModel.zoom.level === zoomLevel; } });
+    };
+
+    var combineFilters = function(filters) {
+      return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
+    };
+
+    var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
+      return new OpenLayers.Rule({
+        filter: combineFilters([typeFilter(type), zoomLevelFilter(zoomLevel)]),
+        symbolizer: style
+      });
+    };
+
+    var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
+
     var zoomLevelRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(8).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[8], { pointRadius: 0 })),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[9], { pointRadius: 0 })),
@@ -19,6 +40,13 @@
     ];
 
     var overlayRules = [
+      overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
+      overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
@@ -49,8 +77,8 @@
       new OpenLayersRule().where('roadClass').is('3').use({ strokeColor: '#f93', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
       new OpenLayersRule().where('roadClass').is('4').use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('roadClass').is('5').use({ strokeColor: '#3cc', externalGraphic: 'images/link-properties/arrow-drop-cyan.svg' }),
-      new OpenLayersRule().where('roadClass').is('6').use({ strokeColor: '#c0f', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
-      new OpenLayersRule().where('roadClass').is('7').use({ strokeColor: '#0cd',  externalGraphic: 'images/link-properties/arrow-drop-cyan.svg'  }),
+      new OpenLayersRule().where('roadClass').is('6').use({ type: 'overlay', strokeColor: '#c0f', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('roadClass').is('7').use({ strokeColor: '#0cd', externalGraphic: 'images/link-properties/arrow-drop-cyan.svg'  }),
       new OpenLayersRule().where('roadClass').is('8').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
       new OpenLayersRule().where('roadClass').is('9').use({ strokeColor: '#eff', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('roadClass').is('10').use({ strokeColor: '#666', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
@@ -104,7 +132,6 @@
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
     });
-
 
     // --- Style map selection
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {

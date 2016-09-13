@@ -248,7 +248,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
   def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: (Int, Int)): Future[Seq[VVHRoadlink]] = {
-    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities))
+    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, false))
   }
 
   /**

@@ -2,16 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkPartitioner}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{NotFound, _}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.{NotFound, _}
 
 /**
   * Created by venholat on 25.8.2016.
