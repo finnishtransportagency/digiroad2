@@ -200,7 +200,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val propertyToValidation = properties.find {
       property => property.publicId.equals("tietojen_yllapitaja") && property.values.head.propertyValue.equals("2")
     }
-    if ((propertyToValidation.size >= 1) || (!user.isBusStopMaintainer())) {
+    if ((propertyToValidation.size >= 1) && (!user.isBusStopMaintainer())) {
       halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
     }
   }
