@@ -119,6 +119,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  delete("/massTransitStops") {
+    val user = userProvider.getCurrentUser()
+
+    val manoeuvreIds = (parsedBody \ "massTransitStopIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
+    manoeuvreIds.foreach(massTransitStopId => {
+      if(user.isBusStopMaintainer()){
+        massTransitStopService.expireMassTransitStop(user.username, massTransitStopId);
+      } else {
+        halt(Unauthorized("User not authorized"))
+      }
+    });
+  }
+
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }

@@ -330,7 +330,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var createNewAsset = function(lonlat) {
+  var createNewAsset = function(lonlat, placement) {
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
@@ -346,14 +346,17 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
-
+    var currentAsset = selectedMassTransitStopModel.getCurrentAsset();
     deselectAsset(selectedAsset);
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
       massTransitStop: massTransitStop};
     selectedAsset.data.stopTypes = [];
-    selectedMassTransitStopModel.place(selectedAsset.data);
-
+    if(placement){
+      selectedMassTransitStopModel.place(selectedAsset.data, currentAsset);
+    }else {
+      selectedMassTransitStopModel.place(selectedAsset.data);
+    }
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
 
@@ -439,38 +442,70 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     {
       new GenericConfirmPopup('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
         successCallback: function(){
-          doMovement(angle, nearestLine, coordinates);
+          doMovement(angle, nearestLine, coordinates, true);
           movementPermission = true;
         },
         closeCallback: function(){
           //Moves the stop to the original position
-          doMovement(angle, nearestLine, busStop);
+          doMovement(angle, nearestLine, busStop, false);
           movementPermission = false;
         }
       });
     }
     else
     {
-      doMovement(angle, nearestLine, coordinates);
+      doMovement(angle, nearestLine, coordinates, false);
     }
   };
 
-  var doMovement= function(angle, nearestLine, coordinates) {
+  var controlledByTR = function () {
+    var properties = selectedMassTransitStopModel.getProperties();
+    var condition = false;
+    for (var i = 0; i < properties.length; i++){
+      if(properties[i].values[0] !== undefined) {
+        condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
+      }
+    }
+    return condition;
+  };
+
+  var doMovement= function(angle, nearestLine, coordinates, checkCondition) {
     roadLayer.selectRoadLink(nearestLine);
-    selectedAsset.data.bearing = angle;
-    selectedAsset.data.roadDirection = angle;
-    selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
-    selectedAsset.roadLinkId = nearestLine.roadLinkId;
-    selectedAsset.data.lon = coordinates.lon;
-    selectedAsset.data.lat = coordinates.lat;
-    moveMarker(coordinates);
-    selectedMassTransitStopModel.move({
-      lon: coordinates.lon,
-      lat: coordinates.lat,
-      bearing: angle,
-      roadLinkId: nearestLine.roadLinkId,
-      linkId: nearestLine.linkId
-    });
+    if (checkCondition && controlledByTR()){
+      //Should create a new Asset
+      var pastAsset = selectedMassTransitStopModel.getCurrentAsset();
+      closeAsset(pastAsset);
+      createNewAsset(coordinates, true);
+      //On this point selectedMassTransitStopModel should contain the newly created asset
+      selectedMassTransitStopModel.copyDataFromOtherMasTransitStop(pastAsset);
+      selectedMassTransitStopModel.expireMassTransitStopById(pastAsset);
+      //Should expire the old Asset
+      eventbus.on('massTransitExpireFailed', function(){
+        selectedMassTransitStopModel.cancel();
+      });
+      eventbus.on('massTransitExpireSuccess', function () {
+        destroyAsset(pastAsset);
+        //TODO: Guilherme Pedrosa - decoment save method call once the Tierekistiri part is working
+        //selectedMassTransitStopModel.save();
+      });
+      
+
+    } else {
+      selectedAsset.data.bearing = angle;
+      selectedAsset.data.roadDirection = angle;
+      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
+      selectedAsset.roadLinkId = nearestLine.roadLinkId;
+      selectedAsset.data.lon = coordinates.lon;
+      selectedAsset.data.lat = coordinates.lat;
+      moveMarker(coordinates);
+      selectedMassTransitStopModel.move({
+        lon: coordinates.lon,
+        lat: coordinates.lat,
+        bearing: angle,
+        roadLinkId: nearestLine.roadLinkId,
+        linkId: nearestLine.linkId
+      });
+    }
   };
 
   var moveMarker = function(lonlat) {
@@ -559,7 +594,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var handleMapClick = function(coordinates) {
     if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
-      createNewAsset(map.getLonLatFromPixel(pixel));
+      createNewAsset(map.getLonLatFromPixel(pixel), false);
     } else {
       if (selectedMassTransitStopModel.isDirty()) {
         new Confirm();

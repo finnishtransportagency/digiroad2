@@ -79,7 +79,7 @@
         });
     };
 
-    var place = function(asset) {
+    var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
       currentAsset.payload = {};
@@ -88,6 +88,9 @@
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
+        if(other) {
+          copyDataFromOtherMasTransitStop(other);
+        }
         eventbus.trigger('asset:modified');
       });
     };
@@ -251,6 +254,23 @@
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
     };
 
+    var getCurrentAsset = function() {
+      return currentAsset;
+    };
+
+    var expireMassTransitStopById = function(massTransitStop) {
+      backend.expireAsset([massTransitStop.id], function() {
+        eventbus.trigger('massTransitExpireSuccess');
+      },function(){
+        eventbus.trigger('massTransitExpireFailed');
+      });
+    };
+
+    var copyDataFromOtherMasTransitStop = function (other) {
+      currentAsset.payload = other.payload;
+      currentAsset.propertyMetadata = other.propertyMetadata;
+    };
+
     var exists = function() {
       return !_.isEmpty(currentAsset);
     };
@@ -330,7 +350,10 @@
       requiredPropertiesMissing: requiredPropertiesMissing,
       place: place,
       hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
-      pikavuoroIsAlone: pikavuoroIsAlone
+      pikavuoroIsAlone: pikavuoroIsAlone,
+      copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
+      getCurrentAsset: getCurrentAsset,
+      expireMassTransitStopById: expireMassTransitStopById
     };
   };
 

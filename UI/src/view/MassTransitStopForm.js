@@ -98,10 +98,17 @@
       var renderAssetForm = function() {
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
-        var wrapper = $('<div />').addClass('wrapper edit-mode');
+        readOnly = controlledByTR();
+        var wrapper;
+        if(readOnly){
+          wrapper = $('<div />').addClass('wrapper read-only');
+        } else {
+          wrapper = $('<div />').addClass('wrapper edit-mode');
+        }
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render())
           .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
+
         var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
@@ -115,8 +122,6 @@
             .append(validationErrorLabel.element)
             .append(saveBtn.element)
             .append(cancelBtn.element));
-
-        readOnly = controlledByTR();
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -554,7 +559,7 @@
          if(!applicationModel.isReadOnly()) {
            eventbus.trigger('application:controledTR',condition);
          } else {
-           eventbus.trigger('application:controledTR',false);
+           eventbus.trigger('application:controledTR',applicationModel.getSelectedTool() === 'Select');
          }
 
         return condition;

@@ -59,7 +59,7 @@ class MassTransitStopDao {
     if (validityDirection != 3) {
       bearing
     } else {
-      bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
+      bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
     }
   }
 
@@ -133,7 +133,7 @@ class MassTransitStopDao {
     }
   }
 
-  def updateTextPropertyValue(assetId :Long, propertyPublicId: String, value: String): Unit ={
+  def updateTextPropertyValue(assetId: Long, propertyPublicId: String, value: String): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
     if (textPropertyValueDoesNotExist(assetId, propertyId)) {
       insertTextProperty(assetId, propertyId, value).execute
@@ -142,7 +142,7 @@ class MassTransitStopDao {
     }
   }
 
-  def updateNumberPropertyValue(assetId :Long, propertyPublicId: String, value: Int): Unit ={
+  def updateNumberPropertyValue(assetId: Long, propertyPublicId: String, value: Int): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
     if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
       insertNumberProperty(assetId, propertyId, value).execute
@@ -151,7 +151,7 @@ class MassTransitStopDao {
     }
   }
 
-  def deleteNumberPropertyValue(assetId :Long, propertyPublicId: String): Unit ={
+  def deleteNumberPropertyValue(assetId: Long, propertyPublicId: String): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
     deleteNumberProperty(assetId, propertyId)
   }
@@ -237,7 +237,7 @@ class MassTransitStopDao {
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
   }
 
-  def getAssetAdministrationClass(assetId : Long): Option[AdministrativeClass] ={
+  def getAssetAdministrationClass(assetId: Long): Option[AdministrativeClass] = {
     val propertyValueOption = getNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka")
 
     propertyValueOption match {
@@ -247,7 +247,7 @@ class MassTransitStopDao {
     }
   }
 
-  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] ={
+  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] = {
     val propertyValueOption = getNumberPropertyValue(assetId, "kellumisen_syy")
 
     propertyValueOption match {
@@ -257,4 +257,11 @@ class MassTransitStopDao {
     }
   }
 
+  def expireMassTransitStop(username: String, id: Long) = {
+    sqlu"""
+             update asset
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             where id = $id
+          """.execute
+  }
 }

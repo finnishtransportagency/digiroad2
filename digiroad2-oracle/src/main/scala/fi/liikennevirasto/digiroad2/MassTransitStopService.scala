@@ -61,7 +61,9 @@ trait MassTransitStopService extends PointAssetOperations {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
 
-      if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
+      //TODO: Guilherme Pedrosa - Remove If false and de-comment the real if once the tierekistery part is done
+      //if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
+      if (false) {
         val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(generateLiviIdentifier(persistedStop.get.nationalId))
         val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
         return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
@@ -563,6 +565,12 @@ trait MassTransitStopService extends PointAssetOperations {
            set municipality_code = $municipalityCode
            where id = $id
       """.execute
+  }
+
+  def expireMassTransitStop(s: String, id: Long) = {
+    withDynTransaction {
+      massTransitStopDao.expireMassTransitStop(s, id)
+    }
   }
 }
 

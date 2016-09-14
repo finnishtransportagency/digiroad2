@@ -22,7 +22,7 @@
       }
     }
 
-    function handleEditMessageTESTE(showMessage) {
+    function handleTRControlMessage(showMessage) {
       if (showMessage) {
         editMessageTESTE.show();
       } else {
@@ -38,12 +38,11 @@
 
     eventbus.on('application:readOnly', function(readOnly) {
       handleEditMessage(readOnly);
-      //handleEditMessageTESTE(!readOnly);
       showEditInstructionsPopup(readOnly);
     });
     
     eventbus.on('application:controledTR', function(show) {
-      handleEditMessageTESTE(show);
+      handleTRControlMessage(show);
     });
 
     $('#header').append(editMessage.hide());
