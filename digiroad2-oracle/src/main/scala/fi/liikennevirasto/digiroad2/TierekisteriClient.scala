@@ -338,10 +338,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
       }
     )
 
-    if(trMassTransitStop.stopType != StopType.Unknown)
-      jsonObj += trStopType -> trMassTransitStop.stopType
+    val stopType: Map[String, Any] = trMassTransitStop.stopType match {
+      case StopType.Unknown => Map()
+      case _ => Map(trStopCode -> trMassTransitStop.stopType)
+    }
 
-    new StringEntity(Serialization.write(jsonObj), ContentType.APPLICATION_JSON)
+    new StringEntity(Serialization.write(jsonObj ++ stopType), ContentType.APPLICATION_JSON)
   }
 
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
