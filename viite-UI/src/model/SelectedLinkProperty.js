@@ -34,18 +34,23 @@
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
-          'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
+          'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
+          'startAddressM', 'endAddressM'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
         var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
         var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
+        var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
+        var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
+        var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
+
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames);
+        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes);
       }
 
       return properties;

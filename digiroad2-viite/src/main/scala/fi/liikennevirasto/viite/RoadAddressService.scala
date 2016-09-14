@@ -6,9 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
-
-import scala.collection.SeqLike
+import fi.liikennevirasto.viite.model.RoadAddressLink
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
 
@@ -82,7 +80,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         rl.length,  rl.administrativeClass,
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.discontinuity.value,
+        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
         ra.startAddrMValue, ra.endAddrMValue, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
         ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
       case _ => new RoadAddressLink(rl.linkId, rl.geometry,
@@ -90,7 +88,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
         rl.attributes, 0, 0, 0, 0,
-        0, 0, 0, 0, SideCode.Unknown,
+        0, 0, 0, 0, 0, SideCode.Unknown,
         None, None)
     }
 

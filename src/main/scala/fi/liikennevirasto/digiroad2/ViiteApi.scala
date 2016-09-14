@@ -131,8 +131,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
+      "roadNumber" -> roadLink.roadNumber,
       "roadPartNumber" -> roadLink.roadPartNumber,
-      "roadNumber" -> roadLink.roadNumber)
+      "elyCode" -> roadLink.elyCode,
+      "trackCode" -> roadLink.trackCode,
+      "startAddressM" -> roadLink.startAddressM,
+      "endAddressM" -> roadLink.endAddressM,
+      "discontinuity" -> roadLink.discontinuity)
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {

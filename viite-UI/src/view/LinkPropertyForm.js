@@ -41,6 +41,28 @@
       [4, 'Silta, Taso 4']
     ];
 
+    var roadClasses = [
+      [1, 'Yleinen tie'],
+      [2, 'Lauttaväylä yleisellä tiellä'],
+      [3, 'Kunnan katuosuus'],
+      [4, 'Yleisen tien työmaa'],
+      [5, 'Yksityistie'],
+      [9, 'Omistaja selvittämättä']
+    ];
+
+    var discontinuitys = [
+      [1, 'Tien loppu'],
+      [2, 'Epäjatkuva'],
+      [3, 'ELY:n raja'],
+      [4, 'Lievä epäjatkuvuus'],
+      [5, 'Jatkuva']
+    ];
+
+    var getDiscontinuityType = function(discontinuity){
+      var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
+      return DiscontinuityType && DiscontinuityType[1];
+    };
+
     var getLocalizedLinkType = function(linkType) {
       var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
       return localizedLinkType && localizedLinkType[1];
@@ -90,41 +112,19 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
-            staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
-            '<div class="form-group editable">' +
-              '<label class="control-label">Toiminnallinen luokka</label>' +
-              '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
-              '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
-              '<label class="control-label">Liikennevirran suunta</label>' +
-              '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
-              '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
-              '<label class="control-label">Tielinkin tyyppi</label>' +
-              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
-              '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
-            '</div>' +
-            staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
-            staticField('Kuntanumero', 'municipalityCode') +
-            staticField('Tien nimi (Suomi)', 'roadNameFi') +
-            staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tien nimi (Saame)', 'roadNameSm') +
-            staticField('Tien numero', 'roadNumber') +
-            staticField('Tieosanumero', 'roadPartNumber') +
-            staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
-            staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
-            staticField('MML ID', 'mmlId') +
+            staticField('TIENUMERO', 'roadNumber') +
+            staticField('TIENUMERO', 'roadNumber') +
+            staticField('TIEOSANUMERO', 'roadPartNumber') +
+            staticField('AJORATA', 'trackCode') +
+            staticField('ALKUETÄISYYS', 'startAddressM') +
+            staticField('LOPPUETÄISUUS', 'endAddressM') +
+            staticField('ELY', 'elyCode') +
+            staticField('TIETYYPPI', 'roadClass') +
+            staticField('JATKUVUUS', 'discontinuity') +
+            staticField('LAKKAUTUS', 'null') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
-    };
-
-    var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
-      var notRendered = !$('#incomplete-links-link').length;
-      if(notRendered) {
-        $('#information-content').append('' +
-          '<div class="form form-horizontal">' +
-              '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
-          '</div>');
-      }
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -156,10 +156,18 @@
         linkProperties.roadNameSm = linkProperties.roadNameSm || '';
         linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-        linkProperties.roadNumber = linkProperties.roadNumber || '';
-        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
+
+        linkProperties.roadNumber = linkProperties.roadNumber || '';
+        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+        linkProperties.trackCode = linkProperties.trackCode || '';
+        linkProperties.startAddressM = linkProperties.startAddressM || '';
+        linkProperties.endAddressM = linkProperties.endAddressM || '';
+        linkProperties.elyCode = linkProperties.elyCode || '';
+        linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
+        linkProperties.roadClass = '';
+
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
@@ -204,12 +212,7 @@
 
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperty') {
-          renderLinkToIncompleteLinks();
-        }
-        else {
-          $('#incomplete-links-link').parent().remove();
-        }
+
       });
 
     };
