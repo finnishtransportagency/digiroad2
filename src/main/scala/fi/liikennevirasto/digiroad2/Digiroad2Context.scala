@@ -120,7 +120,7 @@ object Digiroad2Context {
   }
 
   lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"))
+    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"), getProperty("digiroad2.tierekisteri.enabled").toBoolean)
   }
 
   lazy val roadLinkService: RoadLinkService = {

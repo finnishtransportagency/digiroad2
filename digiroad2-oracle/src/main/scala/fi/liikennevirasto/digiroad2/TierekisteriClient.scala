@@ -144,8 +144,10 @@ class TierekisteriClientException(response: String) extends RuntimeException(res
   * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
   *
   * @param tierekisteriRestApiEndPoint
+  * @param tierekisteriEnabled
+  *
   */
-class TierekisteriClient(tierekisteriRestApiEndPoint: String) {
+class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnabled: Boolean) {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
