@@ -58,6 +58,28 @@
       [5, 'Jatkuva']
     ];
 
+    var getRoadClass = function(administrativeClass,linkType){
+      var value = 9;
+      switch(administrativeClass.toString()){
+        case 'State':
+          if(linkType == 21){
+            value = 2;
+          }
+          else{
+            value = 1;
+          }
+          break;
+        case 'Municipality':
+          value = 3;
+          break;
+        case 'Private':
+          value = 5;
+          break;
+      }
+      var roadClass = _.find(roadClasses, function(x){return x[0] === value;});
+      return roadClass && roadClass[1];
+    };
+
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -121,7 +143,7 @@
             staticField('ELY', 'elyCode') +
             staticField('TIETYYPPI', 'roadClass') +
             staticField('JATKUVUUS', 'discontinuity') +
-            staticField('LAKKAUTUS', 'null') +
+            staticField('LAKKAUTUS', 'endDate') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -166,7 +188,8 @@
         linkProperties.endAddressM = linkProperties.endAddressM || '';
         linkProperties.elyCode = linkProperties.elyCode || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-        linkProperties.roadClass = '';
+        linkProperties.roadClass = getRoadClass(linkProperties.administrativeClass, linkProperties.localizedLinkTypes);
+        linkProperties.endDate = linkProperties.endDate || '';
 
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

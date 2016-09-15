@@ -137,7 +137,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "trackCode" -> roadLink.trackCode,
       "startAddressM" -> roadLink.startAddressM,
       "endAddressM" -> roadLink.endAddressM,
-      "discontinuity" -> roadLink.discontinuity)
+      "discontinuity" -> roadLink.discontinuity,
+      "endDate" -> roadLink.endDate)
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {

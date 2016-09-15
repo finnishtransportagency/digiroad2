@@ -13,6 +13,6 @@ case class RoadAddressLink(linkId: Long, geometry: Seq[Point],
                             functionalClass: Int,  trafficDirection: TrafficDirection,
                             linkType: LinkType,  modifiedAt: Option[String],  modifiedBy: Option[String],
                             attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
-                           startAddressM: Long, endAddressM: Long, startM: Double, endM: Double, sideCode: SideCode,
+                           startAddressM: Long, endAddressM: Long, endDate: String, startM: Double, endM: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint]) extends PolyLine {
 }

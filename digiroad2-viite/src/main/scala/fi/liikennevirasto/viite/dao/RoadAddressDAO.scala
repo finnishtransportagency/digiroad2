@@ -1,17 +1,13 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.util.Track
-import slick.jdbc.{GetResult, StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import org.slf4j.LoggerFactory
+import slick.jdbc.{GetResult, StaticQuery => Q}
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
 sealed trait RoadType {
@@ -69,7 +65,7 @@ object CalibrationCode {
 case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, linkId: Long,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, endDate: String, linkId: Long,
                        startMValue: Double, endMValue: Double, calibrationPoints: Seq[CalibrationPoint] = Seq()
                       )
 
@@ -120,7 +116,7 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
         linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, linkId,
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, endDate, linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
   }
