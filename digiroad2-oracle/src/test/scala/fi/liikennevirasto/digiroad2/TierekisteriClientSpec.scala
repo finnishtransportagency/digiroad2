@@ -21,7 +21,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"))
+    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean)
   }
 
   val connectedToTierekisteri = testConnection
