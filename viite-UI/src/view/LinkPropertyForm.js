@@ -135,7 +135,6 @@
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
             staticField('TIENUMERO', 'roadNumber') +
-            staticField('TIENUMERO', 'roadNumber') +
             staticField('TIEOSANUMERO', 'roadPartNumber') +
             staticField('AJORATA', 'trackCode') +
             staticField('ALKUETÄISYYS', 'startAddressM') +
@@ -184,7 +183,7 @@
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.trackCode = linkProperties.trackCode || '';
-        linkProperties.startAddressM = linkProperties.startAddressM || '';
+        linkProperties.startAddressM = linkProperties.startAddressM || '0';
         linkProperties.endAddressM = linkProperties.endAddressM || '';
         linkProperties.elyCode = linkProperties.elyCode || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';

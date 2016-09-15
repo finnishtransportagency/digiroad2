@@ -44,8 +44,8 @@
         var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
         var trackCode = {trackCode: extractUniqueValues(selectedData, 'trackCode')};
         var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
-        var startAddressM = _.min(_.chain(selectedData).pluck('startAddressM').uniq().value());
-        var endAddressM = _.max(_.chain(selectedData).pluck('endAddressM').uniq().value());
+        var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
+        var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
