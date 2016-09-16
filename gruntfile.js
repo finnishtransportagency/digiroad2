@@ -1,6 +1,7 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    viitepkg: grunt.file.readJSON('viitepackage.json'),
     env: {
       options: {},
       development: {
@@ -25,12 +26,23 @@ module.exports = function(grunt) {
       }
     },
     concat: {
-      options: {
-        separator: ';'
+      oth: {
+        options: {
+          separator: ';'
+        },
+        dist: {
+          src: ['UI/src/**/*.js'],
+          dest: 'dist/js/<%= pkg.name %>.js'
+        }
       },
-      dist: {
-        src: ['UI/src/**/*.js'],
-        dest: 'dist/js/<%= pkg.name %>.js'
+      viite: {
+        options: {
+          separator: ';'
+        },
+        dist: {
+          src: ['viite-UI/src/**/*.js'],
+          dest: 'dist-viite/js/<%= viitepkg.name %>.js'
+        }
       }
     },
     uglify: {
@@ -39,7 +51,8 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+          'dist/js/<%= pkg.name %>.min.js': ['<%= concat.oth.dist.dest %>'],
+          'dist-viite/js/<%= viitepkg.name %>.min.js': ['<%= concat.viite.dist.dest %>']
         }
       }
     },
@@ -109,9 +122,9 @@ module.exports = function(grunt) {
           "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
-      viite: {
+      viitedev: {
         files: {
-          "dist/viite/css/viite.css": "viite-UI/src/less/main.less"
+          "dist-viite/viite/css/viite.css": "viite-UI/src/less/main.less"
         }
       },
       production: {
@@ -120,6 +133,14 @@ module.exports = function(grunt) {
         },
         files: {
           "dist/css/digiroad2.css": "UI/src/less/main.less"
+        }
+      },
+      viiteprod: {
+        options: {
+          cleancss: true
+        },
+        files: {
+          "dist-viite/css/digiroad2.css": "viite-UI/src/less/main.less"
         }
       }
     },
@@ -167,7 +188,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html', 'UI/src/**/*.less', 'viite-UI/**/*.html'],
-      tasks: ['jshint', 'env:development', 'preprocess:development', 'preprocess:viite', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
+      tasks: ['jshint', 'env:development', 'preprocess:development', 'preprocess:viite', 'less:development', 'less:viitedev', 'mocha:unit', 'mocha:integration', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -203,13 +224,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'less:viite', 'watch']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'less:viitedev', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat:oth', 'concat:viite', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'preprocess:viite', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'preprocess:viite', 'less:production', 'less:viiteprod', 'concat:oth', 'concat:viite', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:integration']);
 

@@ -45,7 +45,7 @@ trait DigiroadServer {
   def createViiteContext() = {
     val appContext = new WebAppContext()
     appContext.setDescriptor("src/main/webapp/WEB-INF/viite_web.xml")
-    appContext.setResourceBase("src/main/webapp/viite-UI")
+    appContext.setResourceBase("src/main/webapp/viite")
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
