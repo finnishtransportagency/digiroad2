@@ -42,8 +42,8 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.min.js': ['<%= concat.oth.dist.dest %>'],
-          'dist-viite/js/<%= viitepkg.name %>.min.js': ['<%= concat.viite.dist.dest %>']
+          'dist/js/<%= pkg.name %>.min.js': ['dist/js/<%= pkg.name %>.js'],
+          'dist-viite/js/<%= viitepkg.name %>.min.js': ['dist-viite/js/<%= viitepkg.name %>.js']
         }
       }
     },
