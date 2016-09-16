@@ -94,6 +94,7 @@
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
+      var isAdministratorELYKeskus = false;   // variable to show some of equipment fields read-only for ELY-keskus bus stops and hide inventory date if ELY-keskus is not chosen as administrator
 
       var renderAssetForm = function() {
         var container = $("#feature-attributes").empty();
@@ -248,7 +249,10 @@
           return choice.publicId === property.publicId;
         }).values;
 
-        if (readOnly) {
+        var isReadOnlyEquipment = property.publicId === 'mainoskatos' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
+        var isELYKeskusReadOnlyEquipment = isAdministratorELYKeskus && isReadOnlyEquipment;
+
+        if (readOnly || isELYKeskusReadOnlyEquipment) {
           element = $('<p />').addClass('form-control-static');
 
           if (property.values && property.values[0]) {
@@ -476,6 +480,19 @@
 
       var getAssetForm = function() {
         var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
+
+        // Check if 'tietojen_yllapitaja' property has value 'ELY-keskus' in model and set isAdministratorELYKeskus
+        var administratorProperty =_.find(properties, function(property){
+          return property.publicId === 'tietojen_yllapitaja';
+        });
+        if (administratorProperty.values.length > 0) {
+          if (administratorProperty.values[0].propertyValue === '2') {
+            isAdministratorELYKeskus = true;
+          } else {
+            isAdministratorELYKeskus = false;
+          }
+        }
+
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
@@ -600,7 +617,16 @@
       eventbus.on('assetPropertyValue:changed', function (event) {
         var property = event.propertyData;
 
-        if(event.id && property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))){
+        if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))) {
+          isAdministratorELYKeskus = true;
+          // TODO: Set some equipment fields to read-only if ELY-keskus is selected as administrator
+          //var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
+        }
+        if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
+          isAdministratorELYKeskus = false
+        }
+
+        if (isAdministratorELYKeskus && event.id){
           new GenericConfirmPopup(
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
