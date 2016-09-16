@@ -3,30 +3,30 @@
     var self = this;
     this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
       return {
-        url: '/api/viite/roadlinks?bbox=' + boundingBox
+        url: 'api/viite/roadlinks?bbox=' + boundingBox
       };
     });
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
-      return $.getJSON('/api/viite/roadlinks/' + linkId, function(data) {
+      return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function(mmlId, callback) {
-      return $.getJSON('/api/viite/roadlinks/mml/' + mmlId, function(data) {
+      return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getUserRoles = function () {
-      $.get('/api/viite/user/roles', function (roles) {
+      $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
       });
     };
 
     this.getStartupParametersWithCallback = function(callback) {
-      var url = '/api/viite/startupParameters';
+      var url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
     };
 
