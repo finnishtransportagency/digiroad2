@@ -273,13 +273,13 @@ module.exports = function(grunt) {
 
   grunt.registerTask('viite', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
   grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 };
