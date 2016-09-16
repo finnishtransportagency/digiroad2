@@ -488,8 +488,7 @@ object DataFixture {
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason |" +
-        " check_unknown_speedlimits | import_road_addresses")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | import_road_addresses")
     }
   }
 }

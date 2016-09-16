@@ -8,19 +8,11 @@ import org.scalatest.FunSuite
 class RoadAddressServiceSpec extends FunSuite {
 
   test("testGetCalibrationPoints") {
-
-  }
-
-  test("testGetCalibrationPoints") {
-
-  }
-
-  test("testGetCalibrationPoints") {
-
+    //TODO
   }
 
   test("testRoadClass") {
-
+    //TODO
   }
 
 }
