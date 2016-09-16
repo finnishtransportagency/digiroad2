@@ -1,8 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset._
+import java.util.Date
+
+import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -84,7 +87,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val equipmentProperty = tierekisteriStop.equipments.find(_._1.publicId == property.publicId)
     equipmentProperty match {
       case Some((equipment, existence)) =>
-        property.copy(values = Seq(PropertyValue(existence.propertyValue.toString)))
+        property.copy(values = Seq(PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head))))
       case _ =>
         property
     }
@@ -102,7 +105,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
     if(property.publicId == publidId){
       property.copy( values = property.values.map{
-        case value if(value.propertyValue.isEmpty) => PropertyValue(getValue(tierekisteriStop))
+        case value if(value.propertyValue.isEmpty) => PropertyValue(getValue(tierekisteriStop), Some(massTransitStopDao.getPropertyDescription(publidId, getValue(tierekisteriStop)).head))
         case value => value
       })
     }
