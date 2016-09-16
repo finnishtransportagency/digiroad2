@@ -49,6 +49,7 @@ trait DigiroadServer {
     appContext.setContextPath(viiteContextPath)
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+    appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -61,7 +62,7 @@ class NLSProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     java.net.URI.create("http://karttamoottori.maanmittauslaitos.fi"
-      + uri.replaceFirst("/digiroad", ""))
+      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
