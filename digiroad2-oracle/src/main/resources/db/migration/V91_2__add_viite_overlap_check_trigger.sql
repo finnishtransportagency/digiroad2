@@ -1,4 +1,4 @@
-CREATE OR REPLACE TRIGGER road_address_changes_no_overlap
+CREATE OR REPLACE TRIGGER road_address_chk_overlap
   BEFORE
     INSERT
   ON road_address_changes
