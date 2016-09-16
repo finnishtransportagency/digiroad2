@@ -13,16 +13,16 @@ module.exports = function(grunt) {
     },
     preprocess: {
       development: {
-        src: './UI/tmpl/index.html',
-        dest: './UI/index.html'
-      },
-      viite: {
-        src: './viite-UI/tmpl/index.html',
-        dest: './viite-UI/index.html'
+        files: {
+          './UI/index.html': './UI/tmpl/index.html',
+          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+        }
       },
       production: {
-        src: './UI/tmpl/index.html',
-        dest: './UI/index.html'
+        files: {
+          './UI/index.html': './UI/tmpl/index.html',
+          './viite-UI/index.html': './viite-UI/tmpl/index.html'
+        }
       }
     },
     concat: {
@@ -56,15 +56,60 @@ module.exports = function(grunt) {
         }
       },
       files: {
-        src: ['UI/index.html', 'UI/viite/index.html']
+        src: ['UI/index.html', 'viite-UI/index.html']
       }
     },
-    clean: ['dist'],
+    clean: ['dist', 'dist-viite'],
     connect: {
-      server: {
+      oth: {
         options: {
           port: 9001,
-          base: ['dist', '.', 'UI', 'viite-UI'],
+          base: ['dist', '.', 'UI'],
+          middleware: function(connect, opts) {
+            var config = [
+              // Serve static files.
+              connect.static(opts.base[0]),
+              connect.static(opts.base[1]),
+              connect.static(opts.base[2]),
+              // Make empty directories browsable.
+              connect.directory(opts.base[2])
+            ];
+            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
+            config.unshift(proxy);
+            return config;
+          }
+        },
+        proxies: [
+          {
+            context: '/api',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
+            context: '/maasto',
+            host: 'karttamoottori.maanmittauslaitos.fi',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+          },
+          {
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          }
+        ]
+      },
+      viite: {
+        options: {
+          port: 9001,
+          base: ['dist-viite', '.', 'viite-UI'],
           middleware: function(connect, opts) {
             var config = [
               // Serve static files.
@@ -115,7 +160,7 @@ module.exports = function(grunt) {
       },
       viitedev: {
         files: {
-          "dist-viite/viite/css/viite.css": "viite-UI/src/less/main.less"
+          "dist-viite/css/viite.css": "viite-UI/src/less/main.less"
         }
       },
       production: {
@@ -178,10 +223,19 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html', 'UI/src/**/*.less', 'viite-UI/**/*.html'],
-      tasks: ['jshint', 'env:development', 'preprocess:development', 'preprocess:viite', 'less:development', 'less:viitedev', 'mocha:unit', 'mocha:integration', 'configureProxies'],
-      options: {
-        livereload: true
+      oth: {
+        files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
+        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        options: {
+          livereload: true
+        }
+      },
+      viite: {
+        files: ['<%= jshint.files %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
+        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:viitedev', 'configureProxies:viite'],
+        options: {
+          livereload: true
+        }
       }
     },
     execute: {
@@ -215,13 +269,15 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'less:development', 'less:viitedev', 'watch']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
 
-  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'preprocess:viite', 'connect', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('viite', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
+
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:unit', 'mocha:integration']);
 
   grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'preprocess:viite', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:integration']);
 
