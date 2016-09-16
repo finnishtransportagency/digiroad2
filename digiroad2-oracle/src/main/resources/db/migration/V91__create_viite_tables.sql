@@ -131,25 +131,6 @@ CREATE SEQUENCE VIITE_PROJECT_SEQ INCREMENT BY 1 START WITH 1 MAXVALUE 99999999 
 -- For project_link, road_address tables
 CREATE SEQUENCE VIITE_GENERAL_SEQ INCREMENT BY 1 START WITH 1 MAXVALUE 9999999999 MINVALUE 1 CACHE 20;
 
-CREATE OR REPLACE TRIGGER project_link_reserved
-  BEFORE
-    INSERT
-  ON project_link
-  FOR EACH ROW
-DECLARE
-  ExistingId NUMBER;
-  CURSOR Project_cursor (lrm_id NUMBER, proj_id NUMBER) IS
-    SELECT p.id FROM PROJECT p JOIN PROJECT_LINK pl on (p.id = pl.project_id) JOIN LRM_POSITION l on (l.id = pl.LRM_POSITION_ID)
-    WHERE p.id != proj_id AND l.link_id = (SELECT link_id FROM LRM_POSITION WHERE id = lrm_id) AND p.state in (0, 1);
-BEGIN
-  OPEN Project_cursor (:NEW.lrm_position_id, :NEW.project_id);
-  FETCH Project_cursor INTO ExistingId;
-  IF Project_cursor%NOTFOUND THEN
-    NULL;
-  ELSE
-    Raise_application_error(-20000, 'link_id reserved to project id ' || TO_CHAR(ExistingId));
-  END IF;
-END;
 
 CREATE TABLE ROAD_ADDRESS_CHANGES
 (
