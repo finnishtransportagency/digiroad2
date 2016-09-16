@@ -21,6 +21,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1021227, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1021226, 90, Nil, Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(6488445l))
     .thenReturn(Some(VVHRoadlink(6488445l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -31,7 +33,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
     TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-
+  when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(List(
+    VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1021227, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1021226, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -63,7 +69,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Get stops by bounding box") {
     runWithRollback {
-      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", List(Point(0.0,0.0), Point(120.0, 0.0)), 235)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
       stops.map(_.id) should be(Seq(id))
@@ -95,6 +102,70 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300008).map(_.floating) should be(Some(true))
+    }
+  }
+
+  test("Stop floats if a State road has got changed to a road owned by municipality"){
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300006
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stop floats if a State road has got changed to a road owned to a private road"){
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stops working list shouldn't have floating assets with floating reason RoadOwnerChanged if user is not operator"){
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback {
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      //GetBoundingBox will set assets  to floating
+      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(false))
+      //Get all external ids from the working list
+      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+
+      //Should not find any external id of the asset with administration class changed
+      externalIds.foreach{ externalId =>
+        externalId should not be (8)
+      }
+    }
+  }
+
+  test("Stops working list should have all floating assets if user is operator"){
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback {
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      //GetBoundingBox will set assets  to floating
+      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(true))
+      //Get all external ids from the working list
+      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+
+      //Should have the external id of the asset with administration class changed
+      externalIds.find(_ == 8) should be(Some(8))
     }
   }
 
@@ -161,6 +232,44 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update asset liVi identifier property when is Central ELY administration"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val assetId = 300000
+      val properties = List(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+      val massTransitStop = service.getById(assetId).get
+
+      //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+
+    }
+  }
+
+  test("Update asset liVi identifier property when is NOT Central ELY administration"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val assetId = 300000
+      val properties = List(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+      val massTransitStop = service.getById(assetId).get
+
+      //The property yllapitajan_koodi should not have values
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.size should be(0)
+
+    }
+  }
+
   test("Update last modified info") {
     runWithRollback {
       RollbackMassTransitStopService.updateExistingById(300000, None, Set.empty, "user", _ => Unit)
@@ -220,13 +329,72 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val values = List(PropertyValue("1"))
-      val properties = List(SimpleProperty("pysakin_tyyppi", values))
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", List(Point(0.0,0.0), Point(120.0, 0.0)), 91)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+
+      //The property yllapitajan_koodi should not have values
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.size should be(0)
+
+      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+    }
+  }
+
+  test("Create new virtual mass transit stop with Central ELY administration") {
+    runWithRollback {
+      val massTransitStopDao = new MassTransitStopDao
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("5"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      val massTransitStop = service.getById(id).get
+      massTransitStop.bearing should be(Some(100))
+      massTransitStop.floating should be(false)
+      massTransitStop.stopTypes should be(List(5))
+      massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+
+      //The property yllapitajan_koodi should not have values
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.size should be(0)
+
+      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+    }
+  }
+
+  test("Create new mass transit stop with Central ELY administration") {
+    runWithRollback {
+      val massTransitStopDao = new MassTransitStopDao
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      val massTransitStop = service.getById(id).get
+      massTransitStop.bearing should be(Some(100))
+      massTransitStop.floating should be(false)
+      massTransitStop.stopTypes should be(List(1))
+      massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+
+      //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }

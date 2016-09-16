@@ -96,11 +96,25 @@
           }
         }
 
+        function additionalInfoElement() {
+          return _.isEmpty(prohibition.additionalInfo) ? '' : createAdditionalInfoElement();
+
+          function createAdditionalInfoElement() {
+            var addInfoElement = prohibition.additionalInfo;
+            return '' +
+                '<div class="additionalInfo-group">' +
+                '<label>Tarkenne:</label>' +
+                '  <ul>' + addInfoElement + '</ul>' +
+                '</div>';
+          }
+        }
+
         return '' +
           '<div class="form-control-static existing-prohibition">' +
           typeElement +
           validityPeriodElement() +
           exceptionElement() +
+          additionalInfoElement()+
           '</div>';
       }
 
@@ -163,12 +177,26 @@
             '</div>';
         }
 
+
+        function additionalInfomationField(prohibition) {
+
+          return '' +
+              '<div class="additionalInfo-group">' +
+              '<label>Tarkenne:</label>' +
+              '<div class="form-group new-additionalInfo">' +
+              '<input type="text" class="form-control additional-info" ' +
+              'placeholder="Muu tarkenne" value="' + (_.isEmpty(prohibition.additionalInfo) ? '' : prohibition.additionalInfo) + '"/>' +
+              '</div>' +
+              '</div>';
+        }
+
         return '' +
           '<div class="form-group existing-prohibition">' +
           deleteButton() +
           typeElement() +
           validityPeriodsElement() +
           exceptionsElement(prohibition) +
+          additionalInfomationField(prohibition) +
           '</div>';
       }
 
@@ -335,11 +363,16 @@
           setValue(extractValue(rootElement, className));
         });
 
+        $(rootElement).on('change keyup paste', className + ' .new-additionalInfo .additional-info', function (evt) {
+          setValue(extractValue(rootElement, className));
+        });
+
         $(rootElement).on('change', className + ' .new-prohibition select', function (evt) {
           $(evt.target).parent().replaceWith(prohibitionEditElement({
             typeId: parseInt($(evt.target).val(), 10),
             exceptions: [],
-            validityPeriods: []
+            validityPeriods: [],
+            additionalInfo: {}
           }));
           $(rootElement).find('.form-group' + className + ' .edit-control-group').append(newProhibitionElement());
           setValue(extractValue(rootElement, className));
@@ -376,8 +409,13 @@
         return {
           typeId: parseInt($element.find('.prohibition-type select').val(), 10),
           exceptions: extractExceptions($element),
-          validityPeriods: extractValidityPeriods($element)
+          validityPeriods: extractValidityPeriods($element),
+          additionalInfo: extractAdditionalInfo($element)
         };
+      }
+
+      function extractAdditionalInfo(element) {
+        return element.find('.additional-info').val();
       }
 
       function extractExceptions(element) {

@@ -25,8 +25,7 @@ case class TextualValue(value: String) extends Value {
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int])
-
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {

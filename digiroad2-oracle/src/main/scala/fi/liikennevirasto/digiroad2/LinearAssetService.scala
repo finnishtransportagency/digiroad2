@@ -353,12 +353,21 @@ trait LinearAssetOperations {
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-        val endPoints = GeometryUtils.geometryEndpoints(points)
+        val endPoints: Set[Point] =
+          try {
+          val ep = GeometryUtils.geometryEndpoints(points)
+          Set(ep._1, ep._2)
+        } catch {
+          case ex: NoSuchElementException =>
+            logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
+            val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+            Set(wholeLinkPoints._1, wholeLinkPoints._2)
+        }
         ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
             persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
-            Set(endPoints._1, endPoints._2), persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
+            endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
             persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate)
           ,

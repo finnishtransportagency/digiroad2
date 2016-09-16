@@ -150,7 +150,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    massTransitStopService.getFloatingAssets(includedMunicipalities)
+    massTransitStopService.getFloatingAssets(includedMunicipalities, Some(user.isOperator()))
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
@@ -186,7 +186,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
     val roadLink = vvhClient.fetchVVHRoadlink(linkId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode)
+    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
   }
 
   private def validateUserRights(linkId: Long) = {
@@ -717,9 +717,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- roadLinkService.getRoadLinkFromVVH(asset.linkId)) {
+    for (link <- vvhClient.fetchVVHRoadlink(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
-      service.create(asset, user.username, link.geometry, link.municipalityCode)
+      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass))
     }
   }
 

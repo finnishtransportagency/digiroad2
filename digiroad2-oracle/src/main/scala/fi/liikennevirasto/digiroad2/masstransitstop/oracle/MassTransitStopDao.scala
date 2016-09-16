@@ -6,7 +6,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{FloatingReason, MassTransitStopRow, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
@@ -126,11 +126,38 @@ class MassTransitStopDao {
       case MultipleChoice => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
-      case ReadOnly => {
+      case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
+  }
+
+  def updateTextPropertyValue(assetId :Long, propertyPublicId: String, value: String): Unit ={
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+    if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+      insertTextProperty(assetId, propertyId, value).execute
+    } else {
+      updateTextProperty(assetId, propertyId, value).execute
+    }
+  }
+
+  def updateNumberPropertyValue(assetId :Long, propertyPublicId: String, value: Int): Unit ={
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+    if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
+      insertNumberProperty(assetId, propertyId, value).execute
+    } else {
+      updateNumberProperty(assetId, propertyId, value).execute
+    }
+  }
+
+  def deleteNumberPropertyValue(assetId :Long, propertyPublicId: String): Unit ={
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+    deleteNumberProperty(assetId, propertyId)
+  }
+
+  private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsNumberProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
@@ -165,8 +192,8 @@ class MassTransitStopDao {
         }
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
       }
-      case ReadOnlyText => {
-        logger.debug("Ignoring read only text property in update: " + propertyPublicId)
+      case ReadOnlyText | ReadOnlyNumber => {
+        logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset: " + propertyPublicId + " property type: " + t + " not supported")
     }
@@ -208,6 +235,26 @@ class MassTransitStopDao {
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+  }
+
+  def getAssetAdministrationClass(assetId : Long): Option[AdministrativeClass] ={
+    val propertyValueOption = getNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka")
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) =>
+        Some(AdministrativeClass.apply(propertyValue))
+    }
+  }
+
+  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] ={
+    val propertyValueOption = getNumberPropertyValue(assetId, "kellumisen_syy")
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) =>
+        Some(FloatingReason.apply(propertyValue))
+    }
   }
 
 }
