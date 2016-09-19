@@ -249,8 +249,7 @@
           return choice.publicId === property.publicId;
         }).values;
 
-        var isReadOnlyEquipment = property.publicId === 'mainoskatos' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
-        var isELYKeskusReadOnlyEquipment = isAdministratorELYKeskus && isReadOnlyEquipment;
+        var isELYKeskusReadOnlyEquipment = isAdministratorELYKeskus && isReadOnlyEquipment(property);
 
         if (readOnly || isELYKeskusReadOnlyEquipment) {
           element = $('<p />').addClass('form-control-static');
@@ -583,6 +582,10 @@
          }
       };
 
+      var isReadOnlyEquipment = function(property) {
+        return property.publicId === 'mainoskatos' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
+      };
+
       eventbus.on('asset:modified', function(){
         renderAssetForm();
       });
@@ -617,13 +620,20 @@
       eventbus.on('assetPropertyValue:changed', function (event) {
         var property = event.propertyData;
 
+        // Handle form reload after administrator change
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))) {
           isAdministratorELYKeskus = true;
-          // TODO: Set some equipment fields to read-only if ELY-keskus is selected as administrator
-          //var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
+          property.propertyType = "single_choice";
+          renderAssetForm();
         }
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
           isAdministratorELYKeskus = false;
+          property.propertyType = "single_choice";
+          renderAssetForm();
+        }
+        // Prevent getAssetForm() branching to 'Ei toteutettu'
+        if (isReadOnlyEquipment(property)) {
+          property.propertyType = "single_choice";
         }
 
         if (isAdministratorELYKeskus && event.id){
