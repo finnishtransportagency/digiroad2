@@ -26,17 +26,17 @@
       ]
     };
 
-    var aerialMapConfig = _.merge({}, mapConfig, {
-      url: 'maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg',
-      layer: 'aerialmap',
-      format: 'image/jpeg',
-      serverResolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
-    });
-
     var backgroundMapConfig = _.merge({}, mapConfig, {
       url: 'maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png',
       layer: 'backgroundmap',
       format: 'image/png',
+      serverResolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
+    });
+
+    var aerialMapConfig = _.merge({}, mapConfig, {
+      url: 'maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg',
+      layer: 'aerialmap',
+      format: 'image/jpeg',
       serverResolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
     });
 
