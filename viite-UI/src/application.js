@@ -120,7 +120,7 @@
       //   new TileMapCollection(map, data);
       // });
       // TODO: Use arcgis json data
-      new TileMapCollection(map, data);
+      new TileMapCollection(map, "");
     }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
