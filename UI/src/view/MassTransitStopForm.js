@@ -636,7 +636,7 @@
           property.propertyType = "single_choice";
         }
 
-        if (isAdministratorELYKeskus && event.id){
+        if (property.publicId === 'tietojen_yllapitaja' && isAdministratorELYKeskus && event.id){
           new GenericConfirmPopup(
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
