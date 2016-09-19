@@ -484,7 +484,7 @@
         var administratorProperty =_.find(properties, function(property){
           return property.publicId === 'tietojen_yllapitaja';
         });
-        if (administratorProperty !== null && administratorProperty.values.length > 0) {
+        if (administratorProperty !== null && administratorProperty.values !== null && administratorProperty.values.length > 0) {
           if (administratorProperty.values[0].propertyValue === '2') {
             isAdministratorELYKeskus = true;
           } else {
