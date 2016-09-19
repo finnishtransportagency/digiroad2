@@ -116,9 +116,11 @@
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) {
-      $.get('arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=json', function (data) {
-        new TileMapCollection(map, data);
-      });
+      // $.get('arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=json', function (data) {
+      //   new TileMapCollection(map, data);
+      // });
+      // TODO: Use arcgis json data
+      new TileMapCollection(map, data);
     }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
