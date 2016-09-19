@@ -35,12 +35,6 @@
 
     var greyscaleMapConfig = JSON.parse(arcgisConfig);
 
-    var maxExtent = new OpenLayers.Bounds(greyscaleMapConfig.fullExtent.xmin,
-      greyscaleMapConfig.fullExtent.ymin,
-      greyscaleMapConfig.fullExtent.xmax,
-      greyscaleMapConfig.fullExtent.ymax);
-
-    //Max extent from greyscaleMapConfig above
     var layerMaxExtent = new OpenLayers.Bounds(
       greyscaleMapConfig.fullExtent.xmin,
       greyscaleMapConfig.fullExtent.ymin,
