@@ -485,7 +485,7 @@
         var administratorProperty =_.find(properties, function(property){
           return property.publicId === 'tietojen_yllapitaja';
         });
-        if (administratorProperty.values.length > 0) {
+        if (administratorProperty !== null && administratorProperty.values.length > 0) {
           if (administratorProperty.values[0].propertyValue === '2') {
             isAdministratorELYKeskus = true;
           } else {
@@ -623,7 +623,7 @@
           //var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
         }
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
-          isAdministratorELYKeskus = false
+          isAdministratorELYKeskus = false;
         }
 
         if (isAdministratorELYKeskus && event.id){
