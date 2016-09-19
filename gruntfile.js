@@ -134,6 +134,15 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
+            context: '/arcgis',
+            host: 'aineistot.esri.fi',
+            https: true,
+            port: '443',
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
+          },
+          {
             context: '/maasto',
             host: 'karttamoottori.maanmittauslaitos.fi',
             https: false,

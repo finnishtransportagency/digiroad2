@@ -1,5 +1,5 @@
 (function(root) {
-  root.TileMapCollection = function(map) {
+  root.TileMapCollection = function(map, arcgisConfig) {
     var mapConfig = {
       tileSize: new OpenLayers.Size(256, 256),
       buffer: 0,
@@ -47,11 +47,38 @@
       serverResolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
     });
 
-    var backgroundMapLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
+    var greyscaleMapConfig = JSON.parse(arcgisConfig);
+
+    var layerMaxExtent = new OpenLayers.Bounds(
+      greyscaleMapConfig.fullExtent.xmin,
+      greyscaleMapConfig.fullExtent.ymin,
+      greyscaleMapConfig.fullExtent.xmax,
+      greyscaleMapConfig.fullExtent.ymax
+    );
+
+    var resolutions = [];
+    for (var i=0; i<greyscaleMapConfig.tileInfo.lods.length; i++) {
+      resolutions.push(greyscaleMapConfig.tileInfo.lods[i].resolution);
+    }
+
+    var greyscaleLayer = new OpenLayers.Layer.ArcGISCache( "AGSCache",
+      "/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer", {
+        isBaseLayer: true,
+
+        //From greyscaleMapConfig above
+        resolutions: resolutions,
+        tileSize: new OpenLayers.Size(greyscaleMapConfig.tileInfo.cols, greyscaleMapConfig.tileInfo.rows),
+        tileOrigin: new OpenLayers.LonLat(greyscaleMapConfig.tileInfo.origin.x , greyscaleMapConfig.tileInfo.origin.y),
+        maxExtent: layerMaxExtent,
+        projection: 'EPSG:' + greyscaleMapConfig.spatialReference.wkid
+      });
+
     var aerialMapLayer = new OpenLayers.Layer.WMTS(aerialMapConfig);
+    var backgroundMapLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
     var terrainMapLayer = new OpenLayers.Layer.WMTS(terrainMapConfig);
     var tileMapLayers = {
       background: backgroundMapLayer,
+      greyscale: greyscaleLayer,
       aerial: aerialMapLayer,
       terrain: terrainMapLayer
     };
@@ -67,8 +94,8 @@
       });
     };
 
-    map.addLayers([backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
-    selectMap('background');
+    map.addLayers([greyscaleLayer, backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
+    selectMap('greyscale');
     eventbus.on('tileMap:selected', selectMap);
   };
 })(this);

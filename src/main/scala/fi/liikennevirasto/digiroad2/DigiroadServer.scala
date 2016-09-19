@@ -50,6 +50,7 @@ trait DigiroadServer {
     appContext.setParentLoaderPriority(true)
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -85,6 +86,32 @@ class NLSProxyServlet extends ProxyServlet {
   }
 }
 
+class ArcGisProxyServlet extends ProxyServlet {
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    val uri = req.getRequestURI
+    java.net.URI.create("https://aineistot.esri.fi"
+      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
+  }
+
+  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    proxyRequest.header("Referer", "https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
+    proxyRequest.header("Host", null)
+    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+  }
+
+  override def getHttpClient: HttpClient = {
+    val client = super.getHttpClient
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    if (properties.getProperty("http.proxySet", "false").toBoolean) {
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "443").toInt)
+      proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
+      client.getProxyConfiguration.getProxies.add(proxy)
+      client.setIdleTimeout(60000)
+    }
+    client
+  }
+}
 class VKMProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()

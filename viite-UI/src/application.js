@@ -115,7 +115,11 @@
 
     var mapOverlay = new MapOverlay($('.container'));
 
-    if (withTileMaps) { new TileMapCollection(map); }
+    if (withTileMaps) {
+      $.get('arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=json', function (data) {
+        new TileMapCollection(map, data);
+      });
+    }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
