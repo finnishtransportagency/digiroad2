@@ -80,10 +80,10 @@
     });
 
     var aerialMapLayer = new OpenLayers.Layer.WMTS(aerialMapConfig);
-    var backgroundLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
+    var backgroundMapLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
     var terrainMapLayer = new OpenLayers.Layer.WMTS(terrainMapConfig);
     var tileMapLayers = {
-      background: backgroundLayer,
+      background: backgroundMapLayer,
       greyscale: greyscaleLayer,
       aerial: aerialMapLayer,
       terrain: terrainMapLayer
@@ -100,7 +100,7 @@
       });
     };
 
-    map.addLayers([greyscaleLayer, backgroundLayer, aerialMapLayer, terrainMapLayer]);
+    map.addLayers([greyscaleLayer, backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
     selectMap('greyscale');
     eventbus.on('tileMap:selected', selectMap);
   };
