@@ -96,6 +96,18 @@
       var streetViewHandler;
       var isAdministratorELYKeskus = false;   // variable to show some of equipment fields read-only for ELY-keskus bus stops and hide inventory date if ELY-keskus is not chosen as administrator
 
+      var MStopDeletebutton = function(readOnly) {
+        var removalForm = $('<div class="checkbox"> <label>Poista<input id = "removebox" type="checkbox"></label></div>');
+        var updateMStopDeletebuttonVisibility = function() {
+          if (readOnly)
+          { removalForm.hide(); }
+          else
+          { removalForm.show(); }
+        };
+        updateMStopDeletebuttonVisibility();
+        return removalForm;
+      };
+
       var renderAssetForm = function() {
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
@@ -146,7 +158,7 @@
           header.append(buttons);
           return header;
         }
-      };
+        };
 
       var getStreetView = function() {
         var model = selectedMassTransitStopModel;
@@ -514,7 +526,9 @@
           }
         });
 
-        return $('<div />').append(components);
+        var stopDeleteButton = MStopDeletebutton(readOnly);
+
+        return $('<div />').append(components).append(stopDeleteButton);
       };
 
       var streetViewTemplate  = _.template(
@@ -638,9 +652,16 @@
               {type: 'alert'});
         }
       });
-
+      bindEvents();
       backend.getEnumeratedPropertyValues();
     }
+  };
+
+  function bindEvents() {
+    var rootElement = $('#feature-attributes');
+    rootElement.find('.form-dark').on('change', 'input[type="checkbox"]', function(event) {
+      var eventTarget = $(event.currentTarget);
+    });
   };
 })(this);
 
