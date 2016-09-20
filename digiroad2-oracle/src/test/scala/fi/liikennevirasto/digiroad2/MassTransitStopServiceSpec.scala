@@ -58,20 +58,25 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("update inventory date") {
     val props = Seq(SimpleProperty("foo", Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props)
-    after.foreach(value => println(value.values))
     after should have size (2)
     val after2 = RollbackMassTransitStopService.updatedProperties(after)
-    after2.foreach(value => value.values.foreach(propval => println(propval.propertyValue)))
     after2 should have size (2)
   }
 
   test("update empty inventory date") {
     val props = Seq(SimpleProperty("investointipaiva", Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props)
-    after.foreach(value => println(value.values))
     after should have size (1)
     after.head.values should have size(1)
     after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
+  }
+
+  test("do not update existing inventory date") {
+    val props = Seq(SimpleProperty("investointipaiva", Seq(PropertyValue("2015-12-30"))))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after should have size (1)
+    after.head.values should have size(1)
+    after.head.values.head.propertyValue should be ( "2015-12-30")
   }
 
   test("Calculate mass transit stop validity periods") {
