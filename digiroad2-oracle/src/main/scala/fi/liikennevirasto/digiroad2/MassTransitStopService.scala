@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -50,9 +51,12 @@ trait MassTransitStopService extends PointAssetOperations {
   val CentralELYPropertyValue = "2"
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"
+  val InventoryDateId = "inventointipaiva"
 
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
+
+  val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -65,6 +69,7 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
 
       //TODO: Guilherme Pedrosa - Remove If false and de-comment the real if once the tierekistery part is done
+
       //if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
       if (false) {
         val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(generateLiviIdentifier(persistedStop.get.nationalId))
@@ -78,6 +83,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Override property values of all equipment properties
+    *
     * @param tierekisteriStop Tierekisteri Asset
     * @param property Asset property
     * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
@@ -95,6 +101,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Override property value when the value is empty
+    *
     * @param publidId The public id of the property
     * @param getValue Function to get the property value from Tierekisteri Asset
     * @param tierekisteriStop  Tierekisteri Asset
@@ -144,6 +151,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Verify if the stop is relevant to Tierekisteri
+    *
     * @param persistedStopOption The persisted stops
     * @return returns true if the stop is not vitual and is a ELY bus stop
     */
@@ -317,6 +325,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Checks that virtualTransitStop doesn't have any other types selected
+    *
     * @param stopProperties
     * @return
     */
@@ -365,7 +374,8 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-    updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
+    val props = updatedProperties(properties.toSeq)
+    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -396,17 +406,31 @@ trait MassTransitStopService extends PointAssetOperations {
       insertLrmPosition(lrmPositionId, mValue, asset.linkId)
       insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
       insertAssetLink(assetId, lrmPositionId)
-      val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
-      if (!mixedStoptypes(asset.properties.toSet))
+
+      val properties = updatedProperties(asset.properties)
+
+      val   defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+      if (!mixedStoptypes(properties.toSet))
       {
-        massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
+        massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
         updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-        updateLiViIdentifierProperty(assetId, nationalId, asset.properties)
+        updateLiViIdentifierProperty(assetId, nationalId, properties)
         getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, tierekisteriClient.createMassTransitStop)
         assetId
       }
       else
         throw new IllegalArgumentException
+    }
+  }
+
+
+  def updatedProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
+    val inventoryDate = properties.find(_.publicId == InventoryDateId)
+    val notInventoryDate = properties.filterNot(_.publicId == InventoryDateId)
+    if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
+      properties
+    } else {
+      notInventoryDate ++ Seq(SimpleProperty(InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
     }
   }
 

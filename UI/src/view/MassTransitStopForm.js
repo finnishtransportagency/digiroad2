@@ -184,8 +184,10 @@
       var addDatePickers = function () {
         var $validFrom = $('#ensimmainen_voimassaolopaiva');
         var $validTo = $('#viimeinen_voimassaolopaiva');
+        var $inventoryDate = $('#inventointipaiva');
+
         if ($validFrom.length > 0 && $validTo.length > 0) {
-          dateutil.addDependentDatePickers($validFrom, $validTo);
+          dateutil.addDependentDatePickers($validFrom, $validTo, $inventoryDate);
         }
       };
 
@@ -327,7 +329,6 @@
 
       var createDateElement = function(readOnly, property) {
         var element;
-
         if (readOnly) {
           element = $('<p />').addClass('form-control-static');
 
@@ -337,7 +338,7 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          element = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
+          element = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
               return;
@@ -437,8 +438,9 @@
           'liikennointisuunta',
           'vaikutussuunta',
           'liikennointisuuntima',
-          'ensimmainen_voimassaolopaiva',
-          'viimeinen_voimassaolopaiva',
+          'ensimmainen_voimassaolopaiva',//begin date
+          'viimeinen_voimassaolopaiva',//end date
+          'inventointipaiva',//Inventory date
           'pysakin_tyyppi',
           'korotettu',
           'katos',
@@ -506,7 +508,7 @@
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
-          if (propertyType === "text" || propertyType === "long_text") {
+          if ((propertyType === "text" && feature.publicId != 'inventointipaiva') || propertyType === "long_text" ) {
             return textHandler(feature);
           } else if (propertyType === "read_only_text" || propertyType === 'read-only') {
             return readOnlyHandler(feature);
@@ -516,7 +518,7 @@
             return singleChoiceHandler(feature, enumeratedPropertyValues);
           } else if (feature.propertyType === "multiple_choice") {
             return multiChoiceHandler(feature, enumeratedPropertyValues);
-          } else if (propertyType === "date") {
+          } else if (propertyType === "date" || feature.publicId == 'inventointipaiva') {
             return dateHandler(feature);
           } else if (propertyType === 'notification') {
             return notificationHandler(feature);

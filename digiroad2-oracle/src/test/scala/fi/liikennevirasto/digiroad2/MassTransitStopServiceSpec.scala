@@ -1,10 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{Track, RoadAddress, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, TestTransactions, Track}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -51,6 +54,30 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+
+  test("update inventory date") {
+    val props = Seq(SimpleProperty("foo", Seq()))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after should have size (2)
+    val after2 = RollbackMassTransitStopService.updatedProperties(after)
+    after2 should have size (2)
+  }
+
+  test("update empty inventory date") {
+    val props = Seq(SimpleProperty("inventointipaiva", Seq()))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after should have size (1)
+    after.head.values should have size(1)
+    after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
+  }
+
+  test("do not update existing inventory date") {
+    val props = Seq(SimpleProperty("inventointipaiva", Seq(PropertyValue("2015-12-30"))))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after should have size (1)
+    after.head.values should have size(1)
+    after.head.values.head.propertyValue should be ( "2015-12-30")
+  }
 
   test("Calculate mass transit stop validity periods") {
     runWithRollback {
@@ -187,7 +214,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Fetch mass transit stop enrished by tierekisteri by national id"){
+  test("Fetch mass transit stop enriched by tierekisteri by national id"){
 
     runWithRollback{
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
@@ -211,6 +238,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          println(equipment.publicId)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
       }
     }

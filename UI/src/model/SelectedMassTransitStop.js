@@ -219,7 +219,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function(asset) {
