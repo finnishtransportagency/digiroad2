@@ -1,10 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{Track, RoadAddress, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, TestTransactions, Track}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -51,6 +54,25 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+
+  test("update inventory date") {
+    val props = Seq(SimpleProperty("foo", Seq()))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after.foreach(value => println(value.values))
+    after should have size (2)
+    val after2 = RollbackMassTransitStopService.updatedProperties(after)
+    after2.foreach(value => value.values.foreach(propval => println(propval.propertyValue)))
+    after2 should have size (2)
+  }
+
+  test("update empty inventory date") {
+    val props = Seq(SimpleProperty("investointipaiva", Seq()))
+    val after = RollbackMassTransitStopService.updatedProperties(props)
+    after.foreach(value => println(value.values))
+    after should have size (1)
+    after.head.values should have size(1)
+    after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
+  }
 
   test("Calculate mass transit stop validity periods") {
     runWithRollback {
