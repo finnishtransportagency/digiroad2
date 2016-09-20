@@ -664,6 +664,6 @@
     rootElement.find('.form-dark').on('change', 'input[type="checkbox"]', function(event) {
       var eventTarget = $(event.currentTarget);
     });
-  };
+  }
 })(this);
 
