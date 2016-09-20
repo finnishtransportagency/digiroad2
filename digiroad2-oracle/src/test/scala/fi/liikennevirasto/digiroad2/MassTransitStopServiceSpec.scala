@@ -64,7 +64,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("update empty inventory date") {
-    val props = Seq(SimpleProperty("investointipaiva", Seq()))
+    val props = Seq(SimpleProperty("inventointipaiva", Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props)
     after should have size (1)
     after.head.values should have size(1)
@@ -72,7 +72,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("do not update existing inventory date") {
-    val props = Seq(SimpleProperty("investointipaiva", Seq(PropertyValue("2015-12-30"))))
+    val props = Seq(SimpleProperty("inventointipaiva", Seq(PropertyValue("2015-12-30"))))
     val after = RollbackMassTransitStopService.updatedProperties(props)
     after should have size (1)
     after.head.values should have size(1)
@@ -214,7 +214,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Fetch mass transit stop enrished by tierekisteri by national id"){
+  test("Fetch mass transit stop enriched by tierekisteri by national id"){
 
     runWithRollback{
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
@@ -238,6 +238,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          println(equipment.publicId)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
       }
     }
