@@ -89,12 +89,12 @@ class NLSProxyServlet extends ProxyServlet {
 class ArcGisProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://aineistot.esri.fi"
+    java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
+    proxyRequest.header("Referer", "http://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
     proxyRequest.header("Host", null)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
