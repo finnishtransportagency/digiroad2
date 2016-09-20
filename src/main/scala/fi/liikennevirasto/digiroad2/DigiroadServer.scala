@@ -13,6 +13,7 @@ import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
+import org.slf4j.LoggerFactory
 
 
 trait DigiroadServer {
@@ -87,8 +88,11 @@ class NLSProxyServlet extends ProxyServlet {
 }
 
 class ArcGisProxyServlet extends ProxyServlet {
+  val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
+    logger.info("Requesting " + "http://aineistot.esri.fi"
+      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
     java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
   }
