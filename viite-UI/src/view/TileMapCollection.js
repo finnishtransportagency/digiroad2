@@ -64,7 +64,7 @@
     }
 
     var greyscaleLayer = new OpenLayers.Layer.ArcGISCache( "AGSCache",
-      "/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer", {
+      "arcgis/rest/services/Taustakartat/Harmaasavy/MapServer", {
         isBaseLayer: true,
 
         //From greyscaleMapConfig above
