@@ -481,15 +481,11 @@
         var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
 
         // Check if 'tietojen_yllapitaja' property has value 'ELY-keskus' in model and set isAdministratorELYKeskus
-        var administratorProperty =_.find(properties, function(property){
+        var administratorProperty = _.find(properties, function(property){
           return property.publicId === 'tietojen_yllapitaja';
         });
-        if (administratorProperty !== null && administratorProperty.values !== null && administratorProperty.values.length > 0) {
-          if (administratorProperty.values[0].propertyValue === '2') {
-            isAdministratorELYKeskus = true;
-          } else {
-            isAdministratorELYKeskus = false;
-          }
+        if (administratorProperty && administratorProperty.values && administratorProperty.values[0]) {
+          isAdministratorELYKeskus = (administratorProperty.values[0].propertyValue === '2');
         }
 
         var contents = _.take(properties, 2)
@@ -583,7 +579,7 @@
       };
 
       var isReadOnlyEquipment = function(property) {
-        return property.publicId === 'mainoskatos' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
+        return property.publicId === 'aikataulu' || property.publicId === 'roska_astia' || property.publicId === 'pyorateline' || property.publicId === 'valaistus' || property.publicId === 'penkki';
       };
 
       eventbus.on('asset:modified', function(){
