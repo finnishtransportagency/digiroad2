@@ -72,7 +72,8 @@ trait MassTransitStopService extends PointAssetOperations {
 
       //if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
       if (false) {
-        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(generateLiviIdentifier(persistedStop.get.nationalId))
+        val liViId = persistedStop.get.propertyData.find(_.publicId.equals(LiViIdentifierPublicId)).get.values.head.propertyValue
+        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
         val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
         return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
       }
@@ -146,8 +147,6 @@ trait MassTransitStopService extends PointAssetOperations {
       case massTransitStop => massTransitStop
     }
   }
-
-  def generateLiviIdentifier(nationalId: Long): String = "OTHJ%d".format(nationalId)
 
   /**
     * Verify if the stop is relevant to Tierekisteri
