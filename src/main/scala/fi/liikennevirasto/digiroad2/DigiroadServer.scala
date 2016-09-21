@@ -91,8 +91,6 @@ class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    logger.info("Requesting " + "http://aineistot.esri.fi"
-      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
     java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
   }
@@ -100,6 +98,14 @@ class ArcGisProxyServlet extends ProxyServlet {
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
     proxyRequest.header("Referer", "http://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
     proxyRequest.header("Host", null)
+    logger.info("Request headers")
+    val headers = proxyRequest.getHeaders.iterator()
+    while (headers.hasNext) {
+      val field = headers.next
+      logger.info(field.getName + ": " + field.getValue)
+    }
+    logger.info("/Request headers")
+
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 
