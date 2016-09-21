@@ -357,7 +357,9 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          element = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
+          // Don't show inventory date field if administrator is other than ELY-keskus
+          var hideInventoryDate = property.publicId === "inventointipaiva" && !isAdministratorELYKeskus ? "style='visibility:hidden'":"";
+          element = $('<input type="text"' +  hideInventoryDate + '/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
               return;
