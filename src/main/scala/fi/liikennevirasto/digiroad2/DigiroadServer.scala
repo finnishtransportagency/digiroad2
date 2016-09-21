@@ -91,13 +91,19 @@ class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("http://aineistot.esri.fi"
-      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
+    java.net.URI.create("https://aineistot.esri.fi"
+      + uri.replaceFirst("/viite", ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "http://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
+    proxyRequest.header("Referer", "https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
     proxyRequest.header("Host", null)
+    proxyRequest.header("OAM_REMOTE_USER", null)
+    proxyRequest.header("OAM_IDENTITY_DOMAIN", null)
+    proxyRequest.header("OAM_LAST_REAUTHENTICATION_TIME", null)
+    proxyRequest.header("OAM_GROUPS", null)
+    proxyRequest.header("X-Forwarded-Host", null)
+    proxyRequest.header("Via", null)
     logger.info("Request headers")
     val headers = proxyRequest.getHeaders.iterator()
     while (headers.hasNext) {
@@ -115,6 +121,7 @@ class ArcGisProxyServlet extends ProxyServlet {
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
       val proxy = new HttpProxy("172.17.208.16", 8085)
+      logger.info("Proxy created for ArcGis to " + proxy.getURI)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
