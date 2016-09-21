@@ -132,6 +132,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     });
   }
 
+  delete("/massTransitStops/removal") {
+    val user = userProvider.getCurrentUser()
+    val assetId = (parsedBody \ "assetId").extractOpt[Int].get
+    val municipalityCode = linearAssetService.getMunicipalityCodeByAssetId(assetId)
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    if(!user.isBusStopMaintainer()){
+      halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
+    }
+    else {
+      massTransitStopService.deleteAllMassTransitStopData(assetId)
+    }
+  }
+
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }

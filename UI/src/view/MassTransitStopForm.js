@@ -1,5 +1,7 @@
 (function(root) {
 
+  var poistaSelected = false;
+
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
@@ -50,7 +52,11 @@
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
-      selectedMassTransitStopModel.save();
+      if(poistaSelected){
+        selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
+      }else {
+        selectedMassTransitStopModel.save();
+      }
     });
     var updateStatus = function() {
       if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
@@ -58,12 +64,18 @@
       }
       else if(selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
+      } else if(poistaSelected) {
+        element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
       }
     };
 
     updateStatus();
+
+    eventbus.on('jfots', function(){
+      updateStatus();
+    }, this);
 
     eventbus.on('asset:moved assetPropertyValue:changed', function() {
       updateStatus();
@@ -93,11 +105,17 @@
     initialize: function (backend) {
       var enumeratedPropertyValues = null;
       var readOnly = true;
+      poistaSelected = false;
       var streetViewHandler;
       var isAdministratorELYKeskus = false;   // variable to show some of equipment fields read-only for ELY-keskus bus stops and hide inventory date if ELY-keskus is not chosen as administrator
-
       var MStopDeletebutton = function(readOnly) {
-        var removalForm = $('<div class="checkbox"> <label>Poista<input id = "removebox" type="checkbox"></label></div>');
+
+        var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
+        removalForm.find("label").find("input")[0].onclick = function (){
+          poistaSelected = !poistaSelected
+          eventbus.trigger('jfots');
+        };
+
         var updateMStopDeletebuttonVisibility = function() {
           if (readOnly)
           { removalForm.hide(); }
@@ -109,6 +127,7 @@
       };
 
       var renderAssetForm = function() {
+        poistaSelected = false;
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
         readOnly = controlledByTR();
@@ -654,16 +673,8 @@
               {type: 'alert'});
         }
       });
-      bindEvents();
       backend.getEnumeratedPropertyValues();
     }
   };
-
-  function bindEvents() {
-    var rootElement = $('#feature-attributes');
-    rootElement.find('.form-dark').on('change', 'input[type="checkbox"]', function(event) {
-      var eventTarget = $(event.currentTarget);
-    });
-  }
 })(this);
 

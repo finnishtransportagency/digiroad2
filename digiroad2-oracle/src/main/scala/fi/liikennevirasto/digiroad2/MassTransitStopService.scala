@@ -482,6 +482,15 @@ trait MassTransitStopService extends PointAssetOperations {
     GeometryUtils.calculateLinearReferenceFromPoint(point, points)
   }
 
+  def deleteAllMassTransitStopData(assetId: Long) = {
+    withDynTransaction {
+      massTransitStopDao.deleteAllMassTransitStopData(assetId)
+   }
+    if(tierekisteriClient.isTREnabled()){
+      tierekisteriClient.deleteMassTransitStop(assetId.toString())
+    }
+  }
+
   implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong

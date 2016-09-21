@@ -196,6 +196,14 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   }
 
   /**
+    * Returns the anwser to the question "Is Tierekisteri Enabled?".
+    * @return Type: Boolean - If TR client is enabled
+    */
+  def isTREnabled():Boolean = {
+    tierekisteriEnabled
+  }
+
+  /**
     * Returns a bus stop based on OTH "yllapitajan_koodi" id
     * Tierekisteri REST API endpoint: GET /pysakit/{livitunn}
     *

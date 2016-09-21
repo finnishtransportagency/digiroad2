@@ -311,6 +311,17 @@
       }
     };
 
+    var deleteMassTransitStop = function (poistaSelected){
+      if (poistaSelected){
+        var currAsset = this.getCurrentAsset();
+        backend.deleteAllMassTransitStopData(currAsset.id,function() {
+          eventbus.trigger('massTransitStopDeleted', currAsset);
+        }, function(){
+          cancel();
+        });
+      }
+    };
+
     function getPropertyValue(asset, propertyName) {
       return _.chain(asset.propertyData)
         .find(function (property) { return property.publicId === propertyName; })
@@ -353,7 +364,9 @@
       pikavuoroIsAlone: pikavuoroIsAlone,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
-      expireMassTransitStopById: expireMassTransitStopById
+      expireMassTransitStopById: expireMassTransitStopById,
+      deleteMassTransitStop: deleteMassTransitStop
+
     };
   };
 

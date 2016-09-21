@@ -278,4 +278,13 @@ class MassTransitStopDao {
        Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
       """.as[String].list
   }
+
+  def deleteAllMassTransitStopData(assetId: Long): Unit ={
+    sqlu"""Delete From Single_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Multiple_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Text_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset Where id = $assetId""".execute
+  }
 }
