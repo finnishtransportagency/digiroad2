@@ -96,13 +96,15 @@ class ArcGisProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    proxyRequest.header("Referer", "https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer")
+    proxyRequest.header("Referer", null)
     proxyRequest.header("Host", null)
+    proxyRequest.header("Cookie", null)
     proxyRequest.header("OAM_REMOTE_USER", null)
     proxyRequest.header("OAM_IDENTITY_DOMAIN", null)
     proxyRequest.header("OAM_LAST_REAUTHENTICATION_TIME", null)
     proxyRequest.header("OAM_GROUPS", null)
     proxyRequest.header("X-Forwarded-Host", null)
+    proxyRequest.header("X-Forwarded-Server", null)
     proxyRequest.header("Via", null)
     logger.info("Request headers")
     val headers = proxyRequest.getHeaders.iterator()
