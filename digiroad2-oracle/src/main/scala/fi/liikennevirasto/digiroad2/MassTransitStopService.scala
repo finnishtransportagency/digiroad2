@@ -484,9 +484,10 @@ trait MassTransitStopService extends PointAssetOperations {
   def deleteAllMassTransitStopData(assetId: Long) = {
     withDynTransaction {
       massTransitStopDao.deleteAllMassTransitStopData(assetId)
-   }
-    if(tierekisteriClient.isTREnabled()){
-      tierekisteriClient.deleteMassTransitStop(assetId.toString())
+
+      if (tierekisteriClient.isTREnabled()) {
+        tierekisteriClient.deleteMassTransitStop(assetId.toString())
+      }
     }
   }
 

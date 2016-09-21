@@ -73,7 +73,7 @@
 
     updateStatus();
 
-    eventbus.on('jfots', function(){
+    eventbus.on('checkBoxPoistaChanged', function(){
       updateStatus();
     }, this);
 
@@ -112,8 +112,8 @@
 
         var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
         removalForm.find("label").find("input")[0].onclick = function (){
-          poistaSelected = !poistaSelected
-          eventbus.trigger('jfots');
+          poistaSelected = !poistaSelected;
+          eventbus.trigger('checkBoxPoistaChanged');
         };
 
         var updateMStopDeletebuttonVisibility = function() {

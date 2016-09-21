@@ -64,6 +64,17 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
     }
   }
 
+  test("Delete all MassTransitStop data by Id") {
+    OracleDatabase.withDynTransaction {
+      val idToDelete = sql"""select ID from asset where asset_type_id = 10 and valid_to > = sysdate and rownum = 1""".as[Long].first
+      massTransitStopDao.deleteAllMassTransitStopData(idToDelete)
+
+      val deleted = sql"""select case when COUNT(ID) = 0 then 1 else 0 end as deleted from asset where id = $idToDelete""".as[(Boolean)].firstOption
+      deleted must be(Some(true))
+      dynamicSession.rollback()
+    }
+  }
+
   private def createAssetRow(propertyRow: PropertyRow) = {
     MassTransitStopRow(1, 1, 1, Some(Point(1, 1)), 123l, Some(180), 2, None, None, propertyRow,
       Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, AdministrativeClass.apply(99), 235, false)
