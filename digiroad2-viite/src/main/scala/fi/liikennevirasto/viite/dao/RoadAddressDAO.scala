@@ -6,6 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 
@@ -65,7 +67,7 @@ object CalibrationCode {
 case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, endDate: String, linkId: Long,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: DateTime, linkId: Long,
                        startMValue: Double, endMValue: Double, calibrationPoints: Seq[CalibrationPoint] = Seq()
                       )
 
@@ -93,6 +95,15 @@ object RoadAddressDAO {
         CalibrationPoint(linkId, endMValue, endAddrMValue))
     }
   }
+  val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+
+  def dateTimeParse(string: String) = {
+    try {
+      DateTime.parse(string, formatter)
+    } catch {
+      case ex: Exception => null
+    }
+  }
 
   def fetchByLinkId(linkIds: Set[Long]) = {
     val linkIdString = linkIds.mkString(",")
@@ -116,25 +127,59 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
         linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, endDate, linkId,
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
   }
 
-  private def fetchRoadAddressData(linkIds: Set[Long]) = {
+  def fetchByRoadPart(roadNumber: Int, roadPartNumber: Int) = {
     val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
+        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where road_number = $roadNumber AND road_part_number = $roadPartNumber
+        ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
-        select id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
-        from asset a
-        join asset_link al on a.id = al.asset_id
-        join lrm_position pos on al.position_id = pos.id
-        join property p on p.asset_type_id = a.asset_type_id
-        left join single_choice_value scv on scv.asset_id = a.id
-        left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
-      """
-
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+      String, String, String, String, Int)](query).list
+    tuples.map{
+      case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+    }
   }
 
+  def fetchNextRoadNumber(current: Int) = {
+    val query =
+      s"""
+          SELECT * FROM (
+            SELECT ra.road_number
+            FROM road_address ra
+            WHERE road_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            ORDER BY road_number ASC
+          ) WHERE ROWNUM < 2
+      """
+    Q.queryNA[Int](query).firstOption
+  }
+
+  def fetchNextRoadPartNumber(roadNumber: Int, current: Int) = {
+    val query =
+      s"""
+          SELECT * FROM (
+            SELECT ra.road_part_number
+            FROM road_address ra
+            WHERE road_number = $roadNumber  AND road_part_number > $current AND (end_date < sysdate OR end_date IS NULL)
+            ORDER BY road_part_number ASC
+          ) WHERE ROWNUM < 2
+      """
+    Q.queryNA[Int](query).firstOption
+  }
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))

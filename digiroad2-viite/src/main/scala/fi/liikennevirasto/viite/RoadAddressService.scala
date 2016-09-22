@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkService
+import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import org.joda.time.format.DateTimeFormat
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
 
@@ -30,8 +31,11 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
 
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
   /**
     * Get calibration points for road not in a project
+    *
     * @param roadNumber
     * @return
     */
@@ -42,6 +46,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   /**
     * Get calibration points for road including project created ones
+    *
     * @param roadNumber
     * @param projectId
     * @return
@@ -65,32 +70,36 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: (Int, Int), municipalities: Set[Int]) = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
     val addresses = withDynSession {
-      RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
+      RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
     }
-    println("Found " + addresses.size + " road address links")
-    val viiteRoadLinks = roadLinks.map { rl =>
-      val ra = addresses.get(rl.linkId)
+    val viiteRoadLinks = roadLinks.flatMap { rl =>
+      val ra = addresses.getOrElse(rl.linkId, Seq())
       buildRoadAddressLink(rl, ra)
     }
     viiteRoadLinks
   }
-  def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress]): RoadAddressLink =
-    roadAddr match {
-      case Some(ra) => new RoadAddressLink(rl.linkId, rl.geometry,
-        rl.length,  rl.administrativeClass,
-        rl.functionalClass,  rl.trafficDirection,
-        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
-        ra.startAddrMValue, ra.endAddrMValue, ra.endDate, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-        ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
-      case _ => new RoadAddressLink(rl.linkId, rl.geometry,
+  def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    roadAddrSeq.size match {
+      case 0 => Seq(new RoadAddressLink(0, rl.linkId, rl.geometry,
         rl.length,  rl.administrativeClass,
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
         rl.attributes, 0, 0, 0, 0,
-        0, 0, 0, null, 0, 0, SideCode.Unknown,
-        None, None)
+        0, 0, 0, "", 0, 0, SideCode.Unknown,
+        None, None))
+      case _ => roadAddrSeq.map(ra => {
+        val geom = GeometryUtils.truncateGeometry(rl.geometry, ra.startMValue, ra.endMValue)
+        val length = GeometryUtils.geometryLength(geom)
+        new RoadAddressLink(ra.id, rl.linkId, geom,
+          length, rl.administrativeClass,
+          rl.functionalClass, rl.trafficDirection,
+          rl.linkType, rl.modifiedAt, rl.modifiedBy,
+          rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
+          ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
+          ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
+      })
     }
+  }
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
     track match {
