@@ -57,8 +57,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator) Set() else user.configuration.authorizedMunicipalities
 
+    val zoomLevel = params.getOrElse("zoom", "5")
+
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities))
+      .map(getRoadLinksFromVVH(municipalities, zoomLevel))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -69,7 +71,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(NotFound("Road link with link ID " + linkId + " not found"))
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: String)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    println(bbox)
+    println(zoomLevel)
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = roadAddressService.getRoadAddressLinks(boundingRectangle, (1, 19999), municipalities)
 

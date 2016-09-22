@@ -64,6 +64,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: (Int, Int), municipalities: Set[Int]) = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
+    println("Got " + roadLinks.size + " road links")
     val addresses = withDynSession {
       RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
     }

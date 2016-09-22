@@ -1,9 +1,11 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+    this.getRoadLinks = createCallbackRequestor(function(params) {
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox
       return {
-        url: 'api/viite/roadlinks?bbox=' + boundingBox
+        url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
       };
     });
 

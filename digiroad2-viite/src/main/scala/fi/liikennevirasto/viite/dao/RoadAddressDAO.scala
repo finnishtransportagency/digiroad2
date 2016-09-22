@@ -94,10 +94,10 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long]) = {
+  def fetchByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
-      case true => ""
+      case true => return List()
       case false => s""" where pos.link_id in ($linkIdString)"""
     }
     val query =

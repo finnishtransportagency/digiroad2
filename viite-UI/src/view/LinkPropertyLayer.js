@@ -63,7 +63,10 @@
     };
 
     this.refreshView = function() {
-      roadCollection.fetch(map.getExtent());
+      var zoom = map.getResolution()
+      console.log('zoom = ' + map.getZoom());
+      console.log('Res = ' + map.getResolution());
+      roadCollection.fetch(map.getExtent(), map.getZoom());
     };
 
     this.isDirty = function() {
