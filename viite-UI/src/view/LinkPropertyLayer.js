@@ -3,6 +3,7 @@
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
+    var zoom = 0;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
@@ -53,20 +54,23 @@
     var draw = function() {
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
-      me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
+      if (zoom > zoomlevels.minZoomForAssets) {
+        me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
+      }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
 
     this.refreshView = function() {
-      var zoom = map.getResolution()
-      console.log('zoom = ' + map.getZoom());
-      console.log('Res = ' + map.getResolution());
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      // Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
+      console.log(Math.log(map.getResolution()) * Math.LOG2E);
+      zoom = 11 - Math.round(Math.log(map.getResolution()) * Math.LOG2E);
+      console.log("zoom = " + zoom);
+      roadCollection.fetch(map.getExtent(), zoom);
     };
 
     this.isDirty = function() {

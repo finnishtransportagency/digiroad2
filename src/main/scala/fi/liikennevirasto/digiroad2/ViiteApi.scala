@@ -25,6 +25,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     with RequestHeaderAuthentication
     with GZipSupport {
 
+  class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
+
+  val DrawMainRoadPartsOnly = 1
+  val DrawRoadPartsOnly = 2
+  val DrawPublicRoads = 3
+  val DrawAllRoads = 4
+
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -57,7 +64,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator) Set() else user.configuration.authorizedMunicipalities
 
-    val zoomLevel = params.getOrElse("zoom", "5")
+    val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
 
     params.get("bbox")
       .map(getRoadLinksFromVVH(municipalities, zoomLevel))
@@ -71,15 +78,39 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(NotFound("Road link with link ID " + linkId + " not found"))
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: String)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    println(bbox)
-    println(zoomLevel)
+  private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
-    val viiteRoadLinks = roadAddressService.getRoadAddressLinks(boundingRectangle, (1, 19999), municipalities)
+    println("ZoomLevel = " + zoomLevel)
+    val viiteRoadLinks = zoomLevel match {
+      case DrawMainRoadPartsOnly => roadAddressService.getRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
+      case DrawRoadPartsOnly => roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
+      case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
+      case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
+      case _ => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
+    }
 
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(roadAddressLinkToApi)
+    }
+  }
+
+  private def chooseDrawType(zoomLevel: String) = {
+    val C1 = new Contains(-10 to 3)
+    val C2 = new Contains(4 to 5)
+    val C3 = new Contains(6 to 10)
+    val C4 = new Contains(10 to 16)
+    try {
+      val level: Int = zoomLevel.toInt
+      level match {
+        case C1() => DrawMainRoadPartsOnly
+        case C2() => DrawRoadPartsOnly
+        case C3() => DrawPublicRoads
+        case C4() => DrawAllRoads
+        case _ => DrawMainRoadPartsOnly
+      }
+    } catch {
+      case ex: NumberFormatException => DrawMainRoadPartsOnly
     }
   }
 

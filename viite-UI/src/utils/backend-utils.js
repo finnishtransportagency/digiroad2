@@ -3,7 +3,7 @@
     var self = this;
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
-      var boundingBox = params.boundingBox
+      var boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
       };

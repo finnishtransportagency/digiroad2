@@ -3,14 +3,22 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.RoadLinkService
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.user.User
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
@@ -32,6 +40,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   /**
     * Get calibration points for road not in a project
+    *
     * @param roadNumber
     * @return
     */
@@ -42,6 +51,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   /**
     * Get calibration points for road including project created ones
+    *
     * @param roadNumber
     * @param projectId
     * @return
@@ -62,10 +72,10 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   }
 
-  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: (Int, Int), municipalities: Set[Int]) = {
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, (1, 19999), municipalities)
+  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false) = {
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything)
     println("Got " + roadLinks.size + " road links")
-    val addresses = withDynSession {
+    val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
     }
     println("Found " + addresses.size + " road address links")
@@ -75,6 +85,48 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
     }
     viiteRoadLinks
   }
+
+  def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
+    val addresses = withDynTransaction {
+      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits).map(ra => ra.linkId -> ra).toMap
+    }
+    val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
+    println("Found " + addresses.size + " road address links")
+    println("Got " + roadLinks.size + " road links")
+//    val temp = roadLinkService.fetchByLinkIdMassQuery(roadLinks.map(_.linkId).toSet)
+//    println("fetch is " + temp.size)
+    val groupedLinks = roadLinks.map { rl =>
+      val ra = addresses.get(rl.linkId)
+      buildRoadAddressLink(rl, ra)
+    }.groupBy(_.roadNumber)
+
+    val retval = groupedLinks.mapValues {
+      case (viiteRoadLinks) =>
+        val sorted = viiteRoadLinks.sortWith({
+          case (ral1, ral2) =>
+            if (ral1.roadNumber < ral2.roadNumber)
+              true
+            else if (ral1.roadNumber > ral2.roadNumber)
+              false
+            else if (ral1.roadPartNumber < ral2.roadPartNumber)
+              true
+            else if (ral1.roadPartNumber > ral2.roadPartNumber)
+              false
+            else if (ral1.startAddressM < ral2.startAddressM)
+              true
+            else
+              false
+        })
+        sorted.zip(sorted.tail).map{
+          case (st1, st2) =>
+            println("S " + st1.roadPartNumber + " / " + st1.startAddressM + " - " + st1.endAddressM)
+            println("E " + st2.roadPartNumber + " / " + st2.startAddressM + " - " + st2.endAddressM)
+            st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
+        }
+    }
+    retval.flatMap(x => x._2).toSeq
+  }
+
   def buildRoadAddressLink(rl: RoadLink, roadAddr: Option[RoadAddress]): RoadAddressLink =
     roadAddr match {
       case Some(ra) => new RoadAddressLink(rl.linkId, rl.geometry,

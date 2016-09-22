@@ -1,13 +1,17 @@
 package fi.liikennevirasto.viite.dao
 
 import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import org.joda.time.DateTime
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
 sealed trait RoadType {
@@ -95,6 +99,9 @@ object RoadAddressDAO {
   }
 
   def fetchByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
+    if (linkIds.size > 1000) {
+      return fetchByLinkIdMassQuery(linkIds)
+    }
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
       case true => return List()
@@ -112,12 +119,70 @@ object RoadAddressDAO {
       """
     val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
       String, String, String, String, Int)](query).list
-    tuples.map{
+    tuples.map {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
-        linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
           Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, endDate, linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+    }
+
+  }
+
+  def fetchPartsByRoadNumbers(roadNumbers: Seq[(Int, Int)]): List[RoadAddress] = {
+    val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
+      .mkString("(", ") OR (", ")")
+      //.foldLeft("")((c, r) => c + ") OR (" + r)
+    val where = roadNumbers.isEmpty match {
+      case true => return List()
+//      case false => s""" where calibration_points != 0 AND track_code in (0,1) AND $filter"""
+      case false => s""" where track_code in (0,1) AND $filter"""
+    }
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
+        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        $where
+      """
+    println(query)
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+      String, String, String, String, Int)](query).list
+    tuples.map {
+      case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, endDate, linkId,
+          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+    }
+
+  }
+
+  def fetchByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val query =
+          s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
+        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        join $idTableName i on i.id = pos.link_id
+      """
+        val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+          String, String, String, String, Int)](query).list
+        tuples.map {
+          case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+          linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+            RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
+              Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, endDate, linkId,
+              startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+        }
     }
   }
 
