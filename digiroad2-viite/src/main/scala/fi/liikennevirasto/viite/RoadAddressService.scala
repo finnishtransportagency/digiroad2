@@ -74,11 +74,9 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false) = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything)
-    println("Got " + roadLinks.size + " road links")
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).map(ra => ra.linkId -> ra).toMap
     }
-    println("Found " + addresses.size + " road address links")
     val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.get(rl.linkId)
       buildRoadAddressLink(rl, ra)
@@ -91,10 +89,17 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
       RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits).map(ra => ra.linkId -> ra).toMap
     }
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
-    println("Found " + addresses.size + " road address links")
-    println("Got " + roadLinks.size + " road links")
-//    val temp = roadLinkService.fetchByLinkIdMassQuery(roadLinks.map(_.linkId).toSet)
-//    println("fetch is " + temp.size)
+    roadLinks.map { rl =>
+      val ra = addresses.get(rl.linkId)
+      buildRoadAddressLink(rl, ra)
+    }
+  }
+
+  def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
+    val addresses = withDynTransaction {
+      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse=true).map(ra => ra.linkId -> ra).toMap
+    }
+    val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.map { rl =>
       val ra = addresses.get(rl.linkId)
       buildRoadAddressLink(rl, ra)
@@ -119,8 +124,6 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         })
         sorted.zip(sorted.tail).map{
           case (st1, st2) =>
-            println("S " + st1.roadPartNumber + " / " + st1.startAddressM + " - " + st1.endAddressM)
-            println("E " + st2.roadPartNumber + " / " + st2.startAddressM + " - " + st2.endAddressM)
             st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
         }
     }
