@@ -80,11 +80,12 @@ object DataFixture {
       "kauniainen_exit_numbers.sql",
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
-      "siilijarvi_functional_classes.sql",
-      "siilijarvi_link_types.sql",
-      "siilijarvi_traffic_directions.sql",
-      "siilinjarvi_speed_limits.sql",
-      "siilinjarvi_linear_assets.sql"
+//      "siilijarvi_functional_classes.sql",
+//      "siilijarvi_link_types.sql",
+//      "siilijarvi_traffic_directions.sql",
+//      "siilinjarvi_speed_limits.sql",
+//      "siilinjarvi_linear_assets.sql",
+      "insert_road_address_data.sql"
     ))
   }
 
