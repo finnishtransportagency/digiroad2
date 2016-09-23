@@ -106,14 +106,6 @@ class ArcGisProxyServlet extends ProxyServlet {
     proxyRequest.header("X-Forwarded-Host", null)
     proxyRequest.header("X-Forwarded-Server", null)
     proxyRequest.header("Via", null)
-    logger.info("Request headers")
-    val headers = proxyRequest.getHeaders.iterator()
-    while (headers.hasNext) {
-      val field = headers.next
-      logger.info(field.getName + ": " + field.getValue)
-    }
-    logger.info("/Request headers")
-
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 
@@ -123,7 +115,6 @@ class ArcGisProxyServlet extends ProxyServlet {
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
       val proxy = new HttpProxy("172.17.208.16", 8085)
-      logger.info("Proxy created for ArcGis to " + proxy.getURI)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)

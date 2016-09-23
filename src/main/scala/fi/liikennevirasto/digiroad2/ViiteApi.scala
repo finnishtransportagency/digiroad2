@@ -11,6 +11,7 @@ import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartition
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
+import org.slf4j.LoggerFactory
 
 /**
   * Created by venholat on 25.8.2016.
@@ -34,6 +35,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
+  val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {

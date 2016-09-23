@@ -21,6 +21,8 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  val logger = LoggerFactory.getLogger(getClass)
+
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
 
@@ -106,7 +108,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
           rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
           ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
           ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
-      })
+      }).filter(_.length > 0.0)
     }
   }
 
