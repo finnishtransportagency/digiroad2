@@ -225,7 +225,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
       )
-      RollbackMassTransitStopService.massTransitStopDao.updateTextPropertyValue(300008, "yllapitajan_koodi", "OTHJ%d".format(85755))
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
     }
@@ -250,7 +249,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
       )
-      RollbackMassTransitStopService.massTransitStopDao.updateTextPropertyValue(300008, "yllapitajan_koodi", "OTHJ%d".format(85755))
 
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       equipments.foreach{

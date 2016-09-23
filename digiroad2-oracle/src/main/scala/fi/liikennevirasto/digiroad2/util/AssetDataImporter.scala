@@ -42,7 +42,7 @@ AssetDataImporter {
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
   case class PropertyWrapper(shelterTypePropertyId: Long, accessibilityPropertyId: Long, administratorPropertyId: Long,
-                             busStopAssetTypeId: Long, busStopTypePropertyId: Long)
+                             busStopAssetTypeId: Long, busStopTypePropertyId: Long, busStopLiViPropertyId: Long)
 
   sealed trait ImportDataSet {
     def database(): DatabaseDef
@@ -466,9 +466,10 @@ class AssetDataImporter {
       val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
       val busStopTypePropertyId = sql"select p.id from property p where p.public_id = 'pysakin_tyyppi'".as[Long].first
+      val busStopLiViPropertyId = sql"select p.id from property p where p.public_id = 'yllapitajan_koodi'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
       PropertyWrapper(shelterTypePropertyId, accessibilityPropertyId, administratorPropertyId,
-                      busStopAssetTypeId, busStopTypePropertyId)
+                      busStopAssetTypeId, busStopTypePropertyId, busStopLiViPropertyId)
     }
   }
 
@@ -496,6 +497,7 @@ class AssetDataImporter {
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 2)
       insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
+      insertTextPropertyData(typeProps.busStopLiViPropertyId, assetId, "OTHJ%d".format(busStop.busStopId.get))
     }
   }
 
