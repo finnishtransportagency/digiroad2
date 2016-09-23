@@ -30,6 +30,13 @@
       '</div>');
 
     var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
+
+    var calibrationPointPicture = $('' +
+        '<div class="legend-entry">' +
+          '<div class="label">Jakopiste</div>' +
+        '</div>' +
+        '<div class="calibration-point-image"></div>');
+
     var roadClasses = [
       [1, 'Valtatie (1-39)'],
       [2, 'Kantatie (40-99)'],
@@ -51,6 +58,7 @@
         '</div>';
     }).join('');
     roadClassLegend.append(roadClassLegendEntries);
+    roadClassLegend.append(calibrationPointPicture);
 
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
