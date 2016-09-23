@@ -67,8 +67,6 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-
-      // TODO: In tests the properties don't get populated
       if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
         val properties = persistedStop.map(_.propertyData).get
         val liViProp = properties.find(pd => pd.publicId == LiViIdentifierPublicId)

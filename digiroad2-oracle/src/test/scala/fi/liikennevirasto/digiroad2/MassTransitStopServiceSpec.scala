@@ -209,6 +209,23 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Fetch mass transit stop by national id") {
     runWithRollback {
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Yes,
+        Equipment.CarParkForTakingPassengers -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Yes,
+        Equipment.RaisedBusStop -> Existence.No,
+        Equipment.Lighting -> Existence.Unknown,
+        Equipment.Roof -> Existence.Yes,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.Timetable -> Existence.No,
+        Equipment.TrashBin -> Existence.Yes,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
+      )
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
+      )
+      RollbackMassTransitStopService.massTransitStopDao.updateTextPropertyValue(300008, "yllapitajan_koodi", "OTHJ%d".format(85755))
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
     }
@@ -233,12 +250,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
       )
+      RollbackMassTransitStopService.massTransitStopDao.updateTextPropertyValue(300008, "yllapitajan_koodi", "OTHJ%d".format(85755))
+
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
-      stop.get.propertyData.foreach(println)
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
-          println(equipment.publicId)
           property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
       }
