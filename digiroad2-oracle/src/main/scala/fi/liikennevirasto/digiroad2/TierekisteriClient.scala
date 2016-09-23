@@ -359,9 +359,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
     def getFieldValue(field: String): String = {
       data.
-        getOrElse(field,
-          throw new TierekisteriClientException("Missing field in response '%s'".format(field))).
-        toString
+        getOrElse(field, "").toString
     }
     def getMandatoryFieldValue(field: String): String = {
       val value = getFieldValue(field)
