@@ -128,9 +128,9 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        stopType: StopType,
                                        express: Boolean,
                                        equipments: Map[Equipment, Existence] = Map(),
-                                       stopCode: String,
-                                       nameFi: String,
-                                       nameSe: String,
+                                       stopCode: Option[String],
+                                       nameFi: Option[String],
+                                       nameSe: Option[String],
                                        modifiedBy: String,
                                        operatingFrom: Date,
                                        operatingTo: Date,
@@ -357,15 +357,15 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   }
 
   private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
-    def getFieldValue(field: String): String = {
-      data.
-        getOrElse(field, "").toString
+    def getFieldValue(field: String): Option[String] = {
+      data.get(field).map(_.toString)
     }
     def getMandatoryFieldValue(field: String): String = {
-      val value = getFieldValue(field)
-      if(value.isEmpty)
-        throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
-      value
+      val fieldValue = getFieldValue(field)
+      fieldValue match {
+        case Some(value) => value
+        case _ => throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+      }
     }
 
     //Mandatory fields
@@ -456,7 +456,7 @@ object TierekisteriBusStopMarshaller {
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
       RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
-      "", "", "", "", new Date, new Date, new Date)
+      None, None, None, "", new Date, new Date, new Date)
   }
 
 
@@ -505,8 +505,8 @@ object TierekisteriBusStopMarshaller {
     val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
     val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
     val liViIdProperty = mapLiViIdProperties(massTransitStop.liviId, allPropertiesAvailable)
-    val nameFiProperty = mapNameFiProperties(massTransitStop.nameFi, allPropertiesAvailable)
-    val nameSeProperty = mapNameSeProperties(massTransitStop.nameSe, allPropertiesAvailable)
+    val nameFiProperty = mapNameFiProperties(massTransitStop.nameFi.getOrElse(""), allPropertiesAvailable)
+    val nameSeProperty = mapNameSeProperties(massTransitStop.nameSe.getOrElse(""), allPropertiesAvailable)
     val allProperties = liViIdProperty++equipmentsProperty++stopTypeProperty++nameFiProperty++nameSeProperty
 
     MassTransitStopWithProperties(0L, nationalId, stopTypes.toSeq, 0.0, 0.0, None, None, None, floating = false, allProperties)

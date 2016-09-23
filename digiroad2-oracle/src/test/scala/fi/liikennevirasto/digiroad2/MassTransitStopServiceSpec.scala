@@ -231,14 +231,15 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, "", "TierekisteriFi", "TierekisteriSe", "test", new Date, new Date, new Date)
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
       )
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
-
+      stop.get.propertyData.foreach(println)
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           println(equipment.publicId)
+          property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
       }
     }

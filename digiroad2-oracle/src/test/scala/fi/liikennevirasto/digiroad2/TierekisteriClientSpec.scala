@@ -158,7 +158,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       val dateFormat = "yyyy-MM-dd"
 
       val tkMassTransitStop = TierekisteriMassTransitStop(208914,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),RoadSide.Right,StopType.Combined, false,
-        equipments,"681","Raisionjoki", "Reso å", "KX123456", new Date, new Date,new Date)
+        equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date,new Date)
 
 
       tierekisteriClient.createMassTransitStop(tkMassTransitStop)
@@ -182,7 +182,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
         Equipment.Lighting -> Existence.Unknown)
 
       val tkMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914eeeeeeeeeeeee", RoadAddress(None, 25823, 104, Track.Combined, 150, None), RoadSide.Right, StopType.Combined, false,
-        equipments, "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+        equipments, Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date, new Date)
 
       tierekisteriClient.createMassTransitStop(tkMassTransitStop)
 
@@ -207,7 +207,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
         Equipment.Lighting -> Existence.Unknown)
 
       val tkMassTransitStop = TierekisteriMassTransitStop(208913,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),RoadSide.Right,StopType.Combined, false,
-        equipments,"681","Raisionjoki", "Reso å", "KX123456", new Date, new Date,new Date)
+        equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date,new Date)
 
       tierekisteriClient.createMassTransitStop(tkMassTransitStop)
 
@@ -234,7 +234,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914",
       RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
-      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+      Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date, new Date)
 
     val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
   }
@@ -258,7 +258,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499999999",
       RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
-      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+      Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date, new Date)
 
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
@@ -285,7 +285,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499Err",
       RoadAddress(None, 1, 1, Track.Combined, 150, None), RoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
-      "681", "Raisionjoki", "Reso å", "KX123456", new Date, new Date, new Date)
+      Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", new Date, new Date, new Date)
 
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)

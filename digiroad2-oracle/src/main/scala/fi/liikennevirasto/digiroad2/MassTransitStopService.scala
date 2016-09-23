@@ -68,11 +68,11 @@ trait MassTransitStopService extends PointAssetOperations {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
 
-      //TODO: Guilherme Pedrosa - Remove If false and de-comment the real if once the tierekistery part is done
-
-      //if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
-      if (false) {
-        val liViId = persistedStop.get.propertyData.find(_.publicId.equals(LiViIdentifierPublicId)).get.values.head.propertyValue
+      // TODO: In tests the properties don't get populated
+      if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
+        val properties = persistedStop.map(_.propertyData).get
+        val liViProp = properties.find(pd => pd.publicId == LiViIdentifierPublicId)
+        val liViId = liViProp.map(_.values.head).get.propertyValue
         val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
         val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
         return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
@@ -130,8 +130,8 @@ trait MassTransitStopService extends PointAssetOperations {
   private def enrichPersistedMassTransitStop(persistedMassTransitStop: Option[PersistedMassTransitStop], tierekisteriStop: TierekisteriMassTransitStop): Option[PersistedMassTransitStop] = {
     val overridePropertyValueOperations: Seq[(TierekisteriMassTransitStop, Property) => Property] = Seq(
       setEquipments,
-      setPropertyValueIfEmpty(nameFiPublicId, { ta => ta.nameFi }),
-      setPropertyValueIfEmpty(nameSePublicId, { ta => ta.nameSe })
+      setPropertyValueIfEmpty(nameFiPublicId, { ta => ta.nameFi.getOrElse("") }),
+      setPropertyValueIfEmpty(nameSePublicId, { ta => ta.nameSe.getOrElse("") })
       //In the future if we need to override some property just add here the operation
     )
 
