@@ -69,8 +69,8 @@
       });
     };
 
-    this.fetch = function(boundingBox) {
-      backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
+    this.fetch = function(boundingBox, zoom) {
+      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });
