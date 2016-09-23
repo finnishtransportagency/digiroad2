@@ -29,20 +29,20 @@
         '</div>' +
       '</div>');
 
-    var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
+    var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
     var roadClasses = [
-      [1, 'Valtatie'],
-      [2, 'Kantatie'],
-      [3, 'Seututie'],
-      [4, 'Yhdystie (4)'],
-      [5, 'Yhdystie (5)'],
-      [6, 'Katu'],
-      [7, 'Rampit ja kiertoliittymät'],
-      [8, 'Kevyen liikenteen väylä'],
-      [9, 'Talvitie'],
-      [10, 'Polku'],
-      [11, 'Väliaikainen'],
-      [99, 'Tuntematon']
+      [1, 'Valtatie (1-39)'],
+      [2, 'Kantatie (40-99)'],
+      [3, 'Seututie (100-999)'],
+      [4, 'Yhdystie (1000-9999)'],
+      [5, 'Yhdystie (10001-19999)'],
+      [6, 'Numeroitu katu (40000-49999)'],
+      [7, 'Ramppi tai kiertoliittymä (20001 - 39999)'],
+      [8, 'Jalka- tai pyörätie (70001 - 89999, 90001 - 99999)'],
+      [9, 'Talvitie (60001 - 61999)'],
+      [10,'Polku (62001 - 62999)'],
+      [11,'Muu tieverkko'],
+      [99,'Tuntematon']
     ];
     var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
       return '<div class="legend-entry">' +
