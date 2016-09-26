@@ -13,9 +13,9 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tie", "aosa", "puoli", "ajr", "aet",
-    "pikavuoro", "kayttajatunnus")//TODO verify if it's or not a mandatory field, "pysakin_tyyppi")
+    "pikavuoro", "kayttajatunnus", "pysakin_tyyppi")
 
-  def getMassTransitStop(): Map[String, Any] ={
+  val massTransitStop: Map[String, Any] ={
     Map(
       "valtakunnallinen_id" -> 208914,
       "tie" -> 25823,
@@ -37,6 +37,21 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val massTransitStopWithOnlyMandatoryParameters: Map[String, Any] ={
+    Map(
+      "livitunnus" -> "OTHJ208910",
+      "tie" -> 25823,
+      "aosa" -> 104,
+      "ajr" -> 0,
+      "aet" -> 150,
+      "puoli" -> "oikea",
+      "pysakin_tyyppi" -> "kauko",
+      "pikavuoro" -> "ei",
+      "valtakunnallinen_id" -> 208910,
+      "kayttajatunnus" -> "KX123456"
+    )
+  }
+
   def getEquipments():Map[String, Any] = {
     Map(
       "aikataulu" -> "ei_tietoa",
@@ -54,17 +69,20 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   get("/pysakit") {
     List(
-      getMassTransitStop
+      massTransitStop,
+      massTransitStopWithOnlyMandatoryParameters
     )
   }
 
   get("/pysakit/:liviId"){
     val liviId = params("liviId")
 
-    if(liviId != "OTHJ208914")
+    if (liviId == "OTHJ208910")
+      massTransitStopWithOnlyMandatoryParameters
+    else if(liviId == "OTHJ208914")
+      massTransitStop
+    else
       halt(NotFound())
-
-    getMassTransitStop
   }
 
   put("/pysakit/:liviId") {

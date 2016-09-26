@@ -223,7 +223,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date))
       )
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
@@ -247,7 +247,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", new Date, new Date, new Date)
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date))
       )
 
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)

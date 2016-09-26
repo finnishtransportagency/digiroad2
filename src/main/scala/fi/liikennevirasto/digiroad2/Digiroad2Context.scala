@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
   def receive = {
@@ -120,7 +121,9 @@ object Digiroad2Context {
   }
 
   lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"), getProperty("digiroad2.tierekisteri.enabled").toBoolean)
+    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build)
   }
 
   lazy val roadLinkService: RoadLinkService = {

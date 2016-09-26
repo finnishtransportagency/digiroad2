@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
+
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
-import org.apache.http.client.methods.{HttpGet, HttpPost, HttpPut, HttpDelete}
+import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
@@ -132,9 +133,9 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        nameFi: Option[String],
                                        nameSe: Option[String],
                                        modifiedBy: String,
-                                       operatingFrom: Date,
-                                       operatingTo: Date,
-                                       removalDate: Date)
+                                       operatingFrom: Option[Date],
+                                       operatingTo: Option[Date],
+                                       removalDate: Option[Date])
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -147,7 +148,7 @@ class TierekisteriClientException(response: String) extends RuntimeException(res
   * @param tierekisteriEnabled
   *
   */
-class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnabled: Boolean) {
+class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnabled: Boolean, client: CloseableHttpClient) {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -259,7 +260,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
 
     try {
@@ -277,7 +277,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPost(url)
     request.setEntity(createJson(trMassTransitStop))
-    val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -294,7 +293,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPut(url)
     request.setEntity(createJson(tnMassTransitStop))
-    val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -310,7 +308,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
-    val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -361,28 +358,28 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       try {
         data.get(field).map(_.toString) match {
           case Some(value) => Some(value)
-          case _ => throw new TierekisteriClientException("Missing field in response '%s'".format(field))
+          case _ => None
         }
       } catch {
-        case ex: NullPointerException => Some("")
+        case ex: NullPointerException => None
       }
     }
-    def getMandatoryFieldValue(field: String): String = {
+    def getMandatoryFieldValue(field: String): Option[String] = {
       val fieldValue = getFieldValue(field)
-      fieldValue match {
-        case Some(value) => value
-        case _ => throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
-      }
+      if (fieldValue.isEmpty)
+        throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+      fieldValue
     }
 
     //Mandatory fields
-    val nationalId = convertToLong(getMandatoryFieldValue(trNationalId))
-    val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide))
-    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress), throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
-    val liviId = getMandatoryFieldValue(trLiviId)
-    val stopType = StopType.apply(getMandatoryFieldValue(trStopType))
-    val modifiedBy = getMandatoryFieldValue(trUser)
-    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)), convertToInt(getMandatoryFieldValue(trRoadPartNumber)),Track.Combined,1,None)
+    val nationalId = convertToLong(getMandatoryFieldValue(trNationalId)).get
+    val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide).get)
+    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
+    val liviId = getMandatoryFieldValue(trLiviId).get
+    val stopType = StopType.apply(getMandatoryFieldValue(trStopType).get)
+    val modifiedBy = getMandatoryFieldValue(trUser).get
+    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
+      convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,1,None)
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
@@ -398,7 +395,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   }
 
   private def extractEquipment(data: Map[String, Any]) : Map[Equipment, Existence] = {
-    val equipmentData = data.get(trEquipment).get.asInstanceOf[Map[String, String]]
+    val equipmentData: Map[String, String] = data.get(trEquipment).nonEmpty match {
+      case true => data.get(trEquipment).get.asInstanceOf[Map[String, String]]
+      case false => Map()
+    }
 
     Equipment.values.flatMap{ equipment =>
       equipmentData.get(equipment.value) match{
@@ -410,35 +410,35 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     }.toMap
   }
 
-  private def convertToLong(value: Any): Long = {
+  private def convertToLong(value: Option[String]): Option[Long] = {
     try {
-      value.toString.toLong
+      value.map(_.toLong)
     } catch {
       case e: NumberFormatException =>
         throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
     }
   }
 
-  private def convertToInt(value: Any): Int = {
+  private def convertToInt(value: Option[String]): Option[Int] = {
     try {
-      value.toString.toInt
+      value.map(_.toInt)
     } catch {
       case e: NumberFormatException =>
         throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
     }
   }
 
-  private def convertToDate(value: Any): Date = {
+  private def convertToDate(value: Option[String]): Option[Date] = {
     try {
-      new SimpleDateFormat(dateFormat).parse(value.toString)
+      value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
     } catch {
       case e: ParseException =>
         throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
     }
   }
 
-  private def convertDateToString(date: Date): String = {
-    new SimpleDateFormat(dateFormat).format(date)
+  private def convertDateToString(date: Option[Date]): Option[String] = {
+    date.map(dv => new SimpleDateFormat(dateFormat).format(dv))
   }
 }
 
@@ -463,7 +463,7 @@ object TierekisteriBusStopMarshaller {
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
       RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
-      None, None, None, "", new Date, new Date, new Date)
+      None, None, None, "", None, None, None)
   }
 
 
