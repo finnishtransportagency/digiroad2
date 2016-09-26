@@ -379,7 +379,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val stopType = StopType.apply(getMandatoryFieldValue(trStopType).get)
     val modifiedBy = getMandatoryFieldValue(trUser).get
     val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
-      convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,1,None)
+      convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(trDistance)).get,None)
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
