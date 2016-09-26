@@ -134,6 +134,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
+            staticField('SEGMENTINID', 'segmentId') +
             staticField('TIENUMERO', 'roadNumber') +
             staticField('TIEOSANUMERO', 'roadPartNumber') +
             staticField('AJORATA', 'trackCode') +
@@ -179,7 +180,8 @@
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-
+        linkProperties.roadAddress = linkProperties.roadAddress || '';
+        linkProperties.segmentId = linkProperties.segmentId || '';
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.trackCode = linkProperties.trackCode || '';

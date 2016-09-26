@@ -80,14 +80,14 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         rl.length,  rl.administrativeClass,
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
+        rl.attributes, ra.id, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
         ra.startAddrMValue, ra.endAddrMValue, ra.endDate, ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
         ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
       case _ => new RoadAddressLink(rl.linkId, rl.geometry,
         rl.length,  rl.administrativeClass,
         rl.functionalClass,  rl.trafficDirection,
         rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, 0, 0, 0, 0,
+        rl.attributes, 0, 0, 0, 0, 0,
         0, 0, 0, null, 0, 0, SideCode.Unknown,
         None, None)
     }
