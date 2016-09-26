@@ -3,8 +3,10 @@
     initialize: initialize
   };
 
-  function initialize(container, assetControlGroups) {
+  function initialize(container, searchBox, assetControlGroups) {
     var navigationPanel = $('<div class="navigation-panel"></div>');
+
+    navigationPanel.append(searchBox.element);
 
     var assetControls = _.flatten(assetControlGroups);
 
