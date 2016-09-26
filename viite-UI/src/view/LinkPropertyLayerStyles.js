@@ -27,6 +27,7 @@
     };
 
     var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
+    var borderStyleRule = _.partial(createZoomAndTypeDependentRule, 'underlay');
 
     var zoomLevelRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(8).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[8])),
@@ -47,6 +48,21 @@
       overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
       overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
       overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
+      // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
+    ];
+
+    var borderRules = [
+      borderStyleRule(9, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(10, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(11, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(12, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(13, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(14, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(15, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1})
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
@@ -103,6 +119,7 @@
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
+    roadClassDefaultStyle.addRules(borderRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
     var roadClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -127,6 +144,8 @@
     roadClassSelectionSelectStyle.addRules(linkTypeSizeRules);
     roadClassSelectionDefaultStyle.addRules(overlayUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    roadClassSelectionDefaultStyle.addRules(borderRules);
+    roadClassSelectionSelectStyle.addRules(borderRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle

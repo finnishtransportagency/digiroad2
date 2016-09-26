@@ -105,6 +105,28 @@
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
+    var drawBorderLineFeatures = function(roadLinks) {
+      var adminClass = 'Municipality';
+      var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
+        return _.contains(adminClass, roadLink.administrativeClass);
+      });
+      var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
+      roadLayer.layer.addFeatures(features);
+    };
+
+    var createBorderLineFeatures = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          linkId: roadLink.linkId,
+          type: 'underlay',
+          linkType: roadLink.linkType
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.features, function (feature) {
@@ -135,6 +157,7 @@
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
+        drawBorderLineFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }
