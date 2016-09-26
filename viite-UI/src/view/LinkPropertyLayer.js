@@ -91,9 +91,9 @@
     };
 
     var drawDashedLineFeatures = function(roadLinks) {
-      var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedRoadClasses = [7, 8, 9, 10];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+        return _.contains(dashedRoadClasses, roadLink.roadClass);
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
