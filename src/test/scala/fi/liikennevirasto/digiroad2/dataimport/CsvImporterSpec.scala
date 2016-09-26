@@ -284,6 +284,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override def vvhClient: VVHClient = mockVVHClient
       override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
+      override val tierekisteriEnabled = true
     }
 
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]

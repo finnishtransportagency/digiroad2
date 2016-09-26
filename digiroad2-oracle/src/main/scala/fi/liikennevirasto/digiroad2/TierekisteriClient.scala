@@ -14,6 +14,7 @@ import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
+import org.slf4j.LoggerFactory
 
 /**
   * Values for Stop type (Pysäkin tyyppi) enumeration
@@ -173,11 +174,13 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
 
-  private def serviceUrl() : String = tierekisteriRestApiEndPoint + serviceName
+  private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + "/" + id
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
+
+  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
     * Return all bus stops currently active from Tierekisteri
@@ -200,7 +203,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * Returns the anwser to the question "Is Tierekisteri Enabled?".
     * @return Type: Boolean - If TR client is enabled
     */
-  def isTREnabled():Boolean = {
+  def isTREnabled : Boolean = {
     tierekisteriEnabled
   }
 
@@ -323,7 +326,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
 
-    var jsonObj = Map(
+    val jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
       trLiviId -> trMassTransitStop.liviId,
       trRoadNumber -> trMassTransitStop.roadAddress.road,

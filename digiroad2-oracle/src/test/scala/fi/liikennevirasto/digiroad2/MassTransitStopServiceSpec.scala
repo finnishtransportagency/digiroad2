@@ -23,6 +23,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
+  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
+    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), RoadSide.Unknown, StopType.Combined,
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None)
+  )
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -33,6 +37,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     .thenReturn(Some(VVHRoadlink(6488445l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(123l))
     .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(1611353))
+    .thenReturn(Some(VVHRoadlink(1611353, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1611341l))
     .thenReturn(Some(VVHRoadlink(1611341l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1l))
@@ -49,6 +55,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
@@ -92,8 +99,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).map(_.stopTypes) should be(Some(Seq(2)))
-      massTransitStops.find(_.id == 300001).map(_.stopTypes) should be(Some(Seq(2, 3, 4)))
-      massTransitStops.find(_.id == 300003).map(_.stopTypes) should be(Some(Seq(2, 3)))
+      massTransitStops.find(_.id == 300001).map(_.stopTypes) should be(Some(Seq(2, 4)))
+      massTransitStops.find(_.id == 300003).map(_.stopTypes) should be(Some(Seq(2)))
     }
   }
 
@@ -256,6 +263,23 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
+      }
+    }
+  }
+
+  test("Get properties") {
+    runWithRollback {
+      val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalId(2, Int => Unit).map { stop =>
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData)
       }
     }
   }

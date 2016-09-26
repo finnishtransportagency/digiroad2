@@ -41,6 +41,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   val massTransitStopDao: MassTransitStopDao
   val tierekisteriClient: TierekisteriClient
+  val tierekisteriEnabled: Boolean
   override val idField = "external_id"
 
   override def typeId: Int = 10
@@ -71,11 +72,12 @@ trait MassTransitStopService extends PointAssetOperations {
         val properties = persistedStop.map(_.propertyData).get
         val liViProp = properties.find(pd => pd.publicId == LiViIdentifierPublicId)
         val liViId = liViProp.map(_.values.head).get.propertyValue
-        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
-        val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
-        return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+        if (tierekisteriEnabled) {
+          val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+          val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
+          return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+        }
       }
-
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
   }
@@ -88,14 +90,19 @@ trait MassTransitStopService extends PointAssetOperations {
     * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
     */
   private def setEquipments(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
-
-    val equipmentProperty = tierekisteriStop.equipments.find(_._1.publicId == property.publicId)
-    equipmentProperty match {
-      case Some((equipment, existence)) =>
-        property.copy(values = Seq(PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head))))
-      case _ =>
-        property
+    if (tierekisteriStop == null)
+      throw new TierekisteriClientException("Null object read")
+    if (tierekisteriStop.equipments.isEmpty)
+      return property
+    val equipmentProperty = tierekisteriStop.equipments.filter(_._1.publicId == property.publicId)
+    val mappedProperties = equipmentProperty.map {
+      case (equipment, existence) =>
+        PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head))
     }
+    if (mappedProperties.isEmpty)
+      property
+    else
+      property.copy(values = mappedProperties.toSeq)
   }
 
   /**
@@ -111,7 +118,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
     if(property.publicId == publidId){
       property.copy( values = property.values.map{
-        case value if(value.propertyValue.isEmpty) => PropertyValue(getValue(tierekisteriStop), Some(massTransitStopDao.getPropertyDescription(publidId, getValue(tierekisteriStop)).head))
+        case value if value.propertyValue.isEmpty => PropertyValue(getValue(tierekisteriStop), Some(massTransitStopDao.getPropertyDescription(publidId, getValue(tierekisteriStop)).head))
         case value => value
       })
     }
@@ -222,7 +229,6 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
-
     roadLinkOption match {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
@@ -483,8 +489,8 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       massTransitStopDao.deleteAllMassTransitStopData(assetId)
 
-      if (tierekisteriClient.isTREnabled()) {
-        tierekisteriClient.deleteMassTransitStop(assetId.toString())
+      if (tierekisteriClient.isTREnabled) {
+        tierekisteriClient.deleteMassTransitStop(assetId.toString)
       }
     }
   }

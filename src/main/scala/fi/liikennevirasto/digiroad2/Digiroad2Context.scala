@@ -137,6 +137,7 @@ object Digiroad2Context {
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
+      override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus)
   }

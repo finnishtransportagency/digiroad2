@@ -66,6 +66,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriEnabled = false
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
@@ -194,9 +195,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("mass transit stop has properties defined in asset type properties", Tag("db")) {
     val propIds = getWithUserAuth("/assetTypeProperties/10") {
+      status should equal(200)
       parse(body).extract[List[Property]].map(p => p.publicId).toSet
     }
     val assetPropNames = getWithUserAuth("/massTransitStops/2") {
+      status should equal(200)
       parse(body).extract[MassTransitStopWithProperties].propertyData.map(p => p.publicId).toSet
     }
     propIds should be(assetPropNames)
