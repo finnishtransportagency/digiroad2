@@ -3,8 +3,8 @@
     var selected = false;
     var original = _.clone(data);
 
-    var getId = function() {
-      return data.roadLinkId || data.linkId;
+    var getSegmentId = function() {
+      return data.id;
     };
 
     var getData = function() {
@@ -44,7 +44,7 @@
     };
 
     return {
-      getId: getId,
+      getId: getSegmentId,
       getData: getData,
       getPoints: getPoints,
       setLinkProperty: setLinkProperty,
@@ -69,8 +69,8 @@
       });
     };
 
-    this.fetch = function(boundingBox) {
-      backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
+    this.fetch = function(boundingBox, zoom) {
+      backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });

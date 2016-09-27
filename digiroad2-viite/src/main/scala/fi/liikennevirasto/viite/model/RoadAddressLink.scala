@@ -8,7 +8,7 @@ import fi.liikennevirasto.viite.dao.CalibrationPoint
 /**
   * Created by venholat on 31.8.2016.
   */
-case class RoadAddressLink(linkId: Long, geometry: Seq[Point],
+case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                             length: Double,  administrativeClass: AdministrativeClass,
                             functionalClass: Int,  trafficDirection: TrafficDirection,
                             linkType: LinkType,  modifiedAt: Option[String],  modifiedBy: Option[String],

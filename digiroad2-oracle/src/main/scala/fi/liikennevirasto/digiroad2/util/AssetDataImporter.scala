@@ -896,8 +896,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     val addressList = roads.map(r => (r._16, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
 
     OracleDatabase.withDynTransaction {
-      sqlu"""DELETE FROM LRM_POSITION WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
+      sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +

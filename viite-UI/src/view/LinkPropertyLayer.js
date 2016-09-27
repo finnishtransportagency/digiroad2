@@ -3,6 +3,7 @@
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
+    var zoom = 0;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
@@ -12,7 +13,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
+      selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
       currentRenderIntent = 'select';
       roadLayer.redraw();
       highlightFeatures();
@@ -42,7 +43,7 @@
 
     var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
-        if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
+        if (selectedLinkProperty.isSelected(x.attributes.id)) {
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -53,17 +54,21 @@
     var draw = function() {
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
-      me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
+      if (zoom > zoomlevels.minZoomForAssets) {
+        me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
+      }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
 
     this.refreshView = function() {
-      roadCollection.fetch(map.getExtent());
+      // Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
+      zoom = 11 - Math.round(Math.log(map.getResolution()) * Math.LOG2E);
+      roadCollection.fetch(map.getExtent(), zoom);
     };
 
     this.isDirty = function() {
@@ -86,9 +91,9 @@
     };
 
     var drawDashedLineFeatures = function(roadLinks) {
-      var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedRoadClasses = [7, 8, 9, 10];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+        return _.contains(dashedRoadClasses, roadLink.roadClass);
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
@@ -100,10 +105,33 @@
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
+    var drawBorderLineFeatures = function(roadLinks) {
+      var adminClass = 'Municipality';
+      var roadClasses = [1,2,3,4,5,6,7,8,9,10,11];
+      var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
+        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass);
+      });
+      var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
+      roadLayer.layer.addFeatures(features);
+    };
+
+    var createBorderLineFeatures = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          linkId: roadLink.linkId,
+          type: 'underlay',
+          linkType: roadLink.linkType
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.features, function (feature) {
-        return selectedLinkProperty.isSelected(feature.attributes.linkId);
+        return selectedLinkProperty.isSelected(feature.attributes.id);
       });
     };
 
@@ -130,6 +158,7 @@
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
+        drawBorderLineFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }
@@ -143,7 +172,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.linkId === link.linkId;
+          return feature.attributes.id === link.id;
         });
         if (feature) {
           selectControl.select(feature);

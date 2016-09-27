@@ -27,6 +27,10 @@
 
     NavigationPanel.initialize(
       $('#map-tools'),
+      new SearchBox(
+          instructionsPopup,
+          new LocationSearch(backend, window.applicationModel)
+      ),
       assetGroups
     );
 
