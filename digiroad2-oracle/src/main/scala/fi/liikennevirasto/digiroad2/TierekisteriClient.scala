@@ -7,7 +7,7 @@ import java.util.Date
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
 import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
@@ -458,22 +458,46 @@ object TierekisteriBusStopMarshaller {
   private val stopTypePublicId = "pysakin_tyyppi"
   private val nameFiPublicId = "nimi_suomeksi"
   private val nameSePublicId = "nimi_ruotsiksi"
+  private val stopCode = "stop_code"
+  private val InventoryDatePublicId = "inventointipaiva"
   private val expressPropertyValue = 4
   private val typeId: Int = 10
+  private val dateFormat = "yyyy-MM-dd"
+
+  private def convertDateToString(date: Option[Date]): Option[String] = {
+    date.map(dv => new SimpleDateFormat(dateFormat).format(dv))
+  }
+
+  private def convertStringToDate(str: Option[String]): Option[Date] = {
+    str.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
+  }
 
   def getAllPropertiesAvailable(AssetTypeId : Int): Seq[Property] = {
     Queries.availableProperties(AssetTypeId)
   }
 
-  // TODO: Or variable type: persisted mass transit stop?
-  def toTierekisteriMassTransitStop(massTransitStop: MassTransitStopWithProperties): TierekisteriMassTransitStop = {
+
+  def getPropertyOption(propertyData: Seq[Property], publicId: String): Option[String] = {
+    propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.propertyValue))
+  }
+  def getPropertyDateOption(propertyData: Seq[Property], publicId: String): Option[Date] = {
+    convertStringToDate(propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.propertyValue)))
+  }
+  // TODO: Add the last dates here where applicable
+  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress): TierekisteriMassTransitStop = {
+    val created = massTransitStop.created.modificationTime.map(d => d.toDate)
+    val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId))
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
-      RoadAddress(None, 1,1,Track.Combined,1,None), RoadSide.Right, findStopType(massTransitStop.stopTypes),
+      roadAddress, RoadSide.Right, findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
-      None, None, None, "", None, None, None)
+      getPropertyOption(massTransitStop.propertyData, stopCode),
+      getPropertyOption(massTransitStop.propertyData, nameFiPublicId),
+      getPropertyOption(massTransitStop.propertyData, nameSePublicId),
+      massTransitStop.modified.modifier.getOrElse(massTransitStop.created.modifier.get),
+      inventoryDate, None, None)
   }
 
-
+  // TODO: Map correctly, Seq(2) => local, Seq(2,3) => Combined, Seq(3) => Long distance
   private def findStopType(stopTypes: Seq[Int]): StopType = {
     // remove from OTH stoptypes the values that are not supported by tierekisteri
     val avaibleStopTypes = StopType.values.flatMap(_.propertyValues).intersect(stopTypes.toSet)

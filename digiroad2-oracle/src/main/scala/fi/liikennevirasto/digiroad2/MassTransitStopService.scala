@@ -5,12 +5,14 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+
+import scala.util.Try
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
 
@@ -58,6 +60,8 @@ trait MassTransitStopService extends PointAssetOperations {
   val nameSePublicId = "nimi_ruotsiksi"
 
   val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
+
+  val geometryTransform = new GeometryTransform
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -458,8 +462,15 @@ trait MassTransitStopService extends PointAssetOperations {
 
     if (relevantToTR) {
       val (newMTSWithProperties, floatingReason) = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
+      val roadLink = roadLinkByLinkId.apply(persistedStop.get.linkId)
+      val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
+        case Some(str) => Try(str.toString.toInt).toOption
+        case _ => None
+      }
+      val address = geometryTransform.coordToAddress(Point(persistedStop.get.lon, persistedStop.get.lat), road,
+        includePedestrian = Option(false))
 
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(newMTSWithProperties)
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address)
 
       createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
     }

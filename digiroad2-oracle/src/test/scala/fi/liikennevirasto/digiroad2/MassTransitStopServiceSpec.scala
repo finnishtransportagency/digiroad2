@@ -5,7 +5,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, TestTransactions, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
@@ -49,6 +49,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(1021227, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1021226, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
+  when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
+    RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
+  )
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -56,6 +60,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
+    override val geometryTransform = mockGeometryTransform
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
