@@ -75,8 +75,8 @@ trait MassTransitStopService extends PointAssetOperations {
       if(isNotVirtualStopAndIsMantainedByELY(persistedStop)){
         val properties = persistedStop.map(_.propertyData).get
         val liViProp = properties.find(pd => pd.publicId == LiViIdentifierPublicId)
-        val liViId = liViProp.map(_.values.head).get.propertyValue
         if (tierekisteriEnabled) {
+          val liViId = liViProp.map(_.values.head).get.propertyValue
           val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
           val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
           return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
@@ -467,10 +467,11 @@ trait MassTransitStopService extends PointAssetOperations {
         case Some(str) => Try(str.toString.toInt).toOption
         case _ => None
       }
-      val address = geometryTransform.coordToAddress(Point(persistedStop.get.lon, persistedStop.get.lat), road,
-        includePedestrian = Option(false))
+      println(persistedStop.get.lon + " / " + persistedStop.get.lat)
+      println(persistedStop.get.bearing)
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
 
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address)
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))
 
       createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
     }

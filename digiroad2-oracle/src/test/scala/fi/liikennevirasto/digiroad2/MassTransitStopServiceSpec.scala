@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
@@ -24,8 +25,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
-    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), RoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None, None)
+    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date)
   )
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
@@ -44,6 +45,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
     TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(1611601L))
+    .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1021227, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -235,7 +239,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), Option("2016-08-01"))
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date)
       )
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
@@ -259,7 +263,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), Option("2016-09-02"))
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date)
       )
 
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
@@ -297,7 +301,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop road link mml id") {
     runWithRollback {
-      val position = Some(Position(60.0, 0.0, 6488445l, None))
+      val geom = Point(374708, 6676905)
+      val position = Some(Position(geom.x, geom.y, 1611601L, Some(85)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val linkId = sql"""
             select lrm.link_id from asset a
@@ -311,7 +316,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop bearing") {
     runWithRollback {
-      val position = Some(Position(60.0, 0.0, 6488445l, Some(90)))
+      val geom = Point(375621, 6676556)
+      val position = Some(Position(geom.x, geom.y, 131573L, Some(90)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a
@@ -325,7 +331,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop municipality") {
     runWithRollback {
-      val position = Some(Position(60.0, 0.0, 123l, None))
+      val geom = Point(375621, 6676556)
+      val position = Some(Position(geom.x, geom.y, 131573L, Some(85)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val municipality = sql"""
             select a.municipality_code from asset a
@@ -377,7 +384,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update last modified info") {
     runWithRollback {
-      RollbackMassTransitStopService.updateExistingById(300000, None, Set.empty, "user", _ => Unit)
+      val geom = Point(375621, 6676556)
+      val pos = Position(geom.x, geom.y, 131573L, Some(85))
+      RollbackMassTransitStopService.updateExistingById(300000, Some(pos), Set.empty, "user", _ => Unit)
       val modifier = sql"""
             select a.modified_by from asset a
             where a.id = 300000
@@ -549,6 +558,32 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
       val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
       expired should be(Some(true))
+    }
+  }
+
+  test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
+    def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
+      (stop, None)
+    }
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+    runWithRollback {
+      val assetId = 300006
+      val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
+      stopOption.isEmpty should be (false)
+      val stop = stopOption.get
+      val transform = new GeometryTransform
+      val geom = Point(375621, 6676556)
+      val (address, roadSide) = transform.resolveAddressAndLocation(geom, stop.bearing.get)
+      val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide))
+      roadSide should be (RoadSide.Left)
+      trStop.nationalId should be (stop.nationalId)
+      trStop.stopType should be (StopType.LongDistance)
+      trStop.equipments.get(Equipment.Roof).get should be (Existence.Yes)
+      trStop.equipments.filterNot( x => x._1 == Equipment.Roof).forall(_._2 == Existence.Unknown) should be (true)
+      trStop.operatingFrom.isEmpty should be (false)
+      trStop.operatingTo.isEmpty should be (false)
+      dateFormatter.format(trStop.operatingFrom.get) should be ("2015-09-27")
+      dateFormatter.format(trStop.operatingTo.get) should be ("2019-09-27")
     }
   }
 }

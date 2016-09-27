@@ -7,7 +7,7 @@ import java.util.Date
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
 import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
@@ -102,14 +102,14 @@ object Equipment {
 /**
   * Values for Road side (Puoli) enumeration
   */
-sealed trait RoadSide {
+sealed trait TRRoadSide {
   def value: String
   def propertyValues: Set[Int]
 }
-object RoadSide {
+object TRRoadSide {
   val values = Set(Right, Left, Off, Unknown)
 
-  def apply(value: String): RoadSide = {
+  def apply(value: String): TRRoadSide = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
@@ -117,16 +117,16 @@ object RoadSide {
     values.flatMap(_.propertyValues)
   }
 
-  case object Right extends RoadSide { def value = "oikea"; def propertyValues = Set(1) }
-  case object Left extends RoadSide { def value = "vasen"; def propertyValues = Set(2) }
-  case object Off extends RoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
-  case object Unknown extends RoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
+  case object Right extends TRRoadSide { def value = "oikea"; def propertyValues = Set(1) }
+  case object Left extends TRRoadSide { def value = "vasen"; def propertyValues = Set(2) }
+  case object Off extends TRRoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
+  case object Unknown extends TRRoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long,
                                        liviId: String,
                                        roadAddress: RoadAddress,
-                                       roadSide: RoadSide,
+                                       roadSide: TRRoadSide,
                                        stopType: StopType,
                                        express: Boolean,
                                        equipments: Map[Equipment, Existence] = Map(),
@@ -137,7 +137,7 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        operatingFrom: Option[Date],
                                        operatingTo: Option[Date],
                                        removalDate: Option[Date],
-                                       inventoryDate: Option[String])
+                                       inventoryDate: Date)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -174,7 +174,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trNameSe = "nimi_se"
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
-  private val trInventoryDate = "inventointipaiva"
+  private val trInventoryDate = "inventointipvm"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + "/" + id
@@ -203,6 +203,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   /**
     * Returns the anwser to the question "Is Tierekisteri Enabled?".
+    *
     * @return Type: Boolean - If TR client is enabled
     */
   def isTREnabled : Boolean = {
@@ -382,13 +383,14 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     //Mandatory fields
     val nationalId = convertToLong(getMandatoryFieldValue(trNationalId)).get
-    val roadSide = RoadSide.apply(getMandatoryFieldValue(trSide).get)
+    val roadSide = TRRoadSide.apply(getMandatoryFieldValue(trSide).get)
     val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
     val liviId = getMandatoryFieldValue(trLiviId).get
     val stopType = StopType.apply(getMandatoryFieldValue(trStopType).get)
     val modifiedBy = getMandatoryFieldValue(trUser).get
     val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
       convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(trDistance)).get,None)
+    val inventoryDate = convertToDate(getMandatoryFieldValue(trInventoryDate)).get
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
@@ -463,6 +465,8 @@ object TierekisteriBusStopMarshaller {
   private val nameSePublicId = "nimi_ruotsiksi"
   private val stopCode = "stop_code"
   private val InventoryDatePublicId = "inventointipaiva"
+  private val FirstDayValidPublicId = "ensimmainen_voimassaolopaiva"
+  private val LastDayValidPublicId = "viimeinen_voimassaolopaiva"
   private val expressPropertyValue = 4
   private val typeId: Int = 10
   private val dateFormat = "yyyy-MM-dd"
@@ -486,18 +490,28 @@ object TierekisteriBusStopMarshaller {
   def getPropertyDateOption(propertyData: Seq[Property], publicId: String): Option[Date] = {
     convertStringToDate(propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.propertyValue)))
   }
-  // TODO: Add the last dates here where applicable
-  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress): TierekisteriMassTransitStop = {
-    val created = massTransitStop.created.modificationTime.map(d => d.toDate)
-    val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId))
+
+  def toTRRoadSide(roadSide: RoadSide) = {
+    roadSide match {
+      case RoadSide.Right => TRRoadSide.Right
+      case RoadSide.Left => TRRoadSide.Left
+      case RoadSide.End => TRRoadSide.Off
+      case _ => TRRoadSide.Unknown
+    }
+  }
+  // TODO: Add the removal date here where applicable
+  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide]): TierekisteriMassTransitStop = {
+    val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId)).getOrElse(new Date)
+    val startingDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, FirstDayValidPublicId))
+    val lastDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
-      roadAddress, RoadSide.Right, findStopType(massTransitStop.stopTypes),
+      roadAddress, roadSideOption.map(toTRRoadSide).getOrElse(TRRoadSide.Unknown), findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
       getPropertyOption(massTransitStop.propertyData, stopCode),
       getPropertyOption(massTransitStop.propertyData, nameFiPublicId),
       getPropertyOption(massTransitStop.propertyData, nameSePublicId),
       massTransitStop.modified.modifier.getOrElse(massTransitStop.created.modifier.get),
-      inventoryDate, None, None, None)
+      startingDate, lastDate, None, inventoryDate)
   }
 
   // TODO: Map correctly, Seq(2) => local, Seq(2,3) => Combined, Seq(3) => Long distance
