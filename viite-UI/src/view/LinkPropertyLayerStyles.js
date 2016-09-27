@@ -56,13 +56,13 @@
     ];
 
     var borderRules = [
-      borderStyleRule(9, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(10, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(11, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(12, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(13, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(14, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(15, { strokeColor: '#000000', strokeLinecap: 'solid', strokeWidth: 15, graphicZIndex: -1})
+      borderStyleRule(9, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(10, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(11, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(12, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(13, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(14, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(15, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1})
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
