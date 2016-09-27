@@ -134,6 +134,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
+            staticField('SEGMENTIN ID', 'segmentId') +
             staticField('TIENUMERO', 'roadNumber') +
             staticField('TIEOSANUMERO', 'roadPartNumber') +
             staticField('AJORATA', 'trackCode') +
@@ -179,13 +180,21 @@
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-
+        linkProperties.roadAddress = linkProperties.roadAddress || '';
+        linkProperties.segmentId = linkProperties.segmentId || '';
         linkProperties.roadNumber = linkProperties.roadNumber || '';
-        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-        linkProperties.trackCode = linkProperties.trackCode || '';
-        linkProperties.startAddressM = linkProperties.startAddressM || '0';
+        if (linkProperties.roadNumber > 0) {
+          linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+          linkProperties.startAddressM = linkProperties.startAddressM || '0';
+          linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
+          linkProperties.elyCode = linkProperties.elyCode || '';
+        } else {
+          linkProperties.roadPartNumber = '';
+          linkProperties.trackCode = '';
+          linkProperties.startAddressM = '';
+          linkProperties.elyCode = '';
+        }
         linkProperties.endAddressM = linkProperties.endAddressM || '';
-        linkProperties.elyCode = linkProperties.elyCode || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.roadClass = getRoadClass(linkProperties.administrativeClass, linkProperties.localizedLinkTypes);
         linkProperties.endDate = linkProperties.endDate || '';

@@ -151,6 +151,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressLinkToApi(roadLink: RoadAddressLink): Map[String, Any] = {
     Map(
+      "segmentId" -> roadLink.id,
       "id" -> roadLink.id,
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
