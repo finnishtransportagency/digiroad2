@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
@@ -98,20 +99,21 @@ trait PointAssetOperations {
     }
   }
 
-  protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long)] ={
+  protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
     var query = s"""
-          select a.$idField, m.name_fi, lrm.link_id
+          select a.$idField, m.name_fi, lrm.link_id, null
           from asset a
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
 
-    StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
+    StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
   }
 
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Long]]] = {
-    case class FloatingAsset(id: Long, municipality: String, administrativeClass: String)
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[(Long, Long)]]] = {
+    case class FloatingAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
+    case class FloatingReason(id: Any, floatingReason: Any)
 
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
@@ -125,14 +127,17 @@ trait PointAssetOperations {
       val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
-        .map { case (id, municipality, administrativeClass) =>
-          FloatingAsset(id, municipality, administrativeClasses.getOrElse(administrativeClass, Unknown).toString)
+        .map { case (id, municipality, administrativeClass, floatingReason) =>
+          FloatingAsset(id, municipality, administrativeClasses.getOrElse(administrativeClass, Unknown).toString, floatingReason)
         }
         .groupBy(_.municipality)
         .mapValues { municipalityAssets =>
           municipalityAssets
             .groupBy(_.administrativeClass)
-            .mapValues(_.map(_.id))
+            .mapValues(_.map { floatingReasonAsset =>
+              (floatingReasonAsset.id, floatingReasonAsset.floatingReason.get)
+            }
+            )
         }
     }
   }

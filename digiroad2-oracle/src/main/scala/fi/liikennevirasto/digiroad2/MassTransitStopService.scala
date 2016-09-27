@@ -143,12 +143,12 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedStop.copy(floating = floating)
   }
 
-  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long)] ={
+  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
 
     isOperator match {
       case Some(false) =>
         val query = s"""
-          select a.$idField, m.name_fi, lrm.link_id
+          select a.$idField, m.name_fi, lrm.link_id, np.value
           from asset a
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
@@ -157,7 +157,7 @@ trait MassTransitStopService extends PointAssetOperations {
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and np.value <> ${FloatingReason.RoadOwnerChanged.value}"""
 
-        StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
+        StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
 
       case _ =>
         super.fetchFloatingAssets(addQueryFilter, isOperator)

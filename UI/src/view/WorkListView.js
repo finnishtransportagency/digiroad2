@@ -12,9 +12,12 @@
         return $('<tr/>').append($('<td/>').append(assetLink(id)));
       });
     };
+    var floatingValidator = function() {
+      return $('<span class="work-list-item"> &nbsp; *</span>');
+    };
     var assetLink = function(id) {
       var link = '#' + layerName + '/' + id;
-      return $('<a class="work-list-item"/>').attr('href', link).html(link);
+      return $('<a class="work-list-item"/>').attr('href', link).html(link).append(floatingValidator);
     };
     var tableForAdministrativeClass = function(administrativeClass, linkIds, count) {
       if (!linkIds || linkIds.length === 0) return '';
