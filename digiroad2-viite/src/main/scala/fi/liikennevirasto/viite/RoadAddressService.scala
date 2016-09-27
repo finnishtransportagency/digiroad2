@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
