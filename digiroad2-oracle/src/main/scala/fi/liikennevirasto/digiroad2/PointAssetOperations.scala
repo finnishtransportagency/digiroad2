@@ -54,6 +54,8 @@ trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
 
+  case class FloatingPointAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
+
   def vvhClient: VVHClient
   val idField = "id"
 
@@ -111,14 +113,11 @@ trait PointAssetOperations {
     StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
   }
 
-  def getFloatingAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[(Long, Long)]]] = {
-    case class FloatingAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
-    case class FloatingReason(id: Any, floatingReason: Any)
-
+  protected def getFloatingPointAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Seq[FloatingPointAsset] = {
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
 
-      val municipalityFilter =  optionalMunicipalities match {
+      val municipalityFilter = optionalMunicipalities match {
         case Some(municipalities) => s" and municipality_code in ($municipalities)"
         case _ => ""
       }
@@ -128,18 +127,21 @@ trait PointAssetOperations {
 
       result
         .map { case (id, municipality, administrativeClass, floatingReason) =>
-          FloatingAsset(id, municipality, administrativeClasses.getOrElse(administrativeClass, Unknown).toString, floatingReason)
-        }
-        .groupBy(_.municipality)
-        .mapValues { municipalityAssets =>
-          municipalityAssets
-            .groupBy(_.administrativeClass)
-            .mapValues(_.map { floatingReasonAsset =>
-              (floatingReasonAsset.id, floatingReasonAsset.floatingReason.get)
-            }
-            )
+          FloatingPointAsset(id, municipality, administrativeClasses.getOrElse(administrativeClass, Unknown).toString, floatingReason)
         }
     }
+  }
+
+  def getFloatingAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Long]]] = {
+
+    val result = getFloatingPointAssets(includedMunicipalities, isOperator)
+
+    result.groupBy(_.municipality)
+      .mapValues { municipalityAssets =>
+        municipalityAssets
+          .groupBy(_.administrativeClass)
+          .mapValues(_.map(_.id))
+      }
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
