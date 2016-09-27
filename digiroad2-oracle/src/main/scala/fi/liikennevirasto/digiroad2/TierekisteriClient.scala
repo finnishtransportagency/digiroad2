@@ -335,7 +335,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       trLane -> trMassTransitStop.roadAddress.track.value,
       trDistance -> trMassTransitStop.roadAddress.mValue,
       trStopCode -> trMassTransitStop.stopCode,
-      trIsExpress -> trMassTransitStop.express,
+      trIsExpress -> booleanToBooleanCode.get(trMassTransitStop.express),
       trNameFi -> trMassTransitStop.nameFi,
       trNameSe -> trMassTransitStop.nameSe,
       trUser -> trMassTransitStop.modifiedBy,
