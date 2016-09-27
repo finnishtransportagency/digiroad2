@@ -25,7 +25,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), RoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None)
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, None)
   )
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
@@ -235,7 +235,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date))
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), Option("2016-08-01"))
       )
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
@@ -259,7 +259,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date))
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, RoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), Option("2016-09-02"))
       )
 
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)

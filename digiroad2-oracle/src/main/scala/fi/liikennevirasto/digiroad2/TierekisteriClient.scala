@@ -136,7 +136,8 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        modifiedBy: String,
                                        operatingFrom: Option[Date],
                                        operatingTo: Option[Date],
-                                       removalDate: Option[Date])
+                                       removalDate: Option[Date],
+                                       inventoryDate: Option[String])
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -173,6 +174,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trNameSe = "nimi_se"
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
+  private val trInventoryDate = "inventointipaiva"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + "/" + id
@@ -396,9 +398,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
     val operatingTo = convertToDate(getFieldValue(trOperatingTo))
     val removalDate = convertToDate(getFieldValue(trRemovalDate))
+    val inventoryDate = getFieldValue(trInventoryDate)
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
-      stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate)
+      stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)
   }
 
   private def extractEquipment(data: Map[String, Any]) : Map[Equipment, Existence] = {
@@ -494,7 +497,7 @@ object TierekisteriBusStopMarshaller {
       getPropertyOption(massTransitStop.propertyData, nameFiPublicId),
       getPropertyOption(massTransitStop.propertyData, nameSePublicId),
       massTransitStop.modified.modifier.getOrElse(massTransitStop.created.modifier.get),
-      inventoryDate, None, None)
+      inventoryDate, None, None, None)
   }
 
   // TODO: Map correctly, Seq(2) => local, Seq(2,3) => Combined, Seq(3) => Long distance
