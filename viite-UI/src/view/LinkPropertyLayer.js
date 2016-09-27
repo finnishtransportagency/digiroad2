@@ -91,9 +91,9 @@
     };
 
     var drawDashedLineFeatures = function(roadLinks) {
-      var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedRoadClasses = [7, 8, 9, 10];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+        return _.contains(dashedRoadClasses, roadLink.roadClass);
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
@@ -104,6 +104,29 @@
         return _.contains(dashedLinkTypes, roadLink.linkType);
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
+    };
+    var drawBorderLineFeatures = function(roadLinks) {
+      var adminClass = 'Municipality';
+      var roadClasses = [1,2,3,4,5,6,7,8,9,10,11];
+      var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
+        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass);
+      });
+      var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
+      roadLayer.layer.addFeatures(features);
+    };
+
+    var createBorderLineFeatures = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          linkId: roadLink.linkId,
+          type: 'underlay',
+          linkType: roadLink.linkType
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
     };
 
     var getSelectedFeatures = function() {
@@ -135,6 +158,7 @@
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
+        drawBorderLineFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }
