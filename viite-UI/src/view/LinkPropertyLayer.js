@@ -107,8 +107,9 @@
     };
     var drawBorderLineFeatures = function(roadLinks) {
       var adminClass = 'Municipality';
+      var roadClasses = [1,2,3,4,5,6,7,8,9,10,11];
       var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
-        return _.contains(adminClass, roadLink.administrativeClass);
+        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass);
       });
       var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
       roadLayer.layer.addFeatures(features);

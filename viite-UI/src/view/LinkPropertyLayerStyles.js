@@ -1,7 +1,7 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
     var unknownRoadClassDefaultRules = [
-      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 1.0, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
     var unknownRoadClassUnselectedRules = [
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
@@ -56,13 +56,13 @@
     ];
 
     var borderRules = [
-      borderStyleRule(9, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(10, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(11, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(12, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(13, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(14, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
-      borderStyleRule(15, { strokeColor: '#000000', strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1})
+      borderStyleRule(9, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(10, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(11, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(12, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(13, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(14, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1}),
+      borderStyleRule(15, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 15, graphicZIndex: -1})
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
       // new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
