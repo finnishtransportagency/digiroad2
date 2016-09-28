@@ -48,6 +48,8 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def typeId: Int = 10
 
+  val CommuterBusStopPropertyValue: String = "2"
+  val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
 

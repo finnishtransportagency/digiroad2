@@ -514,14 +514,12 @@ object TierekisteriBusStopMarshaller {
       startingDate, lastDate, None, inventoryDate)
   }
 
-  // TODO: Map correctly, Seq(2) => local, Seq(2,3) => Combined, Seq(3) => Long distance
-  private def findStopType(stopTypes: Seq[Int]): StopType = {
+  // Map Seq(2) => local, Seq(2,3) => Combined, Seq(3) => Long distance, Seq(5) => Virtual
+  def findStopType(stopTypes: Seq[Int]): StopType = {
     // remove from OTH stoptypes the values that are not supported by tierekisteri
-    val avaibleStopTypes = StopType.values.flatMap(_.propertyValues).intersect(stopTypes.toSet)
-    //TODO try to improve that. Maybe just use a match
-    val stopTypeOption = StopType.values.find(st => st.propertyValues.size == avaibleStopTypes.size && avaibleStopTypes.diff(st.propertyValues).isEmpty)
-
-    stopTypeOption match {
+    val codesOfInterest = StopType.values.flatMap(st => st.propertyValues)
+    val availableStopTypes = StopType.values.map(st => st.propertyValues -> st ).toMap
+    availableStopTypes.get(stopTypes.toSet.intersect(codesOfInterest)) match {
       case Some(stopType) =>
         stopType
       case None =>

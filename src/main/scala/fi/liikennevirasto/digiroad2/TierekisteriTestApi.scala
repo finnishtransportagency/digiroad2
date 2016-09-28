@@ -16,7 +16,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tie", "aosa", "puoli", "ajr", "aet",
-    "pikavuoro", "kayttajatunnus", "pysakin_tyyppi")
+    "pikavuoro", "kayttajatunnus", "pysakin_tyyppi", "inventointipvm")
 
   val massTransitStop: Map[String, Any] ={
     Map(
@@ -52,7 +52,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "pysakin_tyyppi" -> "kauko",
       "pikavuoro" -> "ei",
       "valtakunnallinen_id" -> 208910,
-      "kayttajatunnus" -> "KX123456"
+      "kayttajatunnus" -> "KX123456",
+      "inventointipvm" -> "2015-01-01"
     )
   }
 
