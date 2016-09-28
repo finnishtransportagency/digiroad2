@@ -150,7 +150,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    massTransitStopService.getFloatingAssets(includedMunicipalities, Some(user.isOperator()))
+    massTransitStopService.getFloatingAssetsWithReason(includedMunicipalities, Some(user.isOperator()))
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {

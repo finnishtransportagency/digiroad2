@@ -143,25 +143,42 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedStop.copy(floating = floating)
   }
 
-  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long)] ={
+  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
 
-    isOperator match {
-      case Some(false) =>
-        val query = s"""
-          select a.$idField, m.name_fi, lrm.link_id
+    val query = s"""
+          select a.$idField, m.name_fi, lrm.link_id, np.value
           from asset a
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kellumisen_syy'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and np.value <> ${FloatingReason.RoadOwnerChanged.value}"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate)"""
 
-        StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
-
+    val queryFilter = isOperator match {
+      case Some(false) =>
+        (q: String) => {
+          addQueryFilter(q + s""" and np.value <> ${FloatingReason.RoadOwnerChanged.value}""")
+        }
       case _ =>
-        super.fetchFloatingAssets(addQueryFilter, isOperator)
+        addQueryFilter
     }
+
+    StaticQuery.queryNA[(Long, String, Long, Option[Long])](queryFilter(query)).list
+  }
+
+  def getFloatingAssetsWithReason(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Map[String, Long]]]] = {
+
+    val result = getFloatingPointAssets(includedMunicipalities, isOperator)
+
+    result.groupBy(_.municipality)
+      .mapValues { municipalityAssets =>
+        municipalityAssets
+          .groupBy(_.administrativeClass)
+          .mapValues(_.map(asset =>
+            Map("id" -> asset.id, "floatingReason" -> asset.floatingReason.getOrElse(0L))
+          ))
+      }
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {

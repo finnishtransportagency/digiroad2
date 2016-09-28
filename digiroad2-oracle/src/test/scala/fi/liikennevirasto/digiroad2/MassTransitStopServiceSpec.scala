@@ -140,13 +140,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(false))
+      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
       //Get all external ids from the working list
       val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
 
       //Should not find any external id of the asset with administration class changed
       externalIds.foreach{ externalId =>
-        externalId should not be (8)
+        externalId.get("id") should not be (Some(8))
       }
     }
   }
@@ -160,12 +160,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      val workingList = RollbackMassTransitStopService.getFloatingAssets(Some(Set(235)), Some(true))
+      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
       //Get all external ids from the working list
       val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
 
       //Should have the external id of the asset with administration class changed
-      externalIds.find(_ == 8) should be(Some(8))
+      externalIds.map(_.get("id")) should contain (Some(8))
     }
   }
 
