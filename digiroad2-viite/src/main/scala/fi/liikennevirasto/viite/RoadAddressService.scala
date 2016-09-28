@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -79,7 +79,9 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
     val viiteRoadLinks = roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       buildRoadAddressLink(rl, ra)
-    }
+  }
+    val anomalousRoadlinks = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
+    //TODO: 290 - Ricardo, anomalousRoadLinks variables that are anomalous, you can pick it up here
     viiteRoadLinks
   }
 
