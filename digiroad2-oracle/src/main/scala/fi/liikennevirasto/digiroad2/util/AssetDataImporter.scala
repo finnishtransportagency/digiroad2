@@ -881,7 +881,18 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     id
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef) = {
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
+    def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
+      val sorted = lrmPos.sortWith(_._4 > _._4)
+      val (id, linkId, startM, endM) = sorted.head
+      Seq((id, linkId, startM, Math.min(endM, length))) ++ sorted.tail
+    }
+    def cutter(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
+      val (good, bad) = lrmPos.partition(_._4 < length)
+      good ++ bad.map {
+        case (id, linkId, startM, endM) => (id, linkId, Math.min(startM, length), Math.min(endM, length))
+      }
+    }
     val roads = conversionDatabase.withDynSession {
       sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
@@ -892,8 +903,21 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)].list
     }
 
-    val lrmPositions = roads.map(r => (r._16, (r._1, r._2, r._3))).toMap
+    logger.info("Read %d rows from conversion database".format(roads.size))
+    val lrmList = roads.map(r => (r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_._2) // linkId -> (id, linkId, startM, endM)
     val addressList = roads.map(r => (r._16, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
+
+    logger.info("Total of %d link ids".format(lrmList.keys.size))
+    val linkIdGroups = lrmList.keys.toSet.grouped(500) // Mapping LinkId -> Id
+
+    val linkLengths = linkIdGroups.flatMap (
+      linkIds => vvhClient.fetchVVHRoadlinks(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
+    ).toMap
+    logger.info("Read %d road links from vvh".format(linkLengths.size))
+
+    val lrmPositions = linkLengths.flatMap {
+      case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
+    }
 
     OracleDatabase.withDynTransaction {
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
@@ -902,7 +926,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
         "created_date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
-      lrmPositions.foreach { case (id, (linkId, startM, endM)) =>
+      lrmPositions.foreach { case (id, linkId, startM, endM) =>
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
         val addressId = Sequences.nextViitePrimaryKeySeqValue
         val address = addressList.get(id).head
@@ -913,8 +937,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         lrmPositionPS.setLong(1, lrmId)
         lrmPositionPS.setLong(2, linkId)
         lrmPositionPS.setLong(3, sideCode)
-        lrmPositionPS.setLong(4, startM)
-        lrmPositionPS.setLong(5, endM)
+        lrmPositionPS.setDouble(4, startM)
+        lrmPositionPS.setDouble(5, endM)
         lrmPositionPS.addBatch()
         addressPS.setLong(1, addressId)
         addressPS.setLong(2, lrmId)
@@ -937,6 +961,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       lrmPositionPS.close()
       addressPS.close()
     }
+
+
 
     OracleDatabase.withDynTransaction {
       // both dates are open-ended or there is overlap (checked with inverse logic)
