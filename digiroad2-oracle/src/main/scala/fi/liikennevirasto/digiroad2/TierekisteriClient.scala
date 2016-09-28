@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.io.InputStream
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -271,10 +272,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode >= 400)
-        return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+        return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode), "content" -> response.getEntity.getContent), url))
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
-      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage), url))
+      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
     } finally {
       response.close()
     }

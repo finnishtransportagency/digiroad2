@@ -28,34 +28,31 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date)
   )
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
+
+  val vvhRoadLinks = List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1021227, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1021226, 90, Nil, Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(6488445l))
-    .thenReturn(Some(VVHRoadlink(6488445l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(123l))
-    .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1611353))
-    .thenReturn(Some(VVHRoadlink(1611353, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1611341l))
-    .thenReturn(Some(VVHRoadlink(1611341l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1l))
-    .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
-    TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1611601L))
-    .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(List(
-    VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(1021227, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(1021226, 235, List(Point(374786.043988584,6677274.14596445), Point(374675.043988335,6677274.14596169)), Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(131573L, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1611353, 235, Seq(Point(374603.57,6677262.009), Point(374684.567, 6677277.323)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1611341l, 91, Seq(Point(374375.156,6677244.904), Point(374567.632, 6677255.6)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+     VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
+    VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+  vvhRoadLinks.foreach(rl =>
+    when(mockVVHClient.fetchVVHRoadlink(rl.linkId))
+    .thenReturn(Some(rl)))
+  when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
     RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
+  )
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+    (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right)
   )
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -322,14 +319,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
       """.as[Long].firstOption
-      linkId should be(Some(6488445l))
+      linkId should be(Some(1611601L))
     }
   }
 
   test("Update mass transit stop bearing") {
     runWithRollback {
       val geom = Point(375621, 6676556)
-      val position = Some(Position(geom.x, geom.y, 131573L, Some(90)))
+      val position = Some(Position(geom.x, geom.y, 1611341l, Some(90)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a
@@ -344,7 +341,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop municipality") {
     runWithRollback {
       val geom = Point(375621, 6676556)
-      val position = Some(Position(geom.x, geom.y, 131573L, Some(85)))
+      val position = Some(Position(geom.x, geom.y, 1611341l, Some(85)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val municipality = sql"""
             select a.municipality_code from asset a
@@ -504,11 +501,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val massTransitStopDao = new MassTransitStopDao
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
+        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2017-01-01"))))
       val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStop = service.getById(id).get

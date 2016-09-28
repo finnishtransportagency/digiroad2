@@ -322,7 +322,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       "\"pysakin_tyyppi\": \"kauko\","+
       "\"pikavuoro\": \"ei\","+
       "\"livitunnus\": \"OTHJ208910\","+
-      "\"kayttajatunnus\": \"KX123456\""+
+      "\"kayttajatunnus\": \"KX123456\","+
       "\"inventointipvm\": \"2013-01-01\""+
       "}"
     when (response.getEntity).thenReturn(new StringEntity(retval))
