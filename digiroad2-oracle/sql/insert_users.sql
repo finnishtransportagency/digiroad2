@@ -17,4 +17,4 @@ values (8, 'ruovesi', '{"zoom": 8, "east": 346461, "north": 6875944, "municipali
 insert into service_user (id, username, configuration)
 values (9, 'iisalmi', '{"zoom": 8, "east": 509616, "north": 7047561, "municipalityNumber": 140, "authorizedMunicipalities": [140], "roles": ["operator"]}');
 insert into service_user (id, username, configuration)
-values (10, 'busstopmaintainer', '{"zoom": 8, "east": 373560, "north": 6677676, "municipalityNumber": 235, "authorizedMunicipalities": [504], "roles": ["operator", "busStopMaintainer"]}');
+values (10, 'bstest', '{"zoom": 8, "east": 373560, "north": 6677676, "municipalityNumber": 235, "authorizedMunicipalities": [504], "roles": ["operator", "busStopMaintainer"]}');
