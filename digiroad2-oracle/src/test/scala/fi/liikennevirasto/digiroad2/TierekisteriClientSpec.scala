@@ -350,6 +350,8 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     TierekisteriBusStopMarshaller.findStopType(Seq(1,3)) should be (StopType.LongDistance)
     TierekisteriBusStopMarshaller.findStopType(Seq(1,3,4)) should be (StopType.LongDistance)
     TierekisteriBusStopMarshaller.findStopType(Seq(5,3,4)) should be (StopType.Unknown)
+    TierekisteriBusStopMarshaller.findStopType(Seq(1,2,3,4)) should be (StopType.Combined)
+    TierekisteriBusStopMarshaller.findStopType(Seq(1,2,3,5)) should be (StopType.Unknown)
     for (x <- 6 to 99) {
       TierekisteriBusStopMarshaller.findStopType(Seq(x)) should be(StopType.Unknown)
     }
