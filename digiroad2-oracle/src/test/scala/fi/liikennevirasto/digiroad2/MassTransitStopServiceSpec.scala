@@ -63,11 +63,23 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = false
+    override val geometryTransform = mockGeometryTransform
+  }
+
+  class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform = mockGeometryTransform
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
+
+  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -266,7 +278,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date)
       )
 
-      val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
+      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get

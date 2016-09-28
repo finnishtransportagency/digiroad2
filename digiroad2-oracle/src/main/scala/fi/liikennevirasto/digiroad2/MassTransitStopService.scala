@@ -467,8 +467,6 @@ trait MassTransitStopService extends PointAssetOperations {
         case Some(str) => Try(str.toString.toInt).toOption
         case _ => None
       }
-      println(persistedStop.get.lon + " / " + persistedStop.get.lat)
-      println(persistedStop.get.bearing)
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
 
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))

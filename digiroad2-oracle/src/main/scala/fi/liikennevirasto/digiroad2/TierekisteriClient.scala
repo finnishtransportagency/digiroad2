@@ -400,7 +400,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
     val operatingTo = convertToDate(getFieldValue(trOperatingTo))
     val removalDate = convertToDate(getFieldValue(trRemovalDate))
-    val inventoryDate = getFieldValue(trInventoryDate)
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)

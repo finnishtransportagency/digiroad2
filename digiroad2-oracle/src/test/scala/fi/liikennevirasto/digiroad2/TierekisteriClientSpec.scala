@@ -323,6 +323,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       "\"pikavuoro\": \"ei\","+
       "\"livitunnus\": \"OTHJ208910\","+
       "\"kayttajatunnus\": \"KX123456\""+
+      "\"inventointipvm\": \"2013-01-01\""+
       "}"
     when (response.getEntity).thenReturn(new StringEntity(retval))
     when(httpClient.execute(any[HttpGet])).thenReturn(response)
