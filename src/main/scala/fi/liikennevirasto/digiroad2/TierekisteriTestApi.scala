@@ -37,7 +37,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "nimi_se" -> "Reso å",
       "varusteet" -> getEquipments,
       "kayttajatunnus" -> "KX123456",
-      "inventointipaiva" -> "2016-09-01"
+      "inventointipvm" -> "2016-09-01"
     )
   }
 
@@ -84,7 +84,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       halt(NotFound())
   }
 
-  get("/pysakit/") {
+  get("/pysakit") {
     List(
       massTransitStop,
       massTransitStopWithOnlyMandatoryParameters
@@ -120,12 +120,10 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
     }
 
-    val stopId = body.get("valtakunnallinen_id").get.toString.toLong
-
-    if(stopId == 208913)
-      halt(Conflict())
-
     val liviId =  body.get("livitunnus").get.toString
+
+    if(liviId == "OTHJ208916")
+      halt(Conflict())
 
     if(liviId.length > 10)
       halt(BadRequest())

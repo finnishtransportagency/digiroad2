@@ -204,7 +204,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   /**
     * Returns the anwser to the question "Is Tierekisteri Enabled?".
-    *
     * @return Type: Boolean - If TR client is enabled
     */
   def isTREnabled : Boolean = {
@@ -346,6 +345,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       trOperatingFrom -> convertDateToString(trMassTransitStop.operatingFrom),
       trOperatingTo -> convertDateToString(trMassTransitStop.operatingTo),
       trRemovalDate -> convertDateToString(trMassTransitStop.removalDate),
+      trInventoryDate -> convertDateToString(trMassTransitStop.inventoryDate),
       trEquipment -> trMassTransitStop.equipments.map{
         case (equipment, existence) =>
           equipment.value -> existence.value
@@ -450,7 +450,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   }
 
   private def convertDateToString(date: Option[Date]): Option[String] = {
-    date.map(dv => new SimpleDateFormat(dateFormat).format(dv))
+    date.map(dv => convertDateToString(dv))
+  }
+
+  private def convertDateToString(date: Date): String = {
+    new SimpleDateFormat(dateFormat).format(date)
   }
 }
 
