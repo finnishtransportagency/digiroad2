@@ -594,8 +594,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       trStop.equipments.filterNot( x => x._1 == Equipment.Roof).forall(_._2 == Existence.Unknown) should be (true)
       trStop.operatingFrom.isEmpty should be (false)
       trStop.operatingTo.isEmpty should be (false)
-      dateFormatter.format(trStop.operatingFrom.get) should be ("2015-09-27")
-      dateFormatter.format(trStop.operatingTo.get) should be ("2019-09-27")
+      val opFrom = stop.propertyData.find(_.publicId=="ensimmainen_voimassaolopaiva").flatMap(_.values.headOption.map(_.propertyValue))
+      val opTo = stop.propertyData.find(_.publicId=="viimeinen_voimassaolopaiva").flatMap(_.values.headOption.map(_.propertyValue))
+      opFrom shouldNot be (None)
+      opTo shouldNot be (None)
+      dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
+      dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
     }
   }
 }
