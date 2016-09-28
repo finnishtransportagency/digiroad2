@@ -89,6 +89,12 @@
     var overlayUnselectedOpacity = [
       new OpenLayersRule().where('type').is('overlay').use({ strokeOpacity: 0.3 })
     ];
+    var borderDefaultOpacity = [
+      new OpenLayersRule().where('type').is('underlay').use({ strokeOpacity: 1.0 })
+    ];
+    var borderUnselectedOpacity = [
+      new OpenLayersRule().where('type').is('underlay').use({ strokeOpacity: 0.3 })
+    ];
 
     var roadClassRules = [
       new OpenLayersRule().where('roadClass').is('1').use({ strokeColor: '#ff0000'}),
@@ -122,6 +128,7 @@
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
+    roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
@@ -147,6 +154,8 @@
     roadClassSelectionSelectStyle.addRules(overlayDefaultOpacity);
     roadClassSelectionDefaultStyle.addRules(borderRules);
     roadClassSelectionSelectStyle.addRules(borderRules);
+    roadClassSelectionDefaultStyle.addRules(borderUnselectedOpacity);
+    roadClassSelectionSelectStyle.addRules(borderDefaultOpacity);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle

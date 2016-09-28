@@ -82,7 +82,7 @@
         });
         var attributes = {
           dashedLineFeature: roadLink[dashedLineFeature],
-          linkId: roadLink.linkId,
+          id: roadLink.id,
           type: 'overlay',
           linkType: roadLink.linkType
         };
@@ -121,7 +121,7 @@
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var attributes = {
-          linkId: roadLink.linkId,
+          id: roadLink.id,
           type: 'underlay',
           linkType: roadLink.linkType
         };
