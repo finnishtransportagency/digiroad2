@@ -33,7 +33,7 @@
 
     var calibrationPointPicture = $('' +
         '<div class="legend-entry">' +
-          '<div class="label">Jakopiste</div>' +
+          '<div class="label">Kalibrointipiste</div>' +
         '</div>' +
         '<div class="calibration-point-image"></div>');
 
