@@ -54,12 +54,22 @@
     var draw = function() {
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      roadLayer.drawRoadLinks(roadLinks, zoom);
-      drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks);
-      me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
+      var anomalousRoadlinks = _.filter(roadLinks, function (f) {
+        return (f.administrativeClass == "State" || f.roadNumber >0) && f.id === 0
+      });
+      var nonAnomalousRoadLinks = _.filter(roadLinks, function(rl){
+        var sameLink = _.find(anomalousRoadlinks, function(arl) {
+          return arl.linkId === rl.linkId;
+        });
+        return sameLink === undefined;
+      });
+      roadLayer.drawRoadLinks(nonAnomalousRoadLinks, zoom);
+      drawAnomalousFeatures(anomalousRoadlinks);
+      drawDashedLineFeaturesIfApplicable(nonAnomalousRoadLinks);
+      me.drawOneWaySigns(roadLayer.layer, nonAnomalousRoadLinks);
+      me.drawRoadNumberMarkers(roadLayer.layer, nonAnomalousRoadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
-        me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
+        me.drawCalibrationMarkers(roadLayer.layer, nonAnomalousRoadLinks);
       }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
@@ -88,6 +98,55 @@
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
+    };
+
+    var typeSpecificStyleLookup = {
+      overlay: { strokeOpacity: 1.0 },
+      other: { strokeOpacity: 0.7 },
+      unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
+      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+    };
+
+    var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
+
+    var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
+    vectorLayer.setOpacity(1);
+    vectorLayer.setVisibility(true);
+    map.addLayer(vectorLayer);
+
+    var createAnomalousRoadAddresses = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = _.merge({}, roadLink, {
+          type: 'roadAddressAnomaly'
+        });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+
+    var createAnomalousRoadAddressesSigns = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var attributes = _.merge({}, roadLink, {
+          type: 'unknown'
+        });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      }));
+    };
+
+    var drawAnomalousFeatures = function(anomalousRoadLinks) {
+      roadLayer.layer.addFeatures(createAnomalousRoadAddresses(anomalousRoadLinks));
+      vectorLayer.addFeatures(createAnomalousRoadAddressesSigns(anomalousRoadLinks));
+      //TODO: Find out with the sign/marker is not showing
+      vectorLayer.redraw();
     };
 
     var drawDashedLineFeatures = function(roadLinks) {

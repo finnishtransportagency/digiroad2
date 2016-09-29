@@ -1,15 +1,15 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
-    /*
-    / Todo: Handle unknown, stroke black with question mark
-    /
+
+    // Todo: Handle unknown, stroke black with question mark
+
     var unknownRoadClassDefaultRules = [
-      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 1.0, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('type').is('roadAddressAnomaly').use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
     var unknownRoadClassUnselectedRules = [
-      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('type').is('roadAddressAnomaly').use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
-    */
+
     var typeFilter = function(type) {
       return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
     };
@@ -17,7 +17,7 @@
     var zoomLevelFilter = function(zoomLevel) {
       return new OpenLayers.Filter.Function({ evaluate: function() { return applicationModel.zoom.level === zoomLevel; } });
     };
-
+    
     var combineFilters = function(filters) {
       return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
     };
@@ -121,16 +121,26 @@
 
     // -- Road classification styles
 
+    var typeSpecificStyleLookup = {
+      overlay: { strokeOpacity: 1.0 },
+      other: { strokeOpacity: 0.7 },
+      unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
+      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+    };
+
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       rotation: '${rotation}'}));
+
     roadClassDefaultStyle.addRules(roadClassRules);
+    roadClassDefaultStyle.addRules(unknownRoadClassDefaultRules);
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
+    roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     var roadClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
@@ -144,6 +154,8 @@
     }));
     roadClassSelectionDefaultStyle.addRules(roadClassRules);
     roadClassSelectionSelectStyle.addRules(roadClassRules);
+    roadClassSelectionDefaultStyle.addRules(unknownRoadClassUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(unknownRoadClassDefaultRules);
     roadClassSelectionDefaultStyle.addRules(zoomLevelRules);
     roadClassSelectionSelectStyle.addRules(zoomLevelRules);
     roadClassSelectionDefaultStyle.addRules(overlayRules);
@@ -160,6 +172,8 @@
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
     });
+
+    roadClassSelectionStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     // --- Style map selection
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
