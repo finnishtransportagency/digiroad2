@@ -61,7 +61,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = false
-    override val geometryTransform = mockGeometryTransform
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
@@ -71,7 +71,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
-    override val geometryTransform = mockGeometryTransform
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
@@ -578,13 +578,19 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
+      val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
+      when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
+        RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
+      )
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+        (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
+      )
       val assetId = 300006
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
       stopOption.isEmpty should be (false)
       val stop = stopOption.get
-      val transform = new GeometryTransform
       val geom = Point(375621, 6676556)
-      val (address, roadSide) = transform.resolveAddressAndLocation(geom, stop.bearing.get)
+      val (address, roadSide) = mockGeometryTransform.resolveAddressAndLocation(geom, stop.bearing.get)
       val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide))
       roadSide should be (RoadSide.Left)
       trStop.nationalId should be (stop.nationalId)

@@ -127,7 +127,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assume(testConnection)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.fetchMassTransitStop("")
+      val asset = tierekisteriClient.fetchMassTransitStop("12345")
     }
     thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
   }
