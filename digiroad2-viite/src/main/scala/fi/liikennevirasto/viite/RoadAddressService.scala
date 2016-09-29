@@ -81,7 +81,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
       buildRoadAddressLink(rl, ra)
   }
     val anomalousRoadlinks = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
-    //TODO: 290 - Ricardo, anomalousRoadLinks variables that are anomalous, you can pick it up here
+    createMissingRoadAddress(anomalousRoadlinks)
     viiteRoadLinks
   }
 
@@ -205,4 +205,13 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
       case ex: NumberFormatException => NoClass
     }
   }
+
+  def createMissingRoadAddress(missingRoadLinks: Seq[RoadAddressLink]) = {
+    missingRoadLinks.map{ links =>
+      withDynTransaction {
+        RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
+      }
+    }
+  }
+
 }

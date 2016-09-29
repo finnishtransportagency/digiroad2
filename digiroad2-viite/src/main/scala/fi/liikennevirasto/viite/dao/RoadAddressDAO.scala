@@ -247,6 +247,14 @@ object RoadAddressDAO {
       """
     Q.queryNA[Int](query).firstOption
   }
+
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Byte) ={
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m, anomaly_code)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
+           """.execute
+  }
+
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
