@@ -480,7 +480,10 @@ object TierekisteriBusStopMarshaller {
   }
 
   private def convertStringToDate(str: Option[String]): Option[Date] = {
-    str.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
+    if(str.exists(_.trim.nonEmpty))
+      Some(new SimpleDateFormat(dateFormat).parse(str.get))
+    else
+      None
   }
 
   def getAllPropertiesAvailable(AssetTypeId : Int): Seq[Property] = {
