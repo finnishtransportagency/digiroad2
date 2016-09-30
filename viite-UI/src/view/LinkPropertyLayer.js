@@ -55,7 +55,7 @@
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
       var anomalousRoadlinks = _.filter(roadLinks, function (f) {
-        return (f.administrativeClass == "State" || f.roadNumber >0) && f.id === 0
+        return (f.administrativeClass == "State" || f.roadNumber >0) && f.id === 0;
       });
       var nonAnomalousRoadLinks = _.filter(roadLinks, function(rl){
         var sameLink = _.find(anomalousRoadlinks, function(arl) {
