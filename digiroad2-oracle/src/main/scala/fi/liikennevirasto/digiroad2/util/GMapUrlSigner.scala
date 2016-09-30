@@ -6,7 +6,6 @@ import javax.crypto.spec.SecretKeySpec
 
 class GMapUrlSigner
 {
-  //TODO make it fail if file exists, but doesnt have keys
   var propertiesread=true
   lazy val properties: Properties =
   {
@@ -21,14 +20,15 @@ class GMapUrlSigner
     // Load & converts the key from 'web safe' base 64 to binary.
     var loadedkeyString = properties.getProperty("googlemapapi.crypto_key")
     if (loadedkeyString == null)
-      loadedkeyString = "Av2W1c-qJKih0B8cg0e8YH6hkYs="
+      throw new IllegalArgumentException("Missing Google Crypto-key")
     val wskey = loadedkeyString.replace('-', '+').replace('_', '/')
     // Base64 is JDK +1.8 only - older versions may need to use Apache Commons or similar.
     Base64.getDecoder().decode(wskey)
   }
 
   val clientid = properties.getProperty("googlemapapi.client_id")
-
+  if (clientid == null)
+    throw new IllegalArgumentException("Missing Client id")
   def signRequest(wgsX: String, wgsY: String): String =
   {
     // Retrieve the proper URL components to sign
