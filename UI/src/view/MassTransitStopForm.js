@@ -111,13 +111,11 @@
 
       var MStopDeletebutton = function(readOnly) {
 
-        if(selectedMassTransitStopModel.getId() && !readOnly){
-          var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
-          removalForm.find("input").on('click', function(){
-            poistaSelected = !poistaSelected;
-            eventbus.trigger('checkBoxPoistaChanged');
-          });
-        }
+        var removalForm = $('<div class="checkbox"> <label>Poista<input type="checkbox" id = "removebox"></label></div>');
+        removalForm.find("input").on('click', function(){
+          poistaSelected = !poistaSelected;
+          eventbus.trigger('checkBoxPoistaChanged');
+        });
 
         return removalForm;
       };
@@ -545,9 +543,14 @@
           }
         });
 
-        var stopDeleteButton = MStopDeletebutton(readOnly);
+        var assetForm = $('<div />').append(components);
 
-        return $('<div />').append(components).append(stopDeleteButton);
+        if(selectedMassTransitStopModel.getId() && !readOnly) {
+          var stopDeleteButton = MStopDeletebutton(readOnly);
+          assetForm.append(stopDeleteButton);
+        }
+
+        return assetForm;
       };
 
       var streetViewTemplate  = _.template(
