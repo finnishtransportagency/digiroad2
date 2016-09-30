@@ -883,9 +883,16 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
     def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
-      val sorted = lrmPos.sortWith(_._4 > _._4)
-      val (id, linkId, startM, endM) = sorted.head
-      Seq((id, linkId, startM, Math.min(endM, length))) ++ sorted.tail
+      val filled = lrmPos.exists(x => x._4 >= length)
+      filled match {
+        case true => lrmPos
+        case false =>
+          val maxEnd = lrmPos.map(_._4).max
+          val (fixthese, good) = lrmPos.partition(_._4 == maxEnd)
+          fixthese.map {
+            case (xid, xlinkId, xstartM, _) => (xid, xlinkId, xstartM, length)
+          } ++ good
+      }
     }
     def cutter(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
       val (good, bad) = lrmPos.partition(_._4 < length)
@@ -903,25 +910,33 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)].list
     }
 
-    logger.info("Read %d rows from conversion database".format(roads.size))
+    print(s"${DateTime.now()} - ")
+    println("Read %d rows from conversion database".format(roads.size))
     val lrmList = roads.map(r => (r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_._2) // linkId -> (id, linkId, startM, endM)
     val addressList = roads.map(r => (r._16, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
 
-    logger.info("Total of %d link ids".format(lrmList.keys.size))
+    print(s"${DateTime.now()} - ")
+    println("Total of %d link ids".format(lrmList.keys.size))
     val linkIdGroups = lrmList.keys.toSet.grouped(500) // Mapping LinkId -> Id
 
     val linkLengths = linkIdGroups.flatMap (
       linkIds => vvhClient.fetchVVHRoadlinks(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
     ).toMap
-    logger.info("Read %d road links from vvh".format(linkLengths.size))
+    print(s"${DateTime.now()} - ")
+    println("Read %d road links from vvh".format(linkLengths.size))
 
     val lrmPositions = linkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }
+    }.filterNot(x => x._3 == x._4)
+
+    print(s"${DateTime.now()} - ")
+    println("%d zero length segments removed".format(lrmList.size - lrmPositions.size))
 
     OracleDatabase.withDynTransaction {
+      sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
+      println(s"${DateTime.now()} - Old address data removed")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
         "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
@@ -957,12 +972,14 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         addressPS.addBatch()
       }
       lrmPositionPS.executeBatch()
+      println(s"${DateTime.now()} - LRM Positions saved")
       addressPS.executeBatch()
+      println(s"${DateTime.now()} - Road addresses saved")
       lrmPositionPS.close()
       addressPS.close()
     }
 
-
+    println(s"${DateTime.now()} - Updating calibration point information")
 
     OracleDatabase.withDynTransaction {
       // both dates are open-ended or there is overlap (checked with inverse logic)
@@ -975,6 +992,20 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
         (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
         NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET CALIBRATION_POINTS = CALIBRATION_POINTS + 2
+          WHERE
+            START_ADDR_M = 0 OR
+            NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
+              RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
+              RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
+              RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
+              RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+              (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
+                NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
+              )
+            )""".execute
+      sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
     }
   }
 
@@ -1094,6 +1125,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
   /**
     * Retrives distinct int list filled with  municipalitycodes of mass transit stops which have only finnish OR swedish address
+    *
     * @return
     */
 
@@ -1183,6 +1215,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   /**
     * Adds text property to TEXT_PROPERTY_VALUE table. Created for getMassTransitStopAddressesFromVVH
     * to create address information for missing mass transit stops
+    *
     * @param assetId
     * @param propertyVal
     * @param vname
