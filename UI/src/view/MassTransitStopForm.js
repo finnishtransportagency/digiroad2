@@ -276,6 +276,12 @@
           return choice.publicId === property.publicId;
         }).values;
 
+        if(!isBusStopMaintainer && property.publicId == 'tietojen_yllapitaja'){
+          enumValues = _.filter(enumValues, function(value){
+            return value.propertyValue != '2';
+          });
+        }
+
         var isELYKeskusReadOnlyEquipment = isAdministratorELYKeskus && isReadOnlyEquipment(property);
 
         if (readOnly || isELYKeskusReadOnlyEquipment) {
