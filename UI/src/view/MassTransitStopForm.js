@@ -255,7 +255,7 @@
           elementType = property.propertyType === 'long_text' ?
             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
-            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
 
           if(property.values[0]) {
@@ -294,7 +294,7 @@
           }
         } else {
           element = $('<select />').addClass('form-control').change(function(x){
-            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value}], property.propertyType, property.required);
           });
 
           element = _.reduce(enumValues, function(element, value) {
@@ -365,7 +365,7 @@
               return;
             }
             var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
+            selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: propertyValue, propertyDisplayValue: propertyValue }], property.propertyType, property.required);
           }, 500));
 
           if (property.values[0]) {
@@ -403,7 +403,7 @@
 
         element = _.reduce(enumValues, function(element, value) {
           value.checked = _.any(currentValue.values, function (prop) {
-            return prop.propertyValue === value.propertyValue;
+            return prop.propertyValue == value.propertyValue;
           });
 
           if (readOnly) {
@@ -422,11 +422,11 @@
                   return value.checked;
                 })
                 .map(function (value) {
-                  return { propertyValue: parseInt(value.propertyValue, 10) };
+                  return { propertyValue: parseInt(value.propertyValue, 10), propertyDisplayValue: value.propertyDisplayValue, checked: true };
                 })
                 .value();
               if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
-              selectedMassTransitStopModel.setProperty(property.publicId, values);
+              selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
             });
 
             input.prop('checked', value.checked);

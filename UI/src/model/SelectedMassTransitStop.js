@@ -246,8 +246,14 @@
       currentAsset.payload.validityDirection = validityDirection;
     };
 
-    var setProperty = function(publicId, values) {
-      var propertyData = {publicId: publicId, values: values};
+    var setProperty = function(publicId, values, propertyType, required) {
+      var propertyData = {};
+      if(propertyType){
+        propertyData = {publicId: publicId, values: values, propertyType: propertyType, required: required};
+      }
+      else{
+        propertyData = {publicId: publicId, values: values};
+      }
       changedProps = _.union(changedProps, [publicId]);
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
