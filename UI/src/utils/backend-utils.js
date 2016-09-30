@@ -338,6 +338,11 @@
       });
     };
 
+    this.getMassTransitStopStreetViewUrl = function (lati, longi)
+    {
+    return $.getJSON("api/masstransitstopgapiurl?latitude="+lati+"&longitude="+longi);
+    };
+
     this.getGeocode = function(address) {
       return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };

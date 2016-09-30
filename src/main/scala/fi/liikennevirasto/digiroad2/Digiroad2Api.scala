@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication,
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.json4s._
@@ -100,6 +101,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
+    get("/masstransitstopgapiurl"){
+      val failteststring="https://maps.googleapis.com/maps/api/streetview?location=66,30&size=360x180&fail=yes"
+      val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordintes")))
+      val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordintes")))
+      try {
+        val urlsigner = new GMapUrlSigner()
+      Map("gmapiurl" -> urlsigner.signRequest(lat, lon))
+      } catch
+        {
+          case e: Exception => Map("gmapiurl" -> failteststring)
+        }
+    }
 
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser()
@@ -756,5 +769,4 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     servicePointService.expire(id, user.username)
   }
-
 }
