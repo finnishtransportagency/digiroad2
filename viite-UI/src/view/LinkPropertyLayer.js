@@ -103,7 +103,7 @@
     var typeSpecificStyleLookup = {
       overlay: { strokeOpacity: 1.0 },
       other: { strokeOpacity: 0.7 },
-      unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
+      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' },
       cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
     };
 
@@ -111,10 +111,20 @@
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
     browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
+
+
+    var typeFilter = function(type) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+    };
+    var unknownLimitStyleRule = new OpenLayers.Rule({
+      filter: typeFilter('roadAddressAnomaly'),
+      symbolizer: { externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' }
+    });
+    browseStyle.addRules([unknownLimitStyleRule]);
     var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
     vectorLayer.setOpacity(1);
     vectorLayer.setVisibility(true);
-    map.addLayer(vectorLayer);
+
 
     var createAnomalousRoadAddresses = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -136,7 +146,7 @@
         var road = new OpenLayers.Geometry.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
         var attributes = _.merge({}, roadLink, {
-          type: 'unknown'
+          type: 'roadAddressAnomaly'
         });
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
       }));
@@ -144,6 +154,7 @@
 
     var drawAnomalousFeatures = function(anomalousRoadLinks) {
       roadLayer.layer.addFeatures(createAnomalousRoadAddresses(anomalousRoadLinks));
+      map.addLayer(vectorLayer);
       vectorLayer.addFeatures(createAnomalousRoadAddressesSigns(anomalousRoadLinks));
       //TODO: Find out with the sign/marker is not showing
       vectorLayer.redraw();
@@ -281,6 +292,7 @@
     };
 
     var show = function(map) {
+      vectorLayer.setVisibility(true);
       me.show(map);
     };
 
