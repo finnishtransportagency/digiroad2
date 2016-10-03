@@ -35,7 +35,6 @@ object DataFixture {
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
       val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
-      continuityChecker.checkRoadPart()
       val adjusted = LinkRoadAddressCalculator.recalculate(roads)
       val (changed, unchanged) = adjusted.partition(ra =>
         roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
@@ -48,7 +47,7 @@ object DataFixture {
 
   def recalculate():Unit = {
     OracleDatabase.withDynTransaction {
-      var roadNumberOpt = RoadAddressDAO.fetchNextRoadNumber(15370)
+      var roadNumberOpt = RoadAddressDAO.fetchNextRoadNumber(0)
       while (roadNumberOpt.nonEmpty) {
         loopRoadParts(roadNumberOpt.get)
         roadNumberOpt = RoadAddressDAO.fetchNextRoadNumber(roadNumberOpt.get)

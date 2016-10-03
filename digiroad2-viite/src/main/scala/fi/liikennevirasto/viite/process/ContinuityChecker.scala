@@ -10,8 +10,8 @@ import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
   */
 
 trait AddressError {
-  val roadNumber: Int
-  val roadPartNumber: Int
+  val roadNumber: Long
+  val roadPartNumber: Long
   val startMAddr: Option[Long]
   val endMAddr: Option[Long]
   val linkId: Option[Long]
@@ -90,6 +90,6 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
   }
 
   private def checkLinksExist(addresses: Seq[RoadAddress]): Seq[MissingLink] = {
-
+    Seq()
   }
 }
