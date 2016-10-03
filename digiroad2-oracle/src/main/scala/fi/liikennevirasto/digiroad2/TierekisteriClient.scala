@@ -5,6 +5,9 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -186,6 +189,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
   private lazy val logger = LoggerFactory.getLogger(getClass)
+
+  private val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   /**
     * Return all bus stops currently active from Tierekisteri
@@ -395,7 +400,6 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val modifiedBy = getMandatoryFieldValue(trUser).get
     val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
       convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(trDistance)).get,None)
-    val inventoryDate = convertToDate(getMandatoryFieldValue(trInventoryDate)).get
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
@@ -405,6 +409,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
     val operatingTo = convertToDate(getFieldValue(trOperatingTo))
     val removalDate = convertToDate(getFieldValue(trRemovalDate))
+    val inventoryDate = convertToDate(Some(getFieldValue(trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)
