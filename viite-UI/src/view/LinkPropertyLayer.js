@@ -100,38 +100,35 @@
       }));
     };
 
-    var typeSpecificStyleLookup = {
-      overlay: { strokeOpacity: 1.0 },
-      other: { strokeOpacity: 0.7 },
-      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' },
-      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+    var unknownFeatureSizeLookup = {
+      9: { strokeWidth: 3, pointRadius: 0 },
+      10: { strokeWidth: 5, pointRadius: 10 },
+      11: { strokeWidth: 7, pointRadius: 14 },
+      12: { strokeWidth: 10, pointRadius: 16 },
+      13: { strokeWidth: 10, pointRadius: 16 },
+      14: { strokeWidth: 14, pointRadius: 22 },
+      15: { strokeWidth: 14, pointRadius: 22 }
     };
 
     var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
-    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
+    browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
 
-
-
-    var typeFilter = function(type) {
-      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
-    };
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('roadAddressAnomaly'),
-      symbolizer: { externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' }
+      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
     });
     browseStyle.addRules([unknownLimitStyleRule]);
     var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
     vectorLayer.setOpacity(1);
     vectorLayer.setVisibility(true);
 
-
     var createAnomalousRoadAddresses = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var attributes = _.merge({}, roadLink, {
+        var attributes = _.merge({}, _.cloneDeep(roadLink), {
           type: 'roadAddressAnomaly'
         });
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
@@ -145,7 +142,7 @@
         });
         var road = new OpenLayers.Geometry.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
-        var attributes = _.merge({}, roadLink, {
+        var attributes = _.merge({}, _.cloneDeep(roadLink), {
           type: 'roadAddressAnomaly'
         });
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
@@ -153,10 +150,11 @@
     };
 
     var drawAnomalousFeatures = function(anomalousRoadLinks) {
-      roadLayer.layer.addFeatures(createAnomalousRoadAddresses(anomalousRoadLinks));
+
       map.addLayer(vectorLayer);
+      vectorLayer.addFeatures(createAnomalousRoadAddresses(anomalousRoadLinks));
       vectorLayer.addFeatures(createAnomalousRoadAddressesSigns(anomalousRoadLinks));
-      //TODO: Find out with the sign/marker is not showing
+      vectorLayer.setVisibility(true);
       vectorLayer.redraw();
     };
 
