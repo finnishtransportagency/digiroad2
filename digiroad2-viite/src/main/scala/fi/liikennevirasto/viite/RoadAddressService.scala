@@ -3,13 +3,14 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
+
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
 
@@ -80,8 +81,13 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
       val ra = addresses.getOrElse(rl.linkId, Seq())
       buildRoadAddressLink(rl, ra)
   }
-    val anomalousRoadlinks = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
-    createMissingRoadAddress(anomalousRoadlinks)
+    val newAnomalousRL = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
+    val missedRL  = withDynTransaction {
+    RoadAddressDAO.getMissingRoadAddresses()
+    }
+
+    val missingRL = newAnomalousRL.filterNot(rl => missedRL.exists(mrl => mrl._1 == rl.linkId && mrl._2 == rl.startAddressM && mrl._3 == rl.endAddressM))
+    createMissingRoadAddress(missingRL)
     viiteRoadLinks
   }
 
@@ -207,9 +213,10 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
   }
 
   def createMissingRoadAddress(missingRoadLinks: Seq[RoadAddressLink]) = {
-    missingRoadLinks.map{ links =>
-      withDynTransaction {
-        RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
+      missingRoadLinks.map { links =>
+        withDynTransaction {
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
+
       }
     }
   }

@@ -255,6 +255,13 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def getMissingRoadAddresses() = {
+    sql"""SELECT link_id, start_addr_m, end_addr_m
+            FROM missing_road_address""".as[(Long, Long, Long)].list
+  }
+
+
+
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
