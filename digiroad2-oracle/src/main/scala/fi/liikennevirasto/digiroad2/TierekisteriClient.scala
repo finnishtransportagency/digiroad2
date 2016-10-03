@@ -17,6 +17,8 @@ import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
 
+import scala.io.Source
+
 /**
   * Values for Stop type (Pysäkin tyyppi) enumeration
   */
@@ -283,9 +285,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPost(url)
     request.setEntity(createJson(trMassTransitStop))
+    logger.debug("Posting " + Source.fromInputStream(createJson(trMassTransitStop).getContent).getLines().mkString("\t"))
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
+      logger.debug("Got back " + Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\t"))
       if (statusCode >= 400)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
      None
