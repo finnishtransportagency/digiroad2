@@ -3,6 +3,9 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 
+trait LinkRoadAddressCalculator {
+  def recalculate(addressList: Seq[RoadAddress]): Seq[RoadAddress]
+}
 object LinkRoadAddressCalculator {
   /**
     * Recalculate road address mapping to links for one road. This should only be run after ContinuityChecker has been
@@ -41,7 +44,7 @@ object LinkRoadAddressCalculator {
     val endCP = calibrationPoints.tail.head
     val first = addresses.head
     // Test if this link is calibrated on both ends. Special case, then.
-    if (startCP.linkId == endCP.linkId) {
+    if (first.calibrationPoints.contains(startCP) && first.calibrationPoints.contains(endCP)) {
       return segmentize(addresses.tail, calibrationPoints.tail.tail, processed) ++
         Seq(first.copy(startAddrMValue = startCP.addressMValue, endAddrMValue = endCP.addressMValue))
     }

@@ -247,6 +247,22 @@ object RoadAddressDAO {
       """
     Q.queryNA[Int](query).firstOption
   }
+
+  def update(roadAddress: RoadAddress) = {
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+            road_part_number= ${roadAddress.roadPartNumber},
+            track_code = ${roadAddress.track.value},
+            ely= ${roadAddress.ely},
+            road_type= ${roadAddress.roadType.value},
+            discontinuity= ${roadAddress.discontinuity.value},
+            START_ADDR_M= ${roadAddress.startAddrMValue},
+            END_ADDR_M= ${roadAddress.endAddrMValue},
+            start_date= ${roadAddress.startDate},
+            end_date= ${roadAddress.endDate}
+        WHERE id = ${roadAddress.id}""".execute
+  }
+
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
