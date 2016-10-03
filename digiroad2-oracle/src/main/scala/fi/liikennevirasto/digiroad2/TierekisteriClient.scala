@@ -156,7 +156,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private val dateFormat = "yyyy-MM-dd"
-  private val serviceName = "pysakit"
+  private val serviceName = "pysakit/"
 
   private val trNationalId = "valtakunnallinen_id"
   private val trRoadNumber = "tie"        // tienumero
@@ -178,7 +178,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trInventoryDate = "inventointipvm"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
-  private def serviceUrl(id: String) : String = serviceUrl + "/" + id
+  private def serviceUrl(id: String) : String = serviceUrl + id
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
