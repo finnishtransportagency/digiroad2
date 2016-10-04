@@ -13,7 +13,7 @@ object LinkRoadAddressCalculator {
   def recalculate(addressList: Seq[RoadAddress]) = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
-    val calibrationPoints = addressList.flatMap(ra => ra.calibrationPoints).distinct.groupBy(_.linkId)
+    val calibrationPoints = addressList.flatMap(ra => Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.groupBy(_.linkId)
     val (trackZero, others) = addressList.partition(ra => ra.track == Track.Combined)
     val (trackOne, trackTwo) = others.partition(ra => ra.track == Track.RightSide)
     recalculateTrack(trackZero) ++
@@ -25,7 +25,8 @@ object LinkRoadAddressCalculator {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
       case (addresses) =>
-        val calibrationPoints: Seq[CalibrationPoint] = addressList.flatMap(_.calibrationPoints).distinct.sortBy(_.addressMValue)
+        val calibrationPoints: Seq[CalibrationPoint] = addressList.flatMap(ra =>
+          Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.sortBy(_.addressMValue)
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, calibrationPoints, Seq())
     }.values.flatten
@@ -45,7 +46,7 @@ object LinkRoadAddressCalculator {
       return segmentize(addresses.tail, calibrationPoints.tail.tail, processed) ++
         Seq(first.copy(startAddrMValue = startCP.addressMValue, endAddrMValue = endCP.addressMValue))
     }
-    val cutPoint = addresses.tail.indexWhere(_.calibrationPoints.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
+    val cutPoint = addresses.tail.indexWhere(a => a.calibrationPoints._1.nonEmpty || a.calibrationPoints._2.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
     val (segments, others) = addresses.splitAt(cutPoint)
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
     val coefficient = (endCP.addressMValue - startCP.addressMValue) / newGeom.last._2

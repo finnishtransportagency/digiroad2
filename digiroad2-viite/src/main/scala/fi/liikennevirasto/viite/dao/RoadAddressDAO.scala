@@ -72,7 +72,7 @@ case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: DateTime, linkId: Long,
-                       startMValue: Double, endMValue: Double, calibrationPoints: Seq[CalibrationPoint] = Seq()
+                       startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
                       )
 
 object RoadAddressDAO {
@@ -80,23 +80,23 @@ object RoadAddressDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): Seq[CalibrationPoint] = {
+                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
-      case BothDirections => Seq() // Invalid choice
+      case BothDirections => (None, None) // Invalid choice
       case TowardsDigitizing => calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue)
       case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue, startMValue, startAddrMValue, endAddrMValue)
-      case Unknown => Seq()  // Invalid choice
+      case Unknown => (None, None)  // Invalid choice
     }
   }
 
   private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long): Seq[CalibrationPoint] = {
+                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationCode match {
-      case No => Seq()
-      case AtEnd => Seq(CalibrationPoint(linkId, endMValue, endAddrMValue))
-      case AtBeginning => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue))
-      case AtBoth => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue),
-        CalibrationPoint(linkId, endMValue, endAddrMValue))
+      case No => (None, None)
+      case AtEnd => (None, Some(CalibrationPoint(linkId, endMValue, endAddrMValue)))
+      case AtBeginning => (Some(CalibrationPoint(linkId, startMValue, startAddrMValue)), None)
+      case AtBoth => (Some(CalibrationPoint(linkId, startMValue, startAddrMValue)),
+        Some(CalibrationPoint(linkId, endMValue, endAddrMValue)))
     }
   }
   val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")

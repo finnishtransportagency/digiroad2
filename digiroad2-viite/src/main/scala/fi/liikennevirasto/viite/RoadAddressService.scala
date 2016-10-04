@@ -101,18 +101,10 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
           rl.linkType, rl.modifiedAt, rl.modifiedBy,
           rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
           ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-          startingCalibrationPoint(ra.calibrationPoints, length),
-          endingCalibrationPoint(ra.calibrationPoints, length))
+          ra.calibrationPoints._1,
+          ra.calibrationPoints._2)
       }).filter(_.length > 0.0)
     }
-  }
-
-  private def startingCalibrationPoint(calibrationPoints: Seq[CalibrationPoint], linkLength: Double): Option[CalibrationPoint] = {
-    calibrationPoints.filter(_.mValue < linkLength).sortBy(_.mValue).headOption.map(_.copy(mValue = 0.0))
-  }
-
-  private def endingCalibrationPoint(calibrationPoints: Seq[CalibrationPoint], linkLength: Double): Option[CalibrationPoint] = {
-    calibrationPoints.filter(_.mValue > linkLength).sortBy(0.0-_.mValue).headOption.map(_.copy(mValue = linkLength))
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
