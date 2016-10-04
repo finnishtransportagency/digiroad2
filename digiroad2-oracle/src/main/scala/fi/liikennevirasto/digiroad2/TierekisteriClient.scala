@@ -513,7 +513,6 @@ object TierekisteriBusStopMarshaller {
       case _ => TRRoadSide.Unknown
     }
   }
-  // TODO: Add the removal date here where applicable
   def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide]): TierekisteriMassTransitStop = {
     val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId)).getOrElse(new Date)
     val startingDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, FirstDayValidPublicId))
@@ -560,7 +559,7 @@ object TierekisteriBusStopMarshaller {
 
   private def findLiViId(properties: Seq[Property]) = {
     properties.find(p =>
-      p.publicId.equals(liviIdPublicId) && p.values.size > 0).map(_.values.head.propertyValue)
+      p.publicId.equals(liviIdPublicId) && p.values.nonEmpty).map(_.values.head.propertyValue)
   }
 
   def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
