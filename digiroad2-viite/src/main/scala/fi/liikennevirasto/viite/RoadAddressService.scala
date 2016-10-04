@@ -82,6 +82,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
       buildRoadAddressLink(rl, ra)
   }
     val newAnomalousRL = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
+
     val missedRL  = withDynTransaction {
     RoadAddressDAO.getMissingRoadAddresses()
     }
@@ -215,10 +216,30 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
   def createMissingRoadAddress(missingRoadLinks: Seq[RoadAddressLink]) = {
       missingRoadLinks.map { links =>
         withDynTransaction {
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
+
+          val anomalyCode = getAnomalyCodeByLinkId(links.linkId, links.roadPartNumber)
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, anomalyCode)
 
       }
     }
+  }
+
+  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Int = {
+    var code = 0
+      //roadlink dont have road address
+      if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
+        code = 1
+      }
+      //road address do not cover the whole length of the link
+       else if (RoadAddressDAO.getLrmPositionMeasures(linkId).length > 0)
+      {
+        code = 2
+      }
+        //road adress having road parts that dont matching
+      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).length > 0){
+        code = 3
+      }
+    code
   }
 
 }

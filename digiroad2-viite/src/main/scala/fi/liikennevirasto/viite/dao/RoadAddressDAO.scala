@@ -248,7 +248,7 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Byte) ={
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int) = {
     sqlu"""
            insert into missing_road_address (link_id, start_addr_m, end_addr_m, anomaly_code)
            values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
@@ -258,6 +258,29 @@ object RoadAddressDAO {
   def getMissingRoadAddresses() = {
     sql"""SELECT link_id, start_addr_m, end_addr_m
             FROM missing_road_address""".as[(Long, Long, Long)].list
+  }
+
+  def getLrmPositionByLinkId(linkId: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id and lrm.link_id = $linkId""".as[(Long, Long, Long)].list
+  }
+
+  def getLrmPositionMeasures(linkId: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id
+       and (lrm.start_measure != rda.start_addr_m or lrm.end_measure != rda.end_addr_m) and lrm.link_id = $linkId""".as[(Long, Long, Long)].list
+  }
+
+  def getLrmPositionRoadParts(linkId: Long, roadPart: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id
+       and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Long, Long)].list
   }
 
 
