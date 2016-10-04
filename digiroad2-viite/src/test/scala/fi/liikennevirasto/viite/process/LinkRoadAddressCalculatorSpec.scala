@@ -39,7 +39,7 @@ class LinkRoadAddressCalculatorSpec extends FunSuite with Matchers{
     right.filter(_.startAddrMValue==0) should have size (1)
   }
 
-  test("testRecalculate one track road with multiple parts") {
+  ignore("testRecalculate one track road with multiple parts") {
     val addresses = Seq(
       RoadAddress(1, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 0, 110, DateTime.now, null, 123L, 0.0, 108.3, Seq(CalibrationPoint(123L, 0.0, 0))),
       RoadAddress(2, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 110, 135, DateTime.now, null, 124L, 0.0, 25.2),
