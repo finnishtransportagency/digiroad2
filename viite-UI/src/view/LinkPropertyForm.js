@@ -42,12 +42,12 @@
     ];
 
     var roadClasses = [
-      [1, 'Yleinen tie'],
+      [1, 'Maantie'],
       [2, 'Lauttaväylä yleisellä tiellä'],
       [3, 'Kunnan katuosuus'],
       [4, 'Yleisen tien työmaa'],
       [5, 'Yksityistie'],
-      [9, 'Omistaja selvittämättä']
+      [9, 'Ei tiedossa']
     ];
 
     var discontinuitys = [
