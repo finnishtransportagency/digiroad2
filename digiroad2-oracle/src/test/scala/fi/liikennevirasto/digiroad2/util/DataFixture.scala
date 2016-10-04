@@ -150,7 +150,8 @@ object DataFixture {
 
   def importRoadAddresses(): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
-    dataImporter.importRoadAddressData(Conversion.database())
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    dataImporter.importRoadAddressData(Conversion.database(), vvhClient)
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }
