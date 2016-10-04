@@ -84,7 +84,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       halt(NotFound())
   }
 
-  get("/pysakit") {
+  get("/pysakit/") {
     List(
       massTransitStop,
       massTransitStopWithOnlyMandatoryParameters
@@ -112,7 +112,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     halt(NoContent())
   }
 
-  post("/pysakit"){
+  post("/pysakit/"){
 
     val body = parsedBody.extract[Map[String, Any]]
 
