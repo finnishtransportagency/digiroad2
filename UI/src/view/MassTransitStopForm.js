@@ -22,7 +22,6 @@
     };
   };
 
-  var getstreetviewurl;
   var InvalidCombinationError = function() {
     var element = $('<span class="validation-fatal-error">Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</span>');
     var updateVisibility = function() {
@@ -135,12 +134,10 @@
 
       var getStreetView = function() {
         var model = selectedMassTransitStopModel;
-
         var render = function() {
           var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
           var heading= (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90);
           return $(streetViewTemplates(wgs84[0],wgs84[1],heading)(
-
             {
             wgs84X: wgs84[0],
             wgs84Y: wgs84[1],

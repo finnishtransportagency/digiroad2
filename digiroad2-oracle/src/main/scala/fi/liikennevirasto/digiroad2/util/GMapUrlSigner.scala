@@ -1,5 +1,4 @@
 package fi.liikennevirasto.digiroad2.util
-
 import java.util.{Base64, Properties}
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -13,6 +12,7 @@ class GMapUrlSigner
       props.load(getClass.getResourceAsStream("/keys.properties"))
     props
   }
+
   val key: Array[Byte] =
   {
     // Load & converts the key from 'web safe' base 64 to binary.
@@ -23,9 +23,11 @@ class GMapUrlSigner
     // Base64 is JDK +1.8 only - older versions may need to use Apache Commons or similar.
     Base64.getDecoder().decode(wskey)
   }
+
   val clientid = properties.getProperty("googlemapapi.client_id")
   if (clientid == null)
     throw new IllegalArgumentException("Missing Client id")
+
   def signRequest(wgsX: String, wgsY: String,heading:String): String =
   {
     // Retrieve URL components to sign
