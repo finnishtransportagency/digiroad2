@@ -338,9 +338,22 @@
       });
     };
 
-    this.getMassTransitStopStreetViewUrl = function (lati, longi)
-    {
-    return $.getJSON("api/masstransitstopgapiurl?latitude="+lati+"&longitude="+longi);
+
+    this.getMassTransitStopStreetViewUrl = function test(lati,longi,heading) {
+
+      var urli="";
+      function getJson(){
+       $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
+          .done(function (response) {
+            urli=response.gmapiurl;
+            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +urli +'>');
+            })
+          .fail(function () {
+            console.log("error, could not retrive Google street image");
+          });
+      }
+      if (lati && longi && heading)
+    getJson();
     };
 
     this.getGeocode = function(address) {

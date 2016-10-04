@@ -22,6 +22,7 @@
     };
   };
 
+  var getstreetviewurl;
   var InvalidCombinationError = function() {
     var element = $('<span class="validation-fatal-error">Virtuaalipysäkkiä ei voi yhdistää muihin pysäkkityyppeihin</span>');
     var updateVisibility = function() {
@@ -87,7 +88,6 @@
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
-
       var renderAssetForm = function() {
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
@@ -138,7 +138,10 @@
 
         var render = function() {
           var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
-          return $(streetViewTemplate({
+          var heading= (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90);
+          return $(streetViewTemplates(wgs84[0],wgs84[1],heading)(
+
+            {
             wgs84X: wgs84[0],
             wgs84Y: wgs84[1],
             heading: (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90)
@@ -491,12 +494,19 @@
       };
 
 
-      var getstreetviewurl=backend.getMassTransitStopStreetViewUrl("60","30");
-      var debugstopper=null;
+
+
+function streetViewTemplates(longi,lati,heading) {
       var streetViewTemplate  = _.template(
           '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
-          '<img alt="Google StreetView-n&auml;kym&auml;" src='+getstreetviewurl+'>'+
+          '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
           '</a>');
+  backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
+  return streetViewTemplate;
+      }
+
+
+
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
         '<div class="formLabels"><%= localizedName %></div>' +
