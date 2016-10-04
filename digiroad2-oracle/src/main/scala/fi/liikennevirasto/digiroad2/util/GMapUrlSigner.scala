@@ -6,7 +6,6 @@ import javax.crypto.spec.SecretKeySpec
 
 class GMapUrlSigner
 {
-  var propertiesread=true
   lazy val properties: Properties =
   {
     //Property loader. Should load from digiroad2-oracle.conf.dev folder
@@ -14,25 +13,23 @@ class GMapUrlSigner
       props.load(getClass.getResourceAsStream("/keys.properties"))
     props
   }
-
   val key: Array[Byte] =
   {
     // Load & converts the key from 'web safe' base 64 to binary.
-    var loadedkeyString = properties.getProperty("googlemapapi.crypto_key")
+    val loadedkeyString = properties.getProperty("googlemapapi.crypto_key")
     if (loadedkeyString == null)
       throw new IllegalArgumentException("Missing Google Crypto-key")
     val wskey = loadedkeyString.replace('-', '+').replace('_', '/')
     // Base64 is JDK +1.8 only - older versions may need to use Apache Commons or similar.
     Base64.getDecoder().decode(wskey)
   }
-
   val clientid = properties.getProperty("googlemapapi.client_id")
   if (clientid == null)
     throw new IllegalArgumentException("Missing Client id")
-  def signRequest(wgsX: String, wgsY: String): String =
+  def signRequest(wgsX: String, wgsY: String,heading:String): String =
   {
-    // Retrieve the proper URL components to sign
-    val resource = s"/maps/api/streetview?location=$wgsX,$wgsY&size=360x180&client=$clientid"
+    // Retrieve URL components to sign
+    val resource = s"/maps/api/streetview?location=$wgsX,$wgsY&size=360x180&client=$clientid&fov=110&heading=$heading&pitch=-10&sensor=false"
     // Get an HMAC-SHA1 Mac instance and initialize it with the HMAC-SHA1 key
     val mac = Mac.getInstance("HmacSHA1")
     mac.init(new SecretKeySpec(key, "HmacSHA1"))
