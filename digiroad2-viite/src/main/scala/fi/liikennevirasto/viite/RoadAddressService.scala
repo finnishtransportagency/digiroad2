@@ -3,8 +3,8 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.{Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.joda.time.format.DateTimeFormat
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 
-class RoadAddressService(roadLinkService: RoadLinkService) {
+class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -88,7 +88,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
     }
 
     val missingRL = newAnomalousRL.filterNot(rl => missedRL.exists(mrl => mrl._1 == rl.linkId && mrl._2 == rl.startAddressM && mrl._3 == rl.endAddressM))
-    createMissingRoadAddress(missingRL)
+    eventbus.publish("roadAddress:persistMissingRoadAddress", missingRL)
     viiteRoadLinks
   }
 
