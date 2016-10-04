@@ -122,6 +122,7 @@
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
     var template = function(options) {
+      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       return _.template('' +
         '<header>' +
           title() + buttons +
@@ -134,7 +135,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
-            staticField('SEGMENTIN ID', 'segmentId') +
+            staticSegmentIdField +
             staticField('TIENUMERO', 'roadNumber') +
             staticField('TIEOSANUMERO', 'roadPartNumber') +
             staticField('AJORATA', 'trackCode') +
