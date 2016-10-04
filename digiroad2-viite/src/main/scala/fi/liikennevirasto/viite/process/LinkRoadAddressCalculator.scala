@@ -50,11 +50,6 @@ object LinkRoadAddressCalculator {
     val cutPoint = addresses.tail.indexWhere(_.calibrationPoints.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
     val (segments, others) = addresses.splitAt(cutPoint)
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
-    segments.foreach(println)
-    newGeom.foreach(println)
-    print(startCP + " - ")
-    println(endCP)
-    println("---")
     val coefficient = (endCP.addressMValue - startCP.addressMValue) / newGeom.last._2
     segmentize(others, calibrationPoints.tail.tail, processed ++
       segments.zip(newGeom).map {
