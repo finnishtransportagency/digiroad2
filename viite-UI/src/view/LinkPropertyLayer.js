@@ -114,6 +114,10 @@
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
     browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
 
+    var typeFilter = function(type) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+    };
+
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('roadAddressAnomaly'),
       symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
