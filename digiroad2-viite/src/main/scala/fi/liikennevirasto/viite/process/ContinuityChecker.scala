@@ -53,6 +53,7 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     val missingFirst = !addressMap.contains(0L) match {
       case true => Seq(MissingSegment(addresses.head.roadNumber, addresses.head.roadPartNumber,
         Some(0), Some(addresses.map(_.startAddrMValue).min), None))
+      case _ => Seq()
     }
     missingFirst ++ addresses.filter(addressHasGapAfter(addressMap)).map(ra =>
       MissingSegment(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), None, None))

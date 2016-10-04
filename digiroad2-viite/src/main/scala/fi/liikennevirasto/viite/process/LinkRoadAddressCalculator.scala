@@ -16,7 +16,6 @@ object LinkRoadAddressCalculator {
   def recalculate(addressList: Seq[RoadAddress]) = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
-    val calibrationPoints = addressList.flatMap(ra => ra.calibrationPoints).distinct.groupBy(_.linkId)
     val (trackZero, others) = addressList.partition(ra => ra.track == Track.Combined)
     val (trackOne, trackTwo) = others.partition(ra => ra.track == Track.RightSide)
     recalculateTrack(trackZero) ++
@@ -28,7 +27,7 @@ object LinkRoadAddressCalculator {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
       case (addresses) =>
-        val calibrationPoints: Seq[CalibrationPoint] = addressList.flatMap(_.calibrationPoints).distinct.sortBy(_.addressMValue)
+        val calibrationPoints: Seq[CalibrationPoint] = addresses.flatMap(_.calibrationPoints).distinct.sortBy(_.addressMValue)
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, calibrationPoints, Seq())
     }.values.flatten
@@ -51,6 +50,11 @@ object LinkRoadAddressCalculator {
     val cutPoint = addresses.tail.indexWhere(_.calibrationPoints.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
     val (segments, others) = addresses.splitAt(cutPoint)
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
+    segments.foreach(println)
+    newGeom.foreach(println)
+    print(startCP + " - ")
+    println(endCP)
+    println("---")
     val coefficient = (endCP.addressMValue - startCP.addressMValue) / newGeom.last._2
     segmentize(others, calibrationPoints.tail.tail, processed ++
       segments.zip(newGeom).map {
