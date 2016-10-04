@@ -93,7 +93,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         0, 0, 0, "", 0, 0, SideCode.Unknown,
         None, None))
       case _ => roadAddrSeq.map(ra => {
-        val geom = GeometryUtils.truncateGeometry(rl.geometry, ra.startMValue, ra.endMValue)
+        val geom = GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue)
         val length = GeometryUtils.geometryLength(geom)
         new RoadAddressLink(ra.id, rl.linkId, geom,
           length, rl.administrativeClass,
