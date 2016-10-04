@@ -23,7 +23,7 @@
     });
 
     this.updateManoeuvreDetails = function(details, success, failure) {
-       $.ajax({
+      $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/manoeuvres",
@@ -151,7 +151,7 @@
     this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
-      };  
+      };
     });
 
     this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
@@ -340,20 +340,14 @@
 
 
     this.getMassTransitStopStreetViewUrl = function test(lati,longi,heading) {
-
-      var urli="";
       function getJson(){
-       $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
+        $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
           .done(function (response) {
-            urli=response.gmapiurl;
-            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +urli +'>');
-            })
-          .fail(function () {
-            console.log("error, could not retrive Google street image");
+            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
           });
       }
       if (lati && longi && heading)
-    getJson();
+        getJson();
     };
 
     this.getGeocode = function(address) {

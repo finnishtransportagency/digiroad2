@@ -493,9 +493,6 @@
         return $('<div />').append(components);
       };
 
-
-
-
 function streetViewTemplates(longi,lati,heading) {
       var streetViewTemplate  = _.template(
           '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
@@ -504,9 +501,6 @@ function streetViewTemplates(longi,lati,heading) {
   backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
   return streetViewTemplate;
       }
-
-
-
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
         '<div class="formLabels"><%= localizedName %></div>' +
