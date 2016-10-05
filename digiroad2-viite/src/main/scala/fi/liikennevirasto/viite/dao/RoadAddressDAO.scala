@@ -68,7 +68,7 @@ object CalibrationCode {
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
 }
-case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: DateTime, linkId: Long,
@@ -83,20 +83,20 @@ object RoadAddressDAO {
                            startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
       case BothDirections => (None, None) // Invalid choice
-      case TowardsDigitizing => calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue)
-      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue, startMValue, startAddrMValue, endAddrMValue)
+      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, endMValue-startMValue, startAddrMValue, endAddrMValue)
+      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue-startMValue, 0.0, startAddrMValue, endAddrMValue)
       case Unknown => (None, None)  // Invalid choice
     }
   }
 
-  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
                            startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationCode match {
       case No => (None, None)
-      case AtEnd => (None, Some(CalibrationPoint(linkId, endMValue, endAddrMValue)))
-      case AtBeginning => (Some(CalibrationPoint(linkId, startMValue, startAddrMValue)), None)
-      case AtBoth => (Some(CalibrationPoint(linkId, startMValue, startAddrMValue)),
-        Some(CalibrationPoint(linkId, endMValue, endAddrMValue)))
+      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
+      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
+        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
     }
   }
   val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")

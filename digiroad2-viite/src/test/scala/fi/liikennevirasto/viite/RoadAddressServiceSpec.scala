@@ -19,9 +19,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
       case Some(point) =>
-        val mValue = point.mValue match {
+        val mValue = point.segmentMValue match {
           case 0.0 => 0.0
-          case _ => Math.min(point.mValue, GeometryUtils.geometryLength(geometry))
+          case _ => Math.min(point.segmentMValue, GeometryUtils.geometryLength(geometry))
         }
         Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
       case _ => None
