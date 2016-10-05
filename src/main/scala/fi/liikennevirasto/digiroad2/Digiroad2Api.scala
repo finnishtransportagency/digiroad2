@@ -129,7 +129,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       } else {
         halt(Unauthorized("User not authorized"))
       }
-    });
+    })
   }
 
   delete("/massTransitStops/removal") {

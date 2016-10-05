@@ -35,14 +35,14 @@ class MassTransitStopDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
-    assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
-      val row = assetRows.head
+    assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
+      val row = rows.head
       Property(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
-        values = assetRows.map(assetRow =>
+        values = rows.map(assetRow =>
           PropertyValue(
             assetRow.property.propertyValue,
             propertyDisplayValueFromAssetRow(assetRow))
@@ -78,7 +78,7 @@ class MassTransitStopDao {
 
   private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
     propertyWithType match {
-      case (SingleChoice, _, property) => property.values.size > 0
+      case (SingleChoice, _, property) => property.values.nonEmpty
       case _ => true
     }
   }
@@ -107,7 +107,7 @@ class MassTransitStopDao {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.size == 0) {
+        if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
