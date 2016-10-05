@@ -16,21 +16,31 @@ object LinkRoadAddressCalculator {
   def recalculate(addressList: Seq[RoadAddress]) = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
+    addressList.groupBy(_.roadPartNumber).flatMap{ case (_, seq) => recalculatePart(seq) }.toSeq
+  }
+
+  /**
+    * Recalculate road address mapping to links for one road. This should only be run after ContinuityChecker has been
+    * successfully run to the road address list.
+    *
+    * @param addressList RoadAddress objects for one road or road part
+    */
+  private def recalculatePart(addressList: Seq[RoadAddress]): Seq[RoadAddress] = {
     val (trackZero, others) = addressList.partition(ra => ra.track == Track.Combined)
     val (trackOne, trackTwo) = others.partition(ra => ra.track == Track.RightSide)
     recalculateTrack(trackZero) ++
       recalculateTrack(trackOne) ++
       recalculateTrack(trackTwo)
   }
-
   private def recalculateTrack(addressList: Seq[RoadAddress]) = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
       case (addresses) =>
-        val calibrationPoints: Seq[CalibrationPoint] = addresses.flatMap(_.calibrationPoints).distinct.sortBy(_.addressMValue)
+        val calibrationPoints: Seq[CalibrationPoint] = addressList.flatMap(ra =>
+          Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.sortBy(_.addressMValue)
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, calibrationPoints, Seq())
-    }.values.flatten
+    }.values.flatten.toSeq
   }
 
   private def segmentize(addresses: Seq[RoadAddress], calibrationPoints: Seq[CalibrationPoint], processed: Seq[RoadAddress]): Seq[RoadAddress] = {
@@ -43,11 +53,11 @@ object LinkRoadAddressCalculator {
     val endCP = calibrationPoints.tail.head
     val first = addresses.head
     // Test if this link is calibrated on both ends. Special case, then.
-    if (first.calibrationPoints.contains(startCP) && first.calibrationPoints.contains(endCP)) {
+    if (startCP.linkId == endCP.linkId) {
       return segmentize(addresses.tail, calibrationPoints.tail.tail, processed) ++
         Seq(first.copy(startAddrMValue = startCP.addressMValue, endAddrMValue = endCP.addressMValue))
     }
-    val cutPoint = addresses.tail.indexWhere(_.calibrationPoints.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
+    val cutPoint = addresses.tail.indexWhere(a => a.calibrationPoints._1.nonEmpty || a.calibrationPoints._2.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
     val (segments, others) = addresses.splitAt(cutPoint)
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
     val coefficient = (endCP.addressMValue - startCP.addressMValue) / newGeom.last._2

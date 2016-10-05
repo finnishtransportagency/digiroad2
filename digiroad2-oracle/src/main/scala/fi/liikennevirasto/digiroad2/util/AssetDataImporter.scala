@@ -925,12 +925,13 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val lrmPositions = linkLengths.flatMap {
+    val unFilteredLrmPositions = linkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }.filterNot(x => x._3 == x._4)
+    }
+    val lrmPositions = unFilteredLrmPositions.filterNot(x => x._3 == x._4)
 
     print(s"${DateTime.now()} - ")
-    println("%d zero length segments removed".format(lrmList.size - lrmPositions.size))
+    println("%d zero length segments removed".format(unFilteredLrmPositions.size - lrmPositions.size))
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
