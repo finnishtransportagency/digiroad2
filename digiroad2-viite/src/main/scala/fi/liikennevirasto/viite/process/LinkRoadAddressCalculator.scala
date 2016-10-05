@@ -3,6 +3,9 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 
+trait LinkRoadAddressCalculator {
+  def recalculate(addressList: Seq[RoadAddress]): Seq[RoadAddress]
+}
 object LinkRoadAddressCalculator {
   /**
     * Recalculate road address mapping to links for one road. This should only be run after ContinuityChecker has been
@@ -13,14 +16,22 @@ object LinkRoadAddressCalculator {
   def recalculate(addressList: Seq[RoadAddress]) = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
-    val calibrationPoints = addressList.flatMap(ra => Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.groupBy(_.linkId)
+    addressList.groupBy(_.roadPartNumber).flatMap{ case (_, seq) => recalculatePart(seq) }.toSeq
+  }
+
+  /**
+    * Recalculate road address mapping to links for one road. This should only be run after ContinuityChecker has been
+    * successfully run to the road address list.
+    *
+    * @param addressList RoadAddress objects for one road or road part
+    */
+  private def recalculatePart(addressList: Seq[RoadAddress]): Seq[RoadAddress] = {
     val (trackZero, others) = addressList.partition(ra => ra.track == Track.Combined)
     val (trackOne, trackTwo) = others.partition(ra => ra.track == Track.RightSide)
     recalculateTrack(trackZero) ++
       recalculateTrack(trackOne) ++
       recalculateTrack(trackTwo)
   }
-
   private def recalculateTrack(addressList: Seq[RoadAddress]) = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
@@ -29,7 +40,7 @@ object LinkRoadAddressCalculator {
           Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.sortBy(_.addressMValue)
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
         segmentize(sortedAddresses, calibrationPoints, Seq())
-    }.values.flatten
+    }.values.flatten.toSeq
   }
 
   private def segmentize(addresses: Seq[RoadAddress], calibrationPoints: Seq[CalibrationPoint], processed: Seq[RoadAddress]): Seq[RoadAddress] = {
