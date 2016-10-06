@@ -458,7 +458,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val relevantToTR = isStoredInTierekisteri(persistedStop)
 
     if (relevantToTR) {
-      val (newMTSWithProperties, floatingReason) = persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
+      persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
       val roadLink = roadLinkByLinkId.apply(persistedStop.get.linkId)
       val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
         case Some(str) => Try(str.toString.toInt).toOption
@@ -499,10 +499,13 @@ trait MassTransitStopService extends PointAssetOperations {
       val relevantToTR = isStoredInTierekisteri(Some(persistedStop.get))
 
       if ((relevantToTR) && (tierekisteriClient.isTREnabled)) {
-        val liviIdPropertyData = persistedStop.get.propertyData.find(propertyData => propertyData.publicId.equals(LiViIdentifierPublicId))
-        val liviId = liviIdPropertyData.head.values.head.propertyValue
+        val liviIdOption = persistedStop.get.propertyData.find(propertyData =>
+          propertyData.publicId.equals(LiViIdentifierPublicId)).flatMap(propertyData => propertyData.values.headOption).map(_.propertyValue).headOption
 
-        tierekisteriClient.deleteMassTransitStop(liviId)
+        liviIdOption match {
+          case Some(liviId) => tierekisteriClient.deleteMassTransitStop(liviId)
+          case _ => throw new RuntimeException(s"bus stop relevant to Tierekisteri doesn't have 'yllapitajan koodi' property")
+        }
         massTransitStopDao.deleteAllMassTransitStopData(assetId)
       }
     }

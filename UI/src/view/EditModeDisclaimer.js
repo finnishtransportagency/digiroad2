@@ -9,7 +9,7 @@
       '  Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle.' +
       '</div>');
 
-    var editMessageTESTE = $(
+    var editMessageControlTR = $(
         '<div class="controlTR">' +
         '  Pysäkin varustetietoja ylläpidetään Tierekisterissä.' +
         '</div>');
@@ -24,9 +24,9 @@
 
     function handleTRControlMessage(showMessage) {
       if (showMessage) {
-        editMessageTESTE.show();
+        editMessageControlTR.show();
       } else {
-        editMessageTESTE.hide();
+        editMessageControlTR.hide();
       }
     }
 
@@ -46,6 +46,6 @@
     });
 
     $('#header').append(editMessage.hide());
-    $('#header').append(editMessageTESTE.hide());
+    $('#header').append(editMessageControlTR.hide());
   }
 })(this);

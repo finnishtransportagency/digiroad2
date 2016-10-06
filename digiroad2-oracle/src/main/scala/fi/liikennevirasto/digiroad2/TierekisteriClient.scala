@@ -563,22 +563,6 @@ object TierekisteriBusStopMarshaller {
       p.publicId.equals(liviIdPublicId) && p.values.nonEmpty).map(_.values.head.propertyValue)
   }
 
-  def fromTierekisteriMassTransitStop(massTransitStop: TierekisteriMassTransitStop): MassTransitStopWithProperties = {
-    val allPropertiesAvailable = getAllPropertiesAvailable(typeId)
-
-    val nationalId = massTransitStop.nationalId
-    val stopTypes = massTransitStop.stopType.propertyValues
-
-    val equipmentsProperty = mapEquipmentProperties(massTransitStop.equipments, allPropertiesAvailable)
-    val stopTypeProperty = mapStopTypeProperties(massTransitStop.stopType, massTransitStop.express, allPropertiesAvailable)
-    val liViIdProperty = mapLiViIdProperties(massTransitStop.liviId, allPropertiesAvailable)
-    val nameFiProperty = mapNameFiProperties(massTransitStop.nameFi.getOrElse(""), allPropertiesAvailable)
-    val nameSeProperty = mapNameSeProperties(massTransitStop.nameSe.getOrElse(""), allPropertiesAvailable)
-    val allProperties = liViIdProperty++equipmentsProperty++stopTypeProperty++nameFiProperty++nameSeProperty
-
-    MassTransitStopWithProperties(0L, nationalId, stopTypes.toSeq, 0.0, 0.0, None, None, None, floating = false, allProperties)
-  }
-
   private def mapEquipmentProperties(equipments: Map[Equipment, Existence], allProperties: Seq[Property]): Seq[Property] = {
     equipments.map {
       case (equipment, existence) =>

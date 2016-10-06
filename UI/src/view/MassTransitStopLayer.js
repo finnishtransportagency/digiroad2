@@ -485,10 +485,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       });
       eventbus.on('massTransitExpireSuccess', function () {
         destroyAsset(pastAsset);
-        //TODO: Guilherme Pedrosa - decoment save method call once the Tierekistiri part is working
-        //selectedMassTransitStopModel.save();
+        selectedMassTransitStopModel.save();
       });
-      
 
     } else {
       selectedAsset.data.bearing = angle;

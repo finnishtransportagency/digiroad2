@@ -1684,7 +1684,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Get Municipality Code By Asset Id") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val timeStamp = new VVHClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
+    val timeStamp = mockVVHClient.createVVHTimeStamp(-5)
     when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {

@@ -50,10 +50,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-
-
-//  1621077551  1611374
-
   val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
   val testObstacleService = new ObstacleService(mockVVHClient)
   val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
