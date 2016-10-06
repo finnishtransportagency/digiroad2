@@ -104,7 +104,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadAddressLink(0, 1611618, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
       roadAddressLinks.map { links =>
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, 1)
       }
     }
   }

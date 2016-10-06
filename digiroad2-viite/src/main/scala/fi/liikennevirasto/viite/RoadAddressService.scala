@@ -218,7 +218,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         withDynTransaction {
 
           val anomalyCode = getAnomalyCodeByLinkId(links.linkId, links.roadPartNumber)
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, anomalyCode)
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber,anomalyCode)
 
       }
     }

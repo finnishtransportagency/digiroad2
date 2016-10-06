@@ -248,10 +248,10 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int) = {
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, road_number: Long, road_part_number: Long, anomaly_code: Int) = {
     sqlu"""
-           insert into missing_road_address (link_id, start_addr_m, end_addr_m, anomaly_code)
-           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code)
+           values ($linkId, $start_addr_m, $end_addr_m, $road_number, $road_part_number, $anomaly_code)
            """.execute
   }
 

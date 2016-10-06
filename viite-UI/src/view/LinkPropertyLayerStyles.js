@@ -146,7 +146,7 @@
       filter: typeFilter('unknown'),
       symbolizer: { externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' }
     });
-    roadClassDefaultStyle.addRules([unknownLimitStyleRule])
+    roadClassDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var roadClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
