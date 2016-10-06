@@ -23,6 +23,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
   val roadLinkGeometry = List(Point(374567.632,6677255.6,0.0), Point(374603.57,6677262.009,0.0), Point(374631.683,6677267.545,0.0), Point(374651.471,6677270.245,0.0), Point(374669.739,6677273.332,0.0), Point(374684.567,6677277.323,0.0))
+  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -49,10 +50,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-
-
-//  1621077551  1611374
-
   val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
   val testObstacleService = new ObstacleService(mockVVHClient)
   val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
@@ -63,7 +60,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriEnabled = false
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
@@ -171,7 +170,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(37)
+      ps.size should equal(38)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
@@ -192,9 +191,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("mass transit stop has properties defined in asset type properties", Tag("db")) {
     val propIds = getWithUserAuth("/assetTypeProperties/10") {
+      status should equal(200)
       parse(body).extract[List[Property]].map(p => p.publicId).toSet
     }
     val assetPropNames = getWithUserAuth("/massTransitStops/2") {
+      status should equal(200)
       parse(body).extract[MassTransitStopWithProperties].propertyData.map(p => p.publicId).toSet
     }
     propIds should be(assetPropNames)

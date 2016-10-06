@@ -52,6 +52,14 @@ trait LinearAssetOperations {
   val logger = LoggerFactory.getLogger(getClass)
 
 
+  def getMunicipalityCodeByAssetId(assetId: Int): Int = {
+    var municipalityCode = -1
+    withDynTransaction {
+      municipalityCode = dao.getAssetMunicipalityCodeById(assetId)
+    }
+    municipalityCode
+  }
+
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
     *

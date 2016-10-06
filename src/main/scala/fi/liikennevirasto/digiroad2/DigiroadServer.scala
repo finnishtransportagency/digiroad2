@@ -20,8 +20,7 @@ trait DigiroadServer {
   val contextPath : String
   val viiteContextPath: String
 
-  def startServer() {
-    val server = new Server(8080)
+  protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
     context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
     context.setResourceBase("src/main/webapp")
@@ -35,6 +34,12 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
+    context
+  }
+
+  def startServer() {
+    val server = new Server(8080)
+    val context = setupWebContext()
     val handler = new ContextHandlerCollection()
     val handlers = Array(context, createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
