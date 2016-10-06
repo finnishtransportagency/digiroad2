@@ -494,7 +494,6 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def deleteAllMassTransitStopData(assetId: Long) = {
     withDynTransaction {
-      massTransitStopDao.deleteAllMassTransitStopData(assetId)
 
       val persistedStop = fetchPointAssets(withId(assetId)).headOption
       val relevantToTR = isStoredInTierekisteri(Some(persistedStop.get))
@@ -504,6 +503,7 @@ trait MassTransitStopService extends PointAssetOperations {
         val liviId = liviIdPropertyData.head.values.head.propertyValue
 
         tierekisteriClient.deleteMassTransitStop(liviId)
+        massTransitStopDao.deleteAllMassTransitStopData(assetId)
       }
     }
   }

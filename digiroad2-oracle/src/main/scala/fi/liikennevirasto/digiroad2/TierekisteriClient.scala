@@ -321,6 +321,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
+    request.setHeader("content-type","application/json")
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
