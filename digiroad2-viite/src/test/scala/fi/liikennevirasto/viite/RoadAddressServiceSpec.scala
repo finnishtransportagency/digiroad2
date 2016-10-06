@@ -18,7 +18,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
   class TestService(rdService: RoadAddressService, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) {
-//    def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
   }
 
