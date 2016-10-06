@@ -23,6 +23,7 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new MassTransitStopImportApi, "/api/import/*")
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService), "/api/integration/*")
     context.mount(new ChangeApi(), "/api/changes/*")
+    context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient, Digiroad2Context.roadAddressService), "/api/viite/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
     }

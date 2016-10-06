@@ -8,13 +8,19 @@
       return $('<caption/>').html(administrativeClass);
     };
     var tableContentRows = function(linkIds) {
-      return _.map(linkIds, function(id) {
-        return $('<tr/>').append($('<td/>').append(assetLink(id)));
+      return _.map(linkIds, function(asset) {
+        return $('<tr/>').append($('<td/>').append(assetLink(asset)));
       });
     };
-    var assetLink = function(id) {
-      var link = '#' + layerName + '/' + id;
-      return $('<a class="work-list-item"/>').attr('href', link).html(link);
+    var floatingValidator = function() {
+      return $('<span class="work-list-item"> &nbsp; *</span>');
+    };
+    var assetLink = function(asset) {
+      var link = '#' + layerName + '/' + asset.id;
+      var workListItem = $('<a class="work-list-item"/>').attr('href', link).html(link);
+      if(asset.floatingReason === 1) //floating reason equal to RoadOwnerChanged
+        workListItem.append(floatingValidator);
+      return workListItem;
     };
     var tableForAdministrativeClass = function(administrativeClass, linkIds, count) {
       if (!linkIds || linkIds.length === 0) return '';

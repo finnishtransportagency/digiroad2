@@ -1,0 +1,155 @@
+body {
+  min-width: (@feature-attribute-panel-width * 2);
+  overflow: hidden;
+}
+
+body.scrollable {
+  overflow: visible;
+}
+
+a {
+  color: @link-color;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: @link-color-hover;
+    text-decoration: underline;
+  }
+}
+
+//== Header
+
+#header {
+  width: 100%;
+  height: 40px;
+  padding: 10px 20px 5px 10px;
+  border-bottom: 1px solid @gray-darkest;
+  text-align: center;
+  background-color: @gray-darker-2;
+  .box-sizing(border-box);
+  .user-select(none);
+
+  .logo {
+    .text-hide();
+    display: block;
+    float: left;
+    width: 75px;
+    height: 15px;
+    margin: 3px 0;
+    color: #fff;
+    .img-retina('../images/logo.png', '../images/logo@2x.png', 75px, 15px);
+  }
+
+  .notification {
+    padding: 0px 20px;
+    font-size: @font-size-small;
+    color: #fff;
+    float: left;
+  }
+
+  .action-state {
+    display: inline-block;
+    padding: 0 10px;
+    border-radius: @border-radius-base;
+    font-size: @font-size-small;
+    line-height: @line-height-modifier * 6;
+    color: #fff;
+    background-color: @blue;
+  }
+}
+
+.header-link {
+  display: inline-block;
+  float: right;
+  padding: 0 8px;
+  border-radius: @border-radius-base;
+  font-size: 11px;
+  text-decoration: none;
+  color: #fff;
+  background-color: @gray-darker;
+  .transition(all 0.2s @easing-swift-out);
+
+  &:hover, &:focus {
+    background-color: @gray-dark-2;
+    color: #fff;
+    text-decoration: none;
+  }
+}
+
+//== Main site structure
+@feature-attribute-panel-width: 400px;
+
+.container {
+  position: relative;
+  height: 100%;
+  padding-right: @feature-attribute-panel-width;
+  .clearfix();
+}
+
+#map-tools {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: #383836;
+}
+
+#feature-attributes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: @feature-attribute-panel-width;
+  height: 100%;
+  background-color: @gray-darker;
+}
+
+#contentMap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: @gray-darker-2;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  .img-retina('../images/spinner.gif', '../images/spinner@2x.gif', 64px, 64px);
+  div.mapplugins.bottom {
+    bottom: 40px;
+    height: 40px;
+  }
+}
+
+#featureData {
+  position: relative;
+  left: 10px;
+}
+
+//== Landing pages
+//## A wrapper used in landing pages such as login, new user, imports etc.
+
+.page {
+  max-width: 600px;
+  margin: (@line-height-base * 2) auto;
+}
+
+.marker {
+  background: url("../images/center-marker2.svg") center no-repeat;
+  padding: 7px;
+  margin: 3px;
+  color: @input-color-dark;
+  text-transform: uppercase;
+}
+
+#work-list {
+  display: none;
+}
+.calibration-point-image {
+  .text-hide();
+  display: block;
+  float: left;
+  width: 75px;
+  height: 32px;
+  margin: 3px 0;
+  color: #fff;
+  .img-retina('../src/resources/digiroad2/bundle/assetlayer/images/calibration-point.png','../src/resources/digiroad2/bundle/assetlayer/images/calibration-point.png', 75px, 15px);
+}
+

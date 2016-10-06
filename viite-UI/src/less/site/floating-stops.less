@@ -1,0 +1,33 @@
+//== Floating stops and incomplete links table list
+
+.work-list {
+  padding-bottom: @line-height-modifier * 2;
+  
+  caption, h2 {
+    padding-left: @line-height-modifier * 2;
+  }
+
+  .table {
+    > thead,
+    > tbody,
+    > tfoot {
+      > tr {
+        > th,
+        > td {
+          padding-left: @line-height-modifier * 2;
+          padding-right: @line-height-modifier * 2;
+        }
+      }
+    }
+
+    &:first-child {
+      caption {
+        padding-top: @table-cell-padding + @line-height-modifier; // Align with horizontal form labels
+      }
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}

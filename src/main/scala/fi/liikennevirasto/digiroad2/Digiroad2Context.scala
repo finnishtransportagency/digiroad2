@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import fi.liikennevirasto.viite.RoadAddressService
 import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
@@ -171,6 +172,8 @@ object Digiroad2Context {
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
+
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService)
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

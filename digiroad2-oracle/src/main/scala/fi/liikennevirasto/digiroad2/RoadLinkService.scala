@@ -294,6 +294,25 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getViiteRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), everything: Boolean): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesWithRoadNumbersF(bounds, municipalities, roadNumbers)
+      .zip(vvhClient.fetchVVHRoadlinksWithRoadNumbersF(bounds, municipalities, roadNumbers, everything)), atMost = Duration.Inf)
+
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, changes), changes)
+    }
+  }
+
+  /**
+    * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
+    */
+  def getViiteRoadLinksWithoutChangesFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
+    (getRoadLinksFromVVH(linkIds), Seq())
+  }
+
+  /**
     * Returns road links and change data from VVH by bounding box and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */
   def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle): (Seq[RoadLink], Seq[ChangeInfo])= {
@@ -316,10 +335,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
+  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), everything: Boolean) : Seq[RoadLink] =
+    getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything)._1
+
+  def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
+    getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
+
   /**
     * Returns VVH road links by bounding box and municipalities. Used by RoadLinkService.getClosestRoadlinkFromVVH.
     */
-  def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+  def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
 
@@ -327,7 +352,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns VVH road links by bounding box. Used by RoadLinkService.getClosestRoadlinkFromVVH.
     */
   def getVVHRoadLinks(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
-    vvhClient.fetchVVHRoadlinks(bounds)
+    vvhClient.fetchVVHRoadlinks(bounds, Set())
   }
 
   /**
@@ -680,6 +705,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * Get the link end points depending on the road link directions
+ *
     * @param roadlink The Roadlink
     * @return End points of the road link directions
     */
@@ -697,6 +723,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * Get the link start points depending on the road link directions
+ *
     * @param roadlink The Roadlink
     * @return Start points of the road link directions
     */
@@ -759,7 +786,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val sourceLinkGeometryMap = roadLinks.map(rl => rl -> rl.geometry).toMap
     val delta: Vector3d = Vector3d(0.1, 0.1, 0)
     val sourceLinkBoundingBox = geometryToBoundingBox(sourceLinkGeometryMap.values.flatten.toSeq, delta)
-    val sourceLinks = getRoadLinksFromVVH(sourceLinkBoundingBox).filter(roadLink => roadLink.isCarTrafficRoad)
+    val sourceLinks = getRoadLinksFromVVH(sourceLinkBoundingBox, Set[Int]()).filter(roadLink => roadLink.isCarTrafficRoad)
 
     val mapped = sourceLinks.map(rl => rl.linkId -> getRoadLinkEndDirectionPoints(rl)).toMap
     val reverse = sourceLinks.map(rl => rl -> getRoadLinkStartDirectionPoints(rl)).flatMap {

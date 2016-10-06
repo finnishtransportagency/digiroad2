@@ -80,11 +80,12 @@ object DataFixture {
       "kauniainen_exit_numbers.sql",
       "kauniainen_traffic_lights.sql",
       "kauniainen_railway_crossings.sql",
-      "siilijarvi_functional_classes.sql",
-      "siilijarvi_link_types.sql",
-      "siilijarvi_traffic_directions.sql",
-      "siilinjarvi_speed_limits.sql",
-      "siilinjarvi_linear_assets.sql"
+//      "siilijarvi_functional_classes.sql",
+//      "siilijarvi_link_types.sql",
+//      "siilijarvi_traffic_directions.sql",
+//      "siilinjarvi_speed_limits.sql",
+//      "siilinjarvi_linear_assets.sql",
+      "insert_road_address_data.sql"
     ))
   }
 
@@ -144,6 +145,11 @@ object DataFixture {
     println(s"\nCommencing hazmat prohibition import at time: ${DateTime.now()}")
     dataImporter.importHazmatProhibitions()
     println(s"Prohibition import complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  def importRoadAddresses(): Unit = {
+    println("\nDeprecated! Use \nsbt \"project digiroad2-viite\" \"test:run-main fi.liikennevirasto.viite.util.DataFixture import_road_addresses\"\n instead")
     println()
   }
 
@@ -474,6 +480,8 @@ object DataFixture {
         importVVHRoadLinksByMunicipalities()
       case Some("set_transitStops_floating_reason") =>
         transisStopAssetsFloatingReason()
+      case Some ("import_road_addresses") =>
+        importRoadAddresses()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
