@@ -8,12 +8,15 @@ import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.scalatest.mock.MockitoSugar
 
 /**
   * Created by venholat on 12.9.2016.
   */
 class RoadAddressServiceSpec extends FunSuite with Matchers{
-
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
   class TestService(rdService: RoadAddressService, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) {
 //    def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -93,7 +96,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("test createMissingRoadAddress should not add two equal roadAddresses") {
+  test("test createMissingRoadAddress should not add two equal roadAddresses"){
     TestTransactions.runWithRollback() {
       val roadAddressLinks = Seq(
         RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None),
@@ -103,6 +106,15 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressLinks.map { links =>
           RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, 1)
       }
+    }
+  }
+
+  test("test anomaly code"){
+    TestTransactions.runWithRollback() {
+      val roadAddressLinks = Seq(
+        RoadAddressLink(0, 1611615, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
+      )
+      roadAddressService.getAnomalyCodeByLinkId(roadAddressLinks(0).linkId, roadAddressLinks(0).roadPartNumber) should be(1)
     }
   }
 

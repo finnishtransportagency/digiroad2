@@ -236,7 +236,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         code = 2
       }
         //road adress having road parts that dont matching
-      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).length > 0){
+      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).length > 0)
+      {
         code = 3
       }
     code
