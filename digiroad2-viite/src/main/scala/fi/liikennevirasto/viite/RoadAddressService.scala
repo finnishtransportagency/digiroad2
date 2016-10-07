@@ -214,12 +214,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def createMissingRoadAddress(missingRoadLinks: Seq[RoadAddressLink]) = {
+    withDynTransaction {
       missingRoadLinks.map { links =>
-        withDynTransaction {
-
           val anomalyCode = getAnomalyCodeByLinkId(links.linkId, links.roadPartNumber)
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber,anomalyCode)
-
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, anomalyCode)
       }
     }
   }
