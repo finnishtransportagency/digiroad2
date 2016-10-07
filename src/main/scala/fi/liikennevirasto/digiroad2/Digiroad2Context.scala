@@ -66,7 +66,7 @@ class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w:  Seq[RoadAddressLink] => roadAddressService.createMissingRoadAddress(w)
+    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[RoadAddressLink]])
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }

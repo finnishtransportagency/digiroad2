@@ -3,22 +3,22 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mock.MockitoSugar
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-/**
-  * Created by venholat on 12.9.2016.
-  */
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
-  class TestService(rdService: RoadAddressService, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) {
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  def runWithRollback(f: => Unit): Unit = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
@@ -89,27 +89,28 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val segmentId = partitionedRoadLinks.head.head.id
 
       segmentId should not be None
-      roadNumber should be (5);
-      roadPartNumber should be (205);
-      trackCode should be (1);
+      roadNumber should be (5)
+      roadPartNumber should be (205)
+      trackCode should be (1)
     }
   }
 
   test("test createMissingRoadAddress should not add two equal roadAddresses"){
-    TestTransactions.runWithRollback() {
+    runWithRollback {
       val roadAddressLinks = Seq(
         RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None),
         RoadAddressLink(0, 1611617, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374690.403, 6676887.31, 24.645000000004075)), 139.0852126853, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:52:19"), Some("dr1_conversion"), Map("linkId" -> 1611601, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None),
         RoadAddressLink(0, 1611618, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
-      roadAddressLinks.map { links =>
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, 1)
+      roadAddressLinks.foreach { links =>
+        RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, 1)
       }
+      //TODO: Validation
     }
   }
 
   test("test anomaly code"){
-    TestTransactions.runWithRollback() {
+    runWithRollback {
       val roadAddressLinks = Seq(
         RoadAddressLink(0, 1611615, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
