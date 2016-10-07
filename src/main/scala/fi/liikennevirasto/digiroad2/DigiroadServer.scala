@@ -96,7 +96,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://aineistot.esri.fi"
+    java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/viite", ""))
   }
 
