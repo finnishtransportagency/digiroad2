@@ -119,7 +119,7 @@ class ArcGisProxyServlet extends ProxyServlet {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
-      val proxy = new HttpProxy("172.17.208.16", 8085)
+      val proxy = new HttpProxy("127.0.0.1", 3128)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
