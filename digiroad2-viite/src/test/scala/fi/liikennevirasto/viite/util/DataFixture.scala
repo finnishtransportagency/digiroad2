@@ -36,6 +36,7 @@ object DataFixture {
       val partNumber = partNumberOpt.get
       val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
       val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+      assert(adjusted.size == roads.size) // Must not lose any
       val (changed, unchanged) = adjusted.partition(ra =>
         roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
       )

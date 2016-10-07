@@ -36,43 +36,44 @@ object LinkRoadAddressCalculator {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
       case (addresses) =>
-        val calibrationPoints: Seq[CalibrationPoint] = addressList.flatMap(ra =>
-          Seq(ra.calibrationPoints._1, ra.calibrationPoints._2).flatten).distinct.sortBy(_.addressMValue)
         val sortedAddresses = addresses.sortBy(_.startAddrMValue)
-        segmentize(sortedAddresses, calibrationPoints, Seq())
+        segmentize(sortedAddresses, Seq())
     }.values.flatten.toSeq
   }
 
-  private def segmentize(addresses: Seq[RoadAddress], calibrationPoints: Seq[CalibrationPoint], processed: Seq[RoadAddress]): Seq[RoadAddress] = {
-    //TODO: Pushback if calibration point is in the middle of the segment?
+  private def segmentize(addresses: Seq[RoadAddress], processed: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (addresses.isEmpty)
       return processed
-    if (calibrationPoints.isEmpty || calibrationPoints.tail.isEmpty)
+    val calibrationPointsS = addresses.flatMap(ra =>
+      ra.calibrationPoints._1).sortBy(_.addressMValue)
+    val calibrationPointsE = addresses.flatMap(ra =>
+      ra.calibrationPoints._2).sortBy(_.addressMValue)
+    if (calibrationPointsS.isEmpty || calibrationPointsE.isEmpty)
       throw new InvalidAddressDataException("Ran out of calibration points")
-    val startCP = calibrationPoints.head
-    val endCP = calibrationPoints.tail.head
-    val first = addresses.head
-    // Test if this link is calibrated on both ends. Special case, then.
-    if (startCP.linkId == endCP.linkId) {
-      return segmentize(addresses.tail, calibrationPoints.tail.tail, processed) ++
-        Seq(first.copy(startAddrMValue = startCP.addressMValue, endAddrMValue = endCP.addressMValue))
+    val startCP = calibrationPointsS.head
+    val endCP = calibrationPointsE.head
+    if (calibrationPointsS.tail.exists(_.addressMValue < endCP.addressMValue)) {
+      throw new InvalidAddressDataException("Starting calibration point without an ending one")
     }
-    val cutPoint = addresses.tail.indexWhere(a => a.calibrationPoints._1.nonEmpty || a.calibrationPoints._2.nonEmpty) + 2 // Adding one for .tail, one for 0 starting
+    // Test if this link is calibrated on both ends. Special case, then.
+    val cutPoint = addresses.indexWhere(_.calibrationPoints._2.contains(endCP)) + 1
     val (segments, others) = addresses.splitAt(cutPoint)
-    val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
-    val coefficient = (endCP.addressMValue - startCP.addressMValue) / newGeom.last._2
-    segmentize(others, calibrationPoints.tail.tail, processed ++
-      segments.zip(newGeom).map {
-        case (ra, (cumStart, cumEnd)) =>
-          ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startCP.addressMValue,
-            endAddrMValue = Math.round(coefficient * cumEnd) + startCP.addressMValue)
-
-      }
-    )
+    segmentize(others, processed ++ adjustGeometry(segments, startCP, endCP))
   }
 
   private def linkLength(roadAddress: RoadAddress) = {
     roadAddress.endMValue - roadAddress.startMValue
+  }
+
+  private def adjustGeometry(segments: Seq[RoadAddress], startingCP: CalibrationPoint, endingCP: CalibrationPoint) = {
+    val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
+    val coefficient = (endingCP.addressMValue - startingCP.addressMValue) / newGeom.last._2
+    segments.zip(newGeom).map {
+      case (ra, (cumStart, cumEnd)) =>
+        ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue,
+          endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
+
+    }
   }
 }
 
