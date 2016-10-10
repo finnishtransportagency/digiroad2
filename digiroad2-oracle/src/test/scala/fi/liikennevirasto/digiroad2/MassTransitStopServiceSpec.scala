@@ -116,9 +116,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Return mass transit stop types") {
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      massTransitStops.find(_.id == 300000).map(_.stopTypes) should be(Some(Seq(2)))
-      massTransitStops.find(_.id == 300001).map(_.stopTypes) should be(Some(Stream(2, 3, 4)))
-      massTransitStops.find(_.id == 300003).map(_.stopTypes) should be(Some(Stream(2, 3)))
+      massTransitStops.find(_.id == 300000).get.stopTypes should be(Seq(2))
+      massTransitStops.find(_.id == 300001).get.stopTypes should be(Seq(2, 3, 4))
+      massTransitStops.find(_.id == 300003).get.stopTypes should be(Seq(2, 3))
     }
   }
 

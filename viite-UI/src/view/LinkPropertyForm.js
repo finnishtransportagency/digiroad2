@@ -103,9 +103,9 @@
 
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
-               '<label class="control-label">' + labelText + '</label>' +
-               '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
-             '</div>';
+        '<label class="control-label">' + labelText + '</label>' +
+        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+        '</div>';
     };
 
     var title = function() {
@@ -118,41 +118,38 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-    var template = function(options,linkProperty) {
-      return _.template(createFormFields(linkProperty), options);
-    };
 
-    var createFormFields = function(linkProperty) {
-      var start = '' +
-          '<header>' +
-          title() + buttons +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<div class="form-group">' +
-          '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-          '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
-          '</div>';
-      var end = '' +
-          '</div>' +
-          '</div>' +
-          '<footer>' + buttons + '</footer>'
-      start = start.concat(staticField('SEGMENTIN ID', 'segmentId'));
-      start = start.concat(staticField('TIENUMERO', 'roadNumber'));
-      start = start.concat(staticField('TIEOSANUMERO', 'roadPartNumber'));
-      start = start.concat(staticField('AJORATA', 'trackCode'));
-      start = start.concat(staticField('ALKUETÄISYYS', 'startAddressM'));
-      start = start.concat(staticField('LOPPUETÄISUUS', 'endAddressM'));
-      start = start.concat(staticField('ELY', 'elyCode'));
-      start = start.concat(staticField('TIETYYPPI', 'roadClass'));
-      start = start.concat(staticField('JATKUVUUS', 'discontinuity'));
-      if(linkProperty.endDate)start = start.concat(staticField('LAKKAUTUS', 'endDate'));
-      return start.concat(end);
+    var template = function(options) {
+      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
+      var endDateField = typeof linkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
+      return _.template('' +
+        '<header>' +
+        title() + buttons +
+        '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticSegmentIdField +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
+        staticField('ALKUETÄISYYS', 'startAddressM') +
+        staticField('LOPPUETÄISUUS', 'endAddressM') +
+        staticField('ELY', 'elyCode') +
+        staticField('TIETYYPPI', 'roadClass') +
+        staticField('JATKUVUUS', 'discontinuity') +
+        endDateField +
+        '</div>' +
+        '</div>' +
+        '<footer>' + buttons + '</footer>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -219,8 +216,8 @@
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-                                    functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
+          functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+          linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
         rootElement.html(template(options,linkProperties)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
