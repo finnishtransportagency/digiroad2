@@ -1680,4 +1680,23 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("Get Municipality Code By Asset Id") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
+    val timeStamp = mockVVHClient.createVVHTimeStamp(-5)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    OracleDatabase.withDynTransaction {
+      val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to > = sysdate and rownum = 1""".as[(Int, Int)].first
+      val municipalityCode = service.getMunicipalityCodeByAssetId(assetId)
+      municipalityCode should be(assetMunicipalityCode)
+    }
+  }
+
 }

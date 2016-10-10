@@ -20,6 +20,7 @@
         {"id": 300004, "publicId": "liikennointisuuntima", "propertyType": "read-only", "required": false, "values": []},
         {"id": 0, "publicId": "ensimmainen_voimassaolopaiva", "propertyType": "date", "required": false, "values": []},
         {"id": 0, "publicId": "viimeinen_voimassaolopaiva", "propertyType": "date", "required": false, "values": []},
+        {"id": 617616, "publicId": "inventointipaiva", "propertyType": "text", "required": false, "values": []},
         {"id": 200, "publicId": "pysakin_tyyppi", "propertyType": "multiple_choice", "required": true, "values": []},
         {"id": 300005, "publicId": "aikataulu", "propertyType": "single_choice", "required": false, "values": []},
         {"id": 100, "publicId": "katos", "propertyType": "single_choice", "required": true, "values": []},

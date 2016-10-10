@@ -26,6 +26,7 @@
         nimi_suomeksi: "Nimi suomeksi",
         pysakin_tyyppi: "Pysäkin tyyppi",
         ensimmainen_voimassaolopaiva: "Ensimmäinen voimassaolopäivä",
+        inventointipaiva: "Investointipäivä",
         aikataulu: "Aikataulu",
         palauteosoite: "Palauteosoite",
         esteettomyys_liikuntarajoitteiselle: "Esteettömyys liikuntarajoitteiselle",

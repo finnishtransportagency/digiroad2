@@ -169,6 +169,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch a list of floating Obstacles") {
+    //TODO: Remove fixed values, get id from sequence instead.
     OracleDatabase.withDynTransaction {
       val lastIdUpdate = 0
       val lineRange = 1000

@@ -42,7 +42,7 @@
     return picker;
   };
 
-  dateutil.addDependentDatePickers = function (fromElement, toElement) {
+  dateutil.addDependentDatePickers = function (fromElement, toElement, invElement) {
     var fromDateString = function (s) {
       return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
     };
@@ -57,9 +57,13 @@
       datePickers.from.setMaxDate(datePickers.to.getDate());
       toElement.trigger('datechange');
     };
+    var invCallback = function () {
+      invElement.trigger('datechange');
+    };
     datePickers = {
       from: dateutil.addNullableFinnishDatePicker(fromElement, fromCallback),
-      to: dateutil.addNullableFinnishDatePicker(toElement, toCallback)
+      to: dateutil.addNullableFinnishDatePicker(toElement, toCallback),
+      inv: dateutil.addNullableFinnishDatePicker(invElement, invCallback)
     };
     if (to) {
       datePickers.from.setMaxDate(to);
