@@ -591,6 +591,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
+    * Returns the municipality code of a Asset by it's Id
+    * @param assetId The Id of the Asset
+    * @return Type: Int - The Municipality Code
+    */
+  def getAssetMunicipalityCodeById(assetId: Int): Int = {
+    val municipalityCode = sql"""Select municipality_code From asset Where id= $assetId""".as[Int].firstOption.get
+    municipalityCode
+  }
+
+  /**
     * Returns m-values and side code by asset id. Used by OracleLinearAssetDao.splitSpeedLimit.
     */
   def getLinkGeometryData(id: Long): (Double, Double, SideCode, Long) = {

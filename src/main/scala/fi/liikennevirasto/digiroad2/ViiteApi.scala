@@ -83,8 +83,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
-      case DrawMainRoadPartsOnly => roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
-      case DrawRoadPartsOnly => roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
+        //TODO: When well-performing solution for main parts and road parts is ready
+      case DrawMainRoadPartsOnly =>
+        //roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
+        Seq()
+      case DrawRoadPartsOnly =>
+        //roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
+        Seq()
       case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
       case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
       case _ => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
@@ -146,6 +151,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressLinkToApi(roadLink: RoadAddressLink): Map[String, Any] = {
     Map(
+      "segmentId" -> roadLink.id,
       "id" -> roadLink.id,
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
@@ -181,11 +187,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
       case Some(point) =>
-        val mValue = point.mValue match {
-          case 0.0 => 0.0
-          case _ => Math.min(point.mValue, GeometryUtils.geometryLength(geometry))
-        }
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
+        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
       case _ => None
     }
   }

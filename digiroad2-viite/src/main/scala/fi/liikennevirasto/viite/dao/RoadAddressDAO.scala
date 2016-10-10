@@ -68,11 +68,11 @@ object CalibrationCode {
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
 }
-case class CalibrationPoint(linkId: Long, mValue: Double, addressMValue: Long)
+case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: DateTime, linkId: Long,
-                       startMValue: Double, endMValue: Double, calibrationPoints: Seq[CalibrationPoint] = Seq()
+                       startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
                       )
 
 object RoadAddressDAO {
@@ -80,23 +80,23 @@ object RoadAddressDAO {
   private def logger = LoggerFactory.getLogger(getClass)
 
   private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): Seq[CalibrationPoint] = {
+                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
-      case BothDirections => Seq() // Invalid choice
-      case TowardsDigitizing => calibrations(calibrationCode, linkId, startMValue, endMValue, startAddrMValue, endAddrMValue)
-      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue, startMValue, startAddrMValue, endAddrMValue)
-      case Unknown => Seq()  // Invalid choice
+      case BothDirections => (None, None) // Invalid choice
+      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, endMValue-startMValue, startAddrMValue, endAddrMValue)
+      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue-startMValue, 0.0, startAddrMValue, endAddrMValue)
+      case Unknown => (None, None)  // Invalid choice
     }
   }
 
-  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long): Seq[CalibrationPoint] = {
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     calibrationCode match {
-      case No => Seq()
-      case AtEnd => Seq(CalibrationPoint(linkId, endMValue, endAddrMValue))
-      case AtBeginning => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue))
-      case AtBoth => Seq(CalibrationPoint(linkId, startMValue, startAddrMValue),
-        CalibrationPoint(linkId, endMValue, endAddrMValue))
+      case No => (None, None)
+      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
+      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
+        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
     }
   }
   val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
@@ -247,6 +247,22 @@ object RoadAddressDAO {
       """
     Q.queryNA[Int](query).firstOption
   }
+
+  def update(roadAddress: RoadAddress) = {
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+            road_part_number= ${roadAddress.roadPartNumber},
+            track_code = ${roadAddress.track.value},
+            ely= ${roadAddress.ely},
+            road_type= ${roadAddress.roadType.value},
+            discontinuity= ${roadAddress.discontinuity.value},
+            START_ADDR_M= ${roadAddress.startAddrMValue},
+            END_ADDR_M= ${roadAddress.endAddrMValue},
+            start_date= ${roadAddress.startDate},
+            end_date= ${roadAddress.endDate}
+        WHERE id = ${roadAddress.id}""".execute
+  }
+
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))

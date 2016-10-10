@@ -119,6 +119,32 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  delete("/massTransitStops") {
+    val user = userProvider.getCurrentUser()
+
+    val manoeuvreIds = (parsedBody \ "massTransitStopIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
+    manoeuvreIds.foreach(massTransitStopId => {
+      if(user.isBusStopMaintainer()){
+        massTransitStopService.expireMassTransitStop(user.username, massTransitStopId);
+      } else {
+        halt(Unauthorized("User not authorized"))
+      }
+    })
+  }
+
+  delete("/massTransitStops/removal") {
+    val user = userProvider.getCurrentUser()
+    val assetId = (parsedBody \ "assetId").extractOpt[Int].get
+    val municipalityCode = linearAssetService.getMunicipalityCodeByAssetId(assetId)
+    validateUserMunicipalityAccess(user)(municipalityCode)
+    if(!user.isBusStopMaintainer()){
+      halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
+    }
+    else {
+      massTransitStopService.deleteAllMassTransitStopData(assetId)
+    }
+  }
+
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }
@@ -150,7 +176,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    massTransitStopService.getFloatingAssets(includedMunicipalities, Some(user.isOperator()))
+    massTransitStopService.getFloatingAssetsWithReason(includedMunicipalities, Some(user.isOperator()))
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
@@ -172,6 +198,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    validateBusStopMaintainerUser(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
@@ -192,6 +219,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def validateUserRights(linkId: Long) = {
     val authorized: Boolean = vvhClient.fetchVVHRoadlink(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
+  }
+
+  private def validateBusStopMaintainerUser(properties: Seq[SimpleProperty]) = {
+    val user = userProvider.getCurrentUser()
+    val propertyToValidation = properties.find {
+      property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.propertyValue.equals("2"))
+    }
+    if ((propertyToValidation.size >= 1) && (!user.isBusStopMaintainer())) {
+      halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
+    }
   }
 
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
@@ -222,6 +259,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     validateUserRights(linkId)
+    validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
     massTransitStopService.getById(id)
@@ -337,10 +375,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     assetPropertyService.assetPropertyNames(lang)
   }
 
+  object TierekisteriInternalServerError {
+    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
+      ActionResult(ResponseStatus(555, reason), body, headers)
+  }
+
   error {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
+    case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)

@@ -1,21 +1,15 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
-import org.slf4j.LoggerFactory
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
+import slick.jdbc.{StaticQuery => Q}
 
 class RoadAddressService(roadLinkService: RoadLinkService) {
 
@@ -99,7 +93,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
         0, 0, 0, "", 0, 0, SideCode.Unknown,
         None, None))
       case _ => roadAddrSeq.map(ra => {
-        val geom = GeometryUtils.truncateGeometry(rl.geometry, ra.startMValue, ra.endMValue)
+        val geom = GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue)
         val length = GeometryUtils.geometryLength(geom)
         new RoadAddressLink(ra.id, rl.linkId, geom,
           length, rl.administrativeClass,
@@ -107,7 +101,8 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
           rl.linkType, rl.modifiedAt, rl.modifiedBy,
           rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
           ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-          ra.calibrationPoints.find(_.mValue == 0.0), ra.calibrationPoints.find(_.mValue > 0.0))
+          ra.calibrationPoints._1,
+          ra.calibrationPoints._2)
       }).filter(_.length > 0.0)
     }
   }
@@ -176,7 +171,7 @@ class RoadAddressService(roadLinkService: RoadLinkService) {
   }
 
   def roadClass(roadAddressLink: RoadAddressLink) = {
-    val C1 = new Contains(1 to 49)
+    val C1 = new Contains(1 to 39)
     val C2 = new Contains(40 to 99)
     val C3 = new Contains(100 to 999)
     val C4 = new Contains(1000 to 9999)

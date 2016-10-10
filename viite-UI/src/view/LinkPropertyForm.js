@@ -42,12 +42,12 @@
     ];
 
     var roadClasses = [
-      [1, 'Yleinen tie'],
+      [1, 'Maantie'],
       [2, 'Lauttaväylä yleisellä tiellä'],
       [3, 'Kunnan katuosuus'],
       [4, 'Yleisen tien työmaa'],
       [5, 'Yksityistie'],
-      [9, 'Omistaja selvittämättä']
+      [9, 'Ei tiedossa']
     ];
 
     var discontinuitys = [
@@ -122,6 +122,7 @@
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
     var template = function(options) {
+      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       return _.template('' +
         '<header>' +
           title() + buttons +
@@ -134,6 +135,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
+            staticSegmentIdField +
             staticField('TIENUMERO', 'roadNumber') +
             staticField('TIEOSANUMERO', 'roadPartNumber') +
             staticField('AJORATA', 'trackCode') +
@@ -179,13 +181,21 @@
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-
+        linkProperties.roadAddress = linkProperties.roadAddress || '';
+        linkProperties.segmentId = linkProperties.segmentId || '';
         linkProperties.roadNumber = linkProperties.roadNumber || '';
-        linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-        linkProperties.trackCode = linkProperties.trackCode || '';
-        linkProperties.startAddressM = linkProperties.startAddressM || '0';
+        if (linkProperties.roadNumber > 0) {
+          linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+          linkProperties.startAddressM = linkProperties.startAddressM || '0';
+          linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
+          linkProperties.elyCode = linkProperties.elyCode || '';
+        } else {
+          linkProperties.roadPartNumber = '';
+          linkProperties.trackCode = '';
+          linkProperties.startAddressM = '';
+          linkProperties.elyCode = '';
+        }
         linkProperties.endAddressM = linkProperties.endAddressM || '';
-        linkProperties.elyCode = linkProperties.elyCode || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.roadClass = getRoadClass(linkProperties.administrativeClass, linkProperties.localizedLinkTypes);
         linkProperties.endDate = linkProperties.endDate || '';

@@ -20,8 +20,7 @@ trait DigiroadServer {
   val contextPath : String
   val viiteContextPath: String
 
-  def startServer() {
-    val server = new Server(8080)
+  protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
     context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
     context.setResourceBase("src/main/webapp")
@@ -35,6 +34,12 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
+    context
+  }
+
+  def startServer() {
+    val server = new Server(8080)
+    val context = setupWebContext()
     val handler = new ContextHandlerCollection()
     val handlers = Array(context, createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
@@ -93,7 +98,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://aineistot.esri.fi"
+    java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/viite", ""))
   }
 
@@ -116,7 +121,7 @@ class ArcGisProxyServlet extends ProxyServlet {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
-      val proxy = new HttpProxy("172.17.208.16", 8085)
+      val proxy = new HttpProxy("127.0.0.1", 3128)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
