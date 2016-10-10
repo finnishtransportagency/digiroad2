@@ -57,6 +57,8 @@ trait DigiroadServer {
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
+    appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
+    appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
