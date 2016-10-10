@@ -75,6 +75,8 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
                       )
 
+case class MissingRoadAddress(linkId: Long, startAddrMValue: Long, endAddrMValue: Long)
+
 object RoadAddressDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
@@ -271,16 +273,52 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def getMissingRoadAddresses() = {
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
+           """.execute
+  }
+
+  def getAllMissingRoadAddresses = {
     sql"""SELECT link_id, start_addr_m, end_addr_m
             FROM missing_road_address""".as[(Long, Long, Long)].list
+  }
+
+  def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    if (linkIds.size > 500) {
+      getMissingByLinkIdMassQuery(linkIds)
+    } else {
+      val where = linkIds.isEmpty match {
+        case true => return List()
+        case false => s""" where pos.link_id in (${linkIds.mkString(",")})"""
+      }
+      val query =
+        s"""SELECT link_id, start_addr_m, end_addr_m
+            FROM missing_road_address $where"""
+      Q.queryNA[(Long, Long, Long)](query).list.map {
+        case (linkId, startAddrM, endAddrM) => MissingRoadAddress(linkId, startAddrM, endAddrM)
+      }
+    }
+  }
+
+  def getMissingByLinkIdMassQuery(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val query =
+          s"""SELECT link_id, start_addr_m, end_addr_m
+            FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
+        Q.queryNA[(Long, Long, Long)](query).list.map {
+          case (linkId, startAddrM, endAddrM) => MissingRoadAddress(linkId, startAddrM, endAddrM)
+        }
+    }
   }
 
   def getLrmPositionByLinkId(linkId: Long) = {
     sql"""
        select lrm.id, lrm.start_measure, lrm.end_measure
        from lrm_position lrm, road_address rda
-       where lrm.id = rda.lrm_position_id and lrm.link_id = $linkId""".as[(Long, Long, Long)].list
+       where lrm.id = rda.lrm_position_id and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
   }
 
   def getLrmPositionMeasures(linkId: Long) = {
@@ -288,7 +326,7 @@ object RoadAddressDAO {
        select lrm.id, lrm.start_measure, lrm.end_measure
        from lrm_position lrm, road_address rda
        where lrm.id = rda.lrm_position_id
-       and (lrm.start_measure != rda.start_addr_m or lrm.end_measure != rda.end_addr_m) and lrm.link_id = $linkId""".as[(Long, Long, Long)].list
+       and (lrm.start_measure != rda.start_addr_m or lrm.end_measure != rda.end_addr_m) and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
   }
 
   def getLrmPositionRoadParts(linkId: Long, roadPart: Long) = {
@@ -296,7 +334,7 @@ object RoadAddressDAO {
        select lrm.id, lrm.start_measure, lrm.end_measure
        from lrm_position lrm, road_address rda
        where lrm.id = rda.lrm_position_id
-       and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Long, Long)].list
+       and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Double, Double)].list
   }
 
 

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -33,6 +33,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val PathsClass = 10
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
+
+  val AnomalyNoAddressGiven = 1
+  val AnomalyNotFullyCovered = 2
+  val AnomalyIllogical = 3
+  val AnomalyNoAnomaly = 0
 
   class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
 
@@ -74,20 +79,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false) = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything)
+    val linkIds = roadLinks.map(_.linkId).toSet
     val addresses = withDynTransaction {
-      RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+      RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
+    val missingLinkIds = linkIds -- addresses.keySet
+    val missedRL  = withDynTransaction {
+      RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+    }.groupBy(_.linkId)
+
     val viiteRoadLinks = roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       buildRoadAddressLink(rl, ra)
   }
+
+    //TODO: plug filler here, move logic into filler. Check for existence now, rest comes later
     val newAnomalousRL = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
 
-    val missedRL  = withDynTransaction {
-    RoadAddressDAO.getMissingRoadAddresses()
-    }
-
-    val missingRL = newAnomalousRL.filterNot(rl => missedRL.exists(mrl => mrl._1 == rl.linkId && mrl._2 == rl.startAddressM && mrl._3 == rl.endAddressM))
+    val missingRL = newAnomalousRL.filterNot(x => missedRL.keySet.contains(x.linkId)) // check it isn't known already
     eventbus.publish("roadAddress:persistMissingRoadAddress", missingRL)
     viiteRoadLinks
   }
@@ -214,32 +223,32 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def createMissingRoadAddress(missingRoadLinks: Seq[RoadAddressLink]) = {
+  def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]) = {
     withDynTransaction {
-      missingRoadLinks.map { links =>
-          val anomalyCode = getAnomalyCodeByLinkId(links.linkId, links.roadPartNumber)
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, anomalyCode)
+      missingRoadLinks.foreach { links =>
+          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddrMValue, links.endAddrMValue, AnomalyNoAddressGiven)
       }
     }
   }
 
+  //TODO: Priority order for anomalies. Currently this is unused
   def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Int = {
-    var code = 0
       //roadlink dont have road address
       if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
-        code = 1
+        return AnomalyNoAddressGiven
       }
       //road address do not cover the whole length of the link
-       else if (RoadAddressDAO.getLrmPositionMeasures(linkId).length > 0)
+        //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
+       else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
       {
-        code = 2
+        return AnomalyNotFullyCovered
       }
-        //road adress having road parts that dont matching
-      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).length > 0)
+        //road address having road parts that dont matching
+      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
       {
-        code = 3
+        return AnomalyIllogical
       }
-    code
+    AnomalyNoAnomaly
   }
 
 }

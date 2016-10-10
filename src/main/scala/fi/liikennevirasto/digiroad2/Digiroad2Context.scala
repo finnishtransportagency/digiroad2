@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.apache.http.impl.client.HttpClientBuilder
 
@@ -67,7 +68,7 @@ class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
 
 class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[RoadAddressLink]])
+    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }
