@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
   def receive = {
@@ -135,6 +136,12 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build)
+  }
+
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
@@ -144,7 +151,9 @@ object Digiroad2Context {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
+      override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus)
   }

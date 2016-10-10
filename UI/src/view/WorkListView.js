@@ -8,9 +8,13 @@
       return $('<caption/>').html(administrativeClass);
     };
     var tableContentRows = function(linkIds) {
-      return _.map(linkIds, function(asset) {
-        return $('<tr/>').append($('<td/>').append(assetLink(asset)));
+      return _.map(linkIds, function(item) {
+        return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item)));
       });
+    };
+    var idLink = function(id) {
+      var link = '#' + layerName + '/' + id;
+      return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var floatingValidator = function() {
       return $('<span class="work-list-item"> &nbsp; *</span>');

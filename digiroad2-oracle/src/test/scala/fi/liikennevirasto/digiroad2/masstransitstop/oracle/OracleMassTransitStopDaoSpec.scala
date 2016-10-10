@@ -2,11 +2,18 @@ package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{MassTransitStopRow, Point}
 import org.scalatest.{FunSuite, MustMatchers}
 
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
+
 class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   val massTransitStopDao = new MassTransitStopDao
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   test("bearing description is correct") {
     massTransitStopDao.getBearingDescription(2, Some(316)) must equal("Pohjoinen")
@@ -43,6 +50,29 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
     properties.head.publicId must equal("sometestproperty")
     properties.head.values.head.propertyDisplayValue must equal(Some("foo"))
     properties.head.values.head.propertyValue must equal("123")
+  }
+
+  test("get property descriptions correctly"){
+    withDynTransaction {
+      val c = sql""" Select p.public_id, p.property_type, e.value From Property p Left Join Enumerated_value e On p.id = e.property_id
+        """.as[(String,String,String)].list
+      val singleChoiceList = c.filter(p =>
+        p._2 == "single_choice")
+
+      val descs = massTransitStopDao.getPropertyDescription(singleChoiceList.head._1, singleChoiceList.head._3)
+      descs.length must be > (0)
+    }
+  }
+
+  test("Delete all MassTransitStop data by Id") {
+    OracleDatabase.withDynTransaction {
+      val idToDelete = sql"""select ID from asset where asset_type_id = 10 and valid_to > = sysdate and rownum = 1""".as[Long].first
+      massTransitStopDao.deleteAllMassTransitStopData(idToDelete)
+
+      val deleted = sql"""select case when COUNT(ID) = 0 then 1 else 0 end as deleted from asset where id = $idToDelete""".as[(Boolean)].firstOption
+      deleted must be(Some(true))
+      dynamicSession.rollback()
+    }
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {

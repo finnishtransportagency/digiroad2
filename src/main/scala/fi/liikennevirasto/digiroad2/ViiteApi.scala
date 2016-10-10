@@ -187,11 +187,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
       case Some(point) =>
-        val mValue = point.mValue match {
-          case 0.0 => 0.0
-          case _ => Math.min(point.mValue, GeometryUtils.geometryLength(geometry))
-        }
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, mValue)), ("value", point.addressMValue)).toMap)
+        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
       case _ => None
     }
   }

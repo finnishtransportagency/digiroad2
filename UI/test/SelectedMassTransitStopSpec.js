@@ -146,8 +146,8 @@ define(['chai', 'SelectedMassTransitStop'], function (chai) {
         });
 
         it('sends only changed properties to backend', function () {
-          assert.lengthOf(assetSentToBackend.data.properties, 1);
-          assert.deepEqual(assetSentToBackend.data.properties[0], {
+          assert.lengthOf(assetSentToBackend.data.properties, 2);
+          assert.deepEqual(assetSentToBackend.data.properties[1], {
             publicId: 'vaikutussuunta',
             values: [{propertyValue: '3'}]
           });
