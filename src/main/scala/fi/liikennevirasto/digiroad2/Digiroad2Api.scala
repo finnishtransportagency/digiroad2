@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication,
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.util.VKMClientException
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.json4s._
@@ -208,6 +209,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
+      case e: VKMClientException =>
+        logger.warn("VKM error: " + e.getMessage)
+        PreconditionFailed("Unable to find target road link")
     }
   }
 
@@ -261,8 +265,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
-    val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
-    massTransitStopService.getById(id)
+    try {
+      val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
+      massTransitStopService.getById(id)
+    } catch {
+      case e: VKMClientException =>
+        logger.warn(e.getMessage)
+        PreconditionFailed("Unable to find target road link")
+    }
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {

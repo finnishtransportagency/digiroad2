@@ -295,7 +295,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
-        logger.info("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
       }
      None
@@ -314,7 +314,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
-        logger.info("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
       }
       None
@@ -333,7 +333,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
-        logger.info("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
       }
       None
