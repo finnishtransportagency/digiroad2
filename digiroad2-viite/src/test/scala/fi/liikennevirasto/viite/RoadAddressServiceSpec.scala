@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
@@ -103,7 +103,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
       roadAddressLinks.foreach { links =>
-        RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, 1)
+        RoadAddressDAO.createMissingRoadAddress(
+          MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), Some(links.roadNumber),
+            Some(links.roadPartNumber), None, None, 1))
       }
       val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId);
 

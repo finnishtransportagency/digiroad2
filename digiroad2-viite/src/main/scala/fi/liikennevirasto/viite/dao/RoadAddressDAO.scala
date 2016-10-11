@@ -75,7 +75,9 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
                       )
 
-case class MissingRoadAddress(linkId: Long, startAddrMValue: Long, endAddrMValue: Long)
+case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
+                              roadNumber: Option[Long], roadPartNumber: Option[Long],
+                              startMValue: Option[Double], endMValue: Option[Double], anomalyCode: Int)
 
 object RoadAddressDAO {
 
@@ -145,7 +147,7 @@ object RoadAddressDAO {
   def fetchPartsByRoadNumbers(roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
     val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
       .mkString("(", ") OR (", ")")
-      //.foldLeft("")((c, r) => c + ") OR (" + r)
+    //.foldLeft("")((c, r) => c + ") OR (" + r)
     val where = roadNumbers.isEmpty match {
       case true => return List()
       case false => s""" where track_code in (0,1) AND $filter"""
@@ -266,10 +268,12 @@ object RoadAddressDAO {
   }
 
 
-  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, road_number: Long, road_part_number: Long, anomaly_code: Int) = {
+  def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
     sqlu"""
-           insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code)
-           values ($linkId, $start_addr_m, $end_addr_m, $road_number, $road_part_number, $anomaly_code)
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code)
+           values (${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
+           ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber},
+           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, ${missingRoadAddress.anomalyCode})
            """.execute
   }
 
@@ -294,10 +298,11 @@ object RoadAddressDAO {
         case false => s""" where link_id in (${linkIds.mkString(",")})"""
       }
       val query =
-        s"""SELECT link_id, start_addr_m, end_addr_m
+        s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
             FROM missing_road_address $where"""
-      Q.queryNA[(Long, Long, Long)](query).list.map {
-        case (linkId, startAddrM, endAddrM) => MissingRoadAddress(linkId, startAddrM, endAddrM)
+      Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
+        case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
+          MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly)
       }
     }
   }
@@ -306,10 +311,11 @@ object RoadAddressDAO {
     MassQuery.withIds(linkIds) {
       idTableName =>
         val query =
-          s"""SELECT link_id, start_addr_m, end_addr_m
+          s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
-        Q.queryNA[(Long, Long, Long)](query).list.map {
-          case (linkId, startAddrM, endAddrM) => MissingRoadAddress(linkId, startAddrM, endAddrM)
+        Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
+          case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
+            MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly)
         }
     }
   }

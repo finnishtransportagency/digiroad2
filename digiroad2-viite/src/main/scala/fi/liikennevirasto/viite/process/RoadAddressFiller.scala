@@ -1,7 +1,11 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.{Discontinuity, MissingRoadAddress, RoadAddress, RoadType}
+import org.joda.time.DateTime
 import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.digiroad2.asset.State
@@ -10,12 +14,18 @@ object RoadAddressFiller {
   case class LRMValueAdjustment(id: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                droppedAddressIds: Set[Long],
-                               adjustedMValues: Seq[LRMValueAdjustment])
+                               adjustedMValues: Seq[LRMValueAdjustment],
+                               missingRoadAddresses: Seq[MissingRoadAddress])
   private val MaxAllowedMValueError = 0.001
   private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
   private val MinAllowedRoadAddressLength = 0.5
+  private val AnomalyNoAddressGiven = 1
+  private val AnomalyNotFullyCovered = 2
+  private val AnomalyIllogical = 3
+  private val AnomalyNoAnomaly = 0
+
 
   private def capToGeometry(roadLink: RoadLink, segments: Seq[RoadAddress], changeSet: AddressChangeSet): (Seq[RoadAddress], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
@@ -46,19 +56,31 @@ object RoadAddressFiller {
     (adjustments._1, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ adjustments._2))
   }
 
-  def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLink, adjustedSegments: Seq[RoadAddress]) = {
-    //TODO: Unknown road address handling
-    Seq()
+  def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLink, adjustedSegments: Seq[RoadAddress]): Seq[MissingRoadAddress] = {
+    if (adjustedSegments.isEmpty)
+      generateUnknownLink(roadLink)
+    else
+      Seq()
   }
 
-  def buildMissingRoadAddress(roadAddrLnkSeq: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
-    roadAddrLnkSeq.size match {
-//      case 0 => Seq(new MissingRoadAddress(0, 0, 0))
-      case 0 => List()
-      case _ => roadAddrLnkSeq.map(ra => {
-        new MissingRoadAddress(ra.linkId, ra.startAddressM, ra.endAddressM)
-      })
+  private def isPublicRoad(roadLink: RoadLink) = {
+    roadLink.administrativeClass == State || roadLink.attributes.get("ROADNUMBER").exists {
+      case Some(value) => value.toString.toInt > 0
+      case _ => false
     }
+  }
+
+  private def generateUnknownLink(roadLink: RoadLink) = {
+    if (isPublicRoad(roadLink))
+      Seq(MissingRoadAddress(roadLink.linkId, None, None, None, None, Some(0.0), Some(roadLink.length), AnomalyNoAddressGiven))
+    else
+      Seq()
+  }
+
+  private def buildMissingRoadAddress(rl: RoadLink, roadAddrSeq: Seq[MissingRoadAddress]): Seq[RoadAddress] = {
+    roadAddrSeq.map(mra => RoadAddress(0, mra.roadNumber.getOrElse(0), mra.roadPartNumber.getOrElse(0), Track.Unknown,
+      0, RoadType.Public, Discontinuity.Continuous, mra.startAddrMValue.getOrElse(0), mra.endAddrMValue.getOrElse(0),
+      DateTime.now(), DateTime.now(), mra.linkId, mra.startMValue.get, mra.endMValue.get, (None, None)))
   }
 
   def fillTopology(roadLinks: Seq[RoadLink], roadAddressMap: Map[Long, Seq[RoadAddress]]): (Seq[RoadAddress], AddressChangeSet) = {
@@ -67,7 +89,7 @@ object RoadAddressFiller {
       capToGeometry,
       extendToGeometry
     )
-    val initialChangeSet = AddressChangeSet(Set.empty, Nil)
+    val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
 
     roadLinks.foldLeft(Seq.empty[RoadAddress], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
@@ -78,7 +100,9 @@ object RoadAddressFiller {
         operation(roadLink, currentSegments, currentAdjustments)
       }
       val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
-      (existingSegments ++ adjustedSegments ++ generatedRoadAddresses, segmentAdjustments)
+      val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
+      (existingSegments ++ adjustedSegments ++ generatedLinks,
+        segmentAdjustments.copy(missingRoadAddresses = generatedRoadAddresses))
     }
   }
 

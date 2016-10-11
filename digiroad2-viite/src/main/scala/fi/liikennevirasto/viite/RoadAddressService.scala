@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller
 import org.joda.time.format.DateTimeFormat
@@ -91,40 +91,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val viiteRoadLinks = roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
-      buildRoadAddressLink(rl, ra)
-  }
+      val missed = missedRL.getOrElse(rl.linkId, Seq())
+      buildRoadAddressLink(rl, ra, missed)
+    }
 
-    //TODO: plug filler here, move logic into filler. Check for existence now, rest comes later
-    val newAnomalousRL = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, addresses)
 
-    val missingRoadAddressLink = newAnomalousRL.filterNot(x => missedRL.keySet.contains(x.linkId)) // check it isn't known already
-    val missingRoadAddress = RoadAddressFiller.buildMissingRoadAddress(missingRoadAddressLink)
-    eventbus.publish("roadAddress:persistMissingRoadAddress", missingRoadAddress)
+    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     viiteRoadLinks
   }
 
-  def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.size match {
-      case 0 => Seq(new RoadAddressLink(0, rl.linkId, rl.geometry,
-        rl.length,  rl.administrativeClass,
-        rl.functionalClass,  rl.trafficDirection,
-        rl.linkType,  rl.modifiedAt,  rl.modifiedBy,
-        rl.attributes, 0, 0, 0, 0,
-        0, 0, 0, "", 0, 0, SideCode.Unknown,
-        None, None))
-      case _ => roadAddrSeq.map(ra => {
-        val geom = GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue)
+  def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
+    roadAddrSeq.map(ra => {
+      val geom = GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue)
+      val length = GeometryUtils.geometryLength(geom)
+      new RoadAddressLink(ra.id, rl.linkId, geom,
+        length, rl.administrativeClass,
+        rl.functionalClass, rl.trafficDirection,
+        rl.linkType, rl.modifiedAt, rl.modifiedBy,
+        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
+        ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
+        ra.calibrationPoints._1,
+        ra.calibrationPoints._2)
+    }).filter(_.length > 0.0) ++ missing.map(m => {
+        val geom = GeometryUtils.truncateGeometry2D(rl.geometry, m.startMValue.getOrElse(0.0), m.endMValue.getOrElse(rl.length))
         val length = GeometryUtils.geometryLength(geom)
-        new RoadAddressLink(ra.id, rl.linkId, geom,
+        new RoadAddressLink(0, rl.linkId, geom,
           length, rl.administrativeClass,
           rl.functionalClass, rl.trafficDirection,
           rl.linkType, rl.modifiedAt, rl.modifiedBy,
-          rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
-          ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-          ra.calibrationPoints._1,
-          ra.calibrationPoints._2)
+          rl.attributes, m.roadNumber.getOrElse(0), m.roadPartNumber.getOrElse(0), Track.Unknown.value, 0, Discontinuity.Continuous.value,
+          0, 0, "", 0.0, length, SideCode.Unknown,
+          None,
+          None)
       }).filter(_.length > 0.0)
-    }
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
@@ -134,7 +134,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, List())
-      buildRoadAddressLink(rl, ra)
+      buildRoadAddressLink(rl, ra, Seq())
     }
   }
 
@@ -145,7 +145,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.flatMap { rl =>
       val ra = addresses.getOrElse(rl.linkId, List())
-      buildRoadAddressLink(rl, ra)
+      buildRoadAddressLink(rl, ra, Seq())
     }.groupBy(_.roadNumber)
 
     val retval = groupedLinks.mapValues {
@@ -228,28 +228,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]) = {
     withDynTransaction {
       missingRoadLinks.foreach { links =>
-          RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddrMValue, links.endAddrMValue, AnomalyNoAddressGiven)
+        RoadAddressDAO.createMissingRoadAddress(links)
       }
     }
   }
 
   //TODO: Priority order for anomalies. Currently this is unused
   def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Int = {
-      //roadlink dont have road address
-      if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
-        return AnomalyNoAddressGiven
-      }
-      //road address do not cover the whole length of the link
-        //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
-       else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
-      {
-        return AnomalyNotFullyCovered
-      }
-        //road address having road parts that dont matching
-      else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
-      {
-        return AnomalyIllogical
-      }
+    //roadlink dont have road address
+    if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
+      return AnomalyNoAddressGiven
+    }
+    //road address do not cover the whole length of the link
+    //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
+    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
+    {
+      return AnomalyNotFullyCovered
+    }
+    //road address having road parts that dont matching
+    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
+    {
+      return AnomalyIllogical
+    }
     AnomalyNoAnomaly
   }
 
