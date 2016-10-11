@@ -12,7 +12,8 @@ import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
-import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
+import org.apache.http.HttpStatus
+import org.apache.http.client.methods._
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.json4s.jackson.JsonMethods._
@@ -278,7 +279,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode >= 400)
-        return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode), "content" -> response.getEntity.getContent), url))
+        return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
@@ -296,7 +297,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
       }
      None
     } catch {
@@ -315,7 +316,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
       }
       None
     } catch {
@@ -334,7 +335,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
+        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
       }
       None
     } catch {
@@ -475,6 +476,25 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   }
 }
 
+object ErrorMessageConverter {
+  protected implicit val jsonFormats: Formats = DefaultFormats
+
+  def convertJSONToError(response: CloseableHttpResponse) = {
+    def inputToMap(json: StreamInput) = {
+      val jObject = parse(json)
+      jObject.extract[Map[String, String]]
+    }
+    def errorMessageFormat = "%d: %s"
+    val message = inputToMap(StreamInput(response.getEntity.getContent)).getOrElse("message", "N/A")
+    response.getStatusLine.getStatusCode match {
+      case HttpStatus.SC_BAD_REQUEST => errorMessageFormat.format(HttpStatus.SC_BAD_REQUEST, message)
+      case HttpStatus.SC_LOCKED => errorMessageFormat.format(HttpStatus.SC_LOCKED, message)
+      case HttpStatus.SC_CONFLICT => errorMessageFormat.format(HttpStatus.SC_CONFLICT, message)
+      case HttpStatus.SC_INTERNAL_SERVER_ERROR => errorMessageFormat.format(HttpStatus.SC_INTERNAL_SERVER_ERROR, message)
+      case _ => "Unspecified error: %s".format(message)
+    }
+  }
+}
 /**
   * A class to transform data between the interface bus stop format and OTH internal bus stop format
   */
