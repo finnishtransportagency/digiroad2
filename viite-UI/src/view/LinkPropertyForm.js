@@ -124,7 +124,7 @@
 
     var template = function(options) {
       var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
-      var endDateField = typeof linkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
+      var endDateField = typeof selectedLinkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
       return _.template('' +
         '<header>' +
         title() + buttons +
