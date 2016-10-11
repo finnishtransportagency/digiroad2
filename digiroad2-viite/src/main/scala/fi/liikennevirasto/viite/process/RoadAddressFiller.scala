@@ -46,6 +46,8 @@ object RoadAddressFiller {
   }
 
   private def extendToGeometry(roadLink: RoadLink, segments: Seq[RoadAddress], changeSet: AddressChangeSet): (Seq[RoadAddress], AddressChangeSet) = {
+    if (segments.isEmpty)
+      return (segments, changeSet)
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val lastSegment = segments.maxBy(_.endMValue)
     val restSegments = segments.tail
@@ -102,7 +104,7 @@ object RoadAddressFiller {
       val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
       val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
       (existingSegments ++ adjustedSegments ++ generatedLinks,
-        segmentAdjustments.copy(missingRoadAddresses = generatedRoadAddresses))
+        segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++ generatedRoadAddresses))
     }
   }
 
