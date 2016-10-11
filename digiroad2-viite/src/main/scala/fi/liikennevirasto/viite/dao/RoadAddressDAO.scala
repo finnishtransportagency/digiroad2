@@ -291,7 +291,7 @@ object RoadAddressDAO {
     } else {
       val where = linkIds.isEmpty match {
         case true => return List()
-        case false => s""" where pos.link_id in (${linkIds.mkString(",")})"""
+        case false => s""" where link_id in (${linkIds.mkString(",")})"""
       }
       val query =
         s"""SELECT link_id, start_addr_m, end_addr_m

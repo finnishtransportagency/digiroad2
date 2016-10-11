@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.process.RoadAddressFiller
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
@@ -96,8 +97,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //TODO: plug filler here, move logic into filler. Check for existence now, rest comes later
     val newAnomalousRL = viiteRoadLinks.filter(rl => (rl.administrativeClass == State || rl.roadNumber > 0) && rl.id == 0)
 
-    val missingRL = newAnomalousRL.filterNot(x => missedRL.keySet.contains(x.linkId)) // check it isn't known already
-    eventbus.publish("roadAddress:persistMissingRoadAddress", missingRL)
+    val missingRoadAddressLink = newAnomalousRL.filterNot(x => missedRL.keySet.contains(x.linkId)) // check it isn't known already
+    val missingRoadAddress = RoadAddressFiller.buildMissingRoadAddress(missingRoadAddressLink)
+    eventbus.publish("roadAddress:persistMissingRoadAddress", missingRoadAddress)
     viiteRoadLinks
   }
 

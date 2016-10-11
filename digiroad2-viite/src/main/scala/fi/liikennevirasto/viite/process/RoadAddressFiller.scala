@@ -2,7 +2,9 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
+import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.digiroad2.asset.State
 
 object RoadAddressFiller {
   case class LRMValueAdjustment(id: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
@@ -47,6 +49,16 @@ object RoadAddressFiller {
   def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLink, adjustedSegments: Seq[RoadAddress]) = {
     //TODO: Unknown road address handling
     Seq()
+  }
+
+  def buildMissingRoadAddress(roadAddrLnkSeq: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
+    roadAddrLnkSeq.size match {
+//      case 0 => Seq(new MissingRoadAddress(0, 0, 0))
+      case 0 => List()
+      case _ => roadAddrLnkSeq.map(ra => {
+        new MissingRoadAddress(ra.linkId, ra.startAddressM, ra.endAddressM)
+      })
+    }
   }
 
   def fillTopology(roadLinks: Seq[RoadLink], roadAddressMap: Map[Long, Seq[RoadAddress]]): (Seq[RoadAddress], AddressChangeSet) = {

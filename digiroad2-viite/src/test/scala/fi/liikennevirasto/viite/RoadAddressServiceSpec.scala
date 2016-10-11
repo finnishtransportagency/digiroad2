@@ -9,6 +9,8 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery
+import slick.jdbc.StaticQuery.interpolation
 
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -98,15 +100,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("test createMissingRoadAddress should not add two equal roadAddresses"){
     runWithRollback {
       val roadAddressLinks = Seq(
-        RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None),
-        RoadAddressLink(0, 1611617, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374690.403, 6676887.31, 24.645000000004075)), 139.0852126853, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:52:19"), Some("dr1_conversion"), Map("linkId" -> 1611601, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None),
-        RoadAddressLink(0, 1611618, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 0, 0, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
+        RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, 3, TrafficDirection.BothDirections, SingleCarriageway, Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
       roadAddressLinks.foreach { links =>
         RoadAddressDAO.createMissingRoadAddress(links.linkId, links.startAddressM, links.endAddressM, links.roadNumber, links.roadPartNumber, 1)
       }
-      //TODO: Validation
+      val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId);
+
+      linksFromDB(0)._2 should be(0)
+      linksFromDB(0)._3 should be(0)
+      linksFromDB(0)._4 should be(1)
+      linksFromDB(0)._5 should be(3)
+      linksFromDB(0)._6 should be(1)
     }
+  }
+
+  private def getSpecificMissingRoadAddresses(linkId :Long): List[(Long, Long, Long, Long, Long, Int)] = {
+    sql"""
+          select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code
+            from missing_road_address where link_id = $linkId
+      """.as[(Long, Long, Long, Long, Long, Int)].list
   }
 
   test("test anomaly code"){
