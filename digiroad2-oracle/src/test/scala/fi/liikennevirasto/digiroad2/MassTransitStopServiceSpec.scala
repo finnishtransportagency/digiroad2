@@ -623,6 +623,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
       service.deleteAllMassTransitStopData(stop.id)
       verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
@@ -636,6 +637,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
     when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
     intercept[TierekisteriClientException] {
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       service.deleteAllMassTransitStopData(stop.id)
     }
     service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(false)
