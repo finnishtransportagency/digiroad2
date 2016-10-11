@@ -102,9 +102,11 @@ trait MassTransitStopService extends PointAssetOperations {
       return property
     val equipmentProperty = tierekisteriStop.equipments.filter(_._1.publicId == property.publicId)
     val mappedProperties = equipmentProperty.map {
-      case (equipment, existence) =>
-        PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head))
-    }
+      case (equipment, existence) if(equipment.isMaster) =>
+        Some(PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head)))
+      case _ =>
+        None
+    }.flatten
     if (mappedProperties.isEmpty)
       property
     else

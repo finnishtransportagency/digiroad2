@@ -277,10 +277,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
       val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
       equipments.foreach{
-        case (equipment, existence) =>
+        case (equipment, existence) if(equipment.isMaster) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
       }
     }
   }
