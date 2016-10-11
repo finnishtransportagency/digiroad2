@@ -42,8 +42,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
 
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-
   /**
     * Get calibration points for road not in a project
     *
@@ -89,42 +87,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
 
-    val viiteRoadLinks = roadLinks.flatMap { rl =>
+    val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
-      buildRoadAddressLink(rl, ra, missed)
-    }
+      rl.linkId -> buildRoadAddressLink(rl, ra, missed)
+    }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, addresses)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    viiteRoadLinks
+
+    filledTopology
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {
-      val geom = GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue)
-      val length = GeometryUtils.geometryLength(geom)
-      new RoadAddressLink(ra.id, rl.linkId, geom,
-        length, rl.administrativeClass,
-        rl.functionalClass, rl.trafficDirection,
-        rl.linkType, rl.modifiedAt, rl.modifiedBy,
-        rl.attributes, ra.roadNumber, ra.roadPartNumber, ra.track.value, ra.ely, ra.discontinuity.value,
-        ra.startAddrMValue, ra.endAddrMValue, formatter.print(ra.endDate), ra.startMValue, ra.endMValue, toSideCode(ra.startMValue, ra.endMValue, ra.track),
-        ra.calibrationPoints._1,
-        ra.calibrationPoints._2)
-    }).filter(_.length > 0.0) ++ missing.map(m => {
-        val geom = GeometryUtils.truncateGeometry2D(rl.geometry, m.startMValue.getOrElse(0.0), m.endMValue.getOrElse(rl.length))
-        val length = GeometryUtils.geometryLength(geom)
-        new RoadAddressLink(0, rl.linkId, geom,
-          length, rl.administrativeClass,
-          rl.functionalClass, rl.trafficDirection,
-          rl.linkType, rl.modifiedAt, rl.modifiedBy,
-          rl.attributes, m.roadNumber.getOrElse(0), m.roadPartNumber.getOrElse(0), Track.Unknown.value, 0, Discontinuity.Continuous.value,
-          0, 0, "", 0.0, length, SideCode.Unknown,
-          None,
-          None)
-      }).filter(_.length > 0.0)
+    roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
+      missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
@@ -171,23 +149,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
     }
     retval.flatMap(x => x._2).toSeq
-  }
-
-  private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
-    track match {
-      case Track.Combined => SideCode.BothDirections
-      case Track.LeftSide => if (startMValue < endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case Track.RightSide => if (startMValue > endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case _ => SideCode.Unknown
-    }
   }
 
   def roadClass(roadAddressLink: RoadAddressLink) = {
@@ -251,6 +212,54 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       return AnomalyIllogical
     }
     AnomalyNoAnomaly
+  }
+
+}
+
+object RoadAddressLinkBuilder {
+  def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
+    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val length = GeometryUtils.geometryLength(geom)
+    new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
+      length, roadLink.administrativeClass,
+      roadLink.functionalClass, roadLink.trafficDirection,
+      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, formatter.print(roadAddress.endDate), roadAddress.startMValue, roadAddress.endMValue,
+      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.calibrationPoints._1,
+      roadAddress.calibrationPoints._2)
+
+  }
+  def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
+    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
+    val length = GeometryUtils.geometryLength(geom)
+    new RoadAddressLink(0, roadLink.linkId, geom,
+      length, roadLink.administrativeClass,
+      roadLink.functionalClass, roadLink.trafficDirection,
+      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.attributes, missingAddress.roadNumber.getOrElse(0), missingAddress.roadPartNumber.getOrElse(0), Track.Unknown.value, 0, Discontinuity.Continuous.value,
+      0, 0, "", 0.0, length, SideCode.Unknown,
+      None,
+      None)
+  }
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
+    track match {
+      case Track.Combined => SideCode.BothDirections
+      case Track.LeftSide => if (startMValue < endMValue) {
+        SideCode.TowardsDigitizing
+      } else {
+        SideCode.AgainstDigitizing
+      }
+      case Track.RightSide => if (startMValue > endMValue) {
+        SideCode.TowardsDigitizing
+      } else {
+        SideCode.AgainstDigitizing
+      }
+      case _ => SideCode.Unknown
+    }
   }
 
 }
