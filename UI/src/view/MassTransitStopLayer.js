@@ -13,6 +13,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var clickCoords;
   var assetIsMoving = false;
 
+  eventbus.on('massTransitStop:expireFailed', function(){
+    selectedMassTransitStopModel.cancel();
+  });
+  eventbus.on('massTransitStop:expireSuccess', function (asset) {
+    destroyAsset(asset);
+    selectedMassTransitStopModel.save();
+  });
+
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -479,15 +487,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       //On this point selectedMassTransitStopModel should contain the newly created asset
       selectedMassTransitStopModel.copyDataFromOtherMasTransitStop(pastAsset);
       selectedMassTransitStopModel.expireMassTransitStopById(pastAsset);
-      //Should expire the old Asset
-      eventbus.on('massTransitExpireFailed', function(){
-        selectedMassTransitStopModel.cancel();
-      });
-      eventbus.on('massTransitExpireSuccess', function () {
-        destroyAsset(pastAsset);
-        selectedMassTransitStopModel.save();
-      });
-
     } else {
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;

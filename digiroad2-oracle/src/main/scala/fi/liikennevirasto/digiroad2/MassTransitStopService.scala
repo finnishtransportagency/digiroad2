@@ -475,13 +475,12 @@ trait MassTransitStopService extends PointAssetOperations {
     val relevantToTR = isStoredInTierekisteri(persistedStop)
 
     if (relevantToTR) {
-      persistedStopToMassTransitStopWithProperties(roadLinkByLinkId)(persistedStop.get)
       val roadLink = roadLinkByLinkId.apply(persistedStop.get.linkId)
       val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
         case Some(str) => Try(str.toString.toInt).toOption
         case _ => None
       }
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get, road)
 
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))
 

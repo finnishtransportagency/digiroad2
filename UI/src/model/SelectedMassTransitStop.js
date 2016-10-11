@@ -266,9 +266,9 @@
 
     var expireMassTransitStopById = function(massTransitStop) {
       backend.expireAsset([massTransitStop.id], function() {
-        eventbus.trigger('massTransitExpireSuccess');
+        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
       },function(){
-        eventbus.trigger('massTransitExpireFailed');
+        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
       });
     };
 
