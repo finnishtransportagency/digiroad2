@@ -435,12 +435,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
+    var popupMessageToShow;
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
     var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
     if (distance > movementLimit && !movementPermission)
     {
-      new GenericConfirmPopup('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
+      if (controlledByTR()){
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
+      } else {
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
+      }
+
+      new GenericConfirmPopup(popupMessageToShow,{
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates, true);
           movementPermission = true;
