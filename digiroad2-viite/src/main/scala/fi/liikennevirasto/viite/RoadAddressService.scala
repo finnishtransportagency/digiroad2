@@ -19,9 +19,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  val RoadNumber = "ROADNUMBER"
-  val RoadPartNumber = "ROADPARTNUMBER"
-
   val HighwayClass = 1
   val MainRoadClass = 2
   val RegionalClass = 3
@@ -217,6 +214,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 }
 
 object RoadAddressLinkBuilder {
+  val RoadNumber = "ROADNUMBER"
+  val RoadPartNumber = "ROADPARTNUMBER"
+
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
@@ -234,16 +236,18 @@ object RoadAddressLinkBuilder {
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
+    val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
+    val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     new RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.functionalClass, roadLink.trafficDirection,
       roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
-      roadLink.attributes, missingAddress.roadNumber.getOrElse(0), missingAddress.roadPartNumber.getOrElse(0), Track.Unknown.value, 0, Discontinuity.Continuous.value,
+      roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
+      missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, 0, Discontinuity.Continuous.value,
       0, 0, "", 0.0, length, SideCode.Unknown,
       None,
       None)
   }
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
     track match {
@@ -259,6 +263,14 @@ object RoadAddressLinkBuilder {
         SideCode.AgainstDigitizing
       }
       case _ => SideCode.Unknown
+    }
+  }
+
+  private def toIntNumber(value: Any) = {
+    try {
+      value.asInstanceOf[String].toInt
+    } catch {
+      case e: Exception => 0
     }
   }
 
