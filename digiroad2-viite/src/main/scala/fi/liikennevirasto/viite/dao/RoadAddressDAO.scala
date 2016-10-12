@@ -13,6 +13,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
@@ -77,7 +78,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadNumber: Option[Long], roadPartNumber: Option[Long],
-                              startMValue: Option[Double], endMValue: Option[Double], anomalyCode: Int)
+                              startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
 
 object RoadAddressDAO {
 
@@ -273,7 +274,7 @@ object RoadAddressDAO {
            insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code)
            values (${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
            ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber},
-           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, ${missingRoadAddress.anomalyCode})
+           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, ${missingRoadAddress.anomaly.value})
            """.execute
   }
 
@@ -302,7 +303,7 @@ object RoadAddressDAO {
             FROM missing_road_address $where"""
       Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
         case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly)
+          MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
       }
     }
   }
@@ -315,7 +316,7 @@ object RoadAddressDAO {
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly)
+            MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
         }
     }
   }

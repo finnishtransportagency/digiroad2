@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -31,11 +31,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val PathsClass = 10
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
-
-  val AnomalyNoAddressGiven = 1
-  val AnomalyNotFullyCovered = 2
-  val AnomalyIllogical = 3
-  val AnomalyNoAnomaly = 0
 
   class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
 
@@ -192,23 +187,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   //TODO: Priority order for anomalies. Currently this is unused
-  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Int = {
+  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Anomaly = {
     //roadlink dont have road address
     if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
-      return AnomalyNoAddressGiven
+      return Anomaly.NoAddressGiven
     }
     //road address do not cover the whole length of the link
     //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
     else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
     {
-      return AnomalyNotFullyCovered
+      return Anomaly.NotFullyCovered
     }
     //road address having road parts that dont matching
     else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
     {
-      return AnomalyIllogical
+      return Anomaly.Illogical
     }
-    AnomalyNoAnomaly
+    Anomaly.None
   }
 
 }
@@ -246,7 +241,7 @@ object RoadAddressLinkBuilder {
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, 0, Discontinuity.Continuous.value,
       0, 0, "", 0.0, length, SideCode.Unknown,
       None,
-      None)
+      None, missingAddress.anomaly)
   }
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {

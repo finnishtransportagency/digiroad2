@@ -3,11 +3,11 @@
 
     // Todo: Handle unknown, stroke black with question mark
 
-    var unknownRoadClassDefaultRules = [
-      new OpenLayersRule().where('type').is('roadAddressAnomaly').use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
+    var unknownRoadAddressAnomalyRules = [
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
     ];
-    var unknownRoadClassUnselectedRules = [
-      new OpenLayersRule().where('type').is('roadAddressAnomaly').use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
+    var unknownRoadAddressAnomalyUnselectedRules = [
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
     ];
 
     var typeFilter = function(type) {
@@ -133,7 +133,7 @@
       rotation: '${rotation}'}));
 
     roadClassDefaultStyle.addRules(roadClassRules);
-    roadClassDefaultStyle.addRules(unknownRoadClassDefaultRules);
+    roadClassDefaultStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
@@ -160,8 +160,8 @@
     }));
     roadClassSelectionDefaultStyle.addRules(roadClassRules);
     roadClassSelectionSelectStyle.addRules(roadClassRules);
-    roadClassSelectionDefaultStyle.addRules(unknownRoadClassUnselectedRules);
-    roadClassSelectionSelectStyle.addRules(unknownRoadClassDefaultRules);
+    roadClassSelectionDefaultStyle.addRules(unknownRoadAddressAnomalyUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassSelectionDefaultStyle.addRules(zoomLevelRules);
     roadClassSelectionSelectStyle.addRules(zoomLevelRules);
     roadClassSelectionDefaultStyle.addRules(overlayRules);
@@ -220,14 +220,11 @@
       });
     };
 
-    var renderFeatures = function(speedLimits) {
-      var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-      var offsetBySideCode = function(speedLimit) {
-        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, speedLimit);
-      };
-      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
+    var renderFeatures = function(addressLinks) {
+      var addressLinksWithType = _.map(addressLinks, function(limit) { return _.merge({}, limit, { type: 'other' }); });
+      var addressLinksWithAdjustments = _.map(addressLinksWithType, offsetBySideCode);
 
-      return limitSigns(speedLimitsWithAdjustments);
+      return limitSigns(addressLinksWithAdjustments);
     };
 
     // --- Style map selection

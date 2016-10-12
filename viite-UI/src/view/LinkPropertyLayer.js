@@ -67,22 +67,12 @@
     var draw = function() {
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      var anomalousRoadlinks = _.filter(roadLinks, function (f) {
-        return (f.administrativeClass == "State" || f.roadNumber >0) && f.id === 0;
-      });
-      var nonAnomalousRoadLinks = _.filter(roadLinks, function(rl){
-        var sameLink = _.find(anomalousRoadlinks, function(arl) {
-          return arl.linkId === rl.linkId;
-        });
-        return sameLink === undefined;
-      });
-      roadLayer.drawRoadLinks(nonAnomalousRoadLinks, zoom);
-      drawAnomalousFeatures(anomalousRoadlinks);
-      drawDashedLineFeaturesIfApplicable(nonAnomalousRoadLinks);
-      me.drawOneWaySigns(roadLayer.layer, nonAnomalousRoadLinks);
-      me.drawRoadNumberMarkers(roadLayer.layer, nonAnomalousRoadLinks);
+      roadLayer.drawRoadLinks(roadLinks, zoom);
+      drawDashedLineFeaturesIfApplicable(roadLinks);
+      me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
-        me.drawCalibrationMarkers(roadLayer.layer, nonAnomalousRoadLinks);
+        me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
       }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
@@ -164,15 +154,6 @@
         });
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
       }));
-    };
-
-    var drawAnomalousFeatures = function(anomalousRoadLinks) {
-
-      map.addLayer(vectorLayer);
-      vectorLayer.addFeatures(createAnomalousRoadAddresses(anomalousRoadLinks));
-      vectorLayer.addFeatures(createAnomalousRoadAddressesSigns(anomalousRoadLinks));
-      vectorLayer.setVisibility(true);
-      vectorLayer.redraw();
     };
 
     var drawDashedLineFeatures = function(roadLinks) {
