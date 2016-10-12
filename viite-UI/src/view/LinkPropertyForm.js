@@ -123,7 +123,6 @@
       '</div>';
 
     var template = function(options) {
-      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       var endDateField = typeof selectedLinkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
       return _.template('' +
         '<header>' +
@@ -137,7 +136,6 @@
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
-        staticSegmentIdField +
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
