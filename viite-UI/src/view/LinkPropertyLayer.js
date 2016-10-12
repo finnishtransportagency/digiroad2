@@ -13,8 +13,9 @@
     });
 
     var selectRoadLink = function(feature) {
-      selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
+      unselectRoadLink();
       currentRenderIntent = 'select';
+      selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
       if(feature.singleLinkSelect)
         highlightSingleFeature(feature.data.linkId);
       else if (feature.singleLinkSelect !== undefined)
@@ -46,6 +47,8 @@
     var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
         if (selectedLinkProperty.isSelected(x.attributes.id)) {
+          var style = linkPropertyLayerStyles.getSpecificStyle(currentRenderIntent);
+          roadLayer.setLayerSpecificStyleMap(layerName, style);
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -58,6 +61,8 @@
         return f.data.linkId === linkId;
       });
       if (selectedLinkProperty.isSelected(singleFeature.attributes.id)) {
+        var style = linkPropertyLayerStyles.getSpecificStyle(currentRenderIntent);
+        roadLayer.setLayerSpecificStyleMap(layerName, style);
         selectControl.highlight(singleFeature);
       } else {
         selectControl.unhighlight(singleFeature);

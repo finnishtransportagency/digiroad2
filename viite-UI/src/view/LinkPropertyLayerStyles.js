@@ -172,8 +172,18 @@
       return styleMaps[dataset][renderIntent];
     };
 
+    var getSpecificStyle = function(renderIntent){
+      if(renderIntent === "default"){
+        return roadClassDefaultStyle;
+      }
+      if (renderIntent === "select") {
+        return roadClassSelectionDefaultStyle;
+      }
+    };
+
     return {
-      getDatasetSpecificStyleMap: getDatasetSpecificStyleMap
+      getDatasetSpecificStyleMap: getDatasetSpecificStyleMap,
+      getSpecificStyle: getSpecificStyle
     };
   };
 })(this);
