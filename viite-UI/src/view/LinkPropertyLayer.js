@@ -13,10 +13,12 @@
     });
 
     var selectRoadLink = function(feature) {
-      selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
-      currentRenderIntent = 'select';
-      roadLayer.redraw();
-      highlightFeatures();
+      if(feature.attributes.id !== undefined) {
+        selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
+        currentRenderIntent = 'select';
+        roadLayer.redraw();
+        highlightFeatures();
+      }
     };
 
     var unselectRoadLink = function() {
