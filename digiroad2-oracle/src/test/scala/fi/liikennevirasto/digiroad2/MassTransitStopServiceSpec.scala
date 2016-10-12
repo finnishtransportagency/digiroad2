@@ -76,8 +76,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
-    override def withDynSession[T](f: => T): T = f
-    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
+    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
