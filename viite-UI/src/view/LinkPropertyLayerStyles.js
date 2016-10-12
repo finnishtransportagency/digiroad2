@@ -203,19 +203,19 @@
     selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
     selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
-    var isUnknown = function(speedLimit) {
-      return !_.isNumber(speedLimit.value);
+    var isUnknown = function(roadLink) {
+      return roadLink.anomaly > 0;
     };
 
-    var limitSigns = function(speedLimits) {
-      return _.map(speedLimits, function(speedLimit) {
-        var points = _.map(speedLimit.points, function(point) {
+    var limitSigns = function(roadLinks) {
+      return _.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
-        var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(speedLimit), type);
+        var type = isUnknown(roadLink) ? { type: 'unknown' } : {};
+        var attributes = _.merge(_.cloneDeep(roadLink), type);
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
       });
     };
