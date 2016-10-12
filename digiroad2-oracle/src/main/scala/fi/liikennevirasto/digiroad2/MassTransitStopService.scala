@@ -5,6 +5,8 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
@@ -466,7 +468,7 @@ trait MassTransitStopService extends PointAssetOperations {
       }
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
 
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide), null)
 
       createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
     }
@@ -620,10 +622,24 @@ trait MassTransitStopService extends PointAssetOperations {
       """.execute
   }
 
-  def expireMassTransitStop(s: String, id: Long) = {
+//  @throws(classOf[TierekisteriClientException])
+  def expireMassTransitStop(user: String, id: Long) = {
+    val expiredate= new Date()
     withDynTransaction {
-      massTransitStopDao.expireMassTransitStop(s, id)
+      val persistedStop = fetchPointAssets(withId(id)).headOption
+      if (tierekisteriClient.isTREnabled && isStoredInTierekisteri(Some(persistedStop.get))) {
+        massTransitStopDao.expireMassTransitStop(user, id)
+        val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
+        val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide), Option(expiredate))
+        //val operatingdate = updatedTierekisteriMassTransitStop.operatingTo TODO remove when rollbackworks
+        try {
+          tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
+        } catch {
+          case e: Exception =>
+            rollBack
+            throw new TierekisteriClientException("TR-Exception")
+        }
+      }
     }
   }
 }
-
