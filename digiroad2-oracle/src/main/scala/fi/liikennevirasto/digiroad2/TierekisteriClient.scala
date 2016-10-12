@@ -297,7 +297,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
       }
      None
     } catch {
@@ -316,7 +318,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
       }
       None
     } catch {
@@ -335,7 +339,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       val reason = response.getStatusLine.getReasonPhrase
       if (statusCode >= 400) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        return Some(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response)), url))
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
       }
       None
     } catch {
