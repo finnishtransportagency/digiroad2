@@ -233,7 +233,7 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkOption match {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
-        val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
+        val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return (true, Some(FloatingReason.RoadOwnerChanged))
         }
@@ -247,7 +247,7 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkOption match {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
-        val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
+        val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
         }
@@ -582,6 +582,18 @@ trait MassTransitStopService extends PointAssetOperations {
         else if (interval.isBeforeNow) { MassTransitStopValidityPeriod.Past }
         else { MassTransitStopValidityPeriod.Future }
       case _ => MassTransitStopValidityPeriod.Current
+    }
+  }
+
+  private def getAdministrationClass(persistedAsset: PersistedMassTransitStop): Option[AdministrativeClass] = {
+    val propertyValueOption = persistedAsset.propertyData.find(_.publicId == "linkin_hallinnollinen_luokka")
+      .map(_.values).getOrElse(Seq()).headOption
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) if(propertyValue.propertyValue.isEmpty) => None
+      case Some(propertyValue) if(!propertyValue.propertyValue.isEmpty) =>
+        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
     }
   }
 
