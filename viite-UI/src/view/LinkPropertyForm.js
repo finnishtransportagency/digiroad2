@@ -42,12 +42,12 @@
     ];
 
     var roadClasses = [
-      [1, 'Maantie'],
+      [1, 'Yleinen tie'],
       [2, 'Lauttaväylä yleisellä tiellä'],
       [3, 'Kunnan katuosuus'],
       [4, 'Yleisen tien työmaa'],
       [5, 'Yksityistie'],
-      [9, 'Ei tiedossa']
+      [9, 'Omistaja selvittämättä']
     ];
 
     var discontinuitys = [
@@ -103,9 +103,9 @@
 
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
-               '<label class="control-label">' + labelText + '</label>' +
-               '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
-             '</div>';
+        '<label class="control-label">' + labelText + '</label>' +
+        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+        '</div>';
     };
 
     var title = function() {
@@ -118,37 +118,38 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+
     var template = function(options) {
       var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       var endDateField = typeof selectedLinkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
       return _.template('' +
         '<header>' +
-          title() + buttons +
+        title() + buttons +
         '</header>' +
         '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
-            '</div>' +
-            '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
-            '</div>' +
-            staticSegmentIdField +
-            staticField('TIENUMERO', 'roadNumber') +
-            staticField('TIEOSANUMERO', 'roadPartNumber') +
-            staticField('AJORATA', 'trackCode') +
-            staticField('ALKUETÄISYYS', 'startAddressM') +
-            staticField('LOPPUETÄISUUS', 'endAddressM') +
-            staticField('ELY', 'elyCode') +
-            staticField('TIETYYPPI', 'roadClass') +
-            staticField('JATKUVUUS', 'discontinuity') +
-            staticField('LAKKAUTUS', 'endDate') +
-          '</div>' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
         '</div>' +
-      '<footer>' + buttons + '</footer>', options);
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticSegmentIdField +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
+        staticField('ALKUETÄISYYS', 'startAddressM') +
+        staticField('LOPPUETÄISUUS', 'endAddressM') +
+        staticField('ELY', 'elyCode') +
+        staticField('TIETYYPPI', 'roadClass') +
+        staticField('JATKUVUUS', 'discontinuity') +
+        endDateField +
+        '</div>' +
+        '</div>' +
+        '<footer>' + buttons + '</footer>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -215,9 +216,9 @@
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-                                    functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
-        rootElement.html(template(options)(linkProperties));
+          functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+          linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
+        rootElement.html(template(options,linkProperties)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });

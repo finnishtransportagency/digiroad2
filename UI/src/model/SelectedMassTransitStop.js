@@ -266,9 +266,9 @@
 
     var expireMassTransitStopById = function(massTransitStop) {
       backend.expireAsset([massTransitStop.id], function() {
-        eventbus.trigger('massTransitExpireSuccess');
+        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
       },function(){
-        eventbus.trigger('massTransitExpireFailed');
+        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
       });
     };
 
@@ -317,13 +317,16 @@
       }
     };
 
-    var deleteMassTransitStop = function (poistaSelected){
-      if (poistaSelected){
+    var deleteMassTransitStop = function (poistaSelected) {
+      if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
-        backend.deleteAllMassTransitStopData(currAsset.id,function() {
+        backend.deleteAllMassTransitStopData(currAsset.id, function () {
           eventbus.trigger('massTransitStopDeleted', currAsset);
-        }, function(){
+        }, function (errorObject) {
           cancel();
+          if (errorObject.status == 555) {
+            eventbus.trigger('asset:deleteTierekisteriFailed');
+          }
         });
       }
     };
