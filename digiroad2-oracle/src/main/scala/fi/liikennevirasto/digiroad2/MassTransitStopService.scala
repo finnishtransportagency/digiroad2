@@ -468,7 +468,7 @@ trait MassTransitStopService extends PointAssetOperations {
       }
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
 
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide), null)
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))
 
       createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
     }
@@ -631,12 +631,12 @@ trait MassTransitStopService extends PointAssetOperations {
         massTransitStopDao.expireMassTransitStop(user, id)
         val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
         val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide), Option(expiredate))
-        //val operatingdate = updatedTierekisteriMassTransitStop.operatingTo TODO remove when rollbackworks
-        try {
+        try
+        {
           tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
         } catch {
           case e: Exception =>
-            rollBack
+            rollBack //doesnt do anything with dyntransaction, dynsession requires to disable auto-commit
             throw new TierekisteriClientException("TR-Exception")
         }
       }

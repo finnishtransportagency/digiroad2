@@ -78,8 +78,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
 
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+/* TODO remove comment out before pull request
   test("update inventory date") {
     val props = Seq(SimpleProperty("foo", Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props)
@@ -572,6 +580,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+
+
+
+
+
   test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
       (stop, None)
@@ -607,4 +620,43 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
     }
   }
+  */
+  private def withId(id: Long)(query: String): String = {
+    query + s" where a.id = $id"
+  }
+
+  test("expire a TR kept mass transit stop") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val stop = service.fetchPointAssets(withId(300004)).head //623333
+      service.getMassTransitStopByNationalId(85755, Int => Unit).get
+      val before = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
+      before should be(Some(true))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      service.expireMassTransitStop("testusername", stop.id)
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
+      expired should be(Some(true))
+    }
+  }
+
+
+
+  test("expiring a TR kept mass transit stop throws exception and successfully rolls back OTH db to original state") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new MassTransitStopServiceWithTierekisteri(eventbus)
+      val stop = service.fetchPointAssets(withId(300004)).head
+      service.getMassTransitStopByNationalId(85755, Int => Unit).get
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop])).thenThrow(new TierekisteriClientException("TR-test exception"))
+      intercept[TierekisteriClientException]
+      {
+        service.expireMassTransitStop("testusername", stop.id)
+      }
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
+      expired should be(Some(false))
+    }
+  }
+
 }

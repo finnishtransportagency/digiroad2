@@ -55,6 +55,14 @@ object OracleDatabase {
     }
   }
 
+  def rollBack: Unit = {
+    if (!transactionOpen.get())
+      throw new IllegalThreadStateException("Attempted to rollback without a session")
+    else {
+      Database.dynamicSession.rollback()
+    }
+  }
+
   def setSessionLanguage() {
     sqlu"""alter session set nls_language = 'american'""".execute
   }
