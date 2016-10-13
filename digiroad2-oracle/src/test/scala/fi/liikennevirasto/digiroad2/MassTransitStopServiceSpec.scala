@@ -87,7 +87,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-/* TODO remove comment out before pull request
+
   test("update inventory date") {
     val props = Seq(SimpleProperty("foo", Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props)
@@ -560,7 +560,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     mValue should be(1.0)
   }
 
-  test("expire a mass transit stop") {
+  test("expire a mass transit stop (W/O TR") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
@@ -568,13 +568,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(false)
       val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       val createdId = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStopAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $createdId""".as[(Long, Int, String, String)].firstOption
       massTransitStopAsset should be (Some(createdId, vvhRoadLink.municipalityCode, null, null))
-
+      val before = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
       service.expireMassTransitStop("testusername", createdId)
-
       val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
       expired should be(Some(true))
     }
@@ -620,7 +620,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
     }
   }
-  */
+
   private def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
   }
@@ -640,8 +640,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-
-
   test("expiring a TR kept mass transit stop throws exception and successfully rolls back OTH db to original state") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -658,5 +656,4 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       expired should be(Some(false))
     }
   }
-
 }

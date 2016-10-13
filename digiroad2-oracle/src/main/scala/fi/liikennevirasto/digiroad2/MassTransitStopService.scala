@@ -639,7 +639,11 @@ trait MassTransitStopService extends PointAssetOperations {
             rollBack //doesnt do anything with dyntransaction, dynsession requires to disable auto-commit
             throw new TierekisteriClientException("TR-Exception")
         }
-      }
+      }else if (!tierekisteriClient.isTREnabled)
+        {
+          massTransitStopDao.expireMassTransitStop(user, id)
+        }
+
     }
   }
 }
