@@ -121,6 +121,7 @@
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
   var tierekisteriFailedMessage = 'Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa';
   var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
+  var notFoundInTierekisteriMessage = 'Dont Exist information with equivalent livi-id in Tierekisteri or cant connection with Tierekisteri';
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
@@ -144,6 +145,11 @@
     eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
+    });
+
+    eventbus.on('asset:notFoundInTierekisteri', function() {
+      jQuery('.spinner-overlay').remove();
+      alert(notFoundInTierekisteriMessage);
     });
 
     eventbus.on('asset:creationTierekisteriFailed asset:updateTierekisteriFailed', function() {

@@ -149,6 +149,8 @@ case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
 
+class TierekisteriClientWarnings(response: String) extends RuntimeException(response)
+
 /**
   * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
   *
@@ -228,6 +230,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
         mapFields(content)
+      case Right(null) =>
+        null
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
@@ -277,8 +281,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode == 404) {
+        return Right(null)
+      } else if (statusCode >= 400) {
         return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode), "content" -> response.getEntity.getContent), url))
+      }
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))

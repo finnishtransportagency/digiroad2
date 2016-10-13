@@ -74,17 +74,30 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      if(isStoredInTierekisteri(persistedStop)){
+      persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+    }
+  }
+
+  def getByNationalIdWithTRWarnings[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): (Option[T], Boolean) = {
+    withDynTransaction {
+      var showStatusCode = false
+      val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
+      persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+      if (isStoredInTierekisteri(persistedStop)) {
         val properties = persistedStop.map(_.propertyData).get
         val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
         if (tierekisteriEnabled) {
           val liViId = liViProp.map(_.values.head).get.propertyValue
           val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+          if (tierekisteriStop == null) {
+            showStatusCode = true
+            return (persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), showStatusCode)
+          }
           val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
-          return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+          return (enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), showStatusCode)
         }
       }
-      persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+      (persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), showStatusCode)
     }
   }
 
@@ -180,6 +193,10 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
+  }
+
+  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long, municipalityValidation: Int => Unit): (Option[MassTransitStopWithProperties], Boolean) = {
+    getByNationalIdWithTRWarnings(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[VVHRoadlink])

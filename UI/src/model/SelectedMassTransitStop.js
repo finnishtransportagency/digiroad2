@@ -289,7 +289,12 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        backend.getMassTransitStopByNationalId(assetNationalId, function(asset) {
+        backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+            if (errorObject.status == 255) {
+              eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+            }
+          }
           eventbus.trigger('asset:fetched', asset);
         });
       }
