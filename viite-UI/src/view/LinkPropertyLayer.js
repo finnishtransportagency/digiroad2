@@ -69,7 +69,7 @@
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawSigns(roadLayer.layer, roadLinks);
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
@@ -283,7 +283,7 @@
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
-      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
+      me.drawSigns(roadLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
 
