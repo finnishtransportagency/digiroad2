@@ -120,6 +120,7 @@
 
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
   var tierekisteriFailedMessage = 'Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa';
+  var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
@@ -148,6 +149,11 @@
     eventbus.on('asset:creationTierekisteriFailed asset:updateTierekisteriFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(tierekisteriFailedMessage);
+    });
+
+    eventbus.on('asset:deleteTierekisteriFailed', function() {
+      jQuery('.spinner-overlay').remove();
+      alert(tierekisteriFailedMessageDelete);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });

@@ -5,6 +5,7 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
@@ -67,6 +68,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
+
+  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
+    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -606,5 +617,29 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
     }
+  }
+
+  test("delete a TR kept mass transit stop") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
+      service.deleteAllMassTransitStopData(stop.id)
+      verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
+      service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(true)
+    }
+  }
+
+  test("delete fails if a TR kept mass transit stop is not found") {
+    val eventbus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new TestMassTransitStopServiceWithDynTransaction(eventbus)
+    val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
+    when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
+    intercept[TierekisteriClientException] {
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      service.deleteAllMassTransitStopData(stop.id)
+    }
+    service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(false)
   }
 }

@@ -13,4 +13,14 @@ object TestTransactions {
       dynamicSession.rollback()
     }
   }
+  def withDynTransaction[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+    Database.forDataSource(ds).withDynTransaction {
+      f
+    }
+  }
+  def withDynSession[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+    Database.forDataSource(ds).withDynSession {
+      f
+    }
+  }
 }

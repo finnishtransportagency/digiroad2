@@ -514,6 +514,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val persistedStop = fetchPointAssets(withId(assetId)).headOption
       val relevantToTR = isStoredInTierekisteri(Some(persistedStop.get))
 
+      massTransitStopDao.deleteAllMassTransitStopData(assetId)
+
       if ((relevantToTR) && (tierekisteriClient.isTREnabled)) {
         val liviIdOption = persistedStop.get.propertyData.find(propertyData =>
           propertyData.publicId.equals(LiViIdentifierPublicId)).flatMap(propertyData => propertyData.values.headOption).map(_.propertyValue).headOption
@@ -522,7 +524,6 @@ trait MassTransitStopService extends PointAssetOperations {
           case Some(liviId) => tierekisteriClient.deleteMassTransitStop(liviId)
           case _ => throw new RuntimeException(s"bus stop relevant to Tierekisteri doesn't have 'yllapitajan koodi' property")
         }
-        massTransitStopDao.deleteAllMassTransitStopData(assetId)
       }
     }
   }
