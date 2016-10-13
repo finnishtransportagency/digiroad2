@@ -349,7 +349,7 @@
         error: errorCallback
       });
     };
-
+    //TODO DELETE THIS BACKEND CALL
     this.expireAsset = function(massTransitStopIds, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -359,6 +359,18 @@
         dataType: "json",
         success: success,
         error: failure
+      });
+    };
+
+    this.copyMassTransitStopAsset = function(id, data, successCallback, errorCallback) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/massTransitStops/copy/" + id,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: successCallback,
+        error: errorCallback
       });
     };
 

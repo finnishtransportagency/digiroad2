@@ -212,17 +212,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   put("/massTransitStops/copy/:id"){
-    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int): Unit = {
-      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
-        halt(Unauthorized("User cannot copy mass transit stop " + id + ". No write access to municipality " + municipalityCode))
-    }
-    //TODO verify if i will need to verify all this rights
-    /*
+    val id = params("id").toLong
+    val positionParameters = massTransitStopPositionParameters(parsedBody)
+    val lon = positionParameters._1.get
+    val lat = positionParameters._2.get
+    val linkId = positionParameters._3.get
+    val bearing = positionParameters._4.get
+    val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
-    */
 
+    val roadLink = vvhClient.fetchVVHRoadlink(linkId).getOrElse(throw new NoSuchElementException)
+    massTransitStopService.copy(id, NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
 
   }
 

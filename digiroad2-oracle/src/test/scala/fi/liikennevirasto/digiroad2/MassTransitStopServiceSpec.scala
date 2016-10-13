@@ -552,6 +552,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     mValue should be(1.0)
   }
 
+  //TODO delete this test
   test("expire a mass transit stop") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -605,6 +606,53 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       opTo shouldNot be (None)
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
+    }
+  }
+
+  //TODO change the ignore statement
+  ignore("Copy existing masstransitstop if the new distance is greater than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
+      oldAsset should be (Some(oldAssetId, vvhRoadLink.municipalityCode, null, null))
+
+      val newAssetId = service.copy(oldAssetId, NewMassTransitStop(0, 0, 51, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+
+      val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $newAssetId""".as[(Long, Int, String, String)].firstOption
+      newAsset should be (Some(newAssetId, vvhRoadLink.municipalityCode, null, null))
+
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
+      expired should be(Some(true))
+    }
+  }
+
+  //TODO change the ignore statement
+  ignore("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val assetId = service.create(NewMassTransitStop(0, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
+      asset should be (Some(assetId, vvhRoadLink.municipalityCode, null, null))
+
+      intercept[IllegalArgumentException]{
+        service.copy(assetId, NewMassTransitStop(50, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      }
+
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
+      expired should be(Some(false))
     }
   }
 }

@@ -263,7 +263,7 @@
     var getCurrentAsset = function() {
       return currentAsset;
     };
-
+    //TODO remove this function
     var expireMassTransitStopById = function(massTransitStop) {
       backend.expireAsset([massTransitStop.id], function() {
         eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
@@ -271,6 +271,16 @@
         eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
       });
     };
+
+    var copyMassTransitStopById = function(masstransitStop) {
+      backend.copyMassTransitStopAsset(massTransitStop.id, massTransitStop, function(){
+        //TODO Change this event name
+        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
+      },function(){
+        //TODO Change this event name
+        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
+      })
+    }
 
     var copyDataFromOtherMasTransitStop = function (other) {
       currentAsset.payload = other.payload;
