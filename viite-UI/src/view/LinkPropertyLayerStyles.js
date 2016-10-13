@@ -4,10 +4,10 @@
     // Todo: Handle unknown, stroke black with question mark
 
     var unknownRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
     var unknownRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
 
     var typeFilter = function(type) {
@@ -124,7 +124,7 @@
     var typeSpecificStyleLookup = {
       overlay: { strokeOpacity: 1.0 },
       other: { strokeOpacity: 0.7 },
-      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' },
+      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
       cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
     };
 
@@ -144,7 +144,7 @@
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('unknown'),
-      symbolizer: { externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' }
+      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
     });
     roadClassDefaultStyle.addRules([unknownLimitStyleRule]);
 
