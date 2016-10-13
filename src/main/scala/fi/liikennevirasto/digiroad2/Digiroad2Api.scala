@@ -118,7 +118,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "floating" -> stop.floating)
     }
   }
-
+  //TODO delete this entry point
   delete("/massTransitStops") {
     val user = userProvider.getCurrentUser()
 
@@ -209,6 +209,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
     }
+  }
+
+  put("/massTransitStops/copy/:id"){
+    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
+        halt(Unauthorized("User cannot copy mass transit stop " + id + ". No write access to municipality " + municipalityCode))
+    }
+    //TODO verify if i will need to verify all this rights
+    /*
+    validateUserRights(linkId)
+    validateBusStopMaintainerUser(properties)
+    validateCreationProperties(properties)
+    */
+
+
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {

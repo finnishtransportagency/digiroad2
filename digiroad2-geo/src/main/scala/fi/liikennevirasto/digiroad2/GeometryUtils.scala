@@ -177,6 +177,18 @@ object GeometryUtils {
     point.distance2DTo(projection)
   }
 
+  /**
+    * Get the distance between two points
+    *
+    * @param firstPoint
+    * @param secondPoint
+    * @return
+    */
+  def distance(firstPoint: Point, secondPoint: Point): Double = {
+    val firstPoint2D = to2DGeometry(firstPoint)
+    val secondPoint2D = to2DGeometry(secondPoint)
+    return firstPoint2D.distance2DTo(secondPoint2D)
+  }
 
   /**
     * Check if segments overlap (not just barely touching)

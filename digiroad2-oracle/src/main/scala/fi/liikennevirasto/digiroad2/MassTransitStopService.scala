@@ -444,6 +444,49 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  def copy(oldAssetId: Long, asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]) : Long = {
+    //TODO do the head thing better anf change the variable names
+    val toExpireAsset = fetchPointAssets(withId(oldAssetId)).head
+
+    val oldPoint = Point(toExpireAsset.lon, toExpireAsset.lat)
+    val point = Point(asset.lon, asset.lat)
+
+    val assetDistance = GeometryUtils.distance(oldPoint, point)
+
+    //TODO verify this distance
+    if(assetDistance <= 50)
+      throw new IllegalArgumentException
+
+    //TODO create a new method to don't have duplicated code
+    withDynTransaction {
+      //Expire the old asset
+      massTransitStopDao.expireMassTransitStop(username, oldAssetId)
+
+      //Create a new asset
+      val mValue = calculateLinearReferenceFromPoint(point, geometry)
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val nationalId = massTransitStopDao.getNationalBusStopId
+      val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
+      insertLrmPosition(lrmPositionId, mValue, asset.linkId)
+      insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
+      insertAssetLink(assetId, lrmPositionId)
+
+      val properties = updatedProperties(asset.properties)
+
+      val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+      if (!mixedStoptypes(properties.toSet))
+      {
+        massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+        updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+        updateLiViIdentifierProperty(assetId, nationalId, properties)
+        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, tierekisteriClient.createMassTransitStop)
+        assetId
+      }
+      else
+        throw new IllegalArgumentException
+    }
+  }
 
   def updatedProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
     val inventoryDate = properties.find(_.publicId == InventoryDateId)
@@ -639,9 +682,9 @@ trait MassTransitStopService extends PointAssetOperations {
       """.execute
   }
 
-  def expireMassTransitStop(s: String, id: Long) = {
+  def expireMassTransitStop(username: String, id: Long) = {
     withDynTransaction {
-      massTransitStopDao.expireMassTransitStop(s, id)
+      massTransitStopDao.expireMassTransitStop(username, id)
     }
   }
 }
