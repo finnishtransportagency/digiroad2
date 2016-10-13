@@ -12,6 +12,8 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
@@ -64,6 +66,13 @@ class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
   }
 }
 
+class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
+    case _                    => println("roadAddressUpdater: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -92,6 +101,13 @@ object Digiroad2Context {
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
+
+  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
+  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
+
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(roadLinkService, eventbus)
+  }
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -172,8 +188,6 @@ object Digiroad2Context {
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
-
-  lazy val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService)
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {
