@@ -1,15 +1,15 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
-    /*
-    / Todo: Handle unknown, stroke black with question mark
-    /
-    var unknownRoadClassDefaultRules = [
-      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 1.0, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+
+    // Todo: Handle unknown, stroke black with question mark
+
+    var unknownRoadAddressAnomalyRules = [
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
     ];
-    var unknownRoadClassUnselectedRules = [
-      new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+    var unknownRoadAddressAnomalyUnselectedRules = [
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg', pointRadius: 14})
     ];
-    */
+
     var typeFilter = function(type) {
       return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
     };
@@ -121,16 +121,32 @@
 
     // -- Road classification styles
 
+    var typeSpecificStyleLookup = {
+      overlay: { strokeOpacity: 1.0 },
+      other: { strokeOpacity: 0.7 },
+      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' },
+      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+    };
+
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       rotation: '${rotation}'}));
+
     roadClassDefaultStyle.addRules(roadClassRules);
+    roadClassDefaultStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
+    roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
+
+    var unknownLimitStyleRule = new OpenLayers.Rule({
+      filter: typeFilter('unknown'),
+      symbolizer: { externalGraphic: 'viite-UI/images/speed-limits/unknown.svg' }
+    });
+    roadClassDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var roadClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
@@ -144,6 +160,8 @@
     }));
     roadClassSelectionDefaultStyle.addRules(roadClassRules);
     roadClassSelectionSelectStyle.addRules(roadClassRules);
+    roadClassSelectionDefaultStyle.addRules(unknownRoadAddressAnomalyUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassSelectionDefaultStyle.addRules(zoomLevelRules);
     roadClassSelectionSelectStyle.addRules(zoomLevelRules);
     roadClassSelectionDefaultStyle.addRules(overlayRules);
@@ -160,6 +178,54 @@
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
     });
+
+    roadClassSelectionStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
+
+    roadClassSelectionDefaultStyle.addRules([unknownLimitStyleRule]);
+
+    var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+
+    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
+
+    var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.15,
+      graphicOpacity: 0.3
+    }));
+    var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0
+    }));
+    var selectionStyle = new OpenLayers.StyleMap({
+      default: selectionDefaultStyle,
+      select: selectionSelectStyle
+    });
+    selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
+    selectionDefaultStyle.addRules([unknownLimitStyleRule]);
+
+    var isUnknown = function(roadLink) {
+      return roadLink.anomaly > 0;
+    };
+
+    var limitSigns = function(roadLinks) {
+      return _.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var type = isUnknown(roadLink) ? { type: 'unknown' } : {};
+        var attributes = _.merge(_.cloneDeep(roadLink), type);
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      });
+    };
+
+    var renderFeatures = function(addressLinks) {
+      var addressLinksWithType = _.map(addressLinks, function(limit) { return _.merge({}, limit, { type: 'other' }); });
+      var addressLinksWithAdjustments = _.map(addressLinksWithType, offsetBySideCode);
+
+      return limitSigns(addressLinksWithAdjustments);
+    };
 
     // --- Style map selection
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
@@ -183,7 +249,8 @@
 
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap,
-      getSpecificStyle: getSpecificStyle
+      getSpecificStyle: getSpecificStyle,
+      renderFeatures: renderFeatures
     };
   };
 })(this);

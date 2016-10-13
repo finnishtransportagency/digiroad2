@@ -50,11 +50,15 @@
   };
 
   var SaveButton = function() {
-    var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
-      element.prop('disabled', true);
-      if(poistaSelected){
-        selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
-      }else {
+    var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
+      if (poistaSelected) {
+        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin? Kyllä/Ei', {
+          successCallback: function () {
+            element.prop('disabled', true);
+            selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
+          }
+        });
+      } else {
         selectedMassTransitStopModel.save();
       }
     });

@@ -317,13 +317,16 @@
       }
     };
 
-    var deleteMassTransitStop = function (poistaSelected){
-      if (poistaSelected){
+    var deleteMassTransitStop = function (poistaSelected) {
+      if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
-        backend.deleteAllMassTransitStopData(currAsset.id,function() {
+        backend.deleteAllMassTransitStopData(currAsset.id, function () {
           eventbus.trigger('massTransitStopDeleted', currAsset);
-        }, function(){
+        }, function (errorObject) {
           cancel();
+          if (errorObject.status == 555) {
+            eventbus.trigger('asset:deleteTierekisteriFailed');
+          }
         });
       }
     };

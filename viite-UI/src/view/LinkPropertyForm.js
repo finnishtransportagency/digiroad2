@@ -101,6 +101,27 @@
       }
     };
 
+    var dynamicField = function(labelText){
+      var field;
+      //If other fields get the same treatment they can be added here
+      if(labelText === 'TIETYYPPI'){
+        var roadTypes = "";
+        _.each(selectedLinkProperty.get(), function(slp){
+          var roadType = getRoadClass(slp.administrativeClass, slp.linkType);
+          if (roadTypes.length === 0) {
+            roadTypes = roadType;
+          } else if(roadTypes.search(roadType) === -1) {
+            roadTypes = roadTypes + ", " + roadType;
+          }
+        });
+        field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + roadTypes + '</p>' +
+            '</div>' ;
+      }
+      return field;
+    };
+
     var staticField = function(labelText, dataField) {
       return '<div class="form-group">' +
         '<label class="control-label">' + labelText + '</label>' +
@@ -123,8 +144,8 @@
       '</div>';
 
     var template = function(options) {
-      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       var endDateField = typeof selectedLinkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadClass') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -137,14 +158,13 @@
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
-        staticSegmentIdField +
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
         staticField('ALKUETÄISYYS', 'startAddressM') +
         staticField('LOPPUETÄISUUS', 'endAddressM') +
         staticField('ELY', 'elyCode') +
-        staticField('TIETYYPPI', 'roadClass') +
+        roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
         endDateField +
         '</div>' +
