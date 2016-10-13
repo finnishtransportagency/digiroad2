@@ -15,10 +15,8 @@
     var selectRoadLink = function(feature) {
       selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
       currentRenderIntent = 'select';
-      if(feature.singleLinkSelect)
-        highlightSingleFeature(feature.data.linkId);
-      else if (feature.singleLinkSelect !== undefined)
-        highlightFeatures();
+      roadLayer.redraw();
+      highlightFeatures();
     };
 
     var unselectRoadLink = function() {
@@ -51,17 +49,6 @@
           selectControl.unhighlight(x);
         }
       });
-    };
-
-    var highlightSingleFeature = function(linkId) {
-      var singleFeature = _.find (roadLayer.layer.features, function (f) {
-        return f.data.linkId === linkId;
-      });
-      if (selectedLinkProperty.isSelected(singleFeature.attributes.id)) {
-        selectControl.highlight(singleFeature);
-      } else {
-        selectControl.unhighlight(singleFeature);
-      }
     };
 
     var draw = function() {

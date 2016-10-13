@@ -17,7 +17,7 @@
     var zoomLevelFilter = function(zoomLevel) {
       return new OpenLayers.Filter.Function({ evaluate: function() { return applicationModel.zoom.level === zoomLevel; } });
     };
-    
+
     var combineFilters = function(filters) {
       return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
     };
@@ -238,8 +238,18 @@
       return styleMaps[dataset][renderIntent];
     };
 
+    var getSpecificStyle = function(renderIntent){
+      if(renderIntent === "default"){
+        return roadClassDefaultStyle;
+      }
+      if (renderIntent === "select") {
+        return roadClassSelectionDefaultStyle;
+      }
+    };
+
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap,
+      getSpecificStyle: getSpecificStyle,
       renderFeatures: renderFeatures
     };
   };
