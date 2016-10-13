@@ -13,13 +13,10 @@
     });
 
     var selectRoadLink = function(feature) {
-      unselectRoadLink();
-      currentRenderIntent = 'select';
       selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
-      if(feature.singleLinkSelect)
-        highlightSingleFeature(feature.data.linkId);
-      else if (feature.singleLinkSelect !== undefined)
-        highlightFeatures();
+      currentRenderIntent = 'select';
+      roadLayer.redraw();
+      highlightFeatures();
     };
 
     var unselectRoadLink = function() {
@@ -47,26 +44,11 @@
     var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
         if (selectedLinkProperty.isSelected(x.attributes.id)) {
-          var style = linkPropertyLayerStyles.getSpecificStyle(currentRenderIntent);
-          roadLayer.setLayerSpecificStyleMap(layerName, style);
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
         }
       });
-    };
-
-    var highlightSingleFeature = function(linkId) {
-      var singleFeature = _.find (roadLayer.layer.features, function (f) {
-        return f.data.linkId === linkId;
-      });
-      if (selectedLinkProperty.isSelected(singleFeature.attributes.id)) {
-        var style = linkPropertyLayerStyles.getSpecificStyle(currentRenderIntent);
-        roadLayer.setLayerSpecificStyleMap(layerName, style);
-        selectControl.highlight(singleFeature);
-      } else {
-        selectControl.unhighlight(singleFeature);
-      }
     };
 
     var draw = function() {
