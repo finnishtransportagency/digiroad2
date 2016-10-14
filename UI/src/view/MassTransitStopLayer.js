@@ -13,6 +13,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var clickCoords;
   var assetIsMoving = false;
 
+  eventbus.on('massTransitStop:expireFailed', function(){
+    selectedMassTransitStopModel.cancel();
+  });
+  eventbus.on('massTransitStop:expireSuccess', function (asset) {
+    destroyAsset(asset);
+    selectedMassTransitStopModel.save();
+  });
+
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -435,12 +443,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
+    var popupMessageToShow;
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
     var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
     if (distance > movementLimit && !movementPermission)
     {
-      new GenericConfirmPopup('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
+      if (controlledByTR()){
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
+      } else {
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
+      }
+
+      new GenericConfirmPopup(popupMessageToShow,{
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates, true);
           movementPermission = true;
@@ -479,15 +494,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       //On this point selectedMassTransitStopModel should contain the newly created asset
       selectedMassTransitStopModel.copyDataFromOtherMasTransitStop(pastAsset);
       selectedMassTransitStopModel.expireMassTransitStopById(pastAsset);
-      //Should expire the old Asset
-      eventbus.on('massTransitExpireFailed', function(){
-        selectedMassTransitStopModel.cancel();
-      });
-      eventbus.on('massTransitExpireSuccess', function () {
-        destroyAsset(pastAsset);
-        selectedMassTransitStopModel.save();
-      });
-
     } else {
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;

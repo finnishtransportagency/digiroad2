@@ -77,4 +77,18 @@ class LinkRoadAddressCalculatorSpec extends FunSuite with Matchers{
     results.head.endAddrMValue should be (102)
     results.filter(_.startAddrMValue==0) should have size (1)
   }
+
+  test("calibration point in the middle of the link must not break calculation") {
+    val addresses = Seq(
+      RoadAddress(1, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 0, 110, DateTime.now, null, 123L, 0.0, 108.3, (Some(CalibrationPoint(123L, 0.0, 0)), None)),
+      RoadAddress(2, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 110, 135, DateTime.now, null, 123L, 108.3, 135.2),
+      RoadAddress(3, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 135, 180, DateTime.now, null, 123L, 135.2, 180.1, (None, Some(CalibrationPoint(123L, 180.1, 180)))),
+      RoadAddress(4, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 180, 225, DateTime.now, null, 123L, 180.1, 224.3, (Some(CalibrationPoint(123L, 180.1, 180)), None)),
+      RoadAddress(5, 1, 1, Track.Combined, 1, RoadType.Public, Discontinuity.Continuous, 225, 265, DateTime.now, null, 123L, 224.3, 265.2, (None, Some(CalibrationPoint(225L, 265.2, 265)))))
+    val results = LinkRoadAddressCalculator.recalculate(addresses).toList.sortBy(_.endAddrMValue)
+    results.foreach(println)
+    results.last.endAddrMValue should be (265)
+    results.head.endAddrMValue should be (108)
+    results.filter(_.startAddrMValue==0) should have size (1)
+  }
 }

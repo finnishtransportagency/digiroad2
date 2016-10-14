@@ -18,6 +18,8 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
+import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.joda.time._
 import org.slf4j.LoggerFactory
@@ -216,6 +218,25 @@ class AssetDataImporter {
               )
             )""".execute
       sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+    }
+  }
+
+  def updateMissingRoadAddresses(vvhClient: VVHClient) = {
+    val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
+    val eventBus = new DummyEventBus
+    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val service = new RoadAddressService(linkService, eventBus)
+    OracleDatabase.withDynTransaction {
+      val municipalities = Queries.getMunicipalitiesByEly(8)
+      sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
+      println("Old address data cleared")
+      municipalities.foreach(municipality => {
+        println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
+        val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
+        println("Got %d links".format(missing.size))
+        missing.foreach(service.createSingleMissingRoadAddress)
+        println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
+      })
     }
   }
 

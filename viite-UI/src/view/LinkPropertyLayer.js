@@ -13,10 +13,12 @@
     });
 
     var selectRoadLink = function(feature) {
-      selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
-      currentRenderIntent = 'select';
-      roadLayer.redraw();
-      highlightFeatures();
+      if(typeof feature.attributes.id !== 'undefined') {
+        selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
+        currentRenderIntent = 'select';
+        roadLayer.redraw();
+        highlightFeatures();
+      }
     };
 
     var unselectRoadLink = function() {
@@ -56,7 +58,7 @@
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawSigns(roadLayer.layer, roadLinks);
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
@@ -87,6 +89,59 @@
           linkType: roadLink.linkType
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+
+    var unknownFeatureSizeLookup = {
+      9: { strokeWidth: 3, pointRadius: 0 },
+      10: { strokeWidth: 5, pointRadius: 10 },
+      11: { strokeWidth: 7, pointRadius: 14 },
+      12: { strokeWidth: 10, pointRadius: 16 },
+      13: { strokeWidth: 10, pointRadius: 16 },
+      14: { strokeWidth: 14, pointRadius: 22 },
+      15: { strokeWidth: 14, pointRadius: 22 }
+    };
+
+    var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+    browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
+
+    var typeFilter = function(type) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+    };
+
+    var unknownLimitStyleRule = new OpenLayers.Rule({
+      filter: typeFilter('roadAddressAnomaly'),
+      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
+    });
+    browseStyle.addRules([unknownLimitStyleRule]);
+    var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
+    vectorLayer.setOpacity(1);
+    vectorLayer.setVisibility(true);
+
+    var createAnomalousRoadAddresses = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = _.merge({}, _.cloneDeep(roadLink), {
+          type: 'roadAddressAnomaly'
+        });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+
+    var createAnomalousRoadAddressesSigns = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var attributes = _.merge({}, _.cloneDeep(roadLink), {
+          type: 'roadAddressAnomaly'
+        });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
       }));
     };
 
@@ -175,7 +230,11 @@
           return feature.attributes.id === link.id;
         });
         if (feature) {
-          selectControl.select(feature);
+          _.each(selectControl.layer.selectedFeatures, function (selectedFeature){
+            if(selectedFeature.attributes.id !== feature.attributes.id) {
+              selectControl.select(feature);
+            }
+          });
         }
       });
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
@@ -213,7 +272,7 @@
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
-      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
+      me.drawSigns(roadLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
 
@@ -222,6 +281,7 @@
     };
 
     var show = function(map) {
+      vectorLayer.setVisibility(true);
       me.show(map);
     };
 
