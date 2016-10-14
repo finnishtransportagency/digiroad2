@@ -64,6 +64,10 @@ object Queries {
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
+  def fetchLrmPositionIds(len: Int) = {
+    sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= $len""".as[Long].list
+  }
+
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
       update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId
