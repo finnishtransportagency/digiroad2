@@ -144,7 +144,9 @@
       '</div>';
 
     var template = function(options) {
-      var endDateField = typeof selectedLinkProperty.endDate !== 'undefined' ? staticField('LAKKAUTUS', 'endDate') : '';
+      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
+        staticField('LAKKAUTUS', 'endDate') : '';
+      console.log(selectedLinkProperty.get()[0]);
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadClass') : dynamicField('TIETYYPPI');
       var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       return _.template('' +
@@ -167,7 +169,7 @@
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
-        staticField('LAKKAUTUS', '') +
+        endDateField +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
