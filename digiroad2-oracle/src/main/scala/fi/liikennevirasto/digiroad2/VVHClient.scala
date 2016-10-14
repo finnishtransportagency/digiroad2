@@ -550,7 +550,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "MTKHEREFLIP",
       "VALIDFROM",
       "GEOMETRY_EDITED_DATE",
-      "END_DATE",
       "CREATED_DATE",
       "LAST_EDITED_DATE",
       "SURFACETYPE",
@@ -578,9 +577,15 @@ class VVHClient(vvhRestApiEndPoint: String) {
       }
     }
 
-    val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
     val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("LAST_EDITED_DATE")){
+      lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
+    var geometryEditedDate : Option[Long] = Option(0)
+      if(attributes.contains("GEOMETRY_EDITED_DATE")){
+        geometryEditedDate =  Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
 
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
     latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
