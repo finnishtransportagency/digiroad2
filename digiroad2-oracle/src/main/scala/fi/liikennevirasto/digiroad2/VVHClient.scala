@@ -551,6 +551,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "MTKHEREFLIP",
       "VALIDFROM",
       "GEOMETRY_EDITED_DATE",
+      "END_DATE",
       "CREATED_DATE",
       "LAST_EDITED_DATE",
       "END_DATE",
