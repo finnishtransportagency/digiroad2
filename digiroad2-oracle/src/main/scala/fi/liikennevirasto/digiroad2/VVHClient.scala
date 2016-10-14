@@ -553,6 +553,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "GEOMETRY_EDITED_DATE",
       "CREATED_DATE",
       "LAST_EDITED_DATE",
+      "END_DATE",
       "SURFACETYPE").contains(x)
     }.filter { case (_, value) =>
       value != null
