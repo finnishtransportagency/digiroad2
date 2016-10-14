@@ -371,8 +371,6 @@ test("should not drop adjusted short speed limit") {
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get))) } filter(sl => sl.startMeasure != sl.endMeasure)
-
-    output.foreach(println)
   }
 
   test("Should repair speed limit data on overlaps and invalid data") {
@@ -419,11 +417,6 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
-//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
-//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
-//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
-//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
-//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
 
     changeSet.droppedAssetIds should have size 4
     filledTopology.count(_.id != 0) should be (6)
@@ -458,11 +451,6 @@ test("should not drop adjusted short speed limit") {
         Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), edit2, 0, None)    )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
-//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
-//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
-//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
-//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
-//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
 
     changeSet.droppedAssetIds should be (Set())
     filledTopology.length should be (3)
@@ -494,30 +482,21 @@ test("should not drop adjusted short speed limit") {
         Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None),
       SpeedLimit(
         2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 0, None),
+        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 1, None),
       SpeedLimit(
         3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(50)),
         Seq(Point(26.8, 0.0), Point(50, 0.0)), 26.74, 50, None, None, Some("red bd"), edit2, 0, None)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
-//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
-//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
-//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
-//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
-//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
-
-    changeSet.droppedAssetIds should be (Set())
-    filledTopology.length should be (3)
+    changeSet.droppedAssetIds should be (Set(3))
+    filledTopology.length should be (2)
     val oldLink0 = filledTopology.find(_.startMeasure==0.0).get
     oldLink0.endMeasure should be (10.0)
     oldLink0.value.get should be (NumericValue(60))
     val oldLink1 = filledTopology.find(_.startMeasure==10.0).get
-    oldLink1.endMeasure should be (26.74)
+    oldLink1.endMeasure should be (50.0)
     oldLink1.value.get should be (NumericValue(50))
-    val oldLink2 = filledTopology.find(_.startMeasure==26.74).get
-    oldLink2.endMeasure should be (50.0)
-    oldLink2.value.get should be (NumericValue(50))
   }
 
   def parse(string: String) = {
@@ -551,17 +530,6 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
-//    speedLimit.foreach {sl =>
-//      printSL(sl)
-//      printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
-//      changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
-//      if (changeSet.expiredAssetIds.contains(sl.id))
-//        println("EXPIRED ID " + sl.id)
-//      changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
-//      if (changeSet.droppedAssetIds.contains(sl.id))
-//        println("DROPPED ID " + sl.id)
-//
-//    }
     changeSet.droppedAssetIds should have size (2)
     changeSet.adjustedSideCodes should have size (2)
   }
@@ -575,18 +543,6 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
-//        speedLimit.foreach {sl =>
-//          printSL(sl)
-//          printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
-//          changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
-//          if (changeSet.expiredAssetIds.contains(sl.id))
-//            println("EXPIRED ID " + sl.id)
-//          changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
-//          if (changeSet.droppedAssetIds.contains(sl.id))
-//            println("DROPPED ID " + sl.id)
-//
-//        }
-//    filledTopology.filter(_.id == 0).foreach( sl => printSL(sl))
     changeSet.droppedAssetIds should have size (0)
   }
 
@@ -602,17 +558,6 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
-//    speedLimit.foreach {sl =>
-//      printSL(sl)
-//      printSL(filledTopology.find(_.id == sl.id).getOrElse(sl.copy(expired = true)))
-//      changeSet.adjustedMValues.filter(_.assetId == sl.id).foreach(println)
-//      if (changeSet.expiredAssetIds.contains(sl.id))
-//        println("EXPIRED ID " + sl.id)
-//      changeSet.adjustedSideCodes.filter(_.assetId == sl.id).foreach(println)
-//      if (changeSet.droppedAssetIds.contains(sl.id))
-//        println("DROPPED ID " + sl.id)
-//
-//    }
     changeSet.droppedAssetIds should have size (0)
     changeSet.adjustedSideCodes should have size (0)
     changeSet.adjustedMValues should have size (0)
@@ -636,11 +581,6 @@ test("should not drop adjusted short speed limit") {
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(1L -> speedLimit))
-//    filledTopology.sortBy(_.startMeasure).foreach(l => println("speed limit:" + l))
-//    changeSet.adjustedMValues.foreach(l => println("adjusted MValue:" + l))
-//    changeSet.adjustedSideCodes.foreach(l => println("adjusted sidecode:" + l))
-//    changeSet.droppedAssetIds.foreach(l => println("dropped id:" + l))
-//    changeSet.expiredAssetIds.foreach(l => println("expired id:" + l))
 
     filledTopology.length should be (3)
     val oldLink1 = filledTopology.find(_.value.contains(NumericValue(50))).get

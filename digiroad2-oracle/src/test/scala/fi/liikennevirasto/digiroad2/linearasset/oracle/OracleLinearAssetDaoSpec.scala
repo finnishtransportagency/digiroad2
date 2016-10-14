@@ -255,7 +255,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     prohibitionValues.foreach { prohibition =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
       val prohibitionType = prohibition.typeId
-      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE) values ($prohibitionId, $assetId, $prohibitionType)""".execute
+      val prohibitionAddInfo = prohibition.additionalInfo
+      sqlu"""insert into PROHIBITION_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO) values ($prohibitionId, $assetId, $prohibitionType, $prohibitionAddInfo)""".execute
 
       prohibition.validityPeriods.map { validityPeriod =>
         val validityId = Sequences.nextPrimaryKeySeqValue
@@ -275,7 +276,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao(null)
     val linkId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, null))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -293,7 +294,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao(null)
     val linkId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, null))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -312,7 +313,26 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
-      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3)))
+      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), null))
+
+    runWithRollback {
+      setupTestProhibition(linkId, fixtureProhibitionValues)
+
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId))
+
+      persistedAssets.size should be(1)
+      persistedAssets.head.linkId should be(linkId)
+
+      val fetchedProhibitionValues = persistedAssets.head.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
+      fetchedProhibitionValues should equal(fixtureProhibitionValues)
+    }
+  }
+
+  test("fetch prohibition with validity period, exceptions and additional information") {
+    val dao = new OracleLinearAssetDao(null)
+    val linkId = 1l
+    val fixtureProhibitionValues = Set(
+      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), "test value string"))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -333,24 +353,27 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val linkId2 = 2l
     val linkId3 = 3l
     val linkId4 = 4l
+    val linkId5 = 5l
     val fixtureProhibitionValues1 = Set(
       ProhibitionValue(typeId = 10, Set(
-        ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3)),
-      ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2)))
-    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty))
-    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1)))
-    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty))
+        ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3), additionalInfo = null),
+      ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2), additionalInfo = null))
+    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty, additionalInfo = null))
+    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1), additionalInfo = null))
+    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, additionalInfo = null))
+    val fixtureProhibitionValues5 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(9, 19, Weekday)), exceptions = Set(1), additionalInfo = "Value Test"))
 
     runWithRollback {
       setupTestProhibition(linkId1, fixtureProhibitionValues1)
       setupTestProhibition(linkId2, fixtureProhibitionValues2)
       setupTestProhibition(linkId3, fixtureProhibitionValues3)
       setupTestProhibition(linkId4, fixtureProhibitionValues4)
+      setupTestProhibition(linkId5, fixtureProhibitionValues5)
 
-      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId1, linkId2, linkId3, linkId4))
+      val persistedAssets = dao.fetchProhibitionsByLinkIds(190, Seq(linkId1, linkId2, linkId3, linkId4, linkId5))
 
       val sortedPersistedAssets = persistedAssets.sortBy(_.linkId)
-      sortedPersistedAssets.size should be(4)
+      sortedPersistedAssets.size should be(5)
       sortedPersistedAssets(0).linkId should be(linkId1)
       sortedPersistedAssets(0).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues1)
       sortedPersistedAssets(1).linkId should be(linkId2)
@@ -359,6 +382,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       sortedPersistedAssets(2).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues3)
       sortedPersistedAssets(3).linkId should be(linkId4)
       sortedPersistedAssets(3).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues4)
+      sortedPersistedAssets(4).linkId should be(linkId5)
+      sortedPersistedAssets(4).value.get.asInstanceOf[Prohibitions].prohibitions.toSet should equal(fixtureProhibitionValues5)
     }
   }
 

@@ -255,6 +255,18 @@
       });
     };
 
+    this.deleteAllMassTransitStopData = function(assetId,success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/massTransitStops/removal",
+        data: JSON.stringify({assetId: assetId}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
     };
@@ -348,6 +360,18 @@
       }
       if (lati && longi && heading)
         getJson();
+    };
+
+    this.expireAsset = function(massTransitStopIds, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/massTransitStops",
+        data: JSON.stringify({massTransitStopIds: massTransitStopIds}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
     };
 
     this.getGeocode = function(address) {

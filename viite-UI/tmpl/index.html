@@ -1,0 +1,105 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="bower_components/openlayers/theme/default/style.css">
+  <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
+  <link rel="stylesheet" type="text/css" href="css/viite.css">
+  <!-- Google Analytics loaded asynchronously -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  </script>
+  <title>Viite</title>
+</head>
+<body class="digiroad2">
+<header id="header">
+  <span class="logo">Viite</span>
+  <span class="notification" id="notification">
+  </span>
+  <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+</header>
+<div class="container">
+    <div id="contentMap">
+      <div id="mapdiv"></div>
+      <div class="crosshair crosshair-center"></div>
+      <div class="crosshair crosshair-top"></div>
+      <div class="crosshair crosshair-bottom"></div>
+      <div class="crosshair crosshair-left"></div>
+      <div class="crosshair crosshair-right"></div>
+    </div>
+    <nav id="map-tools"></nav>
+    <div id="feature-attributes"></div>
+    <div id="information-content"></div>
+    <div id="map-plugins"></div>
+</div>
+
+<div id="work-list"></div>
+
+<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="bower_components/momentjs/min/moment.min.js"></script>
+<script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="bower_components/backbone/backbone.js"></script>
+<script type="text/javascript" src="bower_components/pikaday/pikaday.js"></script>
+<script type="text/javascript" src="bower_components/proj4/dist/proj4.js"></script>
+<script type="text/javascript" src="bower_components/bacon/dist/Bacon.js"></script>
+<script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
+<!-- @if NODE_ENV == 'DEVELOPMENT' -->
+<script type="text/javascript" src="bower_components/openlayers/lib/OpenLayers.js"></script>
+<script type="text/javascript" src="src/utils/eventbus.js"></script>
+<script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
+<script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
+<script type="text/javascript" src="src/utils/session.js"></script>
+<script type="text/javascript" src="src/utils/date-utils.js"></script>
+<script type="text/javascript" src="src/utils/backend-utils.js"></script>
+<script type="text/javascript" src="src/utils/environment-utils.js"></script>
+<script type="text/javascript" src="src/utils/zoom-levels.js"></script>
+<script type="text/javascript" src="src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="src/view/TileMapCollection.js"></script>
+<script type="text/javascript" src="src/view/Layer.js"></script>
+<script type="text/javascript" src="src/view/RoadLayer.js"></script>
+<script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
+<script type="text/javascript" src="src/view/MapView.js"></script>
+<script type="text/javascript" src="src/view/MapOverlay.js"></script>
+<script type="text/javascript" src="src/view/CoordinatesDisplay.js"></script>
+<script type="text/javascript" src="src/view/ScaleBar.js"></script>
+<script type="text/javascript" src="src/view/TileMapSelector.js"></script>
+<script type="text/javascript" src="src/view/InstructionsPopup.js"></script>
+<script type="text/javascript" src="src/view/EditModeDisclaimer.js"></script>
+<script type="text/javascript" src="src/view/ZoomBox.js"></script>
+<script type="text/javascript" src="src/view/DoubleClickSelectControl.js"></script>
+<script type="text/javascript" src="src/utils/GeometryUtils.js"></script>
+<script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
+<script type="text/javascript" src="src/view/LinkPropertyLayer.js"></script>
+<script type="text/javascript" src="src/view/LinkPropertyLayerStyles.js"></script>
+<script type="text/javascript" src="src/view/LinkPropertyMassUpdateDialog.js"></script>
+<script type="text/javascript" src="src/router.js"></script>
+<script type="text/javascript" src="src/application.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/EditModeToggleButton.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/ActionPanelBoxes.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/LayerSelectBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/SearchBox.js"></script>
+<script type="text/javascript" src="src/view/NavigationPanel.js"></script>
+<script type="text/javascript" src="src/model/ApplicationModel.js"></script>
+<script type="text/javascript" src="src/model/RoadCollection.js"></script>
+<script type="text/javascript" src="src/model/SelectedLinkProperty.js"></script>
+<script type="text/javascript" src="src/model/LinkPropertiesModel.js"></script>
+<script type="text/javascript" src="src/model/LocationSearch.js"></script>
+<script type="text/javascript" src="src/map/CalibrationPointMarker.js"></script>
+<script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
+<script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
+<script type="text/javascript" src="src/view/LinkPropertyForm.js"></script>
+<script type="text/javascript" src="src/utils/script-loader.js"></script>
+<script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
+<script type="text/javascript" src="src/analytics.js"></script>
+<script type="text/javascript" src="src/main.js"></script>
+<!-- @endif -->
+<!-- @if NODE_ENV == 'PRODUCTION' -->
+<script type="text/javascript" src="bower_components/openlayers/build/OpenLayers.js"></script>
+<script type="text/javascript" src="js/viite.min.js"></script>
+<!-- @endif -->
+</body>
+</html>

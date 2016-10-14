@@ -1,0 +1,42 @@
+//== Icon font
+
+@font-face {
+  font-family: 'digiroad2-icons';
+  src: url('../webfonts/digiroad2-icons.eot?54835397');
+  src: url('../webfonts/digiroad2-icons.eot?54835397#iefix') format('embedded-opentype'),
+       url('../webfonts/digiroad2-icons.woff?54835397') format('woff'),
+       url('../webfonts/digiroad2-icons.ttf?54835397') format('truetype'),
+       url('../webfonts/digiroad2-icons.svg?54835397#digiroad2-icons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+/* Chrome hack: SVG is rendered more smooth in Windozze. 100% magic, uncomment if you need it. */
+/* Note, that will break hinting! In other OS-es font will be not as sharp as it could be */
+/*
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: 'digiroad2-icons';
+    src: url('../font/digiroad2-icons.svg?54835397#digiroad2-icons') format('svg');
+  }
+}
+*/
+ 
+ [class^="icon-"]:before, [class*=" icon-"]:before {
+  display: inline-block;
+  width: 1em;
+  line-height: inherit;
+
+  font-family: "digiroad2-icons";
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+  text-decoration: inherit;
+  text-align: center;
+}
+ 
+.icon-plus:before { content: '\e800'; }
+.icon-minus:before { content: '\e801'; }
+.icon-close:before { content: '\e802'; }
+.icon-navigate:before { content: '\e803'; }
+.icon-check:before { content: '\e804'; }
+.icon-error:before { content: '\e805'; }

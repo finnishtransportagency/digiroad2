@@ -1,0 +1,17 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg">
+<metadata>Copyright (C) 2014 by original authors @ fontello.com</metadata>
+<defs>
+<font id="digiroad2-icons" horiz-adv-x="1000" >
+<font-face font-family="digiroad2-icons" font-weight="400" font-stretch="normal" units-per-em="1000" ascent="850" descent="-150" />
+<missing-glyph horiz-adv-x="1000" />
+<glyph glyph-name="plus" unicode="&#xe800;" d="m731 312h-192v-193h-77v193h-193v77h193v192h77v-192h192v-77z" horiz-adv-x="1000" />
+<glyph glyph-name="minus" unicode="&#xe801;" d="m731 312h-462v77h462v-77z" horiz-adv-x="1000" />
+<glyph glyph-name="close" unicode="&#xe802;" d="m635 162l-135 134-135-134-53 53 134 135-134 135 53 54 135-135 135 135 54-54-135-135 135-135-54-53z" horiz-adv-x="1000" />
+<glyph glyph-name="navigate" unicode="&#xe803;" d="m231 581l269-500v231h231l-500 269z" horiz-adv-x="1000" />
+<glyph glyph-name="check" unicode="&#xe804;" d="m500 173l-188 189 53 53 135-134 246 246 54-54-300-300z" horiz-adv-x="1000" />
+<glyph glyph-name="error" unicode="&#xe805;" d="m539 273h-77c0 0-39 231-39 269 0 77 154 77 154 0 0-38-38-269-38-269z m-39 385c169 0 308-139 308-308s-139-308-308-308-308 139-308 308 139 308 308 308m0 38c-192 0-346-154-346-346s154-346 346-346 346 154 346 346-154 346-346 346l0 0z m58-577h-116v116h116v-116z" horiz-adv-x="1000" />
+</font>
+</defs>
+</svg>

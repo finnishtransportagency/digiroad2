@@ -9,6 +9,8 @@
       'nationalId',
       'validityDirection',
       'floating'];
+    var massTransitStopTypePublicId = "pysakin_tyyppi";
+    var administratorInfoPublicId = "tietojen_yllapitaja";
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
@@ -65,6 +67,10 @@
     };
 
     var payloadWithProperties = function(payload, publicIds) {
+
+      if(_.some(publicIds, function(publicId){ return publicId === massTransitStopTypePublicId || publicId === administratorInfoPublicId; }))
+        publicIds = _.union(publicIds, [massTransitStopTypePublicId, administratorInfoPublicId]) ;
+
       return _.merge(
         {},
         _.pick(payload, function(value, key) { return key != 'properties'; }),
@@ -73,7 +79,7 @@
         });
     };
 
-    var place = function(asset) {
+    var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
       currentAsset.payload = {};
@@ -82,6 +88,9 @@
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
+        if(other) {
+          copyDataFromOtherMasTransitStop(other);
+        }
         eventbus.trigger('asset:modified');
       });
     };
@@ -155,11 +164,24 @@
       });
     };
 
-    var hasMixedVirtualAndRealStops = function()
+    var pikavuoroIsAlone = function()
     {
       return _.some(currentAsset.payload.properties, function(property)
       {
         if (property.publicId == "pysakin_tyyppi") {
+          return _.some(property.values, function(propertyValue){
+            return (propertyValue.propertyValue == 4 && property.values.length<2) ;
+          });
+        }
+        return false;
+      });
+    };
+
+    var hasMixedVirtualAndRealStops = function()
+    {
+      return _.some(currentAsset.payload.properties, function(property)
+      {
+        if (property.publicId == massTransitStopTypePublicId) {
           return _.some(property.values, function(propertyValue){
             return (propertyValue.propertyValue == 5 && property.values.length>1) ;
           });
@@ -187,12 +209,17 @@
 
     var save = function() {
       if (currentAsset.id === undefined) {
-        backend.createAsset(currentAsset.payload, function() {
-          eventbus.trigger('asset:creationFailed');
+        backend.createAsset(currentAsset.payload, function(errorObject) {
+          if (errorObject.status == 555) {
+            eventbus.trigger('asset:creationTierekisteriFailed');
+          }else{
+            eventbus.trigger('asset:creationFailed');
+          }
           close();
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function(asset) {
@@ -200,10 +227,14 @@
           assetHasBeenModified = false;
           open(asset);
           eventbus.trigger('asset:saved', asset, positionUpdated);
-        }, function() {
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+        }, function (errorObject) {
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
-            eventbus.trigger('asset:updateFailed', asset);
+            if (errorObject.status == 555) {
+              eventbus.trigger('asset:updateTierekisteriFailed');
+            } else {
+              eventbus.trigger('asset:updateFailed', asset);
+            }
           });
         });
       }
@@ -215,12 +246,35 @@
       currentAsset.payload.validityDirection = validityDirection;
     };
 
-    var setProperty = function(publicId, values) {
-      var propertyData = {publicId: publicId, values: values};
+    var setProperty = function(publicId, values, propertyType, required) {
+      var propertyData = {};
+      if(propertyType){
+        propertyData = {publicId: publicId, values: values, propertyType: propertyType, required: required};
+      }
+      else{
+        propertyData = {publicId: publicId, values: values};
+      }
       changedProps = _.union(changedProps, [publicId]);
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
       eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
+    };
+
+    var getCurrentAsset = function() {
+      return currentAsset;
+    };
+
+    var expireMassTransitStopById = function(massTransitStop) {
+      backend.expireAsset([massTransitStop.id], function() {
+        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
+      },function(){
+        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
+      });
+    };
+
+    var copyDataFromOtherMasTransitStop = function (other) {
+      currentAsset.payload = other.payload;
+      currentAsset.propertyMetadata = other.propertyMetadata;
     };
 
     var exists = function() {
@@ -263,6 +317,20 @@
       }
     };
 
+    var deleteMassTransitStop = function (poistaSelected) {
+      if (poistaSelected) {
+        var currAsset = this.getCurrentAsset();
+        backend.deleteAllMassTransitStopData(currAsset.id, function () {
+          eventbus.trigger('massTransitStopDeleted', currAsset);
+        }, function (errorObject) {
+          cancel();
+          if (errorObject.status == 555) {
+            eventbus.trigger('asset:deleteTierekisteriFailed');
+          }
+        });
+      }
+    };
+
     function getPropertyValue(asset, propertyName) {
       return _.chain(asset.propertyData)
         .find(function (property) { return property.publicId === propertyName; })
@@ -301,7 +369,13 @@
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
       place: place,
-      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops
+      hasMixedVirtualAndRealStops:hasMixedVirtualAndRealStops,
+      pikavuoroIsAlone: pikavuoroIsAlone,
+      copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
+      getCurrentAsset: getCurrentAsset,
+      expireMassTransitStopById: expireMassTransitStopById,
+      deleteMassTransitStop: deleteMassTransitStop
+
     };
   };
 

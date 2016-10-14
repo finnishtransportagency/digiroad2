@@ -11,6 +11,10 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.model.RoadAddressLink
+import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
   def receive = {
@@ -62,6 +66,13 @@ class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
   }
 }
 
+class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case w: Seq[any] => roadAddressService.createMissingRoadAddress(w.asInstanceOf[Seq[MissingRoadAddress]])
+    case _                    => println("roadAddressUpdater: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -91,6 +102,13 @@ object Digiroad2Context {
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
+  val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
+  eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
+
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(roadLinkService, eventbus)
+  }
+
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
@@ -119,6 +137,12 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build)
+  }
+
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
@@ -128,7 +152,9 @@ object Digiroad2Context {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
+      override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus)
   }

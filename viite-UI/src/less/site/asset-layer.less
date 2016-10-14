@@ -1,0 +1,93 @@
+.selected-asset {
+  z-index: 1;
+}
+
+.bus-basic-marker.root, .expanded-bus-stop.root {
+  &:before {
+    content: "";
+    position: absolute;
+    height: 17px;
+    border-right: 3px solid @gray-dark-2;
+    z-index: -1;
+  }
+}
+
+.bus-basic-marker {
+  position: absolute;
+  left : -1px;
+  bottom: 15px;
+  &.root {
+    padding-bottom: 15px;
+    bottom: 0;
+  }
+  .images {
+    border: 1px solid @gray-dark-2;
+  }
+  &:before {
+    bottom: 0;
+  }
+}
+
+.bus-basic-marker, .expanded-bus-stop {
+  .images {
+    @image-container-width: 28px;
+    @image-border-width: 1px;
+    width: @image-container-width + 2 * @image-border-width;
+    border-radius: 3px;
+    padding: 3px;
+    background: white;
+    img {
+      border-right: @image-border-width solid black;
+      border-left: @image-border-width solid black;
+      border-bottom: @image-border-width solid black;
+      &:first-of-type {
+        border-top: @image-border-width solid black;
+      }
+    }
+  }
+
+  &.floating {
+    .images {
+      .img-retina('../images/warning-stripe-bg.png', '../images/warning-stripe-bg@2x.png', 12px, 12px);
+    }
+  }
+}
+
+.expanded-bus-stop {
+  background-color: @gray-darker;
+  padding : 5px;
+  border : 1px solid @gray-darker-2;
+  position: absolute;
+  bottom: 1px;
+  left : -1px;
+  margin-bottom: 15px;
+  font-size : 10px;
+  line-height : 23px;
+  color : white;
+
+  .field {
+    display: table-cell;
+    vertical-align: top;
+  }
+
+  &:before {
+    bottom: -16px;
+    left: -1;
+  }
+
+  .bus-stop-id {
+    padding-left: 5px;
+    padding-right: 5px;
+
+    .padder {
+      width: 39px;
+    }
+  }
+
+  .bus-stop-name {
+    color: #a4a4a2;
+    white-space: nowrap;
+    padding-right: 5px;
+  }
+}
+

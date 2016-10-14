@@ -1,12 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset._
+import java.util.Date
+
+import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, LRMPosition, MassTransitStopDao, Sequences}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+
+import scala.util.Try
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
 
@@ -36,12 +42,28 @@ trait MassTransitStopService extends PointAssetOperations {
   type PersistedAsset = PersistedMassTransitStop
 
   val massTransitStopDao: MassTransitStopDao
+  val tierekisteriClient: TierekisteriClient
+  val tierekisteriEnabled: Boolean
   override val idField = "external_id"
 
   override def typeId: Int = 10
 
+  val CommuterBusStopPropertyValue: String = "2"
+  val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
+
+  val CentralELYPropertyValue = "2"
+  val AdministratorInfoPublicId = "tietojen_yllapitaja"
+  val LiViIdentifierPublicId = "yllapitajan_koodi"
+  val InventoryDateId = "inventointipaiva"
+
+  val nameFiPublicId = "nimi_suomeksi"
+  val nameSePublicId = "nimi_ruotsiksi"
+
+  val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
+
+  val geometryTransform = new GeometryTransform
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -52,7 +74,107 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+      if(isStoredInTierekisteri(persistedStop)){
+        val properties = persistedStop.map(_.propertyData).get
+        val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
+        if (tierekisteriEnabled) {
+          val liViId = liViProp.map(_.values.head).get.propertyValue
+          val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+          val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
+          return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+        }
+      }
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+    }
+  }
+
+  /**
+    * Override property values of all equipment properties
+    *
+    * @param tierekisteriStop Tierekisteri Asset
+    * @param property Asset property
+    * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
+    */
+  private def setEquipments(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
+    if (tierekisteriStop == null)
+      throw new TierekisteriClientException("Null object read")
+    if (tierekisteriStop.equipments.isEmpty)
+      return property
+    val equipmentProperty = tierekisteriStop.equipments.filter(_._1.publicId == property.publicId)
+    val mappedProperties = equipmentProperty.map {
+      case (equipment, existence) =>
+        PropertyValue(existence.propertyValue.toString, Some(massTransitStopDao.getPropertyDescription(property.publicId, existence.propertyValue.toString).head))
+    }
+    if (mappedProperties.isEmpty)
+      property
+    else
+      property.copy(values = mappedProperties.toSeq)
+  }
+
+  /**
+    * Override property value when the value is empty
+    *
+    * @param publidId The public id of the property
+    * @param getValue Function to get the property value from Tierekisteri Asset
+    * @param tierekisteriStop  Tierekisteri Asset
+    * @param property Asset property
+    * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
+    */
+  private def setPropertyValueIfEmpty(publidId: String, getValue: TierekisteriMassTransitStop => String)(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
+
+    if(property.publicId == publidId){
+      property.copy( values = property.values.map{
+        case value if value.propertyValue.isEmpty => PropertyValue(getValue(tierekisteriStop), Some(massTransitStopDao.getPropertyDescription(publidId, getValue(tierekisteriStop)).head))
+        case value => value
+      })
+    }
+    property
+  }
+
+  /**
+    * Override the properties values passed as parameter using override operations
+    *
+    * @param tierekisteriStop Tierekisteri Asset
+    * @param persistedMassTransitStop Asset properties
+    * @return Sequence of overridden properties
+    */
+  private def enrichPersistedMassTransitStop(persistedMassTransitStop: Option[PersistedMassTransitStop], tierekisteriStop: TierekisteriMassTransitStop): Option[PersistedMassTransitStop] = {
+    val overridePropertyValueOperations: Seq[(TierekisteriMassTransitStop, Property) => Property] = Seq(
+      setEquipments,
+      setPropertyValueIfEmpty(nameFiPublicId, { ta => ta.nameFi.getOrElse("") }),
+      setPropertyValueIfEmpty(nameSePublicId, { ta => ta.nameSe.getOrElse("") })
+      //In the future if we need to override some property just add here the operation
+    )
+
+    persistedMassTransitStop match {
+      case Some(masstransitStop) =>
+        Some(masstransitStop.copy(propertyData = masstransitStop.propertyData.map { property =>
+          var overriddenProperty = property
+          overridePropertyValueOperations.foreach { operation =>
+            overriddenProperty = operation(tierekisteriStop, overriddenProperty)
+          }
+          overriddenProperty
+        }))
+      case massTransitStop => massTransitStop
+    }
+  }
+
+  /**
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY
+    *
+    * @param persistedStopOption The persisted stops
+    * @return returns true if the stop is not vitual and is a ELY bus stop
+    */
+  def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
+    persistedStopOption match {
+      case Some(persistedStop) =>
+        val administrationProperty = persistedStop.propertyData.find(_.publicId == AdministratorInfoPublicId)
+        val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
+        val stopType = persistedStop.propertyData.find(pro => pro.publicId == MassTransitStopTypePublicId)
+        val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+        !isVirtualStop && elyAdministrated
+      case _ =>
+        false
     }
   }
 
@@ -88,7 +210,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
         join property p on a.asset_type_id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
@@ -108,11 +230,10 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
-
     roadLinkOption match {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
-        val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
+        val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return (true, Some(FloatingReason.RoadOwnerChanged))
         }
@@ -126,7 +247,7 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkOption match {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
-        val administrationClass = massTransitStopDao.getAssetAdministrationClass(persistedAsset.id)
+        val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
           return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
         }
@@ -139,25 +260,42 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedStop.copy(floating = floating)
   }
 
-  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long)] ={
+  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
 
-    isOperator match {
-      case Some(false) =>
-        val query = s"""
-          select a.$idField, m.name_fi, lrm.link_id
+    val query = s"""
+          select a.$idField, m.name_fi, lrm.link_id, np.value
           from asset a
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kellumisen_syy'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and np.value <> ${FloatingReason.RoadOwnerChanged.value}"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate)"""
 
-        StaticQuery.queryNA[(Long, String, Long)](addQueryFilter(query)).list
-
+    val queryFilter = isOperator match {
+      case Some(false) =>
+        (q: String) => {
+          addQueryFilter(q + s""" and np.value <> ${FloatingReason.RoadOwnerChanged.value}""")
+        }
       case _ =>
-        super.fetchFloatingAssets(addQueryFilter, isOperator)
+        addQueryFilter
     }
+
+    StaticQuery.queryNA[(Long, String, Long, Option[Long])](queryFilter(query)).list
+  }
+
+  def getFloatingAssetsWithReason(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Map[String, Long]]]] = {
+
+    val result = getFloatingPointAssets(includedMunicipalities, isOperator)
+
+    result.groupBy(_.municipality)
+      .mapValues { municipalityAssets =>
+        municipalityAssets
+          .groupBy(_.administrativeClass)
+          .mapValues(_.map(asset =>
+            Map("id" -> asset.id, "floatingReason" -> asset.floatingReason.getOrElse(0L))
+          ))
+      }
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
@@ -208,6 +346,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Checks that virtualTransitStop doesn't have any other types selected
+    *
     * @param stopProperties
     * @return
     */
@@ -217,7 +356,6 @@ trait MassTransitStopService extends PointAssetOperations {
     .flatMap(_.values).map(_.propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
-
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
@@ -241,6 +379,7 @@ trait MassTransitStopService extends PointAssetOperations {
       if (properties.nonEmpty) {
         massTransitStopDao.updateAssetProperties(id, properties.toSeq)
         updateAdministrativeClassValue(id, roadLink.get.administrativeClass)
+        updateLiViIdentifierProperty(id, persistedStop.get.nationalId, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -251,12 +390,13 @@ trait MassTransitStopService extends PointAssetOperations {
         updateMunicipality(id, municipalityCode)
         updateAssetGeometry(id, point)
       }
-      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => roadLink })
+      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => roadLink }, tierekisteriClient.updateMassTransitStop)
     }
   }
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-    updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
+    val props = updatedProperties(properties.toSeq)
+    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -287,13 +427,16 @@ trait MassTransitStopService extends PointAssetOperations {
       insertLrmPosition(lrmPositionId, mValue, asset.linkId)
       insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
       insertAssetLink(assetId, lrmPositionId)
-      val defaultValues = massTransitStopDao.propertyDefaultValues(10).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
-      if (!mixedStoptypes(asset.properties.toSet))
-      {
-        massTransitStopDao.updateAssetProperties(assetId, asset.properties ++ defaultValues.toSet)
-        updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
 
-        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink)
+      val properties = updatedProperties(asset.properties)
+
+      val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+      if (!mixedStoptypes(properties.toSet))
+      {
+        massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+        updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+        updateLiViIdentifierProperty(assetId, nationalId, properties)
+        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, tierekisteriClient.createMassTransitStop)
         assetId
       }
       else
@@ -301,8 +444,49 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
+
+  def updatedProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
+    val inventoryDate = properties.find(_.publicId == InventoryDateId)
+    val notInventoryDate = properties.filterNot(_.publicId == InventoryDateId)
+    if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
+      properties
+    } else {
+      notInventoryDate ++ Seq(SimpleProperty(InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
+    }
+  }
+
+  private def updateLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
+    properties.foreach{ property =>
+      if(property.publicId == AdministratorInfoPublicId){
+        val administrationPropertyValue = property.values.headOption
+        val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+
+        if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
+        }else{
+          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
+        }
+      }
+    }
+  }
+
+  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink], createOrUpdateMassTransitStop: TierekisteriMassTransitStop => Unit) = {
     val persistedStop = fetchPointAssets(withId(assetId)).headOption
+    val relevantToTR = isStoredInTierekisteri(persistedStop)
+
+    if (relevantToTR) {
+      val roadLink = roadLinkByLinkId.apply(persistedStop.get.linkId)
+      val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
+        case Some(str) => Try(str.toString.toInt).toOption
+        case _ => None
+      }
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get, road)
+
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide))
+
+      createOrUpdateMassTransitStop(newTierekisteriMassTransitStop)
+    }
+
     persistedStop.foreach { stop =>
       val municipalityName = massTransitStopDao.getMunicipalityNameByCode(stop.municipalityCode)
       eventbus.publish("asset:saved", eventBusMassTransitStop(stop, municipalityName))
@@ -314,7 +498,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def mandatoryProperties(): Map[String, String] = {
     val requiredProperties = withDynSession {
-      sql"""select public_id, property_type from property where asset_type_id = 10 and required = 1""".as[(String, String)].iterator.toMap
+      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
     }
     val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
@@ -322,6 +506,26 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
     GeometryUtils.calculateLinearReferenceFromPoint(point, points)
+  }
+
+  def deleteAllMassTransitStopData(assetId: Long) = {
+    withDynTransaction {
+
+      val persistedStop = fetchPointAssets(withId(assetId)).headOption
+      val relevantToTR = isStoredInTierekisteri(Some(persistedStop.get))
+
+      massTransitStopDao.deleteAllMassTransitStopData(assetId)
+
+      if ((relevantToTR) && (tierekisteriClient.isTREnabled)) {
+        val liviIdOption = persistedStop.get.propertyData.find(propertyData =>
+          propertyData.publicId.equals(LiViIdentifierPublicId)).flatMap(propertyData => propertyData.values.headOption).map(_.propertyValue).headOption
+
+        liviIdOption match {
+          case Some(liviId) => tierekisteriClient.deleteMassTransitStop(liviId)
+          case _ => throw new RuntimeException(s"bus stop relevant to Tierekisteri doesn't have 'yllapitajan koodi' property")
+        }
+      }
+    }
   }
 
   implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
@@ -381,6 +585,18 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  private def getAdministrationClass(persistedAsset: PersistedMassTransitStop): Option[AdministrativeClass] = {
+    val propertyValueOption = persistedAsset.propertyData.find(_.publicId == "linkin_hallinnollinen_luokka")
+      .map(_.values).getOrElse(Seq()).headOption
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) if(propertyValue.propertyValue.isEmpty) => None
+      case Some(propertyValue) if(!propertyValue.propertyValue.isEmpty) =>
+        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+    }
+  }
+
   private def updateLrmPosition(id: Long, mValue: Double, linkId: Long) {
     sqlu"""
            update lrm_position
@@ -404,7 +620,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
     sqlu"""
            insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
-           values ($id, $nationalId, 10, $bearing, $creator, $municipalityCode,
+           values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
            MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
            $floating)
       """.execute
@@ -434,6 +650,12 @@ trait MassTransitStopService extends PointAssetOperations {
            set municipality_code = $municipalityCode
            where id = $id
       """.execute
+  }
+
+  def expireMassTransitStop(s: String, id: Long) = {
+    withDynTransaction {
+      massTransitStopDao.expireMassTransitStop(s, id)
+    }
   }
 }
 

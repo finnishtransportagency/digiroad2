@@ -13,8 +13,16 @@ case class User(id: Long, username: String, configuration: Configuration) {
 
   def isViewer() = configuration.roles(Role.Viewer)
 
+  def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
+
+  def hasViiteWriteAccess(): Boolean = configuration.roles(Role.ViiteUser)
+
   def isOperator(): Boolean = {
     configuration.roles(Role.Operator)
+  }
+
+  def isBusStopMaintainer(): Boolean = {
+    configuration.roles(Role.BusStopMaintainer)
   }
 
   def hasEarlyAccess(): Boolean = {
@@ -34,4 +42,6 @@ object Role {
   val Administrator = "administrator"
   val Premium = "premium"
   val Viewer = "viewer"
+  val ViiteUser = "viite"
+  val BusStopMaintainer = "busStopMaintainer"
 }

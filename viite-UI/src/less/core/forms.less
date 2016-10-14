@@ -1,0 +1,374 @@
+//== Forms
+
+label {
+  display: inline-block;
+  margin-bottom: @line-height-modifier / 2;
+  font-size: @font-size-small;
+  font-weight: bold;
+  color: @gray-darker;
+  text-transform: uppercase;
+}
+
+// Normalize form controls
+//
+// While most of our form styles require extra classes, some basic normalization
+// is required to ensure optimum display with or without those classes to better
+// address browser inconsistencies.
+
+// Override content-box in Normalize (* isn't specific enough)
+input[type="search"] {
+  .box-sizing(border-box);
+}
+
+// Position radios and checkboxes better
+input[type="radio"],
+input[type="checkbox"] {
+  margin: 4px 0 0;
+  margin-top: 1px \9; // IE8-9
+  line-height: normal;
+}
+
+// Set the height of file controls to match text inputs
+input[type="file"] {
+  display: block;
+}
+
+// Make range inputs behave like textual form controls
+input[type="range"] {
+  display: block;
+  width: 100%;
+}
+
+// Make multiple select elements height not fixed
+select[multiple],
+select[size] {
+  height: auto;
+}
+
+// Focus for file, radio, and checkbox
+input[type="file"]:focus,
+input[type="radio"]:focus,
+input[type="checkbox"]:focus {
+  .tab-focus();
+}
+
+// Common form controls
+//
+// Shared size and type resets for form controls. Apply `.form-control` to any
+// of the following form controls:
+//
+// select
+// textarea
+// input[type="text"]
+// input[type="password"]
+// input[type="datetime"]
+// input[type="datetime-local"]
+// input[type="date"]
+// input[type="month"]
+// input[type="time"]
+// input[type="week"]
+// input[type="number"]
+// input[type="email"]
+// input[type="url"]
+// input[type="search"]
+// input[type="tel"]
+// input[type="color"]
+
+.form-control {
+  display: block;
+  width: 100%;
+  height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
+  padding: @line-height-modifier (1px);
+  font-size: @font-size-base;
+  line-height: @line-height-modifier * 3;
+  color: @input-color;
+  background-color: @input-bg;
+  .box-sizing(border-box);
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .shadow-box();
+
+  // Customize the `:focus` state to imitate native WebKit styles.
+  .form-control-focus();
+
+  .placeholder();
+
+  // Disabled and read-only inputs
+  //
+  // HTML5 says that controls under a fieldset > legend:first-child won't be
+  // disabled if the fieldset is disabled. Due to implementation difficulty, we
+  // don't honor that edge case; we style them as disabled anyway.
+  &[disabled],
+  &[readonly],
+  fieldset[disabled] & {
+    cursor: not-allowed;
+    border-color: @input-border-disabled;
+    color: @input-color-placeholder;
+    background-color: @input-bg-disabled;
+    opacity: 1; // iOS fix for unreadable disabled content
+  }
+
+  // Reset height for `textarea`s
+  textarea& {
+    height: auto;
+  }  
+}
+
+// Form groups
+//
+// Designed to help with the organization and spacing of vertical forms. For
+// horizontal forms, use the predefined grid classes.
+
+.form-group {
+  margin-bottom: @input-margin;
+}
+
+// Checkboxes and radios
+//
+// Indent the labels to position radios/checkboxes as hanging controls.
+
+.radio,
+.checkbox {
+  display: block;
+  min-height: @line-height-modifier * 3; // clear the floating input if there is no label text
+  margin-bottom: @input-margin;
+  margin-top: -1px;
+
+  &:last-child {
+  	margin-bottom: 0;
+  }
+
+  label {
+    margin-bottom: 0;
+    padding-left: 20px;
+    margin-top: 5px;
+    font-size: @font-size-base;
+    font-weight: normal;
+    color: @text-color;
+    text-transform: none;
+    cursor: pointer;
+    .user-select(none);
+  }
+}
+.radio input[type="radio"],
+.radio-inline input[type="radio"],
+.checkbox input[type="checkbox"],
+.checkbox-inline input[type="checkbox"] {
+  float: left;
+  margin-left: -20px;
+  .user-select(none);
+}
+
+.checkbox input[type="checkbox"] {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 1px solid @gray-darker;
+  border-radius: @border-radius-small;
+  outline: none;
+  -webkit-appearance: none;
+  .scale(0.9999);
+  .transition(transform 0.05s ease-in-out);
+  .transition(-webkit-transform 0.05s ease-in-out);
+  .transition(-moz-transform 0.05s ease-in-out);
+  .transition(-o-transform 0.05s ease-in-out);
+  .transition(-ms-transform 0.05s ease-in-out);
+
+  &:active {
+    .scale(0.85);
+  }
+
+  &:checked {
+    .icon-font;
+    &:before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 12px;
+      height: 12px;
+      margin-left: -5px;
+      margin-top: -5px;
+      font-size: 18px;
+      content: '\e804';
+    }
+  }
+}
+
+// Apply same disabled cursor tweak as for inputs
+// Some special care is needed because <label>s don't inherit their parent's `cursor`.
+//
+// Note: Neither radios nor checkboxes can be readonly.
+input[type="radio"],
+input[type="checkbox"] {
+  &[disabled],
+  &.disabled,
+  fieldset[disabled] & {
+    cursor: not-allowed;
+  }
+}
+// These classes are used directly on <label>s
+.radio-inline,
+.checkbox-inline {
+  &.disabled,
+  fieldset[disabled] & {
+    cursor: not-allowed;
+  }
+}
+// These classes are used on elements with <label> descendants
+.radio,
+.checkbox {
+  &.disabled,
+  fieldset[disabled] & {
+    label {
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Static form control text
+//
+// Apply class to a `p` element to make any string of text align with labels in
+// a horizontal form layout.
+
+.form-control-static {
+  margin: 0; // Remove default margin from `p`
+}
+
+// Form control sizing
+//
+// Build on `.form-control` with modifier classes to decrease or increase the
+// height and font-size of form controls.
+
+.input-sm {
+  height: (@line-height-modifier * 4) + 2; // Height at least of their button counterparts: line-height + padding + border
+  padding: @line-height-modifier (@line-height-modifier * 1.5);
+  font-size: @font-size-small;
+  line-height: @line-height-modifier * 2;
+}
+
+// Help text
+//
+// Apply to any element you wish to create light text for placement immediately
+// below a form control. Use for general help, formatting, or instructional text.
+
+.help-block {
+  display: block; // account for any element using help-block
+  margin-top: @input-margin / 2;
+  color: @input-color-placeholder; // lighten the text some for contrast
+}
+
+// Form control feedback states
+//
+// Apply contextual and semantic states to individual form controls.
+
+.form-group {
+  &.error {
+    label {
+      color: @error;
+    }
+  }
+}
+
+// Horizontal forms
+//
+// Horizontal forms allow you to create forms with labels on the left and inputs on the right.
+// NOTE: you still have to manually set widths of labels and inputs to make them float correctly!
+
+.form-horizontal {
+  .form-group {
+    .clearfix();
+  }
+
+  .control-label {
+    display: block;
+    float: left;
+    margin-bottom: 0;
+    padding-top: (@line-height-modifier + 1); // Default padding plus a border
+    line-height: @line-height-modifier * 3;
+    text-align: right;
+    .hyphens();
+  }
+
+  .form-control,
+  .checkbox,
+  .select,
+  .form-control-static,
+  .choice-group {
+    float: left;
+  }
+
+  .choice-group {
+    .form-control,
+    .checkbox,
+    .select {
+      float: none;
+    }
+  }
+
+  .choice-group .radio label {
+    display: block;
+    clear: both;
+  }
+
+  .choice-group input[type="text"] {
+    float: left;
+  }
+
+  button {
+    float: left;
+  }
+
+  .form-control-static {
+    padding-top: (@line-height-modifier  + 1);
+    padding-bottom: (@line-height-modifier + 1);
+    line-height: @line-height-modifier * 3;
+  }
+}
+
+// Inverted colors
+//
+// Inverts the form component colors to work on darker backgrounds
+
+.form-dark {
+  label {
+    color: @gray-lighter;
+  }
+
+  .form-control {
+    border-color: @input-border-dark;
+    color: @input-color-dark;
+    background-color: @input-bg-dark;
+
+    .form-control-focus(@input-border-focus-dark);
+
+    .placeholder(@input-color-placeholder-dark);
+
+    &[disabled],
+    &[readonly],
+    fieldset[disabled] & {
+      border-color: @input-border-disabled-dark;
+      color: @input-color-placeholder-dark;
+      background-color: @input-bg-disabled-dark;
+    }    
+  }
+
+  .radio,
+  .checkbox {
+    label {
+      color: #fff;
+    }
+  }
+
+  .checkbox input[type="checkbox"] {
+    border-color: @input-border-dark;
+    color: @input-border-dark;
+  }
+
+  .form-control-static,
+  .unit-of-measure {
+    color: @input-color-dark;
+  }
+
+  .help-block {
+    color: @input-color-placeholder-dark;
+  }
+}

@@ -35,14 +35,14 @@ class MassTransitStopDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
-    assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
-      val row = assetRows.head
+    assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
+      val row = rows.head
       Property(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
-        values = assetRows.map(assetRow =>
+        values = rows.map(assetRow =>
           PropertyValue(
             assetRow.property.propertyValue,
             propertyDisplayValueFromAssetRow(assetRow))
@@ -59,7 +59,7 @@ class MassTransitStopDao {
     if (validityDirection != 3) {
       bearing
     } else {
-      bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
+      bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
     }
   }
 
@@ -78,7 +78,7 @@ class MassTransitStopDao {
 
   private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
     propertyWithType match {
-      case (SingleChoice, _, property) => property.values.size > 0
+      case (SingleChoice, _, property) => property.values.nonEmpty
       case _ => true
     }
   }
@@ -107,7 +107,7 @@ class MassTransitStopDao {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.size == 0) {
+        if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
@@ -126,14 +126,23 @@ class MassTransitStopDao {
       case MultipleChoice => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
-      case ReadOnly | ReadOnlyNumber => {
+      case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
   }
 
-  def updateNumberPropertyValue(assetId :Long, propertyPublicId: String, value: Int): Unit ={
+  def updateTextPropertyValue(assetId: Long, propertyPublicId: String, value: String): Unit = {
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+    if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+      insertTextProperty(assetId, propertyId, value).execute
+    } else {
+      updateTextProperty(assetId, propertyId, value).execute
+    }
+  }
+
+  def updateNumberPropertyValue(assetId: Long, propertyPublicId: String, value: Int): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
     if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
       insertNumberProperty(assetId, propertyId, value).execute
@@ -142,7 +151,7 @@ class MassTransitStopDao {
     }
   }
 
-  def deleteNumberPropertyValue(assetId :Long, propertyPublicId: String): Unit ={
+  def deleteNumberPropertyValue(assetId: Long, propertyPublicId: String): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
     deleteNumberProperty(assetId, propertyId)
   }
@@ -228,7 +237,7 @@ class MassTransitStopDao {
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
   }
 
-  def getAssetAdministrationClass(assetId : Long): Option[AdministrativeClass] ={
+  def getAssetAdministrationClass(assetId: Long): Option[AdministrativeClass] = {
     val propertyValueOption = getNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka")
 
     propertyValueOption match {
@@ -238,7 +247,7 @@ class MassTransitStopDao {
     }
   }
 
-  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] ={
+  def getAssetFloatingReason(assetId: Long): Option[FloatingReason] = {
     val propertyValueOption = getNumberPropertyValue(assetId, "kellumisen_syy")
 
     propertyValueOption match {
@@ -248,4 +257,34 @@ class MassTransitStopDao {
     }
   }
 
+  def expireMassTransitStop(username: String, id: Long) = {
+    sqlu"""
+             update asset
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             where id = $id
+          """.execute
+  }
+
+  def getPropertyDescription(propertyPublicId : String, value: String) = {
+    sql"""
+       Select distinct
+         case
+                 when e.name_fi is not null then e.name_fi
+                 when tp.value_fi is not null then tp.value_fi
+                 when np.value is not null then to_char(np.value)
+                 else null
+               end as display_value
+       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
+       Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
+      """.as[String].list
+  }
+
+  def deleteAllMassTransitStopData(assetId: Long): Unit ={
+    sqlu"""Delete From Single_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Multiple_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Text_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset Where id = $assetId""".execute
+  }
 }

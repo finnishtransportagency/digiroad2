@@ -12,6 +12,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 
 
 
@@ -173,60 +174,61 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val lastIdUpdate = 0
       val lineRange = 1000
       val obstacleAssetTypeId = 220
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000050, 6000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (1,70000050)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (1,${lrmPositionsIds(0)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400000, 1, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000051, 6000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,70000051)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (3,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000052, 7000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (3,70000052)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 7000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (3,${lrmPositionsIds(2)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400003, 3, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (4,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000053, 8000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (4,70000053)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 8000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (4,${lrmPositionsIds(3)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400004, 4, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (5,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000054, 9000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (5,70000054)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, 9000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (5,${lrmPositionsIds(4)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400005, 5, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (6,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000055, 1000, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (6,70000055)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, 1000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (6,${lrmPositionsIds(5)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400006, 6, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (7,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000056, 1100, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (7,70000056)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(6)}, 1100, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (7,${lrmPositionsIds(6)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400007, 7, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (8,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000057, 1200, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (8,70000057)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(7)}, 1200, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (8,${lrmPositionsIds(7)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400008, 8, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (9,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000058, 1300, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (9,70000058)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(8)}, 1300, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (9,${lrmPositionsIds(8)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400009, 9, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (10,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000059, 1400, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (10,70000059)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(9)}, 1400, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (10,${lrmPositionsIds(9)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400010, 10, 300080, 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (11,$obstacleAssetTypeId,1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (70000060, 1500, null, 0.000, 25.000)""".execute
-      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,70000060)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 1500, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
 
       sqlu"""
