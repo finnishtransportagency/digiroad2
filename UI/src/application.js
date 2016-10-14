@@ -121,7 +121,7 @@
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
   var tierekisteriFailedMessage = 'Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa';
   var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
-  var notFoundInTierekisteriMessage = 'Dont Exist information with equivalent livi-id in Tierekisteri or cant connection with Tierekisteri';
+  var notFoundInTierekisteriMessage = 'Huom! Tämän pysäkin tallennus ei onnistu, koska vastaavaa pysäkkiä ei löydy Tierekisteristä tai Tierekisteriin ei ole yhteyttä tällä hetkellä.';
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
