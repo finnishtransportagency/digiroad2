@@ -293,6 +293,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getViiteRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
+    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities),atMost = Duration.Inf)
+    //historyData.groupBy(_.linkId).map(_._2.maxBy(link => link.attributes.get("END_DATE"))).asInstanceOf[Seq[VVHRoadlink]]
+    var oldestRoadLink : VVHRoadlink = _
+    val groupedData = historyData.groupBy(_.linkId)
+    groupedData.foreach { gd =>
+      gd._2.foreach { rl =>
+
+      }
+    }
+
+  }
+
   /**
     * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */
@@ -343,8 +356,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
-  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), everything: Boolean) : Seq[RoadLink] =
-    getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything)._1
+  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), everything: Boolean) : Seq[RoadLink] = {
+    var roadLinkList = getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything)._1
+    var roadLinkHistoryList = getViiteRoadLinksHistoryFromVVH(bounds, municipalities)
+
+    roadLinkList
+  }
+
 
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
