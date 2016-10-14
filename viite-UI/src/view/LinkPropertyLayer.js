@@ -13,7 +13,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(feature.attributes.id !== undefined) {
+      if(typeof feature.attributes.id !== 'undefined') {
         selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
         currentRenderIntent = 'select';
         roadLayer.redraw();
