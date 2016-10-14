@@ -146,7 +146,6 @@
     var template = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
-      console.log(selectedLinkProperty.get()[0]);
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadClass') : dynamicField('TIETYYPPI');
       var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
       return _.template('' +
