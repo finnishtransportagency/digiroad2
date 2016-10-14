@@ -249,7 +249,7 @@ object RoadAddressLinkBuilder {
       roadLink.functionalClass, roadLink.trafficDirection,
       roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, formatter.print(roadAddress.endDate), roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(null), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
