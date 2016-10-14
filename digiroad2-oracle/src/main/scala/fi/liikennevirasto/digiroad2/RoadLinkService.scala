@@ -293,6 +293,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getViiteRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
+    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities),atMost = Duration.Inf)
+    //historyData.groupBy(_.linkId).map(_._2.maxBy(link => link.attributes.get("END_DATE"))).asInstanceOf[Seq[VVHRoadlink]]
+    var oldestRoadLink : VVHRoadlink = _
+    val groupedData = historyData.groupBy(_.linkId)
+    groupedData.foreach { gd =>
+      gd._2.foreach { rl =>
+
+      }
+    }
+
+  }
+
   /**
     * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */
