@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
-import java.util.{Base64, Properties}
+import java.util.Properties
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import org.apache.commons.codec.binary.Base64
 
 class GMapUrlSigner
 {
@@ -21,7 +22,7 @@ class GMapUrlSigner
       throw new IllegalArgumentException("Missing Google Crypto-key")
     val wskey = loadedkeyString.replace('-', '+').replace('_', '/')
     // Base64 is JDK +1.8 only - older versions may need to use Apache Commons or similar.
-    Base64.getDecoder().decode(wskey)
+    Base64.decodeBase64(wskey)
   }
 
   val clientid = properties.getProperty("googlemapapi.client_id")
@@ -38,7 +39,7 @@ class GMapUrlSigner
     // compute the binary signature for the request
     val sigBytes = mac.doFinal(resource.getBytes())
     // Base64 is JDK 1.8 only - older versions may need to use Apache Commons or similar. Convert the signature to 'web safe' base 64
-    val signature = (Base64.getEncoder().encodeToString(sigBytes)).replace('+', '-').replace('/', '_')
+    val signature = Base64.encodeBase64URLSafeString(sigBytes)
     "https://maps.googleapis.com" + resource + "&signature=" + signature
   }
 }

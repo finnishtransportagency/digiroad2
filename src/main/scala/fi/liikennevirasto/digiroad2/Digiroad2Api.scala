@@ -102,9 +102,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
     get("/masstransitstopgapiurl"){
-      val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordintes")))
-      val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordintes")))
-      val heading =params.get("heading").getOrElse(halt(BadRequest("Bad coordintes")))
+      val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
+      val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))
+      val heading =params.get("heading").getOrElse(halt(BadRequest("Bad coordinates")))
       val oldapikeyurl=s"//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=$lat,$lon&fov=110&heading=$heading&pitch=-10&sensor=false'"
       try {
         val urlsigner = new GMapUrlSigner()
