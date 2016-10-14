@@ -374,6 +374,22 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   /**
+    * Returns VVH road links by municipality.
+    * Used by VVHClient.fetchVVHRoadlinksF(municipality), RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization.
+    */
+  def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads = false)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadnumberFilters))
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
     * Returns VVH road link by link id.
     * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api /manoeuvres DELETE endpoint, Digiroad2Api /manoeuvres PUT endpoint,
     * CsvImporter.updateAssetByExternalIdLimitedByRoadType, RoadLinkService,getRoadLinkMiddlePointByLinkId, RoadLinkService.updateLinkProperties, RoadLinkService.getRoadLinkGeometry,

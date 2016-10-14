@@ -23,7 +23,7 @@
     });
 
     this.updateManoeuvreDetails = function(details, success, failure) {
-       $.ajax({
+      $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/manoeuvres",
@@ -151,7 +151,7 @@
     this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
-      };  
+      };
     });
 
     this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
@@ -348,6 +348,18 @@
         success: successCallback,
         error: errorCallback
       });
+    };
+
+
+    this.getMassTransitStopStreetViewUrl = function test(lati,longi,heading) {
+      function getJson(){
+        $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
+          .done(function (response) {
+            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
+          });
+      }
+      if (lati && longi && heading)
+        getJson();
     };
 
     this.expireAsset = function(massTransitStopIds, success, failure) {

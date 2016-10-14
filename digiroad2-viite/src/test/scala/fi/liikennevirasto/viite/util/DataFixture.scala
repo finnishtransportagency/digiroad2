@@ -64,6 +64,14 @@ object DataFixture {
     println()
   }
 
+  def updateMissingRoadAddresses(): Unit = {
+    println(s"\nUpdating missing road address table at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    dataImporter.updateMissingRoadAddresses(vvhClient)
+    println(s"Missing address update complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -86,7 +94,9 @@ object DataFixture {
         importRoadAddresses()
       case Some ("recalculate_addresses") =>
         recalculate()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses")
+      case Some ("update_missing") =>
+        updateMissingRoadAddresses()
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing")
     }
   }
 }

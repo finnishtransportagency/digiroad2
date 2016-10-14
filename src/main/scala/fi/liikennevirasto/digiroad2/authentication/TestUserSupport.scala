@@ -8,8 +8,6 @@ trait TestUserSupport {
   var testUser: Option[User] = None
 
   def getTestUser(request: HttpServletRequest)(implicit userProvider: UserProvider): Option[User] = {
-    println(request.getRequestURI)
-    println(request.getCookies.map(c => c.getName + " => " + c.getValue) .mkString(";"))
     request.getCookies.find(_.getName == TestUsernameCookie) match {
       case Some(c: Cookie) => userProvider.getUser(c.getValue)
       case _ => throw new UnauthenticatedException()
