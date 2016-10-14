@@ -233,6 +233,12 @@ object Queries {
     """.as[Int].list
   }
 
+  def getMunicipalitiesByEly(ely: Int): Seq[Int] = {
+    sql"""
+      select municipality_id from ely e where e.id = $ely
+    """.as[Int].list
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }

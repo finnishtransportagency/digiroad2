@@ -92,6 +92,31 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     filledTopology
   }
 
+  /**
+    * Returns missing road addresses for links that did not already exist in database
+    * @param roadNumberLimits
+    * @param municipality
+    * @return
+    */
+  def getMissingRoadAddresses(roadNumberLimits: Seq[(Int, Int)], municipality: Int) = {
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(municipality, roadNumberLimits)
+    val linkIds = roadLinks.map(_.linkId).toSet
+    val addresses = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
+
+    val missingLinkIds = linkIds -- addresses.keySet
+    val missedRL  = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
+
+    val viiteRoadLinks = roadLinks.map { rl =>
+      val ra = addresses.getOrElse(rl.linkId, Seq())
+      val missed = missedRL.getOrElse(rl.linkId, Seq())
+      rl.linkId -> buildRoadAddressLink(rl, ra, missed)
+    }.toMap
+
+    val (_, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+
+    changeSet.missingRoadAddresses
+  }
+
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
@@ -180,10 +205,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]) = {
     withDynTransaction {
-      missingRoadLinks.foreach { links =>
-        RoadAddressDAO.createMissingRoadAddress(links)
-      }
+      missingRoadLinks.foreach(createSingleMissingRoadAddress)
     }
+  }
+
+  def createSingleMissingRoadAddress(missingAddress: MissingRoadAddress) = {
+    RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
   //TODO: Priority order for anomalies. Currently this is unused
