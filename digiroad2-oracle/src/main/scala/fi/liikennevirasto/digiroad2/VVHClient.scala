@@ -206,7 +206,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -590,9 +590,15 @@ class VVHClient(vvhRestApiEndPoint: String) {
       }
     }
 
-    val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
     val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("LAST_EDITED_DATE")){
+      lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
+    var geometryEditedDate : Option[Long] = Option(0)
+      if(attributes.contains("GEOMETRY_EDITED_DATE")){
+        geometryEditedDate =  Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
 
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
     latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
