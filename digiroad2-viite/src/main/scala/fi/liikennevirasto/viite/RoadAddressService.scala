@@ -68,8 +68,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false) = {
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything)
+  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                          everything: Boolean = false, publicRoads: Boolean = false) = {
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val linkIds = roadLinks.map(_.linkId).toSet
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
@@ -118,8 +119,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
+    val ral = roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
+    ral.isEmpty match {
+      case true => Seq(RoadAddressLinkBuilder.build(rl, MissingRoadAddress(rl.linkId, None, None, None, None, None, None, Anomaly.None)))
+      case false => ral
+    }
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {

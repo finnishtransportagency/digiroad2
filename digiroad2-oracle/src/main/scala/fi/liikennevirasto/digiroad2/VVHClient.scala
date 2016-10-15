@@ -271,8 +271,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
-  def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)], everything: Boolean): Future[Seq[VVHRoadlink]] = {
-    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, everything))
+  def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+                                        includeAllPublicRoads: Boolean): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, includeAllPublicRoads))
   }
 
   /**
@@ -375,10 +376,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links by municipality.
-    * Used by VVHClient.fetchVVHRoadlinksF(municipality), RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization.
+    * Used by RoadAddressService.getMissingRoadAddresses
     */
   def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
-    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads = false)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
+    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads = true)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadnumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
