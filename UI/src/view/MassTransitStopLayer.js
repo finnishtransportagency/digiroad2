@@ -639,8 +639,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:created', handleAssetCreated);
     eventListener.listenTo(eventbus, 'asset:fetched', handleAssetFetched);
     eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
-    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed', cancelCreate);
-    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed', cancelUpdate);
+    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
+    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {

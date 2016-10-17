@@ -404,11 +404,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       ActionResult(ResponseStatus(555, reason), body, headers)
   }
 
+  object VKMRoadAddressNotFound {
+    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
+      ActionResult(ResponseStatus(564, reason), body, headers)
+  }
+
   error {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
     case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
+    case vkme: VKMClientException => halt(VKMRoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)
