@@ -130,6 +130,23 @@ object TRRoadSide {
   case object Unknown extends TRRoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
 }
 
+sealed trait Operation {
+  def value: Int
+}
+object Operation {
+  val values = Set(Create, Update, Expire, Remove, Noop)
+
+  def apply(intValue: Int): Operation = {
+    values.find(_.value == intValue).getOrElse(Noop)
+  }
+
+  case object Create extends Operation { def value = 0 }
+  case object Update extends Operation { def value = 1 }
+  case object Expire extends Operation { def value = 2 }
+  case object Remove extends Operation { def value = 3 }
+  case object Noop extends Operation { def value = 3 }
+}
+
 case class TierekisteriMassTransitStop(nationalId: Long,
                                        liviId: String,
                                        roadAddress: RoadAddress,
@@ -549,10 +566,13 @@ object TierekisteriBusStopMarshaller {
       case _ => TRRoadSide.Unknown
     }
   }
-  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide]): TierekisteriMassTransitStop = {
+  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide], expire: Boolean = false): TierekisteriMassTransitStop = {
     val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId)).getOrElse(new Date)
     val startingDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, FirstDayValidPublicId))
-    val lastDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
+    val lastDate = expire match {
+      case false => convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
+      case true => Some(inventoryDate)
+    }
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
       roadAddress, roadSideOption.map(toTRRoadSide).getOrElse(TRRoadSide.Unknown), findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
