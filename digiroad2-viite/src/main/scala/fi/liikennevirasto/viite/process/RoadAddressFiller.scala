@@ -67,17 +67,14 @@ object RoadAddressFiller {
   }
 
   private def isPublicRoad(roadLink: RoadLink) = {
-    roadLink.administrativeClass == State || roadLink.attributes.get("ROADNUMBER").exists {
-      case Some(value) => value.toString.toInt > 0
-      case _ => false
-    }
+    roadLink.administrativeClass == State || roadLink.attributes.get("ROADNUMBER").exists(_.toString.toInt > 0)
   }
 
   private def generateUnknownLink(roadLink: RoadLink) = {
-    if (isPublicRoad(roadLink))
-      Seq(MissingRoadAddress(roadLink.linkId, None, None, None, None, Some(0.0), Some(roadLink.length), Anomaly.NoAddressGiven))
-    else
-      Seq()
+    Seq(MissingRoadAddress(roadLink.linkId, None, None, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
+      case true => Anomaly.NoAddressGiven
+      case false => Anomaly.None
+    }))
   }
 
   private def buildMissingRoadAddress(rl: RoadLink, roadAddrSeq: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
@@ -103,7 +100,8 @@ object RoadAddressFiller {
       val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
       val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
       (existingSegments ++ adjustedSegments ++ generatedLinks,
-        segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++ generatedRoadAddresses))
+        segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++
+          generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
     }
   }
 

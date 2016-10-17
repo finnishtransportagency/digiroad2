@@ -119,12 +119,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    val ral = roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
+    roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
-    ral.isEmpty match {
-      case true => Seq(RoadAddressLinkBuilder.build(rl, MissingRoadAddress(rl.linkId, None, None, None, None, None, None, Anomaly.None)))
-      case false => ral
-    }
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
@@ -152,18 +148,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case (viiteRoadLinks) =>
         val sorted = viiteRoadLinks.sortWith({
           case (ral1, ral2) =>
-            if (ral1.roadNumber < ral2.roadNumber)
-              true
-            else if (ral1.roadNumber > ral2.roadNumber)
-              false
-            else if (ral1.roadPartNumber < ral2.roadPartNumber)
-              true
-            else if (ral1.roadPartNumber > ral2.roadPartNumber)
-              false
-            else if (ral1.startAddressM < ral2.startAddressM)
-              true
+            if (ral1.roadNumber != ral2.roadNumber)
+              ral1.roadNumber < ral2.roadNumber
+            else if (ral1.roadPartNumber != ral2.roadPartNumber)
+              ral1.roadPartNumber < ral2.roadPartNumber
             else
-              false
+              ral1.startAddressM < ral2.startAddressM
         })
         sorted.zip(sorted.tail).map{
           case (st1, st2) =>
