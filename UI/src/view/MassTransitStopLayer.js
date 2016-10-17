@@ -5,22 +5,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
-  var movementPermission = false;
+  var movementPermissionConfirmed = false;
 
   var selectedControl = 'Select';
 
   var clickTimestamp;
   var clickCoords;
   var assetIsMoving = false;
-  //TODO delete this event
-  eventbus.on('massTransitStop:expireFailed', function(){
-    selectedMassTransitStopModel.cancel();
-  });
-  //TODO delete this event
-  eventbus.on('massTransitStop:expireSuccess', function (asset) {
-    destroyAsset(asset);
-    selectedMassTransitStopModel.save();
-  });
 
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
@@ -78,7 +69,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return function() {
       var selectAsset = function() {
         selectedMassTransitStopModel.change(asset.data);
-        movementPermission = false;
+        movementPermissionConfirmed = false;
       };
 
       if (selectedControl === 'Select') {
@@ -411,7 +402,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var deselectAsset = function(asset) {
     if (asset) {
-      movementPermission = false;
+      movementPermissionConfirmed = false;
       unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
@@ -447,17 +438,17 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
     var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
-    if (distance > movementLimit && !movementPermission)
+    if (distance > movementLimit && !movementPermissionConfirmed)
     {
       new GenericConfirmPopup('Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?',{
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates, true);
-          movementPermission = true;
+          movementPermissionConfirmed = true;
         },
         closeCallback: function(){
           //Moves the stop to the original position
           doMovement(angle, nearestLine, busStop, false);
-          movementPermission = false;
+          movementPermissionConfirmed = false;
         }
       });
     }
@@ -467,29 +458,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var controlledByTR = function () {
-    var properties = selectedMassTransitStopModel.getProperties();
-    var condition = false;
-    for (var i = 0; i < properties.length; i++){
-      if(properties[i].values[0] !== undefined) {
-        condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-      }
-    }
-    return condition;
-  };
-
-  var doMovement= function(angle, nearestLine, coordinates, checkCondition) {
+  var doMovement= function(angle, nearestLine, coordinates, disableMovement) {
     roadLayer.selectRoadLink(nearestLine);
-    if (checkCondition && controlledByTR()){
-      //Should create a new Asset
-      var pastAsset = selectedMassTransitStopModel.getCurrentAsset();
-      closeAsset(pastAsset);
-      createNewAsset(coordinates, true);
-      //On this point selectedMassTransitStopModel should contain the newly created asset
-      selectedMassTransitStopModel.copyDataFromOtherMasTransitStop(pastAsset);
-      //selectedMassTransitStopModel.expireMassTransitStopById(pastAsset);
-      selectedMassTransitStopModel.copyMassTransitStopById(pastAsset);
-    } else {
+
+    if (!disableMovement){
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;
       selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
@@ -655,6 +627,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       closeAsset();
       destroyAsset(asset);
       eventbus.trigger("asset:closed");
+    });
+    eventListener.listenTo(eventbus, 'massTransitStop:expired', function(asset){
+      destroyAsset(asset);
+    });
+    eventListener.listenTo(eventbus, 'massTransitStop:movementPermission', function(movementPermission){
+      movementPermissionConfirmed = movementPermission;
     });
   };
 

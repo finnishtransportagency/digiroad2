@@ -118,19 +118,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "floating" -> stop.floating)
     }
   }
-  //TODO delete this entry point
-  delete("/massTransitStops") {
-    val user = userProvider.getCurrentUser()
-
-    val manoeuvreIds = (parsedBody \ "massTransitStopIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
-    manoeuvreIds.foreach(massTransitStopId => {
-      if(user.isBusStopMaintainer()){
-        massTransitStopService.expireMassTransitStop(user.username, massTransitStopId);
-      } else {
-        halt(Unauthorized("User not authorized"))
-      }
-    })
-  }
 
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
@@ -209,23 +196,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
     }
-  }
-
-  put("/massTransitStops/copy/:id"){
-    val id = params("id").toLong
-    val positionParameters = massTransitStopPositionParameters(parsedBody)
-    val lon = positionParameters._1.get
-    val lat = positionParameters._2.get
-    val linkId = positionParameters._3.get
-    val bearing = positionParameters._4.get
-    val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    validateUserRights(linkId)
-    validateBusStopMaintainerUser(properties)
-    validateCreationProperties(properties)
-
-    val roadLink = vvhClient.fetchVVHRoadlink(linkId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.copy(id, NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
-
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
