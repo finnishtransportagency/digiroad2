@@ -226,12 +226,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param id
     * @return
     */
-  def fetchMassTransitStop(id: String): TierekisteriMassTransitStop = {
+  def fetchMassTransitStop(id: String): Option[TierekisteriMassTransitStop] = {
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
-        mapFields(content)
+        Some(mapFields(content))
       case Right(null) =>
-        null
+        None
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }

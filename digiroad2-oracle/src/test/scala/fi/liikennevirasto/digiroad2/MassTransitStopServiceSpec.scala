@@ -25,9 +25,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
-  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
+  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date)
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
   )
 
   val vvhRoadLinks = List(
@@ -258,9 +258,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016,8,1))
-      )
+      ))
       val (stop, showStatusCode) = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
 
@@ -284,9 +284,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.Yes,
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
-      )
+      ))
 
       val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
@@ -302,7 +302,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Fetch mass transit stop by national id but does not exist in Tierekisteri"){
     runWithRollback{
 
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(null)
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(None)
       val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
 
       stop.size should be (1)
