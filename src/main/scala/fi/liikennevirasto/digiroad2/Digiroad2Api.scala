@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra._
@@ -383,12 +384,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   object TierekisteriInternalServerError {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(555, reason), body, headers)
+      ActionResult(ResponseStatus(HttpStatus.SC_FAILED_DEPENDENCY, reason), body, headers)
   }
 
   object TierekisteriNotFoundWarning {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(255, reason), body, headers)
+      ActionResult(ResponseStatus(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, reason), body, headers)
   }
 
   error {
