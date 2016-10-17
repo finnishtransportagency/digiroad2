@@ -57,6 +57,8 @@ trait DigiroadServer {
     appContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     appContext.addServlet(classOf[NLSProxyServlet], "/maasto/*")
     appContext.addServlet(classOf[ArcGisProxyServlet], "/arcgis/*")
+    appContext.addServlet(classOf[VKMProxyServlet], "/vkm/*")
+    appContext.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -66,10 +68,13 @@ trait DigiroadServer {
 }
 
 class NLSProxyServlet extends ProxyServlet {
+
+  def regex = "/(digiroad|viite)".r
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
     java.net.URI.create("http://karttamoottori.maanmittauslaitos.fi"
-      + uri.replaceFirst("/digiroad", "").replaceFirst("/viite", ""))
+      + regex.replaceFirstIn(uri, ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
@@ -96,7 +101,7 @@ class ArcGisProxyServlet extends ProxyServlet {
   val logger = LoggerFactory.getLogger(getClass)
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val uri = req.getRequestURI
-    java.net.URI.create("https://aineistot.esri.fi"
+    java.net.URI.create("http://aineistot.esri.fi"
       + uri.replaceFirst("/viite", ""))
   }
 
@@ -119,7 +124,7 @@ class ArcGisProxyServlet extends ProxyServlet {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     if (properties.getProperty("http.proxySet", "false").toBoolean) {
-      val proxy = new HttpProxy("172.17.208.16", 8085)
+      val proxy = new HttpProxy("127.0.0.1", 3128)
       proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
       client.getProxyConfiguration.getProxies.add(proxy)
       client.setIdleTimeout(60000)
@@ -128,11 +133,13 @@ class ArcGisProxyServlet extends ProxyServlet {
   }
 }
 class VKMProxyServlet extends ProxyServlet {
+  def regex = "/(digiroad|viite)".r
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
     val vkmUrl: String = properties.getProperty("digiroad2.VKMUrl")
-    java.net.URI.create(vkmUrl + req.getRequestURI.replaceFirst("/digiroad", ""))
+    java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
@@ -145,7 +152,9 @@ class VKMProxyServlet extends ProxyServlet {
 }
 
 class VKMUIProxyServlet extends ProxyServlet {
+  def regex = "/(digiroad|viite)/viitekehysmuunnin/".r
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    java.net.URI.create("http://localhost:3000" + req.getRequestURI.replaceFirst("/digiroad/viitekehysmuunnin/", "/"))
+    java.net.URI.create("http://localhost:3000" + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 }
