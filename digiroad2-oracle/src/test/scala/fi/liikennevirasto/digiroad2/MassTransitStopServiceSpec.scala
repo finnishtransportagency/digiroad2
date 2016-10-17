@@ -25,9 +25,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
-  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
+  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date)
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
   )
 
   val vvhRoadLinks = List(
@@ -258,11 +258,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016,8,1))
-      )
-      val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
+      ))
+      val (stop, showStatusCode) = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
+
+      showStatusCode should be (false)
     }
   }
 
@@ -282,23 +284,36 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.Yes,
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
-      )
+      ))
 
-      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
       }
+      showStatusCode should be (false)
+    }
+  }
+
+  test("Fetch mass transit stop by national id but does not exist in Tierekisteri"){
+    runWithRollback{
+
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(None)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+
+      stop.size should be (1)
+      stop.map(_.nationalId).get should be (85755)
+      showStatusCode should be (true)
     }
   }
 
   test("Get properties") {
     runWithRollback {
-      val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalId(2, Int => Unit).map { stop =>
+      val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(2, Int => Unit)._1.map { stop =>
         Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
@@ -315,7 +330,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Assert user rights when fetching mass transit stop with id") {
     runWithRollback {
-      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, { municipalityCode => throw new Exception })
+      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, { municipalityCode => throw new Exception })
     }
   }
 
@@ -624,23 +639,24 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
-      service.deleteAllMassTransitStopData(stop.id)
+      val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
+      service.deleteAllMassTransitStopData(stop.head.id)
       verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
-      service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(true)
+      service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(true)
+      service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._2 should be (false)
     }
   }
 
   test("delete fails if a TR kept mass transit stop is not found") {
     val eventbus = MockitoSugar.mock[DigiroadEventBus]
     val service = new TestMassTransitStopServiceWithDynTransaction(eventbus)
-    val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
+    val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
     when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
     intercept[TierekisteriClientException] {
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      service.deleteAllMassTransitStopData(stop.id)
+      service.deleteAllMassTransitStopData(stop.head.id)
     }
-    service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(false)
+    service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(false)
   }
 
   test("Updating the mass transit stop from others -> ELY should create a stop in TR") {

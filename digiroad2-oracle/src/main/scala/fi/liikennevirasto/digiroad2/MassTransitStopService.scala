@@ -75,17 +75,28 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      if(isStoredInTierekisteri(persistedStop)){
+      persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+    }
+  }
+
+  def getByNationalIdWithTRWarnings[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit,
+                                                        persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): (Option[T], Boolean) = {
+    withDynTransaction {
+      val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
+      persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+      if (isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
         val properties = persistedStop.map(_.propertyData).get
         val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
-        if (tierekisteriEnabled) {
-          val liViId = liViProp.map(_.values.head).get.propertyValue
-          val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
-          val enrichedStop = enrichPersistedMassTransitStop(persistedStop, tierekisteriStop)
-          return enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+        val liViId = liViProp.map(_.values.head).get.propertyValue
+        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+        val enrichedStop = tierekisteriStop.isEmpty match {
+          case true => persistedStop
+          case false => enrichPersistedMassTransitStop(persistedStop, tierekisteriStop.get)
         }
+        (enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), tierekisteriStop.isEmpty)
+      } else {
+        (persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), false)
       }
-      persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
   }
 
@@ -185,6 +196,10 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
+  }
+
+  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long, municipalityValidation: Int => Unit): (Option[MassTransitStopWithProperties], Boolean) = {
+    getByNationalIdWithTRWarnings(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[VVHRoadlink])

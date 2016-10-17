@@ -167,6 +167,8 @@ case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
 
+class TierekisteriClientWarnings(response: String) extends RuntimeException(response)
+
 /**
   * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
   *
@@ -242,10 +244,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param id
     * @return
     */
-  def fetchMassTransitStop(id: String): TierekisteriMassTransitStop = {
+  def fetchMassTransitStop(id: String): Option[TierekisteriMassTransitStop] = {
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
-        mapFields(content)
+        Some(mapFields(content))
+      case Right(null) =>
+        None
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
@@ -295,8 +299,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode == HttpStatus.SC_NOT_FOUND) {
+        return Right(null)
+      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
+      }
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
@@ -312,7 +319,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)
@@ -333,7 +340,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)
@@ -354,7 +361,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)

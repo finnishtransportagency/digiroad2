@@ -93,7 +93,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("fetch from tierekisteri mass transit stop") {
     assume(testConnection)
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
-    val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914")
+    val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914").get
 
     asset.nationalId should be (208914)
     asset.liviId should be ("OTHJ208914")
@@ -123,13 +123,11 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   }
 
-  test("fetch should throw exception when mass transit stop doesn't exist"){
+  test("fetch should return None when mass transit stop doesn't exist in Tierekisteri"){
     assume(testConnection)
 
-    val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.fetchMassTransitStop("12345")
-    }
-    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
+    val asset = tierekisteriClient.fetchMassTransitStop("12345")
+    asset should be(None)
   }
 
   test("delete tierekisteri mass transit stop"){
@@ -321,7 +319,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       "}"
     when (response.getEntity).thenReturn(new StringEntity(retval))
     when(httpClient.execute(any[HttpGet])).thenReturn(response)
-    val stop = trClient.fetchMassTransitStop("OTHJ208910")
+    val stop = trClient.fetchMassTransitStop("OTHJ208910").get
     stop.liviId should be ("OTHJ208910")
     stop.modifiedBy should be ("KX123456")
     stop.roadAddress.road should be (25823)
