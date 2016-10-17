@@ -514,10 +514,14 @@ object TierekisteriBusStopMarshaller {
       case _ => TRRoadSide.Unknown
     }
   }
-  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide]): TierekisteriMassTransitStop = {
+  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide], expire:Option[Date]=null): TierekisteriMassTransitStop = {
     val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId)).getOrElse(new Date)
     val startingDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, FirstDayValidPublicId))
-    val lastDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
+    var lastDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
+    if (expire!=null)
+    {
+      lastDate=expire
+    }
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
       roadAddress, roadSideOption.map(toTRRoadSide).getOrElse(TRRoadSide.Unknown), findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),
