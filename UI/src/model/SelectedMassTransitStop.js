@@ -212,7 +212,9 @@
         backend.createAsset(currentAsset.payload, function(errorObject) {
           if (errorObject.status == 555) {
             eventbus.trigger('asset:creationTierekisteriFailed');
-          }else{
+          } else if(errorObject.status == 564) {
+            eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
+          } else {
             eventbus.trigger('asset:creationFailed');
           }
           close();
@@ -232,6 +234,8 @@
             open(asset);
             if (errorObject.status == 555) {
               eventbus.trigger('asset:updateTierekisteriFailed');
+            } else if(errorObject.status == 564) {
+              eventbus.trigger('asset:updateNotFoundRoadAddressVKM');
             } else {
               eventbus.trigger('asset:updateFailed', asset);
             }
