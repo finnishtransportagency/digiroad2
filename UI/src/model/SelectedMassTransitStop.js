@@ -11,6 +11,7 @@
       'floating'];
     var massTransitStopTypePublicId = "pysakin_tyyppi";
     var administratorInfoPublicId = "tietojen_yllapitaja";
+    var PRECONDITION_FAILED_412 = 412;
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
@@ -212,7 +213,7 @@
         backend.createAsset(currentAsset.payload, function(errorObject) {
           if (errorObject.status == 555) {
             eventbus.trigger('asset:creationTierekisteriFailed');
-          } else if(errorObject.status == 564) {
+          } else if(errorObject.status == PRECONDITION_FAILED_412) {
             eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
           } else {
             eventbus.trigger('asset:creationFailed');
@@ -234,7 +235,7 @@
             open(asset);
             if (errorObject.status == 555) {
               eventbus.trigger('asset:updateTierekisteriFailed');
-            } else if(errorObject.status == 564) {
+            } else if(errorObject.status == PRECONDITION_FAILED_412) {
               eventbus.trigger('asset:updateNotFoundRoadAddressVKM');
             } else {
               eventbus.trigger('asset:updateFailed', asset);
