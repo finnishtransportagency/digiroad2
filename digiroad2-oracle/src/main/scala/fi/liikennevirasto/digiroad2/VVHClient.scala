@@ -169,6 +169,19 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
+  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s""""where":"($filter)","""
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+
   private def withLinkIdFilter(linkIds: Set[Long]): String = {
     withFilter("LINKID", linkIds)
   }
@@ -181,13 +194,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter1.isEmpty match {
       case true => filter2
       case _ => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
-    }
-  }
-
-  private def combineFiltersWithOr(filter1: String, filter2: String) = {
-    filter1.isEmpty match {
-      case true => filter2
-      case _ => "%s OR %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
     }
   }
 
@@ -214,8 +220,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
   def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = true): Seq[VVHRoadlink] = {
-    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadnumberFilters))
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
@@ -379,8 +385,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by RoadAddressService.getMissingRoadAddresses
     */
   def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
-    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads = true)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadnumberFilters))
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
