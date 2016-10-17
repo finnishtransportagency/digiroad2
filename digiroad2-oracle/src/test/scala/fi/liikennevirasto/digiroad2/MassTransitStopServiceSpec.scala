@@ -38,7 +38,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611353, 235, Seq(Point(374603.57,6677262.009), Point(374684.567, 6677277.323)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611341l, 91, Seq(Point(374375.156,6677244.904), Point(374567.632, 6677255.6)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-     VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
+    VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -609,33 +609,36 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  //TODO change the ignore statement
-  ignore("Copy existing masstransitstop if the new distance is greater than 50 meters"){
+  test("Update existing masstransitstop if the new distance is greater than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      val oldAssetId = service.create(NewMassTransitStop(0, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
-      oldAsset should be (Some(oldAssetId, vvhRoadLink.municipalityCode, null, null))
-      /*
-      val newAssetId = service.copy(oldAssetId, NewMassTransitStop(0, 0, 51, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $newAssetId""".as[(Long, Int, String, String)].firstOption
-      newAsset should be (Some(newAssetId, vvhRoadLink.municipalityCode, null, null))
+      when(mockVVHClient.fetchVVHRoadlink(linkId))
+        .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry, municipalityCode, Some(Municipality))
+      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
+      oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(oldAssetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  _ => Unit).id
+
+      val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
+      newAsset should be (Some(updatedAssetId, municipalityCode, null, null))
 
       val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
       expired should be(Some(true))
-      */
     }
   }
 
-  //TODO change the ignore statement
-  ignore("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
+  test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
@@ -643,14 +646,19 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      val assetId = service.create(NewMassTransitStop(0, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
-      asset should be (Some(assetId, vvhRoadLink.municipalityCode, null, null))
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      intercept[IllegalArgumentException]{
-        //service.copy(assetId, NewMassTransitStop(50, 0, 0, 0, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      }
+      when(mockVVHClient.fetchVVHRoadlink(linkId))
+        .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry , municipalityCode, Some(Municipality))
+      val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
+      asset should be (Some(assetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(assetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  _ => Unit).id
+      updatedAssetId should be(assetId)
 
       val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
       expired should be(Some(false))

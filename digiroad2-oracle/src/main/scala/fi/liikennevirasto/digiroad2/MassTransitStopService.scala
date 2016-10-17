@@ -390,9 +390,10 @@ trait MassTransitStopService extends PointAssetOperations {
           //Expire the old asset
           massTransitStopDao.expireMassTransitStop(username, asset.id)
 
-          val mergedProperties = asset.propertyData.
+          val mergedProperties = (asset.propertyData.
             filterNot(property => properties.exists(_.publicId == property.publicId)).
-            map(property => SimpleProperty(property.publicId, property.values)) ++ properties
+            map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
+            filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get), mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
