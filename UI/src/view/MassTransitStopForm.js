@@ -178,7 +178,9 @@
         var model = selectedMassTransitStopModel;
         var render = function() {
           var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
-          return $(streetViewTemplate({
+          var heading= (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90);
+          return $(streetViewTemplates(wgs84[0],wgs84[1],heading)(
+            {
             wgs84X: wgs84[0],
             wgs84Y: wgs84[1],
             heading: (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90)
@@ -560,11 +562,14 @@
         return assetForm;
       };
 
+function streetViewTemplates(longi,lati,heading) {
       var streetViewTemplate  = _.template(
           '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
-          '<img alt="Google StreetView-n&auml;kym&auml;" src="//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=<%= wgs84Y %>' +
-          ', <%= wgs84X %>&fov=110&heading=<%= heading %>&pitch=-10&sensor=false">' +
+          '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
           '</a>');
+  backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
+  return streetViewTemplate;
+      }
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
         '<div class="formLabels"><%= localizedName %></div>' +
