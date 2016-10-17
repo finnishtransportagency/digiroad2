@@ -12,6 +12,7 @@ import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
@@ -281,9 +282,9 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode == 404) {
+      if (statusCode == HttpStatus.SC_NOT_FOUND) {
         return Right(null)
-      } else if (statusCode >= 400) {
+      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         return Right(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode), "content" -> response.getEntity.getContent), url))
       }
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
@@ -300,7 +301,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
      None
     } catch {
@@ -316,7 +317,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
       None
     } catch {
@@ -332,7 +333,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST)
         return Some(TierekisteriError(Map("error" -> "Request returned HTTP Error %d".format(statusCode)), url))
       None
     } catch {
