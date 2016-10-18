@@ -302,6 +302,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       name_se should have size (1)
       name_fi.head.propertyValue should be ("TierekisteriFi")
       name_se.head.propertyValue should be ("TierekisteriSe")
+      showStatusCode should be (false)
     }
   }
 
@@ -321,11 +322,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.Yes,
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -333,6 +334,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
           property.values.head.propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
+      showStatusCode should be (false)
     }
   }
 
@@ -352,11 +354,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.No,
         Equipment.RoofMaintainedByAdvertiser -> Existence.No
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
@@ -364,6 +366,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
           property.values.head.propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
+      showStatusCode should be (false)
     }
   }
 
@@ -383,11 +386,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.Unknown,
         Equipment.RoofMaintainedByAdvertiser -> Existence.Unknown
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
-        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
       )
 
-      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
