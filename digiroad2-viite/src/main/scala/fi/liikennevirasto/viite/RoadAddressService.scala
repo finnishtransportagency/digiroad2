@@ -4,14 +4,16 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
+import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.collection.mutable.ListBuffer
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
@@ -32,7 +34,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
 
-  class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
+  class Contains(r: Range) {
+    def unapply(i: Int): Boolean = r contains i
+  }
 
   /**
     * Get calibration points for road not in a project
@@ -75,7 +79,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
     val missingLinkIds = linkIds -- addresses.keySet
-    val missedRL  = withDynTransaction {
+    val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
 
@@ -94,6 +98,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   /**
     * Returns missing road addresses for links that did not already exist in database
+    *
     * @param roadNumberLimits
     * @param municipality
     * @return
@@ -104,7 +109,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val addresses = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
 
     val missingLinkIds = linkIds -- addresses.keySet
-    val missedRL  = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
+    val missedRL = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
 
     val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
@@ -118,7 +123,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
+    roadAddrSeq.map(ra => {
+      RoadAddressLinkBuilder.build(rl, ra)
+    }).filter(_.length > 0.0) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
   }
 
@@ -135,7 +142,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
     val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse=true).groupBy(_.linkId)
+      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse = true).groupBy(_.linkId)
     }
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.flatMap { rl =>
@@ -160,7 +167,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             else
               false
         })
-        sorted.zip(sorted.tail).map{
+        sorted.zip(sorted.tail).map {
           case (st1, st2) =>
             st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
         }
@@ -214,26 +221,155 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   //TODO: Priority order for anomalies. Currently this is unused
-  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Anomaly = {
+  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long): Anomaly = {
     //roadlink dont have road address
     if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
       return Anomaly.NoAddressGiven
     }
     //road address do not cover the whole length of the link
     //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
-    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
-    {
+    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3 - x._2)).sum > 0) {
       return Anomaly.NotFullyCovered
     }
     //road address having road parts that dont matching
-    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
-    {
+    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty) {
       return Anomaly.Illogical
     }
     Anomaly.None
   }
 
+  /**
+    * Method that coordinates the cycle for finding and marking the Floating Road Addresses
+    *
+    * @param batchSize The amount of road addresses to be pulled each time
+    */
+  def markFloatingRoadAddresses(batchSize: Long): Unit = {
+    var roadAddressAmount: Long = 0
+    var nonProcessedRoadAddresses = ListBuffer[Long]()
+    withDynTransaction {
+      roadAddressAmount = RoadAddressDAO.getRoadAddressAmmount()
+    }
+    var stopCondition: Long = 0
+    var lastProcessedId: Long = 0
+    var endIndex = batchSize
+    if (endIndex >= roadAddressAmount){
+      endIndex = roadAddressAmount
+    }
+    while(stopCondition == 0) {
+      //Begin the processing loop
+
+      //Fetch the roadAddresses
+      println(s"\nProcessing ${endIndex}/${roadAddressAmount} road addresses at time : ${DateTime.now()}")
+      var roadAddressList: List[RoadAddress] = List[RoadAddress]()
+      withDynTransaction {
+        roadAddressList = RoadAddressDAO.getAllRoadAddressesByRange(lastProcessedId, batchSize)
+      }
+
+      //Fetch the associated roadLinks
+      println(s"\nFetching the road links associated to the road addresses at time : ${DateTime.now()}")
+      var roadLinkList: Seq[VVHRoadlink] = Seq[VVHRoadlink]()
+      withDynTransaction {
+        roadLinkList = roadLinkService.fetchVVHRoadlinks(roadAddressList.map(_.linkId).toSet)
+      }
+
+      println(s"\nDeliberating if the road addresses are floating or not at time : ${DateTime.now()}")
+      roadAddressList.foreach(ra => {
+        try {
+          processFloatingRoadAddress(ra, roadLinkList)
+          lastProcessedId = ra.id
+        } catch {
+            case e: Exception => {
+              nonProcessedRoadAddresses += ra.id
+            }
+        }
+      })
+      //Update the variables for the next loop
+      if (endIndex == roadAddressAmount) {
+        stopCondition = 1
+      } else if(endIndex + batchSize > roadAddressAmount){
+        endIndex = roadAddressAmount
+      } else {
+        endIndex = endIndex + batchSize
+      }
+    }
+    //Check if the there were any road addresses that were not processed, if there are print a warning with the ID's of them.
+    val nonProcessedRoadAddressString = nonProcessedRoadAddresses.toList
+    if(!nonProcessedRoadAddressString.isEmpty){
+      val nonProcessedString = s"\nThe id's of the following road addresses were not processed: "
+      nonProcessedRoadAddressString.foreach(ra =>{
+        nonProcessedString + ra + ", "
+      })
+      println(nonProcessedString.stripSuffix(", "))
+    }
+  }
+
+  /**
+    * Main processing part of each road address, deliberates if that road address is a floating one based on the inexistence of roadlinks for that road address linkId.
+    *
+    * @param selectedRoadAddress The road address to be analyzed
+    * @param roadLinkList The list of the roadlinks related to that road address
+    */
+  private def processFloatingRoadAddress(selectedRoadAddress: RoadAddress, roadLinkList: Seq[VVHRoadlink]) = {
+    //Get the roadLinks with the same LinkId
+    val roadLinks = roadLinkList.filter(_.linkId == selectedRoadAddress.linkId)
+    //If there is no roadLink for the LinkId in the road address then we mark said road address as "floating"
+    if (roadLinks.isEmpty) {
+      //Mark the road address as floating (FLOATING = 1)
+      withDynTransaction {
+        RoadAddressDAO.changeRoadAddressFloating(1, selectedRoadAddress.id)
+      }
+    } else {
+      var nonProcessedRoadLinks = ListBuffer[Long]()
+      roadLinks.foreach(selectedRoadLink => {
+        try {
+          processFloatingRoadLinks(selectedRoadAddress, selectedRoadLink)
+        } catch {
+          case e: Exception => {
+            nonProcessedRoadLinks += selectedRoadLink.linkId
+          }
+        }
+
+      })
+
+      //Check if the there were any road links that were not processed, if there are print a warning with the ID's of them.
+      val nonProcessedRoadLinksString = nonProcessedRoadLinks.toList
+      if(!nonProcessedRoadLinksString.isEmpty){
+        val nonProcessedString = s"\nThe LinkId's of the following road links related to the road address: ${selectedRoadAddress.id} were not processed: "
+        nonProcessedRoadLinksString.foreach(ra =>{
+          nonProcessedString + ra + ", "
+        })
+        println(nonProcessedString.stripSuffix(", "))
+      }
+
+    }
+  }
+
+  /**
+    * Main processing part for the road links related to a road address, the relationship between the two
+    * is formed by validating that the LinkId of the road address is the same for the Link Id of the road link.
+    * This rules is to be processed only if there are road links for the road address.
+    *
+    * @param selectedRoadAddress The selected road address
+    * @param selectedRoadLink The selected road link
+    */
+  private def processFloatingRoadLinks(selectedRoadAddress: RoadAddress, selectedRoadLink: VVHRoadlink ) ={
+    //If there is we need to check if the length of the roadlink is < than the startM value of the roadAddress, if it is not
+    if (selectedRoadAddress.startMValue > selectedRoadLink.geometry.size) {
+      //Mark the road address as floating (FLOATING = 1)
+      withDynTransaction {
+        RoadAddressDAO.changeRoadAddressFloating(1, selectedRoadAddress.id)
+      }
+    } else {
+      //Mark the road address as not floating (FLOATING = 0)
+      withDynTransaction {
+        RoadAddressDAO.changeRoadAddressFloating(0, selectedRoadAddress.id)
+      }
+    }
+  }
+
 }
+
+
 
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"

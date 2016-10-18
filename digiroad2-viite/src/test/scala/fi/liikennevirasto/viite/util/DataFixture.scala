@@ -5,6 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
+import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.process.{ContinuityChecker, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
@@ -72,6 +73,24 @@ object DataFixture {
     println()
   }
 
+  def findFloatingRoadAddresses(): Unit = {
+    println(s"\nFinding road address that are floating at time: ${DateTime.now()}")
+    val batchSize = 100
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+    try {
+      roadAddressService.markFloatingRoadAddresses(batchSize)
+      println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
+      println()
+    } catch {
+      case e: Exception => {
+        println(s"\nException ${e.getMessage} triggered by ${e.getCause.toString}" )
+      }
+    }
+
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -90,13 +109,15 @@ object DataFixture {
     }
 
     args.headOption match {
+      case Some ("find_floating_road_addresses") =>
+        findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing")
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | find_floating_road_addresses")
     }
   }
 }

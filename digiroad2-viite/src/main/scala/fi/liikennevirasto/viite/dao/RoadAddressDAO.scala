@@ -344,6 +344,54 @@ object RoadAddressDAO {
        and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Double, Double)].list
   }
 
+  def getAllRoadAddressesByRange(startId: Long, returnAmmount: Long) = {
+      val query =
+        s"""
+       Select * From (
+       select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
+       ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+       pos.side_code,
+       ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+       from road_address ra inner join lrm_position pos on ra.lrm_position_id = pos.id
+       Where ra.id > ${startId}
+       Order By ra.Id asc ) Where rownum <= ${returnAmmount}
+      """
+      val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+        String, String, String, String, Int)](query).list
+      tuples.map {
+        case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+        linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
+          RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
+            Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+            startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+      }
+    }
+
+
+  /**
+    * Used to return the total ammount of road addresses (a road address is the junction between road_address table and lrm_position)
+    *
+    * @return The ammount of road addresses
+    */
+  def getRoadAddressAmmount() = {
+    sql"""
+       select count(*)
+              from road_address ra inner join lrm_position pos on ra.lrm_position_id = pos.id
+      """.as[Long].firstOption.get
+  }
+
+  /**
+    * Marks the road address identified by the supplied Id as eiher floating or not
+    *
+    * @param isFloating '0' for not floating, '1' for floating
+    * @param roadAddressId The Id of a road addresss
+    */
+  def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long) = {
+    sqlu"""
+           Update road_address ra Set ra.floating = $isFloating Where ra.id = $roadAddressId
+      """.execute
+  }
+
 
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
