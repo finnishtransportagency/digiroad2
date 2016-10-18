@@ -560,26 +560,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     mValue should be(1.0)
   }
 
-  test("expire a mass transit stop (W/O TR") {
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
-      val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      when(mockTierekisteriClient.isTREnabled).thenReturn(false)
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      val createdId = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      val massTransitStopAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $createdId""".as[(Long, Int, String, String)].firstOption
-      massTransitStopAsset should be (Some(createdId, vvhRoadLink.municipalityCode, null, null))
-      val before = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
-      service.expireMassTransitStop("testusername", createdId)
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
-      expired should be(Some(true))
-    }
-  }
-
   test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
       (stop, None)
@@ -651,7 +631,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val service = new TestMassTransitStopService(eventbus)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
       val linkId = 123l
       val municipalityCode = 91
@@ -664,7 +644,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
       asset should be (Some(assetId, municipalityCode, null, null))
 
-      val updatedAssetId = service.updateExistingById(assetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  _ => Unit).id
+      val updatedAssetId = service.updateExistingById(assetId, Some(Position(0, 50, linkId, Some(0))), Set(), "test",  _ => Unit).id
       updatedAssetId should be(assetId)
 
       val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
@@ -672,39 +652,4 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  private def withId(id: Long)(query: String): String = {
-    query + s" where a.id = $id"
-  }
-
-  test("expire a TR kept mass transit stop") {
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
-      val stop = service.fetchPointAssets(withId(300004)).head //623333
-      service.getMassTransitStopByNationalId(85755, Int => Unit).get
-      val before = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
-      before should be(Some(true))
-      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      service.expireMassTransitStop("testusername", stop.id)
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
-      expired should be(Some(true))
-    }
-  }
-
-  test("expiring a TR kept mass transit stop throws exception and successfully rolls back OTH db to original state") {
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new MassTransitStopServiceWithTierekisteri(eventbus)
-      val stop = service.fetchPointAssets(withId(300004)).head
-      service.getMassTransitStopByNationalId(85755, Int => Unit).get
-      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-      when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop])).thenThrow(new TierekisteriClientException("TR-test exception"))
-      intercept[TierekisteriClientException]
-        {
-          service.expireMassTransitStop("testusername", stop.id)
-        }
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = ${stop.id}""".as[(Boolean)].firstOption
-      expired should be(Some(false))
-    }
-  }
 }

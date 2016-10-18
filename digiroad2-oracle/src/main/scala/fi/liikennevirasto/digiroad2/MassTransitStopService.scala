@@ -390,7 +390,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
         if(assetDistance > 50){
           //Expire the old asset
-          massTransitStopDao.expireMassTransitStop(username, asset.id)
+          expireMassTransitStop(username, asset)
 
           val mergedProperties = (asset.propertyData.
             filterNot(property => properties.exists(_.publicId == property.publicId)).
@@ -679,27 +679,13 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
 //  @throws(classOf[TierekisteriClientException])
-  def expireMassTransitStop(user: String, id: Long) = {
-    val expiredate= new Date()
-    withDynTransaction {
-      val persistedStop = fetchPointAssets(withId(id)).headOption
-      if (tierekisteriClient.isTREnabled && isStoredInTierekisteri(Some(persistedStop.get))) {
-        massTransitStopDao.expireMassTransitStop(user, id)
-        val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.get.lon, persistedStop.get.lat), persistedStop.get.bearing.get)
-        val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop.get, address, Option(roadSide), Option(expiredate))
-        try
-        {
-          tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
-        } catch {
-          case e: Exception =>
-            rollBack //doesnt do anything with dyntransaction, dynsession requires to disable auto-commit
-            throw new TierekisteriClientException("TR-Exception")
-        }
-      }else if (!tierekisteriClient.isTREnabled)
-        {
-          massTransitStopDao.expireMassTransitStop(user, id)
-        }
-
+  private def expireMassTransitStop(username: String, persistedStop: PersistedMassTransitStop) = {
+    val expireDate= new Date()
+    massTransitStopDao.expireMassTransitStop(username, persistedStop.id)
+    if (tierekisteriClient.isTREnabled && isStoredInTierekisteri(Some(persistedStop))) {
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get)
+      val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), Option(expireDate))
+      tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
     }
   }
 }
