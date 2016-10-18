@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkSe
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
+import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
@@ -242,7 +243,7 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(null), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
@@ -250,6 +251,7 @@ object RoadAddressLinkBuilder {
       roadAddress.calibrationPoints._2)
 
   }
+
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
@@ -258,7 +260,7 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, 0, Discontinuity.Continuous.value,
       0, 0, "", 0.0, length, SideCode.Unknown,
@@ -289,6 +291,31 @@ object RoadAddressLinkBuilder {
     } catch {
       case e: Exception => 0
     }
+  }
+
+  private def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]) = {
+      anyValue.map(_.asInstanceOf[BigInt].toLong)
+    }
+    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
+      (a, b) match {
+        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
+          if (firstModifiedAt > secondModifiedAt)
+            Some(firstModifiedAt)
+          else
+            Some(secondModifiedAt)
+        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
+        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
+        case (None, None) => None
+      }
+    }
+    val toIso8601 = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+    val createdDate = toLong(attributes.get("CREATED_DATE"))
+    val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
+    val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
+    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
+    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
+    latestDateString
   }
 
 }
