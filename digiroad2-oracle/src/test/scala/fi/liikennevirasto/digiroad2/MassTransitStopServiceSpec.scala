@@ -283,6 +283,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
           property.values.head.propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
+      val name_fi = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameFiPublicId).get.values
+      val name_se = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameSePublicId).get.values
+      name_fi should have size (1)
+      name_se should have size (1)
+      name_fi.head.propertyValue should be ("TierekisteriFi")
+      name_se.head.propertyValue should be ("TierekisteriSe")
     }
   }
 
@@ -708,7 +714,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       propertyValues.nonEmpty should be (true)
       propertyValues.forall(x => x._2.nonEmpty) should be (true)
       propertyValues.forall(x => x._1 != "") should be (true)
-      propertyValues.foreach(println)
     }
   }
 }

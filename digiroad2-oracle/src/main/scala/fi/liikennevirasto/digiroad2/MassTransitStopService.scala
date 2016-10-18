@@ -154,18 +154,15 @@ trait MassTransitStopService extends PointAssetOperations {
       //In the future if we need to override some property just add here the operation
     )
 
-    // TODO: Cleanup, get rid of var; use fold?
-    persistedMassTransitStop match {
-      case Some(masstransitStop) =>
-        Some(masstransitStop.copy(propertyData = masstransitStop.propertyData.map { property =>
-          var overriddenProperty = property
-          overridePropertyValueOperations.foreach { operation =>
-            overriddenProperty = operation(tierekisteriStop, overriddenProperty)
+    persistedMassTransitStop.map(massTransitStop =>
+      massTransitStop.copy(propertyData = massTransitStop.propertyData.map {
+        property =>
+          overridePropertyValueOperations.foldLeft(property){ case (prop, operation) =>
+            operation(tierekisteriStop, prop)
           }
-          overriddenProperty
-        }))
-      case massTransitStop => massTransitStop
-    }
+        }
+      )
+    )
   }
 
   /**
