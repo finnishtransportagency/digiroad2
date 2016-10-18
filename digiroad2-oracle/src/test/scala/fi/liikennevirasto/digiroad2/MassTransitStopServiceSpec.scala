@@ -286,6 +286,99 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Tierekisteri master overrides set values set to Yes"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Yes,
+        Equipment.CarParkForTakingPassengers -> Existence.Yes,
+        Equipment.ElectronicTimetables -> Existence.Yes,
+        Equipment.RaisedBusStop -> Existence.Yes,
+        Equipment.Lighting -> Existence.Yes,
+        Equipment.Roof -> Existence.Yes,
+        Equipment.Seat -> Existence.Yes,
+        Equipment.Timetable -> Existence.Yes,
+        Equipment.TrashBin -> Existence.Yes,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      )
+
+      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+    }
+  }
+
+  test("Tierekisteri master overrides set values set to No"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.No,
+        Equipment.CarParkForTakingPassengers -> Existence.No,
+        Equipment.ElectronicTimetables -> Existence.No,
+        Equipment.RaisedBusStop -> Existence.No,
+        Equipment.Lighting -> Existence.No,
+        Equipment.Roof -> Existence.No,
+        Equipment.Seat -> Existence.No,
+        Equipment.Timetable -> Existence.No,
+        Equipment.TrashBin -> Existence.No,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.No
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      )
+
+      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+    }
+  }
+
+  test("Tierekisteri master overrides set values set to Unknown"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Unknown,
+        Equipment.CarParkForTakingPassengers -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Unknown,
+        Equipment.RaisedBusStop -> Existence.Unknown,
+        Equipment.Lighting -> Existence.Unknown,
+        Equipment.Roof -> Existence.Unknown,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.Timetable -> Existence.Unknown,
+        Equipment.TrashBin -> Existence.Unknown,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Unknown
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
+      )
+
+      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+    }
+  }
+
   test("Get properties") {
     runWithRollback {
       val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalId(2, Int => Unit).map { stop =>
@@ -606,6 +699,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       opTo shouldNot be (None)
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
+    }
+  }
+
+  test ("Get enumerated property values") {
+    runWithRollback {
+      val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
+      propertyValues.nonEmpty should be (true)
+      propertyValues.forall(x => x._2.nonEmpty) should be (true)
+      propertyValues.forall(x => x._1 != "") should be (true)
+      propertyValues.foreach(println)
     }
   }
 }
