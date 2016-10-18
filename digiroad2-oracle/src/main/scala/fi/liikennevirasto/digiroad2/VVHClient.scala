@@ -517,7 +517,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "CREATED_DATE",
       "LAST_EDITED_DATE",
       "SURFACETYPE").contains(x)
-    }.filter { case (key, value) =>
+    }.filter { case (_, value) =>
       value != null
     }
   }
