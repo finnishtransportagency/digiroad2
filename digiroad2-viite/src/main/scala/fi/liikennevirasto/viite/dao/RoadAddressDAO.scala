@@ -13,6 +13,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
@@ -71,9 +72,13 @@ object CalibrationCode {
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: DateTime, linkId: Long,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: Option[DateTime], linkId: Long,
                        startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
                       )
+
+case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
+                              roadNumber: Option[Long], roadPartNumber: Option[Long],
+                              startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
 
 object RoadAddressDAO {
 
@@ -109,6 +114,17 @@ object RoadAddressDAO {
     }
   }
 
+  def optDateTimeParse(string: String): Option[DateTime] = {
+    try {
+      if (string==null || string == "")
+        None
+      else
+        Some(DateTime.parse(string, formatter))
+    } catch {
+      case ex: Exception => return None
+    }
+  }
+
   def fetchByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
     if (linkIds.size > 1000) {
       return fetchByLinkIdMassQuery(linkIds)
@@ -134,7 +150,7 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
 
@@ -143,7 +159,7 @@ object RoadAddressDAO {
   def fetchPartsByRoadNumbers(roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
     val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
       .mkString("(", ") OR (", ")")
-      //.foldLeft("")((c, r) => c + ") OR (" + r)
+    //.foldLeft("")((c, r) => c + ") OR (" + r)
     val where = roadNumbers.isEmpty match {
       case true => return List()
       case false => s""" where track_code in (0,1) AND $filter"""
@@ -168,7 +184,7 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
 
@@ -193,7 +209,7 @@ object RoadAddressDAO {
           case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
           linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
             RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-              Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+              Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
               startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
         }
     }
@@ -217,7 +233,7 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), dateTimeParse(endDate), linkId,
+          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
           startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
   }
@@ -262,6 +278,84 @@ object RoadAddressDAO {
             end_date= ${roadAddress.endDate}
         WHERE id = ${roadAddress.id}""".execute
   }
+
+
+  def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code)
+           values (${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
+           ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber},
+           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, ${missingRoadAddress.anomaly.value})
+           """.execute
+  }
+
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code)
+           """.execute
+  }
+
+  def getAllMissingRoadAddresses = {
+    sql"""SELECT link_id, start_addr_m, end_addr_m
+            FROM missing_road_address""".as[(Long, Long, Long)].list
+  }
+
+  def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    if (linkIds.size > 500) {
+      getMissingByLinkIdMassQuery(linkIds)
+    } else {
+      val where = linkIds.isEmpty match {
+        case true => return List()
+        case false => s""" where link_id in (${linkIds.mkString(",")})"""
+      }
+      val query =
+        s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
+            FROM missing_road_address $where"""
+      Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
+        case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
+          MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+      }
+    }
+  }
+
+  def getMissingByLinkIdMassQuery(linkIds: Set[Long]): List[MissingRoadAddress] = {
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val query =
+          s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
+            FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
+        Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
+          case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
+            MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+        }
+    }
+  }
+
+  def getLrmPositionByLinkId(linkId: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
+  }
+
+  def getLrmPositionMeasures(linkId: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id
+       and (lrm.start_measure != rda.start_addr_m or lrm.end_measure != rda.end_addr_m) and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
+  }
+
+  def getLrmPositionRoadParts(linkId: Long, roadPart: Long) = {
+    sql"""
+       select lrm.id, lrm.start_measure, lrm.end_measure
+       from lrm_position lrm, road_address rda
+       where lrm.id = rda.lrm_position_id
+       and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Double, Double)].list
+  }
+
+
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 

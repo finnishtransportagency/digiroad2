@@ -5,6 +5,7 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
@@ -67,6 +68,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
+
+  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
+    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -705,6 +716,103 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       opTo shouldNot be (None)
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
+    }
+  }
+
+  test("delete a TR kept mass transit stop") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
+      service.deleteAllMassTransitStopData(stop.id)
+      verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
+      service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(true)
+    }
+  }
+
+  test("delete fails if a TR kept mass transit stop is not found") {
+    val eventbus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new TestMassTransitStopServiceWithDynTransaction(eventbus)
+    val stop = service.getMassTransitStopByNationalId(85755, Int => Unit).get
+    when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
+    intercept[TierekisteriClientException] {
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      service.deleteAllMassTransitStopData(stop.id)
+    }
+    service.getMassTransitStopByNationalId(85755, Int => Unit).isEmpty should be(false)
+  }
+
+  test("Updating the mass transit stop from others -> ELY should create a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]],
+        any[Option[Boolean]])).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      val service = RollbackMassTransitStopServiceWithTierekisteri
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get
+      val newAdmin = admin.copy(values = List(PropertyValue("2")))
+      val types = props.find(_.publicId == "pysakin_tyyppi").get
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      admin.values.exists(_.propertyValue == "1") should be (true)
+      types.values.exists(_.propertyValue == "2") should be (true)
+      types.values.exists(_.propertyValue == "3") should be (false)
+      val newStop = stop.copy(stopTypes = Seq(2, 3),
+        propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
+          Seq(newAdmin, newTypes))
+      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop])
+    }
+  }
+
+  test("Saving a mass transit stop should not create a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
+    }
+  }
+  test("Updating the mass transit stop from ELY -> others should expire a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]],
+        any[Option[Boolean]])).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      val service = RollbackMassTransitStopServiceWithTierekisteri
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get.copy(values = List(PropertyValue("1")))
+      val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
+      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop])
     }
   }
 
