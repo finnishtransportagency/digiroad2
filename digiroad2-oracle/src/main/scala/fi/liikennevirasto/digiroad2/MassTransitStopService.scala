@@ -180,6 +180,14 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  def wasStoredInTierekisteri(properties: Seq[SimpleProperty]): Boolean ={
+    val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
+    val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
+    val stopType = properties.find(pro => pro.publicId == MassTransitStopTypePublicId)
+    val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+    !isVirtualStop && elyAdministrated
+  }
+
   def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
@@ -378,12 +386,16 @@ trait MassTransitStopService extends PointAssetOperations {
         .map{ x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
 
-      val id = persistedStop.get.id
+      val asset = persistedStop.getOrElse(throw new NoSuchElementException)
+
+      val mergedProperties = (asset.propertyData.
+        filterNot(property => properties.exists(_.publicId == property.publicId)).
+        map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
+        filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
 
       //Expire existing asset and create a new one
-      if(optionalPosition.isDefined && isStoredInTierekisteri(persistedStop)){
+      if(optionalPosition.isDefined && wasStoredInTierekisteri(mergedProperties)){
         val position = optionalPosition.get
-        val asset = persistedStop.getOrElse(throw new NoSuchElementException)
         val assetPoint = Point(asset.lon, asset.lat)
         val newPoint = Point(position.lon, position.lat)
         val assetDistance = GeometryUtils.distance(assetPoint, newPoint)
@@ -392,21 +404,16 @@ trait MassTransitStopService extends PointAssetOperations {
           //Expire the old asset
           expireMassTransitStop(username, asset)
 
-          val mergedProperties = (asset.propertyData.
-            filterNot(property => properties.exists(_.publicId == property.publicId)).
-            map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
-            filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
-
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get), mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
         }
         else
         {
-          update(persistedStop.get, optionalPosition, username, properties.toSeq, roadLink.get)
+          update(asset, optionalPosition, username, properties.toSeq, roadLink.get)
         }
       }
       else{
-        update(persistedStop.get, optionalPosition, username, properties.toSeq, roadLink.get)
+        update(asset, optionalPosition, username, properties.toSeq, roadLink.get)
       }
     }
   }
@@ -682,7 +689,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def expireMassTransitStop(username: String, persistedStop: PersistedMassTransitStop) = {
     val expireDate= new Date()
     massTransitStopDao.expireMassTransitStop(username, persistedStop.id)
-    if (tierekisteriClient.isTREnabled && isStoredInTierekisteri(Some(persistedStop))) {
+    if (tierekisteriClient.isTREnabled) {
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get)
       val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), Option(expireDate))
       tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)

@@ -5,6 +5,7 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
@@ -77,6 +78,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
+
+  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
+    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def vvhClient: VVHClient = mockVVHClient
@@ -652,4 +663,27 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Should rollback bus stop if tierekisteri throw exception") {
+    val assetId = 300000
+    val geom = Point(374550, 6677350)
+    val pos = Position(geom.x, geom.y, 131573L, Some(85))
+    val properties = List(
+      SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+      SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+      SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+
+    val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus)
+    when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+    when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop])).thenThrow(new TierekisteriClientException("TR-test exception"))
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+      (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
+    )
+
+    intercept[TierekisteriClientException] {
+      service.updateExistingById(300000, Some(pos), properties.toSet, "user", _ => Unit)
+    }
+
+    val asset = service.getById(300000).get
+    asset.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+  }
 }
