@@ -81,6 +81,7 @@ object Existence {
 sealed trait Equipment {
   def value: String
   def publicId: String
+  def isMaster: Boolean
 }
 object Equipment {
   val values = Set[Equipment](Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
@@ -93,17 +94,17 @@ object Equipment {
     values.find(_.publicId == value).getOrElse(Unknown)
   }
 
-  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
-  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; }
-  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
-  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; }
-  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
-  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; }
-  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
-  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
-  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
-  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; }
-  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
+  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; def isMaster = true; }
+  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; def isMaster = true; }
+  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; def isMaster = true; }
+  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; def isMaster = true; }
+  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; def isMaster = true; }
+  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; def isMaster = false; }
+  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; def isMaster = false; }
+  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; def isMaster = false; }
+  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; def isMaster = false; }
+  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; def isMaster = false; }
+  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; def isMaster = false; }
 }
 
 /**
