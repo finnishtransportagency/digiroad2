@@ -272,6 +272,9 @@ object RoadAddressLinkBuilder {
   }
 
   private def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]) = {
+      anyValue.map(_.asInstanceOf[BigInt].toLong)
+    }
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
       (a, b) match {
         case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
@@ -284,11 +287,10 @@ object RoadAddressLinkBuilder {
         case (None, None) => None
       }
     }
-
     val toIso8601 = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
-    val createdDate = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    val createdDate = toLong(attributes.get("CREATED_DATE"))
+    val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
+    val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
     val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
     latestDateString

@@ -518,7 +518,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "LAST_EDITED_DATE",
       "SURFACETYPE").contains(x)
     }.filter { case (key, value) =>
-      value != null || key == "LAST_EDITED_DATE" || key == "GEOMETRY_EDITED_DATE"
+      value != null
     }
   }
 
