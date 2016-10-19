@@ -219,7 +219,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = true): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
@@ -385,7 +385,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by RoadAddressService.getMissingRoadAddresses
     */
   def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
-    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, false, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
