@@ -112,7 +112,7 @@ object Digiroad2Context {
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
 
-  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressUpdater")
+  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
