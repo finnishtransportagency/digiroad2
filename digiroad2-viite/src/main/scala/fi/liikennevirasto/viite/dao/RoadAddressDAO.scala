@@ -418,6 +418,7 @@ object RoadAddressDAO {
        select distinct road_number
               from road_address ra
               where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              order by road_number
       """.as[Long].list
   }
 

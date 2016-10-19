@@ -74,7 +74,7 @@ object DataFixture {
   }
 
   def findFloatingRoadAddresses(): Unit = {
-    println(s"\nFinding road address that are floating at time: ${DateTime.now()}")
+    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     OracleDatabase.withDynTransaction {

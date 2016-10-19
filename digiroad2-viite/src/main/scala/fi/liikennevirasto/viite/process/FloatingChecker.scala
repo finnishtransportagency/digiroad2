@@ -19,12 +19,14 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   }
 
   def checkRoad(roadNumber: Long) = {
+    println(s"Checking road: $roadNumber")
     val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
     roadPartNumbers.flatMap(checkRoadPart(roadNumber))
   }
 
   def checkRoadNetwork() = {
     val roadNumbers = RoadAddressDAO.getValidRoadNumbers
+    println(s"Got ${roadNumbers.size} roads")
     roadNumbers.flatMap(checkRoad)
   }
 }

@@ -59,6 +59,13 @@ object RoadAddressFiller {
     (adjustments._1, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ adjustments._2))
   }
 
+  private def dropShort(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
+    val (droppedSegments, passThroughSegments) = segments.partition (s => s.length < MinAllowedRoadAddressLength)
+    val droppedSegmentIds = droppedSegments.map(_.id).toSet
+
+    (passThroughSegments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ droppedSegmentIds))
+  }
+
   def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLink, adjustedSegments: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
     if (adjustedSegments.isEmpty)
       generateUnknownLink(roadLink)
@@ -85,7 +92,8 @@ object RoadAddressFiller {
     val fillOperations: Seq[(RoadLink, Seq[RoadAddressLink], AddressChangeSet) => (Seq[RoadAddressLink], AddressChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       capToGeometry,
-      extendToGeometry
+      extendToGeometry,
+      dropShort
     )
     val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
 

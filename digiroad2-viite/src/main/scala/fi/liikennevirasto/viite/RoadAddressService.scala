@@ -127,7 +127,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     roadAddrSeq.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
-    }).filter(_.length > 0.0) ++
+    }) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
   }
 
