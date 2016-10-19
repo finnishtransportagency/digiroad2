@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
@@ -12,8 +12,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
-
-import scala.collection.mutable.ListBuffer
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
