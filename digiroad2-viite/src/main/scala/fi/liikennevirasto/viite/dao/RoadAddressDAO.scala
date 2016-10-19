@@ -73,7 +73,8 @@ case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: 
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: Option[DateTime], linkId: Long,
-                       startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None)
+                       startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None),
+                       floating: Boolean = false
                       )
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
