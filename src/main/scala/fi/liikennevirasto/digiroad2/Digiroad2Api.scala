@@ -7,8 +7,10 @@ import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication,
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.util.VKMClientException
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra._
@@ -169,7 +171,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
     val nationalId = params("nationalId").toLong
-    val massTransitStop = massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+    val massTransitStop = massTransitStopReturned._1.map { stop =>
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -181,7 +184,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData)
     }
-    massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+
+    if (massTransitStopReturned._2) {
+      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found")))
+    } else {
+      massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+    }
   }
 
   get("/massTransitStops/floating") {
@@ -222,6 +230,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
+      case e: VKMClientException =>
+        logger.warn("VKM error: " + e.getMessage)
+        PreconditionFailed("Unable to find target road link")
     }
   }
 
@@ -275,8 +286,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
-    val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
-    massTransitStopService.getById(id)
+    try {
+      val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
+      massTransitStopService.getById(id)
+    } catch {
+      case e: VKMClientException =>
+        logger.warn(e.getMessage)
+        PreconditionFailed("Unable to find target road link")
+    }
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
@@ -391,7 +408,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   object TierekisteriInternalServerError {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(ResponseStatus(555, reason), body, headers)
+      ActionResult(ResponseStatus(HttpStatus.SC_FAILED_DEPENDENCY, reason), body, headers)
+  }
+
+  object TierekisteriNotFoundWarning {
+    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
+      ActionResult(ResponseStatus(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, reason), body, headers)
   }
 
   error {
