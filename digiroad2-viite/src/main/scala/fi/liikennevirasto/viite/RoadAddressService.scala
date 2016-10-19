@@ -93,6 +93,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
     filledTopology
   }
@@ -231,6 +232,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       return Anomaly.Illogical
     }
     Anomaly.None
+  }
+
+  def setRoadAddressFloating(ids: Set[Long]): Unit = {
+    withDynTransaction {
+      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id))
+    }
   }
 
 }

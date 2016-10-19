@@ -73,6 +73,13 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
+class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case w: Set[any] => roadAddressService.setRoadAddressFloating(w.asInstanceOf[Set[Long]])
+    case _                    => println("roadAddressUpdater: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -104,6 +111,9 @@ object Digiroad2Context {
 
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
+
+  val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressUpdater")
+  eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus)

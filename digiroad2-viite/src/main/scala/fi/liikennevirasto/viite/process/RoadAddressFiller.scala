@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 object RoadAddressFiller {
   case class LRMValueAdjustment(id: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
-                               droppedAddressIds: Set[Long],
+                               toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],
                                missingRoadAddresses: Seq[MissingRoadAddress])
   private val MaxAllowedMValueError = 0.001
@@ -43,7 +43,7 @@ object RoadAddressFiller {
     val (overflowingSegments, passThroughSegments) = segments.partition(_.startMValue + Epsilon > linkLength)
     val droppedSegmentIds = overflowingSegments.map (s => s.id)
 
-    (passThroughSegments, changeSet.copy(droppedAddressIds = changeSet.droppedAddressIds ++ droppedSegmentIds))
+    (passThroughSegments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ droppedSegmentIds))
   }
 
   private def extendToGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
@@ -92,7 +92,7 @@ object RoadAddressFiller {
     roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
       val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)
-      val validSegments = segments.filterNot { segment => changeSet.droppedAddressIds.contains(segment.id) }
+      val validSegments = segments.filterNot { segment => changeSet.toFloatingAddressIds.contains(segment.id) }
 
       val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
