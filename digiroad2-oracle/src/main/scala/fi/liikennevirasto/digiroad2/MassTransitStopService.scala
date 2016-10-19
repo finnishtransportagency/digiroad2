@@ -533,28 +533,6 @@ trait MassTransitStopService extends PointAssetOperations {
       .get
   }
 
-  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
-    if (operation != Operation.Noop) {
-      val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
-      val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
-        case Some(str) => Try(str.toString.toInt).toOption
-        case _ => None
-      }
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
-
-      val expire = operation == Operation.Expire
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire)
-
-      operation match {
-        case Create => tierekisteriClient.createMassTransitStop(newTierekisteriMassTransitStop)
-        case Update => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop)
-        case Expire => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop)
-        case Remove => tierekisteriClient.deleteMassTransitStop(newTierekisteriMassTransitStop.liviId)
-        case Noop =>
-      }
-    }
-  }
-
   def mandatoryProperties(): Map[String, String] = {
     val requiredProperties = withDynSession {
       sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
@@ -628,6 +606,28 @@ trait MassTransitStopService extends PointAssetOperations {
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) = {
       r.nextDateOption().map(new LocalDate(_))
+    }
+  }
+
+  private def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
+    if (operation != Operation.Noop) {
+      val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
+      val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
+        case Some(str) => Try(str.toString.toInt).toOption
+        case _ => None
+      }
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
+
+      val expire = operation == Operation.Expire
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire)
+
+      operation match {
+        case Create => tierekisteriClient.createMassTransitStop(newTierekisteriMassTransitStop)
+        case Update => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop)
+        case Expire => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop)
+        case Remove => tierekisteriClient.deleteMassTransitStop(newTierekisteriMassTransitStop.liviId)
+        case Noop =>
+      }
     }
   }
 
