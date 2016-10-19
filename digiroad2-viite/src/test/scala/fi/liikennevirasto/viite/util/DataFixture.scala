@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkSer
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.process.{ContinuityChecker, LinkRoadAddressCalculator}
+import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
@@ -75,20 +75,16 @@ object DataFixture {
 
   def findFloatingRoadAddresses(): Unit = {
     println(s"\nFinding road address that are floating at time: ${DateTime.now()}")
-    val batchSize = 100
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-    try {
-      roadAddressService.markFloatingRoadAddresses(batchSize)
-      println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
-      println()
-    } catch {
-      case e: Exception => {
-        println(s"\nException ${e.getMessage} triggered by ${e.getCause.toString}" )
-      }
+    OracleDatabase.withDynTransaction {
+      val checker = new FloatingChecker(roadLinkService)
+      val roads = checker.checkRoadNetwork()
+      println(s"${roads.size} segment(s) found")
+      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id))
     }
-
+    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
+    println()
   }
 
   def main(args:Array[String]) : Unit = {
