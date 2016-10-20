@@ -609,13 +609,14 @@ function streetViewTemplates(longi,lati,heading) {
         }
 
         var properties = selectedMassTransitStopModel.getProperties();
-        var condition = false;
 
-        for (var i = 0; i < properties.length; i++){
-          if(properties[i].values[0] !== undefined) {
-            condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-          }
-        }
+        var owner = _.find(properties, function(property) {
+          return property.publicId === "tietojen_yllapitaja"; });
+
+        var condition = typeof owner != 'undefined' &&
+          typeof owner.values != 'undefined' &&  owner.values > 0 && _.contains(_.map(owner.values, function (value) {
+          return value.propertyValue;
+        }), "2");
 
          if(isBusStopMaintainer === true && condition) {
            eventbus.trigger('application:controledTR',condition);
