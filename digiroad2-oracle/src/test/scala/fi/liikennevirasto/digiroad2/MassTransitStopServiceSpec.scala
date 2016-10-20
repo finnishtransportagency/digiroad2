@@ -75,16 +75,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
-    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
-    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
-    override def vvhClient: VVHClient = mockVVHClient
-    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
-    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val tierekisteriEnabled = true
-    override val geometryTransform: GeometryTransform = mockGeometryTransform
-  }
-
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
