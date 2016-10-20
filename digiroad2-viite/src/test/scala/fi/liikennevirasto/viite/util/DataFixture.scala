@@ -5,7 +5,8 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
-import fi.liikennevirasto.viite.process.{ContinuityChecker, LinkRoadAddressCalculator}
+import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
@@ -72,6 +73,20 @@ object DataFixture {
     println()
   }
 
+  def findFloatingRoadAddresses(): Unit = {
+    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    OracleDatabase.withDynTransaction {
+      val checker = new FloatingChecker(roadLinkService)
+      val roads = checker.checkRoadNetwork()
+      println(s"${roads.size} segment(s) found")
+      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id))
+    }
+    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
+    println()
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -90,13 +105,15 @@ object DataFixture {
     }
 
     args.headOption match {
+      case Some ("find_floating_road_addresses") =>
+        findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing")
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | find_floating_road_addresses")
     }
   }
 }
