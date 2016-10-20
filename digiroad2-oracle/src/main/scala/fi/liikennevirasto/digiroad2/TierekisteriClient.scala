@@ -11,7 +11,7 @@ import org.joda.time.format.DateTimeFormat
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthreader, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods._
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -202,7 +202,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
-  private val auth = new TierekisteriAuthreader
+  private val auth = new TierekisteriAuthPropertyReader
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + id
 
