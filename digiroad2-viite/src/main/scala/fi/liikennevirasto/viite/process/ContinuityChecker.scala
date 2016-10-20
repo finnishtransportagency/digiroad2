@@ -26,8 +26,10 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val missingSegments = checkAddressesHaveNoGaps(roadAddressList)
+    // TODO: Combine these checks, maybe?
     if (checkMissingLinks)
-      checkLinksExist(roadAddressList) ++ missingSegments
+      new FloatingChecker(roadLinkService).checkRoadNetwork().map(ra =>
+        MissingLink(ra.roadNumber, ra.roadPartNumber, Some(ra.startAddrMValue), Some(ra.endAddrMValue), Some(ra.linkId)))
     else
       missingSegments
   }

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -8,10 +8,10 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkSe
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
+import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
-
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
@@ -32,7 +32,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
 
-  class Contains(r: Range) { def unapply(i: Int): Boolean = r contains i }
+  class Contains(r: Range) {
+    def unapply(i: Int): Boolean = r contains i
+  }
 
   /**
     * Get calibration points for road not in a project
@@ -76,7 +78,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
     val missingLinkIds = linkIds -- addresses.keySet
-    val missedRL  = withDynTransaction {
+    val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
 
@@ -89,12 +91,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
     filledTopology
   }
 
   /**
     * Returns missing road addresses for links that did not already exist in database
+    *
     * @param roadNumberLimits
     * @param municipality
     * @return
@@ -105,7 +109,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val addresses = RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
 
     val missingLinkIds = linkIds -- addresses.keySet
-    val missedRL  = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
+    val missedRL = RoadAddressDAO.getMissingRoadAddresses(missingLinkIds).groupBy(_.linkId)
 
     val viiteRoadLinks = roadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
@@ -119,7 +123,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {RoadAddressLinkBuilder.build(rl, ra)}).filter(_.length > 0.0) ++
+    roadAddrSeq.map(ra => {
+      RoadAddressLinkBuilder.build(rl, ra)
+    }) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
   }
 
@@ -136,7 +142,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
     val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse=true).groupBy(_.linkId)
+      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse = true).groupBy(_.linkId)
     }
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.flatMap { rl =>
@@ -155,7 +161,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             else
               ral1.startAddressM < ral2.startAddressM
         })
-        sorted.zip(sorted.tail).map{
+        sorted.zip(sorted.tail).map {
           case (st1, st2) =>
             st1.copy(geometry = Seq(st1.geometry.head, st2.geometry.head))
         }
@@ -209,26 +215,32 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   //TODO: Priority order for anomalies. Currently this is unused
-  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long) : Anomaly = {
+  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long): Anomaly = {
     //roadlink dont have road address
     if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
       return Anomaly.NoAddressGiven
     }
     //road address do not cover the whole length of the link
     //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
-    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3-x._2)).sum > 0)
-    {
+    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3 - x._2)).sum > 0) {
       return Anomaly.NotFullyCovered
     }
     //road address having road parts that dont matching
-    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty)
-    {
+    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty) {
       return Anomaly.Illogical
     }
     Anomaly.None
   }
 
+  def setRoadAddressFloating(ids: Set[Long]): Unit = {
+    withDynTransaction {
+      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id))
+    }
+  }
+
 }
+
+
 
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
@@ -242,7 +254,7 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(null), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
@@ -250,6 +262,7 @@ object RoadAddressLinkBuilder {
       roadAddress.calibrationPoints._2)
 
   }
+
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
@@ -258,7 +271,7 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, roadLink.modifiedAt, roadLink.modifiedBy,
+      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, 0, Discontinuity.Continuous.value,
       0, 0, "", 0.0, length, SideCode.Unknown,
@@ -289,6 +302,31 @@ object RoadAddressLinkBuilder {
     } catch {
       case e: Exception => 0
     }
+  }
+
+  private def extractModifiedAtVVH(attributes: Map[String, Any]): Option[String] = {
+    def toLong(anyValue: Option[Any]) = {
+      anyValue.map(_.asInstanceOf[BigInt].toLong)
+    }
+    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
+      (a, b) match {
+        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
+          if (firstModifiedAt > secondModifiedAt)
+            Some(firstModifiedAt)
+          else
+            Some(secondModifiedAt)
+        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
+        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
+        case (None, None) => None
+      }
+    }
+    val toIso8601 = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+    val createdDate = toLong(attributes.get("CREATED_DATE"))
+    val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
+    val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
+    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
+    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
+    latestDateString
   }
 
 }

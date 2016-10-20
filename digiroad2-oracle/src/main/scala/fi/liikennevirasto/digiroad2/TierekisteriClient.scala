@@ -81,6 +81,7 @@ object Existence {
 sealed trait Equipment {
   def value: String
   def publicId: String
+  def isMaster: Boolean
 }
 object Equipment {
   val values = Set[Equipment](Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
@@ -93,17 +94,17 @@ object Equipment {
     values.find(_.publicId == value).getOrElse(Unknown)
   }
 
-  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; }
-  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; }
-  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; }
-  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; }
-  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; }
-  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; }
-  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; }
-  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; }
-  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; }
-  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; }
-  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; }
+  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; def isMaster = true; }
+  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; def isMaster = true; }
+  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; def isMaster = true; }
+  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; def isMaster = true; }
+  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; def isMaster = true; }
+  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; def isMaster = false; }
+  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; def isMaster = false; }
+  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; def isMaster = false; }
+  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; def isMaster = false; }
+  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; def isMaster = false; }
+  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; def isMaster = false; }
 }
 
 /**
@@ -166,6 +167,8 @@ case class TierekisteriMassTransitStop(nationalId: Long,
 case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
+
+class TierekisteriClientWarnings(response: String) extends RuntimeException(response)
 
 /**
   * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
@@ -242,10 +245,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param id
     * @return
     */
-  def fetchMassTransitStop(id: String): TierekisteriMassTransitStop = {
+  def fetchMassTransitStop(id: String): Option[TierekisteriMassTransitStop] = {
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
-        mapFields(content)
+        Some(mapFields(content))
+      case Right(null) =>
+        None
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
@@ -295,8 +300,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode >= 400)
+      if (statusCode == HttpStatus.SC_NOT_FOUND) {
+        return Right(null)
+      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
+      }
       Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
     } catch {
       case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
@@ -312,7 +320,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)
@@ -333,7 +341,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)
@@ -354,7 +362,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     try {
       val statusCode = response.getStatusLine.getStatusCode
       val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= 400) {
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
         logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
         val error = ErrorMessageConverter.convertJSONToError(response)
         logger.warn("Json from Tierekisteri: " + error)

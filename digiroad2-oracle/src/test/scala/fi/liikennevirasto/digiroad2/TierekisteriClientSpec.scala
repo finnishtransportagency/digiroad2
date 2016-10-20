@@ -93,7 +93,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("fetch from tierekisteri mass transit stop") {
     assume(testConnection)
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
-    val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914")
+    val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914").get
 
     asset.nationalId should be (208914)
     asset.liviId should be ("OTHJ208914")
@@ -321,7 +321,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       "}"
     when (response.getEntity).thenReturn(new StringEntity(retval))
     when(httpClient.execute(any[HttpGet])).thenReturn(response)
-    val stop = trClient.fetchMassTransitStop("OTHJ208910")
+    val stop = trClient.fetchMassTransitStop("OTHJ208910").get
     stop.liviId should be ("OTHJ208910")
     stop.modifiedBy should be ("KX123456")
     stop.roadAddress.road should be (25823)
