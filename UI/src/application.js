@@ -121,6 +121,7 @@
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
   var tierekisteriFailedMessage = 'Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa';
   var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
+  var vkmNotFoundMessage = 'Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui';
   var notFoundInTierekisteriMessage = 'Huom! Tämän pysäkin tallennus ei onnistu, koska vastaavaa pysäkkiä ei löydy Tierekisteristä tai Tierekisteriin ei ole yhteyttä tällä hetkellä.';
 
   var indicatorOverlay = function() {
@@ -160,6 +161,11 @@
     eventbus.on('asset:deleteTierekisteriFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(tierekisteriFailedMessageDelete);
+    });
+
+    eventbus.on('asset:creationNotFoundRoadAddressVKM asset:updateNotFoundRoadAddressVKM', function() {
+      jQuery('.spinner-overlay').remove();
+      alert(vkmNotFoundMessage);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });

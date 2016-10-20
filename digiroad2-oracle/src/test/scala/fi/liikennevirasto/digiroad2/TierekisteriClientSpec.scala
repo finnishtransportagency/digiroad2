@@ -123,11 +123,13 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   }
 
-  test("fetch should return None when mass transit stop doesn't exist in Tierekisteri"){
+  test("fetch should throw exception when mass transit stop doesn't exist"){
     assume(testConnection)
 
-    val asset = tierekisteriClient.fetchMassTransitStop("12345")
-    asset should be(None)
+    val thrown = intercept[TierekisteriClientException] {
+      val asset = tierekisteriClient.fetchMassTransitStop("12345")
+    }
+    thrown.getMessage should be ("Tierekisteri error: 404: N/A")
   }
 
   test("delete tierekisteri mass transit stop"){
@@ -141,7 +143,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.deleteMassTransitStop("123475")
     }
-    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 404")
+    thrown.getMessage should be ("Tierekisteri error: 404: N/A")
   }
 
   test("post should throw nothing if the create TierekisteriMassTransitStop was successful"){
@@ -186,7 +188,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       tierekisteriClient.createMassTransitStop(tkMassTransitStop)
 
     }
-    thrown.getMessage should be("Tierekisteri error: Request returned HTTP Error 400")
+    thrown.getMessage should be ("Tierekisteri error: 400: N/A")
   }
 
   test("post should throw exception when mass transit have one id that already exists"){
@@ -211,7 +213,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       tierekisteriClient.createMassTransitStop(tkMassTransitStop)
 
     }
-    thrown.getMessage should be("Tierekisteri error: Request returned HTTP Error 409")
+    thrown.getMessage should be ("Tierekisteri error: 409: N/A")
   }
 
   test("updating bus stop information in Tierekisteri using PUT method (204 on successful update)") {
@@ -262,7 +264,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
     }
-    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 400")
+    thrown.getMessage should be ("Tierekisteri error: 400: N/A")
   }
 
   test("updating bus stop information in Tierekisteri using PUT method (500 (INTERNAL SERVER ERROR) error in Tierekisteri)") {
@@ -289,7 +291,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val thrown = intercept[TierekisteriClientException] {
       val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
     }
-    thrown.getMessage should be ("Tierekisteri error: Request returned HTTP Error 500")
+    thrown.getMessage should be ("Tierekisteri error: 500: N/A")
   }
 
 
