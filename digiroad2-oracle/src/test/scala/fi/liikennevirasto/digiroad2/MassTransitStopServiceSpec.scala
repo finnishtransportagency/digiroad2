@@ -607,6 +607,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test ("Test date conversions in Marshaller") {
+    def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
+      (stop, None)
+    }
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+    runWithRollback {
+      val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
+      when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
+        RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
+      )
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+        (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
+      )
+      val assetId = 300006
+      val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
+      stopOption.isEmpty should be (false)
+      val stop = stopOption.get
+      val geom = Point(375621, 6676556)
+      val (address, roadSide) = mockGeometryTransform.resolveAddressAndLocation(geom, stop.bearing.get)
+      val expireDate = new Date(10487450L)
+      val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), Some(expireDate))
+      trStop.operatingTo.isEmpty should be (false)
+      trStop.operatingTo.get should be (expireDate)
+      val trStopNoExpireDate = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), None)
+      trStopNoExpireDate.operatingTo.isEmpty should be (false)
+      trStopNoExpireDate.operatingTo.get shouldNot be (expireDate)
+    }
+  }
+
   test("Update existing masstransitstop if the new distance is greater than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
