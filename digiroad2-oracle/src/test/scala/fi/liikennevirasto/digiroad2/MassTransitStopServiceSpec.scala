@@ -438,8 +438,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Persist floating on update") {
+    // This asset is actually supposed to be floating, but updateExisting shouldn't do a floating check
     runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))
+      sql"""
+            update asset a
+            set floating = '0'
+            where a.id = 300002
+      """.asUpdate.execute
       RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", _ => Unit)
       val floating = sql"""
             select a.floating from asset a
