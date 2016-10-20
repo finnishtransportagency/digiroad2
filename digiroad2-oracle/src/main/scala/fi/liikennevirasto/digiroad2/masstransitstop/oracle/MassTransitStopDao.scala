@@ -265,6 +265,7 @@ class MassTransitStopDao {
           """.execute
   }
 
+  //TODO: Fixme. Is distinct needed?
   def getPropertyDescription(propertyPublicId : String, value: String) = {
     sql"""
        Select distinct
@@ -274,7 +275,8 @@ class MassTransitStopDao {
                  when np.value is not null then to_char(np.value)
                  else null
                end as display_value
-       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
+       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on
+         tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
        Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
       """.as[String].list
   }

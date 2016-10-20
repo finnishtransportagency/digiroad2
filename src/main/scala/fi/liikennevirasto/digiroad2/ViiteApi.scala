@@ -90,7 +90,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawRoadPartsOnly =>
         //roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
-      case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
+      case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities, publicRoads = true)
       case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
       case _ => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
     }
@@ -166,14 +166,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "modifiedAt" -> roadLink.modifiedAt,
       "modifiedBy" -> roadLink.modifiedBy,
       "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
-      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
       "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
       "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
       "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
-      "minAddressNumberRight" -> roadLink.attributes.get("FROM_RIGHT"),
-      "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
-      "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
-      "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadNumber" -> roadLink.roadNumber,
       "roadPartNumber" -> roadLink.roadPartNumber,
       "elyCode" -> roadLink.elyCode,
@@ -181,7 +176,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> roadLink.startAddressM,
       "endAddressM" -> roadLink.endAddressM,
       "discontinuity" -> roadLink.discontinuity,
-      "endDate" -> roadLink.endDate)
+      "endDate" -> roadLink.endDate,
+      "anomaly" -> roadLink.anomaly.value)
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {

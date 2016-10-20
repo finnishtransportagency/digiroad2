@@ -25,9 +25,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
-  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(
+  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date)
+      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
   )
 
   val vvhRoadLinks = List(
@@ -68,6 +68,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
+
+  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
+    override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -136,8 +146,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).get.stopTypes should be(Seq(2))
-      massTransitStops.find(_.id == 300001).get.stopTypes should be(Seq(2, 3, 4))
-      massTransitStops.find(_.id == 300003).get.stopTypes should be(Seq(2, 3))
+      massTransitStops.find(_.id == 300001).get.stopTypes should be(Stream(2, 3, 4))
+      massTransitStops.find(_.id == 300003).get.stopTypes should be(Stream(2, 3))
     }
   }
 
@@ -266,11 +276,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
       val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016,8,1))
-      )
-      val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
+      ))
+      val (stop, showStatusCode) = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
+
+      showStatusCode should be (false)
     }
   }
 
@@ -290,23 +302,139 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
         Equipment.TrashBin -> Existence.Yes,
         Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
       )
-      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
         TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2))
-      )
+      ))
 
-      val stop = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalId(85755, _ => Unit)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       equipments.foreach{
-        case (equipment, existence) =>
+        case (equipment, existence) if(equipment.isMaster) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
           property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
       }
+      val name_fi = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameFiPublicId).get.values
+      val name_se = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameSePublicId).get.values
+      name_fi should have size (1)
+      name_se should have size (1)
+      name_fi.head.propertyValue should be ("TierekisteriFi")
+      name_se.head.propertyValue should be ("TierekisteriSe")
+      showStatusCode should be (false)
+    }
+  }
+
+  test("Tierekisteri master overrides set values set to Yes"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Yes,
+        Equipment.CarParkForTakingPassengers -> Existence.Yes,
+        Equipment.ElectronicTimetables -> Existence.Yes,
+        Equipment.RaisedBusStop -> Existence.Yes,
+        Equipment.Lighting -> Existence.Yes,
+        Equipment.Roof -> Existence.Yes,
+        Equipment.Seat -> Existence.Yes,
+        Equipment.Timetable -> Existence.Yes,
+        Equipment.TrashBin -> Existence.Yes,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Yes
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
+      )
+
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+      showStatusCode should be (false)
+    }
+  }
+
+  test("Tierekisteri master overrides set values set to No"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.No,
+        Equipment.CarParkForTakingPassengers -> Existence.No,
+        Equipment.ElectronicTimetables -> Existence.No,
+        Equipment.RaisedBusStop -> Existence.No,
+        Equipment.Lighting -> Existence.No,
+        Equipment.Roof -> Existence.No,
+        Equipment.Seat -> Existence.No,
+        Equipment.Timetable -> Existence.No,
+        Equipment.TrashBin -> Existence.No,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.No
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
+      )
+
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+      showStatusCode should be (false)
+    }
+  }
+
+  test("Tierekisteri master overrides set values set to Unknown"){
+
+    runWithRollback{
+      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0, None)
+      val equipments = Map[Equipment, Existence](
+        Equipment.BikeStand -> Existence.Unknown,
+        Equipment.CarParkForTakingPassengers -> Existence.Unknown,
+        Equipment.ElectronicTimetables -> Existence.Unknown,
+        Equipment.RaisedBusStop -> Existence.Unknown,
+        Equipment.Lighting -> Existence.Unknown,
+        Equipment.Roof -> Existence.Unknown,
+        Equipment.Seat -> Existence.Unknown,
+        Equipment.Timetable -> Existence.Unknown,
+        Equipment.TrashBin -> Existence.Unknown,
+        Equipment.RoofMaintainedByAdvertiser -> Existence.Unknown
+      )
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(Some(
+        TierekisteriMassTransitStop(85755, "OTHJ85755", roadAddress, TRRoadSide.Unknown, StopType.Unknown, false, equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 2)))
+      )
+
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+      equipments.foreach{
+        case (equipment, existence) if equipment.isMaster =>
+          val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
+          property.values should have size (1)
+          property.values.head.propertyValue should be(existence.propertyValue.toString)
+        case _ => ;
+      }
+      showStatusCode should be (false)
+    }
+  }
+
+  test("Fetch mass transit stop by national id but does not exist in Tierekisteri"){
+    runWithRollback{
+
+      when(mockTierekisteriClient.fetchMassTransitStop("OTHJ85755")).thenReturn(None)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
+
+      stop.size should be (1)
+      stop.map(_.nationalId).get should be (85755)
+      showStatusCode should be (true)
     }
   }
 
   test("Get properties") {
     runWithRollback {
-      val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalId(2, Int => Unit).map { stop =>
+      val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(2, Int => Unit)._1.map { stop =>
         Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
@@ -323,7 +451,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Assert user rights when fetching mass transit stop with id") {
     runWithRollback {
-      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, { municipalityCode => throw new Exception })
+      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755, { municipalityCode => throw new Exception })
     }
   }
 
@@ -720,5 +848,112 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
     val asset = service.getById(300000).get
     asset.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+  }
+
+  test("delete a TR kept mass transit stop") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
+      service.deleteAllMassTransitStopData(stop.head.id)
+      verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
+      service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(true)
+      service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._2 should be (false)
+    }
+  }
+
+  test("delete fails if a TR kept mass transit stop is not found") {
+    val eventbus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new TestMassTransitStopServiceWithDynTransaction(eventbus)
+    val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
+    when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
+    intercept[TierekisteriClientException] {
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      service.deleteAllMassTransitStopData(stop.head.id)
+    }
+    service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(false)
+  }
+
+  test("Updating the mass transit stop from others -> ELY should create a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]],
+        any[Option[Boolean]])).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      val service = RollbackMassTransitStopServiceWithTierekisteri
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get
+      val newAdmin = admin.copy(values = List(PropertyValue("2")))
+      val types = props.find(_.publicId == "pysakin_tyyppi").get
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      admin.values.exists(_.propertyValue == "1") should be (true)
+      types.values.exists(_.propertyValue == "2") should be (true)
+      types.values.exists(_.propertyValue == "3") should be (false)
+      val newStop = stop.copy(stopTypes = Seq(2, 3),
+        propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
+          Seq(newAdmin, newTypes))
+      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop])
+    }
+  }
+
+  test("Saving a mass transit stop should not create a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
+    }
+  }
+  test("Updating the mass transit stop from ELY -> others should expire a stop in TR") {
+    runWithRollback {
+      reset(mockTierekisteriClient)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec",
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]],
+        any[Option[Boolean]])).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      val service = RollbackMassTransitStopServiceWithTierekisteri
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get.copy(values = List(PropertyValue("1")))
+      val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
+      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
+      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop])
+    }
+  }
+
+  test ("Get enumerated property values") {
+    runWithRollback {
+      val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
+      propertyValues.nonEmpty should be (true)
+      propertyValues.forall(x => x._2.nonEmpty) should be (true)
+      propertyValues.forall(x => x._1 != "") should be (true)
+    }
   }
 }
