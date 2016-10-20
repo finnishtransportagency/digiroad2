@@ -298,7 +298,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getViiteRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                          municipalities: Set[Int] = Set(), everything: Boolean,
-                                         publicRoads: Boolean): (Seq[RoadLink], Seq[ChangeInfo])= {
+                                         publicRoads: Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesWithRoadNumbersF(bounds, municipalities, roadNumbers)
       .zip(everything match {
         case true => vvhClient.fetchVVHRoadlinksF(bounds, municipalities)
@@ -349,7 +349,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
   def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(),
-                               everything: Boolean, publicRoads: Boolean) : Seq[RoadLink] =
+                               everything: Boolean, publicRoads: Boolean = false) : Seq[RoadLink] =
     getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
 
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =

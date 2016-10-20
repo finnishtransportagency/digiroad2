@@ -169,7 +169,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
-  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean = false, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s""""where":"($filter)","""
     if (includeAllPublicRoads)
@@ -278,7 +278,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
   def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                        includeAllPublicRoads: Boolean): Future[Seq[VVHRoadlink]] = {
+                                        includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
     Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, includeAllPublicRoads))
   }
 
