@@ -11,7 +11,7 @@ import org.joda.time.format.DateTimeFormat
 import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthreader, Track}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods._
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -202,7 +202,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
-
+  private val auth = new TierekisteriAuthreader
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + id
 
@@ -297,6 +297,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
     val response = client.execute(request)
+    request.addHeader("Authorization", "Basic " + auth.getAuthinBase64())
 
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -315,6 +316,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPost(url)
+    request.addHeader("Authorization", "Basic " + auth.getAuthinBase64())
     request.setEntity(createJson(trMassTransitStop))
     val response = client.execute(request)
     try {
@@ -336,6 +338,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPut(url)
+    request.addHeader("Authorization", "Basic " + auth.getAuthinBase64())
     request.setEntity(createJson(tnMassTransitStop))
     val response = client.execute(request)
     try {
@@ -358,6 +361,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
     request.setHeader("content-type","application/json")
+    request.addHeader("Authorization", "Basic " + auth.getAuthinBase64())
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
