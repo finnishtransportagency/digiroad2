@@ -258,8 +258,11 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
-          return (true, Some(FloatingReason.RoadOwnerChanged))
+        if (administrationClass.isDefined && administrationClass.get != Unknown) {
+          if ((administrationClass.get == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
+            || ((administrationClass.get == Municipality || administrationClass.get == Private) && (roadLink.administrativeClass == State))) {
+            return (true, Some(FloatingReason.RoadOwnerChanged))
+          }
         }
     }
 
@@ -272,8 +275,11 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
-          return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
+        if (administrationClass.isDefined && administrationClass.get != Unknown) {
+          if ((administrationClass.get == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
+            || ((administrationClass.get == Municipality || administrationClass == Private) && (roadLink.administrativeClass == State))) {
+            return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
+          }
         }
     }
 
