@@ -46,10 +46,30 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 - Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; emmi.sallinen@karttakeskus.fi
 
 
-2. Tiedon rakentuminen Viite-sovelluksessa
+2. Perustietoja Viite-sovelluksesta
 --------------------------
 
-Viite-sovellus on karttasovellus, jossa tieosoiteverkko piirret&auml;&auml;n Maanmittauslaitoksen tarjoaman tielinkki-aineiston p&auml;&auml;lle. Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tieosoiteverkko piirtyy geometrian p&auml;&auml;lle tieosoitesegmenttein&auml; _lineaarisen referoinnin_ avulla. 
+_T&auml;h&auml;n joku hieno kuva sitten, kun esim. liittym&auml;t tierekisteriin on tarkemmin tiedossa._
+
+2.1 Viite-sovelluksen yhteydet muihin j&auml;rjestelmiin
+--------------------------
+
+###V&auml;yl&auml;verkon hallinta (VVH)###
+
+Viite-sovelluksessa pohja-aineistona oleva geometria tulee Liikenneviraston V&auml;yl&auml;verkon hallinnan (VVH) sovelluksessa. VVH-sovellukseen ladataan p&auml;ivitt&auml;in Maanmittauslaitokselta p&auml;ivitykset Maastotietokannan (MTK) keskilinja-aineistoon, jolloin my&ouml;s Viite-sovelluksessa on k&auml;yt&ouml;ss&auml; uusi keskilinjageometria joka p&auml;iv&auml;.
+
+###Digiroad: Ominaisuustietojen hallinta###
+
+Viite-sovelluksella ja Digiroadin ominaisuustietojen hallinnan (OTH) -sovelluksella ei ole loppuk&auml;ytt&auml;j&auml;n n&auml;k&ouml;kulmasta mit&auml;&auml;n yhteytt&auml;. Molemmissa sovelluksissa on kuitenkin k&auml;yt&ouml;ss&auml; sama, V&auml;yl&auml;verkon hallinnan tarjoama keskilinjageometria.
+
+###Liikenneviraston Tierekisteri###
+
+_T&auml;ydennet&auml;&auml;n my&ouml;hemmin..._
+
+2.2 Tiedon rakentuminen Viite-sovelluksessa
+--------------------------
+
+Viite-sovelluksessa tieosoiteverkko piirret&auml;&auml;n VVH:n tarjoaman Maanmittauslaitoksen keskilinja-aineiston p&auml;&auml;lle. Maanmittauslaitoksen keskilinja-aineisto muodostuu tielinkeist&auml;. Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tieosoiteverkko piirtyy geometrian p&auml;&auml;lle tieosoitesegmenttein&auml; _lineaarisen referoinnin_ avulla. 
 
 Tielinkki on Viite-sovelluksen lineaarinen viitekehys, eli sen geometriaan sidotaan tieosoitesegmentit. Kukin tieosoitesegmentti tiet&auml;&auml; mille tielinkille se kuuluu (tielinkin ID) sek&auml; kohdan, josta se alkaa ja loppuu kyseisell&auml; tielinkill&auml;. Tieosoitesegmentit ovat siten tielinkin mittaisia tai niit&auml; lyhyempi&auml; tieosoitteen osuuksia.
 
@@ -61,7 +81,7 @@ _Tieosoitesegmenttej&auml; (1) ja muita tielinkkej&auml; (2) Viitteen karttaikun
 
 Tieosoitesegmentit piirret&auml;&auml;n Viite-sovelluksessa kartalle erilaisin v&auml;rein (kts. kohta 4. Tieosoiteverkon katselu). Muut tielinkit, jotka eiv&auml;t kuulu tieosoiteverkkoon, piirret&auml;&auml;n kartalle harmaalla. N&auml;it&auml; ovat esimerkiksi tieosoitteettomat kuntien omistamat tiet, ajopolut, ajotiet jne. pienemm&auml;t tieosuudet.
 
-Palautteet geometrian eli tielinkkien virheist&auml; voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan selvitys virheest&auml; ja sen sijainnista (kuvakaappaus tms.).
+Palautteet geometrian eli tielinkkien virheist&auml; voi laittaa Maanmittauslaitokselle, maasto@maanmittauslaitos.fi. Mukaan selvitys virheest&auml; ja sen sijainnista (esim. kuvakaappaus).
 
 3. Karttan&auml;kym&auml;n muokkaus
 --------------------------
@@ -146,12 +166,12 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 |Alkuet&auml;isyys**|Tieosoiteverkon kalibrointipisteiden avulla laskettu alkuet&auml;isyys. Kalibrointipisteen kohdalla alkuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet vuonna 2016.|X|
 |Loppuet&auml;isyys**|Tieosoiteverkon kalibrointipisteiden avulla laskettu loppuet&auml;isyys. Kalibrointipisteen kohdalla loppuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet vuonna 2016.|X|
 |ELY|Liikenneviraston ELY-numero.|X|
-|Tietyyppi|Muodostetaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista, kts. taulukko alempana.|X|
+|Tietyyppi|Muodostetaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista, kts. taulukko alempana. Jos valitulla tieosalla on useita tietyyppej&auml;, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.|X|
 |Jatkuvuus|Tieosoiteverkon mukainen jatkuvuus-tieto. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet vuonna 2016.|X|
 |Lakkautus|Ei k&auml;yt&ouml;ss&auml; toistaiseksi||
 
-*Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, ett&auml; muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin.
-**Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sek&auml; ajoratakoodin vaihtuminen) m&auml;&auml;rittelev&auml;t mitatut alku- ja loppuet&auml;isyydet. Kalibrointipiste v&auml;lill&auml; alku- ja loppuet&auml;isyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
+*)Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, ett&auml; muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokatti viimeksi -p&auml;iv&auml;t ovat kaikki v&auml;hint&auml;&auml;n 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
+**)Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sek&auml; ajoratakoodin vaihtuminen) m&auml;&auml;rittelev&auml;t mitatut alku- ja loppuet&auml;isyydet. Kalibrointipiste v&auml;lill&auml; alku- ja loppuet&auml;isyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
 __Tietyypin muodostaminen Viite-sovelluksessa__
 
@@ -180,4 +200,22 @@ _Kohdistaminen tielinkin ID:ll&auml;._
 5. Tuntemattomat tieosoitesegmentit
 --------------------------
 
-Coming soon...
+Tuntemattomilla tieosoitesegmenteill&auml; tarkoitetaan tieosoitesegmenttej&auml;, joilla pit&auml;isi olla tieosoite, mutta niill&auml; ei ole sit&auml;. Puuttuva tieosoite voi johtua esimerkiksi siit&auml;, ett&auml; Maanmittauslaitoksen tekem&auml;t geometriap&auml;ivitykset ovat aiheuttaneet tielinkki-aineistossa niin suuria muutoksia, ettei tieosoitesegmentti&auml; saada en&auml;&auml; sovitettua p&auml;ivittyneen tielinkin p&auml;&auml;lle.
+
+Tuntemattomaksi tieosoitesegmentiksi katsotaan kohteet, jotka ovat: 
+
+1. Maanmittauslaitoksen hallinnollisessa luokittelussa arvolla 1 = Valtion omistama tie
+
+	- N&auml;m&auml; kohteet muodostavat suurimman osan tieosoiteverkosta
+
+1. Sellaisessa sijainnissa, ett&auml; siin&auml; on aiemmin ollut voimassaoleva tieosoite
+
+	- N&auml;m&auml; kohteet ovat esimerkiksi tieosoitteellisia katuja (maanmittauslaitoksen hallinnollinen luokka arvolla 2 = Kunnan omistama)
+
+Tuntemattomat tieosoitesegmentit visualisoidaan kartalle mustalla viivalla ja kysymysmerkill&auml; (1).
+
+![Tuntematon tieosoitesegmentti](k10.JPG)
+
+_Tuntemattomia tieosotiesegmenttej&auml;._
+
+Tuntemattomia tieosoitesegmenttej&auml; voi valita ja tarkastella klikkailemalla samalla tavalla, kuin muitakin tieosoitesegmenttej&auml;. Tuntemattoman tieosoitesegmentin tiedot ominaisuustietotaulussa (2) ovat puutteelliset, koska ko. kohdasta puuttuu tiedot tieosoitteesta.
