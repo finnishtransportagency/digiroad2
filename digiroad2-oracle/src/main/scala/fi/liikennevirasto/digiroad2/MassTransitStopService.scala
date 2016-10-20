@@ -63,6 +63,8 @@ trait MassTransitStopService extends PointAssetOperations {
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
 
+  val MaxMovementDistanceMeters = 50
+
   val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   val geometryTransform = new GeometryTransform
@@ -398,9 +400,9 @@ trait MassTransitStopService extends PointAssetOperations {
         val position = optionalPosition.get
         val assetPoint = Point(asset.lon, asset.lat)
         val newPoint = Point(position.lon, position.lat)
-        val assetDistance = GeometryUtils.distance(assetPoint, newPoint)
+        val assetDistance = assetPoint.distance2DTo(newPoint)
 
-        if(assetDistance > 50){
+        if(assetDistance > MaxMovementDistanceMeters){
           //Expire the old asset
           expireMassTransitStop(username, asset)
 
