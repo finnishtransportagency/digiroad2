@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest.{FunSuite, Matchers}
 
-
 class TierekisteriAuthPropertyReaderSpec extends FunSuite with Matchers {
   val reader = new TierekisteriAuthPropertyReader
 
