@@ -4,10 +4,10 @@ import org.scalatest.{FunSuite, Matchers}
 
 
 class TierekisteriAuthPropertyReaderSpec extends FunSuite with Matchers {
-  val authtest= new TierekisteriAuthPropertyReader
+  val reader = new TierekisteriAuthPropertyReader
 
   test("Basic64 authentication for TR client") {
-val authenticate=authtest.getAuthinBase64()
-    authenticate  should be ("dXNlclhZWjpwYXNzd29yZFhZWg==")
+    val authenticate = reader.getAuthInBase64
+    authenticate should be ("dXNlclhZWjpwYXNzd29yZFhZWg==")
   }
 }

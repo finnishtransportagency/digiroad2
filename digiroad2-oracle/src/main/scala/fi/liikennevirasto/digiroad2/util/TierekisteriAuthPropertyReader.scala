@@ -3,8 +3,6 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 import org.apache.commons.codec.binary.Base64
 
-
-
 class TierekisteriAuthPropertyReader {
 
   lazy val properties: Properties = {
@@ -13,22 +11,21 @@ class TierekisteriAuthPropertyReader {
     props
   }
 
-  private def getUsername(): String = {
-
-    val loadedkeyString = properties.getProperty("tierekisteri.username")
-    if (loadedkeyString == null)
+  private def getUsername: String = {
+    val loadedKeyString = properties.getProperty("tierekisteri.username")
+    if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR username")
-    loadedkeyString
+    loadedKeyString
   }
 
-  private def getPassword(): String = {
-    val loadedkeyString =properties.getProperty("tierekisteri.password")
-    if (loadedkeyString == null)
+  private def getPassword: String = {
+    val loadedKeyString = properties.getProperty("tierekisteri.password")
+    if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
-    loadedkeyString
+    loadedKeyString
   }
 
-  def getAuthinBase64(): String = {
- Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
+  def getAuthInBase64: String = {
+    Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
   }
 }
