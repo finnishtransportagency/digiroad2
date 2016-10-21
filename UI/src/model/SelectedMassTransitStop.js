@@ -236,9 +236,9 @@
           backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
             if (errorObject.status == FAILED_DEPENDENCY_424) {
-              eventbus.trigger('asset:updateTierekisteriFailed');
+              eventbus.trigger('asset:updateTierekisteriFailed', asset);
             } else if(errorObject.status == PRECONDITION_FAILED_412) {
-              eventbus.trigger('asset:updateNotFoundRoadAddressVKM');
+              eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
             } else {
               eventbus.trigger('asset:updateFailed', asset);
             }
