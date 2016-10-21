@@ -115,10 +115,24 @@
       });
     };
 
+    this.getByLinkId = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(roadLinks(), function(road) { return road.getData().linkId === id; });
+      });
+    };
+
     this.getGroup = function(id) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
+        });
+      });
+    };
+
+    this.getGroupByLinkId = function (linkId) {
+      return _.find(roadLinkGroups, function(roadLinkGroup) {
+        return _.some(roadLinkGroup, function(roadLink) {
+          return roadLink.getData().linkId === linkId;
         });
       });
     };
