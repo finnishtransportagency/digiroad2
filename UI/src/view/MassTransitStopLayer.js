@@ -422,7 +422,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return property.publicId === "tietojen_yllapitaja"; });
 
     return typeof owner != 'undefined' &&
-      typeof owner.values != 'undefined' &&  owner.values > 0 && _.contains(_.map(owner.values, function (value) {
+      typeof owner.values != 'undefined' &&  owner.values.length > 0 && _.contains(_.map(owner.values, function (value) {
         return value.propertyValue;
       }), "2");
   };
