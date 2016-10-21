@@ -59,7 +59,7 @@
 
     var highlightSingleFeature = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
-        if (selectedLinkProperty.isSelected(x.attributes.id) && x.attributes.linkId === feature.attributes.linkId) {
+        if (selectedLinkProperty.isSelected(x.attributes.linkId) && x.attributes.linkId === feature.attributes.linkId) {
           selectControl.highlight(x);
         }
       });
