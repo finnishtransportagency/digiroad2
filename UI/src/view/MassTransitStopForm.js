@@ -526,6 +526,8 @@
           isAdministratorELYKeskus = (administratorProperty.values[0].propertyValue === '2');
         }
 
+        disableFormIfELYBusStopHasEndDate(properties, isAdministratorELYKeskus);
+
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
@@ -561,6 +563,21 @@
 
         return assetForm;
       };
+
+      function disableFormIfELYBusStopHasEndDate(properties, isAdministratorELYKeskus) {
+        var isBusStopExpired = false;
+        var expireDateProperty = _.find(properties, function(property){
+          return property.publicId === 'viimeinen_voimassaolopaiva';
+        });
+
+        if (expireDateProperty && expireDateProperty.values && expireDateProperty.values[0]) {
+          isBusStopExpired = expireDateProperty.values[0].propertyValue !== "";
+        }
+
+        if (isBusStopExpired && isAdministratorELYKeskus)  {
+          readOnly = true;
+        }
+      }
 
 function streetViewTemplates(longi,lati,heading) {
       var streetViewTemplate  = _.template(
