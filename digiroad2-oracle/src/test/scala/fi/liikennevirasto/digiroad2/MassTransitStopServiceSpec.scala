@@ -39,7 +39,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(6488445, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611353, 235, Seq(Point(374603.57,6677262.009), Point(374684.567, 6677277.323)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611341l, 91, Seq(Point(374375.156,6677244.904), Point(374567.632, 6677255.6)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-     VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
+    VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -75,6 +75,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
+  object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
+
+  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
+
   class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
@@ -85,9 +89,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
-
-  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
+  class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    override def vvhClient: VVHClient = mockVVHClient
+    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+    override val tierekisteriEnabled = true
+    override val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -439,7 +447,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop road link mml id") {
     runWithRollback {
-      val geom = Point(374708, 6676905)
+      val geom = Point(374450, 6677250)
       val position = Some(Position(geom.x, geom.y, 1611601L, Some(85)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val linkId = sql"""
@@ -454,7 +462,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop bearing") {
     runWithRollback {
-      val geom = Point(375621, 6676556)
+      val geom = Point(374450, 6677250)
       val position = Some(Position(geom.x, geom.y, 1611341l, Some(90)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val bearing = sql"""
@@ -469,7 +477,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop municipality") {
     runWithRollback {
-      val geom = Point(375621, 6676556)
+      val geom = Point(374450, 6677250)
       val position = Some(Position(geom.x, geom.y, 1611341l, Some(85)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val municipality = sql"""
@@ -490,7 +498,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val properties = List(
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val position = Some(Position(60.0, 0.0, 123l, None))
+      val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
       val massTransitStop = service.getById(assetId).get
 
@@ -509,7 +517,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val properties = List(
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val position = Some(Position(60.0, 0.0, 123l, None))
+      val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
       val massTransitStop = service.getById(assetId).get
 
@@ -522,7 +530,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update last modified info") {
     runWithRollback {
-      val geom = Point(375621, 6676556)
+      val geom = Point(374450, 6677250)
       val pos = Position(geom.x, geom.y, 131573L, Some(85))
       RollbackMassTransitStopService.updateExistingById(300000, Some(pos), Set.empty, "user", _ => Unit)
       val modifier = sql"""
@@ -548,8 +556,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Persist floating on update") {
+    // This asset is actually supposed to be floating, but updateExisting shouldn't do a floating check
     runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))
+      sql"""
+            update asset a
+            set floating = '0'
+            where a.id = 300002
+      """.asUpdate.execute
       RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", _ => Unit)
       val floating = sql"""
             select a.floating from asset a
@@ -681,26 +695,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     mValue should be(1.0)
   }
 
-  test("expire a mass transit stop") {
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
-      val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      val createdId = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      val massTransitStopAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $createdId""".as[(Long, Int, String, String)].firstOption
-      massTransitStopAsset should be (Some(createdId, vvhRoadLink.municipalityCode, null, null))
-
-      service.expireMassTransitStop("testusername", createdId)
-
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $createdId""".as[(Boolean)].firstOption
-      expired should be(Some(true))
-    }
-  }
-
   test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
       (stop, None)
@@ -735,6 +729,115 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
       dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
     }
+  }
+
+  test ("Test date conversions in Marshaller") {
+    def massTransitStopTransformation(stop: PersistedMassTransitStop): (PersistedMassTransitStop, Option[FloatingReason]) = {
+      (stop, None)
+    }
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+    runWithRollback {
+      val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
+      when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
+        RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
+      )
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+        (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
+      )
+      val assetId = 300006
+      val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
+      stopOption.isEmpty should be (false)
+      val stop = stopOption.get
+      val geom = Point(375621, 6676556)
+      val (address, roadSide) = mockGeometryTransform.resolveAddressAndLocation(geom, stop.bearing.get)
+      val expireDate = new Date(10487450L)
+      val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), Some(expireDate))
+      trStop.operatingTo.isEmpty should be (false)
+      trStop.operatingTo.get should be (expireDate)
+      val trStopNoExpireDate = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), None)
+      trStopNoExpireDate.operatingTo.isEmpty should be (false)
+      trStopNoExpireDate.operatingTo.get shouldNot be (expireDate)
+    }
+  }
+
+  test("Update existing masstransitstop if the new distance is greater than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+
+      when(mockVVHClient.fetchVVHRoadlink(linkId))
+        .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry, municipalityCode, Some(Municipality))
+      val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
+      oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(oldAssetId, Some(Position(0, 51, linkId, Some(0))), Set(), "test",  _ => Unit).id
+
+      val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
+      newAsset should be (Some(updatedAssetId, municipalityCode, null, null))
+
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
+      expired should be(Some(true))
+    }
+  }
+
+  test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+
+      when(mockVVHClient.fetchVVHRoadlink(linkId))
+        .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry , municipalityCode, Some(Municipality))
+      val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
+      asset should be (Some(assetId, municipalityCode, null, null))
+
+      val updatedAssetId = service.updateExistingById(assetId, Some(Position(0, 50, linkId, Some(0))), Set(), "test",  _ => Unit).id
+      updatedAssetId should be(assetId)
+
+      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
+      expired should be(Some(false))
+    }
+  }
+
+  test("Should rollback bus stop if tierekisteri throw exception") {
+    val assetId = 300000
+    val geom = Point(374550, 6677350)
+    val pos = Position(geom.x, geom.y, 131573L, Some(85))
+    val properties = List(
+      SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+      SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+      SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+
+    val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus)
+    when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+    when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop])).thenThrow(new TierekisteriClientException("TR-test exception"))
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
+      (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
+    )
+
+    intercept[TierekisteriClientException] {
+      service.updateExistingById(300000, Some(pos), properties.toSet, "user", _ => Unit)
+    }
+
+    val asset = service.getById(300000).get
+    asset.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
   }
 
   test("delete a TR kept mass transit stop") {

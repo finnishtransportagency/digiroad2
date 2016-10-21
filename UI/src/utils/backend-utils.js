@@ -362,15 +362,15 @@
         getJson();
     };
 
-    this.expireAsset = function(massTransitStopIds, success, failure) {
+    this.copyMassTransitStopAsset = function(id, data, successCallback, errorCallback) {
       $.ajax({
         contentType: "application/json",
-        type: "DELETE",
-        url: "api/massTransitStops",
-        data: JSON.stringify({massTransitStopIds: massTransitStopIds}),
+        type: "PUT",
+        url: "api/massTransitStops/copy/" + id,
+        data: JSON.stringify(data),
         dataType: "json",
-        success: success,
-        error: failure
+        success: successCallback,
+        error: errorCallback
       });
     };
 

@@ -230,8 +230,14 @@
         backend.updateAsset(currentAsset.id, payload, function(asset) {
           changedProps = [];
           assetHasBeenModified = false;
-          open(asset);
-          eventbus.trigger('asset:saved', asset, positionUpdated);
+          if(currentAsset.id != asset.id){
+            eventbus.trigger('massTransitStop:expired', currentAsset);
+            eventbus.trigger('asset:created', asset);
+          }else{
+            open(asset);
+            eventbus.trigger('asset:saved', asset, positionUpdated);
+          }
+
         }, function (errorObject) {
           backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
@@ -269,14 +275,6 @@
 
     var getCurrentAsset = function() {
       return currentAsset;
-    };
-
-    var expireMassTransitStopById = function(massTransitStop) {
-      backend.expireAsset([massTransitStop.id], function() {
-        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
-      },function(){
-        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
-      });
     };
 
     var copyDataFromOtherMasTransitStop = function (other) {
@@ -385,7 +383,6 @@
       pikavuoroIsAlone: pikavuoroIsAlone,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
-      expireMassTransitStopById: expireMassTransitStopById,
       deleteMassTransitStop: deleteMassTransitStop
 
     };

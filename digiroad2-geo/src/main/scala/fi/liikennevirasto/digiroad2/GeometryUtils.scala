@@ -177,7 +177,6 @@ object GeometryUtils {
     point.distance2DTo(projection)
   }
 
-
   /**
     * Check if segments overlap (not just barely touching)
     *
