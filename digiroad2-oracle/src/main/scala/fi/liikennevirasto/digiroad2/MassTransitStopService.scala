@@ -461,13 +461,7 @@ trait MassTransitStopService extends PointAssetOperations {
           update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
         }
       } else {
-        operation match {
-          case Operation.Update => update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
-          case Operation.Expire => update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
-          case Operation.Create => update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
-          case Operation.Noop => update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
-          case _ => throw new NoSuchElementException // Won't happen
-        }
+        update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
       }
     }
   }
@@ -491,7 +485,12 @@ trait MassTransitStopService extends PointAssetOperations {
       updateMunicipality(id, roadLink.municipalityCode)
       updateAssetGeometry(id, point)
     }
-    getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) }, tierekisteriOperation)
+    if(tierekisteriOperation == Operation.Expire){
+      executeTierekisteriOperation(tierekisteriOperation, persistedStop, { _ => Some(roadLink) })
+      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) })
+    } else {
+      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) }, tierekisteriOperation)
+    }
   }
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {

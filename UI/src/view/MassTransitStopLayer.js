@@ -6,6 +6,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
   var movementPermissionConfirmed = false;
+  var requestingMovePermission  = false;
 
   var selectedControl = 'Select';
 
@@ -21,29 +22,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var showAsset = function(asset) {
     asset.massTransitStop.getMarker().display(true);
     assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
-  };
-
-  var mouseUpHandler = function(asset) {
-    clickTimestamp = null;
-    unregisterMouseUpHandler(asset);
-    if (assetIsMoving) {
-      selectedMassTransitStopModel.move({
-        lon: selectedMassTransitStopModel.get('lon'),
-        lat: selectedMassTransitStopModel.get('lat'),
-        bearing: selectedMassTransitStopModel.get('bearing'),
-        roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
-        linkId: selectedMassTransitStopModel.get('linkId')
-      });
-      eventbus.trigger('asset:moveCompleted');
-      assetIsMoving = false;
-    }
-  };
-
-  var mouseUp = function(asset) {
-    return function(evt) {
-      OpenLayers.Event.stop(evt);
-      mouseUpHandler(asset);
-    };
   };
 
   var mouseDown = function(asset) {
@@ -428,8 +406,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         { x: lonlat.lon, y: lonlat.lat});
       lonlat.lon = position.x;
       lonlat.lat = position.y;
-      restrictMovement(busStopPoint, lonlat, angle, nearestLine,lonlat);
 
+      doMovement(angle, nearestLine, lonlat, false);
    }
   };
 
@@ -449,6 +427,34 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       }), "2");
   };
 
+  var mouseUpHandler = function(asset) {
+    clickTimestamp = null;
+    unregisterMouseUpHandler(asset);
+    if (assetIsMoving) {
+
+      var busStopPoint = new OpenLayers.LonLat(selectedAsset.data.originalLon, selectedAsset.data.originalLat);
+      var lonlat = {
+        lon: selectedMassTransitStopModel.get('lon'),
+        lat: selectedMassTransitStopModel.get('lat')
+      };
+      var angle = selectedMassTransitStopModel.get('bearing');
+      var nearestLine = {
+        roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
+        linkId: selectedMassTransitStopModel.get('linkId')
+      };
+
+      restrictMovement(busStopPoint, lonlat, angle, nearestLine, lonlat);
+
+      assetIsMoving = false;
+    }
+  };
+
+  var mouseUp = function(asset) {
+    return function(evt) {
+      OpenLayers.Event.stop(evt);
+      mouseUpHandler(asset);
+    };
+  };
 
   var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
@@ -458,6 +464,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     if (distance > movementLimit && !movementPermissionConfirmed)
     {
+      requestingMovePermission = true;
       if (ownedByELY()){
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
       } else {
@@ -468,39 +475,45 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates, true);
           movementPermissionConfirmed = true;
+          requestingMovePermission = false;
         },
         closeCallback: function(){
           //Moves the stop to the original position
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), busStop.lon, busStop.lat);
+          var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
           doMovement(angle, nearestLine, busStop, false);
           movementPermissionConfirmed = false;
+          requestingMovePermission = false;
         }
       });
     }
     else
     {
-      doMovement(angle, nearestLine, coordinates, false);
+      doMovement(angle, nearestLine, coordinates, true);
     }
   };
 
-  var doMovement= function(angle, nearestLine, coordinates, disableMovement) {
-    roadLayer.selectRoadLink(nearestLine);
+  var doMovement= function(angle, nearestLine, coordinates, disableMarkerMovement) {
+    selectedAsset.data.bearing = angle;
+    selectedAsset.data.roadDirection = angle;
+    selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
+    selectedAsset.roadLinkId = nearestLine.roadLinkId;
+    selectedAsset.data.lon = coordinates.lon;
+    selectedAsset.data.lat = coordinates.lat;
 
-    if (!disableMovement){
-      selectedAsset.data.bearing = angle;
-      selectedAsset.data.roadDirection = angle;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
-      selectedAsset.roadLinkId = nearestLine.roadLinkId;
-      selectedAsset.data.lon = coordinates.lon;
-      selectedAsset.data.lat = coordinates.lat;
+    if (!disableMarkerMovement){
+      roadLayer.selectRoadLink(nearestLine);
       moveMarker(coordinates);
-      selectedMassTransitStopModel.move({
-        lon: coordinates.lon,
-        lat: coordinates.lat,
-        bearing: angle,
-        roadLinkId: nearestLine.roadLinkId,
-        linkId: nearestLine.linkId
-      });
     }
+
+    selectedMassTransitStopModel.move({
+      lon: coordinates.lon,
+      lat: coordinates.lat,
+      bearing: angle,
+      roadLinkId: nearestLine.roadLinkId,
+      linkId: nearestLine.linkId
+    });
+
   };
 
   var moveMarker = function(lonlat) {
@@ -592,7 +605,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       createNewAsset(map.getLonLatFromPixel(pixel), false);
     } else {
       if (selectedMassTransitStopModel.isDirty()) {
-        new Confirm();
+        if(!requestingMovePermission)
+          new Confirm();
       } else {
         selectedMassTransitStopModel.close();
       }
