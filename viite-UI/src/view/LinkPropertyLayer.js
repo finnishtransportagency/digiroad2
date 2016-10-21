@@ -18,9 +18,9 @@
         currentRenderIntent = 'select';
         roadLayer.redraw();
         if(feature.singleLinkSelect) {
-          highlightSingleFeature(feature)
+          highlightSingleFeature(feature);
         } else {
-            highlightFeatures();
+          highlightFeatures();
         }
       }
     };
