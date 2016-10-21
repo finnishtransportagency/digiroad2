@@ -296,9 +296,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    val response = client.execute(request)
     request.addHeader("Authorization", "Basic " + auth.getAuthinBase64())
-
+    val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
