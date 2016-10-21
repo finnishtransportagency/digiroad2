@@ -19,18 +19,8 @@
         roadLayer.redraw();
         if(feature.singleLinkSelect) {
           highlightSingleFeature(feature)
-        } else if(feature.attributes.anomaly === 1){
-          highlightAnomalousFeatures();
-        } else  if(feature.attributes.id === 0){
-          var possibleSelections = _.filter(selectedLinkProperty.get(), function (ps) {
-            return ps.id === 0 && ps.anomaly === 0;
-          });
-          var possibleFeatures = _.filter(roadLayer.layer.features, function(feature) {
-            return _.contains(_.pluck(possibleSelections, 'linkId'), feature.attributes.linkId );
-          });
-          highlightOtherRoadFeatures(feature, possibleFeatures);
         } else {
-          highlightFeatures();
+            highlightFeatures();
         }
       }
     };
@@ -59,7 +49,7 @@
 
      var highlightFeatures = function() {
      _.each(roadLayer.layer.features, function(x) {
-      if (selectedLinkProperty.isSelected(x.attributes.id)) {
+      if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
         selectControl.highlight(x);
       } else {
         selectControl.unhighlight(x);
@@ -73,35 +63,6 @@
           selectControl.highlight(x);
         }
       });
-    };
-
-    var highlightAnomalousFeatures = function() {
-      _.each(roadLayer.layer.features, function(x) {
-        if (selectedLinkProperty.isSelected(x.attributes.id) && x.attributes.anomaly === 1) {
-          selectControl.highlight(x);
-        } else {
-          selectControl.unhighlight(x);
-        }
-      });
-    };
-
-    var highlightOtherRoadFeatures = function(selectedFeature, features) {
-        var interceptedLinks = [selectedFeature];
-        var currentInterceptedLinks = interceptedLinks.length;
-        do {
-            currentInterceptedLinks = interceptedLinks.length;
-            var remainingFeatures = _.difference(features, interceptedLinks);
-            var interceptedPoints = _.flatten(_.pluck(_.pluck(interceptedLinks, 'attributes'), 'points'))
-            _.each(remainingFeatures, function(feature){
-                if(GeometryUtils.pointsToLineString(interceptedPoints).intersects(GeometryUtils.pointsToLineString(feature.attributes.points))) {
-                    interceptedLinks.push(feature);
-                }
-            });
-        } while (interceptedLinks.length !== currentInterceptedLinks);
-
-        _.each(interceptedLinks, function (il){
-            selectControl.highlight(il);
-        });
     };
 
     var unhighlightFeatures = function() {
@@ -255,7 +216,7 @@
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
-        highlightFeatures(_.first(features));
+        highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
       if (selectedLinkProperty.isDirty()) {

@@ -83,7 +83,8 @@
     };
 
     var isSelected = function(linkId) {
-      return _.some(current, function(selected) { return selected.getId() === linkId; });
+      return _.some(current, function(selected) {
+        return selected.getData().linkId === linkId; });
     };
 
     var save = function() {
