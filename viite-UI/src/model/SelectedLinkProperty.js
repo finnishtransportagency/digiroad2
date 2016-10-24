@@ -61,7 +61,7 @@
     var open = function(id, singleLinkSelect) {
       if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
         close();
-        current = singleLinkSelect ? roadCollection.get([id]) : roadCollection.getGroup(id);
+        current = singleLinkSelect ? roadCollection.getByLinkId([id]) : roadCollection.getGroupByLinkId(id);
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -83,7 +83,8 @@
     };
 
     var isSelected = function(linkId) {
-      return _.some(current, function(selected) { return selected.getId() === linkId; });
+      return _.some(current, function(selected) {
+        return selected.getData().linkId === linkId; });
     };
 
     var save = function() {

@@ -14,10 +14,14 @@
 
     var selectRoadLink = function(feature) {
       if(typeof feature.attributes.id !== 'undefined') {
-        selectedLinkProperty.open(feature.attributes.id, feature.singleLinkSelect);
+        selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
         currentRenderIntent = 'select';
         roadLayer.redraw();
-        highlightFeatures();
+        if(feature.singleLinkSelect) {
+          highlightSingleFeature(feature);
+        } else {
+          highlightFeatures();
+        }
       }
     };
 
@@ -25,7 +29,7 @@
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
       roadLayer.redraw();
-      highlightFeatures();
+      unhighlightFeatures();
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
@@ -43,13 +47,27 @@
       doubleClickSelectControl.deactivate();
     };
 
-    var highlightFeatures = function() {
+     var highlightFeatures = function() {
+     _.each(roadLayer.layer.features, function(x) {
+      if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
+        selectControl.highlight(x);
+      } else {
+        selectControl.unhighlight(x);
+      }
+     });
+   };
+
+    var highlightSingleFeature = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
-        if (selectedLinkProperty.isSelected(x.attributes.id)) {
+        if (selectedLinkProperty.isSelected(x.attributes.linkId) && x.attributes.linkId === feature.attributes.linkId) {
           selectControl.highlight(x);
-        } else {
-          selectControl.unhighlight(x);
         }
+      });
+    };
+
+    var unhighlightFeatures = function() {
+      _.each(roadLayer.layer.features, function(x) {
+          selectControl.unhighlight(x);
       });
     };
 
