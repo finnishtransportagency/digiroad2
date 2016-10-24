@@ -539,7 +539,7 @@ object TierekisteriBusStopMarshaller {
   private val stopTypePublicId = "pysakin_tyyppi"
   private val nameFiPublicId = "nimi_suomeksi"
   private val nameSePublicId = "nimi_ruotsiksi"
-  private val stopCode = "stop_code"
+  private val stopCode = "matkustajatunnus"
   private val InventoryDatePublicId = "inventointipaiva"
   private val FirstDayValidPublicId = "ensimmainen_voimassaolopaiva"
   private val LastDayValidPublicId = "viimeinen_voimassaolopaiva"
