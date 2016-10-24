@@ -15,6 +15,7 @@
     var selectRoadLink = function(feature) {
       if(typeof feature.attributes.id !== 'undefined') {
         selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
+        unhighlightFeatures();
         currentRenderIntent = 'select';
         roadLayer.redraw();
         if(feature.singleLinkSelect) {
