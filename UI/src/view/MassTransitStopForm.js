@@ -52,7 +52,7 @@
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
-        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin? Kyllä/Ei', {
+        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin?', {
           successCallback: function () {
             element.prop('disabled', true);
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
