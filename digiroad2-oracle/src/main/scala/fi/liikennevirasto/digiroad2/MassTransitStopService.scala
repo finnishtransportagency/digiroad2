@@ -13,6 +13,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+import scala.collection.immutable.Stream.Empty
 import scala.util.Try
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
@@ -258,11 +259,9 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if (administrationClass.isDefined && administrationClass.get != Unknown) {
-          if ((administrationClass.get == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
-            || ((administrationClass.get == Municipality || administrationClass.get == Private) && (roadLink.administrativeClass == State))) {
-            return (true, Some(FloatingReason.RoadOwnerChanged))
-          }
+        val (floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
+        if (floating == true) {
+          return (floating, floatingReason)
         }
     }
 
@@ -275,11 +274,9 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if (administrationClass.isDefined && administrationClass.get != Unknown) {
-          if ((administrationClass.get == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
-            || ((administrationClass.get == Municipality || administrationClass == Private) && (roadLink.administrativeClass == State))) {
-            return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
-          }
+        val floatingReason = MassTransitStopOperations.floatingReason(administrationClass.getOrElse(Unknown), roadLink)
+        if (floatingReason != null) {
+          return floatingReason
         }
     }
 
@@ -724,3 +721,30 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 }
 
+object MassTransitStopOperations {
+  def isFloating(administrationClass: AdministrativeClass, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+
+    val roadLinkAdminClass = roadLink match {
+      case Some(roadLink) => roadLink.administrativeClass
+      case None => Empty
+    }
+
+    if (administrationClass != Unknown) {
+      if ((administrationClass == State && (roadLinkAdminClass == Municipality || roadLinkAdminClass == Private))
+        || ((administrationClass == Municipality || administrationClass == Private) && (roadLinkAdminClass == State))) {
+        return (true, Some(FloatingReason.RoadOwnerChanged))
+      }
+    }
+    return (false, None)
+  }
+
+  def floatingReason(administrationClass: AdministrativeClass, roadLink: VVHRoadlink): String = {
+    if (administrationClass != null && administrationClass != Unknown) {
+      if ((administrationClass == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
+        || ((administrationClass == Municipality || administrationClass == Private) && (roadLink.administrativeClass == State))) {
+        return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.value)
+      }
+    }
+    return null
+  }
+}
