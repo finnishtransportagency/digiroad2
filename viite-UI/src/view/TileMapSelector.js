@@ -5,8 +5,8 @@
       '<ul>' +
         '<li data-layerid="terrain" title="Maastokartta">Maastokartta</li>' +
         '<li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>' +
-        '<li data-layerid="background" title="Taustakarttasarja">Taustakarttasarja</li>' +
-        '<li data-layerid="greyscale" title="Harmaasävy" class="selected">Harmaasävykartta</li>' +
+        '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
+        '<li data-layerid="greyscale" title="Harmaasävy">Harmaasävykartta</li>' +
       '</ul>' +
     '</div>';
     container.append(element);
