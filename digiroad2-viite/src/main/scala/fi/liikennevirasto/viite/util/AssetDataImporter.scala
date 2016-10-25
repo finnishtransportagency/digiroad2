@@ -96,11 +96,9 @@ class AssetDataImporter {
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
-    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)): Unit ={
-      "linkid: "+r._1+", alku: "+r._2+", loppu: "+r._3+ ", tie: "+r._4+", aosa: "+r._5+", ajr: "+
-        r._6+", ely: "+r._7+", tietyyppi: "+r._8+", jatkuu: "+r._9+", aet: "+r._10+", let: "+
-        r._11+", alkupvm: "+r._12+", loppupvm: "+r._13+", kayttaja: "+r._14+", muutospvm or rekisterointipvm: "+r._15
-
+    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)): String ={
+      s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
+        format(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15)
     }
     def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
       val filled = lrmPos.exists(x => x._4 >= length)
@@ -146,7 +144,7 @@ class AssetDataImporter {
     println("Read %d road links from vvh".format(linkLengths.size))
 
     roads.filter(r => linkLengths.get(r._1).isDefined).foreach{
-      row => println("Suppressed row ID {} with reason 1: 'LINK-ID is not found in the VVH Interface' {}", row._16, printRow(row))
+      row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row._16, printRow(row)))
     }
 
     val (lrmPositions, warningRows) = linkLengths.flatMap {
@@ -156,7 +154,7 @@ class AssetDataImporter {
     warningRows.foreach{
       warning =>
         val row = roads.find(r => r._16 == warning._1).get
-        println("Suppressed row ID {} with reason 1: 'Values of the start and end fields are totally outside of the link geometry' {}", warning._1, printRow(row))
+        println("Suppressed row ID %d with reason 1: 'Values of the start and end fields are totally outside of the link geometry' %s".format(warning._1, printRow(row)))
     }
 
     print(s"${DateTime.now()} - ")
