@@ -154,7 +154,7 @@ class AssetDataImporter {
     warningRows.foreach{
       warning =>
         val row = roads.find(r => r._16 == warning._1).get
-        println("Suppressed row ID %d with reason 1: 'Values of the start and end fields are totally outside of the link geometry' %s".format(warning._1, printRow(row)))
+        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' %s".format(warning._1, printRow(row)))
     }
 
     print(s"${DateTime.now()} - ")
