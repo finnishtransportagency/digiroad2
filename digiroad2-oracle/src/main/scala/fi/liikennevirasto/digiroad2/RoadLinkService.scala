@@ -402,14 +402,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                everything: Boolean, publicRoads: Boolean) : Seq[RoadLink] =
     getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
 
-  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), everything: Boolean) : Seq[RoadLink] = {
-    var roadLinkList = getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, false)._1
-    var roadLinkHistoryList = getViiteRoadLinksHistoryFromVVH(bounds, municipalities)
-
-    roadLinkList
-  }
-
-
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
 
