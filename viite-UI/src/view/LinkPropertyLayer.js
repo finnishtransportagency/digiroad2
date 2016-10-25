@@ -14,15 +14,11 @@
 
     var selectRoadLink = function(feature) {
       if(typeof feature.attributes.id !== 'undefined') {
-        selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
+        selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
         unhighlightFeatures();
         currentRenderIntent = 'select';
         roadLayer.redraw();
-        if(feature.singleLinkSelect) {
-          highlightSingleFeature(feature);
-        } else {
-          highlightFeatures();
-        }
+        highlightFeatures();
       }
     };
 
@@ -50,21 +46,14 @@
 
      var highlightFeatures = function() {
      _.each(roadLayer.layer.features, function(x) {
-      if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
+       var canIHighlight = !_.isUndefined(x.attributes.linkId) ? selectedLinkProperty.isSelectedByLinkId(x.attributes.linkId) : selectedLinkProperty.isSelectedById(x.attributes.id);
+      if (canIHighlight) {
         selectControl.highlight(x);
       } else {
         selectControl.unhighlight(x);
       }
      });
    };
-
-    var highlightSingleFeature = function(feature) {
-      _.each(roadLayer.layer.features, function(x) {
-        if (selectedLinkProperty.isSelected(x.attributes.linkId) && x.attributes.linkId === feature.attributes.linkId) {
-          selectControl.highlight(x);
-        }
-      });
-    };
 
     var unhighlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
@@ -138,32 +127,6 @@
     vectorLayer.setOpacity(1);
     vectorLayer.setVisibility(true);
 
-    var createAnomalousRoadAddresses = function(roadLinks) {
-      return _.flatten(_.map(roadLinks, function(roadLink) {
-        var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var attributes = _.merge({}, _.cloneDeep(roadLink), {
-          type: 'roadAddressAnomaly'
-        });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-      }));
-    };
-
-    var createAnomalousRoadAddressesSigns = function(roadLinks) {
-      return _.flatten(_.map(roadLinks, function(roadLink) {
-        var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
-        var attributes = _.merge({}, _.cloneDeep(roadLink), {
-          type: 'roadAddressAnomaly'
-        });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
-      }));
-    };
-
     var drawDashedLineFeatures = function(roadLinks) {
       var dashedRoadClasses = [7, 8, 9, 10];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -205,7 +168,7 @@
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.features, function (feature) {
-        return selectedLinkProperty.isSelected(feature.attributes.id);
+        return selectedLinkProperty.isSelectedById(feature.attributes.id);
       });
     };
 
