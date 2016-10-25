@@ -139,9 +139,18 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val lrmPositions = linkLengths.flatMap {
+    roads.filter(r => linkLengths.get(r._1).isDefined).foreach{
+      row => logger.warn("REASON 1: LINK-ID IS NOT FOUND IN THE VVH INTERFACE", row)
+    }
+
+    val (lrmPositions, warningRows) = linkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }.filterNot(x => x._3 == x._4)
+    }.partition(x => x._3 == x._4)
+
+    warningRows.foreach{
+      warning =>
+        logger.warn("REASON 2: VALUES OF THE START AND END FIELDS ARE TOTALLY OUTSIDE OF THE LINK GEOMETRY ", warning)
+    }
 
     print(s"${DateTime.now()} - ")
     println("%d zero length segments removed".format(lrmList.size - lrmPositions.size))
