@@ -140,7 +140,7 @@ class AssetDataImporter {
     println("Read %d road links from vvh".format(linkLengths.size))
 
     roads.filter(r => linkLengths.get(r._1).isDefined).foreach{
-      row => logger.warn("REASON 1: LINK-ID IS NOT FOUND IN THE VVH INTERFACE", row)
+      row => logger.warn("ROW ID {} REASON 1: LINK-ID IS NOT FOUND IN THE VVH INTERFACE {}", row._16, row)
     }
 
     val (lrmPositions, warningRows) = linkLengths.flatMap {
@@ -149,7 +149,7 @@ class AssetDataImporter {
 
     warningRows.foreach{
       warning =>
-        logger.warn("REASON 2: VALUES OF THE START AND END FIELDS ARE TOTALLY OUTSIDE OF THE LINK GEOMETRY ", warning)
+        logger.warn("ROW ID {} REASON 2: VALUES OF THE START AND END FIELDS ARE TOTALLY OUTSIDE OF THE LINK GEOMETRY {}", warning._1, warning)
     }
 
     print(s"${DateTime.now()} - ")
