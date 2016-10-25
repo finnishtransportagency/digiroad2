@@ -583,10 +583,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
       (a, b) match {
         case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-          if (firstModifiedAt > secondModifiedAt)
-            Some(firstModifiedAt)
-          else
-            Some(secondModifiedAt)
+          Some(Math.max(firstModifiedAt, secondModifiedAt))
         case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
         case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
         case (None, None) => None
