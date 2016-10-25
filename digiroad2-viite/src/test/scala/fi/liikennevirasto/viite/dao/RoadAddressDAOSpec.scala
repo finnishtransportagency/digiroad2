@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -46,6 +47,21 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val numbers = RoadAddressDAO.getValidRoadParts(5L)
       numbers.isEmpty should be(false)
       numbers should contain(201L)
+    }
+  }
+
+  test("Updating a geometry is executed in SQL server") {
+    runWithRollback {
+      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      RoadAddressDAO.update(address, Some(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 1.0))))
+    }
+  }
+
+
+  test("Set road address to floating and update the geometry as well") {
+    runWithRollback {
+      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 1.0))))
     }
   }
 }

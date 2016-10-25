@@ -235,7 +235,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
     withDynTransaction {
-      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id))
+      // TODO: add geometry if it is somehow available
+      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id, None))
     }
   }
 

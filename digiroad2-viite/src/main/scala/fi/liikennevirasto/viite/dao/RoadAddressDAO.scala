@@ -245,7 +245,7 @@ object RoadAddressDAO {
 
   def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) : Unit = {
     val updatedGeometry = geometryToUpdateSQL(geometry)
-    sqlu"""UPDATE ROAD_ADDRESS
+    println(s"""UPDATE ROAD_ADDRESS
         SET road_number = ${roadAddress.roadNumber},
             road_part_number= ${roadAddress.roadPartNumber},
             track_code = ${roadAddress.track.value},
@@ -254,6 +254,19 @@ object RoadAddressDAO {
             END_ADDR_M= ${roadAddress.endAddrMValue},
             start_date= ${roadAddress.startDate},
             end_date= ${roadAddress.endDate}
+            $updatedGeometry
+        WHERE id = ${roadAddress.id}""")
+    sqlu"""UPDATE ROAD_ADDRESS ra
+        SET ra.road_number = ${roadAddress.roadNumber},
+           |ra.road_part_number= ${roadAddress.roadPartNumber},
+           |ra.track_code = ${roadAddress.track.value},
+           |ra.ely= ${roadAddress.ely},
+           |ra.road_type= ${roadAddress.roadType.value},
+           |ra.discontinuity= ${roadAddress.discontinuity.value},
+           |ra.START_ADDR_M= ${roadAddress.startAddrMValue},
+           |ra.END_ADDR_M= ${roadAddress.endAddrMValue},
+           |ra.start_date= ${roadAddress.startDate},
+           |ra.end_date= ${roadAddress.endDate}
             $updatedGeometry
         WHERE id = ${roadAddress.id}""".execute
   }
@@ -373,6 +386,7 @@ object RoadAddressDAO {
     */
   def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
     val updatedGeometry = geometryToUpdateSQL(geometry)
+    println(s"""Update road_address ra Set ra.floating = $isFloating $updatedGeometry Where ra.id = $roadAddressId""")
     sqlu"""
            Update road_address ra Set ra.floating = $isFloating $updatedGeometry Where ra.id = $roadAddressId
       """.execute
@@ -403,19 +417,21 @@ object RoadAddressDAO {
 
   /**
     * Create the floating SQL for updates when necessary. Used for displaying floating road addresses (outside of road geometry)
+    *
     * @param geometry Geometry, if available
     * @return Update SQL or empty string if no viable geometry given
     */
   private def geometryToUpdateSQL(geometry: Option[Seq[Point]]) = {
     val insert = geometryToInsertSQL(geometry)
     if (insert != "")
-      s"geometry = $insert"
+      s""", ra.geometry = $insert"""
     else
       ""
   }
 
   /**
     * Create the value for geometry field, using the updateSQL above.
+    *
     * @param geometry Geometry, if available
     * @return
     */

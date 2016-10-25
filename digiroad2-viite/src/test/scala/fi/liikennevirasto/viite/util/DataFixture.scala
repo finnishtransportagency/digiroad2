@@ -42,7 +42,7 @@ object DataFixture {
         roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
       )
       println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-      changed.foreach(RoadAddressDAO.update)
+      changed.foreach(addr => RoadAddressDAO.update(addr, None))
       partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
     }
   }
@@ -81,7 +81,7 @@ object DataFixture {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork()
       println(s"${roads.size} segment(s) found")
-      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id))
+      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id, None))
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()
