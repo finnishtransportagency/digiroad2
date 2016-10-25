@@ -4,8 +4,10 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.MassTransitStopService
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
@@ -396,6 +398,71 @@ object DataFixture {
     }
   }
 
+  def verifyRoadLinkAdministrativeClassChanged(): Unit = {
+    println("\nVerify if roadlink administrator class and floating reason of mass transit stop asset was modified")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    val administrationClassPublicId = "linkin_hallinnollinen_luokka"
+
+    OracleDatabase.withDynTransaction {
+
+      val administrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
+
+      municipalities.foreach { municipality =>
+        println("Start processing municipality %d".format(municipality))
+
+        println("Start verification if road link administrative class is changed")
+        verifyIsChanged(administrationClassPublicId, administrationClassPropertyId, municipality)
+
+        println("End processing municipality %d".format(municipality))
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
+    case class AssetBeforeUpdate(asset: PersistedPointAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
+
+    val floatingReasonPublicId = "kellumisen_syy"
+    val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
+
+    val typeId = 10
+    //Get all no floating mass transit stops by municipality id
+    val assets = dataImporter.getNonFloatingAssetsWithNumberPropertyValue(typeId, propertyPublicId, municipality)
+
+    println("Processing %d assets not floating".format(assets.length))
+
+    if (assets.length > 0) {
+
+      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+
+      assets.foreach {
+        _ match {
+          case (assetId, linkId, None) =>
+            println("Don't exist Administration Class value at the asset with id %d .".format(assetId))
+          case (assetId, linkId, adminClass) =>
+            val roadlink = roadLinks.find(_.linkId == linkId)
+            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadlink) match {
+              case (_, Some(reason)) =>
+                dataImporter.updateFloating(assetId, true)
+                dataImporter.updateNumberPropertyData(floatingReasonPropertyId, assetId, reason.value)
+              case (_, None) =>
+                println("Don't exist modifications in Administration Class at the asset with id %d .".format(assetId))
+            }
+        }
+      }
+    }
+  }
+
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
@@ -482,12 +549,14 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
+      case Some (verify_roadLink_administrative_class_changed) =>
+        verifyRoadLinkAdministrativeClassChanged()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | verifyRoadLinkAdministrativeClassChanged")
     }
   }
 }

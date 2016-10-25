@@ -764,6 +764,19 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     """.execute
   }
 
+  def updateNumberPropertyData(propertyId: Long, assetId: Long, value: Int) {
+    sqlu"""
+       update number_property_value set value = $value
+       where asset_id = $assetId and property_id = $propertyId
+    """.execute
+  }
+
+  def updateFloating(id: Long, floating: Boolean) {
+    sqlu"""
+         update asset set floating = $floating where id = $id
+    """.execute
+  }
+
   def insertMultipleChoiceValue(propertyId: Long, assetId: Long, value: Int) {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
