@@ -430,8 +430,6 @@ object DataFixture {
   }
 
   private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
-    case class AssetBeforeUpdate(asset: PersistedPointAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
-
     val floatingReasonPublicId = "kellumisen_syy"
     val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
 

@@ -260,7 +260,7 @@ trait MassTransitStopService extends PointAssetOperations {
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         val (floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
-        if (floating == true) {
+        if (floating) {
           return (floating, floatingReason)
         }
     }
