@@ -223,18 +223,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     URLEncoder.encode(definition, "UTF-8")
   }
 
-  private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
-    val definitionStart = "[{"
-    val layerSelection = """"layerId":0,"""
-    val fieldSelection = customFieldSelection match {
-      case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE""""
-    }
-    val definitionEnd = "}]"
-    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
-    URLEncoder.encode(definition, "UTF-8")
-  }
-
   private def queryParameters(fetchGeometry: Boolean = true): String = {
     if (fetchGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
     else "f=pjson"
@@ -248,7 +236,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -413,7 +401,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
