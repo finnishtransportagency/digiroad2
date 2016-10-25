@@ -12,6 +12,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
@@ -238,7 +239,8 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def update(roadAddress: RoadAddress) = {
+  def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) = {
+    val updatedGeometry = geometryToUpdateSQL(geometry)
     sqlu"""UPDATE ROAD_ADDRESS
         SET road_number = ${roadAddress.roadNumber},
             road_part_number= ${roadAddress.roadPartNumber},
@@ -248,6 +250,7 @@ object RoadAddressDAO {
             END_ADDR_M= ${roadAddress.endAddrMValue},
             start_date= ${roadAddress.startDate},
             end_date= ${roadAddress.endDate}
+            $updatedGeometry
         WHERE id = ${roadAddress.id}""".execute
   }
 
@@ -364,16 +367,17 @@ object RoadAddressDAO {
     * @param isFloating '0' for not floating, '1' for floating
     * @param roadAddressId The Id of a road addresss
     */
-  def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long): Unit = {
+  def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+    val updatedGeometry = geometryToUpdateSQL(geometry)
     sqlu"""
-           Update road_address ra Set ra.floating = $isFloating Where ra.id = $roadAddressId
+           Update road_address ra Set ra.floating = $isFloating $updatedGeometry Where ra.id = $roadAddressId
       """.execute
   }
 
-  def changeRoadAddressFloating(float: Boolean, roadAddressId: Long): Unit = {
+  def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
     changeRoadAddressFloating(float match {
       case true => 1
-      case _ => 0}, roadAddressId)
+      case _ => 0}, roadAddressId, geometry)
   }
 
   def getValidRoadNumbers = {
@@ -393,6 +397,37 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
+  /**
+    * Create the floating SQL for updates when necessary. Used for displaying floating road addresses (outside of road geometry)
+    * @param geometry Geometry, if available
+    * @return Update SQL or empty string if no viable geometry given
+    */
+  private def geometryToUpdateSQL(geometry: Option[Seq[Point]]) = {
+    val insert = geometryToInsertSQL(geometry)
+    if (insert != "")
+      s"geometry = $insert"
+    else
+      ""
+  }
+
+  /**
+    * Create the value for geometry field, using the updateSQL above.
+    * @param geometry Geometry, if available
+    * @return
+    */
+  private def geometryToInsertSQL(geometry: Option[Seq[Point]]) = {
+    geometry match {
+      case Some(geom) if geom.nonEmpty =>
+        val first = geom.head
+        val last = geom.last
+        val length = GeometryUtils.geometryLength(geom)
+        s"""MDSYS.SDO_GEOMETRY(4002, 3067, NULL,
+      MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+      MDSYS.SDO_ORDINATE_ARRAY(${first.x}, ${first.y}, ${first.z}, 0,
+      ${last.x}, ${last.y}, ${last.z}, $length))"""
+      case _ => ""
+    }
+  }
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
