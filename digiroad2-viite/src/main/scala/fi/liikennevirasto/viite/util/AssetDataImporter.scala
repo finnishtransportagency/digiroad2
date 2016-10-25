@@ -96,6 +96,12 @@ class AssetDataImporter {
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
+    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)): Unit ={
+      "linkid: "+r._1+", alku: "+r._2+", loppu: "+r._3+ ", tie: "+r._4+", aosa: "+r._5+", ajr: "+
+        r._6+", ely: "+r._7+", tietyyppi: "+r._8+", jatkuu: "+r._9+", aet: "+r._10+", let: "+
+        r._11+", alkupvm: "+r._12+", loppupvm: "+r._13+", kayttaja: "+r._14+", muutospvm or rekisterointipvm: "+r._15
+
+    }
     def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
       val filled = lrmPos.exists(x => x._4 >= length)
       filled match {
@@ -140,7 +146,7 @@ class AssetDataImporter {
     println("Read %d road links from vvh".format(linkLengths.size))
 
     roads.filter(r => linkLengths.get(r._1).isDefined).foreach{
-      row => logger.warn("ROW ID {} REASON 1: LINK-ID IS NOT FOUND IN THE VVH INTERFACE {}", row._16, row)
+      row => println("Suppressed row ID {} with reason 1: 'LINK-ID is not found in the VVH Interface' {}", row._16, printRow(row))
     }
 
     val (lrmPositions, warningRows) = linkLengths.flatMap {
@@ -149,7 +155,8 @@ class AssetDataImporter {
 
     warningRows.foreach{
       warning =>
-        logger.warn("ROW ID {} REASON 2: VALUES OF THE START AND END FIELDS ARE TOTALLY OUTSIDE OF THE LINK GEOMETRY {}", warning._1, warning)
+        val row = roads.find(r => r._16 == warning._1).get
+        println("Suppressed row ID {} with reason 1: 'Values of the start and end fields are totally outside of the link geometry' {}", warning._1, printRow(row))
     }
 
     print(s"${DateTime.now()} - ")
