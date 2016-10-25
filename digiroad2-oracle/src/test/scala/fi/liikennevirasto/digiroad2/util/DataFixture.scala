@@ -448,7 +448,7 @@ object DataFixture {
       assets.foreach {
         _ match {
           case (assetId, linkId, None) =>
-            println("Don't exist Administration Class value at the asset with id %d .".format(assetId))
+            println("Asset with asset-id: %d doesn't have Administration Class value.".format(assetId))
           case (assetId, linkId, adminClass) =>
             val roadlink = roadLinks.find(_.linkId == linkId)
             MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadlink) match {
@@ -549,14 +549,14 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
-      case Some (verify_roadLink_administrative_class_changed) =>
+      case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason | verifyRoadLinkAdministrativeClassChanged")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed")
     }
   }
 }
