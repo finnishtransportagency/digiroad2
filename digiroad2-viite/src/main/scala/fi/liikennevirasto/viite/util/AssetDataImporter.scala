@@ -143,7 +143,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    roads.filter(r => linkLengths.get(r._1).isDefined).foreach{
+    roads.filterNot(r => linkLengths.get(r._1).isDefined).foreach{
       row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row._16, printRow(row)))
     }
 
