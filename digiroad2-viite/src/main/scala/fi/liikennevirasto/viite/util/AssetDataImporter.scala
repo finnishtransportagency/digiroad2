@@ -149,7 +149,7 @@ class AssetDataImporter {
 
     val (lrmPositions, warningRows) = linkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }.partition(x => x._3 == x._4)
+    }.partition(x => x._3 != x._4)
 
     warningRows.foreach{
       warning =>
