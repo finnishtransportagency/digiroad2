@@ -179,8 +179,8 @@ trait MassTransitStopService extends PointAssetOperations {
     * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
     * Convenience method
     *
-    * @param persistedStopOption The persisted stop
-    * @return returns true if the stop is not vitual and is a ELY bus stop
+    * @param persistedStopOption The persisted stops
+    * @return returns true if the stop is not virtual and is a ELY bus stop
     */
   def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
     persistedStopOption match {
@@ -269,8 +269,9 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
-          return (true, Some(FloatingReason.RoadOwnerChanged))
+        val (floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
+        if (floating) {
+          return (floating, floatingReason)
         }
     }
 
@@ -283,8 +284,9 @@ trait MassTransitStopService extends PointAssetOperations {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
-        if(administrationClass.isDefined && administrationClass.get == State &&  roadLink.administrativeClass.value != administrationClass.get.value){
-          return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.get.value)
+        val floatingReason = MassTransitStopOperations.floatingReason(administrationClass.getOrElse(Unknown), roadLink)
+        if (floatingReason.nonEmpty) {
+          return floatingReason.get
         }
     }
 
@@ -708,7 +710,7 @@ trait MassTransitStopService extends PointAssetOperations {
     propertyValueOption match {
       case None => None
       case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-      case Some(propertyValue) if !propertyValue.propertyValue.isEmpty =>
+      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
         Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
     }
   }
@@ -777,5 +779,40 @@ trait MassTransitStopService extends PointAssetOperations {
       val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), Option(expireDate))
       tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
     }
+  }
+}
+
+object MassTransitStopOperations {
+  val StateOwned: Set[AdministrativeClass] = Set(State)
+  val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
+
+  /**
+    * Check for administrative class change: road link has differing owner other than Unknown.
+    * @param administrativeClass MassTransitStop administrative class
+    * @param roadLinkAdminClassOption RoadLink administrative class
+    * @return true, if mismatch (owner known and non-compatible)
+    */
+  private def administrativeClassMismatch(administrativeClass: AdministrativeClass,
+                                 roadLinkAdminClassOption: Option[AdministrativeClass]) = {
+    val rlAdminClass = roadLinkAdminClassOption.getOrElse(Unknown)
+    val mismatch = StateOwned.contains(rlAdminClass) && OtherOwned.contains(administrativeClass) ||
+      OtherOwned.contains(rlAdminClass) && StateOwned.contains(administrativeClass)
+    administrativeClass != Unknown && roadLinkAdminClassOption.nonEmpty && mismatch
+  }
+
+  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+
+    val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
+    if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
+      (true, Some(FloatingReason.RoadOwnerChanged))
+    else
+      (false, None)
+  }
+
+  def floatingReason(administrativeClass: AdministrativeClass, roadLink: VVHRoadlink): Option[String] = {
+    if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
+      Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
+    else
+      None
   }
 }

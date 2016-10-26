@@ -37,6 +37,12 @@ object BusStopTestData {
                     Point(370675.043988335,6077274.14596169),
                     2499861,
                     235, 69), // to be used on change owner floating reason
+      SimpleBusStop(2, Some(300005), Some(9), Seq(3),
+                    28, LocalDate.now().minusYears(1),
+                    Some(LocalDate.now().plusYears(3)),
+                    Point(370675.043988335, 6077274.14596169),
+                    2499861,
+                    235, 69), // to be used on change owner floating reason
       SimpleBusStop(2, Some(300003), Some(4), Seq(2, 3),
                     37, LocalDate.now.plusYears(1),
                     Some(LocalDate.now().plusYears(3)),

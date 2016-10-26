@@ -179,70 +179,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Stop floats if a State road has got changed to a road owned by municipality"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300006
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  test("Stop floats if a State road has got changed to a road owned to a private road"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback{
-      val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
-      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
-    }
-  }
-
-  test("Stops working list shouldn't have floating assets with floating reason RoadOwnerChanged if user is not operator"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback {
-      val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
-      //GetBoundingBox will set assets  to floating
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
-      //Get all external ids from the working list
-      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
-
-      //Should not find any external id of the asset with administration class changed
-      externalIds.foreach{ externalId =>
-        externalId.get("id") should not be (Some(8))
-      }
-    }
-  }
-
-  test("Stops working list should have all floating assets if user is operator"){
-    val massTransitStopDao = new MassTransitStopDao
-    runWithRollback {
-      val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
-      //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
-      //GetBoundingBox will set assets  to floating
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
-      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
-      //Get all external ids from the working list
-      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
-
-      //Should have the external id of the asset with administration class changed
-      externalIds.map(_.get("id")) should contain (Some(8))
-    }
-  }
-
   test("Persist mass transit stop floating status change") {
     runWithRollback {
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
@@ -944,6 +880,112 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       propertyValues.nonEmpty should be (true)
       propertyValues.forall(x => x._2.nonEmpty) should be (true)
       propertyValues.forall(x => x._1 != "") should be (true)
+    }
+  }
+
+  test("Stop floats if a State road has got changed to a road owned by municipality"){
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300006
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stop floats if a State road has got changed to a road owned to a private road"){
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stop floats if a Municipality road has got changed to a road owned by state"){
+    val vvhRoadLinks = List(
+      VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300006
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, Municipality)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stop floats if a Private road has got changed to a road owned by state"){
+    val vvhRoadLinks = List(
+      VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    val massTransitStopDao = new MassTransitStopDao
+    runWithRollback{
+      val assetId = 300006
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, Private)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      stops.find(_.id == assetId).map(_.floating) should be(Some(true))
+      massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
+    }
+  }
+
+  test("Stops working list shouldn't have floating assets with floating reason RoadOwnerChanged if user is not operator"){
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    runWithRollback {
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      //GetBoundingBox will set assets  to floating
+      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
+      //Get all external ids from the working list
+      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+
+      //Should not find any external id of the asset with administration class changed
+      externalIds.foreach{ externalId =>
+        externalId.get("id") should not be (Some(8))
+      }
+    }
+  }
+
+  test("Stops working list should have all floating assets if user is operator"){
+    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+
+    runWithRollback {
+      val assetId = 300012
+      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
+      //Set administration class of the asset with State value
+      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      //GetBoundingBox will set assets  to floating
+      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
+      //Get all external ids from the working list
+      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+
+      //Should have the external id of the asset with administration class changed
+      externalIds.map(_.get("id")) should contain (Some(8))
     }
   }
 }
