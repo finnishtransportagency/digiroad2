@@ -239,6 +239,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
+    Seq()
+  }
+
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
