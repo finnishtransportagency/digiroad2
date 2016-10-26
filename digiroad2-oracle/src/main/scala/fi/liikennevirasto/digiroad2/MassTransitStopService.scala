@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.Operation._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
@@ -10,6 +12,7 @@ import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+
 import scala.util.Try
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
