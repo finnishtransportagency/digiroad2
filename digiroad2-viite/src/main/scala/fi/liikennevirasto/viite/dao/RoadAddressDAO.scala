@@ -8,32 +8,14 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
-import org.joda.time.DateTime
+import fi.liikennevirasto.viite.RoadType
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.viite.RoadType.{Public, UnknownOwner}
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
-
-//TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
-sealed trait RoadType {
-  def value: Int
-}
-object RoadType {
-  val values = Set(Public, Ferry, MunicipalityStreet, PublicUnderConstruction, Private, UnknownOwner)
-
-  def apply(intValue: Int): RoadType = {
-    values.find(_.value == intValue).getOrElse(UnknownOwner)
-  }
-
-  case object Public extends RoadType { def value = 1 }
-  case object Ferry extends RoadType { def value = 2 }
-  case object MunicipalityStreet extends RoadType { def value = 3 }
-  case object PublicUnderConstruction extends RoadType { def value = 4 }
-  case object Private extends RoadType { def value = 5 }
-  case object UnknownOwner extends RoadType { def value = 9 }
-}
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
 
@@ -78,7 +60,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                       )
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
-                              roadNumber: Option[Long], roadPartNumber: Option[Long],
+                              roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
 
 object RoadAddressDAO {
@@ -298,11 +280,6 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def getAllMissingRoadAddresses = {
-    sql"""SELECT link_id, start_addr_m, end_addr_m
-            FROM missing_road_address""".as[(Long, Long, Long)].list
-  }
-
   def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
@@ -316,7 +293,7 @@ object RoadAddressDAO {
             FROM missing_road_address $where"""
       Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
         case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+          MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwner ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
       }
     }
   }
@@ -329,7 +306,7 @@ object RoadAddressDAO {
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+            MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwner, road, roadPart, startM, endM, Anomaly.apply(anomaly))
         }
     }
   }

@@ -1,8 +1,9 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress, RoadType}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
 import org.joda.time.DateTime
+import fi.liikennevirasto.viite.RoadType
 import org.scalatest.{FunSuite, Matchers}
 
 /**

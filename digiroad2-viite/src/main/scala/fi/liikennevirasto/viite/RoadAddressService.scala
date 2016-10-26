@@ -32,6 +32,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
 
+  val PublicRoad = "Yleinen tie"
+  val FerryRoad = "Lauttaväylä yleisellä tiellä"
+  val MunicipalityRoad = "Kunnan katuosuus"
+  val PublicUnderConstructionRoad = "Yleisen tien työmaa"
+  val PrivateRoad = "Yksityistie"
+  val UnknownOwnerRoad ="Omistaja selvittämättä"
+
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i
   }
@@ -204,6 +211,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getRoadType(administrativeClass: String, linkType: Any): String = {
+    (administrativeClass, linkType) match {
+      case ("State", 21) => FerryRoad
+      case ("State", _) => PublicRoad
+      case ("Municipality", _) => MunicipalityRoad
+      case ("Private", _) => PrivateRoad
+      case (_,_) => UnknownOwnerRoad
+    }
+  }
+
   def createMissingRoadAddress(missingRoadLinks: Seq[MissingRoadAddress]) = {
     withDynTransaction {
       missingRoadLinks.foreach(createSingleMissingRoadAddress)
@@ -240,7 +257,24 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 }
 
+//TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
+sealed trait RoadType {
+  def value: Int
+}
+object RoadType {
+  val values = Set(Public, Ferry, MunicipalityStreet, PublicUnderConstruction, Private, UnknownOwner)
 
+  def apply(intValue: Int): RoadType = {
+    values.find(_.value == intValue).getOrElse(UnknownOwner)
+  }
+
+  case object Public extends RoadType { def value = 1 }
+  case object Ferry extends RoadType { def value = 2 }
+  case object MunicipalityStreet extends RoadType { def value = 3 }
+  case object PublicUnderConstruction extends RoadType { def value = 4 }
+  case object Private extends RoadType { def value = 5 }
+  case object UnknownOwner extends RoadType { def value = 9 }
+}
 
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
@@ -252,9 +286,8 @@ object RoadAddressLinkBuilder {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass,
-      roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, roadLink.linkType, roadAddress.roadType,
+      extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(null), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
@@ -269,9 +302,8 @@ object RoadAddressLinkBuilder {
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     new RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass,
-      roadLink.functionalClass, roadLink.trafficDirection,
-      roadLink.linkType, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, roadLink.linkType, missingAddress.roadType,
+      extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, 0, Discontinuity.Continuous.value,
       0, 0, "", 0.0, length, SideCode.Unknown,
