@@ -13,7 +13,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.viite.RoadType.{Public, UnknownOwner}
+import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
 
@@ -293,7 +293,7 @@ object RoadAddressDAO {
             FROM missing_road_address $where"""
       Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
         case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwner ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
+          MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
       }
     }
   }
@@ -306,7 +306,7 @@ object RoadAddressDAO {
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwner, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+            MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly))
         }
     }
   }

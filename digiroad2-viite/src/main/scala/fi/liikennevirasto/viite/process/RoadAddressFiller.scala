@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.digiroad2.asset.State
-import fi.liikennevirasto.viite.RoadType.Public
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder}
 
 object RoadAddressFiller {
@@ -79,7 +79,7 @@ object RoadAddressFiller {
   }
 
   private def generateUnknownLink(roadLink: RoadLink) = {
-    Seq(MissingRoadAddress(roadLink.linkId, None, None, Public, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
+    Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
       case true => Anomaly.NoAddressGiven
       case false => Anomaly.None
     }))

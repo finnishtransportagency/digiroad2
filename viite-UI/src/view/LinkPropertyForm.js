@@ -196,7 +196,6 @@
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
-        // linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
         linkProperties.roadNameFi = linkProperties.roadNameFi || '';
         linkProperties.roadNameSe = linkProperties.roadNameSe || '';
         linkProperties.roadNameSm = linkProperties.roadNameSm || '';
@@ -220,7 +219,6 @@
         }
         linkProperties.endAddressM = linkProperties.endAddressM || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-        // linkProperties.roadClass = getRoadType(linkProperties.administrativeClass, linkProperties.localizedLinkTypes);
         linkProperties.endDate = linkProperties.endDate || '';
         linkProperties.roadType = linkProperties.roadType || '';
 
