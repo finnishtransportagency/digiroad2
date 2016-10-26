@@ -9,6 +9,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Sunday, Saturday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -59,59 +61,6 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
           .getOrElse(""))
   }
 
-  def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
-    "muokannut_viimeksi" ->  massTransitStop.modified.modifier
-      .getOrElse(massTransitStop.created.modifier
-        .getOrElse(""))
-  }
-
-  private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
-    roadLinks.map{ roadLink =>
-      Map("linkId" -> roadLink.linkId,
-        "mmlId" -> roadLink.attributes.get("MTKID"),  // TODO: remove if mmlId field not needed any more in Kalpa API (transferred also in MTKID field)
-        "administrativeClass" -> roadLink.administrativeClass.value,
-        "functionalClass" -> roadLink.functionalClass,
-        "trafficDirection" -> roadLink.trafficDirection.value,
-        "linkType" -> roadLink.linkType.value,
-        "modifiedAt" -> roadLink.modifiedAt) ++ roadLink.attributes
-    }
-  }
-
-  def toTimeDomain(validityPeriod: ValidityPeriod): String = {
-    val daySpec = validityPeriod.days match {
-      case Saturday => "(t7){d1}"
-      case Sunday => "(t1){d1}"
-      case _ => "(t2){d5}"
-    }
-    s"[[$daySpec]*[(h${validityPeriod.startHour}){h${validityPeriod.duration()}}]]"
-  }
-
-  def toTimeDomainWithMinutes(validityPeriod: ValidityPeriod): String = {
-    val daySpec = validityPeriod.days match {
-      case Saturday => "(t7){d1}"
-      case Sunday => "(t1){d1}"
-      case _ => "(t2){d5}"
-    }
-    s"[[$daySpec]*[(h${validityPeriod.startHour}m${validityPeriod.startMinute}){h${validityPeriod.preciseDuration()._1}m${validityPeriod.preciseDuration()._2}}]]"
-  }
-
-  def valueToApi(value: Option[Value]) = {
-    value match {
-      case Some(Prohibitions(x)) => x.map { prohibitionValue =>
-        val exceptions = prohibitionValue.exceptions.toList match {
-          case Nil => Map()
-          case items => Map("exceptions" -> items)
-        }
-        val validityPeriods = prohibitionValue.validityPeriods.toList match {
-          case Nil => Map()
-          case _ => Map("validityPeriods" -> prohibitionValue.validityPeriods.map(toTimeDomain))
-        }
-        Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
-      }
-      case Some(TextualValue(x)) => x.split("\n").toSeq
-      case _ => value.map(_.toJson)
-    }
-  }
 
   def latestModificationTime(createdDateTime: Option[DateTime], modifiedDateTime: Option[DateTime]): (String, String) = {
     "muokattu_viimeksi" ->
@@ -121,7 +70,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
         .getOrElse("")
   }
 
-  def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
+  def geometryWKT(geometry: Seq[Point]): (String, String) =
   {
     if (geometry.nonEmpty)
     {
@@ -137,18 +86,42 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       "geometryWKT" -> ""
   }
 
-  def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
-    val geometryWKT = "POINT (" + lon + " " + lat + ")"
-    "geometryWKT" -> geometryWKT
+  def roadAddressLinksToApi(roadAddressLinks : Seq[RoadAddressLink]): Seq[Map[String, Any]] = {
+    roadAddressLinks.map{
+      roadAddressLink =>
+        Map(
+          "muokattu_viimeksi" -> "", //TODO put here the muokattu maybe use the method from OTH
+          geometryWKT(roadAddressLink.geometry), //TODO verify this
+          "id" -> roadAddressLink.id,
+          "road_number" -> roadAddressLink.roadNumber,
+          "road_part_number" -> roadAddressLink.roadPartNumber,
+          "track_code" -> roadAddressLink.trackCode,
+          "start_addr_m" -> roadAddressLink.startAddressM,
+          "end_addr_m" -> roadAddressLink.endAddressM,
+          "ely_code" -> roadAddressLink.elyCode, //TODO verify on DRVVH-209
+          "road_type" -> roadAddressLink.linkType, //TODO verify on DRVVH-209
+          "discontinuity" -> roadAddressLink.discontinuity,
+          "start_date" ->  "", //TODO missin start date from database
+          "end_date" ->  roadAddressLink.endDate, //TODO verify the format
+          "calibration_points" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
+            calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint))
+        )
+    }
+  }
+
+  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
+    calibrationPoint match {
+      case Some(point) =>
+        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
+      case _ => None
+    }
   }
 
   get("/road_address") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
       val municipalityCode = municipality.toInt
-
-      //TODO add the integration api
-
+      roadAddressLinksToApi(roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode))
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
     }
