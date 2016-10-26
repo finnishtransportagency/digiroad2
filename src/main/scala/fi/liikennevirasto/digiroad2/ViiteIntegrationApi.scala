@@ -145,7 +145,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
   get("/road_address") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
-      val municipalityNumber = municipality.toInt
+      val municipalityCode = municipality.toInt
 
       //TODO add the integration api
 

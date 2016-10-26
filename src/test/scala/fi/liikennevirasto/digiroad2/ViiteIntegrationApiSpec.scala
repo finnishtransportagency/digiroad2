@@ -30,6 +30,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     integrationApi.clearCache()
   }
   after {
+
     integrationApi.clearCache()
   }
 

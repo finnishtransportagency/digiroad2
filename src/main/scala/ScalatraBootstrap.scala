@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.user.UserConfigurationApi
 import org.scalatra._
 import javax.servlet.ServletContext
 
+
 class ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
