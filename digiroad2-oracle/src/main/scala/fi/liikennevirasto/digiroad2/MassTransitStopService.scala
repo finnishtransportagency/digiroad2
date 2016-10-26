@@ -1,12 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Date
-
 import fi.liikennevirasto.digiroad2.Operation._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -275,8 +273,8 @@ trait MassTransitStopService extends PointAssetOperations {
       case Some(roadLink) =>
         val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
         val floatingReason = MassTransitStopOperations.floatingReason(administrationClass.getOrElse(Unknown), roadLink)
-        if (floatingReason != null) {
-          return floatingReason
+        if (floatingReason.nonEmpty) {
+          return floatingReason.get
         }
     }
 
@@ -374,7 +372,7 @@ trait MassTransitStopService extends PointAssetOperations {
   /**
     * Checks that virtualTransitStop doesn't have any other types selected
     *
-    * @param stopProperties
+    * @param stopProperties Set of stop's properties
     * @return
     */
   private def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
@@ -556,9 +554,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
       massTransitStopDao.deleteAllMassTransitStopData(assetId)
 
-      if ((relevantToTR) && (tierekisteriClient.isTREnabled)) {
+      if (relevantToTR && tierekisteriClient.isTREnabled) {
         val liviIdOption = persistedStop.get.propertyData.find(propertyData =>
-          propertyData.publicId.equals(LiViIdentifierPublicId)).flatMap(propertyData => propertyData.values.headOption).map(_.propertyValue).headOption
+          propertyData.publicId.equals(LiViIdentifierPublicId)).flatMap(propertyData => propertyData.values.headOption).map(_.propertyValue)
 
         liviIdOption match {
           case Some(liviId) => tierekisteriClient.deleteMassTransitStop(liviId)
@@ -653,8 +651,8 @@ trait MassTransitStopService extends PointAssetOperations {
 
     propertyValueOption match {
       case None => None
-      case Some(propertyValue) if(propertyValue.propertyValue.isEmpty) => None
-      case Some(propertyValue) if(!propertyValue.propertyValue.isEmpty) =>
+      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
+      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
         Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
     }
   }
@@ -722,29 +720,36 @@ trait MassTransitStopService extends PointAssetOperations {
 }
 
 object MassTransitStopOperations {
-  def isFloating(administrationClass: AdministrativeClass, roadLink: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+  val StateOwned: Set[AdministrativeClass] = Set(State)
+  val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
 
-    val roadLinkAdminClass = roadLink match {
-      case Some(roadLink) => roadLink.administrativeClass
-      case None => Empty
-    }
-
-    if (administrationClass != Unknown) {
-      if ((administrationClass == State && (roadLinkAdminClass == Municipality || roadLinkAdminClass == Private))
-        || ((administrationClass == Municipality || administrationClass == Private) && (roadLinkAdminClass == State))) {
-        return (true, Some(FloatingReason.RoadOwnerChanged))
-      }
-    }
-    return (false, None)
+  /**
+    * Check for administrative class change: road link has differing owner other than Unknown.
+    * @param administrativeClass MassTransitStop administrative class
+    * @param roadLinkAdminClassOption RoadLink administrative class
+    * @return true, if mismatch (owner known and non-compatible)
+    */
+  private def administrativeClassMismatch(administrativeClass: AdministrativeClass,
+                                 roadLinkAdminClassOption: Option[AdministrativeClass]) = {
+    val rlAdminClass = roadLinkAdminClassOption.getOrElse(Unknown)
+    val mismatch = StateOwned.contains(rlAdminClass) && OtherOwned.contains(administrativeClass) ||
+      OtherOwned.contains(rlAdminClass) && StateOwned.contains(administrativeClass)
+    administrativeClass != Unknown && roadLinkAdminClassOption.nonEmpty && mismatch
   }
 
-  def floatingReason(administrationClass: AdministrativeClass, roadLink: VVHRoadlink): String = {
-    if (administrationClass != null && administrationClass != Unknown) {
-      if ((administrationClass == State && (roadLink.administrativeClass == Municipality || roadLink.administrativeClass == Private))
-        || ((administrationClass == Municipality || administrationClass == Private) && (roadLink.administrativeClass == State))) {
-        return "Road link administration class have changed from %d to %d".format(roadLink.administrativeClass.value, administrationClass.value)
-      }
-    }
-    return null
+  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+
+    val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
+    if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
+      (true, Some(FloatingReason.RoadOwnerChanged))
+    else
+      (false, None)
+  }
+
+  def floatingReason(administrativeClass: AdministrativeClass, roadLink: VVHRoadlink): Option[String] = {
+    if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
+      Some("Road link administrative class have changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
+    else
+      None
   }
 }
