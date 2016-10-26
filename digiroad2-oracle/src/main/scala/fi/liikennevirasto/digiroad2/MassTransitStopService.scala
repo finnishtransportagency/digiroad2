@@ -86,24 +86,33 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
+  /**
+    * Run enriching if the stop is found in Tierekisteri. Return enriched stop with a boolean flag for errors (not found in TR)
+    * @param persistedStop Optional mass transit stop
+    * @return Enriched stop with a boolean flag for TR operation errors
+    */
+  private def enrichStopIfInTierekisteri(persistedStop: Option[PersistedMassTransitStop]) = {
+    if (isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
+      val properties = persistedStop.map(_.propertyData).get
+      val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
+      val liViId = liViProp.map(_.values.head).get.propertyValue
+      val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+      tierekisteriStop.isEmpty match {
+        case true => (persistedStop, true)
+        case false => (enrichPersistedMassTransitStop(persistedStop, tierekisteriStop.get), false)
+      }
+    } else {
+      (persistedStop, false)
+    }
+  }
+
   def getByNationalIdWithTRWarnings[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit,
                                                         persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): (Option[T], Boolean) = {
     withDynTransaction {
       val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      if (isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
-        val properties = persistedStop.map(_.propertyData).get
-        val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
-        val liViId = liViProp.map(_.values.head).get.propertyValue
-        val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
-        val enrichedStop = tierekisteriStop.isEmpty match {
-          case true => persistedStop
-          case false => enrichPersistedMassTransitStop(persistedStop, tierekisteriStop.get)
-        }
-        (enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), tierekisteriStop.isEmpty)
-      } else {
-        (persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), false)
-      }
+      val (enrichedStop, trError) = enrichStopIfInTierekisteri(persistedStop)
+      (enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), trError)
     }
   }
 
@@ -380,6 +389,12 @@ trait MassTransitStopService extends PointAssetOperations {
   override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
+
+  override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
+    val assets = super.getByMunicipality(municipalityCode)
+    assets.flatMap(a => enrichStopIfInTierekisteri(Some(a))._1)
+  }
+
 
   /**
     * Checks that virtualTransitStop doesn't have any other types selected
@@ -788,6 +803,7 @@ object MassTransitStopOperations {
 
   /**
     * Check for administrative class change: road link has differing owner other than Unknown.
+    *
     * @param administrativeClass MassTransitStop administrative class
     * @param roadLinkAdminClassOption RoadLink administrative class
     * @return true, if mismatch (owner known and non-compatible)

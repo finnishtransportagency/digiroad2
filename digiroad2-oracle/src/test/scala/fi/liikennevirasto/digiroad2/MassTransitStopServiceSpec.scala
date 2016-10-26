@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.util._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers._
+import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -988,4 +989,27 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       externalIds.map(_.get("id")) should contain (Some(8))
     }
   }
+
+  test("getByMunicipality gets Tierekisteri Equipment") {
+    val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
+    combinations.foreach { case (e, v) =>
+      reset(mockVVHClient, mockTierekisteriClient)
+      when(mockVVHClient.fetchByMunicipality(any[Int])).thenReturn(vvhRoadLinks)
+      when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
+        TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
+          false, equipments = Equipment.values.map(equip => equip -> e).toMap, None, None, None, "KX12356", None, None, None, new Date))
+      )
+      runWithRollback {
+        val stops = RollbackMassTransitStopServiceWithTierekisteri.getByMunicipality(235)
+        val (trStops, _) = stops.partition(s => RollbackMassTransitStopServiceWithTierekisteri.isStoredInTierekisteri(Some(s)))
+        val equipmentPublicIds = Equipment.values.filter(_.isMaster).map(_.publicId)
+        // All should be unknown as set in the TRClientMock
+        val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
+        equipments.forall(_.forall(p => p.values.nonEmpty && p.values.head.propertyValue == v)) should be(true)
+      }
+      verify(mockVVHClient, times(1)).fetchByMunicipality(any[Int])
+      verify(mockTierekisteriClient, Mockito.atLeast(1)).fetchMassTransitStop(any[String])
+    }
+  }
+
 }
