@@ -219,7 +219,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = true): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
@@ -278,7 +278,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
   def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                        includeAllPublicRoads: Boolean): Future[Seq[VVHRoadlink]] = {
+                                        includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
     Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, includeAllPublicRoads))
   }
 

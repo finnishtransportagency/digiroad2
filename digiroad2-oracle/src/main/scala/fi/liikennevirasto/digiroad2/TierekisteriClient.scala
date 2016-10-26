@@ -1,27 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
-import java.io.InputStream
-import java.text.ParseException
-import java.text.SimpleDateFormat
+import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
-
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-
-import scala.collection.GenTraversableOnce
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods._
 import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.apache.http.impl.client.CloseableHttpClient
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
-
-import scala.io.Source
 
 /**
   * Values for Stop type (Pysäkin tyyppi) enumeration
@@ -202,7 +195,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
-
+  //private val auth = new TierekisteriAuthPropertyReader
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + id
 
@@ -232,6 +225,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   /**
     * Returns the anwser to the question "Is Tierekisteri Enabled?".
+ *
     * @return Type: Boolean - If TR client is enabled
     */
   def isTREnabled : Boolean = {
@@ -296,8 +290,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
+    //request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
-
     try {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode == HttpStatus.SC_NOT_FOUND) {
@@ -315,6 +309,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPost(url)
+    //request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(trMassTransitStop))
     val response = client.execute(request)
     try {
@@ -336,6 +331,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
   private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
     val request = new HttpPut(url)
+    //request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(tnMassTransitStop))
     val response = client.execute(request)
     try {
@@ -358,6 +354,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
     request.setHeader("content-type","application/json")
+    //request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -539,7 +536,7 @@ object TierekisteriBusStopMarshaller {
   private val stopTypePublicId = "pysakin_tyyppi"
   private val nameFiPublicId = "nimi_suomeksi"
   private val nameSePublicId = "nimi_ruotsiksi"
-  private val stopCode = "stop_code"
+  private val stopCode = "matkustajatunnus"
   private val InventoryDatePublicId = "inventointipaiva"
   private val FirstDayValidPublicId = "ensimmainen_voimassaolopaiva"
   private val LastDayValidPublicId = "viimeinen_voimassaolopaiva"
@@ -578,13 +575,11 @@ object TierekisteriBusStopMarshaller {
       case _ => TRRoadSide.Unknown
     }
   }
-  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress, roadSideOption: Option[RoadSide], expire: Boolean = false): TierekisteriMassTransitStop = {
+  def toTierekisteriMassTransitStop(massTransitStop: PersistedMassTransitStop, roadAddress: RoadAddress,
+                                    roadSideOption: Option[RoadSide], expireDate: Option[Date] = None): TierekisteriMassTransitStop = {
     val inventoryDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, InventoryDatePublicId)).getOrElse(new Date)
     val startingDate = convertStringToDate(getPropertyOption(massTransitStop.propertyData, FirstDayValidPublicId))
-    val lastDate = expire match {
-      case false => convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
-      case true => Some(inventoryDate)
-    }
+    val lastDate = if (expireDate.nonEmpty) expireDate else convertStringToDate(getPropertyOption(massTransitStop.propertyData, LastDayValidPublicId))
     TierekisteriMassTransitStop(massTransitStop.nationalId, findLiViId(massTransitStop.propertyData).getOrElse(""),
       roadAddress, roadSideOption.map(toTRRoadSide).getOrElse(TRRoadSide.Unknown), findStopType(massTransitStop.stopTypes),
       massTransitStop.stopTypes.contains(expressPropertyValue), mapEquipments(massTransitStop.propertyData),

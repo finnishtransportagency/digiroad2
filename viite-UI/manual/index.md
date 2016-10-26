@@ -219,3 +219,7 @@ Tuntemattomat tieosoitesegmentit visualisoidaan kartalle mustalla viivalla ja ky
 _Tuntemattomia tieosotiesegmenttej&auml;._
 
 Tuntemattomia tieosoitesegmenttej&auml; voi valita ja tarkastella klikkailemalla samalla tavalla, kuin muitakin tieosoitesegmenttej&auml;. Tuntemattoman tieosoitesegmentin tiedot ominaisuustietotaulussa (2) ovat puutteelliset, koska ko. kohdasta puuttuu tiedot tieosoitteesta.
+
+![Tuntemattoman tieosoitesegmentin puuttelliset ominaisuustiedot](k11.JPG)
+
+_Tuntematon tieosoitesegmentti valittuna. Ominaisuustietotaulun tiedot ovat puuttelliset._

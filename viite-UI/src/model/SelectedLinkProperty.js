@@ -58,10 +58,16 @@
       return properties;
     };
 
-    var open = function(id, singleLinkSelect) {
-      if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
+    var open = function(linkId, id, singleLinkSelect) {
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      if (canIOpen) {
         close();
-        current = singleLinkSelect ? roadCollection.get([id]) : roadCollection.getGroup(id);
+        if(!_.isUndefined(linkId)){
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);  
+        } else {
+          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+        }
+        
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -82,8 +88,14 @@
       return dirty;
     };
 
-    var isSelected = function(linkId) {
-      return _.some(current, function(selected) { return selected.getId() === linkId; });
+    var isSelectedById = function(id) {
+      return _.some(current, function(selected) {
+        return selected.getData().id === id; });
+    };
+
+    var isSelectedByLinkId = function(linkId) {
+      return _.some(current, function(selected) {
+        return selected.getData().linkId === linkId; });
     };
 
     var save = function() {
@@ -131,7 +143,8 @@
       isDirty: isDirty,
       save: save,
       cancel: cancel,
-      isSelected: isSelected,
+      isSelectedById: isSelectedById,
+      isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,

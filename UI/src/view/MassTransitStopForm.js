@@ -52,7 +52,7 @@
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
-        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin? Kyllä/Ei', {
+        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin?', {
           successCallback: function () {
             element.prop('disabled', true);
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
@@ -526,6 +526,8 @@
           isAdministratorELYKeskus = (administratorProperty.values[0].propertyValue === '2');
         }
 
+        disableFormIfELYBusStopHasEndDate(properties, isAdministratorELYKeskus);
+
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
@@ -561,6 +563,21 @@
 
         return assetForm;
       };
+
+      function disableFormIfELYBusStopHasEndDate(properties, isAdministratorELYKeskus) {
+        var isBusStopExpired = false;
+        var expireDateProperty = _.find(properties, function(property){
+          return property.publicId === 'viimeinen_voimassaolopaiva';
+        });
+
+        if (expireDateProperty && expireDateProperty.values && expireDateProperty.values[0]) {
+          isBusStopExpired = expireDateProperty.values[0].propertyValue !== "";
+        }
+
+        if (isBusStopExpired && isAdministratorELYKeskus)  {
+          readOnly = true;
+        }
+      }
 
 function streetViewTemplates(longi,lati,heading) {
       var streetViewTemplate  = _.template(
@@ -609,13 +626,14 @@ function streetViewTemplates(longi,lati,heading) {
         }
 
         var properties = selectedMassTransitStopModel.getProperties();
-        var condition = false;
 
-        for (var i = 0; i < properties.length; i++){
-          if(properties[i].values[0] !== undefined) {
-            condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-          }
-        }
+        var owner = _.find(properties, function(property) {
+          return property.publicId === "tietojen_yllapitaja"; });
+
+        var condition = typeof owner != 'undefined' &&
+          typeof owner.values != 'undefined' &&  owner.values > 0 && _.contains(_.map(owner.values, function (value) {
+          return value.propertyValue;
+        }), "2");
 
          if(isBusStopMaintainer === true && condition) {
            eventbus.trigger('application:controledTR',condition);

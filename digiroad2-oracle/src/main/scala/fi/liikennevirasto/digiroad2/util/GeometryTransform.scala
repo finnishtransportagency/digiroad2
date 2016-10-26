@@ -105,6 +105,7 @@ class GeometryTransform {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
+  private def DefaultToleranceMeters = 20.0
 
   private def vkmUrl = {
     val properties = new Properties()
@@ -183,7 +184,7 @@ class GeometryTransform {
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
     val params = Map(VkmRoad -> road, VkmRoadPart -> roadPart, VkmDistance -> distance, VkmTrackCode -> track.map(_.value),
-    "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> searchDistance,
+    "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> Some(searchDistance.getOrElse(DefaultToleranceMeters)),
       VkmRoadNumberInterval -> roadNumberInterval(includePedestrian, road))
     request(vkmUrl + urlParams(params)) match {
       case Left(address) => mapFields(address)

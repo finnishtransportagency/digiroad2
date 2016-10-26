@@ -105,7 +105,7 @@
     };
 
     map.addLayers([greyscaleLayer, backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
-    selectMap('greyscale');
+    selectMap('background');
     eventbus.on('tileMap:selected', selectMap);
   };
 })(this);
