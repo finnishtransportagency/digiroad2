@@ -239,7 +239,11 @@ object RoadAddressDAO {
     Q.queryNA[Int](query).firstOption
   }
 
-  def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) = {
+  def update(roadAddress: RoadAddress) : Unit = {
+    update(roadAddress, None)
+  }
+
+  def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) : Unit = {
     val updatedGeometry = geometryToUpdateSQL(geometry)
     sqlu"""UPDATE ROAD_ADDRESS
         SET road_number = ${roadAddress.roadNumber},
@@ -374,7 +378,7 @@ object RoadAddressDAO {
       """.execute
   }
 
-  def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
+  def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]] = None): Unit = {
     changeRoadAddressFloating(float match {
       case true => 1
       case _ => 0}, roadAddressId, geometry)
