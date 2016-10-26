@@ -10,8 +10,6 @@ import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
-import scala.collection.immutable.Stream.Empty
 import scala.util.Try
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
@@ -178,7 +176,7 @@ trait MassTransitStopService extends PointAssetOperations {
     * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY
     *
     * @param persistedStopOption The persisted stops
-    * @return returns true if the stop is not vitual and is a ELY bus stop
+    * @return returns true if the stop is not virtual and is a ELY bus stop
     */
   def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
     persistedStopOption match {
@@ -748,7 +746,7 @@ object MassTransitStopOperations {
 
   def floatingReason(administrativeClass: AdministrativeClass, roadLink: VVHRoadlink): Option[String] = {
     if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
-      Some("Road link administrative class have changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
+      Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
     else
       None
   }
