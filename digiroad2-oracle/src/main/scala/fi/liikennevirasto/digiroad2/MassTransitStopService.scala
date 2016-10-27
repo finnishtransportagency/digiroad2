@@ -200,11 +200,11 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-/**
-  * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
-  * Convenience method
-  *
-  */
+  /**
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
+    * Convenience method
+    *
+    */
   private def isStoredInTierekisteri(properties: Seq[AbstractProperty]): Boolean ={
     val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopTypePublicId)
@@ -435,7 +435,8 @@ trait MassTransitStopService extends PointAssetOperations {
       if (properties.nonEmpty) {
         massTransitStopDao.updateAssetProperties(id, properties.toSeq)
         updateAdministrativeClassValue(id, roadLink.get.administrativeClass)
-        updateLiViIdentifierProperty(id, asset.nationalId, properties.toSeq)
+        if (liviIdOption(properties.toSeq).getOrElse("") == "")
+          overWriteLiViIdentifierProperty(id, asset.nationalId, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -491,7 +492,8 @@ trait MassTransitStopService extends PointAssetOperations {
     if (properties.nonEmpty) {
       massTransitStopDao.updateAssetProperties(id, properties)
       updateAdministrativeClassValue(id, roadLink.administrativeClass)
-      updateLiViIdentifierProperty(id, persistedStop.nationalId, properties)
+      if (liviIdOption(properties).getOrElse("") == "")
+        overWriteLiViIdentifierProperty(id, persistedStop.nationalId, properties)
     }
     if (optionalPosition.isDefined) {
       val position = optionalPosition.get
@@ -560,34 +562,28 @@ trait MassTransitStopService extends PointAssetOperations {
 
     val properties = updatedProperties(asset.properties)
 
-      val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-      if (!mixedStoptypes(properties.toSet))
-      {
-        massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
-        updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-        updateLiViIdentifierProperty(assetId, nationalId, properties)
-        val shouldBeInTierekisteri = isStoredInTierekisteri(properties)
-        val operation = shouldBeInTierekisteri match {
-            case true => Operation.Create
-            case false => Operation.Noop
-          }
-        getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation)
-      }
-      else
-        throw new IllegalArgumentException
+    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    if (!mixedStoptypes(properties.toSet))
+    {
+      massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+      updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+      overWriteLiViIdentifierProperty(assetId, nationalId, properties)
+      val operation = if (isStoredInTierekisteri(properties)) Operation.Create else Operation.Noop
+      getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation)
     }
+    else
+      throw new IllegalArgumentException
+  }
 
-  private def updateLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
-    properties.foreach{ property =>
-      if(property.publicId == AdministratorInfoPublicId){
-        val administrationPropertyValue = property.values.headOption
-        val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+  private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
+    properties.find(_.publicId== AdministratorInfoPublicId).foreach { property =>
+      val administrationPropertyValue = property.values.headOption
+      val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
 
-        if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
-          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
-        }else{
-          massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
-        }
+      if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+        massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
+      }else{
+        massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
       }
     }
   }
@@ -795,6 +791,10 @@ trait MassTransitStopService extends PointAssetOperations {
       tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop)
     }
   }
+
+  private def liviIdOption(properties: Seq[AbstractProperty]) = {
+    properties.find(_.publicId == LiViIdentifierPublicId).flatMap(prop => prop.values.headOption)
+  }
 }
 
 object MassTransitStopOperations {
@@ -809,7 +809,7 @@ object MassTransitStopOperations {
     * @return true, if mismatch (owner known and non-compatible)
     */
   private def administrativeClassMismatch(administrativeClass: AdministrativeClass,
-                                 roadLinkAdminClassOption: Option[AdministrativeClass]) = {
+                                          roadLinkAdminClassOption: Option[AdministrativeClass]) = {
     val rlAdminClass = roadLinkAdminClassOption.getOrElse(Unknown)
     val mismatch = StateOwned.contains(rlAdminClass) && OtherOwned.contains(administrativeClass) ||
       OtherOwned.contains(rlAdminClass) && StateOwned.contains(administrativeClass)
