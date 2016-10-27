@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, SpeedLimit}
 import fi.liikennevirasto.viite.RoadAddressService
 import org.json4s.{DefaultFormats, Formats}
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Tag, BeforeAndAfter, FunSuite}
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -15,8 +16,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  //TODO create the mocks
-  //when(mockRoadAddressService.getRoadAddressLinks()).thenReturn(Seq()))
+  when(mockRoadAddressService.getRoadAddressesLinkByMunicipality(235)).thenReturn(Seq())
 
   private val integrationApi = new ViiteIntegrationApi(mockRoadAddressService)
   addServlet(integrationApi, "/*")
@@ -35,7 +35,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     integrationApi.clearCache()
   }
 
-  ignore("Should require correct authentication", Tag("db")) {
+  test("Should require correct authentication", Tag("db")) {
     get("/road_address") {
       status should equal(401)
     }
@@ -44,7 +44,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     }
   }
 
-  ignore("Get road address requires municipality number") {
+  test("Get road address requires municipality number") {
     getWithBasicUserAuth("/road_address", "kalpa", "kalpa") {
       status should equal(400)
     }
