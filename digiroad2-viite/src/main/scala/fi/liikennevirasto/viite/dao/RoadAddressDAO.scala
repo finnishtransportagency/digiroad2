@@ -1,19 +1,18 @@
 package fi.liikennevirasto.viite.dao
 
-import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.RoadType
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
+import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
 
@@ -118,18 +117,18 @@ object RoadAddressDAO {
     }
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
-        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
         ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND floating='0'
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
       String, String, String, String, Int)](query).list
     tuples.map {
-      case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
@@ -150,18 +149,18 @@ object RoadAddressDAO {
     }
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
-        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
         ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where $coarseWhere AND floating='0'
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
       String, String, String, String, Int)](query).list
     tuples.map {
-      case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
@@ -173,8 +172,8 @@ object RoadAddressDAO {
       idTableName =>
         val query =
           s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
-        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
         ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
@@ -182,10 +181,10 @@ object RoadAddressDAO {
         join $idTableName i on i.id = pos.link_id
         where floating='0'
       """
-        val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+        val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
           String, String, String, String, Int)](query).list
         tuples.map {
-          case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+          case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
           linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
             RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
         }
@@ -195,8 +194,8 @@ object RoadAddressDAO {
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long) = {
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
-        ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
         ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
         from road_address ra
@@ -204,10 +203,10 @@ object RoadAddressDAO {
         where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
       String, String, String, String, Int)](query).list
     tuples.map{
-      case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
@@ -327,18 +326,18 @@ object RoadAddressDAO {
       val query =
         s"""
        Select * From (
-       select ra.id, ra.road_number, ra.road_part_number, ra.track_code, ra.ely,
-       ra.road_type, ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+       select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
        pos.side_code,
        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
        from road_address ra inner join lrm_position pos on ra.lrm_position_id = pos.id
        Where ra.id > ${startId}
        Order By ra.Id asc ) Where rownum <= ${returnAmount}
       """
-      val tuples = Q.queryNA[(Long, Long, Long, Int, Long, Int, Int, Long, Long, Long, Double, Double, Int,
+      val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
         String, String, String, String, Int)](query).list
       tuples.map {
-        case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
+        case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
         linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
           RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), Some(dateTimeParse(endDate)), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
       }
@@ -396,8 +395,6 @@ object RoadAddressDAO {
 
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
-
-  implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
 
   implicit val getTrack = GetResult[Track]( r=> Track.apply(r.nextInt()))
 
