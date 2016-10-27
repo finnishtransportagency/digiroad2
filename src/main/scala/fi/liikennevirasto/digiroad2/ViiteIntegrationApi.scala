@@ -54,26 +54,8 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
     basicAuth
   }
 
-  def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
-    "muokattu_viimeksi" ->
-      timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
-        .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
-          .getOrElse(""))
-  }
-
-
-  def latestModificationTime(createdDateTime: Option[DateTime], modifiedDateTime: Option[DateTime]): (String, String) = {
-    "muokattu_viimeksi" ->
-      modifiedDateTime
-        .orElse(createdDateTime)
-        .map(DateTimePropertyFormat.print)
-        .getOrElse("")
-  }
-
-  def geometryWKT(geometry: Seq[Point]): (String, String) =
-  {
-    if (geometry.nonEmpty)
-    {
+  def geometryWKT(geometry: Seq[Point]): (String, String) = {
+    if (geometry.nonEmpty) {
       val segments = geometry.zip(geometry.tail)
       val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2))
       val mValuedGeometry = geometry.zip(runningSum.toList)
@@ -90,31 +72,33 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
     roadAddressLinks.map{
       roadAddressLink =>
         Map(
-          "muokattu_viimeksi" -> "", //TODO put here the muokattu maybe use the method from OTH
-          geometryWKT(roadAddressLink.geometry), //TODO verify this
+          "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
+          geometryWKT(roadAddressLink.geometry),
           "id" -> roadAddressLink.id,
           "road_number" -> roadAddressLink.roadNumber,
           "road_part_number" -> roadAddressLink.roadPartNumber,
           "track_code" -> roadAddressLink.trackCode,
           "start_addr_m" -> roadAddressLink.startAddressM,
           "end_addr_m" -> roadAddressLink.endAddressM,
-          "ely_code" -> roadAddressLink.elyCode, //TODO verify on DRVVH-209
-          "road_type" -> roadAddressLink.linkType, //TODO verify on DRVVH-209
+          "ely_code" -> roadAddressLink.elyCode,
+          "road_type" -> "", //TODO do that after the merge of 339
           "discontinuity" -> roadAddressLink.discontinuity,
-          "start_date" ->  "", //TODO missin start date from database
-          "end_date" ->  roadAddressLink.endDate, //TODO verify the format
-          "calibration_points" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
-            calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint))
+          "start_date" ->  roadAddressLink.startDate,
+          "end_date" ->  roadAddressLink.endDate,
+          "calibration_points" -> calibrationPoint(roadAddressLink.startCalibrationPoint, roadAddressLink.endCalibrationPoint)
         )
     }
   }
 
-  private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
-    calibrationPoint match {
-      case Some(point) =>
-        Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
-      case _ => None
+  private def calibrationPoint(startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint]) = {
+    def calibrationPointMapper(calibrationPoint: Option[CalibrationPoint]) = {
+      calibrationPoint.map(cp => Map("link_id" -> cp.linkId, "address_m_value" -> cp.addressMValue, "segment_m_value" -> cp.segmentMValue))
     }
+
+    Map(
+      "start" -> calibrationPointMapper(startCalibrationPoint),
+      "end" -> calibrationPointMapper(endCalibrationPoint)
+    )
   }
 
   get("/road_address") {
