@@ -50,10 +50,18 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Updating a geometry is executed in SQL server") {
+  test("Update without geometry") {
     runWithRollback {
       val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
-      RoadAddressDAO.update(address, Some(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 1.0))))
+      RoadAddressDAO.update(address)
+    }
+  }
+
+  test("Updating a geometry is executed in SQL server") {
+    runWithRollback {
+      sqlu"""alter session set nls_language = 'american'""".execute
+      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      RoadAddressDAO.update(address, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
     }
   }
 
@@ -61,7 +69,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Set road address to floating and update the geometry as well") {
     runWithRollback {
       val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
-      RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 1.0))))
+      RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
     }
   }
 }

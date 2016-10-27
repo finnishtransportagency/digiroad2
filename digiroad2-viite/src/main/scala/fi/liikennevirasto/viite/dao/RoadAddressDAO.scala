@@ -1,5 +1,8 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.Timestamp
+
+import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.SideCode
@@ -16,6 +19,8 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
 
@@ -53,9 +58,9 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
-case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity,
-                       startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: Option[DateTime],
-                       linkId: Long, startMValue: Double, endMValue: Double,
+case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false)
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
@@ -86,14 +91,10 @@ object RoadAddressDAO {
         Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
     }
   }
-  val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+  val formatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   def dateTimeParse(string: String) = {
-    try {
-      DateTime.parse(string, formatter)
-    } catch {
-      case ex: Exception => null
-    }
+    formatter.parseDateTime(string)
   }
 
   def optDateTimeParse(string: String): Option[DateTime] = {
@@ -103,7 +104,7 @@ object RoadAddressDAO {
       else
         Some(DateTime.parse(string, formatter))
     } catch {
-      case ex: Exception => return None
+      case ex: Exception => None
     }
   }
 
@@ -126,14 +127,17 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND floating='0'
       """
+    queryList(query)
+  }
+
+  private def queryList(query: String) = {
     val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-      String, String, String, String, Int)](query).list
+      Option[DateTime], Option[DateTime], String, Option[DateTime], Int)](query).list
     tuples.map {
       case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
-
   }
 
   def fetchPartsByRoadNumbers(roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
@@ -158,14 +162,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where $coarseWhere AND floating='0'
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-      String, String, String, String, Int)](query).list
-    tuples.map {
-      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
-      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
-    }
-
+    queryList(query)
   }
 
   def fetchByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
@@ -182,13 +179,7 @@ object RoadAddressDAO {
         join $idTableName i on i.id = pos.link_id
         where floating='0'
       """
-        val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-          String, String, String, String, Int)](query).list
-        tuples.map {
-          case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
-          linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-            RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
-        }
+        queryList(query)
     }
   }
 
@@ -204,13 +195,7 @@ object RoadAddressDAO {
         where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
-    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-      String, String, String, String, Int)](query).list
-    tuples.map{
-      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
-      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
-    }
+    queryList(query)
   }
 
   def fetchNextRoadNumber(current: Int) = {
@@ -243,34 +228,49 @@ object RoadAddressDAO {
     update(roadAddress, None)
   }
 
-  def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) : Unit = {
-    val updatedGeometry = geometryToUpdateSQL(geometry)
-    println(s"""UPDATE ROAD_ADDRESS
-        SET road_number = ${roadAddress.roadNumber},
-            road_part_number= ${roadAddress.roadPartNumber},
-            track_code = ${roadAddress.track.value},
-            discontinuity= ${roadAddress.discontinuity.value},
-            START_ADDR_M= ${roadAddress.startAddrMValue},
-            END_ADDR_M= ${roadAddress.endAddrMValue},
-            start_date= ${roadAddress.startDate},
-            end_date= ${roadAddress.endDate}
-            $updatedGeometry
-        WHERE id = ${roadAddress.id}""")
-    sqlu"""UPDATE ROAD_ADDRESS ra
-        SET ra.road_number = ${roadAddress.roadNumber},
-           |ra.road_part_number= ${roadAddress.roadPartNumber},
-           |ra.track_code = ${roadAddress.track.value},
-           |ra.ely= ${roadAddress.ely},
-           |ra.road_type= ${roadAddress.roadType.value},
-           |ra.discontinuity= ${roadAddress.discontinuity.value},
-           |ra.START_ADDR_M= ${roadAddress.startAddrMValue},
-           |ra.END_ADDR_M= ${roadAddress.endAddrMValue},
-           |ra.start_date= ${roadAddress.startDate},
-           |ra.end_date= ${roadAddress.endDate}
-            $updatedGeometry
-        WHERE id = ${roadAddress.id}""".execute
+  def toTimeStamp(dateTime: Option[DateTime]) = {
+    dateTime.map(dt => new Timestamp(dt.getMillis))
   }
 
+  def update(roadAddress: RoadAddress, geometry: Option[Seq[Point]]) : Unit = {
+    if (geometry.isEmpty)
+      updateWithoutGeometry(roadAddress)
+    else {
+      val startTS = toTimeStamp(roadAddress.startDate)
+      val endTS = toTimeStamp(roadAddress.endDate)
+      val first = geometry.get.head
+      val last = geometry.get.last
+      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
+      val length = GeometryUtils.geometryLength(geometry.get)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+           road_part_number= ${roadAddress.roadPartNumber},
+           track_code = ${roadAddress.track.value},
+           discontinuity= ${roadAddress.discontinuity.value},
+           START_ADDR_M= ${roadAddress.startAddrMValue},
+           END_ADDR_M= ${roadAddress.endAddrMValue},
+           start_date= $startTS,
+           end_date= $endTS,
+           geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+        WHERE id = ${roadAddress.id}""".execute
+    }
+  }
+
+  private def updateWithoutGeometry(roadAddress: RoadAddress) = {
+    val startTS = toTimeStamp(roadAddress.startDate)
+    val endTS = toTimeStamp(roadAddress.endDate)
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET road_number = ${roadAddress.roadNumber},
+           road_part_number= ${roadAddress.roadPartNumber},
+           track_code = ${roadAddress.track.value},
+           discontinuity= ${roadAddress.discontinuity.value},
+           START_ADDR_M= ${roadAddress.startAddrMValue},
+           END_ADDR_M= ${roadAddress.endAddrMValue},
+           start_date= $startTS,
+           end_date= $endTS
+        WHERE id = ${roadAddress.id}""".execute
+  }
 
   def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
     sqlu"""
@@ -343,8 +343,8 @@ object RoadAddressDAO {
   }
 
   def getAllRoadAddressesByRange(startId: Long, returnAmount: Long) = {
-      val query =
-        s"""
+    val query =
+      s"""
        Select * From (
        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
@@ -354,14 +354,8 @@ object RoadAddressDAO {
        Where ra.id > ${startId}
        Order By ra.Id asc ) Where rownum <= ${returnAmount}
       """
-      val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-        String, String, String, String, Int)](query).list
-      tuples.map {
-        case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
-        linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-          RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), Some(dateTimeParse(endDate)), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
-      }
-    }
+    queryList(query)
+  }
 
 
   /**
@@ -385,11 +379,23 @@ object RoadAddressDAO {
     * @param roadAddressId The Id of a road addresss
     */
   def changeRoadAddressFloating(isFloating: Int, roadAddressId: Long, geometry: Option[Seq[Point]]): Unit = {
-    val updatedGeometry = geometryToUpdateSQL(geometry)
-    println(s"""Update road_address ra Set ra.floating = $isFloating $updatedGeometry Where ra.id = $roadAddressId""")
-    sqlu"""
-           Update road_address ra Set ra.floating = $isFloating $updatedGeometry Where ra.id = $roadAddressId
+    if (geometry.nonEmpty) {
+      val first = geometry.get.head
+      val last = geometry.get.last
+      val (x1, y1, z1, x2, y2, z2) = (first.x, first.y, first.z, last.x, last.y, last.z)
+      val length = GeometryUtils.geometryLength(geometry.get)
+      sqlu"""
+           Update road_address Set floating = $isFloating,
+                  geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+                  $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+             Where id = $roadAddressId
       """.execute
+    } else {
+      sqlu"""
+           Update road_address Set floating = $isFloating
+             Where id = $roadAddressId
+      """.execute
+    }
   }
 
   def changeRoadAddressFloating(float: Boolean, roadAddressId: Long, geometry: Option[Seq[Point]] = None): Unit = {
@@ -416,35 +422,14 @@ object RoadAddressDAO {
   }
 
   /**
-    * Create the floating SQL for updates when necessary. Used for displaying floating road addresses (outside of road geometry)
-    *
-    * @param geometry Geometry, if available
-    * @return Update SQL or empty string if no viable geometry given
-    */
-  private def geometryToUpdateSQL(geometry: Option[Seq[Point]]) = {
-    val insert = geometryToInsertSQL(geometry)
-    if (insert != "")
-      s""", ra.geometry = $insert"""
-    else
-      ""
-  }
-
-  /**
     * Create the value for geometry field, using the updateSQL above.
     *
     * @param geometry Geometry, if available
     * @return
     */
-  private def geometryToInsertSQL(geometry: Option[Seq[Point]]) = {
+  private def geometryToSQL(geometry: Option[Seq[Point]]) = {
     geometry match {
       case Some(geom) if geom.nonEmpty =>
-        val first = geom.head
-        val last = geom.last
-        val length = GeometryUtils.geometryLength(geom)
-        s"""MDSYS.SDO_GEOMETRY(4002, 3067, NULL,
-      MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-      MDSYS.SDO_ORDINATE_ARRAY(${first.x}, ${first.y}, ${first.z}, 0,
-      ${last.x}, ${last.y}, ${last.z}, $length))"""
       case _ => ""
     }
   }
