@@ -240,6 +240,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @return
     */
   def fetchMassTransitStop(id: String): Option[TierekisteriMassTransitStop] = {
+    logger.info("Requesting stop %s from Tierekisteri".format(id))
     request[Map[String, Any]](serviceUrl(id)) match {
       case Left(content) =>
         Some(mapFields(content))
@@ -256,6 +257,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param trMassTransitStop
     */
   def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    logger.info("Creating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
     post(serviceUrl, trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ; // do nothing
@@ -269,6 +271,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param trMassTransitStop
     */
   def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
+    logger.info("Updating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
     put(serviceUrl(trMassTransitStop.liviId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
@@ -282,6 +285,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     * @param id
     */
   def deleteMassTransitStop(id: String): Unit ={
+    logger.info("REMOVING stop %s in Tierekisteri".format(id))
     delete(serviceUrl(id)) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
