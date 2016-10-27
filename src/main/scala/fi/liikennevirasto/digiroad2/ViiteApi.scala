@@ -125,30 +125,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    Map(
-      "linkId" -> roadLink.linkId,
-      "mmlId" -> roadLink.attributes.get("MTKID"),
-      "points" -> roadLink.geometry,
-      "administrativeClass" -> roadLink.administrativeClass.toString,
-      "linkType" -> roadLink.linkType.value,
-      "functionalClass" -> roadLink.functionalClass,
-      "trafficDirection" -> roadLink.trafficDirection.toString,
-      "modifiedAt" -> roadLink.modifiedAt,
-      "modifiedBy" -> roadLink.modifiedBy,
-      "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
-      "verticalLevel" -> roadLink.attributes.get("VERTICALLEVEL"),
-      "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
-      "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
-      "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
-      "minAddressNumberRight" -> roadLink.attributes.get("FROM_RIGHT"),
-      "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
-      "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
-      "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
-      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
-  }
-
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
     Map(
       "segmentId" -> roadAddressLink.id,

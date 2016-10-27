@@ -267,6 +267,8 @@ object RoadAddressLinkBuilder {
 
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
+  lazy val municipalityMapping = ElyDAO.getMunicipalityMapping
+
   def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
     (administrativeClass, linkType) match {
       case (State, CableFerry) => FerryRoad
@@ -283,8 +285,8 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, roadAddress.ely, roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(null), roadAddress.startMValue, roadAddress.endMValue,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityMapping.getOrElse(roadLink.municipalityCode, 0), roadAddress.discontinuity.value,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)

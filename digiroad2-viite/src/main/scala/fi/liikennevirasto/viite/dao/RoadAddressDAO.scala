@@ -53,11 +53,10 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
-case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, ely: Long, roadType: RoadType,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: Option[DateTime], linkId: Long,
-                       startMValue: Double, endMValue: Double, calibrationPoints: (Option[CalibrationPoint],Option[CalibrationPoint]) = (None, None),
-                       floating: Boolean = false
-                      )
+case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Discontinuity,
+                       startAddrMValue: Long, endAddrMValue: Long, startDate: DateTime, endDate: Option[DateTime],
+                       linkId: Long, startMValue: Double, endMValue: Double,
+                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false)
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
@@ -132,9 +131,7 @@ object RoadAddressDAO {
     tuples.map {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
-          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
 
   }
@@ -166,9 +163,7 @@ object RoadAddressDAO {
     tuples.map {
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
-          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
 
   }
@@ -192,9 +187,7 @@ object RoadAddressDAO {
         tuples.map {
           case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
           linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-            RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-              Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
-              startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+            RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
         }
     }
   }
@@ -216,9 +209,7 @@ object RoadAddressDAO {
     tuples.map{
       case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-          Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId,
-          startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), optDateTimeParse(endDate), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
     }
   }
 
@@ -253,8 +244,6 @@ object RoadAddressDAO {
         SET road_number = ${roadAddress.roadNumber},
             road_part_number= ${roadAddress.roadPartNumber},
             track_code = ${roadAddress.track.value},
-            ely= ${roadAddress.ely},
-            road_type= ${roadAddress.roadType.value},
             discontinuity= ${roadAddress.discontinuity.value},
             START_ADDR_M= ${roadAddress.startAddrMValue},
             END_ADDR_M= ${roadAddress.endAddrMValue},
@@ -351,9 +340,7 @@ object RoadAddressDAO {
       tuples.map {
         case (id, roadNumber, roadPartNumber, track, elyCode, roadType, discontinuity, startAddrMValue, endAddrMValue,
         linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-          RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), elyCode, RoadType.apply(roadType),
-            Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), Some(dateTimeParse(endDate)), linkId,
-            startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+          RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, dateTimeParse(startDate), Some(dateTimeParse(endDate)), linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
       }
     }
 
