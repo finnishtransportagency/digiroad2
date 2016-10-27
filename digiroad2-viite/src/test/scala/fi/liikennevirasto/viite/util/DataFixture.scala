@@ -87,20 +87,6 @@ object DataFixture {
     println()
   }
 
-  def testRoadlinkFetching(): Unit = {
-    println(s"Testing getting road addresses by municipality at time: ${DateTime.now}")
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
-    //val municipalityCode = 235
-    val municipalityCode = 749
-    val roadAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode)
-    println(s"Ammount of roadAddressLinks fetched: ${roadAddressLinks.length}")
-    roadAddressLinks.foreach(ral => {
-      println(s"Road Address Link: ${ral.toString}")
-    })
-  }
-
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -127,8 +113,6 @@ object DataFixture {
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case Some("test_roadlink_fetching") =>
-        testRoadlinkFetching()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | find_floating_road_addresses")
     }
   }
