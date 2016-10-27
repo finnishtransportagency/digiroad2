@@ -58,28 +58,6 @@
       [5, 'Jatkuva']
     ];
 
-    var getRoadType = function(administrativeClass,linkType){
-      var value = 9;
-      switch(administrativeClass.toString()){
-        case 'State':
-          if(linkType == 21){
-            value = 2;
-          }
-          else{
-            value = 1;
-          }
-          break;
-        case 'Municipality':
-          value = 3;
-          break;
-        case 'Private':
-          value = 5;
-          break;
-      }
-      var roadClass = _.find(allRoadTypes, function(x){return x[0] === value;});
-      return roadClass && roadClass[1];
-    };
-
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -107,7 +85,7 @@
       if(labelText === 'TIETYYPPI'){
         var roadTypes = "";
         _.each(selectedLinkProperty.get(), function(slp){
-          var roadType = getRoadType(slp.administrativeClass, slp.linkType);
+          var roadType = slp.roadType;
           if (roadTypes.length === 0) {
             roadTypes = roadType;
           } else if(roadTypes.search(roadType) === -1) {
@@ -210,13 +188,12 @@
           linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
           linkProperties.startAddressM = linkProperties.startAddressM || '0';
           linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
-          linkProperties.elyCode = linkProperties.elyCode || '';
         } else {
           linkProperties.roadPartNumber = '';
           linkProperties.trackCode = '';
           linkProperties.startAddressM = '';
-          linkProperties.elyCode = '';
         }
+        linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
         linkProperties.endAddressM = linkProperties.endAddressM || '';
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.endDate = linkProperties.endDate || '';
