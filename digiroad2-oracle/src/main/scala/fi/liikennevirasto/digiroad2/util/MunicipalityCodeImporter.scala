@@ -39,7 +39,7 @@ class MunicipalityCodeImporter {
         })
       } catch {
         case  npe: NullPointerException => {
-          println(s"/kunnat_ja_elyt_2014.csv was not found, skipping.")
+          println("//kunnat_ja_elyt_2014.csv was not found, skipping.")
         }
       }
     }
