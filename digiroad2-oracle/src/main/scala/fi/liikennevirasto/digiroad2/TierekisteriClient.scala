@@ -270,9 +270,10 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     *
     * @param trMassTransitStop
     */
-  def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
-    logger.info("Updating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
-    put(serviceUrl(trMassTransitStop.liviId), trMassTransitStop) match {
+  def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop, overrideLiviIdOption: Option[String]): Unit ={
+    val liviId = overrideLiviIdOption.getOrElse(trMassTransitStop.liviId)
+    logger.info("Updating stop %s in Tierekisteri".format(liviId))
+    put(serviceUrl(liviId), trMassTransitStop) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
     }

@@ -106,8 +106,6 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
     }
 
-    if(liviId != "OTHJ208914")
-      halt(NotFound())
 
     halt(NoContent())
   }
