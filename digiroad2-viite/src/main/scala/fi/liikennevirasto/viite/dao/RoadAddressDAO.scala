@@ -5,18 +5,17 @@ import java.sql.Timestamp
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.RoadType
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.RoadType._
+import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.model.Anomaly
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -68,6 +67,22 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
 
 object RoadAddressDAO {
+
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
+    val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where $filter
+      """
+    (queryList(query), Seq())
+  }
+
 
   private def logger = LoggerFactory.getLogger(getClass)
 
@@ -301,7 +316,7 @@ object RoadAddressDAO {
             FROM missing_road_address $where"""
       Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
         case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
+          MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
       }
     }
   }
@@ -314,7 +329,7 @@ object RoadAddressDAO {
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly))
         }
     }
   }
