@@ -5,12 +5,13 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
@@ -34,6 +35,26 @@ object DataFixture {
   }
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(vvhClient)
+  }
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+  lazy val eventbus: DigiroadEventBus = {
+    new DigiroadEventBus
+  }
+
+  lazy val massTransitStopService: MassTransitStopService = {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def vvhClient: VVHClient = DataFixture.vvhClient
+      override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
+      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriEnabled = true
+    }
+    new MassTransitStopServiceWithDynTransaction(eventbus)
   }
 
   def flyway: Flyway = {
@@ -414,6 +435,61 @@ object DataFixture {
     println("\n")
   }
 
+  def checkBusStopMatchingBetweenOTHandTR(): Unit = {
+    println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
+    println(DateTime.now())
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var missedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get a List of All Bus Stops present in Tierekisteri
+    val busStopsTR = tierekisteriClient.fetchActiveMassTransitStops
+
+    //Save Tierekisteri LiviIDs into a List
+    val liviIdsListTR = busStopsTR.map(_.liviId)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, true)
+
+      persistedStop.foreach { stop =>
+        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
+        if (!liviIdsListTR.exists(_ == "OTHJ%d".format(stop.nationalId)) && massTransitStopService.isStoredInTierekisteri(Some(stop))) {
+
+          //Add a list of missing stops with road addresses is available
+          missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
+
+          try {
+            //Create missed Bus Stop at the Tierekisteri
+            massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => vvhClient.fetchVVHRoadlink(stop.linkId))
+          } catch {
+            case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+          }
+        }
+      }
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of missing stops with road addresses is available
+    println("List of missing stops with road addresses is available:")
+    missedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -482,12 +558,14 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
+      case Some("check_bus_stop_matching_between_OTH_TR") =>
+        checkBusStopMatchingBetweenOTHandTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | check_bus_stop_matching_between_OTH_TR")
     }
   }
 }

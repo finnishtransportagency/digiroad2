@@ -353,6 +353,13 @@ trait MassTransitStopService extends PointAssetOperations {
     }.values.toSeq
   }
 
+  def getByMunicipality(municipalityCode: Int, enrichWithTR: Boolean): Seq[PersistedAsset] = {
+    if (enrichWithTR)
+      getByMunicipality(municipalityCode)
+    else
+      super.getByMunicipality(municipalityCode)
+  }
+
   private def withNationalId(nationalId: Long)(query: String): String = {
     query + s" where a.external_id = $nationalId"
   }
@@ -666,7 +673,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
+  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink]) = {
     if (operation != Operation.Noop) {
       val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
       val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
