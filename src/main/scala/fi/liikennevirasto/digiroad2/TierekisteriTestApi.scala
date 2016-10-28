@@ -73,6 +73,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   get("/pysakit/:id"){
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     val liviId = params("id")
     if (liviId == "OTHJ208910")
       massTransitStopWithOnlyMandatoryParameters
@@ -85,6 +87,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   get("/pysakit/") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     List(
       massTransitStop,
       massTransitStopWithOnlyMandatoryParameters
@@ -92,8 +96,9 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   put("/pysakit/:liviId") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     val liviId = params("liviId")
-
     if (liviId == "OTHJ20891499999999") {
       halt(BadRequest("Invalid 'mass transit stop' value for a field"))
     } else if (liviId == "OTHJ20891499Err") {
@@ -113,7 +118,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   post("/pysakit/"){
-
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     val body = parsedBody.extract[Map[String, Any]]
 
     mandatoryFields.foreach{ field  =>
@@ -132,6 +138,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   delete("/pysakit/:liviId"){
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     val liviId = params("liviId")
 
     if(liviId != "OTHJ208914")
