@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 
-import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, Municipality, TrafficDirection, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, SpeedLimit}
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, Municipality, SideCode}
+import fi.liikennevirasto.viite.{RoadType, RoadAddressService}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.json4s.{DefaultFormats, Formats}
@@ -55,9 +54,9 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
     }
   }
 
-  ignore("encode road adress") {
-    /*
-    val roadAdressLink = RoadAddressLink(0,5171208,Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5)),0.0,Municipality,UnknownLinkType,RoadType None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,1,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
+  test("encode road adress") {
+    val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
+    val roadAdressLink = RoadAddressLink(0,5171208, geometry,0.0,Municipality,UnknownLinkType,RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,1,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.0 0.0 0.0 0.0, 1.0 0.0 0.5 1.0, 4.0 4.0 1.5 6.0)",
@@ -68,13 +67,12 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "start_addr_m" -> 0,
       "end_addr_m" -> 1,
       "ely_code" -> 0,
-      "road_type" -> "", //TODO do that after the merge of 339
+      "road_type" -> 3,
       "discontinuity" -> 0,
       "start_date" ->  "2015-01-01",
       "end_date" ->  "2016-01-01",
       "calibration_points" -> Map("start" ->  Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1)), "end" -> None)
     )))
-    */
   }
 
   test("geometryWKTForLinearAssets provides proper geometry") {

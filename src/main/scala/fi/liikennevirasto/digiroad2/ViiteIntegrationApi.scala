@@ -81,7 +81,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
           "start_addr_m" -> roadAddressLink.startAddressM,
           "end_addr_m" -> roadAddressLink.endAddressM,
           "ely_code" -> roadAddressLink.elyCode,
-          "road_type" -> "", //TODO do that after the merge of 339
+          "road_type" -> roadAddressLink.roadType.value,
           "discontinuity" -> roadAddressLink.discontinuity,
           "start_date" ->  roadAddressLink.startDate,
           "end_date" ->  roadAddressLink.endDate,
