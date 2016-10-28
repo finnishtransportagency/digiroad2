@@ -17,10 +17,10 @@ class OracleMunicipalityProvider extends MunicipalityProvider {
 
   implicit val parameterSetOfInts: SetParameter[Set[Int]] = seqParam[Int]
 
-  def getMunicipalities(elyNumbers: Set[Int]): Seq[Int] = {
+  def getMunicipalities(elyNroNumbers: Set[Int]): Seq[Int] = {
     OracleDatabase.withDynSession {
-      val q = "select municipality_id from ely where id in (" + elyNumbers.toArray.map(_ => "?").mkString(",") + ")"
-      StaticQuery.query[Set[Int], Int](q).apply(elyNumbers).list
+      val q = "select m.id from municipality m where m.ELY_NRO in (" + elyNroNumbers.toArray.map(_ => "?").mkString(",") + ")"
+      StaticQuery.query[Set[Int], Int](q).apply(elyNroNumbers).list
     }
   }
 
