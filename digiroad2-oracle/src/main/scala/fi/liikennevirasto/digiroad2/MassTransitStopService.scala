@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -42,6 +43,7 @@ trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
   type PersistedAsset = PersistedMassTransitStop
 
+  lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
   val tierekisteriClient: TierekisteriClient
   val tierekisteriEnabled: Boolean
@@ -88,6 +90,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   /**
     * Run enriching if the stop is found in Tierekisteri. Return enriched stop with a boolean flag for errors (not found in TR)
+    *
     * @param persistedStop Optional mass transit stop
     * @return Enriched stop with a boolean flag for TR operation errors
     */
@@ -432,11 +435,16 @@ trait MassTransitStopService extends PointAssetOperations {
 
       val id = asset.id
       massTransitStopDao.updateAssetLastModified(id, username)
-      if (properties.nonEmpty) {
-        massTransitStopDao.updateAssetProperties(id, properties.toSeq)
-        updateAdministrativeClassValue(id, roadLink.get.administrativeClass)
-        if (liviIdOption(properties.toSeq).getOrElse("") == "")
-          overWriteLiViIdentifierProperty(id, asset.nationalId, properties.toSeq)
+      val newLiviIdProperty = if (properties.nonEmpty) {
+        val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
+        val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
+        if  (!elyAdministrated && liviIdOption(asset.propertyData).exists(_.propertyValue != "")) {
+          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+        } else {
+          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, liviIdOption(asset.propertyData))
+        }
+      } else {
+        None
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -476,25 +484,36 @@ trait MassTransitStopService extends PointAssetOperations {
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
             mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
         } else {
-          update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
+          update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
         }
       } else {
-        update(asset, optionalPosition, username, properties.toSeq, roadLink.get, operation)
+        update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
       }
     }
+  }
+
+  /**
+    * Update properties and administrative class for asset. Return optionally new LiviId
+    *
+    * @param id
+    * @param properties
+    * @param administrativeClass
+    * @return
+    */
+  private def updatePropertiesForAsset(id: Long, properties: Seq[SimpleProperty], administrativeClass: AdministrativeClass,
+                                       nationalId: Long, assetLiviId: Option[PropertyValue]) = {
+    massTransitStopDao.updateAssetProperties(id, properties)
+    updateAdministrativeClassValue(id, administrativeClass)
+    if (!assetLiviId.exists(_.propertyValue != ""))
+      overWriteLiViIdentifierProperty(id, nationalId, properties)
+    else
+      None
   }
 
   private def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], username: String,
                      properties: Seq[SimpleProperty], roadLink: VVHRoadlink, tierekisteriOperation: Operation): MassTransitStopWithProperties = {
 
     val id = persistedStop.id
-    massTransitStopDao.updateAssetLastModified(id, username)
-    if (properties.nonEmpty) {
-      massTransitStopDao.updateAssetProperties(id, properties)
-      updateAdministrativeClassValue(id, roadLink.administrativeClass)
-      if (liviIdOption(properties).getOrElse("") == "")
-        overWriteLiViIdentifierProperty(id, persistedStop.nationalId, properties)
-    }
     if (optionalPosition.isDefined) {
       val position = optionalPosition.get
       val point = Point(position.lon, position.lat)
@@ -504,8 +523,10 @@ trait MassTransitStopService extends PointAssetOperations {
       updateMunicipality(id, roadLink.municipalityCode)
       updateAssetGeometry(id, point)
     }
+
+    val modifiedAsset = fetchPointAssets(withId(id)).head // Reload from database
     if(tierekisteriOperation == Operation.Expire){
-      executeTierekisteriOperation(tierekisteriOperation, persistedStop, { _ => Some(roadLink) })
+      executeTierekisteriOperation(tierekisteriOperation, modifiedAsset, { _ => Some(roadLink) })
       getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) })
     } else {
       getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) }, tierekisteriOperation)
@@ -575,16 +596,23 @@ trait MassTransitStopService extends PointAssetOperations {
       throw new IllegalArgumentException
   }
 
-  private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Unit = {
-    properties.find(_.publicId== AdministratorInfoPublicId).foreach { property =>
+  private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Option[SimpleProperty] = {
+    val adminProp = properties.find(_.publicId== AdministratorInfoPublicId)
+    if (adminProp.nonEmpty) {
+      val property = adminProp.get
       val administrationPropertyValue = property.values.headOption
       val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
 
       if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
-        massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "OTHJ%d".format(nationalId))
+        val id = "OTHJ%d".format(nationalId)
+        massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, id)
+        Some(SimpleProperty(LiViIdentifierPublicId, Seq(PropertyValue(id, Some(id)))))
       }else{
         massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
+        Some(SimpleProperty(LiViIdentifierPublicId, Seq(PropertyValue("", Some("")))))
       }
+    } else {
+      None
     }
   }
 

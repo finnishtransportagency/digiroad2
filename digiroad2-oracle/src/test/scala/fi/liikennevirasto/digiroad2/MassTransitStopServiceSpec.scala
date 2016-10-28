@@ -431,30 +431,63 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Update asset liVi identifier property when is Central ELY administration"){
+  test("Do not overwrite asset liVi identifier property when already administered by ELY"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val assetId = 300000
+      sqlu"""update text_property_value set value_fi='livi1' where asset_id = 300000 and value_fi = 'OTHJ1'""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where value_fi='livi1' and asset_id = 300000""".as[String].list
+      dbResult.size should be (1)
+      dbResult.head should be ("livi1")
       val properties = List(
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
       val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
       val massTransitStop = service.getById(assetId).get
 
       //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+      liviIdentifierProperty.values.head.propertyValue should be("livi1")
 
     }
   }
 
-  ignore("Update asset liVi identifier property when is NOT Central ELY administration"){
+  test("Overwrite non-existent asset liVi identifier property when administered by ELY"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val assetId = 300000
+      val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
+      sqlu"""update text_property_value set value_fi='' where id = $propertyValueId""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      dbResult.size should be (1)
+      dbResult.head should be (null)
+      val properties = List(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
+      val position = Some(Position(374450, 6677250, 123l, None))
+      RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+      val massTransitStop = service.getById(assetId).get
+
+      //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
+      val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
+
+    }
+  }
+
+  test("Update asset liVi identifier property when is NOT Central ELY administration"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val assetId = 300000
+      val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
+      sqlu"""update text_property_value set value_fi='livi123' where id = $propertyValueId""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      dbResult.size should be (1)
+      dbResult.head should be ("livi123")
       val properties = List(
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
@@ -1019,7 +1052,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val (stopOpt, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       val stop = stopOpt.get
       RollbackMassTransitStopServiceWithTierekisteri.updateExistingById(stop.id,
-        None, stop.propertyData.map(p => SimpleProperty(p.publicId, p.values)).toSet, "pekka", Int => Unit)
+        None, stop.propertyData.map(p =>
+          if (p.publicId != RollbackMassTransitStopServiceWithTierekisteri.LiViIdentifierPublicId)
+            SimpleProperty(p.publicId, p.values)
+        else
+            SimpleProperty(p.publicId, Seq(PropertyValue("1")))
+        ).toSet, "pekka", Int => Unit)
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
       verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture)
       val capturedStop = captor.getValue
