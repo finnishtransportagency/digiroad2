@@ -70,8 +70,7 @@ object LinkRoadAddressCalculator {
     val coefficient = (endingCP.addressMValue - startingCP.addressMValue) / newGeom.last._2
     segments.zip(newGeom).map {
       case (ra, (cumStart, cumEnd)) =>
-        ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue,
-          endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
+        ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue, endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
 
     }
   }
