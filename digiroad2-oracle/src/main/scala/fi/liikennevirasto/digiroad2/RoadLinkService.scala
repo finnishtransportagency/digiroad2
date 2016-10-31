@@ -318,6 +318,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     (enrichRoadLinksFromVVH(links, Seq()), Seq())._1
   }
+
+  /**
+    * Returns the road links from VVH by municipality.
+    * @param municipality A integer, representative of the municipality Id.
+    */
+  def getViiteRoadLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
+    val links = vvhClient.fetchByMunicipality(municipality)
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, Seq()), Seq())._1
+    }
+  }
+
   /**
     * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */

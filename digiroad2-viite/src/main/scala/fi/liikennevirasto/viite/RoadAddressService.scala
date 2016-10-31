@@ -235,8 +235,39 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
     withDynTransaction {
-      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id))
+      // TODO: add geometry if it is somehow available
+      ids.foreach(id => RoadAddressDAO.changeRoadAddressFloating(float = true, id, None))
     }
+  }
+
+  /*
+    Kalpa-API methods
+  */
+
+  def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
+
+    val addresses =
+      withDynTransaction {
+        RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+      }
+    // In order to avoid sending roadAddressLinks that have no road address
+    // we remove the road links that have no known address
+    val knownRoadLinks = roadLinks.filter(rl => {
+      addresses.contains(rl.linkId)
+    })
+
+    val viiteRoadLinks = knownRoadLinks.map { rl =>
+      val ra = addresses.getOrElse(rl.linkId, Seq())
+      rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
+    }.toMap
+
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+
+    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+
+    filledTopology
   }
 
 }
@@ -285,10 +316,10 @@ object RoadAddressLinkBuilder {
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType),
-      extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass,
+      roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
@@ -305,9 +336,7 @@ object RoadAddressLinkBuilder {
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", 0.0, length, SideCode.Unknown,
-      None,
-      None, missingAddress.anomaly)
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
   }
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {

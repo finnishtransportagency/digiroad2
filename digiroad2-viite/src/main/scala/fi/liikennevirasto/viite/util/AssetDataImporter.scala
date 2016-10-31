@@ -158,7 +158,9 @@ class AssetDataImporter {
     }
 
     print(s"${DateTime.now()} - ")
-    println("%d zero length segments removed".format(lrmList.size - lrmPositions.size))
+    println("%d zero length segments removed".format(warningRows.size))
+    print(s"${DateTime.now()} - ")
+    println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
@@ -167,8 +169,8 @@ class AssetDataImporter {
       println(s"${DateTime.now()} - Old address data removed")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
-        "track_code, ely, road_type, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-        "created_date) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
+        "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+        "created_date) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
       val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level < ${lrmPositions.size}""".as[Long].list
       lrmPositions.zip(ids).foreach { case ((id, linkId, startM, endM), (lrmId)) =>
         val address = addressList.get(id).head
@@ -186,15 +188,13 @@ class AssetDataImporter {
         addressPS.setLong(2, address._1)
         addressPS.setLong(3, address._2)
         addressPS.setLong(4, address._3)
-        addressPS.setLong(5, address._4)
-        addressPS.setLong(6, address._5)
-        addressPS.setLong(7, address._6)
-        addressPS.setLong(8, startAddrM)
-        addressPS.setLong(9, endAddrM)
-        addressPS.setString(10, address._9)
-        addressPS.setString(11, address._10.getOrElse(""))
-        addressPS.setString(12, address._11)
-        addressPS.setString(13, address._12)
+        addressPS.setLong(5, address._6)
+        addressPS.setLong(6, startAddrM)
+        addressPS.setLong(7, endAddrM)
+        addressPS.setString(8, address._9)
+        addressPS.setString(9, address._10.getOrElse(""))
+        addressPS.setString(10, address._11)
+        addressPS.setString(11, address._12)
         addressPS.addBatch()
       }
       lrmPositionPS.executeBatch()
