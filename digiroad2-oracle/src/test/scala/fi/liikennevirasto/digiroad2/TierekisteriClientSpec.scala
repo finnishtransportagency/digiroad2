@@ -235,7 +235,31 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
-    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
+  }
+
+  test("updating bus stop information in Tierekisteri using override in PUT method") {
+    val equipmentsMap: Map[Equipment, Existence] = Map(
+      Equipment.Timetable -> Existence.Unknown,
+      Equipment.Seat -> Existence.Unknown,
+      Equipment.BikeStand -> Existence.Unknown,
+      Equipment.ElectronicTimetables -> Existence.Unknown,
+      Equipment.TrashBin -> Existence.Unknown,
+      Equipment.Roof -> Existence.Yes,
+      Equipment.RoofMaintainedByAdvertiser -> Existence.No,
+      Equipment.CarParkForTakingPassengers -> Existence.No,
+      Equipment.RaisedBusStop -> Existence.Yes,
+      Equipment.Lighting -> Existence.Unknown
+    )
+
+    assume(testConnection)
+
+    val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914",
+      RoadAddress(None, 1, 1, Track.Combined, 150, None), TRRoadSide.Right, StopType("paikallis"),
+      false, equipmentsMap,
+      Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
+
+    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, Some("Livi123456"))
   }
 
   test("updating bus stop information in Tierekisteri using PUT method (400 (BAD REQUEST) malformed)") {
@@ -260,7 +284,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
     }
     thrown.getMessage should be ("Tierekisteri error: 400: N/A")
   }
@@ -287,7 +311,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop)
+      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
     }
     thrown.getMessage should be ("Tierekisteri error: 500: N/A")
   }

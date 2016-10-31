@@ -96,6 +96,10 @@ class AssetDataImporter {
   }
 
   def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
+    def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)): String ={
+      s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
+        format(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15)
+    }
     def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
       val filled = lrmPos.exists(x => x._4 >= length)
       filled match {
@@ -139,9 +143,19 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val lrmPositions = linkLengths.flatMap {
+    roads.filterNot(r => linkLengths.get(r._1).isDefined).foreach{
+      row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row._16, printRow(row)))
+    }
+
+    val (lrmPositions, warningRows) = linkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }.filterNot(x => x._3 == x._4)
+    }.partition(x => x._3 != x._4)
+
+    warningRows.foreach{
+      warning =>
+        val row = roads.find(r => r._16 == warning._1).get
+        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' %s".format(warning._1, printRow(row)))
+    }
 
     print(s"${DateTime.now()} - ")
     println("%d zero length segments removed".format(lrmList.size - lrmPositions.size))
