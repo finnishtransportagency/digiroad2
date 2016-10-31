@@ -12,6 +12,6 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 object MunicipalityDAO {
   def getMunicipalityMapping = {
 
-    Q.queryNA[(Long, Long)]("""SELECT id, ely_nro FROM MUNICIPALITY""").list.map(x => x._1 -> x._2).toMap
+    Q.queryNA[(Long, Long)]("""SELECT id, ROAD_MAINTAINER_ID FROM MUNICIPALITY""").list.map(x => x._1 -> x._2).toMap
   }
 }
