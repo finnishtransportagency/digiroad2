@@ -54,13 +54,14 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
     basicAuth
   }
 
-  def geometryWKT(geometry: Seq[Point]): (String, String) = {
+  def geometryWKT(geometry: Seq[Point], startAddr: Long, endAddr: Long): (String, String) = {
     if (geometry.nonEmpty) {
       val segments = geometry.zip(geometry.tail)
-      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2))
+      val factor = (endAddr - startAddr) / GeometryUtils.geometryLength(geometry)
+      val runningSum = segments.scanLeft(0.0 + startAddr)((current, points) => current + points._1.distance2DTo(points._2) * factor)
       val mValuedGeometry = geometry.zip(runningSum.toList)
       val wktString = mValuedGeometry.map {
-        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
+        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + Math.round(newM)
       }.mkString(", ")
       "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
     }
@@ -73,7 +74,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       roadAddressLink =>
         Map(
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
-          geometryWKT(roadAddressLink.geometry),
+          geometryWKT(roadAddressLink.geometry, roadAddressLink.startAddressM, roadAddressLink.endAddressM),
           "id" -> roadAddressLink.id,
           "road_number" -> roadAddressLink.roadNumber,
           "road_part_number" -> roadAddressLink.roadPartNumber,
