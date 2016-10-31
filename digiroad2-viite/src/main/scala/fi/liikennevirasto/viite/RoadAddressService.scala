@@ -319,7 +319,7 @@ object RoadAddressLinkBuilder {
       length, roadLink.administrativeClass,
       roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
-      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(null), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
