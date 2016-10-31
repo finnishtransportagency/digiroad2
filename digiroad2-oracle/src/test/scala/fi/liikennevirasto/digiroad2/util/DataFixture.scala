@@ -500,7 +500,7 @@ object DataFixture {
     println("\n")
   }
 
-  def checkBusStopMatchingBetweenOTHandTR(): Unit = {
+  def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
     println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
     println(DateTime.now())
 
@@ -523,18 +523,26 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Get all OTH Bus Stops By Municipality
-      persistedStop = massTransitStopService.getByMunicipality(municipality, true)
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      //Get all road links from VVH
+      val roadLinks = vvhClient.fetchVVHRoadlinks(persistedStop.map(_.linkId).toSet)
 
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
-        if (!liviIdsListTR.exists(_ == "OTHJ%d".format(stop.nationalId)) && massTransitStopService.isStoredInTierekisteri(Some(stop))) {
+        val stopLiviId = stop.propertyData.
+          find(property => property.publicId == massTransitStopService.LiViIdentifierPublicId).
+          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+        if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
 
           //Add a list of missing stops with road addresses is available
           missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
 
           try {
             //Create missed Bus Stop at the Tierekisteri
-            massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => vvhClient.fetchVVHRoadlink(stop.linkId), None)
+            if(!dryRun)
+              massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None)
           } catch {
             case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
           }
@@ -626,7 +634,8 @@ object DataFixture {
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
       case Some("check_bus_stop_matching_between_OTH_TR") =>
-        checkBusStopMatchingBetweenOTHandTR()
+        val dryRun = args.length == 2 && args(1) == "dry-run"
+        checkBusStopMatchingBetweenOTHandTR(dryRun)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
