@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
 import fi.liikennevirasto.viite.dao.RoadAddress
 import org.joda.time._
 import org.slf4j.LoggerFactory
@@ -240,6 +240,7 @@ class AssetDataImporter {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
+    RoadAddressLinkBuilder.municipalityMapping // Populate it beforehand, because it can't be done in nested TX
     OracleDatabase.withDynTransaction {
       val municipalities = Queries.getMunicipalitiesByEly(8)
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
