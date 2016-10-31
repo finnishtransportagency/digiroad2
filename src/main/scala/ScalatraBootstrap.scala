@@ -6,7 +6,8 @@ import org.scalatra._
 import javax.servlet.ServletContext
 
 
-class ScalatraBootstrap extends LifeCycle {
+class
+ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
       Digiroad2Context.speedLimitService,
@@ -23,7 +24,7 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new MassTransitStopImportApi, "/api/import/*")
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService), "/api/integration/*")
-    context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService), "/viite/api/integration/*")
+    context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService), "/api/viite/integration/*")
     context.mount(new ChangeApi(), "/api/changes/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient, Digiroad2Context.roadAddressService), "/api/viite/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
