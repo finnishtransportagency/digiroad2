@@ -245,26 +245,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   */
 
   def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
-    val linkIdsAmmounts = 100
-    var roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
-    val linkIds = roadLinks.map(_.linkId).toSet
-    val linkIdGroups = linkIds.grouped(linkIdsAmmounts)
+    val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
 
-    val addresses = linkIdGroups.map(links =>
+    val addresses =
       withDynTransaction {
-      RoadAddressDAO.fetchByLinkId(links)
-    }).flatten.toList.groupBy(_.linkId)
-
-    //In order to avoid sending roadAddressLinks that have no road address
-    // we remove the roadlinks that have no match from the address pool
-    roadLinks = roadLinks.filter(rl => {
+        RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+      }
+    // In order to avoid sending roadAddressLinks that have no road address
+    // we remove the road links that have no known address
+    val knownRoadLinks = roadLinks.filter(rl => {
       addresses.contains(rl.linkId)
     })
 
-    val viiteRoadLinks = roadLinks.map { rl =>
+    val viiteRoadLinks = knownRoadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
-      val missed = Seq()
-      rl.linkId -> buildRoadAddressLink(rl, ra, missed)
+      rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
