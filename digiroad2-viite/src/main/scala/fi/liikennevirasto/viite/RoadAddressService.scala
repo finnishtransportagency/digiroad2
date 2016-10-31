@@ -299,7 +299,7 @@ object RoadAddressLinkBuilder {
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   lazy val municipalityMapping = OracleDatabase.withDynSession{
-    ElyDAO.getMunicipalityMapping
+    MunicipalityDAO.getMunicipalityMapping
   }
 
   def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
