@@ -301,6 +301,9 @@ object RoadAddressLinkBuilder {
   lazy val municipalityMapping = OracleDatabase.withDynSession{
     MunicipalityDAO.getMunicipalityMapping
   }
+  lazy val municipalityRoadMaintainerMapping = OracleDatabase.withDynSession{
+    MunicipalityDAO.getMunicipalityRoadMaintainers
+  }
 
   def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
     (administrativeClass, linkType) match {
@@ -318,7 +321,7 @@ object RoadAddressLinkBuilder {
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass,
       roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
       roadAddress.calibrationPoints._1,
@@ -335,7 +338,7 @@ object RoadAddressLinkBuilder {
       length, roadLink.administrativeClass, roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
-      missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
   }
 
