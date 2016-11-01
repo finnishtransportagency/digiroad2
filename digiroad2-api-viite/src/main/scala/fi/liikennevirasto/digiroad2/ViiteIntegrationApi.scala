@@ -1,19 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Properties
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Sunday, Saturday}
-import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
+import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}

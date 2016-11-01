@@ -1,16 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
-
-import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, Municipality, SideCode}
-import fi.liikennevirasto.viite.{RoadType, RoadAddressService}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, UnknownLinkType}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.{RoadAddressService, RoadType}
+import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Tag, BeforeAndAfter, FunSuite}
+import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
-import org.apache.commons.codec.binary.Base64
 
 
 class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{

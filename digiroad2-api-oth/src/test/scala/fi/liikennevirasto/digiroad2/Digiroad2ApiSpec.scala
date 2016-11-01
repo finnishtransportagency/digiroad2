@@ -17,11 +17,7 @@ import scala.concurrent.Promise
 
 case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
 
-trait GeneralApiSpec extends AuthenticatedApiSpec {
-
-}
-
-class Digiroad2ApiSpec extends GeneralApiSpec with BeforeAndAfter {
+class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
