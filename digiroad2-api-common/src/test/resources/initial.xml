@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Maastotiedot xmlns="http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02 http://xml.nls.fi/XML/Schema/Maastotietojarjestelma/MTK/201202/Maastotiedot.xsd" srsName="EPSG:3067, EPSG:5717" aikaleima="2013-11-25T16:10:38.000+02:00">
+    <tieviivat>
+    <Tieviiva gid="1457964389" dimension="3">
+        <sijaintitarkkuus>3000</sijaintitarkkuus>
+        <korkeustarkkuus>201</korkeustarkkuus>
+        <aineistolahde>1</aineistolahde>
+        <alkupvm>2010-12-30</alkupvm>
+        <kulkutapa>1</kulkutapa>
+        <sijainti>
+            <Murtoviiva>
+                <gml:posList srsDimension="3">375295.264 6678420.423 36.410 375290.952 6678385.118 35.027</gml:posList>
+            </Murtoviiva>
+        </sijainti>
+        <kohderyhma>25</kohderyhma>
+        <kohdeluokka>12314</kohdeluokka>
+        <tasosijainti>0</tasosijainti>
+        <valmiusaste>0</valmiusaste>
+        <paallyste>2</paallyste>
+        <yksisuuntaisuus>0</yksisuuntaisuus>
+        <kuntatunnus>49</kuntatunnus>
+    </Tieviiva>
+    </tieviivat>
+</Maastotiedot>
+        <!--  Luontiaika: 145000ms -->
