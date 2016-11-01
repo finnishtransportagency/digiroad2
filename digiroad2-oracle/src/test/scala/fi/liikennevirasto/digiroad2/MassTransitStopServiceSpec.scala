@@ -245,8 +245,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           property.values.head.propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
-      val name_fi = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameFiPublicId).get.values
-      val name_se = stop.get.propertyData.find(_.publicId == RollbackMassTransitStopService.nameSePublicId).get.values
+      val name_fi = stop.get.propertyData.find(_.publicId == MassTransitStopOperations.nameFiPublicId).get.values
+      val name_se = stop.get.propertyData.find(_.publicId == MassTransitStopOperations.nameSePublicId).get.values
       name_fi should have size (1)
       name_se should have size (1)
       name_fi.head.propertyValue should be ("TierekisteriFi")
@@ -1094,7 +1094,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       )
       runWithRollback {
         val stops = RollbackMassTransitStopServiceWithTierekisteri.getByMunicipality(235)
-        val (trStops, _) = stops.partition(s => RollbackMassTransitStopServiceWithTierekisteri.isStoredInTierekisteri(Some(s)))
+        val (trStops, _) = stops.partition(s => MassTransitStopOperations.isStoredInTierekisteri(Some(s)))
         val equipmentPublicIds = Equipment.values.filter(_.isMaster).map(_.publicId)
         // All should be unknown as set in the TRClientMock
         val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
@@ -1133,7 +1133,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val stop = stopOpt.get
       RollbackMassTransitStopServiceWithTierekisteri.updateExistingById(stop.id,
         None, stop.propertyData.map(p =>
-          if (p.publicId != RollbackMassTransitStopServiceWithTierekisteri.LiViIdentifierPublicId)
+          if (p.publicId != MassTransitStopOperations.LiViIdentifierPublicId)
             SimpleProperty(p.publicId, p.values)
         else
             SimpleProperty(p.publicId, Seq(PropertyValue("1")))
