@@ -55,8 +55,11 @@ trait MassTransitStopService extends PointAssetOperations {
   val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
+  val MassTransitStopAdminClassPublicId = "linkin_hallinnollinen_luokka"
 
   val CentralELYPropertyValue = "2"
+  val HSLPropertyValue = "3"
+  val AdminClassStatePropertyValue = "1"
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"
   val InventoryDateId = "inventointipaiva"
@@ -211,15 +214,17 @@ trait MassTransitStopService extends PointAssetOperations {
   private def isStoredInTierekisteri(properties: Seq[AbstractProperty]): Boolean ={
     val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopTypePublicId)
-    isStoredInTierekisteri(administrationProperty, stopType)
+    val adminClass = properties.find(pro => pro.publicId == MassTransitStopAdminClassPublicId)
+    isStoredInTierekisteri(administrationProperty, stopType, adminClass)
   }
 
-  private def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty]) = {
+  private def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty],  adminClassProperty: Option[AbstractProperty]) = {
     val elyAdministrated = administratorInfo.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
     val isVirtualStop = stopTypeProperty.exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
-    !isVirtualStop && elyAdministrated
+    val isAdminClassState = adminClassProperty.exists(_.values.exists(_.propertyValue == AdminClassStatePropertyValue))
+    val isHSLAdministrated =  administratorInfo.exists(_.values.headOption.exists(_.propertyValue == HSLPropertyValue))
+    !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
   }
-
 
   def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
@@ -589,8 +594,10 @@ trait MassTransitStopService extends PointAssetOperations {
     {
       massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
       updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-      val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, properties)
-      val operation = if (isStoredInTierekisteri(properties)) Operation.Create else Operation.Noop
+      val newAdminClassProperty = SimpleProperty(MassTransitStopAdminClassPublicId, Seq(PropertyValue(administrativeClass.getOrElse(Unknown).value.toString)))
+      val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
+      val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass)
+      val operation = if (isStoredInTierekisteri(propsWithAdminClass)) Operation.Create else Operation.Noop
       getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue))
     }
     else
@@ -598,13 +605,12 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Option[SimpleProperty] = {
-    val adminProp = properties.find(_.publicId== AdministratorInfoPublicId)
-    if (adminProp.nonEmpty) {
-      val property = adminProp.get
-      val administrationPropertyValue = property.values.headOption
-      val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
-
-      if(!isVirtualStop && administrationPropertyValue.isDefined && administrationPropertyValue.get.propertyValue == CentralELYPropertyValue) {
+    //val adminProp = properties.find(_.publicId== AdministratorInfoPublicId)
+    //if (adminProp.nonEmpty) {
+      //val property = adminProp.get
+      //val administrationPropertyValue = property.values.headOption
+      //val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+      if(isStoredInTierekisteri(properties)) {
         val id = "OTHJ%d".format(nationalId)
         massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, id)
         Some(SimpleProperty(LiViIdentifierPublicId, Seq(PropertyValue(id, Some(id)))))
@@ -612,9 +618,9 @@ trait MassTransitStopService extends PointAssetOperations {
         massTransitStopDao.updateTextPropertyValue(assetId, LiViIdentifierPublicId, "")
         Some(SimpleProperty(LiViIdentifierPublicId, Seq(PropertyValue("", Some("")))))
       }
-    } else {
-      None
-    }
+    //} else {
+      //None
+    //}
   }
 
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink],
