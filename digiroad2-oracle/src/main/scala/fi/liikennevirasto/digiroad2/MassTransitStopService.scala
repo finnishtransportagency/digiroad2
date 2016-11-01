@@ -218,7 +218,8 @@ trait MassTransitStopService extends PointAssetOperations {
     isStoredInTierekisteri(administrationProperty, stopType, adminClass)
   }
 
-  private def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty],  adminClassProperty: Option[AbstractProperty]) = {
+  private def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty],
+                                     adminClassProperty: Option[AbstractProperty]) = {
     val elyAdministrated = administratorInfo.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
     val isVirtualStop = stopTypeProperty.exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
     val isAdminClassState = adminClassProperty.exists(_.values.exists(_.propertyValue == AdminClassStatePropertyValue))
@@ -444,7 +445,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val newLiviIdProperty = if (properties.nonEmpty) {
         val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
         val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
-        if  (!elyAdministrated && liviIdOption(asset.propertyData).exists(_.propertyValue != "")) {
+        val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == HSLPropertyValue))
+        if  (!(elyAdministrated || hslAdministrated) && liviIdOption(asset.propertyData).exists(_.propertyValue != "")) {
           updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
           updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, liviIdOption(asset.propertyData))

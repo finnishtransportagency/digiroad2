@@ -655,8 +655,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
-      // TODO: Why does this floating change to true when I change road link administrative class from Municipality to State?
-      //massTransitStop.floating should be(false)
+      when(mockVVHClient.fetchVVHRoadlink(123l)).thenReturn(Some(vvhRoadLink))
+      massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
 
@@ -669,7 +669,55 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
 
+      val liviId = liviIdentifierProperty.values.head.propertyValue
+
+      val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, Mockito.atLeastOnce).createMassTransitStop(captor.capture)
+      val capturedStop = captor.getValue
+      capturedStop.liviId should be (liviId)
+
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+    }
+  }
+
+  test("Create new mass transit stop with HSL administration and 'state' road link and turn it into a municipality stop") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val properties = List(
+        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
+        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))))
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      when(mockVVHClient.fetchVVHRoadlink(123l)).thenReturn(Some(vvhRoadLink))
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
+
+      val newProperties = Set(
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1")))
+      )
+
+      service.updateExistingById(id, None, newProperties, "test2", Int => Unit)
+
+      val massTransitStop = service.getById(id).get
+
+      val administratorProperty = massTransitStop.propertyData.find(p => p.publicId == "tietojen_yllapitaja").get
+      administratorProperty.values.head.propertyValue should be("1")
+
+      val administrativeClassProperty = massTransitStop.propertyData.find(p => p.publicId == "linkin_hallinnollinen_luokka").get
+      administrativeClassProperty.values.head.propertyValue should be("1")
+
+      val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
+      val stringCaptor: ArgumentCaptor[Option[String]] = ArgumentCaptor.forClass(classOf[Option[String]])
+      verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, stringCaptor.capture)
+      val trStop = captor.getValue
+      stringCaptor.getValue shouldNot be (None)
+      val liviId = stringCaptor.getValue.get
+
+      liviId shouldNot be ("")
+      trStop.operatingTo.isEmpty should be (false)
+      trStop.operatingTo.get.getTime - new Date().getTime < 5*60*1000L should be (true)
     }
   }
 
