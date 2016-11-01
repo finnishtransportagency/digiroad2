@@ -22,8 +22,8 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
     runWithRollback{
       val municipalityMap = MunicipalityDAO.getMunicipalityMapping
       municipalityMap.isEmpty should be(false)
-      municipalityMap.head._1 >0 should be(true)
-      municipalityMap.head._2 >0 should be(true)
+      municipalityMap.keySet.forall(_ > 0) should be(true)
+      municipalityMap.values.forall(_ >= 0) should be(true)
     }
   }
 
@@ -31,8 +31,8 @@ class MunicipalityDaoSpec extends FunSuite with Matchers{
     runWithRollback{
       val municipalityRoadMaitainerMap = MunicipalityDAO.getMunicipalityRoadMaintainers
       municipalityRoadMaitainerMap.isEmpty should be(false)
-      municipalityRoadMaitainerMap.head._1 >0 should be(true)
-      municipalityRoadMaitainerMap.head._2 >0 should be(true)
+      municipalityRoadMaitainerMap.keySet.forall(_ > 0) should be(true)
+      municipalityRoadMaitainerMap.values.forall(_ >= 0) should be(true)
     }
   }
 
