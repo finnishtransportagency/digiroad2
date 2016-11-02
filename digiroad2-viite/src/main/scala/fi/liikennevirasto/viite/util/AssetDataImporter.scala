@@ -95,7 +95,7 @@ class AssetDataImporter {
     }
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
+  private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, vvhClientProd: Option[VVHClient]): Unit = {
     def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)): String ={
       s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
         format(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15)
@@ -125,21 +125,25 @@ class AssetDataImporter {
             jatkuu, aet, let,
             TO_CHAR(alkupvm, 'YYYY-MM-DD'), TO_CHAR(loppupvm, 'YYYY-MM-DD'),
             kayttaja, TO_CHAR(COALESCE(muutospvm, rekisterointipvm), 'YYYY-MM-DD'), id
-            from vvh_tieosoite_nyky""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)].list
+            from vvh_tieosoite_nyky WHERE ely=$ely""".as[(Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long)].list
     }
 
-    print(s"${DateTime.now()} - ")
-    println("Read %d rows from conversion database".format(roads.size))
+    print(s"\n${DateTime.now()} - ")
+    println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
     val lrmList = roads.map(r => (r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_._2) // linkId -> (id, linkId, startM, endM)
     val addressList = roads.map(r => (r._16, (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15))).toMap
 
     print(s"${DateTime.now()} - ")
     println("Total of %d link ids".format(lrmList.keys.size))
-    val linkIdGroups = lrmList.keys.toSet.grouped(500) // Mapping LinkId -> Id
+    val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
 
-    val linkLengths = linkIdGroups.flatMap (
-      linkIds => vvhClient.fetchVVHRoadlinks(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
-    ).toMap
+    val roadLinks = linkIdSet.grouped(4000).flatMap(group => vvhClientProd.getOrElse(vvhClient).fetchVVHRoadlinks(group)).toSeq
+
+    val linkLengths = roadLinks.map{
+      roadLink =>
+        roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry)
+    }.toMap
+
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
@@ -162,52 +166,103 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 
+    val linkIdMapping: Map[Long,Long] = if (vvhClientProd.nonEmpty) {
+      print(s"${DateTime.now()} - ")
+      println("Converting link ids to DEV link ids")
+      val mmlIdMaps = roadLinks.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchVVHRoadlinksByMmlIds(grp)).toSeq
+      val fromMmlIdMap = links.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+      val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
+        mmlIdMaps.get(mmlId).get -> devLinkId
+      }.partition { case (pid, did) => pid != did }
+      println("Removing the non-differing mmlId+linkId combinations from mapping: %d road links".format(same.size))
+      differ
+    } else {
+      Map()
+    }
+
+    print(s"${DateTime.now()} - ")
+    println("Link mapping contains %d entries".format(linkIdMapping.size))
+
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
+      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+      "created_date) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
+    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level < ${lrmPositions.size}""".as[Long].list
+    lrmPositions.zip(ids).foreach { case ((id, linkId, startM, endM), (lrmId)) =>
+      val address = addressList.get(id).head
+      val (startAddrM, endAddrM, sideCode) = address._7 < address._8 match {
+        case true => (address._7, address._8, SideCode.TowardsDigitizing.value)
+        case false => (address._8, address._7, SideCode.AgainstDigitizing.value)
+      }
+      lrmPositionPS.setLong(1, lrmId)
+      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(linkId, linkId))
+      lrmPositionPS.setLong(3, sideCode)
+      lrmPositionPS.setDouble(4, startM)
+      lrmPositionPS.setDouble(5, endM)
+      lrmPositionPS.addBatch()
+      addressPS.setLong(1, lrmId)
+      addressPS.setLong(2, address._1)
+      addressPS.setLong(3, address._2)
+      addressPS.setLong(4, address._3)
+      addressPS.setLong(5, address._6)
+      addressPS.setLong(6, startAddrM)
+      addressPS.setLong(7, endAddrM)
+      addressPS.setString(8, address._9)
+      addressPS.setString(9, address._10.getOrElse(""))
+      addressPS.setString(10, address._11)
+      addressPS.setString(11, address._12)
+      addressPS.addBatch()
+    }
+    lrmPositionPS.executeBatch()
+    println(s"${DateTime.now()} - LRM Positions saved")
+    addressPS.executeBatch()
+    println(s"${DateTime.now()} - Road addresses saved")
+    lrmPositionPS.close()
+    addressPS.close()
+  }
+
+  println(s"${DateTime.now()} - Updating calibration point information")
+
+  OracleDatabase.withDynTransaction {
+    // both dates are open-ended or there is overlap (checked with inverse logic)
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET CALIBRATION_POINTS = 1
+        WHERE NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
+        RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
+        RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
+        RA2.START_ADDR_M = ROAD_ADDRESS.END_ADDR_M AND
+        RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+        (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
+        NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)))""".execute
+    sqlu"""UPDATE ROAD_ADDRESS
+        SET CALIBRATION_POINTS = CALIBRATION_POINTS + 2
+          WHERE
+            START_ADDR_M = 0 OR
+            NOT EXISTS(SELECT 1 FROM ROAD_ADDRESS RA2 WHERE RA2.ID != ROAD_ADDRESS.ID AND
+              RA2.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER AND
+              RA2.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER AND
+              RA2.END_ADDR_M = ROAD_ADDRESS.START_ADDR_M AND
+              RA2.TRACK_CODE = ROAD_ADDRESS.TRACK_CODE AND
+              (ROAD_ADDRESS.END_DATE IS NULL AND RA2.END_DATE IS NULL OR
+                NOT (RA2.END_DATE < ROAD_ADDRESS.START_DATE OR RA2.START_DATE > ROAD_ADDRESS.END_DATE)
+              )
+            )""".execute
+    sqlu"""ALTER TABLE ROAD_ADDRESS ENABLE ALL TRIGGERS""".execute
+
+  }
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient]): Unit = {
+    val roadMaintainerElys = Set(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
+
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
-      println(s"${DateTime.now()} - Old address data removed")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
-      val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
-        "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-        "created_date) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'))")
-      val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level < ${lrmPositions.size}""".as[Long].list
-      lrmPositions.zip(ids).foreach { case ((id, linkId, startM, endM), (lrmId)) =>
-        val address = addressList.get(id).head
-        val (startAddrM, endAddrM, sideCode) = address._7 < address._8 match {
-          case true => (address._7, address._8, SideCode.TowardsDigitizing.value)
-          case false => (address._8, address._7, SideCode.AgainstDigitizing.value)
-        }
-        lrmPositionPS.setLong(1, lrmId)
-        lrmPositionPS.setLong(2, linkId)
-        lrmPositionPS.setLong(3, sideCode)
-        lrmPositionPS.setDouble(4, startM)
-        lrmPositionPS.setDouble(5, endM)
-        lrmPositionPS.addBatch()
-        addressPS.setLong(1, lrmId)
-        addressPS.setLong(2, address._1)
-        addressPS.setLong(3, address._2)
-        addressPS.setLong(4, address._3)
-        addressPS.setLong(5, address._6)
-        addressPS.setLong(6, startAddrM)
-        addressPS.setLong(7, endAddrM)
-        addressPS.setString(8, address._9)
-        addressPS.setString(9, address._10.getOrElse(""))
-        addressPS.setString(10, address._11)
-        addressPS.setString(11, address._12)
-        addressPS.addBatch()
-      }
-      lrmPositionPS.executeBatch()
-      println(s"${DateTime.now()} - LRM Positions saved")
-      addressPS.executeBatch()
-      println(s"${DateTime.now()} - Road addresses saved")
-      lrmPositionPS.close()
-      addressPS.close()
-    }
+      println (s"${DateTime.now ()} - Old address data removed")
 
-    println(s"${DateTime.now()} - Updating calibration point information")
+      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, vvhClientProd))
 
-    OracleDatabase.withDynTransaction {
+      println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
       sqlu"""UPDATE ROAD_ADDRESS
         SET CALIBRATION_POINTS = 1

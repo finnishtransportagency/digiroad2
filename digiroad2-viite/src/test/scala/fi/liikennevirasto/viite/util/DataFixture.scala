@@ -57,10 +57,15 @@ object DataFixture {
     }
   }
 
-  def importRoadAddresses(): Unit = {
+  def importRoadAddresses(isDevDatabase: Boolean): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.importRoadAddressData(Conversion.database(), vvhClient)
+    val vvhClientProd = if (isDevDatabase) {
+      Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+    } else {
+      None
+    }
+    dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd)
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }
@@ -108,7 +113,7 @@ object DataFixture {
       case Some ("find_floating_road_addresses") =>
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
-        importRoadAddresses()
+        importRoadAddresses(username.startsWith("dr2dev"))
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
