@@ -21,6 +21,10 @@ object RoadAddressFiller {
   private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
+  private val MaxDistanceDiffAllowed = 1 /*Temporary restriction from PO: Filler limit on modifications
+                                          (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+                                          cut more than that then nothing is done to the road address LRM data.
+                                          */
   private val MinAllowedRoadAddressLength = 0.5
   private val AnomalyNoAddressGiven = 1
   private val AnomalyNotFullyCovered = 2
@@ -40,7 +44,9 @@ object RoadAddressFiller {
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val (overflowingSegments, passThroughSegments) = segments.partition(_.startMValue + Epsilon > linkLength)
+//    val (overflowingSegments, passThroughSegments) = segments.partition(_.startMValue + Epsilon > linkLength)
+    val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.startMValue + Epsilon > linkLength) && (x.startMValue + Epsilon - linkLength <= MaxDistanceDiffAllowed))
+
     val droppedSegmentIds = overflowingSegments.map (s => s.id)
 
     (passThroughSegments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ droppedSegmentIds))
@@ -52,7 +58,9 @@ object RoadAddressFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val lastSegment = segments.maxBy(_.endMValue)
     val restSegments = segments.tail
-    val (adjustments) = lastSegment.endMValue < linkLength - MaxAllowedMValueError match {
+    val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
+    val (adjustments) = ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) match {
+//    val (adjustments) = lastSegment.endMValue < linkLength - MaxAllowedMValueError match {
       case true => (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LRMValueAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
       case _ => (segments, Seq())
     }
