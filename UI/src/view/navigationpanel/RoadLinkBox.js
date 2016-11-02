@@ -21,6 +21,9 @@
           '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
+        '<div class="check-box-container">' +
+            '<input type="checkbox">Näytä poistuneet tielinkit</input>' +
+        '</div>' +
       '</div>');
 
     var administrativeClassLegend = $('' +
