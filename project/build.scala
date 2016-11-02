@@ -93,7 +93,7 @@ object Digiroad2Build extends Build {
         "org.json4s"   %% "json4s-jackson" % "3.2.11",
         "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
+        "org.scalatra" %% "scalatra-auth" % ScalatraVersion % "test",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
@@ -125,7 +125,7 @@ object Digiroad2Build extends Build {
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatest" % "scalatest_2.11" % "2.2.4" % "compile,test",
-        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "compile,test",
+        "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
@@ -174,7 +174,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
-  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar)
+  ) dependsOn(geoJar, oracleJar, viiteJar, commonApiJar % "compile->compile;test->test")
 
   val Digiroad2OTHApiName = "digiroad2-api-oth"
   lazy val othApiJar = Project (
@@ -208,7 +208,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
-  ) dependsOn(geoJar, oracleJar, commonApiJar)
+  ) dependsOn(geoJar, oracleJar, commonApiJar % "compile->compile;test->test")
 
   lazy val warProject = Project (
     Digiroad2Name,
