@@ -85,7 +85,7 @@ trait MassTransitStopService extends PointAssetOperations {
     */
   private def enrichStopIfInTierekisteri(persistedStop: Option[PersistedMassTransitStop]) = {
     if (MassTransitStopOperations.isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
-      val liViId = MassTransitStopOperations.liviId(persistedStop.map(_.propertyData).get).propertyValue
+      val liViId = MassTransitStopOperations.liviIdValue(persistedStop.map(_.propertyData).get).propertyValue
       val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
       tierekisteriStop.isEmpty match {
         case true => (persistedStop, true)
@@ -375,15 +375,15 @@ trait MassTransitStopService extends PointAssetOperations {
 
       val id = asset.id
       massTransitStopDao.updateAssetLastModified(id, username)
-      val oldLiviIdProperty = MassTransitStopOperations.liviIdOption(asset.propertyData)
+      val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
       val newLiviIdProperty = if (properties.nonEmpty) {
         val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
         val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
         val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
-        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdOption(asset.propertyData).exists(_.propertyValue != "")) {
+        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
           updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdOption(asset.propertyData))
+          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
@@ -392,9 +392,9 @@ trait MassTransitStopService extends PointAssetOperations {
         val position = optionalPosition.get
         val point = Point(position.lon, position.lat)
         val mValue = calculateLinearReferenceFromPoint(point, geometry)
-        updateLrmPosition(id, mValue, linkId)
-        updateBearing(id, position)
-        updateMunicipality(id, municipalityCode)
+        massTransitStopDao.updateLrmPosition(id, mValue, linkId)
+        massTransitStopDao.updateBearing(id, position)
+        massTransitStopDao.updateMunicipality(id, municipalityCode)
         updateAssetGeometry(id, point)
       }
 
@@ -460,18 +460,18 @@ trait MassTransitStopService extends PointAssetOperations {
       val position = optionalPosition.get
       val point = Point(position.lon, position.lat)
       val mValue = calculateLinearReferenceFromPoint(point, roadLink.geometry)
-      updateLrmPosition(id, mValue, roadLink.linkId)
-      updateBearing(id, position)
-      updateMunicipality(id, roadLink.municipalityCode)
+      massTransitStopDao.updateLrmPosition(id, mValue, roadLink.linkId)
+      massTransitStopDao.updateBearing(id, position)
+      massTransitStopDao.updateMunicipality(id, roadLink.municipalityCode)
       updateAssetGeometry(id, point)
     }
-    val tierekisteriLiviId = MassTransitStopOperations.liviIdOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
-    val modifiedAsset = fetchPointAssets(withId(id)).head // Reload from database
+    val tierekisteriLiviId = MassTransitStopOperations.liviIdValueOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
+    val modifiedAsset = fetchPointAssets(withId(id)).headOption // Reload from database
     if(tierekisteriOperation == Operation.Expire){
-      executeTierekisteriOperation(tierekisteriOperation, modifiedAsset, { _ => Some(roadLink) }, tierekisteriLiviId)
-      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId)
+      executeTierekisteriOperation(tierekisteriOperation, modifiedAsset.get, { _ => Some(roadLink) }, tierekisteriLiviId)
+      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId)
     } else {
-      getPersistedStopWithPropertiesAndPublishEvent(id, { _ => Some(roadLink) }, tierekisteriOperation, tierekisteriLiviId)
+      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, tierekisteriOperation, tierekisteriLiviId)
     }
   }
 
@@ -519,9 +519,9 @@ trait MassTransitStopService extends PointAssetOperations {
     val nationalId = massTransitStopDao.getNationalBusStopId
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
     val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
-    insertLrmPosition(lrmPositionId, mValue, asset.linkId)
-    insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
-    insertAssetLink(assetId, lrmPositionId)
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId)
+    massTransitStopDao.insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
+    massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
     val properties = updatedProperties(asset.properties)
 
@@ -560,10 +560,12 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink],
-                                                            operation: Operation, liviId: Option[String]) = {
-    // TODO: use already loaded asset
-    val persistedStop = fetchPointAssets(withId(assetId)).headOption
+                                                            operation: Operation, liviId: Option[String]): MassTransitStopWithProperties = {
+    convertPersistedStopWithPropertiesAndPublishEvent(fetchPointAssets(withId(assetId)).headOption, roadLinkByLinkId, operation, liviId)
+  }
 
+  private def convertPersistedStopWithPropertiesAndPublishEvent(persistedStop: Option[PersistedMassTransitStop], roadLinkByLinkId: Long => Option[VVHRoadlink],
+                                                            operation: Operation, liviId: Option[String]): MassTransitStopWithProperties = {
     persistedStop.foreach { stop =>
       executeTierekisteriOperation(operation, stop, roadLinkByLinkId, liviId)
 
@@ -596,7 +598,7 @@ trait MassTransitStopService extends PointAssetOperations {
       massTransitStopDao.deleteAllMassTransitStopData(assetId)
 
       if (relevantToTR && tierekisteriClient.isTREnabled) {
-        val liviIdOption = MassTransitStopOperations.liviIdOption(persistedStop.get.propertyData).map(_.propertyValue)
+        val liviIdOption = MassTransitStopOperations.liviIdValueOption(persistedStop.get.propertyData).map(_.propertyValue)
 
         liviIdOption match {
           case Some(liviId) => tierekisteriClient.deleteMassTransitStop(liviId)
@@ -709,60 +711,6 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def updateLrmPosition(id: Long, mValue: Double, linkId: Long) {
-    sqlu"""
-           update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId
-           where id = (
-            select lrm.id
-            from asset a
-            join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
-            where a.id = $id)
-      """.execute
-  }
-
-  private def insertLrmPosition(id: Long, mValue: Double, linkId: Long) {
-    sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id)
-           values ($id, $mValue, $mValue, $linkId)
-      """.execute
-  }
-
-  private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
-    sqlu"""
-           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
-           values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
-           $floating)
-      """.execute
-  }
-
-  private def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
-
-    sqlu"""
-           insert into asset_link(asset_id, position_id)
-           values ($assetId, $lrmPositionId)
-      """.execute
-  }
-
-  private def updateBearing(id: Long, position: Position) {
-    position.bearing.foreach { bearing =>
-      sqlu"""
-           update asset
-           set bearing = $bearing
-           where id = $id
-        """.execute
-    }
-  }
-
-  private def updateMunicipality(id: Long, municipalityCode: Int) {
-    sqlu"""
-           update asset
-           set municipality_code = $municipalityCode
-           where id = $id
-      """.execute
-  }
 
   //  @throws(classOf[TierekisteriClientException])
   private def expireMassTransitStop(username: String, persistedStop: PersistedMassTransitStop) = {
@@ -844,7 +792,7 @@ object MassTransitStopOperations {
   }
 
   /**
-    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY or HSL.
     * Convenience method
     *
     */
@@ -864,12 +812,12 @@ object MassTransitStopOperations {
     !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
   }
 
-  def liviIdOption(properties: Seq[AbstractProperty]) = {
+  def liviIdValueOption(properties: Seq[AbstractProperty]) = {
     properties.find(_.publicId == LiViIdentifierPublicId).flatMap(prop => prop.values.headOption)
   }
 
-  def liviId(properties: Seq[AbstractProperty]) = {
-    liviIdOption(properties).get
+  def liviIdValue(properties: Seq[AbstractProperty]) = {
+    liviIdValueOption(properties).get
   }
 
   /**
