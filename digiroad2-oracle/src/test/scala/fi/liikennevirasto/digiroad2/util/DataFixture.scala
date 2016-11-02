@@ -5,13 +5,14 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.MassTransitStopService
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
