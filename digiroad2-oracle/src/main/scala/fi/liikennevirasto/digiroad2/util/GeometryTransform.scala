@@ -206,6 +206,11 @@ class GeometryTransform {
     }
   }
 
+  def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
+    //TODO implement this method
+    Seq()
+  }
+
   /**
     * Resolve side code as well as road address
     *
