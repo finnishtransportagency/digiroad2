@@ -266,7 +266,8 @@ class AssetDataImporter {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
-    RoadAddressLinkBuilder.municipalityMapping // Populate it beforehand, because it can't be done in nested TX
+    RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
+    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     OracleDatabase.withDynTransaction {
       val municipalities = Queries.getMunicipalitiesByEly(8)
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
