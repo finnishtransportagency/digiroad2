@@ -44,7 +44,6 @@ object RoadAddressFiller {
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-//    val (overflowingSegments, passThroughSegments) = segments.partition(_.startMValue + Epsilon > linkLength)
     val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.startMValue + Epsilon > linkLength) && (x.startMValue + Epsilon - linkLength <= MaxDistanceDiffAllowed))
 
     val droppedSegmentIds = overflowingSegments.map (s => s.id)
@@ -60,7 +59,6 @@ object RoadAddressFiller {
     val restSegments = segments.tail
     val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
     val (adjustments) = ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) match {
-//    val (adjustments) = lastSegment.endMValue < linkLength - MaxAllowedMValueError match {
       case true => (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LRMValueAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
       case _ => (segments, Seq())
     }
