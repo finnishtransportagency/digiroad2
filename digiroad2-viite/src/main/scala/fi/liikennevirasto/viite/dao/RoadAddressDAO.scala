@@ -68,9 +68,9 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
+  def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
     val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
-    val query =
+    val query = if(!fetchOnlyFloating){
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
@@ -80,6 +80,17 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter
       """
+    } else {
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where $filter and ra.floating = 1
+      """
+    }
     (queryList(query), Seq())
   }
 

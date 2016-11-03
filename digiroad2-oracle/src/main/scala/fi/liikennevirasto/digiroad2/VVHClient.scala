@@ -28,6 +28,7 @@ case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, cha
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L)
 
+case class VVHHistoryRoadLink(linkId: Long, geometry: Seq[Point], endDate: DateTime, attributes: Map[String, Any] = Map())
 /**
   * Numerical values for change types from VVH ChangeInfo Api
   */
@@ -216,7 +217,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE""""
+      case _ => s""""outFields":"LINKID,GEOMETRY,END_DATE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -531,6 +532,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     roadLinkFromFeature(attributes, path)
   }
 
+
+
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
       "MTKID",
@@ -628,12 +631,31 @@ class VVHClient(vvhRestApiEndPoint: String) {
     curr - (curr % (24L*oneHourInMs))
   }
 
+  private def historicRoadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHHistoryRoadLink = {
+    val linkGeometry: Seq[Point] = path.map(point => {
+      Point(point(0), point(1), extractMeasure(point(2)).get)
+    })
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
+    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
+    val endTime = attributes("END_TIME").asInstanceOf[DateTime]
+
+    VVHHistoryRoadLink(linkId, linkGeometry, endTime, extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+  }
+
+
+  private def extractVVHHistoricFeature(feature: Map[String, Any]): VVHHistoryRoadLink = {
+    val attributes = extractFeatureAttributes(feature)
+    val path = extractFeatureGeometry(feature)
+    historicRoadLinkFromFeature(attributes,path)
+  }
+
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
-  def fetchVVHRoadlinkHistoryF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(fetchVVHRoadlinkHistory(bounds, municipalities))
+  def fetchVVHRoadlinkHistoryF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
+    Future(fetchVVHRoadlinkHistory(linkIds))
   }
 
   /**
@@ -641,14 +663,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadlinkHistory(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = historyLayerDefinition(withMunicipalityFilter(municipalities))
+  def fetchVVHRoadlinkHistory(linkIds: Set[Long] = Set()): Seq[VVHHistoryRoadLink] = {
+    val definition = historyLayerDefinition(withLinkIdFilter(linkIds))
     val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
-      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+      s"layerDefs=$definition" + queryParameters()
 
     fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
+      case Left(features) => features.map(extractVVHHistoricFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }

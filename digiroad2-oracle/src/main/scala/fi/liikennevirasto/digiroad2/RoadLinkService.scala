@@ -293,16 +293,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getViiteRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
-    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities),atMost = Duration.Inf)
-    //historyData.groupBy(_.linkId).map(_._2.maxBy(link => link.attributes.get("END_DATE"))).asInstanceOf[Seq[VVHRoadlink]]
+  def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long], municipalities: Set[Int] = Set()) = {
+    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds),atMost = Duration.Inf)
     val groupedData = historyData.groupBy(_.linkId)
+    var viiteRoadLinks: Seq[VVHHistoryRoadLink] = Seq.empty
     groupedData.foreach { gd =>
+      var newerLink: Option[VVHHistoryRoadLink] = Option.empty
       gd._2.foreach { rl =>
-
+        if(newerLink.isEmpty){
+          newerLink = Option(rl)
+        } else {
+          if(rl.endDate.isAfter(newerLink.get.endDate)) {
+            newerLink = Option(rl)
+          }
+        }
       }
+      viiteRoadLinks = viiteRoadLinks :+ newerLink.get
     }
-
+    viiteRoadLinks
   }
 
   /**
