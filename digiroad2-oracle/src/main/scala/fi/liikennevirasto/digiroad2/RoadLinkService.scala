@@ -938,4 +938,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
     cleared
   }
+
+  def getComplementaryRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+    val vvhRoadLinks = Await.result(vvhClient.fetchComplementaryVVHRoadlinksF(bounds, municipalities), atMost = Duration.Inf)
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
+    }._1
+  }
 }

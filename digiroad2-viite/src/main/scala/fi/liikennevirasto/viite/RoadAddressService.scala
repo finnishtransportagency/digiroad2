@@ -78,6 +78,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
+    val complementaryRoadLinks = roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
     val missingLinkIds = linkIds -- addresses.keySet
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
