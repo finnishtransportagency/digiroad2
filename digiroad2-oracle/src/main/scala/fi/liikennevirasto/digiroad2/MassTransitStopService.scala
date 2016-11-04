@@ -467,7 +467,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val mergedProperties = (asset.propertyData.
         filterNot(property => properties.exists(_.publicId == property.publicId)).
         map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
-        filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
+        filterNot(property => AssetPropertyConfiguration.commonAssetProperties.filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId).exists(_._1 == property.publicId))
 
       val wasStoredInTierekisteri = isStoredInTierekisteri(persistedStop)
       val shouldBeInTierekisteri = isStoredInTierekisteri(mergedProperties)
