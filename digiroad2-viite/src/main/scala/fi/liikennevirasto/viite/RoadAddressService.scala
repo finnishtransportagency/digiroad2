@@ -17,6 +17,7 @@ import slick.jdbc.{StaticQuery => Q}
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -248,7 +249,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
 
     val addresses =
-      withDynTransaction {
+      withDynSession {
         RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address

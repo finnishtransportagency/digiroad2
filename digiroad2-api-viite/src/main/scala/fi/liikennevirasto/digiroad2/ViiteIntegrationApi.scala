@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.CalibrationPoint
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -69,6 +69,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
           geometryWKT(roadAddressLink.geometry, roadAddressLink.startAddressM, roadAddressLink.endAddressM),
           "id" -> roadAddressLink.id,
+          "link_id" -> roadAddressLink.linkId,
           "road_number" -> roadAddressLink.roadNumber,
           "road_part_number" -> roadAddressLink.roadPartNumber,
           "track_code" -> roadAddressLink.trackCode,
@@ -99,7 +100,9 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
     contentType = formats("json")
     params.get("municipality").map { municipality =>
       val municipalityCode = municipality.toInt
-      roadAddressLinksToApi(roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode))
+      val knownAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode).
+        filterNot(_.anomaly == Anomaly.NoAddressGiven)
+      roadAddressLinksToApi(knownAddressLinks)
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
     }
