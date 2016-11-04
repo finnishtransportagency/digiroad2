@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.RoadType.{PrivateRoadType, UnknownOwnerRoad}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.json4s.{DefaultFormats, Formats}
@@ -101,7 +102,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
     params.get("municipality").map { municipality =>
       val municipalityCode = municipality.toInt
       val knownAddressLinks = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityCode).
-        filterNot(_.anomaly == Anomaly.NoAddressGiven)
+        filter(ral => ral.roadNumber > 0)
       roadAddressLinksToApi(knownAddressLinks)
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")

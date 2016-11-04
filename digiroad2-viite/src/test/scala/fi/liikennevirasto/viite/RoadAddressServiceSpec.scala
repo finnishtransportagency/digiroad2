@@ -150,7 +150,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
       roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)
-      roadAddressLink.length > 0 should be(true)
+      roadAddressLink.nonEmpty should be(true)
       roadAddressLink.head.linkId should be(linkId)
       roadAddressLink.head.attributes.contains("MUNICIPALITYCODE") should be (true)
       roadAddressLink.head.attributes.get("MUNICIPALITYCODE") should be (Some(municipalityId))
