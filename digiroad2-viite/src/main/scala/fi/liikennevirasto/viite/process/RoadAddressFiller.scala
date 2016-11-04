@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
@@ -78,7 +79,7 @@ object RoadAddressFiller {
   }
 
   private def generateUnknownLink(roadLink: RoadLink) = {
-    Seq(MissingRoadAddress(roadLink.linkId, None, None, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
+    Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
       case true => Anomaly.NoAddressGiven
       case false => Anomaly.None
     }))

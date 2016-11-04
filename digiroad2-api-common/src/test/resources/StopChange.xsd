@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!-- ########################### # Stops ########################### -->
+	<xs:element name="Stops">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Stop" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>stop details.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+
+							<xs:element name="StopId" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>Unique nationwide id.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="AdminStopId" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>public transport authority specific stop id.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="StopCode" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>stop code targeted to end users. This should
+										match the value existed in actual stop signs.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Names" type="NamesType" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>This element lists stop names in different
+										languages.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Coordinate" type="CoordinatesType">
+								<xs:annotation>
+									<xs:documentation>stop coordinates.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Address" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>stop address.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="RoadNumber" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>road number where stop exists.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Bearing">
+								<xs:annotation>
+									<xs:documentation>bearing value indicating to witch direction
+										traffic is heading from this stop.</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:union memberTypes="BearingType emptyString"/>
+								</xs:simpleType>
+							</xs:element>
+
+							<xs:element name="BearingDescription" type="BearingDescriptionType" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Bearing Description by direction.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Direction" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation> Textual representation of direction to the stop.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="StopAttribute" type="StopAttribute"/>
+
+							<xs:element name="Equipment" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>Facility available in the stop. For eg, roof.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="Reachability" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Additional information such as parking space or link to map</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="SpecialNeeds" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Information of stop accessibility such as wheelchair</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+					        <xs:element name="ModifiedTimestamp" nillable="true">
+								<xs:annotation>
+									<xs:documentation>datetime value when this stop details where
+										last edited.</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+								<xs:union memberTypes="xs:dateTime emptyString"/>
+								</xs:simpleType>
+							</xs:element>
+
+							<xs:element name="ModifiedBy" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>information who last edited this stop
+										details.</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="ValidFrom" nillable="true" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>datetime value from which date onwards stop
+										is valid.</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+								<xs:union memberTypes="xs:dateTime emptyString"/>
+								</xs:simpleType>
+							</xs:element>
+
+							<xs:element name="ValidTo" nillable="true" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>datetime value to which date stop is valid.
+									</xs:documentation>
+								</xs:annotation>
+							<xs:simpleType>
+								<xs:union memberTypes="xs:dateTime emptyString"/>
+								</xs:simpleType>
+							</xs:element>
+
+							<xs:element name="AdministratorCode" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>public authority who owns this stop.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="MunicipalityCode" nillable="true" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>code of municipality where stop exists.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:union memberTypes="xs:nonNegativeInteger emptyString"/>
+								</xs:simpleType>
+							</xs:element>
+
+							<xs:element name="MunicipalityName" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>Name of the municipality.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+                            <!-- minOccurs added 19.5.2014 Esko Vääräsmäki and Samuli Karjula -->
+							<xs:element name="Comments" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>comment
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
+							<xs:element name="ContactEmails" type="ContactEmailsType">
+								<xs:annotation>
+									<xs:documentation>List of email address who to inform in case
+										of information changes.</xs:documentation>
+								</xs:annotation>
+								<xs:unique name="UniqueEmail">
+									<xs:selector xpath="ContactEmails"/>
+									<xs:field xpath="Contact"/>
+								</xs:unique>
+							</xs:element>
+
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+		<xs:unique name="UniqueStopId">
+			<xs:selector xpath="Stops/Stop"/>
+			<xs:field xpath="StopId"/>
+		</xs:unique>
+	</xs:element>
+	<!-- ########################### # UTILS ########################### -->
+	<xs:complexType name="CoordinatesType">
+		<xs:sequence>
+			<xs:element name="xCoordinate" type="xs:nonNegativeInteger"/>
+			<xs:element name="yCoordinate" type="xs:nonNegativeInteger"/>
+		</xs:sequence>
+		<xs:attribute name="epsg" type="xs:nonNegativeInteger">
+			<xs:annotation>
+				<xs:documentation>This attribute defines used coordinate system in
+					EPSG value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="StopAttribute">
+		<xs:annotation>
+			<xs:documentation>This element lists traffic types that this stop
+				supports.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            This element defines type of stop. Stop can have multiple types. If there are no types on a stop, the type of the stop is undefined or unknown.
+            Type is specified as one of the following integers:
+            1 - Tram stop
+            2 - Local bus stop
+            3 - Express bus stop
+            4 - Non-stop express bus stop
+            5 - Virtual stop
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="BearingDescriptionType">
+		<xs:annotation>
+			<xs:documentation>This value is used to restrict directions returned.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Pohjoinen"/>
+			<xs:enumeration value="Koillinen"/>
+			<xs:enumeration value="Itä"/>
+			<xs:enumeration value="Kaakko"/>
+			<xs:enumeration value="Etelä"/>
+			<xs:enumeration value="Lounas"/>
+			<xs:enumeration value="Länsi"/>
+			<xs:enumeration value="Luode"/>
+			<xs:enumeration value=""/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="BearingType">
+		<xs:annotation>
+			<xs:documentation>Bearing value of the stop. Value range is specified
+				to include degrees between 0 and 359.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="0"/>
+			<xs:maxInclusive value="359"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="EmailType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="([A-Za-z0-9_]+([-+.'][A-Za-z0-9_]+)*@[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*\.[A-Za-z0-9_]+([-.][A-Za-z0-9_]+)*)?"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="ContactEmailsType">
+		<xs:sequence>
+			<xs:element name="Contact" type="EmailType" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>email address of the contact</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="NamesType">
+		<xs:sequence>
+			<xs:element name="Name" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Name of the location.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute name="lang" type="xs:language">
+								<xs:annotation>
+									<xs:documentation>Language identifier for different languages.
+									</xs:documentation>
+								</xs:annotation>
+							</xs:attribute>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="emptyString">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value=""/>
+		</xs:restriction>
+	</xs:simpleType>
+	</xs:schema>

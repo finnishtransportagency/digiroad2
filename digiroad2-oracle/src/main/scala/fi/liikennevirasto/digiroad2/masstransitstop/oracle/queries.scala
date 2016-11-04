@@ -237,9 +237,9 @@ object Queries {
     """.as[Int].list
   }
 
-  def getMunicipalitiesByEly(ely: Int): Seq[Int] = {
+  def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
     sql"""
-      select municipality_id from ely e where e.id = $ely
+      select m.id from municipality m where m.ELY_NRO = $elyNro
     """.as[Int].list
   }
 

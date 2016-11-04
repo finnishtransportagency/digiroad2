@@ -496,4 +496,25 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Check the correct return of a ViiteRoadLink By Municipality") {
+    val municipalityId = 235
+    val linkId = 2l
+    val roadLink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      when(mockVVHClient.fetchByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
+
+      val viiteRoadLinks = service.getViiteRoadLinksFromVVHByMunicipality(municipalityId)
+
+      viiteRoadLinks.length > 0 should be (true)
+      viiteRoadLinks.head.isInstanceOf[RoadLink] should be (true)
+      viiteRoadLinks.head.linkId should be(linkId)
+      viiteRoadLinks.head.municipalityCode should be (municipalityId)
+
+    }
+  }
+
 }
