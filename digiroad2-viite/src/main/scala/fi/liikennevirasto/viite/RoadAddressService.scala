@@ -249,7 +249,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
 
     val addresses =
-      withDynSession {
+      withDynTransaction {
         RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
