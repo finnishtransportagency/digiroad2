@@ -540,7 +540,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "GEOMETRY_EDITED_DATE",
       "CREATED_DATE",
       "LAST_EDITED_DATE",
-      "SURFACETYPE").contains(x)
+      "SURFACETYPE",
+      "SUBTYPE").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
@@ -622,7 +623,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
   def fetchComplementaryVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(withMunicipalityFilter(municipalities))
+    val definition = layerDefinition(withMunicipalityFilter(municipalities), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
     val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
