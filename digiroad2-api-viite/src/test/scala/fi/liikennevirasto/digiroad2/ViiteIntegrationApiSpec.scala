@@ -55,10 +55,8 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   test("encode road adress") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
-    val geometry2 = Seq(Point(1.0, 0.0, 0.0), Point(5.0, 0.0, 0.5), Point(14.0, 4.0, 1.5))
     val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality,UnknownLinkType,RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
-    val filteredAdressLink = RoadAddressLink(0,5171209, geometry2, GeometryUtils.geometryLength(geometry2),Municipality,UnknownLinkType,RoadType.PrivateRoadType,None,None,Map("linkId" ->5171209 ),0,0,0,0,0,0,0,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,None,None)
-    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink,filteredAdressLink)) should be(Seq(Map(
+    integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.0 0.0 0.0 0, 1.0 0.0 0.5 1, 4.0 4.0 1.5 6)",
       "id" -> 63298,
