@@ -627,7 +627,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
-    fetchVVHFeatures(url) match {
+    resolveComplementaryVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
@@ -640,6 +640,22 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def fetchComplementaryVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(fetchComplementaryVVHRoadlinks(bounds, municipalities))
   }
+
+  private def resolveComplementaryVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
+      val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
+      val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
+      optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
+    } finally {
+      response.close()
+    }
+  }
+
 }
 
 
