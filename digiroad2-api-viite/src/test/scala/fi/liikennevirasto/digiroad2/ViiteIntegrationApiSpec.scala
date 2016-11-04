@@ -60,6 +60,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.0 0.0 0.0 0, 1.0 0.0 0.5 1, 4.0 4.0 1.5 6)",
       "id" -> 0,
+      "link_id" -> 5171208,
       "road_number" -> 5,
       "road_part_number" -> 205,
       "track_code" -> 1,
