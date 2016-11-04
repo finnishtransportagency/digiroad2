@@ -100,6 +100,7 @@ class GeometryTransform {
   private def VkmReturnErrorMessage = "virheteksti"
   private def VkmReturnCode = "palautusarvo"
   private def VkmRoadNumberInterval = "tievali"
+  private def VkmStartingPoint = "alkupiste"
   private def VkmReturnCodeOk = 1
   private def VkmReturnCodeError = 0
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
@@ -122,6 +123,11 @@ class GeometryTransform {
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
        + "=" + URLEncoder.encode(entry._2.get.toString, "UTF-8")).mkString("&")
+  }
+
+  def urlParamsReverse(paramMap: Map[String, Any]) = {
+    paramMap.map(entry => URLEncoder.encode(entry._1, "UTF-8")
+      + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
   }
 
   def jsonParams(paramMaps: List[Map[String, Option[Any]]]) = {
@@ -207,8 +213,11 @@ class GeometryTransform {
   }
 
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
-    //TODO implement this method
-    Seq()
+    val params = Map(VkmRoad -> roadAddress.road, VkmRoadPart -> roadAddress.roadPart, VkmTrackCode -> roadAddress.track.value, VkmDistance -> roadAddress.mValue)
+    request(vkmUrl + urlParamsReverse(params)) match {
+      case Left(addressData) => mapCoordinates(addressData)
+      case Right(error) => throw new VKMClientException(error.toString)
+    }
   }
 
   /**
@@ -263,6 +272,31 @@ class GeometryTransform {
       throw new VKMClientException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
     RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
+  }
+
+  private def mapCoordinates(data: Map[String, Any]) = {
+    val returnCode = data.getOrElse(VkmReturnCode, VkmReturnCodeOk)
+    val error = data.get(VkmError)
+    if (returnCode.toString.toInt == VkmReturnCodeError || error.nonEmpty)
+      throw new VKMClientException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
+    try {
+      val roadAddresses = dig(data, Seq(VkmStartingPoint, VkmQueryRoadAddresses)).asInstanceOf[List[Map[String, Any]]]
+      roadAddresses.map {
+        addr =>
+          val x = dig(addr, Seq("point", "x")).asInstanceOf[Double]
+          val y = dig(addr, Seq("point", "y")).asInstanceOf[Double]
+          Point(x,y)
+      }
+    } catch {
+      case ex: Exception => throw new VKMClientException("Could not convert response from VKM: %s".format(ex.getMessage))
+    }
+  }
+
+  private def dig(data: Map[String, Any], keyLine: Seq[String]): Any = {
+    if (keyLine.tail.nonEmpty)
+      dig(data.get(keyLine.head).get.asInstanceOf[Map[String, Any]], keyLine.tail)
+    else
+      data.get(keyLine.head).get
   }
 
   private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
