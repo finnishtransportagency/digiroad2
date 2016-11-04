@@ -12,6 +12,8 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
@@ -513,8 +515,27 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       viiteRoadLinks.head.isInstanceOf[RoadLink] should be (true)
       viiteRoadLinks.head.linkId should be(linkId)
       viiteRoadLinks.head.municipalityCode should be (municipalityId)
-
     }
   }
 
+  test("Verify if there are roadlinks from the complimentary geometry") {
+    val municipalityId = 235
+    val linkId = 2l
+    val roadLink: VVHRoadlink = VVHRoadlink(linkId, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      when(mockVVHClient.fetchComplementaryVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
+
+      val roadLinksList = service.getComplementaryRoadLinksFromVVH(boundingBox, Set.empty)
+
+      roadLinksList.length > 0 should be(true)
+      roadLinksList.head.isInstanceOf[RoadLink] should be(true)
+      roadLinksList.head.linkId should be(linkId)
+      roadLinksList.head.municipalityCode should be(municipalityId)
+    }
+  }
 }
