@@ -1,11 +1,13 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.RoadLinkType.{NormalRoadLinkType, ComplementaryRoadLinkType}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{FeatureClass, _}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
@@ -78,10 +80,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val complementedRoadLinks = roadLinks ++ roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
+
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
-//    val newAddresses = addresses ++ Map(6519162.toLong -> RoadAddress(161788,5,205,LeftSide,Continuous,5197,5219,Some(new DateTime(2014, 5, 19, 10, 21, 0)),None,5171285,0.0,21.595,(None,None),false))
 
     val missingLinkIds = linkIds -- addresses.keySet
     val missedRL = withDynTransaction {
@@ -301,7 +303,6 @@ object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
   val ComplementarySubType = 3
-  val OverlappingZPoint = 9999
 
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
@@ -324,17 +325,15 @@ object RoadAddressLinkBuilder {
 
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
 
-    val testRoadAddress = RoadAddress(161788,5,205,LeftSide,Continuous,5197,5219,Some(new DateTime(2014, 5, 19, 10, 21, 0)),None,5171285,0.0,21.595,(None,None),false)
-    val complementaryGeom = roadLink.attributes.contains("SUBTYPE") && roadLink.attributes("SUBTYPE") == ComplementarySubType match {
-      case true => roadLink.geometry.map{ p => Point(p.x, p.y, OverlappingZPoint) }
-      case false => roadLink.geometry
+    val roadLinkType = roadLink.attributes.contains("SUBTYPE") && roadLink.attributes("SUBTYPE") == ComplementarySubType match {
+      case true => ComplementaryRoadLinkType
+      case false => NormalRoadLinkType
     }
 
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass,
-      roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
@@ -349,7 +348,7 @@ object RoadAddressLinkBuilder {
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     new RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, roadLink.linkType, NormalRoadLinkType, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,

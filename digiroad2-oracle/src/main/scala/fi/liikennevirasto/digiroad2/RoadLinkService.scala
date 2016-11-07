@@ -26,6 +26,22 @@ import scala.concurrent.duration.Duration
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
 
+sealed trait RoadLinkType {
+  def value: Int
+}
+
+object RoadLinkType{
+  val values = Set(NormalRoadLinkType, ComplementaryRoadLinkType, UnknownRoadLinkType)
+
+  def apply(intValue: Int): RoadLinkType = {
+    values.find(_.value == intValue).getOrElse(UnknownRoadLinkType)
+  }
+
+  case object UnknownRoadLinkType extends RoadLinkType { def value = 0 }
+  case object NormalRoadLinkType extends RoadLinkType { def value = 1 }
+  case object ComplementaryRoadLinkType extends RoadLinkType { def value = 3 }
+}
+
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
   val logger = LoggerFactory.getLogger(getClass)
 

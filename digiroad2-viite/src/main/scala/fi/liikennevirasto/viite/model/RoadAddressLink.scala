@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkType, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.viite.dao.CalibrationPoint
@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite.RoadType
   */
 case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
-                           linkType: LinkType, roadType: RoadType, modifiedAt: Option[String], modifiedBy: Option[String],
+                           linkType: LinkType, roadLinkType: RoadLinkType, roadType: RoadType, modifiedAt: Option[String], modifiedBy: Option[String],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
