@@ -4,8 +4,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.Track.LeftSide
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, RoadLinkService}
 import fi.liikennevirasto.viite.RoadType._
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
@@ -74,17 +76,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false) = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val linkIds = roadLinks.map(_.linkId).toSet
+    val complementedRoadLinks = roadLinks ++ roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
+    val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
-    val complementaryRoadLinks = roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
+//    val newAddresses = addresses ++ Map(6519162.toLong -> RoadAddress(161788,5,205,LeftSide,Continuous,5197,5219,Some(new DateTime(2014, 5, 19, 10, 21, 0)),None,5171285,0.0,21.595,(None,None),false))
+
     val missingLinkIds = linkIds -- addresses.keySet
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
 
-    val viiteRoadLinks = roadLinks.map { rl =>
+    val viiteRoadLinks = complementedRoadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed)
@@ -296,6 +300,8 @@ object RoadType {
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
+  val ComplementarySubType = 3
+  val OverlappingZPoint = 9999
 
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
@@ -317,6 +323,13 @@ object RoadAddressLinkBuilder {
   }
 
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
+
+    val testRoadAddress = RoadAddress(161788,5,205,LeftSide,Continuous,5197,5219,Some(new DateTime(2014, 5, 19, 10, 21, 0)),None,5171285,0.0,21.595,(None,None),false)
+    val complementaryGeom = roadLink.attributes.contains("SUBTYPE") && roadLink.attributes("SUBTYPE") == ComplementarySubType match {
+      case true => roadLink.geometry.map{ p => Point(p.x, p.y, OverlappingZPoint) }
+      case false => roadLink.geometry
+    }
+
     val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     new RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
