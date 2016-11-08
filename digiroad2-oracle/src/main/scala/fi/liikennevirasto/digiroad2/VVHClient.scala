@@ -287,10 +287,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(municipality).
     */
-  def fetchVVHRoadlinksF(municipality: Int): Future[Seq[VVHRoadlink]] = {
+  def fetchMunicipalityVVHRoadlinksF(municipality: Int): Future[Seq[VVHRoadlink]] = {
     Future(fetchByMunicipality(municipality))
   }
 
+  def fetchMunicipalityVVHRoadlinksF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchByMunicipality(municipality, roadNumbers))
+  }
   /**
     * Returns VVH change data. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
@@ -505,12 +508,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt]
-    val featureClass = if(!Option(featureClassCode).isEmpty) {
-      featureClassCodeToFeatureClass.getOrElse(featureClassCode.intValue(), FeatureClass.AllOthers)
-    } else  {
-      FeatureClass.AllOthers
-    }
+    val mtkClass = attributes("MTKCLASS")
+    val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
+      attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
+    else
+      0
+    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
@@ -639,11 +642,31 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   /**
+    * Returns VVH complementary road links in a municipality
+    */
+  def fetchComplementaryVVHRoadlinks(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
   def fetchComplementaryVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(fetchComplementaryVVHRoadlinks(bounds, municipalities))
+  }
+
+  def fetchComplementaryVVHRoadlinksF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchComplementaryVVHRoadlinks(municipality, roadNumbers))
   }
 
   private def resolveComplementaryVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {

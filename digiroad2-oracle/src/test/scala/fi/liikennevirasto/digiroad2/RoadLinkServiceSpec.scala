@@ -538,4 +538,29 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinksList.head.municipalityCode should be(municipalityId)
     }
   }
+
+  test("Full municipality request includes both complementary and ordinary geometries") {
+    val municipalityId = 235
+    val linkId = Seq(1l, 2l)
+    val roadLinks = linkId.map(id =>
+      new VVHRoadlink(id, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+    )
+    val linkIdComp = Seq(3l, 4l)
+    val roadLinksComp = linkIdComp.map(id =>
+      new VVHRoadlink(id, municipalityId, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
+    )
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      when(mockVVHClient.fetchComplementaryVVHRoadlinksF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
+      when(mockVVHClient.fetchMunicipalityVVHRoadlinksF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
+
+      val roadLinksList = service.getViiteCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
+
+      roadLinksList should have length (4)
+      roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)
+    }
+  }
 }

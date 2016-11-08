@@ -20,7 +20,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
-import scala.concurrent.{Await, duration}
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
@@ -411,7 +411,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Gets road links and change data by municipality from VVH. Used to update cache
     */
   def reloadRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.fetchChangesF(municipality).zip(vvhClient.fetchVVHRoadlinksF(municipality)), atMost = Duration.Inf)
+    val (changes, links) = Await.result(vvhClient.fetchChangesF(municipality).zip(vvhClient.fetchMunicipalityVVHRoadlinksF(municipality)), atMost = Duration.Inf)
 
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes)
@@ -436,7 +436,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns road links by municipality. Used by expireImportRoadLinksVVHtoOTH.
     */
   def getVVHRoadLinksF(municipality: Int) : Seq[VVHRoadlink] = {
-    Await.result(vvhClient.fetchVVHRoadlinksF(municipality), atMost = Duration.Inf)
+    Await.result(vvhClient.fetchMunicipalityVVHRoadlinksF(municipality), atMost = Duration.Inf)
   }
 
   /**
@@ -956,9 +956,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getComplementaryRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
-    val vvhRoadLinks = Await.result(vvhClient.fetchComplementaryVVHRoadlinksF(bounds, municipalities), atMost = Duration.Inf)
+    val vvhRoadLinks = Await.result(vvhClient.fetchComplementaryVVHRoadlinksF(bounds, municipalities), atMost = Duration.create(1, TimeUnit.HOURS))
     withDynTransaction {
       (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
     }._1
   }
+
+  def getComplementaryRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
+    val vvhRoadLinks = Await.result(vvhClient.fetchComplementaryVVHRoadlinksF(municipality, Seq()), Duration.create(1, TimeUnit.HOURS))
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
+    }._1
+  }
+
+  def getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
+    val complementaryF = vvhClient.fetchComplementaryVVHRoadlinksF(municipality, roadNumbers)
+    val currentF = vvhClient.fetchMunicipalityVVHRoadlinksF(municipality, roadNumbers)
+    val (compLinks, vvhRoadLinks) = Await.result(complementaryF.zip(currentF), atMost = Duration.create(1, TimeUnit.HOURS))
+    (enrichRoadLinksFromVVH(compLinks ++ vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])._1
+  }
+
 }
