@@ -1,5 +1,5 @@
 (function(selectedMassTransitStop) {
-  selectedMassTransitStop.initialize = function(backend) {
+  selectedMassTransitStop.initialize = function(backend, roadCollection) {
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -327,6 +327,12 @@
       }
     };
 
+    var getRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
     var deleteMassTransitStop = function (poistaSelected) {
       if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
@@ -383,8 +389,8 @@
       pikavuoroIsAlone: pikavuoroIsAlone,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
-      deleteMassTransitStop: deleteMassTransitStop
-
+      deleteMassTransitStop: deleteMassTransitStop,
+      getRoadLink: getRoadLink
     };
   };
 

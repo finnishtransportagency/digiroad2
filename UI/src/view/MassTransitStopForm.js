@@ -579,6 +579,10 @@
           if  (adminClassProperty.values[0].propertyValue === '1') {
             isAdminClassState = true;
           }
+        }else{
+          //Get administration class from roadlink
+          var roadlink = selectedMassTransitStopModel.getRoadLink();
+          isAdminClassState = roadlink ? (roadlink.getData().administrativeClass == 'State') : false;
         }
         isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
       }
