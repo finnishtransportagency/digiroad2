@@ -5,7 +5,7 @@ import java.util.Properties
 import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -304,6 +304,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
 
+  }
+
+  def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
+    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities), atMost = Duration.Inf)
+    val currentLinks = vvhClient.fetchVVHRoadlinks(bounds, municipalities)
+    val linkprocessor = new VVHRoadLinkHistoryProcessor()
+    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
+    val filtteredHistoryLinks = linkprocessor.process(historyData, currentLinks)
   }
 
   /**
