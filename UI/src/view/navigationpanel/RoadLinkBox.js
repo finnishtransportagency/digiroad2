@@ -136,6 +136,15 @@
         legendContainer.append(legends[datasetName]);
         linkPropertiesModel.setDataset(datasetName);
       });
+
+      elements.expanded.find('input[type="checkbox"]').on('change', function(event) {
+        var eventTarget = $(event.currentTarget);
+        if(eventTarget.prop('checked')){
+          eventbus.trigger('roadLinkHistory:show');
+        } else {
+          eventbus.trigger('roadLinkHistory:hide');
+        }
+      });
     };
 
     var bindExternalEventHandlers = function() {
