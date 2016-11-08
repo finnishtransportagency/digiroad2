@@ -79,6 +79,10 @@
                '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
              '</div>';
     }).join('');
+    var speedLimitHistoryCheckBox = [
+      '<div class="check-box-container">',
+          '<input name="history-checkbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+    '</div>'].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
@@ -87,6 +91,7 @@
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
+            speedLimitHistoryCheckBox,
       '  </div>',
       '</div>'].join('');
 

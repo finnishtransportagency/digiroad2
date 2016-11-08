@@ -22,7 +22,7 @@
         '</div>' +
         '<div class="legend-container"></div>' +
         '<div class="check-box-container">' +
-            '<input type="checkbox">Näytä poistuneet tielinkit</input>' +
+            '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
         '</div>' +
       '</div>');
 
