@@ -366,6 +366,42 @@
       }
     }
 
+    function isAdminClassState(properties){
+      if(!properties)
+        properties = getProperties();
+
+      var adminClassProperty = _.find(properties, function(property){
+        return property.publicId === 'linkin_hallinnollinen_luokka';
+      });
+
+      if (adminClassProperty && !_.isEmpty(adminClassProperty.values))
+        return _.some(adminClassProperty.values, function(value){ return value.propertyValue === '1'; });
+
+      //Get administration class from roadlink
+      var stopRoadlink = getRoadLink();
+      return stopRoadlink ? (stopRoadlink.getData().administrativeClass === 'State') : false;
+    }
+
+    function isAdministratorHSL(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='3'; });
+      });
+    }
+
+    function isAdministratorELY(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='2'; });
+      });
+    }
+
     return {
       close: close,
       save: save,
@@ -390,7 +426,10 @@
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
       deleteMassTransitStop: deleteMassTransitStop,
-      getRoadLink: getRoadLink
+      getRoadLink: getRoadLink,
+      isAdminClassState: isAdminClassState,
+      isAdministratorELY: isAdministratorELY,
+      isAdministratorHSL: isAdministratorHSL
     };
   };
 

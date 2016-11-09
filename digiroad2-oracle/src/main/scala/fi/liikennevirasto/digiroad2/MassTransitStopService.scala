@@ -448,7 +448,7 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.updateAssetProperties(id, properties)
     updateAdministrativeClassValue(id, administrativeClass)
     if (!assetLiviId.exists(_.propertyValue != ""))
-      overWriteLiViIdentifierProperty(id, nationalId, properties)
+      overWriteLiViIdentifierProperty(id, nationalId, properties, Some(administrativeClass))
     else
       None
   }
@@ -533,21 +533,21 @@ trait MassTransitStopService extends PointAssetOperations {
       updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
       val newAdminClassProperty = SimpleProperty(MassTransitStopOperations.MassTransitStopAdminClassPublicId, Seq(PropertyValue(administrativeClass.getOrElse(Unknown).value.toString)))
       val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopOperations.MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
-      val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass)
-      val operation = if (MassTransitStopOperations.isStoredInTierekisteri(propsWithAdminClass)) Operation.Create else Operation.Noop
+      val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass, administrativeClass)
+      val operation = if (MassTransitStopOperations.isStoredInTierekisteri(propsWithAdminClass, administrativeClass)) Operation.Create else Operation.Noop
       getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue))
     }
     else
       throw new IllegalArgumentException
   }
 
-  private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty]) : Option[SimpleProperty] = {
+  private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty], administrativeClass: Option[AdministrativeClass]) : Option[SimpleProperty] = {
     //val adminProp = properties.find(_.publicId== AdministratorInfoPublicId)
     //if (adminProp.nonEmpty) {
     //val property = adminProp.get
     //val administrationPropertyValue = property.values.headOption
     //val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
-    if(MassTransitStopOperations.isStoredInTierekisteri(properties)) {
+    if(MassTransitStopOperations.isStoredInTierekisteri(properties, administrativeClass)) {
       val id = "OTHJ%d".format(nationalId)
       massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, id)
       Some(SimpleProperty(MassTransitStopOperations.LiViIdentifierPublicId, Seq(PropertyValue(id, Some(id)))))
@@ -701,15 +701,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getAdministrationClass(persistedAsset: PersistedMassTransitStop): Option[AdministrativeClass] = {
-    val propertyValueOption = persistedAsset.propertyData.find(_.publicId == "linkin_hallinnollinen_luokka")
-      .map(_.values).getOrElse(Seq()).headOption
-
-    propertyValueOption match {
-      case None => None
-      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
-        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
-    }
+    MassTransitStopOperations.getAdministrationClass(persistedAsset.propertyData)
   }
 
 

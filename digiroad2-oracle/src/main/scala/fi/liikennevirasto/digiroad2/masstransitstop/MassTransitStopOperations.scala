@@ -62,6 +62,23 @@ object MassTransitStopOperations {
     * Convenience method
     *
     * @param persistedStopOption The persisted stops
+    * @param administrativeClass Road administration class
+    * @return returns true if the stop is not virtual and is a ELY bus stop
+    */
+  def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop], administrativeClass: Option[AdministrativeClass]): Boolean ={
+    persistedStopOption match {
+      case Some(persistedStop) =>
+        isStoredInTierekisteri(persistedStop.propertyData, administrativeClass)
+      case _ =>
+        false
+    }
+  }
+
+  /**
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
+    * Convenience method
+    *
+    * @param persistedStopOption The persisted stops
     * @return returns true if the stop is not virtual and is a ELY bus stop
     */
   def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
@@ -81,17 +98,38 @@ object MassTransitStopOperations {
   def isStoredInTierekisteri(properties: Seq[AbstractProperty]): Boolean ={
     val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopTypePublicId)
-    val adminClass = properties.find(pro => pro.publicId == MassTransitStopAdminClassPublicId)
-    isStoredInTierekisteri(administrationProperty, stopType, adminClass)
+    isStoredInTierekisteri(administrationProperty, stopType, getAdministrationClass(properties))
   }
 
-  def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty],
-                             adminClassProperty: Option[AbstractProperty]) = {
+  /**
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY or HSL.
+    * Convenience method
+    *
+    */
+  def isStoredInTierekisteri(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean ={
+    val administrationProperty = properties.find(_.publicId == AdministratorInfoPublicId)
+    val stopType = properties.find(pro => pro.publicId == MassTransitStopTypePublicId)
+    isStoredInTierekisteri(administrationProperty, stopType, administrativeClass)
+  }
+
+  def isStoredInTierekisteri(administratorInfo: Option[AbstractProperty], stopTypeProperty: Option[AbstractProperty], administrativeClass: Option[AdministrativeClass]) = {
     val elyAdministrated = administratorInfo.exists(_.values.headOption.exists(_.propertyValue == CentralELYPropertyValue))
     val isVirtualStop = stopTypeProperty.exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
-    val isAdminClassState = adminClassProperty.exists(_.values.exists(_.propertyValue == AdminClassStatePropertyValue))
     val isHSLAdministrated =  administratorInfo.exists(_.values.headOption.exists(_.propertyValue == HSLPropertyValue))
+    val isAdminClassState = administrativeClass.map(_ == State).getOrElse(false)
     !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
+  }
+
+  def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
+    val propertyValueOption = properties.find(_.publicId == MassTransitStopAdminClassPublicId)
+      .map(_.values).getOrElse(Seq()).headOption
+
+    propertyValueOption match {
+      case None => None
+      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
+      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
+        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+    }
   }
 
   def liviIdValueOption(properties: Seq[AbstractProperty]) = {

@@ -283,6 +283,11 @@
           enumValues = _.filter(enumValues, function(value){
             return value.propertyValue != '2';
           });
+          if(selectedMassTransitStopModel.isAdminClassState()){
+            enumValues = _.filter(enumValues, function(value){
+              return value.propertyValue != '3';
+            });
+          }
         }
 
         var isTRReadOnlyEquipment = isTRMassTransitStop && isReadOnlyEquipment(property);
@@ -558,57 +563,32 @@
       };
 
       function setIsTRMassTransitStopValue(properties) {
-        var isAdministratorELY = false;
-        var isAdministratorHSL = false;
-        var isAdminClassState = false;
-        var administratorProperty = _.find(properties, function(property){
-          return property.publicId === 'tietojen_yllapitaja';
-        });
-        if (administratorProperty && administratorProperty.values && administratorProperty.values[0]) {
-          if (administratorProperty.values[0].propertyValue === '2') {
-            isAdministratorELY = true;
-          }
-          if  (administratorProperty.values[0].propertyValue === '3') {
-            isAdministratorHSL = true;
-          }
-        }
-        var adminClassProperty = _.find(properties, function(property){
-          return property.publicId === 'linkin_hallinnollinen_luokka';
-        });
-        if (adminClassProperty && adminClassProperty.values && adminClassProperty.values[0]) {
-          if  (adminClassProperty.values[0].propertyValue === '1') {
-            isAdminClassState = true;
-          }
-        }else{
-          //Get administration class from roadlink
-          var roadlink = selectedMassTransitStopModel.getRoadLink();
-          isAdminClassState = roadlink ? (roadlink.getData().administrativeClass == 'State') : false;
-        }
+        var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
+        var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
+        var isAdminClassState = selectedMassTransitStopModel.isAdminClassState(properties);
+
         isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
       }
 
       function disableFormIfTRMassTransitStopHasEndDate(properties) {
-        var isBusStopExpired = false;
-        var expireDateProperty = _.find(properties, function(property){
-          return property.publicId === 'viimeinen_voimassaolopaiva';
-        });
 
-        if (expireDateProperty && expireDateProperty.values && expireDateProperty.values[0]) {
-          isBusStopExpired = expireDateProperty.values[0].propertyValue !== "";
-        }
+        var isBusStopExpired = _.some(properties, function(property){
+          return property.publicId === 'viimeinen_voimassaolopaiva' &&
+              _.some(property.values, function(value){ return value.propertyValue !== ""; });
+        });
 
         if (isBusStopExpired && isTRMassTransitStop)  {
           readOnly = true;
         }
       }
 
-function streetViewTemplates(longi,lati,heading) {
-      var streetViewTemplate  = _.template(
-          '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
-          '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
-          '</a>');
-  backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
-  return streetViewTemplate;
+      function streetViewTemplates(longi,lati,heading) {
+            var streetViewTemplate  = _.template(
+                '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
+                '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
+                '</a>');
+        backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
+        return streetViewTemplate;
       }
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
