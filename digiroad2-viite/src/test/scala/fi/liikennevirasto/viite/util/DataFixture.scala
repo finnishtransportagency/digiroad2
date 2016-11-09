@@ -4,6 +4,7 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
@@ -92,6 +93,12 @@ object DataFixture {
     println()
   }
 
+  private def importComplementaryRoadAddress(): Unit ={
+    SqlScriptRunner.runViiteScripts(List(
+      "insert_complementary_geometry_data.sql"
+    ))
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -114,6 +121,8 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
         importRoadAddresses(username.startsWith("dr2dev"))
+      case Some("import_complementary_road_address") =>
+        importComplementaryRoadAddress()
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
