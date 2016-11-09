@@ -88,6 +88,12 @@
       });
     };
 
+    this.fetchHistory = function (boundingBox) {
+      backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
+        //TODO: When Layers Done apply the road links catched
+      });
+    };
+
     this.getRoadsForMassTransitStops = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {

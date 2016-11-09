@@ -294,6 +294,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinks = roadLinkService.getRoadLinksHistoryFromVVH(boundingRectangle, municipalities)
+
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "linkId" -> roadLink.linkId,
@@ -326,6 +337,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     params.get("bbox")
       .map(getRoadLinksFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  get("/roadlinks/history") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadLinksHistoryFromVVH(municipalities))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 

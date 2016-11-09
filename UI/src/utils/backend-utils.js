@@ -16,6 +16,12 @@
       };
     });
 
+    this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks/history?bbox=' + boundingBox
+      };
+    });
+
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/manoeuvres?bbox=' + boundingBox
