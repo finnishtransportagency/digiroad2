@@ -684,6 +684,31 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
+  }
+
+  def fetchComplementaryRoadlinks[T](linkIds: Set[Long],
+                                     fieldSelection: Option[String],
+                                     fetchGeometry: Boolean,
+                                     resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                                     filter: Set[Long] => String): Seq[T] = {
+    val batchSize = 1000
+    val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
+    idGroups.par.flatMap { ids =>
+      val definition = layerDefinition(filter(ids), fieldSelection)
+      val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+        s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map { feature =>
+          val attributes = extractFeatureAttributes(feature)
+          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
+          resultTransition(attributes, geometry)
+        }
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
+  }
 }
 
 
