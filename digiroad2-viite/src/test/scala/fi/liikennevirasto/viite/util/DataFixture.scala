@@ -94,7 +94,9 @@ object DataFixture {
 
   private def importComplementaryRoadAddress(): Unit ={
     println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
-
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+    }
     SqlScriptRunner.runViiteScripts(List(
       "insert_complementary_geometry_data.sql"
     ))
