@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkSer
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
-import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
@@ -93,10 +92,13 @@ object DataFixture {
     println()
   }
 
-  private def importComplementaryRoadAddress(): Unit ={
+  def importComplementaryRoadAddress(): Unit ={
+    println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
     SqlScriptRunner.runViiteScripts(List(
       "insert_complementary_geometry_data.sql"
     ))
+    println(s"complementary road address import completed at time: ${DateTime.now()}")
+    println()
   }
 
   def main(args:Array[String]) : Unit = {
