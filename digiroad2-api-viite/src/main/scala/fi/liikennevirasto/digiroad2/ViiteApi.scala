@@ -82,7 +82,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {
-        //TODO: When well-performing solution for main parts and road parts is ready
+      //TODO: When well-performing solution for main parts and road parts is ready
       case DrawMainRoadPartsOnly =>
         //roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
         Seq()
@@ -151,7 +151,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "discontinuity" -> roadAddressLink.discontinuity,
       "endDate" -> roadAddressLink.endDate,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadAddressLink.roadLinkType)
+      "roadLinkType" -> roadAddressLink.roadLinkType,
+      "subType" -> roadAddressLink.attributes.getOrElse("SUBTYPE", null))
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
