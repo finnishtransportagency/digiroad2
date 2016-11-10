@@ -96,7 +96,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, missed)
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
