@@ -1,4 +1,163 @@
 (function(root) {
+
+  var RoadHistoryLayer = function(map, selectedLinkProperty){
+    var vectorLayer;
+    var selectControl;
+    var layerStyleMap = {};
+
+    var drawRoadLinks = function(roadLinks, zoom) {
+      vectorLayer.removeAllFeatures();
+      var features = _.map(roadLinks, function(roadLink) {
+        return createRoadLinkFeature(roadLink);
+      });
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.addFeatures(features);
+      });
+    };
+
+    var drawRoadLink = function(roadLink) {
+      var feature = createRoadLinkFeature(roadLink);
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.addFeatures([feature]);
+      });
+    };
+
+    var createRoadLinkFeature = function(roadLink){
+      var points = _.map(roadLink.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
+      });
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
+    };
+
+    var setLayerSpecificStyleMap = function(renderIntent, styleMap) {
+      layerStyleMap = styleMap('history')[renderIntent];
+      activateLayerStyleMap();
+    };
+
+    var activateLayerStyleMap = function() {
+      vectorLayer.styleMap = layerStyleMap || new RoadStyles().roadStyles;
+    };
+
+    var redraw = function() {
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.redraw();
+      });
+    };
+
+    var clear = function() {
+      vectorLayer.removeAllFeatures();
+    };
+
+    var usingLayerSpecificStyleProvider = function(action) {
+      vectorLayer.styleMap = layerStyleMap;
+      action();
+    };
+
+    var getSelectedFeatures = function (){
+      return _.filter(vectorLayer.features, function (feature) {
+        return selectedLinkProperty.isSelected(feature.attributes.linkId);
+      });
+    };
+
+    var removeSelectedFeatures = function() {
+      vectorLayer.removeFeatures(getSelectedFeatures());
+    };
+
+    var removeFeatures = function(){
+      vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'overlay'));
+    };
+
+    var getSelectControl = function(){
+      return selectControl;
+    };
+
+    var highlightFeatures = function() {
+      _.each(vectorLayer.features, function(x) {
+        if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
+          selectControl.highlight(x);
+        } else {
+          selectControl.unhighlight(x);
+        }
+      });
+    };
+
+    var reselectRoadLink = function() {
+      var originalOnSelectHandler = selectControl.onSelect;
+      selectControl.onSelect = function() {};
+      var features = getSelectedFeatures();
+      if (!_.isEmpty(features)) {
+        //TODO think how to change the map style render intent
+        //currentRenderIntent = 'select';
+        selectControl.select(_.first(features));
+        highlightFeatures();
+      }
+      selectControl.onSelect = originalOnSelectHandler;
+    };
+
+    var selectRoadLink = function(roadLink) {
+      var feature = _.find(vectorLayer.features, function(feature) {
+        if (roadLink.linkId) return feature.attributes.linkId === roadLink.linkId;
+        else return feature.attributes.roadLinkId === roadLink.roadLinkId;
+      });
+      selectControl.unselectAll();
+      selectControl.select(feature);
+    };
+
+    var selectRoadLinkByLinkId = function(linkId){
+      var feature = _.find(vectorLayer.features, function(feature) {
+        return feature.attributes.linkId === linkId;
+      });
+      if (feature) {
+        selectControl.select(feature);
+      }
+    };
+
+    var selectFeatureRoadLink = function(feature) {
+      selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
+      //currentRenderIntent = 'select';
+      //TODO think how to change the map style render intent
+      vectorLayer.redraw();
+      highlightFeatures();
+    };
+
+    var unselectFeatureRoadLink = function() {
+      //currentRenderIntent = 'default';
+      //TODO think how to change the map style render intent
+      selectedLinkProperty.close();
+      vectorLayer.redraw();
+      highlightFeatures();
+    };
+
+    selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+      onSelect: selectFeatureRoadLink,
+      onUnselect: unselectFeatureRoadLink
+    });
+
+    vectorLayer = new OpenLayers.Layer.Vector('historyDataLayer', {transparent: "true"}, {isBaseLayer: false});
+    vectorLayer.setVisibility(true);
+    map.addLayer(vectorLayer);
+    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
+    map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
+
+    map.addControl(selectControl);
+
+    return {
+      layer: vectorLayer,
+      redraw: redraw,
+      clear: clear,
+      selectRoadLink: selectRoadLink,
+      setLayerSpecificStyleMap: setLayerSpecificStyleMap,
+      drawRoadLink: drawRoadLink,
+      drawRoadLinks: drawRoadLinks,
+      removeSelectedFeatures: removeSelectedFeatures,
+      getSelectControl: getSelectControl,
+      reselectRoadLink: reselectRoadLink,
+      selectFeatureRoadLink: selectFeatureRoadLink,
+      unselectFeatureRoadLink: unselectFeatureRoadLink,
+      selectRoadLinkByLinkId: selectRoadLinkByLinkId
+    };
+  };
+
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
@@ -7,12 +166,11 @@
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
-    // Layer for history data road links
-    var historyLayer = new OpenLayers.Layer.Vector('historyDataLayer', {transparent: "true"}, {isBaseLayer: false});
-    historyLayer.setVisibility(true);
-    map.addLayer(historyLayer);
-    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-    map.setLayerIndex(historyLayer, roadLinksLayerIndex - 1);
+    var historyLayer = new RoadHistoryLayer(map, selectedLinkProperty);
+
+    historyLayer.setLayerSpecificStyleMap(currentRenderIntent, function(renderIntent){
+      return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), renderIntent);
+    });
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -90,17 +248,29 @@
     };
 
     var draw = function() {
+      //TODO uncomment roadlink layer draws
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      roadLayer.drawRoadLinks(roadLinks, map.getZoom());
-      drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      //TODO uncomment that when we start using data from the server
+      var roadLinkHistory = roadLinks;// roadCollection.getAllHistory();
+
+      //roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      historyLayer.drawRoadLinks(roadLinkHistory, map.getZoom());
+
+      //drawDashedLineFeaturesIfApplicable(roadLinks, roadLayer.layer);
+      drawDashedLineFeaturesIfApplicable(roadLinkHistory, historyLayer.layer);
+
+      //me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawOneWaySigns(historyLayer.layer, roadLinkHistory);
+
       redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
 
     this.refreshView = function() {
       roadCollection.fetch(map.getExtent());
+      //TODO uncomment that when we start using data from the server
+      //roadCollection.fetchHistory(map.getExtent());
     };
 
     this.isDirty = function() {
@@ -122,20 +292,20 @@
       }));
     };
 
-    var drawDashedLineFeatures = function(roadLinks) {
+    var drawDashedLineFeatures = function(roadLinks, layer) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
       });
-      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
+      layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
-    var drawDashedLineFeaturesForType = function(roadLinks) {
+    var drawDashedLineFeaturesForType = function(roadLinks, layer) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedLinkTypes, roadLink.linkType);
       });
-      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
+      layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
     var getSelectedFeatures = function() {
@@ -155,6 +325,8 @@
         highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
+      //TODO do that i don't know exacly what it is that but ok
+      historyLayer.reselectRoadLink();
       if (selectedLinkProperty.isDirty()) {
         me.deactivateSelection();
       }
@@ -164,11 +336,11 @@
       me.deactivateSelection();
     };
 
-    var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
+    var drawDashedLineFeaturesIfApplicable = function(roadLinks, layer) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
-        drawDashedLineFeatures(roadLinks);
+        drawDashedLineFeatures(roadLinks, layer);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
-        drawDashedLineFeaturesForType(roadLinks);
+        drawDashedLineFeaturesForType(roadLinks, layer);
       }
     };
 
@@ -185,6 +357,7 @@
         if (feature) {
           selectControl.select(feature);
         }
+        historyLayer.selectRoadLinkByLinkId(link.linkId);
       });
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
@@ -196,10 +369,12 @@
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
       unselectRoadLink();
+      historyLayer.unselectFeatureRoadLink();
     };
 
     var refreshViewAfterSaving = function() {
       unselectRoadLink();
+      historyLayer.unselectFeatureRoadLink();
       me.refreshView();
     };
 
@@ -217,16 +392,26 @@
     };
 
     var redrawSelected = function() {
-      roadLayer.layer.removeFeatures(getSelectedFeatures());
+      //TODO uncomment roadlayer operations
+      //roadLayer.layer.removeFeatures(getSelectedFeatures());
+      historyLayer.removeSelectedFeatures();
+
       var selectedRoadLinks = selectedLinkProperty.get();
-      _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
-      drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
-      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
+
+      _.each(selectedRoadLinks,  function(selectedLink) {
+        //roadLayer.drawRoadLink(selectedLink);
+        historyLayer.drawRoadLink(selectedLink);
+      });
+      //drawDashedLineFeaturesIfApplicable(selectedRoadLinks, roadLayer.layer);
+      drawDashedLineFeaturesIfApplicable(selectedRoadLinks, historyLayer.layer);
+      //me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
+      me.drawOneWaySigns(historyLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
 
     this.removeLayerFeatures = function() {
       roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+      historyLayer.removeLayerFeatures();
     };
 
     var show = function(map) {
@@ -235,6 +420,7 @@
 
     var hideLayer = function() {
       unselectRoadLink();
+      historyLayer.unselectFeatureRoadLink();
       me.stop();
       me.hide();
     };
