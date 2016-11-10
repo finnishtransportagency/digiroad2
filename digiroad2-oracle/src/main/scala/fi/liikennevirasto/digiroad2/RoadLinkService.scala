@@ -111,7 +111,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       .flatMap { vvhRoadLink =>
         GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       }
-    middlePoint.map((linkId, _))
+    middlePoint.orElse(getComplementaryLinkMiddlePointByLinkId(linkId)).map((linkId, _))
+  }
+
+  def getComplementaryLinkMiddlePointByLinkId(linkId: Long): Option[Point] = {
+    val middlePoint: Option[Point] = vvhClient.fetchComplementaryRoadlinks(Set(linkId)).headOption
+      .flatMap { vvhRoadLink =>
+        GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
+      }
+    middlePoint
   }
 
   /**

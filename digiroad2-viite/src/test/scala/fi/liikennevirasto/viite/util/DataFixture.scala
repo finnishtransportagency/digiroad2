@@ -132,7 +132,8 @@ object DataFixture {
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | find_floating_road_addresses")
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
+        "find_floating_road_addresses | import_complementary_road_address")
     }
   }
 }
