@@ -19,7 +19,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(any[Long])).thenReturn(Seq(
+  when(mockVVHClient.fetchByLinkId(any[Long])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 

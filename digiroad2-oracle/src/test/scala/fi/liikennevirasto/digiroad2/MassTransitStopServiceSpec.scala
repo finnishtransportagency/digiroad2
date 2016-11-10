@@ -50,9 +50,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     // Reset the mocks here so individual tests don't have to
     when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     vvhRoadLinks.foreach(rl =>
-      when(mockVVHClient.fetchVVHRoadlink(rl.linkId))
+      when(mockVVHClient.fetchByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
-    when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
     when(mockGeometryTransform.coordToAddress(any[Point], any[Option[Int]], any[Option[Int]], any[Option[Int]], any[Option[Track]], any[Option[Double]], any[Option[Boolean]])).thenReturn(
       RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None)
     )
@@ -746,7 +746,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      when(mockVVHClient.fetchVVHRoadlink(linkId))
+      when(mockVVHClient.fetchByLinkId(linkId))
         .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
       val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry, municipalityCode, Some(Municipality))
@@ -775,7 +775,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      when(mockVVHClient.fetchVVHRoadlink(linkId))
+      when(mockVVHClient.fetchByLinkId(linkId))
         .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
       val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry , municipalityCode, Some(Municipality))

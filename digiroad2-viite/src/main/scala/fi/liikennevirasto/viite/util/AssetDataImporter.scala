@@ -151,7 +151,7 @@ class AssetDataImporter {
       if (complementaryLinks)
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
       else
-        vvhClientProd.getOrElse(vvhClient).fetchVVHRoadlinks(group)
+        vvhClientProd.getOrElse(vvhClient).fetchByLinkIds(group)
     ).toSeq
 
     val linkLengths = roadLinks.map{
@@ -185,7 +185,7 @@ class AssetDataImporter {
       print(s"${DateTime.now()} - ")
       println("Converting link ids to DEV link ids")
       val mmlIdMaps = roadLinks.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchVVHRoadlinksByMmlIds(grp)).toSeq
+      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchByMmlIds(grp)).toSeq
       val fromMmlIdMap = links.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
         mmlIdMaps.get(mmlId).get -> devLinkId

@@ -123,7 +123,7 @@ trait PointAssetOperations {
       }
 
       val result = fetchFloatingAssets(query => query + municipalityFilter, isOperator)
-      val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = vvhClient.fetchByLinkIds(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass, floatingReason) =>
@@ -158,7 +158,7 @@ trait PointAssetOperations {
 
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.linkId) }
+    val roadLinks: Option[VVHRoadlink] = persistedAsset.flatMap { x => vvhClient.fetchByLinkId(x.linkId) }
 
     def findRoadlink(linkId: Long): Option[VVHRoadlink] =
       roadLinks.find(_.linkId == linkId)

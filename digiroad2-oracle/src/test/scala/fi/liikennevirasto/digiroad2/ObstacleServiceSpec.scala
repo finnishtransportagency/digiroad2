@@ -25,11 +25,11 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1611317)).thenReturn(Seq(
+  when(mockVVHClient.fetchByLinkId(1611317)).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
-  when(mockVVHClient.fetchVVHRoadlink(1191950690)).thenReturn(Seq(
+  when(mockVVHClient.fetchByLinkId(1191950690)).thenReturn(Seq(
     VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
@@ -151,7 +151,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       TrafficDirection.BothDirections, FeatureClass.AllOthers)
     when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
       roadLink))
-    when(mockVVHClient.fetchVVHRoadlink(5797521)).thenReturn(Seq(
+    when(mockVVHClient.fetchByLinkId(5797521)).thenReturn(Seq(
       roadLink).headOption)
 
     val service = new ObstacleService(mockVVHClient) {
