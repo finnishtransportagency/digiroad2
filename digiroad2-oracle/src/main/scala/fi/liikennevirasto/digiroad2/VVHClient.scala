@@ -133,9 +133,9 @@ object ChangeType {
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
-
+  lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   private val roadLinkData_Service = "Roadlink_data"
-  private val roadLinkComplementaryService = "Roadlink_complimentary"
+
 
   private def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
@@ -162,7 +162,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
-  private def withMunicipalityFilter(municipalities: Set[Int]): String = {
+  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
 
@@ -170,7 +170,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
-  private def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s""""where":"($filter)","""
     if (includeAllPublicRoads)
@@ -183,7 +183,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
   }
 
-  private def withLinkIdFilter(linkIds: Set[Long]): String = {
+  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
     withFilter("LINKID", linkIds)
   }
 
@@ -191,14 +191,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MTKID", mmlIds)
   }
 
-  private def combineFiltersWithAnd(filter1: String, filter2: String) = {
+  protected def combineFiltersWithAnd(filter1: String, filter2: String) = {
     filter1.isEmpty match {
       case true => filter2
       case _ => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
     }
   }
 
-  private def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
+  protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
     val definitionStart = "[{"
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
@@ -210,7 +210,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     URLEncoder.encode(definition, "UTF-8")
   }
 
-  private def queryParameters(fetchGeometry: Boolean = true): String = {
+  protected def queryParameters(fetchGeometry: Boolean = true): String = {
     if (fetchGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
     else "f=pjson"
   }
@@ -352,7 +352,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-
   private def extractVVHChangeInfo(feature: Map[String, Any]) = {
     val attributes = extractFeatureAttributes(feature)
 
@@ -470,7 +469,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   case class VVHError(content: Map[String, Any], url: String)
 
-  private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+  protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -490,17 +489,17 @@ class VVHClient(vvhRestApiEndPoint: String) {
     attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
   }
 
-  private def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
+  protected def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
     feature("attributes").asInstanceOf[Map[String, Any]]
   }
 
-  private def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
+  protected def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
     paths.head
   }
 
-  private def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
+  protected def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(point(0), point(1), extractMeasure(point(2)).get)
     })
@@ -519,7 +518,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
 
-  private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
+  protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
     roadLinkFromFeature(attributes, path)
@@ -624,6 +623,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
     curr - (curr % (24L*oneHourInMs))
   }
 
+}
+
+class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
+  private val roadLinkComplementaryService = "Roadlink_complimentary"
+
+
+
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
@@ -656,7 +662,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
-
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
@@ -684,7 +689,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-  def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+   def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
   }
 
@@ -710,5 +715,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }.toList
   }
 }
+
+
 
 

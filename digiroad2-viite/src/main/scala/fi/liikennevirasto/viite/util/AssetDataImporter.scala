@@ -149,7 +149,7 @@ class AssetDataImporter {
 
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       if (complementaryLinks)
-        vvhClientProd.getOrElse(vvhClient).fetchComplementaryRoadlinks(group)
+        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
       else
         vvhClientProd.getOrElse(vvhClient).fetchVVHRoadlinks(group)
     ).toSeq
