@@ -580,6 +580,11 @@
         if (isBusStopExpired && isTRMassTransitStop)  {
           readOnly = true;
         }
+
+        if(!isBusStopExpired && isTRMassTransitStop && !isBusStopMaintainer){
+          readOnly = true;
+        }
+
       }
 
       function streetViewTemplates(longi,lati,heading) {
