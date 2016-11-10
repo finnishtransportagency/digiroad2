@@ -530,7 +530,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryVVHRoadlinksF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
+      when(mockVVHComplementaryClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(roadLink)))
 
       val roadLinksList = service.getComplementaryRoadLinksFromVVH(boundingBox, Set.empty)
 
@@ -558,7 +558,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryVVHRoadlinksF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
+      when(mockVVHComplementaryClient.fetchByMunicipalityAndRoadNumbers(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
       when(mockVVHClient.fetchMunicipalityVVHRoadlinksF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
 
       val roadLinksList = service.getViiteCurrentAndComplementaryRoadLinksFromVVH(235, Seq())
