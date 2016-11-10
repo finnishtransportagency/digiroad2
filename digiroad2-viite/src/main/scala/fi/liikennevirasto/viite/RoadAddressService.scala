@@ -77,8 +77,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false) = {
+    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
+      everything || publicRoads || roadNumberLimits.exists {
+        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
+      }
+    }
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val complementedRoadLinks = roadLinks ++ roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
+    val complementaryLinks = roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
+    val complementedRoadLinks = roadLinks ++ complementaryLinks
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
     val addresses = withDynTransaction {
@@ -101,7 +108,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
-    filledTopology
+    val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
+    filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
+      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
   }
 
   /**
