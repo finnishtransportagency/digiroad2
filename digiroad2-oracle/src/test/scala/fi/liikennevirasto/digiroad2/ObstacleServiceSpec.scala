@@ -22,7 +22,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1611317)).thenReturn(Seq(
@@ -52,7 +52,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {
@@ -67,7 +67,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {
@@ -149,7 +149,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       Point(240881.381, 6700685.655),
       Point(240885.898, 6700689.602)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
       roadLink))
     when(mockVVHClient.fetchVVHRoadlink(5797521)).thenReturn(Seq(
       roadLink).headOption)

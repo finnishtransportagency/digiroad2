@@ -74,7 +74,7 @@ trait PointAssetOperations {
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
 
-    val roadLinks: Seq[VVHRoadlink] = vvhClient.fetchVVHRoadlinks(bounds)
+    val roadLinks: Seq[VVHRoadlink] = vvhClient.queryByMunicipalitesAndBounds(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
@@ -145,7 +145,7 @@ trait PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
+    val roadLinks = vvhClient.queryByMunicipality(municipalityCode)
     def findRoadlink(linkId: Long): Option[VVHRoadlink] =
       roadLinks.find(_.linkId == linkId)
 
