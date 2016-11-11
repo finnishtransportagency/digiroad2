@@ -542,11 +542,6 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty], administrativeClass: Option[AdministrativeClass]) : Option[SimpleProperty] = {
-    //val adminProp = properties.find(_.publicId== AdministratorInfoPublicId)
-    //if (adminProp.nonEmpty) {
-    //val property = adminProp.get
-    //val administrationPropertyValue = property.values.headOption
-    //val isVirtualStop = properties.exists(pro => pro.publicId == MassTransitStopTypePublicId && pro.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
     if(MassTransitStopOperations.isStoredInTierekisteri(properties, administrativeClass)) {
       val id = "OTHJ%d".format(nationalId)
       massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, id)
@@ -555,9 +550,6 @@ trait MassTransitStopService extends PointAssetOperations {
       massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, "")
       Some(SimpleProperty(MassTransitStopOperations.LiViIdentifierPublicId, Seq(PropertyValue("", Some("")))))
     }
-    //} else {
-    //None
-    //}
   }
 
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink],
