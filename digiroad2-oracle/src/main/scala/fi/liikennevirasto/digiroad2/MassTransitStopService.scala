@@ -4,6 +4,7 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2.Operation._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
@@ -47,6 +48,7 @@ trait MassTransitStopService extends PointAssetOperations {
   val massTransitStopDao: MassTransitStopDao
   val tierekisteriClient: TierekisteriClient
   val tierekisteriEnabled: Boolean
+  val roadLinkService: RoadLinkService
   override val idField = "external_id"
 
   override def typeId: Int = 10
@@ -229,7 +231,7 @@ trait MassTransitStopService extends PointAssetOperations {
     getByNationalIdWithTRWarnings(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
-  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[VVHRoadlink])
+  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike])
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
@@ -238,7 +240,7 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = persistedStop.propertyData), floatingReason)
   }
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks:Seq[VVHRoadlink]): Seq[PersistedMassTransitStop] = {
+  override def fetchPointAssets(queryFilter: String => String, roadLinks:Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
@@ -276,7 +278,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+  override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     roadLinkOption match {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
@@ -290,7 +292,7 @@ trait MassTransitStopService extends PointAssetOperations {
     super.isFloating(persistedAsset, roadLinkOption)
   }
 
-  protected override def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[VVHRoadlink]) : String = {
+  protected override def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
 
     roadLinkOption match {
       case None => return super.floatingReason(persistedAsset, roadLinkOption) //This is just because the warning
@@ -523,7 +525,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], username: String,
-                     properties: Seq[SimpleProperty], roadLink: VVHRoadlink, tierekisteriOperation: Operation): MassTransitStopWithProperties = {
+                     properties: Seq[SimpleProperty], roadLink: RoadLinkLike, tierekisteriOperation: Operation): MassTransitStopWithProperties = {
 
     val id = persistedStop.id
     if (optionalPosition.isDefined) {
@@ -562,7 +564,7 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.deleteNumberPropertyValue(assetId, "kellumisen_syy")
   }
 
-  private def fetchRoadLink(linkId: Long): Option[VVHRoadlink] = {
+  private def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
     vvhClient.fetchVVHRoadlink(linkId)
   }
 
@@ -628,7 +630,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[VVHRoadlink],
+  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[RoadLinkLike],
                                                             operation: Operation, liviId: Option[String]) = {
     // TODO: use already loaded asset
     val persistedStop = fetchPointAssets(withId(assetId)).headOption
@@ -720,12 +722,20 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink], overrideLiviId: Option[String]) = {
+  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[RoadLinkLike], overrideLiviId: Option[String]) = {
     if (operation != Operation.Noop) {
       val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
-      val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
-        case Some(str) => Try(str.toString.toInt).toOption
-        case _ => None
+      val road = roadLink.flatMap { rl =>
+        val roadNumber =
+          rl match {
+            case link: RoadLink => link.attributes.get("ROADNUMBER")
+            case link: VVHRoadlink => link.attributes.get("ROADNUMBER")
+            case _ => None
+          }
+        roadNumber match {
+          case Some(str) => Try(str.toString.toInt).toOption
+          case _ => None
+        }
       }
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
 
@@ -857,7 +867,7 @@ object MassTransitStopOperations {
     administrativeClass != Unknown && roadLinkAdminClassOption.nonEmpty && mismatch
   }
 
-  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
 
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
     if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
@@ -866,7 +876,7 @@ object MassTransitStopOperations {
       (false, None)
   }
 
-  def floatingReason(administrativeClass: AdministrativeClass, roadLink: VVHRoadlink): Option[String] = {
+  def floatingReason(administrativeClass: AdministrativeClass, roadLink: RoadLinkLike): Option[String] = {
     if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
       Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
     else

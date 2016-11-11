@@ -45,6 +45,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   before {
     // Reset the mocks here so individual tests don't have to
@@ -60,7 +61,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right)
     )
   }
-  class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+  class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override def vvhClient: VVHClient = mockVVHClient
@@ -70,7 +71,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+  class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override def vvhClient: VVHClient = mockVVHClient
@@ -80,11 +81,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
+  object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus, mockRoadLinkService)
 
-  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus)
+  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus, mockRoadLinkService)
 
-  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+  class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override def vvhClient: VVHClient = mockVVHClient
@@ -94,7 +95,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
-  class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+  class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -447,7 +448,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
-        val service = new TestMassTransitStopService(eventbus)
+        val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         val assetId = 300000
         sqlu"""update text_property_value set value_fi='livi1' where asset_id = 300000 and value_fi = 'OTHJ1'""".execute
         val dbResult = sql"""SELECT value_fi FROM text_property_value where value_fi='livi1' and asset_id = 300000""".as[String].list
@@ -471,7 +472,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
-        val service = new TestMassTransitStopService(eventbus)
+        val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         val assetId = 300000
         val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
         sqlu"""update text_property_value set value_fi='' where id = $propertyValueId""".execute
@@ -496,7 +497,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
-        val service = new TestMassTransitStopService(eventbus)
+        val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         val assetId = 300000
         val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
         sqlu"""update text_property_value set value_fi='livi123' where id = $propertyValueId""".execute
@@ -569,7 +570,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Send event to event bus in update") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val position = Some(Position(60.0, 0.0, 123l, None))
       service.updateExistingById(300002, position, Set.empty, "user", _ => Unit)
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
@@ -586,7 +587,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Create new mass transit stop") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val values = List(PropertyValue("1"))
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
@@ -612,7 +613,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val massTransitStopDao = new MassTransitStopDao
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("5"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
@@ -637,7 +638,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val massTransitStopDao = new MassTransitStopDao
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
@@ -756,7 +757,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Update existing masstransitstop if the new distance is greater than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
@@ -786,7 +787,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Should not copy existing masstransitstop if the new distance is less or equal than 50 meters"){
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
@@ -813,7 +814,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("delete a TR kept mass transit stop") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
       service.deleteAllMassTransitStopData(stop.head.id)
@@ -825,7 +826,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("delete fails if a TR kept mass transit stop is not found") {
     val eventbus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new TestMassTransitStopServiceWithDynTransaction(eventbus)
+    val service = new TestMassTransitStopServiceWithDynTransaction(eventbus, mockRoadLinkService)
     val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
     when(mockTierekisteriClient.deleteMassTransitStop(any[String])).thenThrow(new TierekisteriClientException("foo"))
     intercept[TierekisteriClientException] {
@@ -1097,7 +1098,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
       SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
 
-    val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus)
+    val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
     when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
@@ -1116,7 +1117,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
-        val service = new TestMassTransitStopService(eventbus)
+        val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         when(mockTierekisteriClient.isTREnabled).thenReturn(true)
         val assetId = 300000
         val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head

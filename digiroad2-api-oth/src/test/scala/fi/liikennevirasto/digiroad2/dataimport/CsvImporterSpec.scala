@@ -278,7 +278,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
     when(mockMassTransitStopDao.getAssetAdministrationClass(any[Long])).thenReturn(None)
 
-    class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynSession[T](f: => T): T = f
       override def withDynTransaction[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
@@ -303,7 +303,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         val persistedPointAsset: PersistedPointAsset  = invocation.getArguments()(0).asInstanceOf[PersistedPointAsset]
         val vvhRoadlink: Option[VVHRoadlink]  = invocation.getArguments()(1).asInstanceOf[Option[VVHRoadlink]]
 
-        val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus)
+        val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus, MockitoSugar.mock[RoadLinkService])
         testMassTransitStopService.isFloating(persistedPointAsset, vvhRoadlink)
       }
     })

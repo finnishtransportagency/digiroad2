@@ -169,7 +169,7 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -177,7 +177,7 @@ object Digiroad2Context {
       override def vvhClient: VVHClient = Digiroad2Context.vvhClient
       override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
-    new ProductionMassTransitStopService(eventbus)
+    new ProductionMassTransitStopService(eventbus, roadLinkService)
   }
 
   lazy val linearAssetService: LinearAssetService = {

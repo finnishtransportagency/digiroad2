@@ -62,6 +62,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override def vvhClient: VVHClient = mockVVHClient
+    override val roadLinkService: RoadLinkService = testRoadLinkService
     override val tierekisteriEnabled = false
   }
   val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)

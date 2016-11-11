@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
@@ -12,7 +13,7 @@ class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperati
 
   override def typeId: Int = 230
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink]): Seq[RailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: RailwayCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
