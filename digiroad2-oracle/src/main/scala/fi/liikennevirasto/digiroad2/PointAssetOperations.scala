@@ -145,13 +145,13 @@ trait PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = vvhClient.fetchByMunicipality(municipalityCode)
-    def findRoadlink(linkId: Long): Option[VVHRoadlink] =
-      roadLinks.find(_.linkId == linkId)
+    val roadLinks = vvhClient.fetchByMunicipality(municipalityCode).map(l => l.linkId -> l).toMap
+    def linkIdToRoadLink(linkId: Long): Option[VVHRoadlink] =
+      roadLinks.get(linkId)
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
+        .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink)))
         .toList
     }
   }
