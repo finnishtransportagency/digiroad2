@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
@@ -73,6 +74,13 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
   }
 }
 
+class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Actor {
+  def receive = {
+    case w: Seq[any] => roadAddressService.saveAdjustments(w.asInstanceOf[Seq[LRMValueAdjustment]])
+    case _                    => println("roadAddressUpdater: Received unknown message")
+  }
+}
+
 class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
     case w: Set[any] => roadAddressService.setRoadAddressFloating(w.asInstanceOf[Set[Long]])
@@ -111,6 +119,9 @@ object Digiroad2Context {
 
   val roadAddressUpdater = system.actorOf(Props(classOf[RoadAddressUpdater], roadAddressService), name = "roadAddressUpdater")
   eventbus.subscribe(roadAddressUpdater, "roadAddress:persistMissingRoadAddress")
+
+  val roadAddressAdjustment = system.actorOf(Props(classOf[RoadAddressAdjustment], roadAddressService), name = "roadAddressAdjustment")
+  eventbus.subscribe(roadAddressAdjustment, "roadAddress:persistAdjustments")
 
   val roadAddressFloater = system.actorOf(Props(classOf[RoadAddressFloater], roadAddressService), name = "roadAddressFloater")
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
