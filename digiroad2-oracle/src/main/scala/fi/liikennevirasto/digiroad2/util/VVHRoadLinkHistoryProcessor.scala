@@ -3,13 +3,16 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.VVHRoadlink
 import scala.collection.mutable.ListBuffer
 
-
-
+/**
+  * Class tries to find newest history link with significant change to current road links
+  */
 class VVHRoadLinkHistoryProcessor() {
 
 
   def process(historyLinks:Seq[VVHRoadlink], currentLinks :Seq[VVHRoadlink]) : Seq[VVHRoadlink] ={
-    val groupedRoadLinksList=historyLinks.sortBy(_.linkId).groupBy(_.linkId)
+    //val groupedRoadLinksList=historyLinks.sortBy(_ .linkId).groupBy(_.linkId)
+    val groupedRoadLinksList= historyLinks.groupBy(_.linkId).toSeq.sortBy(_._1)
+
     var ignorelist = ListBuffer.empty[String]
     var listOfNewestChangedHistoryLinks=scala.collection.mutable.ArrayBuffer.empty[VVHRoadlink]
     for ( groupedRoadLinks<-groupedRoadLinksList)
@@ -21,8 +24,8 @@ class VVHRoadLinkHistoryProcessor() {
         val newLinkid = link.attributes.getOrElse("LINKID_NEW",None)
         if (newLinkid != None)
         {
-
-          val newerLink=getNewestId(newLinkid.toString, groupedRoadLinksList, ignorelist.toList,currentLinks)
+          val appendedlistignoreList=(ignorelist++List(link.linkId.toString)).toList
+          val newerLink=getNewestId(newLinkid.toString, groupedRoadLinksList.toMap, appendedlistignoreList,currentLinks)
           newerLink._1 match {
 
             case Some(newestRoadLink:VVHRoadlink) =>
@@ -40,28 +43,27 @@ class VVHRoadLinkHistoryProcessor() {
                       if (compareGeoOfLinks(nHlink,link))
                       {//Change between current link value significant enough
                         listOfNewestChangedHistoryLinks += newestRoadLink
-                        ignorelist += link.linkId.toString
-                        ignorelist ++ newerLink._2
+                        ignorelist += newestRoadLink.linkId.toString
+                        ignorelist ++= newerLink._2
                       }
                       else if (compareGeoOfLinks(nHlink,changedlink))
                       {//  Change significant enough was found in one of the links with current link-id
                         listOfNewestChangedHistoryLinks += newestRoadLink
-                        ignorelist += link.linkId.toString
-                        ignorelist ++ newerLink._2
+                        ignorelist += newestRoadLink.linkId.toString
+                        ignorelist ++= newerLink._2
                       }
                       else
                       { // no significant change
-                        ignorelist += link.linkId.toString
-                        ignorelist ++ newerLink._2
+                        ignorelist += newestRoadLink.linkId.toString
+                        ignorelist ++= newerLink._2
                       }
                     }
                     case None => //this when when link chain has not found "current link". This might be because link was deleted
                     {
                       listOfNewestChangedHistoryLinks += newestRoadLink
-                      ignorelist += link.linkId.toString
-                      ignorelist ++ newerLink._2
+                      ignorelist += newestRoadLink.linkId.toString
+                      ignorelist ++= newerLink._2
                     }
-
                   }
                 }
                 else
@@ -69,7 +71,7 @@ class VVHRoadLinkHistoryProcessor() {
 
                   listOfNewestChangedHistoryLinks += newestRoadLink
                   ignorelist += link.linkId.toString
-                  ignorelist ++ newerLink._2
+                  ignorelist ++= newerLink._2
                 }
               }
             }
@@ -82,7 +84,7 @@ class VVHRoadLinkHistoryProcessor() {
                   {
                     listOfNewestChangedHistoryLinks += link
                     ignorelist += link.linkId.toString
-                    ignorelist ++ newerLink._2
+                    ignorelist ++= newerLink._2
                   }
 
 
@@ -90,7 +92,7 @@ class VVHRoadLinkHistoryProcessor() {
                   {
                     listOfNewestChangedHistoryLinks += changedlink
                     ignorelist += link.linkId.toString
-                    ignorelist ++ newerLink._2
+                    ignorelist ++= newerLink._2
                   }
                   else
                   { // No significant change found (Ignore)
@@ -102,8 +104,6 @@ class VVHRoadLinkHistoryProcessor() {
                   // ignored
                 }
               }
-              listOfNewestChangedHistoryLinks += link
-              ignorelist +=link.linkId.toString
             }
           }
         }
@@ -119,33 +119,6 @@ class VVHRoadLinkHistoryProcessor() {
   }
 
   /**
-    * Checks which link-id element is the newest and which is first to change enough from first element
-    * @return
-    */
-  def getNewestAndChangedLink(linksOfTheRoad :Seq[VVHRoadlink]) : (VVHRoadlink,VVHRoadlink) = // returns (newest link,first to change)
-  {
-    def endDate(vVHRoadlink: VVHRoadlink) =
-    {
-      vVHRoadlink.attributes.getOrElse("END_DATE", "0").asInstanceOf[BigInt].longValue()
-    }
-    def getFirsttoChangedLink(sortedlinklist:Seq[VVHRoadlink], linktocompare:VVHRoadlink) : VVHRoadlink =
-    {
-      for ( link <-sortedlinklist)
-      {
-        if (link.geometry.size!= linktocompare.geometry.size) //if geometry is missing "node" it is considered changed
-          return link
-        if (compareGeoOfLinks(link, linktocompare)) //if changed enough return
-          return link
-      }
-      linktocompare
-    }
-
-    val newestLink=linksOfTheRoad.maxBy(endDate)
-    val changedLink= if (linksOfTheRoad.size > 1) getFirsttoChangedLink(linksOfTheRoad.sortBy(_.attributes.getOrElse("END_DATE","0").asInstanceOf[BigInt].longValue()).reverse,newestLink)  else {newestLink}
-    (newestLink,changedLink)
-  }
-
-  /**
     * Recursive loop  to find newest history change, returns back in recursion until sufficient change to geometry has been found and returns it
     * @param linkid
     * @param groupedRoadLinksList
@@ -156,9 +129,10 @@ class VVHRoadLinkHistoryProcessor() {
 
   def getNewestId(linkid:String,groupedRoadLinksList: Map[Long, Seq[VVHRoadlink]],ignoreList:List[String], currentLinks:Seq[VVHRoadlink]) : (Option[VVHRoadlink],List[String], Boolean, Option[VVHRoadlink]) =
   {
-    val loopsIgnoreList=ignoreList.toBuffer
+    var loopsIgnoreList=ignoreList.toBuffer
     var chainsNewestLink=  None: Option[VVHRoadlink]
     val ignoredlink= if (loopsIgnoreList.toList.contains(linkid)) true else false
+
     if (!ignoredlink)
     {
       for ( groupedRoadLinks<-groupedRoadLinksList)
@@ -171,16 +145,16 @@ class VVHRoadLinkHistoryProcessor() {
           val newLinkid = link.attributes.getOrElse("LINKID_NEW", None)
           if (newLinkid != None)
           {
-            val newerLink=getNewestId(newLinkid.toString, groupedRoadLinksList, loopsIgnoreList.toList,currentLinks)
+            val appendedIgnoreList=(loopsIgnoreList++List(linkid)).toList
+            val newerLink=getNewestId(newLinkid.toString, groupedRoadLinksList, appendedIgnoreList,currentLinks)
             newerLink._1 match
             {
               case Some(newestRoadLink: VVHRoadlink) =>
               {
                 if (!loopsIgnoreList.contains(newestRoadLink.linkId.toString))
                 {
-                  //add comparison check
                   loopsIgnoreList += link.linkId.toString
-                  loopsIgnoreList ++ newerLink._2 //updates ignorelist from recursion
+                  loopsIgnoreList ++= newerLink._2 //updates ignorelist from recursion
                   if (!newerLink._3) // check if link with enough coordinate change has been found
                   {
                     newerLink._4 match
@@ -195,6 +169,10 @@ class VVHRoadLinkHistoryProcessor() {
                           return (Some(link), loopsIgnoreList.toList, false, newerLink._4)
                       }
                       case None => // case where there is no current link for history link (for example deleted link)
+                        // check
+                        /*val filtterkey=newestRoadLink.linkId
+                        val idgroup= groupedRoadLinksList.filterKeys(Set(newestRoadLink.linkId)).toSeq.unzip._2*/
+                        //getNewestAndChangedLink(idgroup)
                         return (newerLink._1,loopsIgnoreList.toList,false,newerLink._4)
                     }
                   }
@@ -252,6 +230,8 @@ class VVHRoadLinkHistoryProcessor() {
   }
 
 
+
+/*******************  Helper methods after this           *****/
   /**  Checks if geometry differs more than 3
     *
     * @param hLink link nro 1
@@ -266,9 +246,37 @@ class VVHRoadLinkHistoryProcessor() {
       for(comparison  <-geometryComparison)
       {
         // Check if geometry is with in bounds
-        if (comparison._1.distance2DTo(comparison._2) >= 1 &&  comparison._1.distance2DTo(comparison._2)<=50) return true
-      }
+        if (comparison._1.distance2DTo(comparison._2) >= 5 &&  comparison._1.distance2DTo(comparison._2)<=50)
+          return true
+        }
     }
     false
+  }
+
+  /**
+    * Checks which link-id element is the newest and which is first to change enough from first element
+    * @return
+    */
+  def getNewestAndChangedLink(linksOfTheRoad :Seq[VVHRoadlink]) : (VVHRoadlink,VVHRoadlink) = // returns (newest link,first to change)
+  {
+    def endDate(vVHRoadlink: VVHRoadlink) =
+    {
+      vVHRoadlink.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
+    }
+    def getFirsttoChangedLink(sortedlinklist:Seq[VVHRoadlink], linktocompare:VVHRoadlink) : VVHRoadlink =
+    {
+      for ( link <-sortedlinklist)
+      {
+        if (link.geometry.size!= linktocompare.geometry.size) //if geometry is missing "node" it is considered changed
+          return link
+        if (compareGeoOfLinks(link, linktocompare)) //if changed enough return
+          return link
+      }
+      linktocompare
+    }
+
+    val newestLink=linksOfTheRoad.maxBy(endDate)
+    val changedLink= if (linksOfTheRoad.size > 1) getFirsttoChangedLink(linksOfTheRoad.sortBy(_.attributes.getOrElse("END_DATE",BigInt(0)).asInstanceOf[BigInt].longValue()).reverse,newestLink)  else {newestLink}
+    (newestLink,changedLink)
   }
 }
