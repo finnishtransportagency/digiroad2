@@ -98,8 +98,8 @@ trait MassTransitStopService extends PointAssetOperations {
     if (isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
       val properties = persistedStop.map(_.propertyData).get
       val liViProp = properties.find(_.publicId == LiViIdentifierPublicId)
-      val liViId = liViProp.map(_.values.head).get.propertyValue
-      val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
+      val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
+      val tierekisteriStop = liViId.flatMap(tierekisteriClient.fetchMassTransitStop)
       tierekisteriStop.isEmpty match {
         case true => (persistedStop, true)
         case false => (enrichPersistedMassTransitStop(persistedStop, tierekisteriStop.get), false)
@@ -464,10 +464,14 @@ trait MassTransitStopService extends PointAssetOperations {
         updateAssetGeometry(id, point)
       }
 
+      //Remove from common assets the side code property
+      val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
+        filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
+
       val mergedProperties = (asset.propertyData.
         filterNot(property => properties.exists(_.publicId == property.publicId)).
         map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
-        filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
+        filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
       val wasStoredInTierekisteri = isStoredInTierekisteri(persistedStop)
       val shouldBeInTierekisteri = isStoredInTierekisteri(mergedProperties)
@@ -726,7 +730,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
 
       val expire = if(operation == Operation.Expire) Some(new Date()) else None
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire)
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire, overrideLiviId)
 
       operation match {
         case Create => tierekisteriClient.createMassTransitStop(newTierekisteriMassTransitStop)

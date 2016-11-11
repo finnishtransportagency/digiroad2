@@ -9,12 +9,13 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
 import org.json4s.jackson.JsonMethods._
+import org.slf4j.LoggerFactory
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
-    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, false, Modification(None, None), Modification(None, None), Seq())
+    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, Modification(None, None), Modification(None, None), Seq())
   }
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
@@ -143,7 +144,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("encode manouvre") {
-    val manoeuvre = new Manoeuvre(1,
+    val manoeuvre = Manoeuvre(1,
         Seq(ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement),
             ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
             ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),

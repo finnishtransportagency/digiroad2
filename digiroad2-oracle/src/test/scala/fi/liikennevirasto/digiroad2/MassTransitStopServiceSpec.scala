@@ -741,7 +741,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
       val linkId = 123l
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
@@ -1090,6 +1091,24 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
     val asset = service.getById(300000).get
     asset.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+  }
+
+  test("Should not crash TR stop without livi id"){
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val assetId = 300000
+      val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
+      sqlu"""delete from text_property_value where id = $propertyValueId""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      dbResult.size should be (0)
+      val (stop, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(1, _ => Unit)
+      stop.isDefined should be (true)
+      val liviIdentifierProperty = stop.get.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+      liviIdentifierProperty.values.isEmpty should be(true)
+      showStatusCode should be (true)
+    }
   }
 
 }

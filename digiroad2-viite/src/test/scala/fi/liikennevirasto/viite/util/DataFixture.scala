@@ -125,7 +125,7 @@ object DataFixture {
       case Some ("find_floating_road_addresses") =>
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
-        importRoadAddresses(username.startsWith("dr2dev"))
+        importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some ("recalculate_addresses") =>
