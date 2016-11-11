@@ -322,7 +322,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
 
     params.get("bbox")
       .map(getRoadLinksFromVVH(municipalities))
