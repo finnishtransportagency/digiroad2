@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressFiller {
-  case class LRMValueAdjustment(id: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
+  case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],

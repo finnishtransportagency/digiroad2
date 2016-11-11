@@ -9,7 +9,10 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -214,6 +217,34 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     changeSet.toFloatingAddressIds.size should be (1)
     changeSet.toFloatingAddressIds.contains(333015L) should be (true)
     changeSet.adjustedMValues.map(_.linkId) should be (Seq(l4, l5))
+  }
+
+  test("LRM modifications are published"){
+    val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
+    runWithRollback {
+      val modificationDate = "1455274504000l"
+      val modificationUser = "testUser"
+      val (linkId, endM) = sql""" Select pos.LINK_ID, pos.end_measure
+                                From ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
+                                Order By ra.id asc""".as[(Long, Double)].firstOption.get
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
+      val captor: ArgumentCaptor[Iterable[Any]] = ArgumentCaptor.forClass(classOf[Iterable[Any]])
+      reset(localMockEventBus)
+      localRoadAddressService.getRoadAddressLinks(BoundingRectangle(Point(0.0, 0.0), Point(1.0,1.0)), Seq(), Set())
+      verify(localMockEventBus, times(3)).publish(any[String], captor.capture)
+      val capturedAdjustments = captor.getAllValues
+      val adj0 = capturedAdjustments.get(0)
+      val adj1 = capturedAdjustments.get(1)
+      val adj2 = capturedAdjustments.get(2)
+      adj0.size should be (0)
+      adj1.size should be (1)
+      adj2.size should be (0)
+      adj1.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
+    }
   }
 
 }

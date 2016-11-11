@@ -13,12 +13,14 @@ import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
+
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -107,6 +109,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
@@ -282,11 +285,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
     filledTopology
   }
 
+  def saveAdjustments(addresses: Seq[LRMValueAdjustment]): Unit = {
+    withDynTransaction {
+      addresses.foreach(RoadAddressDAO.updateLRM)
+    }
+  }
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)

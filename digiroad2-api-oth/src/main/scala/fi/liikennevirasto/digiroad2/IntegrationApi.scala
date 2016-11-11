@@ -50,7 +50,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
     def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
     def propertyValuesToString(values: Seq[String]): String = { values.mkString }
-    def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
+    def firstPropertyValueToInt(values: Seq[String]): Int = {
+      try {
+        values.headOption.map(_.toInt).get
+      } catch {
+        case e: Exception => 99
+      }
+    }
     def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
