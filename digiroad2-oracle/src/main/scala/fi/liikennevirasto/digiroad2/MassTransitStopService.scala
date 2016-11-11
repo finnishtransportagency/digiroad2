@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.Operation._
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
-import fi.liikennevirasto.digiroad2.util.{RoadSide, Track, RoadAddress, GeometryTransform}
+import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.slf4j.LoggerFactory
@@ -727,9 +727,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case Some(str) => Try(str.toString.toInt).toOption
         case _ => None
       }
-      val (address, roadSide) = (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right)
-
-      //geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
 
       val expire = if(operation == Operation.Expire) Some(new Date()) else None
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire, overrideLiviId)
