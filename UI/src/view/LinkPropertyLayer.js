@@ -1,11 +1,14 @@
 (function(root) {
 
-  var RoadHistoryLayer = function(map, selectedLinkProperty){
+  var RoadHistoryLayer = function(map, roadCollection, selectedLinkProperty){
     var vectorLayer;
     var selectControl;
+    var layerStyleMapProvider;
+    var uiState = { zoomLevel: 9 };
     var layerStyleMap = {};
 
     var drawRoadLinks = function(roadLinks, zoom) {
+      uiState.zoomLevel = zoom;
       vectorLayer.removeAllFeatures();
       var features = _.map(roadLinks, function(roadLink) {
         return createRoadLinkFeature(roadLink);
@@ -29,6 +32,11 @@
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
     };
 
+    var setLayerSpecificStyleMapProvider = function(layer, provider) {
+      layerStyleMapProvider = provider;
+    };
+
+    //TODO delete this function
     var setLayerSpecificStyleMap = function(renderIntent, styleMap) {
       layerStyleMap = styleMap('history')[renderIntent];
       activateLayerStyleMap();
@@ -49,7 +57,9 @@
     };
 
     var usingLayerSpecificStyleProvider = function(action) {
-      vectorLayer.styleMap = layerStyleMap;
+      if (!_.isUndefined(layerStyleMapProvider)) {
+        vectorLayer.styleMap = layerStyleMap = layerStyleMapProvider();
+      }
       action();
     };
 
@@ -86,8 +96,6 @@
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
       if (!_.isEmpty(features)) {
-        //TODO think how to change the map style render intent
-        //currentRenderIntent = 'select';
         selectControl.select(_.first(features));
         highlightFeatures();
       }
@@ -114,15 +122,11 @@
 
     var selectFeatureRoadLink = function(feature) {
       selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
-      //currentRenderIntent = 'select';
-      //TODO think how to change the map style render intent
       vectorLayer.redraw();
       highlightFeatures();
     };
 
     var unselectFeatureRoadLink = function() {
-      //currentRenderIntent = 'default';
-      //TODO think how to change the map style render intent
       selectedLinkProperty.close();
       vectorLayer.redraw();
       highlightFeatures();
@@ -133,23 +137,90 @@
       onUnselect: unselectFeatureRoadLink
     });
 
+    function stylesUndefined() {
+      return _.isUndefined(layerStyleMap);
+    }
+
+    var enableColorsOnRoadLayer = function() {
+      if (stylesUndefined()) {
+        var administrativeClassStyleLookup = {
+          Private: { strokeColor: '#0011bb' },
+          Municipality: { strokeColor: '#11bb00' },
+          State: { strokeColor: '#ff0000' },
+          Unknown: { strokeColor: '#888' }
+        };
+        vectorLayer.styleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+      }
+    };
+
+    var disableColorsOnRoadLayer = function() {
+      if (stylesUndefined()) {
+        vectorLayer.styleMap.styles.default.rules = [];
+      }
+    };
+
+    var toggleRoadType = function() {
+      if (applicationModel.isRoadTypeShown()) {
+        enableColorsOnRoadLayer();
+      } else {
+        disableColorsOnRoadLayer();
+      }
+      usingLayerSpecificStyleProvider(function() { vectorLayer.redraw(); });
+    };
+
+    var minimumContentZoomLevel = function() {
+      /*
+      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
+        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
+      }
+      */
+      return zoomlevels.minZoomForRoadLinks;
+    };
+
+    var mapMovedHandler = function(mapState) {
+      if (mapState.zoom < minimumContentZoomLevel()) {
+        vectorLayer.removeAllFeatures();
+        //TODO reset only history
+        roadCollection.reset();
+      }
+      handleRoadsVisibility();
+    };
+
+    var handleRoadsVisibility = function() {
+      if (_.isObject(vectorLayer)) {
+        vectorLayer.setVisibility(map.getZoom() >= minimumContentZoomLevel());
+      }
+    };
+
     vectorLayer = new OpenLayers.Layer.Vector('historyDataLayer', {transparent: "true"}, {isBaseLayer: false});
     vectorLayer.setVisibility(true);
     map.addLayer(vectorLayer);
     var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-    map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
+    //TODO uncomment when we have the two layers working together
+    //map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
 
     map.addControl(selectControl);
 
+    eventbus.on('road-type:selected', toggleRoadType, this);
+
+    eventbus.on('map:moved', mapMovedHandler, this);
+
+    eventbus.on('layer:selected', function(layer) {
+      activateLayerStyleMap(layer);
+      toggleRoadType();
+    }, this);
+
     return {
+      uiState: uiState,
       layer: vectorLayer,
       redraw: redraw,
       clear: clear,
       selectRoadLink: selectRoadLink,
-      setLayerSpecificStyleMap: setLayerSpecificStyleMap,
+      setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
       removeSelectedFeatures: removeSelectedFeatures,
+      removeFeatures: removeFeatures,
       getSelectControl: getSelectControl,
       reselectRoadLink: reselectRoadLink,
       selectFeatureRoadLink: selectFeatureRoadLink,
@@ -164,12 +235,13 @@
     var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
+
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
-    var historyLayer = new RoadHistoryLayer(map, selectedLinkProperty);
-
-    historyLayer.setLayerSpecificStyleMap(currentRenderIntent, function(renderIntent){
-      return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), renderIntent);
+    var historyLayer = new RoadHistoryLayer(map, roadCollection, selectedLinkProperty);
+    var linkPropertyHistoryLayerStyles = LinkPropertyLayerStyles(historyLayer);
+    historyLayer.setLayerSpecificStyleMapProvider(layerName, function(){
+      return linkPropertyHistoryLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), 'history')[currentRenderIntent];
     });
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
@@ -255,12 +327,11 @@
       var roadLinkHistory = roadLinks;// roadCollection.getAllHistory();
 
       //roadLayer.drawRoadLinks(roadLinks, map.getZoom());
-      historyLayer.drawRoadLinks(roadLinkHistory, map.getZoom());
-
       //drawDashedLineFeaturesIfApplicable(roadLinks, roadLayer.layer);
-      drawDashedLineFeaturesIfApplicable(roadLinkHistory, historyLayer.layer);
-
       //me.drawOneWaySigns(roadLayer.layer, roadLinks);
+
+      historyLayer.drawRoadLinks(roadLinkHistory, map.getZoom());
+      drawDashedLineFeaturesIfApplicable(roadLinkHistory, historyLayer.layer);
       me.drawOneWaySigns(historyLayer.layer, roadLinkHistory);
 
       redrawSelected();
@@ -411,7 +482,7 @@
 
     this.removeLayerFeatures = function() {
       roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-      historyLayer.removeLayerFeatures();
+      historyLayer.removeFeatures();
     };
 
     var show = function(map) {

@@ -61,32 +61,31 @@
 
     //History rules
     var zoomLevelHistoryRules = [
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, { strokeWidth: 1 }, { pointRadius: 0 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, { strokeWidth: 3 }, { pointRadius: 10 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, { strokeWidth: 4 }, { pointRadius: 12 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, { strokeWidth: 5 }, { pointRadius: 13 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, { strokeWidth: 5 }, { pointRadius: 14 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, { strokeWidth: 7 }, { pointRadius: 16 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, { strokeWidth: 7 }, { pointRadius: 16 }))
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, { strokeWidth: 2 }, { pointRadius: 0 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, { strokeWidth: 4 }, { pointRadius: 10 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, { strokeWidth: 6 }, { pointRadius: 12 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, { strokeWidth: 8 }, { pointRadius: 13 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, { strokeWidth: 8 }, { pointRadius: 14 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, { strokeWidth: 11 }, { pointRadius: 16 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, { strokeWidth: 11 }, { pointRadius: 16 }))
     ];
 
     var linkTypeSizeHistoryRules = [
-      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).use({ strokeWidth: 3 }),
-      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 1 }),
-      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 2 }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 16' }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).use({ strokeWidth: 5 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 2 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 3 }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 16' }),
       new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
       new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
     ];
 
     var overlayHistoryRules = [
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 6' }),
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 15' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 28' })
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 15' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 22' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 11, strokeDashstyle: '1 28' })
     ];
-
 
     // --- Functional class style maps
 
@@ -255,6 +254,46 @@
       default: linkTypeSelectionDefaultStyle
     });
 
+    // --- Link type history style maps
+
+    var linkTypeHistoryDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}'}));
+    linkTypeHistoryDefaultStyle.addRules(linkTypeRules);
+    linkTypeHistoryDefaultStyle.addRules(unknownLinkTypeDefaultRules);
+    linkTypeHistoryDefaultStyle.addRules(zoomLevelRules);
+    linkTypeHistoryDefaultStyle.addRules(overlayRules);
+    linkTypeHistoryDefaultStyle.addRules(linkTypeSizeRules);
+    linkTypeHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    var linkTypeHistoryDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeHistoryDefaultStyle });
+
+    var linkTypeHistorySelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var linkTypeHistorySelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
+    linkTypeHistorySelectionDefaultStyle.addRules(linkTypeRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkTypeRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(unknownLinkTypeUnselectedRules);
+    linkTypeHistorySelectionSelectStyle.addRules(unknownLinkTypeDefaultRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(zoomLevelRules);
+    linkTypeHistorySelectionSelectStyle.addRules(zoomLevelRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(overlayRules);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(linkTypeSizeRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkTypeSizeRules);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayUnselectedOpacity);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayDefaultOpacity);
+    var linkTypeHistorySelectionStyleMap = new OpenLayers.StyleMap({
+      select: linkTypeHistorySelectionSelectStyle,
+      default: linkTypeHistorySelectionDefaultStyle
+    });
+
     // --- Vertical level style maps
 
     var verticalLevelRules = [
@@ -333,7 +372,11 @@
         },
         'link-type': {
           'default': linkTypeDefaultStyleMap,
-          'select': linkTypeSelectionStyleMap
+          'select': linkTypeSelectionStyleMap,
+          'history': {
+            'default': linkTypeHistoryDefaultStyleMap,
+            'select': linkTypeHistorySelectionStyleMap
+          }
         },
         'vertical-level': {
           'default': verticalLevelDefaultStyleMap,
