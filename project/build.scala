@@ -105,7 +105,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
     )
-  ) dependsOn(geoJar, oracleJar)
+  ) dependsOn(geoJar, oracleJar % "compile->compile;test->test")
 
   val Digiroad2ApiName = "digiroad2-api-common"
   lazy val commonApiJar = Project (

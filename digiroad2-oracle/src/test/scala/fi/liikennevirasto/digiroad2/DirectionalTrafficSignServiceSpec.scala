@@ -15,7 +15,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
@@ -65,7 +65,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     }
   }
   test("Expire directional traffic sign") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {
@@ -81,9 +81,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
   test("Update directional traffic sign") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(1611317, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-    when(mockVVHClient.fetchByMunicipality(91)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(91)).thenReturn(Seq(
       VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {

@@ -4,8 +4,8 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
-import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
@@ -92,6 +92,18 @@ object DataFixture {
     println()
   }
 
+  private def importComplementaryRoadAddress(): Unit ={
+    println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+    }
+    SqlScriptRunner.runViiteScripts(List(
+      "insert_complementary_geometry_data.sql"
+    ))
+    println(s"complementary road address import completed at time: ${DateTime.now()}")
+    println()
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -114,11 +126,14 @@ object DataFixture {
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
         importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
+      case Some("import_complementary_road_address") =>
+        importComplementaryRoadAddress()
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | find_floating_road_addresses")
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
+        "find_floating_road_addresses | import_complementary_road_address")
     }
   }
 }

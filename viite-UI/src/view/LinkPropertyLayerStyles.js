@@ -130,6 +130,7 @@
 
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
+      graphicZIndex: "${zIndex}",
       rotation: '${rotation}'}));
 
     roadClassDefaultStyle.addRules(roadClassRules);
@@ -151,11 +152,13 @@
     var roadClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
       graphicOpacity: 0.3,
+      graphicZIndex: "${zIndex}",
       rotation: '${rotation}'
     }));
     var roadClassSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       graphicOpacity: 1.0,
+      graphicZIndex: "${zIndex}",
       rotation: '${rotation}'
     }));
     roadClassSelectionDefaultStyle.addRules(roadClassRules);
