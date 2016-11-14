@@ -318,7 +318,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long], municipalities: Set[Int] = Set()) = {
-    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds),atMost = Duration.Inf)
+    val historyData = Await.result(vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds),atMost = Duration.Inf)
     val groupedData = historyData.groupBy(_.linkId)
     var viiteRoadLinks: Seq[VVHHistoryRoadLink] = Seq.empty
     groupedData.foreach { gd =>
