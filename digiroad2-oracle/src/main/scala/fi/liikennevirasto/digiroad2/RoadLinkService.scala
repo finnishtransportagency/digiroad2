@@ -40,6 +40,7 @@ object RoadLinkType{
   case object UnknownRoadLinkType extends RoadLinkType { def value = 0 }
   case object NormalRoadLinkType extends RoadLinkType { def value = 1 }
   case object ComplementaryRoadLinkType extends RoadLinkType { def value = 3 }
+  case object FloatingRoadLinkType extends RoadLinkType { def value = -1 }
 }
 
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
@@ -317,7 +318,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long], municipalities: Set[Int] = Set()) = {
+  def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long]): Seq[VVHHistoryRoadLink] = {
     val historyData = Await.result(vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds),atMost = Duration.Inf)
     val groupedData = historyData.groupBy(_.linkId)
     var viiteRoadLinks: Seq[VVHHistoryRoadLink] = Seq.empty
@@ -327,7 +328,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         if(newerLink.isEmpty){
           newerLink = Option(rl)
         } else {
-          if(rl.endDate.isAfter(newerLink.get.endDate)) {
+          if(rl.endDate > (newerLink.get.endDate)) {
             newerLink = Option(rl)
           }
         }

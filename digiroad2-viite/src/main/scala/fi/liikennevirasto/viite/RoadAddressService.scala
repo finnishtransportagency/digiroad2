@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{NormalRoadLinkType, ComplementaryRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -95,6 +95,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
     }
 
+    val floatingAddresses = withDynTransaction{
+      RoadAddressDAO.queryFloatingByLinkId(linkIds).groupBy(_.linkId)
+    }
+
+    val floatingHistoryRoadLinks = withDynTransaction {
+      roadLinkService.getViiteRoadLinksHistoryFromVVH(floatingAddresses.keySet)
+    }
+
+    val floatingViiteRoadLinks = floatingHistoryRoadLinks.map {rl =>
+    val ra = floatingAddresses.getOrElse(rl.linkId, Seq())
+      rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
+    }
+
+
     val missingLinkIds = linkIds -- addresses.keySet
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
@@ -113,8 +127,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
-    filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
+    val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+
+    returningTopology ++ floatingViiteRoadLinks.flatMap(_._2)
+
   }
 
   /**
@@ -148,6 +165,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
+  }
+
+  def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+   roadAddrSeq.map( ra => {
+     RoadAddressLinkBuilder.build(rl, ra)
+   })
   }
 
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
@@ -372,6 +395,21 @@ object RoadAddressLinkBuilder {
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
+  }
+
+  def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
+
+    val roadLinkType = FloatingRoadLinkType
+
+    val geom = GeometryUtils.truncateGeometry2D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val length = GeometryUtils.geometryLength(geom)
+    RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
+      length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
+      historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
+      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.calibrationPoints._1,
+      roadAddress.calibrationPoints._2)
   }
 
   private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {

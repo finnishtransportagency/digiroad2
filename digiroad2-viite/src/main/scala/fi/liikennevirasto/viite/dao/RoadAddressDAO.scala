@@ -499,4 +499,44 @@ object RoadAddressDAO {
   implicit val getTrack = GetResult[Track]( r=> Track.apply(r.nextInt()))
 
   implicit val getCalibrationCode = GetResult[CalibrationCode]( r=> CalibrationCode.apply(r.nextInt()))
+
+  def queryFloatingByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val query =
+          s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        join $idTableName i on i.id = pos.link_id
+        where floating='1'
+      """
+        queryList(query)
+    }
+  }
+
+  def queryFloatingByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
+    if (linkIds.size > 1000) {
+      return queryFloatingByLinkIdMassQuery(linkIds)
+    }
+    val linkIdString = linkIds.mkString(",")
+    val where = linkIds.isEmpty match {
+      case true => return List()
+      case false => s""" where pos.link_id in ($linkIdString)"""
+    }
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        $where AND floating='1'
+      """
+    queryList(query)
+  }
 }
