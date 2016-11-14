@@ -13,7 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 
-class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
+class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing
   type PersistedAsset = PedestrianCrossing
 

@@ -51,9 +51,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
-  val testObstacleService = new ObstacleService(mockVVHClient)
-  val testRailwayCrossingService = new RailwayCrossingService(mockVVHClient)
-  val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockVVHClient)
+  val testObstacleService = new ObstacleService(testRoadLinkService)
+  val testRailwayCrossingService = new RailwayCrossingService(testRoadLinkService)
+  val testDirectionalTrafficSignService = new DirectionalTrafficSignService(testRoadLinkService)
   val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
@@ -61,7 +61,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
-    override def vvhClient: VVHClient = mockVVHClient
     override val roadLinkService: RoadLinkService = testRoadLinkService
     override val tierekisteriEnabled = false
   }

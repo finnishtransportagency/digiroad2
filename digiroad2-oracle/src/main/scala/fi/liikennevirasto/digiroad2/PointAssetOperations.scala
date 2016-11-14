@@ -57,7 +57,7 @@ trait PointAssetOperations {
 
   case class FloatingPointAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
 
-  def vvhClient: VVHClient
+  def roadLinkService: RoadLinkService
   val idField = "id"
 
   lazy val dataSource = {
@@ -75,7 +75,7 @@ trait PointAssetOperations {
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
 
-    val roadLinks: Seq[RoadLinkLike] = vvhClient.fetchVVHRoadlinks(bounds)
+    val roadLinks: Seq[RoadLinkLike] = roadLinkService.getRoadLinksFromVVH(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
@@ -124,7 +124,7 @@ trait PointAssetOperations {
       }
 
       val result = fetchFloatingAssets(query => query + municipalityFilter, isOperator)
-      val administrativeClasses = vvhClient.fetchVVHRoadlinks(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = roadLinkService.getRoadLinksFromVVH(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass, floatingReason) =>
@@ -146,7 +146,7 @@ trait PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = vvhClient.fetchByMunicipality(municipalityCode).map(l => l.linkId -> l).toMap
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityCode).map(l => l.linkId -> l).toMap
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.get(linkId)
 
@@ -159,7 +159,7 @@ trait PointAssetOperations {
 
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => vvhClient.fetchVVHRoadlink(x.linkId) }
+    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkFromVVH(x.linkId) }
 
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)

@@ -174,7 +174,6 @@ object Digiroad2Context {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
-      override def vvhClient: VVHClient = Digiroad2Context.vvhClient
       override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService)
@@ -185,23 +184,23 @@ object Digiroad2Context {
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
-    new PedestrianCrossingService(vvhClient)
+    new PedestrianCrossingService(roadLinkService)
   }
 
   lazy val trafficLightService: TrafficLightService = {
-    new TrafficLightService(vvhClient)
+    new TrafficLightService(roadLinkService)
   }
 
   lazy val obstacleService: ObstacleService = {
-    new ObstacleService(vvhClient)
+    new ObstacleService(roadLinkService)
   }
 
   lazy val railwayCrossingService: RailwayCrossingService = {
-    new RailwayCrossingService(vvhClient)
+    new RailwayCrossingService(roadLinkService)
   }
 
   lazy val directionalTrafficSignService: DirectionalTrafficSignService = {
-    new DirectionalTrafficSignService(vvhClient)
+    new DirectionalTrafficSignService(roadLinkService)
   }
 
   lazy val manoeuvreService = {

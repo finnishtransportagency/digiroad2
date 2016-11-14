@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle._
 case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
 
 
-class DirectionalTrafficSignService(val vvhClient: VVHClient) extends PointAssetOperations {
+class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingDirectionalTrafficSign
   type PersistedAsset = DirectionalTrafficSign
 

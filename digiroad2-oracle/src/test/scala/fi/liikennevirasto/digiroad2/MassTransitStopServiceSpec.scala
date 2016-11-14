@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -47,6 +48,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
   before {
     // Reset the mocks here so individual tests don't have to
     when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
@@ -60,11 +65,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right)
     )
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    vvhRoadLinks.foreach(rl =>
+      when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
+        .thenReturn(Some(toRoadLink(rl))))
+    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[Set[Long]])).thenReturn(vvhRoadLinks.map(toRoadLink))
   }
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = false
@@ -74,7 +84,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
@@ -88,7 +97,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
-    override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
@@ -96,7 +104,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
-    override def vvhClient: VVHClient = mockVVHClient
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
@@ -953,6 +960,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
 
     when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
@@ -971,6 +979,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
 
     when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
@@ -1027,12 +1036,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("getByMunicipality gets Tierekisteri Equipment") {
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
-      reset(mockVVHClient, mockTierekisteriClient)
-      when(mockVVHClient.fetchByMunicipality(any[Int])).thenReturn(vvhRoadLinks)
+      reset(mockTierekisteriClient, mockRoadLinkService)
       when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
         TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
           false, equipments = Equipment.values.map(equip => equip -> e).toMap, None, None, None, "KX12356", None, None, None, new Date))
       )
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(vvhRoadLinks.map(toRoadLink))
+
       runWithRollback {
         val stops = RollbackMassTransitStopServiceWithTierekisteri.getByMunicipality(235)
         val (trStops, _) = stops.partition(s => RollbackMassTransitStopServiceWithTierekisteri.isStoredInTierekisteri(Some(s)))
@@ -1041,7 +1051,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
         equipments.forall(_.forall(p => p.values.nonEmpty && p.values.head.propertyValue == v)) should be(true)
       }
-      verify(mockVVHClient, times(1)).fetchByMunicipality(any[Int])
+      verify(mockRoadLinkService, times(1)).getRoadLinksFromVVH(any[Int])
       verify(mockTierekisteriClient, Mockito.atLeast(1)).fetchMassTransitStop(any[String])
     }
   }

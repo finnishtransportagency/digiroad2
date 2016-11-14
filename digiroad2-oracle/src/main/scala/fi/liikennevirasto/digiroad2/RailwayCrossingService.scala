@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 
 case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
 
-class RailwayCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
+class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
   type PersistedAsset = RailwayCrossing
 

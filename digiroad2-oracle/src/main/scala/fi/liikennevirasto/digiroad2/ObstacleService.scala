@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
 
-class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
+class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingObstacle
   type PersistedAsset = Obstacle
 

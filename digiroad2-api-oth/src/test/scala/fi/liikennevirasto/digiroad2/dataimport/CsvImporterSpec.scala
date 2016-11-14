@@ -281,7 +281,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynSession[T](f: => T): T = f
       override def withDynTransaction[T](f: => T): T = f
-      override def vvhClient: VVHClient = mockVVHClient
       override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
       override val tierekisteriEnabled = true

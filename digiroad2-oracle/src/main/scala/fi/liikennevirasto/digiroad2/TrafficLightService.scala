@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficLightDao, Tr
 
 case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 
-class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations {
+class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
   type PersistedAsset = TrafficLight
 

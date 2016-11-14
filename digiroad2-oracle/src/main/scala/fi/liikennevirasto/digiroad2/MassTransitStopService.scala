@@ -437,7 +437,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
 
-      val roadLink = vvhClient.fetchVVHRoadlink(linkId)
+      val roadLink = roadLinkService.getRoadLinkFromVVH(linkId)
       val (municipalityCode, geometry) = roadLink
         .map{ x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
@@ -565,7 +565,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
-    vvhClient.fetchVVHRoadlink(linkId)
+    roadLinkService.getRoadLinkFromVVH(linkId, newTransaction = false)
   }
 
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long = {
