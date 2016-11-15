@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.VVHRoadlink
+import fi.liikennevirasto.digiroad2.{GeometryUtils, VVHRoadlink}
+import org.geotools.filter.function.GeometryTransformation
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ArrayBuffer
 
@@ -13,6 +14,36 @@ import scala.collection.mutable.ArrayBuffer
   */
 class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
 
+  def process(historyRoadLinks:Seq[VVHRoadlink], roadLinks :Seq[VVHRoadlink]) : Seq[VVHRoadlink] ={
+    def endDate(vvhRoadlink: VVHRoadlink) =
+      vvhRoadlink.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
+
+    def newLinkId(vvhRoadlink: VVHRoadlink) : Option[BigInt] = {
+      vvhRoadlink.attributes.get("LINKID_NEW") match {
+        case Some(linkId) =>
+          Some(linkId.asInstanceOf[BigInt].longValue())
+        case _ =>
+          None
+      }
+    }
+    def hasNewLinkId(vvhRoadlink: VVHRoadlink) = newLinkId(vvhRoadlink).isEmpty
+
+    val lastHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).map(_._2)
+
+    val deletedRoadlinks = lastHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
+
+    val changedRoadlinks = lastHistory.filter{
+      rl =>
+        val roadlink = roadLinks.find(r => Some(r.linkId) == newLinkId(rl) || (r.linkId == rl.linkId && includeCurrentLinks))
+        roadlink.exists(r =>
+          //GeometryUtils.withinTolerance(r.geometry, rl.geometry, minimumChange, maximumChange)
+          compareGeoOfLinks(r, rl)
+        )
+    }
+
+    (changedRoadlinks ++ deletedRoadlinks).toSeq
+  }
+
   /**
     * Try to find newest history links within tolerance of min 1 and max 50 meters to current road links
     *
@@ -20,7 +51,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @param currentLinks
     * @return Filtered history links
     */
-  def process(historyLinks: Seq[VVHRoadlink], currentLinks: Seq[VVHRoadlink]) : Seq[VVHRoadlink] = {
+  def process1(historyLinks: Seq[VVHRoadlink], currentLinks: Seq[VVHRoadlink]) : Seq[VVHRoadlink] = {
     val groupedRoadLinksList = historyLinks.groupBy(_.linkId).toSeq.sortBy(_._1)
     var ignoreList = ListBuffer.empty[Long]   // Ids of history links already searched, which have occurred in recursive linked list search
     var listOfNewestChangedHistoryLinks = ArrayBuffer.empty[VVHRoadlink]  // History links to be returned
