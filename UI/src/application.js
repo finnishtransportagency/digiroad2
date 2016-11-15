@@ -30,7 +30,7 @@
       });
     });
 
-    var selectedMassTransitStopModel = SelectedMassTransitStop.initialize(backend);
+    var selectedMassTransitStopModel = SelectedMassTransitStop.initialize(backend, roadCollection);
     var models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
