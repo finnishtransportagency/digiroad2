@@ -5,8 +5,8 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.MassTransitStopService
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleD
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
@@ -37,6 +38,26 @@ object DataFixture {
   }
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(vvhClient)
+  }
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+  lazy val eventbus: DigiroadEventBus = {
+    new DigiroadEventBus
+  }
+
+  lazy val massTransitStopService: MassTransitStopService = {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def vvhClient: VVHClient = DataFixture.vvhClient
+      override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
+      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriEnabled = true
+    }
+    new MassTransitStopServiceWithDynTransaction(eventbus)
   }
 
   def flyway: Flyway = {
@@ -351,7 +372,7 @@ object DataFixture {
 
     if(assets.length > 0){
 
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -381,7 +402,7 @@ object DataFixture {
 
     if(assets.length > 0){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -442,7 +463,7 @@ object DataFixture {
 
     if (assets.length > 0) {
 
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -473,6 +494,69 @@ object DataFixture {
     }
 
     linearAssetService.expireImportRoadLinksVVHtoOTH(assetTypeId)
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
+    println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
+    println(DateTime.now())
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var missedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get a List of All Bus Stops present in Tierekisteri
+    val busStopsTR = tierekisteriClient.fetchActiveMassTransitStops
+
+    //Save Tierekisteri LiviIDs into a List
+    val liviIdsListTR = busStopsTR.map(_.liviId)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      //Get all road links from VVH
+      val roadLinks = vvhClient.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
+
+      persistedStop.foreach { stop =>
+        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
+        val stopLiviId = stop.propertyData.
+          find(property => property.publicId == massTransitStopService.LiViIdentifierPublicId).
+          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+        if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
+
+          //Add a list of missing stops with road addresses is available
+          missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
+
+          try {
+            //Create missed Bus Stop at the Tierekisteri
+            if(!dryRun)
+              massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None)
+          } catch {
+            case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+          }
+        }
+      }
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of missing stops with road addresses is available
+    println("List of missing stops with road addresses is available:")
+    missedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
 
     println("\n")
     println("Complete at time: ")
@@ -550,12 +634,16 @@ object DataFixture {
         importRoadAddresses()
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
+      case Some("check_bus_stop_matching_between_OTH_TR") =>
+        val dryRun = args.length == 2 && args(1) == "dry-run"
+        checkBusStopMatchingBetweenOTHandTR(dryRun)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed" +
+        " check_bus_stop_matching_between_OTH_TR")
     }
   }
 }

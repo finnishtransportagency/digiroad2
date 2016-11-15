@@ -16,10 +16,10 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(any[Long])).thenReturn(Seq(
+  when(mockVVHClient.fetchByLinkId(any[Long])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
 
@@ -43,7 +43,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {
@@ -59,7 +59,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire railway crossing") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
+    when(mockVVHClient.queryByMunicipality(235)).thenReturn(Seq(
       VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
     runWithRollback {

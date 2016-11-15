@@ -85,6 +85,7 @@ trait MassTransitStopService extends PointAssetOperations {
     * @return Enriched stop with a boolean flag for TR operation errors
     */
   private def enrichStopIfInTierekisteri(persistedStop: Option[PersistedMassTransitStop]) = {
+
     if (MassTransitStopOperations.isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
       val liViId = MassTransitStopOperations.liviIdValue(persistedStop.map(_.propertyData).get).propertyValue
       val tierekisteriStop = tierekisteriClient.fetchMassTransitStop(liViId)
@@ -321,6 +322,13 @@ trait MassTransitStopService extends PointAssetOperations {
     }.values.toSeq
   }
 
+  def getByMunicipality(municipalityCode: Int, enrichWithTR: Boolean): Seq[PersistedAsset] = {
+    if (enrichWithTR)
+      getByMunicipality(municipalityCode)
+    else
+      super.getByMunicipality(municipalityCode)
+  }
+
   private def withNationalId(nationalId: Long)(query: String): String = {
     query + s" where a.external_id = $nationalId"
   }
@@ -369,7 +377,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
 
-      val roadLink = vvhClient.fetchVVHRoadlink(linkId)
+      val roadLink = vvhClient.fetchByLinkId(linkId)
       val (municipalityCode, geometry) = roadLink
         .map{ x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
@@ -399,10 +407,14 @@ trait MassTransitStopService extends PointAssetOperations {
         updateAssetGeometry(id, point)
       }
 
+      //Remove from common assets the side code property
+      val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
+        filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
+
       val mergedProperties = (asset.propertyData.
         filterNot(property => properties.exists(_.publicId == property.publicId)).
         map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
-        filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
+        filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
       val wasStoredInTierekisteri = MassTransitStopOperations.isStoredInTierekisteri(persistedStop)
       val shouldBeInTierekisteri = MassTransitStopOperations.isStoredInTierekisteri(mergedProperties)
@@ -494,7 +506,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def fetchRoadLink(linkId: Long): Option[VVHRoadlink] = {
-    vvhClient.fetchVVHRoadlink(linkId)
+    vvhClient.fetchByLinkId(linkId)
   }
 
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long = {
@@ -645,7 +657,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink], overrideLiviId: Option[String]) = {
+  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[VVHRoadlink], overrideLiviId: Option[String]) = {
     if (operation != Operation.Noop) {
       val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
       val road = roadLink.map(rl => rl.attributes.get("ROADNUMBER")) match {
@@ -655,7 +667,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
 
       val expire = if(operation == Operation.Expire) Some(new Date()) else None
-      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire)
+      val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire, overrideLiviId)
 
       operation match {
         case Create => tierekisteriClient.createMassTransitStop(newTierekisteriMassTransitStop)

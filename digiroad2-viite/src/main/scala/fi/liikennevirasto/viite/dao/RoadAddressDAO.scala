@@ -17,6 +17,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
@@ -434,6 +435,39 @@ object RoadAddressDAO {
               from road_address ra
               where road_number = $roadNumber AND ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
       """.as[Long].list
+  }
+
+  def updateLRM(lRMValueAdjustment: LRMValueAdjustment) = {
+    val (startM, endM) = (lRMValueAdjustment.startMeasure, lRMValueAdjustment.endMeasure)
+    (startM, endM) match {
+      case (Some(s), Some(e)) =>
+        sqlu"""
+           UPDATE LRM_POSITION
+           SET start_measure = $s,
+             end_measure = $e,
+             link_id = ${lRMValueAdjustment.linkId},
+             modified_date = sysdate
+           WHERE id = (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE id = ${lRMValueAdjustment.addressId})
+      """.execute
+      case (_, Some(e)) =>
+        sqlu"""
+           UPDATE LRM_POSITION
+           SET
+             end_measure = ${lRMValueAdjustment.endMeasure.get},
+             link_id = ${lRMValueAdjustment.linkId},
+             modified_date = sysdate
+           WHERE id = (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE id = ${lRMValueAdjustment.addressId})
+      """.execute
+      case (Some(s), _) =>
+        sqlu"""
+           UPDATE LRM_POSITION
+           SET start_measure = ${lRMValueAdjustment.startMeasure.get},
+             link_id = ${lRMValueAdjustment.linkId},
+             modified_date = sysdate
+           WHERE id = (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS WHERE id = ${lRMValueAdjustment.addressId})
+      """.execute
+      case _ =>
+    }
   }
 
   /**

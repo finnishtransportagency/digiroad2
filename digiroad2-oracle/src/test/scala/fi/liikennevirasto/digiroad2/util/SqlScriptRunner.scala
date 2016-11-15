@@ -9,12 +9,16 @@ import Database.dynamicSession
 
 object SqlScriptRunner {
   def runScripts(filenames: Seq[String]) {
-    executeStatements(filenames.flatMap(readScriptStatements))
+    executeStatements(filenames.flatMap(readScriptStatements("./digiroad2-oracle/sql/", _)))
   }
 
-  def readScriptStatements(filename: String): Seq[String] = {
+  def runViiteScripts(filenames: Seq[String]) {
+    executeStatements(filenames.flatMap(readScriptStatements("./digiroad2-viite/sql/", _)))
+  }
+
+  def readScriptStatements(path: String, filename: String): Seq[String] = {
     val commentR = """\/\*.*\*\/""".r
-    val withComments = Source.fromFile("./digiroad2-oracle/sql/" + filename)(Codec.UTF8).getLines.filterNot(_.trim.startsWith("--")).mkString
+    val withComments = Source.fromFile(path + filename)(Codec.UTF8).getLines.filterNot(_.trim.startsWith("--")).mkString
     commentR.replaceAllIn(withComments, "").split(";")
   }
 

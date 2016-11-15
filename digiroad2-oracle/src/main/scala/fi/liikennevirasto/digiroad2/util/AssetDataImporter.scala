@@ -132,7 +132,7 @@ class AssetDataImporter {
     val roadsByLinkId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
 
     val vvhClient = new VVHClient(vvhHost)
-    val vvhLinks = vvhClient.fetchVVHRoadlinks(roadsByLinkId.keySet)
+    val vvhLinks = vvhClient.fetchByLinkIds(roadsByLinkId.keySet)
     val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
@@ -214,7 +214,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.fetchVVHRoadlinks(prohibitions.map(_._2).toSet)
+    val roadLinks = vvhClient.fetchByLinkIds(prohibitions.map(_._2).toSet)
 
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
@@ -512,7 +512,7 @@ class AssetDataImporter {
 
         println(s"*** Fetching from VVH with municipality: $municipalityCode")
 
-        val flippedLinks = vvhClient.fetchByMunicipality(municipalityCode)
+        val flippedLinks = vvhClient.queryByMunicipality(municipalityCode)
           .filter(isHereFlipped)
           .filterNot(link => processedLinkIds.contains(link.linkId))
 
@@ -935,7 +935,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     val linkIdGroups = lrmList.keys.toSet.grouped(500) // Mapping LinkId -> Id
 
     val linkLengths = linkIdGroups.flatMap (
-      linkIds => vvhClient.fetchVVHRoadlinks(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
+      linkIds => vvhClient.fetchByLinkIds(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
     ).toMap
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
@@ -1057,7 +1057,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
+        val roadLinks = vvhClient.fetchByLinkIds(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -1081,7 +1081,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
+        val roadLinks = vvhClient.fetchByLinkIds(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode, idAddressFi, idAddressSe)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode, idAddressFi, idAddressSe)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id

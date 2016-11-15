@@ -19,11 +19,9 @@ class OracleMunicipalityProvider extends MunicipalityProvider {
 
   def getMunicipalities(elyNumbers: Set[Int]): Seq[Int] = {
     OracleDatabase.withDynSession {
-      val q = "select municipality_id from ely where id in (" + elyNumbers.toArray.map(_ => "?").mkString(",") + ")"
+      val q = "select m.id from municipality m where m.ELY_NRO in (" + elyNumbers.toArray.map(_ => "?").mkString(",") + ")"
       StaticQuery.query[Set[Int], Int](q).apply(elyNumbers).list
     }
   }
 
-  Set(941, 170, 683, 614, 698, 417, 320, 751, 261, 766, 60, 65, 583, 742, 148, 732, 498, 736, 76, 318, 890, 758, 240, 851, 438, 241, 35, 295, 43, 845, 976, 771, 478, 854, 273, 47, 62)
-  Set(683, 614, 698, 320, 751, 261, 583, 742, 148, 732, 498, 890, 758, 240, 851, 241, 845, 976, 854, 273, 47)
 }
