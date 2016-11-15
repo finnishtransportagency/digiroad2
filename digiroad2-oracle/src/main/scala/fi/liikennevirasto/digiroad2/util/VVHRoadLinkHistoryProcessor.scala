@@ -2,60 +2,69 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.VVHRoadlink
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Class tries to find newest history link with significant change to current road links
+  * Class to filter history road links.
+  *
+  * @param includeCurrentLinks If true, compare history with current road links within tolerance
+  * @param minimumChange Tolerance minimum value
+  * @param maximumChange Tolerance maximum value
   */
-class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChange:Double=1.0, maximumChange:Double=50.0) {
+class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
 
+  /**
+    * Try to find newest history links within tolerance of min 1 and max 50 meters to current road links
+    *
+    * @param historyLinks
+    * @param currentLinks
+    * @return Filtered history links
+    */
+  def process(historyLinks: Seq[VVHRoadlink], currentLinks: Seq[VVHRoadlink]) : Seq[VVHRoadlink] = {
+    val groupedRoadLinksList = historyLinks.groupBy(_.linkId).toSeq.sortBy(_._1)
+    var ignoreList = ListBuffer.empty[Long]   // Ids of history links already searched, which have occurred in recursive linked list search
+    var listOfNewestChangedHistoryLinks = ArrayBuffer.empty[VVHRoadlink]  // History links to be returned
 
-  def process(historyLinks:Seq[VVHRoadlink], currentLinks :Seq[VVHRoadlink]) : Seq[VVHRoadlink] ={
-    val groupedRoadLinksList= historyLinks.groupBy(_.linkId).toSeq.sortBy(_._1)
-    var ignoreList = ListBuffer.empty[Long]
-    var listOfNewestChangedHistoryLinks=scala.collection.mutable.ArrayBuffer.empty[VVHRoadlink]
-    for ( groupedRoadLinks<-groupedRoadLinksList)
-    {
-      if (!ignoreList.contains(groupedRoadLinks._1)) {  //check for already searched ids, which have occurred in recursive linked list search
-      val newAndChangedLink=getNewestAndChangedLink(groupedRoadLinks._2)
-        val link=newAndChangedLink._1
-        val changedLink=newAndChangedLink._2
+    for (groupedRoadLinks <- groupedRoadLinksList) {
+      if (!ignoreList.contains(groupedRoadLinks._1)) {
+        val (link, changedLink) = getNewestAndChangedLink(groupedRoadLinks._2)
+
         link.attributes.get("LINKID_NEW") match {
-          case Some(newLinkidB:BigInt) => {
-            val appendedlistignoreList = (ignoreList ++ List(link.linkId)).toList
-            val newerLink = getNewestId(newLinkidB.toLong, groupedRoadLinksList.toMap, appendedlistignoreList, currentLinks)
-            newerLink._1 match {
-              case Some(newestRoadLink: VVHRoadlink) => {
-                if (!ignoreList.contains(newestRoadLink.linkId)) // Ignores link chains that have already been processed
-                {
-                  if (!newerLink._3) {
-                    // check if link with enough coordinate change has been found
-                    newerLink._4 match {
-                      // no change found yet in recursion
-                      case Some(nHlink: VVHRoadlink) => {
+          case Some(newLinkIdBigInt: BigInt) => {
+            val appendedListIgnoreList = (ignoreList ++ List(link.linkId)).toList
+            val (newestLink, updatedIgnoreList, isMatchingLinkFound, matchingCurrentLink) = getNewestId(newLinkIdBigInt.toLong, groupedRoadLinksList.toMap, appendedListIgnoreList, currentLinks)
 
-                        if (includeCurrentLinks && compareGeoOfLinks(nHlink, link)) {
+            newestLink match {
+              case Some(newestRoadLink: VVHRoadlink) => {
+                if (!ignoreList.contains(newestRoadLink.linkId)) { // Ignores link chains that have already been processed
+                  if (!isMatchingLinkFound) {
+                    // check if link with enough coordinate change has been found
+                    matchingCurrentLink match {
+                      // no change found yet in recursion
+                      case Some(nonHistoryLink: VVHRoadlink) => {
+                        if (includeCurrentLinks && compareGeoOfLinks(nonHistoryLink, link)) {
                           //Change between current link value significant enough when undeleted link histories are also showed
                           listOfNewestChangedHistoryLinks += newestRoadLink
                           ignoreList += newestRoadLink.linkId
-                          ignoreList ++= newerLink._2
+                          ignoreList ++= updatedIgnoreList
                         }
-                        else if (includeCurrentLinks && compareGeoOfLinks(nHlink, changedLink)) {
+                        else if (includeCurrentLinks && compareGeoOfLinks(nonHistoryLink, changedLink)) {
                           //  Change significant enough was found in one of the links with current link-id when undeleted link histories are also showed
                           listOfNewestChangedHistoryLinks += newestRoadLink
                           ignoreList += newestRoadLink.linkId
-                          ignoreList ++= newerLink._2
+                          ignoreList ++= updatedIgnoreList
                         }
                         else {
                           // no significant change or only deleted links are wanted
                           ignoreList += newestRoadLink.linkId
-                          ignoreList ++= newerLink._2
+                          ignoreList ++= updatedIgnoreList
                         }
                       }
-                      case None => //this when when link chain has not found "current link". This might be because link was deleted
-                      {
+                      case None => {
+                        //this when when link chain has not found "current link". This might be because link was deleted
                         listOfNewestChangedHistoryLinks += newestRoadLink
                         ignoreList += newestRoadLink.linkId
-                        ignoreList ++= newerLink._2
+                        ignoreList ++= updatedIgnoreList
                       }
                     }
                   }
@@ -64,38 +73,36 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
                     if (includeCurrentLinks) listOfNewestChangedHistoryLinks += newestRoadLink  // only added if current link changes are wanted
 
                     ignoreList += newestRoadLink.linkId
-                    ignoreList ++= newerLink._2
+                    ignoreList ++= updatedIgnoreList
                   }
                 }
               }
-              case None => //when cannot find newer link from history list
-              {
-                newerLink._4 match {
+              case None => {
+                //when cannot find newer link from history list
+                matchingCurrentLink match {
                   //checks if next link exists in current (non-history) Link list
-                  case Some(nHlink: VVHRoadlink) => {
+                  case Some(nonHistoryLink: VVHRoadlink) => {
                     if (includeCurrentLinks) {
-                      if (compareGeoOfLinks(nHlink, link)) //comparison if link-id is close enough and not too far from "currents loops newest link
-                      {
+                      if (compareGeoOfLinks(nonHistoryLink, link)) {
+                        //comparison if link-id is close enough and not too far from "currents loops newest link
                         listOfNewestChangedHistoryLinks += link
                         ignoreList += link.linkId
-                        ignoreList ++= newerLink._2
+                        ignoreList ++= updatedIgnoreList
                       }
-                      else if (compareGeoOfLinks(nHlink, changedLink))
-                      {
+                      else if (compareGeoOfLinks(nonHistoryLink, changedLink)) {
                         listOfNewestChangedHistoryLinks += changedLink
                         ignoreList += link.linkId
-                        ignoreList ++= newerLink._2
+                        ignoreList ++= updatedIgnoreList
                       }
                       else {
                         // No significant change found (Ignore)
                         ignoreList += link.linkId
-                        ignoreList ++= newerLink._2
+                        ignoreList ++= updatedIgnoreList
                       }
                     }
-                    else
-                    {
+                    else {
                       ignoreList += link.linkId
-                      ignoreList ++= newerLink._2
+                      ignoreList ++= updatedIgnoreList
                     }
                   }
                   case None => {
@@ -103,14 +110,13 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
                   }
                 }
               }
-
             }
           }
-          case _ => // if link does NOT have value for newer versions
-          {
-            currentLinks.find(_.linkId==link.linkId) match {
-              case Some(currentLink:VVHRoadlink) =>
-              { //History link-id is found in current-link list
+          case _ => {
+            // if link does NOT have value for newer versions
+            currentLinks.find(_.linkId == link.linkId) match {
+              case Some(currentLink:VVHRoadlink) => {
+                //History link-id is found in current-link list
                 if(includeCurrentLinks && compareGeoOfLinks(link, currentLink))
                 {
 
@@ -118,8 +124,8 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
                   ignoreList += link.linkId
                 }
               }
-              case _=>
-              {// Link is deleted link
+              case _=> {
+                // Link is deleted link
                 listOfNewestChangedHistoryLinks += link
                 ignoreList += link.linkId
               }
@@ -140,72 +146,69 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
     * @return newest VVHRoadlink of the chain, updated ignore list (processed links), boolean if link matching requirment was found, matching current roadlink if found
     */
 
-  private def getNewestId(linkid:Long,groupedRoadLinksList: Map[Long, Seq[VVHRoadlink]],ignoreList:List[Long], currentLinks:Seq[VVHRoadlink]) : (Option[VVHRoadlink],List[Long], Boolean, Option[VVHRoadlink]) =
+  private def getNewestId(linkid: Long,groupedRoadLinksList: Map[Long, Seq[VVHRoadlink]], ignoreList: List[Long], currentLinks: Seq[VVHRoadlink]): (Option[VVHRoadlink], List[Long], Boolean, Option[VVHRoadlink]) =
   {
-    var loopsIgnoreList= ignoreList.toBuffer[Long]
-    val nullRoadLink=  None: Option[VVHRoadlink]
-    val ignoredLink= if (loopsIgnoreList.toList.contains(linkid)) true else false
+    var loopsIgnoreList = ignoreList.toBuffer[Long]
+    val nullRoadLink = None: Option[VVHRoadlink]
+    val ignoredLink = if (loopsIgnoreList.toList.contains(linkid)) true else false
 
-    if (!ignoredLink)
-    {
-      val groupLinks= groupedRoadLinksList.find(_._1 ==linkid)
+    if (!ignoredLink) {
+      val groupLinks = groupedRoadLinksList.find(_._1 == linkid)
       groupLinks match {
-        case Some(groupedRoadLinks: (Long,Seq[VVHRoadlink])) => { //link with corresponding id found
+        case Some(groupedRoadLinks: (Long,Seq[VVHRoadlink])) => {
+          //link with corresponding id found
           if (groupedRoadLinks._1 == linkid) {
-            val newestAndChangedLink = getNewestAndChangedLink(groupedRoadLinks._2)
-            val link = newestAndChangedLink._1
-            val changedlink = newestAndChangedLink._2
+            val (link, changedLink) = getNewestAndChangedLink(groupedRoadLinks._2)
             link.attributes.get("LINKID_NEW") match {
-              case Some(newLinkidB:BigInt) => {
+              case Some(newLinkIdBigInt: BigInt) => {
                 val appendedIgnoreList = (loopsIgnoreList ++ List(linkid)).toList
-                val newerLink = getNewestId(newLinkidB.toLong, groupedRoadLinksList, appendedIgnoreList, currentLinks)
-                newerLink._1 match {
+                val (newestLink, updatedIgnoreList, isMatchingLinkFound, matchingCurrentLink) = getNewestId(newLinkIdBigInt.toLong, groupedRoadLinksList, appendedIgnoreList, currentLinks)
+                newestLink match {
                   case Some(newestRoadLink: VVHRoadlink) => {
                     if (!loopsIgnoreList.contains(newestRoadLink.linkId)) {
                       loopsIgnoreList += link.linkId
-                      loopsIgnoreList ++= newerLink._2 //updates ignoreList from recursion
-                      if (!newerLink._3) // check if link with enough coordinate change has been found
-                      {
-                        newerLink._4 match {
-
-                          case Some(nLink: VVHRoadlink) => // check if newest link, or changed link is changed enough
-                          {
-
+                      loopsIgnoreList ++= updatedIgnoreList //updates ignoreList from recursion
+                      if (!isMatchingLinkFound) {
+                        // check if link with enough coordinate change has been found
+                        matchingCurrentLink match {
+                          case Some(nLink: VVHRoadlink) => {
+                            // check if newest link, or changed link is changed enough
                             if (compareGeoOfLinks(nLink, link))
-                              return (Some(link), loopsIgnoreList.toList, true, newerLink._4)
-                            else if (compareGeoOfLinks(nLink, changedlink))
-                              return (Some(changedlink), loopsIgnoreList.toList, true, newerLink._4)
+                              return (Some(link), loopsIgnoreList.toList, true, matchingCurrentLink)
+                            else if (compareGeoOfLinks(nLink, changedLink))
+                              return (Some(changedLink), loopsIgnoreList.toList, true, matchingCurrentLink)
                             else
-                              return (Some(newestRoadLink ), loopsIgnoreList.toList, false, newerLink._4)
+                              return (Some(newestRoadLink ), loopsIgnoreList.toList, false, matchingCurrentLink)
                           }
                           case None => // case where there is no current link for history link (for example deleted link)
-                            return (newerLink._1, loopsIgnoreList.toList, false, newerLink._4)
+                            return (newestLink, loopsIgnoreList.toList, false, matchingCurrentLink)
 
                         }
                       }
                       else {
                         // just passes values to previous loop when significant coordinate change has been found
-                        return (Some(newestRoadLink), loopsIgnoreList.toList, newerLink._3, newerLink._4)
+                        return (Some(newestRoadLink), loopsIgnoreList.toList, isMatchingLinkFound, matchingCurrentLink)
                       }
                     }
                   }
                   case None => {
                     //None when cannot find newer link from history list
-                    newerLink._4 match {
+                    matchingCurrentLink match {
                       //checks if next link exists in (non-history) link list and if it exists returns changed link
-                      case Some(nHlink: VVHRoadlink) => {
-                        if (compareGeoOfLinks(nHlink, link)) //comparison if link-id is close enough to "currents loops newest link
-                          return (Some(link), loopsIgnoreList.toList, true, newerLink._4)
-                        else if (compareGeoOfLinks(nHlink, changedlink)) //changed link is link (which same link id as link, but has been updated enough to consider "changed link"
-                        {
-                          return (Some(changedlink), loopsIgnoreList.toList, true, newerLink._4) // there was link changed enough with same id (just not the newest  one)
+                      case Some(nonHistoryLinks: VVHRoadlink) => {
+                        if (compareGeoOfLinks(nonHistoryLinks, link)) //comparison if link-id is close enough to "currents loops newest link
+                          return (Some(link), loopsIgnoreList.toList, true, matchingCurrentLink)
+                        else if (compareGeoOfLinks(nonHistoryLinks, changedLink)){
+                          //changed link is link (which same link id as link, but has been updated enough to consider "changed link"
+                          return (Some(changedLink), loopsIgnoreList.toList, true, matchingCurrentLink) // there was link changed enough with same id (just not the newest  one)
                         }
                         else {
-                          return (Some(link), loopsIgnoreList.toList, false, newerLink._4) // could not find link-id where coordinates have been changed enough
+                          return (Some(link), loopsIgnoreList.toList, false, matchingCurrentLink) // could not find link-id where coordinates have been changed enough
                         }
                       }
-                      case None => { // could not find link-id for current link
-                        if (!loopsIgnoreList.contains(newLinkidB.toLong)) //checks link is not ignored
+                      case None => {
+                        // could not find link-id for current link
+                        if (!loopsIgnoreList.contains(newLinkIdBigInt.toLong)) //checks link is not ignored
                         return (nullRoadLink, loopsIgnoreList.toList, false, None)
                         else return (Some(link), loopsIgnoreList.toList, false, None)
                       }
@@ -213,15 +216,12 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
                   }
                 }
               }
-              case None => { //Link has no new link id = either deleted link or link can be found from current links list
-                currentLinks.find(_.linkId==linkid) match {
-                  case Some(currentLink:VVHRoadlink) =>
-                    {
-
+              case None => {
+                //Link has no new link id = either deleted link or link can be found from current links list
+                currentLinks.find(_.linkId == linkid) match {
+                  case Some(currentLink:VVHRoadlink) => {
                       if (includeCurrentLinks) return (Some(link), loopsIgnoreList.toList, false, Some(currentLink))
-
-                      else
-                      {
+                      else {
                         loopsIgnoreList += link.linkId
                         return (Some(link), loopsIgnoreList.toList, false, Some(currentLink))
                       }
@@ -233,29 +233,27 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
             }
           }
         }
-        case None => { // Link could not be found from history, checks current links
-          return (nullRoadLink,loopsIgnoreList.toList,false,currentLinks.find(_.linkId==linkid))
+        case None => {
+          // Link could not be found from history, checks current links
+          return (nullRoadLink,loopsIgnoreList.toList,false,currentLinks.find(_.linkId == linkid))
         }
       }
     }
     //if ignored or next link was unreachable return this None object. Ignored when value has already been processed
-     (nullRoadLink,loopsIgnoreList.toList,false,nullRoadLink)
+    (nullRoadLink, loopsIgnoreList.toList, false, nullRoadLink)
   }
   /**
     *
-    * @param hLink link nro 1
-    * @param cLink link nro 2
-    * @return true when distance is crater than minimum but less than maximum else false. Also true if number of geometries is different
+    * @param historyLink link nro 1
+    * @param currentLink link nro 2
+    * @return true when distance is greater than minimum but less than maximum else false. Also true if number of geometries is different
     */
-  private def compareGeoOfLinks( hLink :VVHRoadlink, cLink:VVHRoadlink): Boolean =
-  {
-    if (hLink.geometry.size==cLink.geometry.size)
-    {
-      val geometryComparison =hLink.geometry.zip(cLink.geometry)
-      for(comparison  <-geometryComparison)
-      {
+  private def compareGeoOfLinks( historyLink: VVHRoadlink, currentLink: VVHRoadlink): Boolean = {
+    if (historyLink.geometry.size == currentLink.geometry.size) {
+      val geometryComparison = historyLink.geometry.zip(currentLink.geometry)
+      for (comparison  <- geometryComparison) {
         // Check if geometry is with in bounds
-        if (comparison._1.distance2DTo(comparison._2) >= minimumChange &&  comparison._1.distance2DTo(comparison._2)<=maximumChange)
+        if (comparison._1.distance2DTo(comparison._2) >= minimumChange &&  comparison._1.distance2DTo(comparison._2) <= maximumChange)
           return true
       }
     }
@@ -264,19 +262,18 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
 
   /**
     * Checks which link-id element is the newest and which is first to change enough from first element
+    *
+    * @param linksOfTheRoad
     * @return
     */
- private def getNewestAndChangedLink(linksOfTheRoad :Seq[VVHRoadlink]) : (VVHRoadlink,VVHRoadlink) = // returns (newest link,first to change)
-  {
-    def endDate(vVHRoadlink: VVHRoadlink) =
-    {
+  private def getNewestAndChangedLink(linksOfTheRoad :Seq[VVHRoadlink]): (VVHRoadlink,VVHRoadlink) = {
+   // returns (newest link,first to change)
+    def endDate(vVHRoadlink: VVHRoadlink) = {
       vVHRoadlink.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
     }
-    def getFirstToChangedLink(sortedLinkList:Seq[VVHRoadlink], linkToCompare:VVHRoadlink) : VVHRoadlink =
-    {
-      for ( link <-sortedLinkList)
-      {
-        if (link.geometry.size!= linkToCompare.geometry.size) //if geometry is missing "node" it is considered changed
+    def getFirstToChangedLink(sortedLinkList:Seq[VVHRoadlink], linkToCompare:VVHRoadlink): VVHRoadlink = {
+      for (link <- sortedLinkList) {
+        if (link.geometry.size != linkToCompare.geometry.size) //if geometry is missing "node" it is considered changed
           return link
         if (compareGeoOfLinks(link, linkToCompare)) //if changed enough return
           return link
@@ -284,8 +281,8 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks:Boolean=false,minimumChang
       linkToCompare
     }
 
-    val newestLink=linksOfTheRoad.maxBy(endDate)
-    val changedLink= if (linksOfTheRoad.size > 1) getFirstToChangedLink(linksOfTheRoad.sortBy(_.attributes.getOrElse("END_DATE",BigInt(0)).asInstanceOf[BigInt].longValue()).reverse,newestLink)  else {newestLink}
+    val newestLink = linksOfTheRoad.maxBy(endDate)
+    val changedLink = if (linksOfTheRoad.size > 1) getFirstToChangedLink(linksOfTheRoad.sortBy(_.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()).reverse, newestLink)  else {newestLink}
     (newestLink,changedLink)
   }
 }
