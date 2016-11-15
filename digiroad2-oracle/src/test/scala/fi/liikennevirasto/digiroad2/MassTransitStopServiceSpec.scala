@@ -712,7 +712,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
         SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))))
       val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      when(mockVVHClient.fetchVVHRoadlink(123l)).thenReturn(Some(vvhRoadLink))
+      when(mockVVHClient.fetchByLinkId(123l)).thenReturn(Some(vvhRoadLink))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
 
       val newProperties = Set(

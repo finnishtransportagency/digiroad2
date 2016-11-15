@@ -532,7 +532,7 @@ object DataFixture {
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         val stopLiviId = stop.propertyData.
-          find(property => property.publicId == massTransitStopService.LiViIdentifierPublicId).
+          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
           flatMap(property => property.values.headOption).map(p => p.propertyValue)
 
         if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
