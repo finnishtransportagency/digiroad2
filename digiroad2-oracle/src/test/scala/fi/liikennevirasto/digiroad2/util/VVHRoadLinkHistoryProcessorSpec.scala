@@ -21,7 +21,6 @@ class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val roadLink3 = VVHRoadlink(3, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1, roadLink2,roadLink3)
-    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, emptyVVHLinkSeq)
     filtteredHistoryLinks.size should be(1)
   }
@@ -33,7 +32,6 @@ class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1)
     val currentlinks= Seq(roadLink2)
-    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filtteredHistoryLinks = linkProcessorShowCurrentlyChanged.process(roadLinksSeq, currentlinks)
     filtteredHistoryLinks.size should be(0)
   }
@@ -65,7 +63,6 @@ class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val roadLink5 = VVHRoadlink(5, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5)
-    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, emptyVVHLinkSeq)
     filtteredHistoryLinks.size should be(2)
   }
@@ -89,7 +86,6 @@ class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val roadLink5 = VVHRoadlink(1, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5)
-    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, emptyVVHLinkSeq)
     filtteredHistoryLinks.size should be(1)
     val chosenLinksEndDate = filtteredHistoryLinks.head.attributes.getOrElse("END_DATE", 0)
@@ -121,7 +117,6 @@ class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val roadLink7 = VVHRoadlink(4, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes6)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5, roadLink6, roadLink7)
-    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, emptyVVHLinkSeq)
     filtteredHistoryLinks.size should be(1)
     val chosenLinksEndDate = filtteredHistoryLinks.head.attributes.getOrElse("END_DATE", 0)
