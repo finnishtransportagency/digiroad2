@@ -60,14 +60,18 @@
     ];
 
     //History rules
+    var unknownFunctionalClassHistoryDefaultRules = [
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
     var zoomLevelHistoryRules = [
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, { strokeWidth: 2 }, { pointRadius: 0 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, { strokeWidth: 4 }, { pointRadius: 10 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, { strokeWidth: 6 }, { pointRadius: 12 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, { strokeWidth: 8 }, { pointRadius: 13 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, { strokeWidth: 8 }, { pointRadius: 14 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, { strokeWidth: 11 }, { pointRadius: 16 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, { strokeWidth: 11 }, { pointRadius: 16 }))
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, { strokeWidth: 1 }, { pointRadius: 0 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, { strokeWidth: 2 }, { pointRadius: 10 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, { strokeWidth: 4 }, { pointRadius: 12 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, { strokeWidth: 6 }, { pointRadius: 13 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, { strokeWidth: 6 }, { pointRadius: 14 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, { strokeWidth: 9 }, { pointRadius: 16 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, { strokeWidth: 9 }, { pointRadius: 16 }))
     ];
 
     var linkTypeSizeHistoryRules = [
@@ -130,10 +134,10 @@
     // --- Functional history class style maps
 
     var functionalClassHistoryDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeOpacity: 0.7,
+      strokeOpacity: 0.3,
       rotation: '${rotation}'}));
     functionalClassHistoryDefaultStyle.addRules(functionalClassRules);
-    functionalClassHistoryDefaultStyle.addRules(unknownFunctionalClassDefaultRules);
+    functionalClassHistoryDefaultStyle.addRules(unknownFunctionalClassHistoryDefaultRules);
     functionalClassHistoryDefaultStyle.addRules(zoomLevelHistoryRules);
     functionalClassHistoryDefaultStyle.addRules(overlayHistoryRules);
     functionalClassHistoryDefaultStyle.addRules(linkTypeSizeHistoryRules);
@@ -153,7 +157,7 @@
     functionalClassHistorySelectionDefaultStyle.addRules(functionalClassRules);
     functionalClassHistorySelectionSelectStyle.addRules(functionalClassRules);
     functionalClassHistorySelectionDefaultStyle.addRules(unknownFunctionalClassUnselectedRules);
-    functionalClassHistorySelectionSelectStyle.addRules(unknownFunctionalClassDefaultRules);
+    functionalClassHistorySelectionSelectStyle.addRules(unknownFunctionalClassHistoryDefaultRules);
     functionalClassHistorySelectionDefaultStyle.addRules(zoomLevelHistoryRules);
     functionalClassHistorySelectionSelectStyle.addRules(zoomLevelHistoryRules);
     functionalClassHistorySelectionDefaultStyle.addRules(overlayHistoryRules);

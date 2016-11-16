@@ -100,8 +100,7 @@
     };
 
     this.fetchHistory = function (boundingBox) {
-      //TODO Change getRoadLinks to getHistoryRoadLinks
-      backend.getRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
+      backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {
           return roadLink.getId();
         });

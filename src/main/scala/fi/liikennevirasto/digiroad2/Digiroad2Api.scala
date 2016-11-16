@@ -340,6 +340,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
+  get("/roadlinks/:linkId") {
+    val linkId = params("linkId").toLong
+    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
+      case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
+    }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
+  }
+
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -349,13 +356,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox")
       .map(getRoadLinksHistoryFromVVH(municipalities))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
-  }
-
-  get("/roadlinks/:linkId") {
-    val linkId = params("linkId").toLong
-    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
-      case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
-    }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
   }
 
   get("/roadlinks/mml/:mmlId") {

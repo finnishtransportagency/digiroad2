@@ -196,8 +196,7 @@
     vectorLayer.setVisibility(true);
     map.addLayer(vectorLayer);
     var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-    //TODO uncomment when we have the two layers working together
-    //map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
+    map.setLayerIndex(vectorLayer, roadLinksLayerIndex + 1);
 
     map.addControl(selectControl);
 
@@ -320,15 +319,13 @@
     };
 
     var draw = function() {
-      //TODO uncomment roadlink layer draws
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
-      //TODO uncomment that when we start using data from the server
-      var roadLinkHistory = roadLinks;// roadCollection.getAllHistory();
+      var roadLinkHistory =  roadCollection.getAllHistory();
 
-      //roadLayer.drawRoadLinks(roadLinks, map.getZoom());
-      //drawDashedLineFeaturesIfApplicable(roadLinks, roadLayer.layer);
-      //me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      drawDashedLineFeaturesIfApplicable(roadLinks, roadLayer.layer);
+      me.drawOneWaySigns(roadLayer.layer, roadLinks);
 
       historyLayer.drawRoadLinks(roadLinkHistory, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinkHistory, historyLayer.layer);
@@ -340,8 +337,8 @@
 
     this.refreshView = function() {
       roadCollection.fetch(map.getExtent());
-      //TODO uncomment that when we start using data from the server
-      //roadCollection.fetchHistory(map.getExtent());
+      //TODO control the fetch depending on the checkbox
+      roadCollection.fetchHistory(map.getExtent());
     };
 
     this.isDirty = function() {
@@ -396,7 +393,7 @@
         highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
-      //TODO do that i don't know exacly what it is that but ok
+      //TODO If the history layer doesn't need to be selected we don't need that
       historyLayer.reselectRoadLink();
       if (selectedLinkProperty.isDirty()) {
         me.deactivateSelection();
@@ -463,19 +460,17 @@
     };
 
     var redrawSelected = function() {
-      //TODO uncomment roadlayer operations
-      //roadLayer.layer.removeFeatures(getSelectedFeatures());
+      roadLayer.layer.removeFeatures(getSelectedFeatures());
       historyLayer.removeSelectedFeatures();
 
       var selectedRoadLinks = selectedLinkProperty.get();
-
       _.each(selectedRoadLinks,  function(selectedLink) {
-        //roadLayer.drawRoadLink(selectedLink);
+        roadLayer.drawRoadLink(selectedLink);
         historyLayer.drawRoadLink(selectedLink);
       });
-      //drawDashedLineFeaturesIfApplicable(selectedRoadLinks, roadLayer.layer);
+      drawDashedLineFeaturesIfApplicable(selectedRoadLinks, roadLayer.layer);
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks, historyLayer.layer);
-      //me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
+      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
       me.drawOneWaySigns(historyLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
