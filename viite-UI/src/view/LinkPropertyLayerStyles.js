@@ -1,13 +1,18 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
 
-    // Todo: Handle unknown, stroke black with question mark
-
     var unknownRoadAddressAnomalyRules = [
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
     ];
     var unknownRoadAddressAnomalyUnselectedRules = [
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+    ];
+
+    var FloatingRoadAddressAnomalyRules = [
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.8, strokeWidth:20, externalGraphic: 'images/link-properties/flag-floating.svg',pointRadius: 14})
+    ];
+    var FloatingRoadAddressAnomalyUnselectedRules = [
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.3, strokeWidth:20, externalGraphic: 'images/link-properties/flag-floating.svg',pointRadius: 14})
     ];
 
     var typeFilter = function(type) {
@@ -140,6 +145,7 @@
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
+    roadClassDefaultStyle.addRules(FloatingRoadAddressAnomalyRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
     roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
@@ -177,6 +183,8 @@
     roadClassSelectionSelectStyle.addRules(borderRules);
     roadClassSelectionDefaultStyle.addRules(borderUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(borderDefaultOpacity);
+    roadClassSelectionDefaultStyle.addRules(FloatingRoadAddressAnomalyUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(FloatingRoadAddressAnomalyRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
