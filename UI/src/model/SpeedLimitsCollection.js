@@ -33,20 +33,30 @@
           speedLimit.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox) {
-      return backend.getSpeedLimits(boundingBox).then(function(speedLimitGroups) {
-        var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
-          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
+    this.fetch = function (boundingBox, showHistorySpeedLimits) {
+      return backend.getSpeedLimits(boundingBox).then(function (speedLimitGroups) {
+        var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function (speedLimitGroup) {
+          return _.some(speedLimitGroup, function (speedLimit) {
+            return _.has(speedLimit, "id");
+          });
         });
         var knownSpeedLimits = partitionedSpeedLimitGroups[true] || [];
-        var unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function(speedLimitGroup) {
-          return _.map(speedLimitGroup, function(speedLimit) {
-            return _.merge({}, speedLimit, { generatedId: generateUnknownLimitId(speedLimit) });
-          });
-        }) || [];
+        var unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function (speedLimitGroup) {
+              return _.map(speedLimitGroup, function (speedLimit) {
+                return _.merge({}, speedLimit, {generatedId: generateUnknownLimitId(speedLimit)});
+              });
+            }) || [];
         speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
-        eventbus.trigger('speedLimits:fetched', self.getAll());
+        if (showHistorySpeedLimits === 'false') {
+          eventbus.trigger('speedLimits:fetched', self.getAll());
+        } else {
+          eventbus.trigger('speedLimits:drawSpeedLimitsHistory', self.getAll());
+        }
       });
+    };
+
+    this.hideHistorySpeedLimits = function () {
+      eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
     };
 
     var isUnknown = function(speedLimit) {

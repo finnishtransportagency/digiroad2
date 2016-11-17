@@ -275,6 +275,62 @@ window.SpeedLimitLayer = function(params) {
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
   selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
+
+  //History rules
+  var overlayStyleRuleHistory = _.partial(createZoomAndTypeDependentRule, 'overlay');
+  var overlayStyleRulesHistory = [
+    overlayStyleRuleHistory(9, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 0.1, strokeDashstyle: '1 6' }),
+    overlayStyleRuleHistory(10, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 10' }),
+    overlayStyleRuleHistory(11, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 15' }),
+    overlayStyleRuleHistory(12, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(13, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(14, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 28' }),
+    overlayStyleRuleHistory(15, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 28' })
+  ];
+
+  var validityDirectionStyleRulesHistory = [
+    createZoomDependentOneWayRule(9, { strokeWidth: 0.5 }),
+    createZoomDependentOneWayRule(10, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(11, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(12, { strokeWidth: 4 }),
+    createZoomDependentOneWayRule(13, { strokeWidth: 4 }),
+    createZoomDependentOneWayRule(14, { strokeWidth: 5 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 5 })
+  ];
+
+  var speedLimitFeatureSizeLookupHistory = {
+    9: { strokeWidth: 1, pointRadius: 0 },
+    10: { strokeWidth: 3, pointRadius: 10 },
+    11: { strokeWidth: 5, pointRadius: 14 },
+    12: { strokeWidth: 8, pointRadius: 16 },
+    13: { strokeWidth: 8, pointRadius: 16 },
+    14: { strokeWidth: 12, pointRadius: 22 },
+    15: { strokeWidth: 12, pointRadius: 22 }
+  };
+
+  var typeSpecificStyleLookupHistory = {
+    overlay: { strokeOpacity: 0.8 },
+    other: { strokeOpacity: 0.5 },
+    unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
+    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+  };
+
+  var historyStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    strokeOpacity: 0.15,
+    graphicOpacity: 0.3
+  }));
+  var historyStyleMap = new OpenLayers.StyleMap({ default: historyStyle });
+  historyStyleMap.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
+  historyStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookupHistory, uiState);
+  historyStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookupHistory);
+  historyStyle.addRules(overlayStyleRulesHistory);
+  historyStyle.addRules(validityDirectionStyleRulesHistory);
+  historyStyle.addRules(oneWayOverlayStyleRules);
+
+  var vectorLayerHistory = new OpenLayers.Layer.Vector(layerName, { styleMap: historyStyleMap});
+  vectorLayerHistory.setOpacity(1);
+  vectorLayerHistory.setVisibility(false);
+
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
   vectorLayer.setVisibility(false);
@@ -299,10 +355,17 @@ window.SpeedLimitLayer = function(params) {
     highlightMultipleSpeedLimitFeatures();
   };
 
-  var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = selectionStyle;
+  var setSelectionStyleAndHighlightFeature = function(showHistorySpeedLimits) {
+    var vectorLayerToUse;
+
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerToUse = vectorLayerHistory;
+    } else {
+      vectorLayerToUse = vectorLayer;
+    }
+    vectorLayerToUse.styleMap = selectionStyle;
     highlightSpeedLimitFeatures();
-    vectorLayer.redraw();
+    vectorLayerToUse.redraw();
   };
 
   var speedLimitOnSelect = function(feature) {
@@ -331,7 +394,7 @@ window.SpeedLimitLayer = function(params) {
       onCancel: cancelSelection,
       onSave: function(newSpeedLimit) {
         selectedSpeedLimit.saveMultiple(newSpeedLimit);
-        activateBrowseStyle();
+        activateStyles();
         selectedSpeedLimit.closeMultiple();
       }
     });
@@ -339,19 +402,30 @@ window.SpeedLimitLayer = function(params) {
 
   function cancelSelection() {
     selectedSpeedLimit.closeMultiple();
-    activateBrowseStyle();
+    activateStyles();
     collection.fetch(map.getExtent());
   }
 
-  var handleSpeedLimitUnSelected = function(selection) {
-    _.each(_.filter(vectorLayer.features, function(feature) {
+  var handleSpeedLimitUnSelected = function (selection, showHistorySpeedLimits) {
+    var vectorLayerToUse;
+    var styleMapToUse;
+
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerToUse = vectorLayerHistory;
+      styleMapToUse = historyStyleMap;
+    } else {
+      vectorLayerToUse = vectorLayer;
+      styleMapToUse = browseStyleMap;
+    }
+
+    _.each(_.filter(vectorLayerToUse.features, function (feature) {
       return selection.isSelected(feature.attributes);
-    }), function(feature) {
+    }), function (feature) {
       selectControl.unhighlight(feature);
     });
 
-    vectorLayer.styleMap = browseStyleMap;
-    vectorLayer.redraw();
+    vectorLayerToUse.styleMap = styleMapToUse;
+    vectorLayerToUse.redraw();
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
 
@@ -391,19 +465,38 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var activateBrowseStyle = function() {
-    _.each(vectorLayer.features, function(feature) {
+  var activateStyles = function(showHistorySpeedLimits) {
+    var vectorLayerToUse;
+    var styleMapToUse;
+
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerToUse = vectorLayerHistory;
+      styleMapToUse = historyStyleMap;
+    } else {
+      vectorLayerToUse = vectorLayer;
+      styleMapToUse = browseStyleMap;
+    }
+
+    _.each(vectorLayerToUse.features, function(feature) {
       selectControl.unhighlight(feature);
     });
-    vectorLayer.styleMap = browseStyleMap;
-    vectorLayer.redraw();
+
+    vectorLayerToUse.styleMap = styleMapToUse;
+    vectorLayerToUse.redraw();
   };
 
-  var activateSelectionStyle = function(selectedSpeedLimits) {
-    vectorLayer.styleMap = selectionStyle;
+  var activateSelectionStyle = function(selectedSpeedLimits, showHistorySpeedLimits) {
+    var vectorLayerToUse;
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerToUse = vectorLayerHistory;
+    } else {
+      vectorLayerToUse = vectorLayer;
+    }
+
+    vectorLayerToUse.styleMap = selectionStyle;
     selectedSpeedLimit.openMultiple(selectedSpeedLimits);
     highlightMultipleSpeedLimitFeatures();
-    vectorLayer.redraw();
+    vectorLayerToUse.redraw();
   };
 
   var bindEvents = function(eventListener) {
@@ -417,6 +510,18 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
+    eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
+  };
+
+  var hideSpeedLimitsHistory = function() {
+    vectorLayerHistory.setVisibility(false);
+  };
+
+  var showSpeedLimitsHistory = function (historySpeedLimitChains) {
+    map.addLayer(vectorLayerHistory);
+    var historySpeedLimits = _.flatten(historySpeedLimitChains);
+    drawSpeedLimits(historySpeedLimits, true);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -511,7 +616,7 @@ window.SpeedLimitLayer = function(params) {
     drawSpeedLimits(speedLimits);
   };
 
-  var drawSpeedLimits = function(speedLimits) {
+  var drawSpeedLimits = function(speedLimits, showHistorySpeedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
       return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
@@ -521,13 +626,20 @@ window.SpeedLimitLayer = function(params) {
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
-    vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
-    vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
-    vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
+    var vectorLayerToUse;
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerHistory.setVisibility(true);
+      vectorLayerToUse = vectorLayerHistory;
+    } else {
+      vectorLayerToUse = vectorLayer;
+    }
+    vectorLayerToUse.addFeatures(lineFeatures(lowSpeedLimits));
+    vectorLayerToUse.addFeatures(dottedLineFeatures(highSpeedLimits));
+    vectorLayerToUse.addFeatures(limitSigns(speedLimitsWithAdjustments));
 
     if (selectedSpeedLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+      var feature = _.find(vectorLayerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
       if (feature) {
         selectControl.select(feature);
       }
@@ -574,9 +686,20 @@ window.SpeedLimitLayer = function(params) {
     });
   };
 
-  var reset = function() {
+  var reset = function(showHistorySpeedLimits) {
+    var vectorLayerToUse;
+    var styleMapToUse;
+
+    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
+      vectorLayerToUse = vectorLayerHistory;
+      styleMapToUse = historyStyleMap;
+    } else {
+      vectorLayerToUse = vectorLayer;
+      styleMapToUse = browseStyleMap;
+    }
+
     selectControl.unselectAll();
-    vectorLayer.styleMap = browseStyleMap;
+    vectorLayerToUse.styleMap = styleMapToUse;
     speedLimitCutter.deactivate();
   };
 
@@ -589,6 +712,7 @@ window.SpeedLimitLayer = function(params) {
   var hideLayer = function(map) {
     reset();
     vectorLayer.setVisibility(false);
+    vectorLayerHistory.setVisibility(false);
     indicatorLayer.setVisibility(false);
     me.stop();
     me.hide();
