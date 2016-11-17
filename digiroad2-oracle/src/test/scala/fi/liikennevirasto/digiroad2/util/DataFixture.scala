@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -533,7 +534,7 @@ object DataFixture {
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         val stopLiviId = stop.propertyData.
-          find(property => property.publicId == massTransitStopService.LiViIdentifierPublicId).
+          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
           flatMap(property => property.values.headOption).map(p => p.propertyValue)
 
         if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {

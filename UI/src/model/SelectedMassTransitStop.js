@@ -1,5 +1,5 @@
 (function(selectedMassTransitStop) {
-  selectedMassTransitStop.initialize = function(backend) {
+  selectedMassTransitStop.initialize = function(backend, roadCollection) {
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -327,6 +327,12 @@
       }
     };
 
+    var getRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
     var deleteMassTransitStop = function (poistaSelected) {
       if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
@@ -360,6 +366,42 @@
       }
     }
 
+    function isAdminClassState(properties){
+      if(!properties)
+        properties = getProperties();
+
+      var adminClassProperty = _.find(properties, function(property){
+        return property.publicId === 'linkin_hallinnollinen_luokka';
+      });
+
+      if (adminClassProperty && !_.isEmpty(adminClassProperty.values))
+        return _.some(adminClassProperty.values, function(value){ return value.propertyValue === '1'; });
+
+      //Get administration class from roadlink
+      var stopRoadlink = getRoadLink();
+      return stopRoadlink ? (stopRoadlink.getData().administrativeClass === 'State') : false;
+    }
+
+    function isAdministratorHSL(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='3'; });
+      });
+    }
+
+    function isAdministratorELY(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='2'; });
+      });
+    }
+
     return {
       close: close,
       save: save,
@@ -383,8 +425,11 @@
       pikavuoroIsAlone: pikavuoroIsAlone,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
-      deleteMassTransitStop: deleteMassTransitStop
-
+      deleteMassTransitStop: deleteMassTransitStop,
+      getRoadLink: getRoadLink,
+      isAdminClassState: isAdminClassState,
+      isAdministratorELY: isAdministratorELY,
+      isAdministratorHSL: isAdministratorHSL
     };
   };
 
