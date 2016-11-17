@@ -2,10 +2,10 @@
   root.LinkPropertyLayerStyles = function(roadLayer) {
 
     var unknownRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 1})
     ];
     var unknownRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 1})
     ];
 
     var FloatingRoadAddressAnomalyRules = [

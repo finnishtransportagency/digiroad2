@@ -1,15 +1,12 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.util.Track.LeftSide
-import fi.liikennevirasto.digiroad2.{FeatureClass, _}
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
@@ -337,7 +334,7 @@ object RoadType {
   case object FerryRoad extends RoadType { def value = 2; def displayValue = "Lauttaväylä yleisellä tiellä" }
   case object MunicipalityStreetRoad extends RoadType { def value = 3; def displayValue = "Kunnan katuosuus" }
   case object PublicUnderConstructionRoad extends RoadType { def value = 4; def displayValue = "Yleisen tien työmaa" }
-  case object PrivateRoadType extends RoadType { def value = 5; def displayValue = "yksityistie" }
+  case object PrivateRoadType extends RoadType { def value = 5; def displayValue = "Yksityistie" }
   case object UnknownOwnerRoad extends RoadType { def value = 9; def displayValue = "Omistaja selvittämättä" }
 }
 
