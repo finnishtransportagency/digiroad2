@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkSer
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
-import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, LinkRoadAddressCalculator}
+import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
@@ -36,13 +36,17 @@ object DataFixture {
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
       val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
-      val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-      assert(adjusted.size == roads.size) // Must not lose any
-      val (changed, unchanged) = adjusted.partition(ra =>
-        roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-      )
-      println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-      changed.foreach(addr => RoadAddressDAO.update(addr, None))
+      try {
+        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+        assert(adjusted.size == roads.size) // Must not lose any
+        val (changed, unchanged) = adjusted.partition(ra =>
+          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+        )
+        println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+        changed.foreach(addr => RoadAddressDAO.update(addr, None))
+      } catch {
+        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
+      }
       partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
     }
   }
