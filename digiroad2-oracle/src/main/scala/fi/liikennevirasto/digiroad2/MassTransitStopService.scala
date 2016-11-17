@@ -724,39 +724,3 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 }
-
-object MassTransitStopOperations {
-  val StateOwned: Set[AdministrativeClass] = Set(State)
-  val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
-
-  /**
-    * Check for administrative class change: road link has differing owner other than Unknown.
-    *
-    * @param administrativeClass MassTransitStop administrative class
-    * @param roadLinkAdminClassOption RoadLink administrative class
-    * @return true, if mismatch (owner known and non-compatible)
-    */
-  private def administrativeClassMismatch(administrativeClass: AdministrativeClass,
-                                          roadLinkAdminClassOption: Option[AdministrativeClass]) = {
-    val rlAdminClass = roadLinkAdminClassOption.getOrElse(Unknown)
-    val mismatch = StateOwned.contains(rlAdminClass) && OtherOwned.contains(administrativeClass) ||
-      OtherOwned.contains(rlAdminClass) && StateOwned.contains(administrativeClass)
-    administrativeClass != Unknown && roadLinkAdminClassOption.nonEmpty && mismatch
-  }
-
-  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-
-    val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
-    if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
-      (true, Some(FloatingReason.RoadOwnerChanged))
-    else
-      (false, None)
-  }
-
-  def floatingReason(administrativeClass: AdministrativeClass, roadLink: RoadLinkLike): Option[String] = {
-    if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
-      Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
-    else
-      None
-  }
-}

@@ -673,7 +673,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Create new mass transit stop with HSL administration and 'state' road link") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
@@ -712,7 +712,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Create new mass transit stop with HSL administration and 'state' road link and turn it into a municipality stop") {
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus)
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
@@ -720,7 +720,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
         SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))))
       val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      when(mockVVHClient.fetchByLinkId(123l)).thenReturn(Some(vvhRoadLink))
+      when(mockRoadLinkService.getRoadLinkFromVVH(123l)).thenReturn(Some(vvhRoadLink).map(toRoadLink))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
 
       val newProperties = Set(
