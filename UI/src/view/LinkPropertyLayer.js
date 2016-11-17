@@ -36,12 +36,6 @@
       layerStyleMapProvider = provider;
     };
 
-    //TODO delete this function
-    var setLayerSpecificStyleMap = function(renderIntent, styleMap) {
-      layerStyleMap = styleMap('history')[renderIntent];
-      activateLayerStyleMap();
-    };
-
     var activateLayerStyleMap = function() {
       vectorLayer.styleMap = layerStyleMap || new RoadStyles().roadStyles;
     };
@@ -58,9 +52,12 @@
 
     var usingLayerSpecificStyleProvider = function(action) {
       if (!_.isUndefined(layerStyleMapProvider)) {
-        vectorLayer.styleMap = layerStyleMap = layerStyleMapProvider();
+          layerStyleMap = layerStyleMapProvider();
       }
-      action();
+      if(layerStyleMap){
+        vectorLayer.styleMap = layerStyleMap;
+        action();
+      }
     };
 
     var getSelectedFeatures = function (){
@@ -169,19 +166,13 @@
     };
 
     var minimumContentZoomLevel = function() {
-      /*
-      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
-        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
-      }
-      */
       return zoomlevels.minZoomForRoadLinks;
     };
 
     var mapMovedHandler = function(mapState) {
       if (mapState.zoom < minimumContentZoomLevel()) {
         vectorLayer.removeAllFeatures();
-        //TODO reset only history
-        roadCollection.reset();
+        roadCollection.resetHistory();
       }
       handleRoadsVisibility();
     };
@@ -192,13 +183,30 @@
       }
     };
 
+    var showLayer = function(){
+      vectorLayer.setVisibility(true);
+    };
+
+    var hideLayer = function(){
+      vectorLayer.setVisibility(false);
+    };
+
     vectorLayer = new OpenLayers.Layer.Vector('historyDataLayer', {transparent: "true"}, {isBaseLayer: false});
     vectorLayer.setVisibility(true);
     map.addLayer(vectorLayer);
     var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
     map.setLayerIndex(vectorLayer, roadLinksLayerIndex + 1);
-
+    vectorLayer.setVisibility(false);
     map.addControl(selectControl);
+
+    eventbus.on('roadLinkHistory:show', function(){
+      roadCollection.fetchHistory(map.getExtent());
+      showLayer();
+    });
+
+    eventbus.on('roadLinkHistory:hide', function(){
+      hideLayer();
+    });
 
     eventbus.on('road-type:selected', toggleRoadType, this);
 
@@ -224,7 +232,9 @@
       reselectRoadLink: reselectRoadLink,
       selectFeatureRoadLink: selectFeatureRoadLink,
       unselectFeatureRoadLink: unselectFeatureRoadLink,
-      selectRoadLinkByLinkId: selectRoadLinkByLinkId
+      selectRoadLinkByLinkId: selectRoadLinkByLinkId,
+      show: showLayer,
+      hide: hideLayer
     };
   };
 
@@ -240,7 +250,10 @@
     var historyLayer = new RoadHistoryLayer(map, roadCollection, selectedLinkProperty);
     var linkPropertyHistoryLayerStyles = LinkPropertyLayerStyles(historyLayer);
     historyLayer.setLayerSpecificStyleMapProvider(layerName, function(){
-      return linkPropertyHistoryLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), 'history')[currentRenderIntent];
+      var styleProvider = linkPropertyHistoryLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), 'history');
+      if(styleProvider)
+        return styleProvider[currentRenderIntent];
+      return undefined;
     });
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
@@ -293,6 +306,7 @@
       updateMassUpdateHandlerState();
       doubleClickSelectControl.activate();
     };
+
     this.deactivateSelection = function() {
       updateMassUpdateHandlerState();
       doubleClickSelectControl.deactivate();
@@ -337,8 +351,6 @@
 
     this.refreshView = function() {
       roadCollection.fetch(map.getExtent());
-      //TODO control the fetch depending on the checkbox
-      roadCollection.fetchHistory(map.getExtent());
     };
 
     this.isDirty = function() {
@@ -428,6 +440,7 @@
         historyLayer.selectRoadLinkByLinkId(link.linkId);
       });
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
+      eventListener.listenTo(eventbus, 'roadLinks:historyFetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
@@ -487,6 +500,7 @@
     var hideLayer = function() {
       unselectRoadLink();
       historyLayer.unselectFeatureRoadLink();
+      historyLayer.clear();
       me.stop();
       me.hide();
     };

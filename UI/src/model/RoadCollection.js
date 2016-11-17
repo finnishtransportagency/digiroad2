@@ -161,6 +161,11 @@
 
     this.reset = function(){
       roadLinkGroups = [];
+      roadLinkGroupsHistory = [];
+    };
+
+    this.resetHistory = function(){
+      roadLinkGroupsHistory = [];
     };
   };
 })(this);

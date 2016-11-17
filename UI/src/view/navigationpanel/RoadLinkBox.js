@@ -133,18 +133,26 @@
       elements.expanded.find('input[name="dataset"]').change(function(event) {
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
+
+        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        eventbus.trigger('roadLinkHistory:hide');
+
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
         linkPropertiesModel.setDataset(datasetName);
 
-        legendContainer.find('input[type="checkbox"]').on('change', function(event) {
-          var eventTarget = $(event.currentTarget);
-          if(eventTarget.prop('checked')){
-            eventbus.trigger('roadLinkHistory:show');
-          } else {
-            eventbus.trigger('roadLinkHistory:hide');
-          }
-        });
+        bindHistoryEventHandlers(legendContainer);
+      });
+    };
+
+    var bindHistoryEventHandlers = function(checkboxContainer){
+      checkboxContainer.find('input[type="checkbox"]').on('change', function(event) {
+        var eventTarget = $(event.currentTarget);
+        if(eventTarget.prop('checked')){
+          eventbus.trigger('roadLinkHistory:show');
+        } else {
+          eventbus.trigger('roadLinkHistory:hide');
+        }
       });
     };
 
@@ -162,6 +170,8 @@
 
     elements.expanded.find('.legend-container').append(functionalClassLegend);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+
+    bindHistoryEventHandlers(elements.expanded);
 
     function show() {
       editModeToggle.toggleEditMode(applicationModel.isReadOnly());
