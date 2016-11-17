@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.pointasset.oracle.DirectionalTrafficSign
 import org.json4s._
@@ -50,24 +51,50 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val testRoadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
-  val testObstacleService = new ObstacleService(testRoadLinkService)
-  val testRailwayCrossingService = new RailwayCrossingService(testRoadLinkService)
-  val testDirectionalTrafficSignService = new DirectionalTrafficSignService(testRoadLinkService)
-  val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, testRoadLinkService)
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
+
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.getRoadLinkFromVVH(1l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkFromVVH(2l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkFromVVH(7478l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
+    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]]))
+    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.getRoadLinkFromVVH(1611071l))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkFromVVH(1611353))
+    .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611071l, 1611070l, 1611069l)))
+    .thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
+    .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+  val testObstacleService = new ObstacleService(mockRoadLinkService)
+  val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
+  val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)
+  val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
-    override val roadLinkService: RoadLinkService = testRoadLinkService
+    override val roadLinkService: RoadLinkService = mockRoadLinkService
     override val tierekisteriEnabled = false
   }
-  val testLinearAssetService = new LinearAssetService(testRoadLinkService, new DummyEventBus)
+  val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
+  addServlet(new Digiroad2Api(mockRoadLinkService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
