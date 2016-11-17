@@ -6,7 +6,7 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
 
   def partition(links: Seq[RoadAddressLink]): Seq[Seq[RoadAddressLink]] = {
     val linkGroups = links.groupBy { link => (
-      link.anomaly.value, link.roadNumber, link.roadPartNumber, link.trackCode
+      link.anomaly.value, link.roadNumber, link.roadPartNumber, link.trackCode, link.roadLinkType.value
       )
     }
     val clusters = for (linkGroup <- linkGroups.values.toSeq;

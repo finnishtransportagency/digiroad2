@@ -225,12 +225,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
-    val roadLink = vvhClient.fetchVVHRoadlink(linkId).getOrElse(throw new NoSuchElementException)
+    val roadLink = vvhClient.fetchByLinkId(linkId).getOrElse(throw new NoSuchElementException)
     massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
   }
 
   private def validateUserRights(linkId: Long) = {
-    val authorized: Boolean = vvhClient.fetchVVHRoadlink(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+    val authorized: Boolean = vvhClient.fetchByLinkId(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -689,7 +689,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     manoeuvreIds.foreach { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -703,7 +703,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchVVHRoadlink(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
@@ -791,7 +791,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- vvhClient.fetchVVHRoadlink(asset.linkId)) {
+    for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass))
     }

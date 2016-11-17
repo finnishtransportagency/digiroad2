@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Locale
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadAddressService
@@ -55,7 +57,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       val runningSum = segments.scanLeft(0.0 + startAddr)((current, points) => current + points._1.distance2DTo(points._2) * factor)
       val mValuedGeometry = geometry.zip(runningSum.toList)
       val wktString = mValuedGeometry.map {
-        case (p, newM) => p.x +" " + p.y + " " + p.z + " " + Math.round(newM)
+        case (p, newM) => "%.3f %.3f %.3f %.3f".formatLocal(Locale.US, p.x, p.y, p.z, newM)
       }.mkString(", ")
       "geometryWKT" -> ("LINESTRING ZM (" + wktString + ")")
     }

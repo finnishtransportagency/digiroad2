@@ -272,7 +272,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
     stops.foreach { case(id, administrativeClass) =>
-      when(mockVVHClient.fetchVVHRoadlink(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockVVHClient.fetchByLinkId(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]

@@ -25,11 +25,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
-    when(mockVVHClient.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
+    when(mockVVHClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHClient.fetchVVHRoadlink(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new OracleLinearAssetDao(mockVVHClient)
@@ -38,7 +38,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.fetchVVHRoadlink(linkId).get.geometry
+    val geometry = vvhClient.fetchByLinkId(linkId).get.geometry
     GeometryUtils.truncateGeometry(geometry, startMeasure, endMeasure)
   }
 

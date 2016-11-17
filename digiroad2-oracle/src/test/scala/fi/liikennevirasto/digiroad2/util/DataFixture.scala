@@ -373,7 +373,7 @@ object DataFixture {
 
     if(assets.length > 0){
 
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -403,7 +403,7 @@ object DataFixture {
 
     if(assets.length > 0){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -464,7 +464,7 @@ object DataFixture {
 
     if (assets.length > 0) {
 
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -528,7 +528,7 @@ object DataFixture {
       persistedStop = massTransitStopService.getByMunicipality(municipality, false)
 
       //Get all road links from VVH
-      val roadLinks = vvhClient.fetchVVHRoadlinks(persistedStop.map(_.linkId).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
 
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
