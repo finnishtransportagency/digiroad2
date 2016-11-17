@@ -106,6 +106,12 @@
       };
     });
 
+    this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/speedlimits/history?bbox=' + boundingBox
+      };
+    });
+
     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
         contentType: "application/json",

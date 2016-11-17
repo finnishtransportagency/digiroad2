@@ -604,6 +604,36 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/speedlimits/history") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      speedLimitService.getHistory(boundingRectangle, municipalities).map { linkPartition =>
+        linkPartition.map { link =>
+          Map(
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "linkId" -> link.linkId,
+            "sideCode" -> link.sideCode,
+            "trafficDirection" -> link.trafficDirection,
+            "value" -> link.value.map(_.value),
+            "points" -> link.geometry,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime
+          )
+        }
+      }
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/speedlimits/unknown") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {

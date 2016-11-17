@@ -87,6 +87,19 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Returns speed limits history for Digiroad2Api /history speedlimits GET endpoint.
+    */
+  def getHistory(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksHistoryFromVVH(bounds, municipalities)
+    withDynTransaction {
+      val (filledTopology, roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, Seq())
+      LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
+      //TODO: Above, we leave a start for the method to do the get of the History for the SpeedLimts
+      //TODO: Need to be verified the method "getFilledTopologyAndRoadLinks" because it's using the SpeedLimit DAO, and we will have because of the floating clause and valid_to > CURRENT_TIMESTAMP, need to be review.
+    }
+  }
+
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
