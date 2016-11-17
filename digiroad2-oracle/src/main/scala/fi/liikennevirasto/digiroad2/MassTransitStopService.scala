@@ -725,18 +725,12 @@ trait MassTransitStopService extends PointAssetOperations {
   def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[RoadLinkLike], overrideLiviId: Option[String]) = {
     if (operation != Operation.Noop) {
       val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
-      val road = roadLink.flatMap { rl =>
-        val roadNumber =
-          rl match {
-            case link: RoadLink => link.attributes.get("ROADNUMBER")
-            case link: VVHRoadlink => link.attributes.get("ROADNUMBER")
-            case _ => None
-          }
-        roadNumber match {
+      val road = roadLink.flatMap(_.roadNumber
+         match {
           case Some(str) => Try(str.toString.toInt).toOption
           case _ => None
         }
-      }
+      )
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, road)
 
       val expire = if(operation == Operation.Expire) Some(new Date()) else None
