@@ -36,8 +36,11 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  }
   lazy val obstacleService: ObstacleService = {
-    new ObstacleService(vvhClient)
+    new ObstacleService(roadLinkService)
   }
   lazy val tierekisteriClient: TierekisteriClient = {
     new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
@@ -49,15 +52,14 @@ object DataFixture {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override def vvhClient: VVHClient = DataFixture.vvhClient
       override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriEnabled = true
     }
-    new MassTransitStopServiceWithDynTransaction(eventbus)
+    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
 
   def flyway: Flyway = {

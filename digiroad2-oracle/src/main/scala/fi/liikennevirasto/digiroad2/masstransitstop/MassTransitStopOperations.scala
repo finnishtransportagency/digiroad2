@@ -1,11 +1,9 @@
 package fi.liikennevirasto.digiroad2.masstransitstop
 
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
-import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedMassTransitStop, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedMassTransitStop}
 
-/**
-  * Created by venholat on 2.11.2016.
-  */
 object MassTransitStopOperations {
   val StateOwned: Set[AdministrativeClass] = Set(State)
   val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
@@ -40,7 +38,7 @@ object MassTransitStopOperations {
     administrativeClass != Unknown && roadLinkAdminClassOption.nonEmpty && mismatch
   }
 
-  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[VVHRoadlink]): (Boolean, Option[FloatingReason]) = {
+  def isFloating(administrativeClass: AdministrativeClass, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
 
     val roadLinkAdminClass = roadLinkOption.map(_.administrativeClass)
     if (administrativeClassMismatch(administrativeClass, roadLinkAdminClass))
@@ -49,7 +47,7 @@ object MassTransitStopOperations {
       (false, None)
   }
 
-  def floatingReason(administrativeClass: AdministrativeClass, roadLink: VVHRoadlink): Option[String] = {
+  def floatingReason(administrativeClass: AdministrativeClass, roadLink: RoadLinkLike): Option[String] = {
     if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
       Some("Road link administrative class has changed from %d to %d".format(roadLink.administrativeClass.value, administrativeClass.value))
     else
@@ -152,5 +150,4 @@ object MassTransitStopOperations {
       .flatMap(_.values).map(_.propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
-
 }

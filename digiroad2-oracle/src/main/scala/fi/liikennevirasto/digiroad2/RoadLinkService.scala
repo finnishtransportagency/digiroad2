@@ -451,11 +451,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Returns road link by link id. Used by Digiroad2Api.updatePointAsset, Digiroad2Api.createNewPointAsset, ManoeuvreService.isValidManoeuvre and SpeedLimitService.toSpeedLimit.
     */
-  def getRoadLinkFromVVH(linkId: Long): Option[RoadLink] = {
+  def getRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(Set(linkId))
-    withDynTransaction {
-      enrichRoadLinksFromVVH(vvhRoadLinks)
-    }.headOption
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }.headOption
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
   }
 
   /**
