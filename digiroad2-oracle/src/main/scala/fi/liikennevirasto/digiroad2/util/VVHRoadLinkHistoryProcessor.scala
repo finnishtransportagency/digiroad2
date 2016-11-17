@@ -6,7 +6,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Class to filter history road links.
+  * This class is used to filter history road links from VVH. Filtered history links are used to show history information on map (DROTH-10).
   *
   * @param includeCurrentLinks If true, compare history with current road links within tolerance
   * @param minimumChange Tolerance minimum value
@@ -14,6 +14,15 @@ import scala.collection.mutable.ArrayBuffer
   */
 class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
 
+  /**
+    * This method returns the latest history links that:
+    * - have been deleted
+    * - have been changed and are within tolerance (when includeCurrentLinks flag is set as true)
+    *
+    * @param historyRoadLinks All history road links
+    * @param roadLinks Current road links
+    * @return Filtered history links
+    */
   def process(historyRoadLinks:Seq[VVHRoadlink], roadLinks :Seq[VVHRoadlink]) : Seq[VVHRoadlink] ={
     def endDate(vvhRoadlink: VVHRoadlink) =
       vvhRoadlink.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
@@ -26,13 +35,17 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
           None
       }
     }
+
     def hasNewLinkId(vvhRoadlink: VVHRoadlink) = newLinkId(vvhRoadlink).isEmpty
 
-    val lastHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).map(_._2)
+    // If several history link items have the same linkId, pick the one with latest endDate
+    val latestHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).map(_._2)
 
-    val deletedRoadlinks = lastHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
+    // Deleted = history link has newLinkId and it's linkId is not found in current links
+    val deletedRoadlinks = latestHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
 
-    val changedRoadlinks = lastHistory.filter{
+    // Changed = linkId of history link is found in current links
+    val changedRoadlinks = latestHistory.filter{
       rl =>
         val roadlink = roadLinks.find(r => Some(r.linkId) == newLinkId(rl) || (r.linkId == rl.linkId && includeCurrentLinks))
         roadlink.exists(r =>
@@ -45,11 +58,11 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
   }
 
   /**
-    * Try to find newest history links within tolerance of min 1 and max 50 meters to current road links
+    * This method is an old version of the process function. It can be used if filtering with date values is needed later.
     *
     * @param historyLinks
     * @param currentLinks
-    * @return Filtered history links
+    * @return
     */
   def process1(historyLinks: Seq[VVHRoadlink], currentLinks: Seq[VVHRoadlink]) : Seq[VVHRoadlink] = {
     val groupedRoadLinksList = historyLinks.groupBy(_.linkId).toSeq.sortBy(_._1)
