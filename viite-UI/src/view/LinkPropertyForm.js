@@ -58,6 +58,11 @@
       [5, 'Jatkuva']
     ];
 
+    var floatingText = [
+      [0, 'Ei'],
+      [-1, 'Kyllä']
+    ];
+
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -77,6 +82,16 @@
       if(selectedLinkProperty.count() == 1){
         return mmlId;
       }
+    };
+
+    var getFloatingType = function(floatingValue) {
+      var floatingType =  _.find(floatingText, function (f) {
+        return f[0] === floatingValue;
+      });
+      if(typeof floatingType == 'undefined'){
+        floatingType = [0, 'Ei'];
+      }
+      return floatingType && floatingType[1];
     };
 
     var dynamicField = function(labelText){
@@ -146,6 +161,7 @@
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
+        staticField('KELLUVA', 'floating') +
         endDateField +
         '</div>' +
         '</div>' +
@@ -198,6 +214,7 @@
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.endDate = linkProperties.endDate || '';
         linkProperties.roadType = linkProperties.roadType || '';
+        linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
 
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
