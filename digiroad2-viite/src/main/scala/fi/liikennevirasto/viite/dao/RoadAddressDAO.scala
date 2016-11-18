@@ -355,62 +355,6 @@ object RoadAddressDAO {
     }
   }
 
-  def getLrmPositionByLinkId(linkId: Long) = {
-    sql"""
-       select lrm.id, lrm.start_measure, lrm.end_measure
-       from lrm_position lrm, road_address rda
-       where lrm.id = rda.lrm_position_id and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
-  }
-
-  def getLrmPositionMeasures(linkId: Long) = {
-    sql"""
-       select lrm.id, lrm.start_measure, lrm.end_measure
-       from lrm_position lrm, road_address rda
-       where lrm.id = rda.lrm_position_id
-       and (lrm.start_measure != rda.start_addr_m or lrm.end_measure != rda.end_addr_m) and lrm.link_id = $linkId""".as[(Long, Double, Double)].list
-  }
-
-  def getLrmPositionRoadParts(linkId: Long, roadPart: Long) = {
-    sql"""
-       select lrm.id, lrm.start_measure, lrm.end_measure
-       from lrm_position lrm, road_address rda
-       where lrm.id = rda.lrm_position_id
-       and lrm.link_id = $linkId and rda.road_part_number!= $roadPart""".as[(Long, Double, Double)].list
-  }
-
-  def getAllRoadAddressesByRange(startId: Long, returnAmount: Long) = {
-    val query =
-      s"""
-       Select * From (
-       select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
-       pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
-        from road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-       join lrm_position pos on ra.lrm_position_id = pos.id
-       Where ra.id > ${startId} and t.id < t2.id
-       Order By ra.Id asc ) Where rownum <= ${returnAmount}
-      """
-    queryList(query)
-  }
-
-
-  /**
-    * Used to return the total ammount of road addresses (a road address is the junction between road_address table and lrm_position)
-    *
-    * @return The ammount of road addresses
-    */
-  def getRoadAddressAmount = {
-    sql"""
-       select count(*)
-              from road_address ra
-              where floating='0'
-                    AND (end_date < sysdate OR end_date IS NULL)
-      """.as[Long].firstOption.get
-  }
-
   /**
     * Marks the road address identified by the supplied Id as eiher floating or not
     *

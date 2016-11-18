@@ -271,24 +271,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
-  //TODO: Priority order for anomalies. Currently this is unused
-  def getAnomalyCodeByLinkId(linkId: Long, roadPart: Long): Anomaly = {
-    //roadlink dont have road address
-    if (RoadAddressDAO.getLrmPositionByLinkId(linkId).length < 1) {
-      return Anomaly.NoAddressGiven
-    }
-    //road address do not cover the whole length of the link
-    //TODO: Check against link geometry length, using tolerance and GeometryUtils that we cover the whole link
-    else if (RoadAddressDAO.getLrmPositionMeasures(linkId).map(x => Math.abs(x._3 - x._2)).sum > 0) {
-      return Anomaly.NotFullyCovered
-    }
-    //road address having road parts that dont matching
-    else if (RoadAddressDAO.getLrmPositionRoadParts(linkId, roadPart).nonEmpty) {
-      return Anomaly.Illogical
-    }
-    Anomaly.None
-  }
-
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
     withDynTransaction {
       // TODO: add geometry if it is somehow available
