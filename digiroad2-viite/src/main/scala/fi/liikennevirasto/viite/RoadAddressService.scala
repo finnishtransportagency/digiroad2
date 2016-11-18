@@ -88,25 +88,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val complementedRoadLinks = roadLinks ++ complementaryLinks
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
-    val addresses = withDynTransaction {
-      RoadAddressDAO.fetchByLinkId(linkIds).groupBy(_.linkId)
+    println("roadlinks " + roadLinks.size)
+    val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
+      RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating = false)._1.partition(_.floating)
     }
 
-    val floatingAddresses = withDynTransaction{
-      RoadAddressDAO.queryFloatingByLinkId(linkIds).groupBy(_.linkId)
-    }
+    val floating = floatingAddresses.groupBy(_.linkId)
+    val addresses = nonFloatingAddresses.groupBy(_.linkId)
 
     val floatingHistoryRoadLinks = withDynTransaction {
-      roadLinkService.getViiteRoadLinksHistoryFromVVH(floatingAddresses.keySet)
+      roadLinkService.getViiteRoadLinksHistoryFromVVH(floating.keySet)
     }
 
     val floatingViiteRoadLinks = floatingHistoryRoadLinks.map {rl =>
-    val ra = floatingAddresses.getOrElse(rl.linkId, Seq())
+      val ra = floating.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
-    }
+    }.toMap
 
 
-    val missingLinkIds = linkIds -- addresses.keySet
+    val missingLinkIds = linkIds -- floating.keySet
+
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
@@ -157,10 +158,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     changeSet.missingRoadAddresses
   }
 
-//  def buildRoadAddressLink(roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-//    roadAddrSeq.map(RoadAddressLinkBuilder.build)
-//  }
-//
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     roadAddrSeq.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
