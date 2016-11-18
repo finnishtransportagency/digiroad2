@@ -2,12 +2,12 @@
   root.LinkPropertyMarker = function(data) {
     var me = this;
 
-    this.drawMarkers = function(roadLinks) {
+    var drawMarkers = function(roadLinks) {
       var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
         });
       var features = _.map(floatingRoadMarkers, function(floatlink) {
-        var marker = createMarker(floatlink);
+        return createMarker(floatlink);
       });
       return features;
     };
@@ -41,39 +41,22 @@
     };
 
     var renderDefaultState = function(box, roadlink) {
-      // var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
-      // var groupIndex = findGroupIndexForAsset(filteredGroup, data);
-      var defaultMarker = $('<div class="bus-basic-marker" />')
-      //.addClass(data.floating ? 'floating' : '')
-        .append($('<div class="images" />').append(floatingImage()));
-        // .addClass(groupIndex === 0 && 'root');
+      var defaultMarker = $('<div class="bus-basic-marker root" />')
+        .append($('<div class="images" />').append(floatingImage()))
       $(box.div).html(defaultMarker);
       $(box.div).removeClass('selected-asset');
-      setYPositionForAssetOnGroup(box, roadlink);
+      $(box.div).css("-webkit-transform", "translate(0px,0px)")
+        .css("transform", "translate(0px,0px)");
     };
 
     var floatingImage = function() {
-        // return '<img src="images/link-properties/flag-floating.svg">';
-      return '<img src="images/mass-transit-stops/1.png">';
+      return '<img src="images/link-properties/flag-floating.svg">';
+      //return '<img src="images/mass-transit-stops/1.png">';
     };
 
-    var setYPositionForAssetOnGroup = function(box, roadlink) {
-      // var yPositionInGroup = -1 * calculateOffsetForMarker(roadlink);
-      $(box.div).css("-webkit-transform", "translate(0px," + 20 + "px)")
-        .css("transform", "translate(0px," + 20 + "px)");
+    return {
+      drawMarkers: drawMarkers,
+      createMarker: createMarker
     };
-
-    var calculateOffsetForMarker = function(dataForCalculation) {
-      //var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, dataForCalculation);
-
-      return _.chain(filteredGroup)
-        .take(groupIndex)
-        .map(function(x) { return x.stopTypes.length * 17/*IMAGE_HEIGHT*/; })
-        .map(function(x) { return 8 /*GROUP_ASSET_PADDING*/ + x; })
-        .reduce(function(acc, x) { return acc + x; }, 0)
-        .value();
-    };
-
   };
 }(this));

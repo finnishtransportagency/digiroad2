@@ -10,6 +10,8 @@
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
     var roadLinkLayer = new OpenLayers.Layer.Boxes(layerName);
+    map.addLayer(roadLinkLayer);
+    roadLinkLayer.setVisibility(true);
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -71,7 +73,14 @@
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
-      roadLinkLayer.addMarker(cachedLinkPropertyMarker.drawMarkers(roadLinks));
+
+      var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
+        return roadlink.roadLinkType === -1;
+      });
+      _.each(floatingRoadMarkers, function(floatlink) {
+        roadLinkLayer.addMarker(cachedLinkPropertyMarker.createMarker(floatlink));
+      });
+
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
@@ -258,6 +267,7 @@
 
     var redrawSelected = function() {
       roadLayer.layer.removeFeatures(getSelectedFeatures());
+      // roadLayer.layer.clearMarkers();
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
