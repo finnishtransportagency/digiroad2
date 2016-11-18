@@ -195,7 +195,7 @@
     vectorLayer.setVisibility(true);
     map.addLayer(vectorLayer);
     var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-    map.setLayerIndex(vectorLayer, roadLinksLayerIndex + 1);
+    map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
     vectorLayer.setVisibility(false);
     map.addControl(selectControl);
 
