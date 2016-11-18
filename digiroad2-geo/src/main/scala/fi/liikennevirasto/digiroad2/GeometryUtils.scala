@@ -12,11 +12,7 @@ object GeometryUtils {
   }
 
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    val workGeometry =
-    if(startMeasure < endMeasure) {
-       geometry.reverse
-    } else geometry
-    truncateGeometry(workGeometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
+    truncateGeometry(geometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
