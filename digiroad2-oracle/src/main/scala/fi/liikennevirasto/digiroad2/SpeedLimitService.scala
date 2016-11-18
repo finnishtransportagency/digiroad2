@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, LinearAssetUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -47,8 +47,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo]) = {
-    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+  private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {
+    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks, showSpeedLimitsHistory)
     val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(change, roadLinks)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
 
@@ -93,10 +93,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def getHistory(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksHistoryFromVVH(bounds, municipalities)
     withDynTransaction {
-      val (filledTopology, roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, Seq())
+      val (filledTopology, roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, Seq(), true)
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
-      //TODO: Above, we leave a start for the method to do the get of the History for the SpeedLimts
-      //TODO: Need to be verified the method "getFilledTopologyAndRoadLinks" because it's using the SpeedLimit DAO, and we will have because of the floating clause and valid_to > CURRENT_TIMESTAMP, need to be review.
     }
   }
 

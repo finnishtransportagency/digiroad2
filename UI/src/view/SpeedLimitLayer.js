@@ -510,15 +510,20 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
-    eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+  };
+
+  var showSpeedLimitsHistory = function() {
+    collection.fetchHistory(map.getExtent());
   };
 
   var hideSpeedLimitsHistory = function() {
     vectorLayerHistory.setVisibility(false);
   };
 
-  var showSpeedLimitsHistory = function (historySpeedLimitChains) {
+  var drawSpeedLimitsHistory = function (historySpeedLimitChains) {
     map.addLayer(vectorLayerHistory);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
     drawSpeedLimits(historySpeedLimits, true);

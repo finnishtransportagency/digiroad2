@@ -187,6 +187,23 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
   }
 
+  private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[Long]) = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,
+        a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
+           from asset a
+           join asset_link al on a.id = al.asset_id
+           join lrm_position pos on al.position_id = pos.id
+           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+           join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+           join enumerated_value e on s.enumerated_value_id = e.id
+           join  #$idTableName i on i.id = pos.link_id
+           where a.asset_type_id = 20 and floating = 0 AND
+           (valid_to IS NOT NULL AND valid_to < CURRENT_TIMESTAMP) """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
+    }
+  }
+
   /**
     * Iterates a set of asset ids with a property id and returns linear assets. Used by LinearAssetService.getPersistedAssetsByIds,
     * LinearAssetService.split and LinearAssetService.separate.
@@ -402,9 +419,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Returns only car traffic roads as a topology and speed limits that match these road links.
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink]): (Seq[SpeedLimit],  Seq[RoadLink]) = {
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[SpeedLimit],  Seq[RoadLink]) = {
     val topology = roadLinks.filter(_.isCarTrafficRoad)
-    val speedLimitLinks = fetchSpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+    var speedLimitLinks : Seq[SpeedLimit] = Seq()
+    if (showSpeedLimitsHistory){
+      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+    }else{
+      speedLimitLinks = fetchSpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+    }
     (speedLimitLinks, topology)
   }
 

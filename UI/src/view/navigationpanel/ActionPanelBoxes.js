@@ -81,7 +81,7 @@
     }).join('');
     var speedLimitHistoryCheckBox = [
       '<div class="check-box-container">',
-          '<input name="history-checkbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+          '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
     '</div>'].join('');
 
     var expandedTemplate = [
@@ -132,6 +132,15 @@
     function hide() {
       element.hide();
     }
+
+    elements.expanded.find('input[type=checkbox]').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      if (eventTarget.prop('checked')) {
+        eventbus.trigger('speedLimits:showSpeedLimitsHistory');
+      } else {
+        eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
+      }
+    });
 
     return {
       title: 'Nopeusrajoitus',
