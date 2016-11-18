@@ -157,6 +157,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     changeSet.missingRoadAddresses
   }
 
+//  def buildRoadAddressLink(roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+//    roadAddrSeq.map(RoadAddressLinkBuilder.build)
+//  }
+//
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     roadAddrSeq.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
@@ -170,20 +174,36 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
    })
   }
 
+  private def combineGeom(roadAddresses: Seq[RoadAddress]) = {
+    if (roadAddresses.length == 1) {
+      roadAddresses.head
+    } else {
+      val max = roadAddresses.maxBy(ra => ra.endMValue)
+      val min = roadAddresses.minBy(ra => ra.startMValue)
+      min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
+        endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue),
+        startMValue = min.startMValue, endMValue = max.endMValue,
+        geom = Seq(min.geom.head, max.geom.last))
+    }
+  }
+
   def getRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
     val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits).groupBy(_.linkId)
+      RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits).groupBy(_.linkId)
     }
-    val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
-    roadLinks.flatMap { rl =>
-      val ra = addresses.getOrElse(rl.linkId, List())
-      buildRoadAddressLink(rl, ra, Seq())
-    }
+
+    val vvhRoadLinks = roadLinkService.getRoadLinksFromVVH(addresses.keySet)
+    val combined = addresses.mapValues(combineGeom)
+    val roadLinks = vvhRoadLinks.map( rl => rl -> combined(rl.linkId)).toMap
+
+    roadLinks.flatMap { case (rl, ra) =>
+      buildRoadAddressLink(rl, Seq(ra), Seq())
+    }.toSeq
   }
 
   def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
     val addresses = withDynTransaction {
-      RoadAddressDAO.fetchPartsByRoadNumbers(roadNumberLimits, coarse = true).groupBy(_.linkId)
+      RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits, coarse = true).groupBy(_.linkId)
     }
     val roadLinks = roadLinkService.getViiteRoadPartsFromVVH(addresses.keySet, municipalities)
     val groupedLinks = roadLinks.flatMap { rl =>
@@ -360,6 +380,16 @@ object RoadAddressLinkBuilder {
       case (Private, _) => PrivateRoadType
       case (_,_) => UnknownOwnerRoad
     }
+  }
+
+  def build(roadAddress: RoadAddress) = {
+    RoadAddressLink(roadAddress.id, roadAddress.linkId, roadAddress.geom,
+      GeometryUtils.geometryLength(roadAddress.geom), State, UnknownLinkType, NormalRoadLinkType, PublicRoad, None, None,
+      Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, -1, roadAddress.discontinuity.value,
+      roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
+      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.calibrationPoints._1,
+      roadAddress.calibrationPoints._2)
   }
 
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {

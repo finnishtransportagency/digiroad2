@@ -12,12 +12,14 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
-import slick.jdbc.{GetResult, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import oracle.spatial.geometry.JGeometry
+import oracle.sql.STRUCT
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
@@ -61,7 +63,8 @@ case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false)
+                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                       geom: Seq[Point])
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
@@ -76,20 +79,24 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter
+        where $filter and t.id < t2.id
       """
     } else {
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter and ra.floating = 1
+        where $filter and t.id < t2.id and ra.floating = 1
       """
     }
     (queryList(query), Seq())
@@ -149,25 +156,31 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND floating='0'
+        $where AND floating='0' and t.id < t2.id
       """
     queryList(query)
   }
 
   private def queryList(query: String) = {
     val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-      Option[DateTime], Option[DateTime], String, Option[DateTime], Int)](query).list
+      Option[DateTime], Option[DateTime], String, Option[DateTime], Int, Boolean, Double, Double, Double, Double)](query).list
     tuples.map {
       case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
-      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode) =>
-        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity), startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue, endAddrMValue, SideCode.apply(sideCode)))
+      linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode, floating, x, y, x2, y2) =>
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
+          startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue,
+          calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
+            endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)))
     }
   }
 
-  def fetchPartsByRoadNumbers(roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
+  def fetchPartsByRoadNumbers(boundingRectangle: BoundingRectangle, roadNumbers: Seq[(Int, Int)], coarse: Boolean = false): List[RoadAddress] = {
+    val geomFilter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
     val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
       .mkString("(", ") OR (", ")")
     //.foldLeft("")((c, r) => c + ") OR (" + r)
@@ -184,10 +197,12 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $coarseWhere AND floating='0'
+        $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id
       """
     queryList(query)
   }
@@ -200,11 +215,13 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where floating='0'
+        where floating='0' and t.id < t2.id
       """
         queryList(query)
     }
@@ -216,10 +233,12 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber
+        where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -376,9 +395,12 @@ object RoadAddressDAO {
        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
        pos.side_code,
-       ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-       from road_address ra inner join lrm_position pos on ra.lrm_position_id = pos.id
-       Where ra.id > ${startId}
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+       join lrm_position pos on ra.lrm_position_id = pos.id
+       Where ra.id > ${startId} and t.id < t2.id
        Order By ra.Id asc ) Where rownum <= ${returnAmount}
       """
     queryList(query)
@@ -508,11 +530,13 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where floating='1'
+        where floating='1' and t.id < t2.id
       """
         queryList(query)
     }
@@ -532,10 +556,12 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS
-        from road_address ra
+        ra.start_date, ra.end_date, ra.created_by, ra.created_date, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND floating='1'
+        $where AND floating='1' and t.id < t2.id
       """
     queryList(query)
   }
