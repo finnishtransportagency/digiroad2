@@ -51,7 +51,6 @@
 
     var floatingImage = function() {
       return '<img src="images/link-properties/flag-floating.svg">';
-      //return '<img src="images/mass-transit-stops/1.png">';
     };
 
     return {

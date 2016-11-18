@@ -80,7 +80,6 @@
       _.each(floatingRoadMarkers, function(floatlink) {
         roadLinkLayer.addMarker(cachedLinkPropertyMarker.createMarker(floatlink));
       });
-
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
