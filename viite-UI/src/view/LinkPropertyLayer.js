@@ -1,12 +1,15 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
     var layerName = 'linkProperty';
+    var cachedLinkPropertyMarker = null;
+    var cachedMarker = null;
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var zoom = 0;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
+    var roadLinkLayer = new OpenLayers.Layer.Boxes(layerName);
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -62,11 +65,13 @@
     };
 
     var draw = function() {
+      cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
+      roadLinkLayer.addMarker(cachedLinkPropertyMarker.drawMarkers(roadLinks));
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
