@@ -88,7 +88,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val complementedRoadLinks = roadLinks ++ complementaryLinks
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
-    println("roadlinks " + roadLinks.size)
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
       RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating = false)._1.partition(_.floating)
     }

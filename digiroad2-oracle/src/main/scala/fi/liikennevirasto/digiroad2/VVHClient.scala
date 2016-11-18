@@ -823,6 +823,9 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
   def fetchVVHRoadlinkHistory(linkIds: Set[Long] = Set()): Seq[VVHHistoryRoadLink] = {
+    if (linkIds.isEmpty)
+      Nil
+    else {
       val definition = historyLayerDefinition(linkIdFilter(linkIds))
       val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/0/query?" +
         definition + queryParameters()
@@ -831,8 +834,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }
-
-
+  }
 }
 
 
