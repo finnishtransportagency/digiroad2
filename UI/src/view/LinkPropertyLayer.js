@@ -6,6 +6,7 @@
     var layerStyleMapProvider;
     var uiState = { zoomLevel: 9 };
     var layerStyleMap = {};
+    var isActive = false;
 
     var drawRoadLinks = function(roadLinks, zoom) {
       uiState.zoomLevel = zoom;
@@ -183,6 +184,11 @@
       }
     };
 
+    var refreshView = function(){
+      if(isActive)
+        roadCollection.fetchHistory(map.getExtent());
+    }
+
     var showLayer = function(){
       vectorLayer.setVisibility(true);
     };
@@ -200,11 +206,13 @@
     map.addControl(selectControl);
 
     eventbus.on('roadLinkHistory:show', function(){
+      isActive = true;
       roadCollection.fetchHistory(map.getExtent());
       showLayer();
     });
 
     eventbus.on('roadLinkHistory:hide', function(){
+      isActive = false;
       hideLayer();
     });
 
@@ -234,7 +242,8 @@
       unselectFeatureRoadLink: unselectFeatureRoadLink,
       selectRoadLinkByLinkId: selectRoadLinkByLinkId,
       show: showLayer,
-      hide: hideLayer
+      hide: hideLayer,
+      refreshView: refreshView
     };
   };
 
@@ -351,6 +360,7 @@
 
     this.refreshView = function() {
       roadCollection.fetch(map.getExtent());
+      historyLayer.refreshView();
     };
 
     this.isDirty = function() {
