@@ -365,7 +365,7 @@ object RoadAddressLinkBuilder {
       GeometryUtils.geometryLength(roadAddress.geom), State, UnknownLinkType, NormalRoadLinkType, PublicRoad, None, None,
       Map(), roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, -1, roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
-      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
   }
@@ -383,7 +383,7 @@ object RoadAddressLinkBuilder {
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
-      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
 
@@ -412,26 +412,9 @@ object RoadAddressLinkBuilder {
       length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
       historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
-      toSideCode(roadAddress.startMValue, roadAddress.endMValue, roadAddress.track),
+      roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
-  }
-
-  private def toSideCode(startMValue: Double, endMValue: Double, track: Track) = {
-    track match {
-      case Track.Combined => SideCode.BothDirections
-      case Track.LeftSide => if (startMValue < endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case Track.RightSide => if (startMValue > endMValue) {
-        SideCode.TowardsDigitizing
-      } else {
-        SideCode.AgainstDigitizing
-      }
-      case _ => SideCode.Unknown
-    }
   }
 
   private def toIntNumber(value: Any) = {

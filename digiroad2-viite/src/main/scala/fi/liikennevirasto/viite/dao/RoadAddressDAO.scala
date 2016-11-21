@@ -62,7 +62,7 @@ case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: 
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double,
+                       endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
@@ -163,7 +163,7 @@ object RoadAddressDAO {
       case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode, floating, x, y, x2, y2) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
-          startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue,
+          startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue, SideCode.apply(sideCode),
           calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
             endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)))
     }
