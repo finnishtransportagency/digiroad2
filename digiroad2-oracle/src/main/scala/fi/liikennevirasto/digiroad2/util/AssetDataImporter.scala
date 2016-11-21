@@ -796,6 +796,17 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     sql"select p.id from property p where p.public_id = $publicId".as[Long].first
   }
 
+  def getExistingLiviIds(): Seq[String] ={
+    withDynSession {
+      sql"""
+        select  tv.value_fi
+        from property p
+        inner join text_property_value tv on tv.property_id = p.id
+        where public_id = 'yllapitajan_koodi';
+      """.as[String].list
+    }
+  }
+
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
     implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
     sql"""
