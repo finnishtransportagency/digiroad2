@@ -62,30 +62,8 @@ object DataFixture {
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
 
-  lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      HttpClientBuilder.create().build)
-  }
-
   lazy val geometryTransform: GeometryTransform = {
     new GeometryTransform()
-  }
-
-  lazy val eventbus: DigiroadEventBus = {
-    new DigiroadEventBus
-  }
-
-  lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus) extends MassTransitStopService {
-      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override def vvhClient: VVHClient = DataFixture.vvhClient
-      override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
-      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val tierekisteriEnabled = true
-    }
-    new MassTransitStopServiceWithDynTransaction(eventbus)
   }
 
   def flyway: Flyway = {
@@ -498,7 +476,7 @@ object DataFixture {
             val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
             val filter = s" where $boundingBoxFilter"
             val persistedStops = massTransitStopService.fetchPointAssets(query => query + filter).
-                                  filter(stop => massTransitStopService.isStoredInTierekisteri(Some(stop)))
+                                  filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop)))
 
             if(persistedStops.isEmpty){
               println("Couldn't find any asset of the nearest TR bus stop with livi Id "+ trStop.liviId)
