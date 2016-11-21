@@ -42,7 +42,7 @@
 
     var renderDefaultState = function(box, roadlink) {
       var defaultMarker = $('<div class="bus-basic-marker root" />')
-        .append($('<div class="images" />').append(floatingImage()))
+        .append($('<div class="images" />').append(floatingImage()));
       $(box.div).html(defaultMarker);
       $(box.div).removeClass('selected-asset');
       $(box.div).css("-webkit-transform", "translate(0px,0px)")

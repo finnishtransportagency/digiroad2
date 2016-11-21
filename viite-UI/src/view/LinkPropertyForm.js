@@ -136,11 +136,21 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
+    var notificationPart = function(displayNotification) {
+      if(displayNotification)
+        return '' +
+          '<div class="form-group form-notification">' +
+          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa sijainti</p>' +
+          '</div>';
+      else
+        return '';
+    };
+
     var template = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
+      var notification = notificationPart(_.contains((_.pluck(selectedLinkProperty.get(), 'roadLinkType'), -1)));
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -163,6 +173,7 @@
         staticField('JATKUVUUS', 'discontinuity') +
         staticField('KELLUVA', 'floating') +
         endDateField +
+        notification +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
