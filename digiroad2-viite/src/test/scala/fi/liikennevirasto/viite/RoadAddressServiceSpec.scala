@@ -220,14 +220,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val (linkId, endM) = sql""" Select pos.LINK_ID, pos.end_measure
                                 From ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
                                 Order By ra.id asc""".as[(Long, Double)].firstOption.get
-      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
       when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
       when(localMockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
       when(localMockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq.empty)
       val captor: ArgumentCaptor[Iterable[Any]] = ArgumentCaptor.forClass(classOf[Iterable[Any]])
       reset(localMockEventBus)
-      localRoadAddressService.getRoadAddressLinks(BoundingRectangle(Point(0.0, 0.0), Point(1.0,1.0)), Seq(), Set())
+      val links = localRoadAddressService.getRoadAddressLinks(BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385)), Seq(), Set())
+      links.size should be (1)
       verify(localMockEventBus, times(3)).publish(any[String], captor.capture)
       val capturedAdjustments = captor.getAllValues
       val adj0 = capturedAdjustments.get(0)
