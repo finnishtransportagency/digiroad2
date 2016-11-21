@@ -2,16 +2,6 @@
   root.LinkPropertyMarker = function(data) {
     var me = this;
 
-    var drawMarkers = function(roadLinks) {
-      var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
-          return roadlink.roadLinkType === -1;
-        });
-      var features = _.map(floatingRoadMarkers, function(floatlink) {
-        return createMarker(floatlink);
-      });
-      return features;
-    };
-
     var createMarker = function(roadlink) {
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
@@ -42,7 +32,7 @@
 
     var renderDefaultState = function(box, roadlink) {
       var defaultMarker = $('<div class="bus-basic-marker root" />')
-        .append($('<div class="images" />').append(floatingImage()));
+        .append(floatingImage());
       $(box.div).html(defaultMarker);
       $(box.div).removeClass('selected-asset');
       $(box.div).css("-webkit-transform", "translate(0px,0px)")
@@ -54,7 +44,6 @@
     };
 
     return {
-      drawMarkers: drawMarkers,
       createMarker: createMarker
     };
   };

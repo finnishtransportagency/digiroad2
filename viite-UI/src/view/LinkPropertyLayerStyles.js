@@ -9,10 +9,10 @@
     ];
 
     var FloatingRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.8, strokeWidth:20, pointRadius: 14})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.8, strokeWidth:30, pointRadius: 2})
     ];
     var FloatingRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.3, strokeWidth:20, pointRadius: 14})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.3, strokeWidth:30, pointRadius: 2})
     ];
 
     var typeFilter = function(type) {

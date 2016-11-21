@@ -77,15 +77,26 @@
       var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
         return roadlink.roadLinkType === -1;
       });
+
       _.each(floatingRoadMarkers, function(floatlink) {
-        roadLinkLayer.addMarker(cachedLinkPropertyMarker.createMarker(floatlink));
+        var mouseClickHandler = createMouseClickHandler(floatlink);
+        var marker = cachedLinkPropertyMarker.createMarker(floatlink);
+        marker.events.register('click', roadLinkLayer, mouseClickHandler);
+        roadLinkLayer.addMarker(marker);
       });
+      
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
       }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
+    };
+
+    var createMouseClickHandler = function(floatlink) {
+      return function(){
+        selectedLinkProperty.open(floatlink.linkId, floatlink.id, true);
+      };
     };
 
     this.refreshView = function() {
