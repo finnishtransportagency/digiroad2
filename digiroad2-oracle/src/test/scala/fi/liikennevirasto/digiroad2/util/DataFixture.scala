@@ -44,11 +44,9 @@ object DataFixture {
     new ObstacleService(roadLinkService)
   }
   lazy val tierekisteriClient: TierekisteriClient = {
-    val httpRequestBuilder = HttpClientBuilder.create()
-    httpRequestBuilder.setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(600000).setSocketTimeout(600000).build())
     new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      httpRequestBuilder.build())
+      HttpClientBuilder.create().build())
   }
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
@@ -473,26 +471,32 @@ object DataFixture {
 
     trBusStops.foreach{
       trStop =>
-        val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
+        try {
+          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
 
-        stopPointOption match {
-          case Some(stopPoint) =>
-            val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
-            val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
-            val bounds = BoundingRectangle(leftPoint, rightPoint)
-            val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-            val filter = s" where $boundingBoxFilter"
-            val persistedStops = massTransitStopService.fetchPointAssets(query => query + filter).
-                                  filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop)))
+          stopPointOption match {
+            case Some(stopPoint) =>
+              val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
+              val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
+              val bounds = BoundingRectangle(leftPoint, rightPoint)
+              val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+              val filter = s" where $boundingBoxFilter and a.asset_type_id = 10"
+              val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
+                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop)))
 
-            if(persistedStops.isEmpty){
-              println("Couldn't find any asset of the nearest TR bus stop with livi Id "+ trStop.liviId)
-            }else{
-              val (peristedStop, distance) = persistedStops.map(stop => (stop, stopPoint.distance2DTo(Point(stop.lon, stop.lat, 0)))).minBy(_._2)
-              println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" distance "+distance)
-            }
-          case _ =>
-              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+              if(persistedStops.isEmpty){
+                println("Couldn't find any asset of the nearest TR bus stop with livi Id "+ trStop.liviId)
+              }else{
+                val (peristedStop, distance) = persistedStops.map(stop => (stop, stopPoint.distance2DTo(Point(stop.lon, stop.lat, 0)))).minBy(_._2)
+                println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" distance "+distance)
+              }
+            case _ =>
+                println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+          }
+        }catch {
+          case e: VKMClientException => {
+            println("VKM throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
+          }
         }
     }
 
