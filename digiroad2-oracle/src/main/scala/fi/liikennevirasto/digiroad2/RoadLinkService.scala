@@ -84,11 +84,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return Road links
     */
-  def getRoadLinksFromVVH(linkIds: Set[Long]): Seq[RoadLink] = {
+  def getRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(linkIds)
-    withDynTransaction {
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
       enrichRoadLinksFromVVH(vvhRoadLinks)
-    }
   }
 
   /**
@@ -467,7 +470,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */
   def getViiteRoadLinksWithoutChangesFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
-    (getRoadLinksFromVVH(linkIds), Seq())
+    (getRoadLinksByLinkIdsFromVVH(linkIds), Seq())
   }
 
   def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(),
@@ -825,7 +828,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */
   def getAdjacent(linkId: Long): Seq[RoadLink] = {
-    val sourceRoadLink = getRoadLinksFromVVH(Set(linkId)).headOption
+    val sourceRoadLink = getRoadLinksByLinkIdsFromVVH(Set(linkId)).headOption
     val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
     val sourceDirectionPoints = getRoadLinkEndDirectionPoints(sourceRoadLink.get)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
@@ -864,7 +867,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Used by Digiroad2Api /roadlinks/adjacents/:ids GET endpoint
     */
   def getAdjacents(linkIds: Set[Long]): Map[Long, Seq[RoadLink]] = {
-    val roadLinks = getRoadLinksFromVVH(linkIds)
+    val roadLinks = getRoadLinksByLinkIdsFromVVH(linkIds)
     val sourceLinkGeometryMap = roadLinks.map(rl => rl -> rl.geometry).toMap
     val delta: Vector3d = Vector3d(0.1, 0.1, 0)
     val sourceLinkBoundingBox = geometryToBoundingBox(sourceLinkGeometryMap.values.flatten.toSeq, delta)

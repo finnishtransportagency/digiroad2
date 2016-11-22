@@ -28,7 +28,7 @@ class CsvGenerator(vvhServiceHost: String) {
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
-    val roadLinksWithProperties = roadLinkService.getRoadLinksFromVVH(manoeuvres.map(_._4).toSet)
+    val roadLinksWithProperties = roadLinkService.getRoadLinksByLinkIdsFromVVH(manoeuvres.map(_._4).toSet)
     val roadLinksByLinkId = roadLinksWithProperties.groupBy(_.linkId).mapValues(_.head)
     val roadLinkIds = roadLinksWithProperties.map(_.linkId).toSet
     val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkIds.contains(row._4)) }

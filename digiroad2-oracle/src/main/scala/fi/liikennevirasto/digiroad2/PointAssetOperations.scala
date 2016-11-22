@@ -124,7 +124,7 @@ trait PointAssetOperations {
       }
 
       val result = fetchFloatingAssets(query => query + municipalityFilter, isOperator)
-      val administrativeClasses = roadLinkService.getRoadLinksFromVVH(result.map(_._3).toSet).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromVVH(result.map(_._3).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass, floatingReason) =>
