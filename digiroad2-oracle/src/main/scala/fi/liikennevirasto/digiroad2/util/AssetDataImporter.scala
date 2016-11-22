@@ -802,7 +802,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         select  tv.value_fi
         from property p
         inner join text_property_value tv on tv.property_id = p.id
-        where public_id = 'yllapitajan_koodi';
+        where public_id = 'yllapitajan_koodi'
       """.as[String].list
     }
   }
