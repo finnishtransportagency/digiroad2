@@ -49,20 +49,20 @@
       doubleClickSelectControl.deactivate();
     };
 
-     var highlightFeatures = function() {
-     _.each(roadLayer.layer.features, function(x) {
-       var canIHighlight = !_.isUndefined(x.attributes.linkId) ? selectedLinkProperty.isSelectedByLinkId(x.attributes.linkId) : selectedLinkProperty.isSelectedById(x.attributes.id);
-      if (canIHighlight) {
-        selectControl.highlight(x);
-      } else {
-        selectControl.unhighlight(x);
-      }
-     });
-   };
+    var highlightFeatures = function() {
+      _.each(roadLayer.layer.features, function(x) {
+        var canIHighlight = !_.isUndefined(x.attributes.linkId) ? selectedLinkProperty.isSelectedByLinkId(x.attributes.linkId) : selectedLinkProperty.isSelectedById(x.attributes.id);
+        if (canIHighlight) {
+          selectControl.highlight(x);
+        } else {
+          selectControl.unhighlight(x);
+        }
+      });
+    };
 
     var unhighlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
-          selectControl.unhighlight(x);
+        selectControl.unhighlight(x);
       });
     };
 
@@ -70,21 +70,25 @@
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
+
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 
-      var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
-        return roadlink.roadLinkType === -1;
-      });
 
-      _.each(floatingRoadMarkers, function(floatlink) {
-        var mouseClickHandler = createMouseClickHandler(floatlink);
-        var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-        marker.events.register('click', roadLinkLayer, mouseClickHandler);
-        roadLinkLayer.addMarker(marker);
-      });
-      
+      if(zoom > zoomlevels.minZoomForAssets) {
+        var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
+          return roadlink.roadLinkType === -1;
+        });
+        _.each(floatingRoadMarkers, function(floatlink) {
+          var mouseClickHandler = createMouseClickHandler(floatlink);
+          var marker = cachedLinkPropertyMarker.createMarker(floatlink);
+          marker.events.register('click', roadLinkLayer, mouseClickHandler);
+          roadLinkLayer.addMarker(marker);
+        });
+      }
+
+
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);

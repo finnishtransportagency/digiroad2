@@ -1,6 +1,21 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
 
+    var normalRoadAddressUnselectedRules = [
+      new OpenLayersRule().where('roadLinkType').is(1).use({graphicZIndex: 0})
+    ];
+    var normalRoadAddressRules = [
+      new OpenLayersRule().where('roadLinkType').is(1).use({graphicZIndex: 0})
+    ];
+
+    var complementaryRoadAddressUnselectedRules = [
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 1, strokeColor: '#00ccdd'})
+    ];
+
+    var complementaryRoadAddressRules = [
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 1, strokeColor: '#00ccdd'})
+    ];
+
     var unknownRoadAddressAnomalyRules = [
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
     ];
@@ -8,11 +23,11 @@
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
     ];
 
-    var FloatingRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.8, strokeWidth:30, pointRadius: 2})
+    var floatingRoadAddressRules = [
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.8, strokeWidth:30, graphicZIndex: -99})
     ];
-    var FloatingRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E ', strokeOpacity: 0.3, strokeWidth:30, pointRadius: 2})
+    var floatingRoadAddressUnselectedRules = [
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.3, strokeWidth:30, graphicZIndex: -99})
     ];
 
     var typeFilter = function(type) {
@@ -135,17 +150,20 @@
 
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
-      graphicZIndex: "${zIndex}",
+      // graphicZIndex: "${zIndex}",
+      graphicZIndex: 0,
       rotation: '${rotation}'}));
 
     roadClassDefaultStyle.addRules(roadClassRules);
+    roadClassDefaultStyle.addRules(normalRoadAddressRules);
     roadClassDefaultStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassDefaultStyle.addRules(zoomLevelRules);
     roadClassDefaultStyle.addRules(overlayRules);
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
-    roadClassDefaultStyle.addRules(FloatingRoadAddressAnomalyRules);
+    roadClassDefaultStyle.addRules(floatingRoadAddressRules);
+    roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
     roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
@@ -169,6 +187,8 @@
     }));
     roadClassSelectionDefaultStyle.addRules(roadClassRules);
     roadClassSelectionSelectStyle.addRules(roadClassRules);
+    roadClassSelectionDefaultStyle.addRules(normalRoadAddressUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(normalRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(unknownRoadAddressAnomalyUnselectedRules);
     roadClassSelectionSelectStyle.addRules(unknownRoadAddressAnomalyRules);
     roadClassSelectionDefaultStyle.addRules(zoomLevelRules);
@@ -183,8 +203,10 @@
     roadClassSelectionSelectStyle.addRules(borderRules);
     roadClassSelectionDefaultStyle.addRules(borderUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(borderDefaultOpacity);
-    roadClassSelectionDefaultStyle.addRules(FloatingRoadAddressAnomalyUnselectedRules);
-    roadClassSelectionSelectStyle.addRules(FloatingRoadAddressAnomalyRules);
+    roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
+    roadClassSelectionDefaultStyle.addRules(complementaryRoadAddressUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
