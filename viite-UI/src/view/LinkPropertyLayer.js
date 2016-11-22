@@ -39,6 +39,7 @@
       onSelect: selectRoadLink,
       onUnselect: unselectRoadLink
     });
+
     map.addControl(selectControl);
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
@@ -256,8 +257,14 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
 //      eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
+      eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     };
 
+    var handleMapClick = function (){
+      selectedLinkProperty.cancel();
+      selectedLinkProperty.close();
+    };
+    
     var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
