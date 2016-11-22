@@ -140,7 +140,7 @@
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa sijainti</p>' +
+          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa sijainti.</p>' +
           '</div>';
       else
         return '';
@@ -150,7 +150,7 @@
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var notification = notificationPart(_.contains((_.pluck(selectedLinkProperty.get(), 'roadLinkType'), -1)));
+      var compactForm = selectedLinkProperty.get()[0].roadLinkType === -1;
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -166,14 +166,17 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
+        (!compactForm ?
         staticField('ALKUETÄISYYS', 'startAddressM') +
         staticField('LOPPUETÄISUUS', 'endAddressM') +
-        staticField('ELY', 'elyCode') +
+        staticField('ELY', 'elyCode') : '') +
         roadTypes +
+        (!compactForm ?
         staticField('JATKUVUUS', 'discontinuity') +
         staticField('KELLUVA', 'floating') +
-        endDateField +
-        notification +
+        endDateField : '') +
+        (compactForm ?
+        notificationPart(true):'')  +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -226,6 +229,7 @@
         linkProperties.endDate = linkProperties.endDate || '';
         linkProperties.roadType = linkProperties.roadType || '';
         linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+        linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

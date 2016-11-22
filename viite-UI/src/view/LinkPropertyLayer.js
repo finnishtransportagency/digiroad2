@@ -5,6 +5,7 @@
     var cachedMarker = null;
     Layer.call(this, layerName, roadLayer);
     var me = this;
+    var eventListener = _.extend({running: false}, eventbus);
     var zoom = 0;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
@@ -75,6 +76,9 @@
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 
+      _.each(roadLinkLayer.markers, function(marker) {
+        roadLinkLayer.removeMarker(marker);
+      });
 
       if(zoom > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -87,7 +91,6 @@
           roadLinkLayer.addMarker(marker);
         });
       }
-
 
       me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
@@ -296,6 +299,7 @@
     var show = function(map) {
       vectorLayer.setVisibility(true);
       me.show(map);
+      eventListener.listenTo(eventbus, 'map:clicked', cancelSelection);
     };
 
     var hideLayer = function() {
