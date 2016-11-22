@@ -187,7 +187,7 @@
     var refreshView = function(){
       if(isActive)
         roadCollection.fetchHistory(map.getExtent());
-    }
+    };
 
     var showLayer = function(){
       vectorLayer.setVisibility(true);

@@ -5,6 +5,7 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadLayer = params.roadLayer,
       layerName = 'speedLimit';
+  var isActive = false;
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -30,6 +31,7 @@ window.SpeedLimitLayer = function(params) {
   this.removeLayerFeatures = function() {
     vectorLayer.removeAllFeatures();
     indicatorLayer.clearMarkers();
+    vectorLayerHistory.setVisibility(false);
   };
   var me = this;
 
@@ -279,13 +281,13 @@ window.SpeedLimitLayer = function(params) {
   //History rules
   var overlayStyleRuleHistory = _.partial(createZoomAndTypeDependentRule, 'overlay');
   var overlayStyleRulesHistory = [
-    overlayStyleRuleHistory(9, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 0.1, strokeDashstyle: '1 6' }),
+    overlayStyleRuleHistory(9, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
     overlayStyleRuleHistory(10, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 10' }),
-    overlayStyleRuleHistory(11, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 15' }),
-    overlayStyleRuleHistory(12, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 22' }),
-    overlayStyleRuleHistory(13, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 22' }),
-    overlayStyleRuleHistory(14, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 28' }),
-    overlayStyleRuleHistory(15, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 28' })
+    overlayStyleRuleHistory(11, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 15' }),
+    overlayStyleRuleHistory(12, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(13, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(14, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' }),
+    overlayStyleRuleHistory(15, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' })
   ];
 
   var validityDirectionStyleRulesHistory = [
@@ -299,13 +301,13 @@ window.SpeedLimitLayer = function(params) {
   ];
 
   var speedLimitFeatureSizeLookupHistory = {
-    9: { strokeWidth: 1, pointRadius: 0 },
-    10: { strokeWidth: 3, pointRadius: 10 },
-    11: { strokeWidth: 5, pointRadius: 14 },
-    12: { strokeWidth: 8, pointRadius: 16 },
-    13: { strokeWidth: 8, pointRadius: 16 },
-    14: { strokeWidth: 12, pointRadius: 22 },
-    15: { strokeWidth: 12, pointRadius: 22 }
+    9: {strokeWidth: 1, pointRadius: 0},
+    10: {strokeWidth: 2, pointRadius: 10},
+    11: {strokeWidth: 4, pointRadius: 12},
+    12: {strokeWidth: 5, pointRadius: 13},
+    13: {strokeWidth: 5, pointRadius: 14},
+    14: {strokeWidth: 7, pointRadius: 16},
+    15: {strokeWidth: 12, pointRadius: 16}
   };
 
   var typeSpecificStyleLookupHistory = {
@@ -442,6 +444,7 @@ window.SpeedLimitLayer = function(params) {
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
     vectorLayer.redraw();
+    vectorLayerHistory.setVisibility(true);
   };
 
   var changeTool = function(tool) {
@@ -521,12 +524,17 @@ window.SpeedLimitLayer = function(params) {
 
   var hideSpeedLimitsHistory = function() {
     vectorLayerHistory.setVisibility(false);
+    isActive = false;
+    vectorLayerHistory.removeAllFeatures();
   };
 
   var drawSpeedLimitsHistory = function (historySpeedLimitChains) {
+    isActive = true;
     map.addLayer(vectorLayerHistory);
+    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
+    map.setLayerIndex(vectorLayerHistory, roadLinksLayerIndex - 1);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
-    drawSpeedLimits(historySpeedLimits, true);
+    drawSpeedLimits(historySpeedLimits, isActive);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -610,6 +618,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var redrawSpeedLimits = function(speedLimitChains) {
+    isActive = false;
     doubleClickSelectControl.deactivate();
     vectorLayer.removeAllFeatures();
     indicatorLayer.clearMarkers();
@@ -621,7 +630,7 @@ window.SpeedLimitLayer = function(params) {
     drawSpeedLimits(speedLimits);
   };
 
-  var drawSpeedLimits = function(speedLimits, showHistorySpeedLimits) {
+  var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
       return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
@@ -632,8 +641,8 @@ window.SpeedLimitLayer = function(params) {
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
     var vectorLayerToUse;
-    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
-      vectorLayerHistory.setVisibility(true);
+    if (isActive === true) {
+      vectorLayerHistory.setVisibility(isActive);
       vectorLayerToUse = vectorLayerHistory;
     } else {
       vectorLayerToUse = vectorLayer;

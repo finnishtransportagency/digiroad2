@@ -28,6 +28,10 @@
       return maintainSelectedSpeedLimitChain(speedLimits);
     };
 
+    this.getAllHistory = function() {
+      return maintainSelectedSpeedLimitChain(speedLimitsHistory);
+    };
+
     var generateUnknownLimitId = function(speedLimit) {
       return speedLimit.linkId.toString() +
           speedLimit.startMeasure.toFixed(2) +
@@ -62,7 +66,7 @@
               });
             }) || [];
         speedLimitsHistory = knownHistorySpeedLimits.concat(unknownHistorySpeedLimits);
-        eventbus.trigger('speedLimits:drawSpeedLimitsHistory', self.getAll());
+        eventbus.trigger('speedLimits:drawSpeedLimitsHistory', self.getAllHistory());
       });
     };
 
