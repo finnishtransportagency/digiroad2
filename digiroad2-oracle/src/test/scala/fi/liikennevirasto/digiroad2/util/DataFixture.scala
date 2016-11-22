@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleD
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -43,9 +44,11 @@ object DataFixture {
     new ObstacleService(roadLinkService)
   }
   lazy val tierekisteriClient: TierekisteriClient = {
+    val httpRequestBuilder = HttpClientBuilder.create()
+    httpRequestBuilder.setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(600000).setSocketTimeout(600000).build())
     new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      HttpClientBuilder.create().build())
+      httpRequestBuilder.build())
   }
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
@@ -462,13 +465,17 @@ object DataFixture {
     println(DateTime.now())
 
     val existingLiviIds = dataImporter.getExistingLiviIds()
-    val trBusStops = tierekisteriClient.fetchActiveMassTransitStops()
 
-    trBusStops.filterNot(stop => existingLiviIds.contains(stop.liviId)).foreach{
+    val trBusStops = tierekisteriClient.fetchActiveMassTransitStops().
+      filterNot(stop => existingLiviIds.contains(stop.liviId))
+
+    println("Processing %d TR bus stops".format(trBusStops.length))
+
+    trBusStops.foreach{
       trStop =>
         val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
 
-        stopPointOption match{
+        stopPointOption match {
           case Some(stopPoint) =>
             val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
             val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
@@ -485,7 +492,7 @@ object DataFixture {
               println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" distance "+distance)
             }
           case _ =>
-              println("VKM can't resolve the coordeantes of the TR bus stop address with livi Id "+ trStop.liviId)
+              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
         }
     }
 
