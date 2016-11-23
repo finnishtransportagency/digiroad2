@@ -91,7 +91,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
     }
-    val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksByLinkIdsFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
 
     persistedSpeedLimits.flatMap { speedLimit =>
       roadLinks.find(_.linkId == speedLimit.linkId).map { roadLink =>

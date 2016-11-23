@@ -72,7 +72,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
     when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[Set[Long]])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
   }
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f

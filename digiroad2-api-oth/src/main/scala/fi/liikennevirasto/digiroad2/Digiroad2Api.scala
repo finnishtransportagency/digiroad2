@@ -668,7 +668,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
       val linkIds = manoeuvres.flatMap(_.linkIds)
-      val roadlinks = roadLinkService.getRoadLinksFromVVH(linkIds.toSet)
+      val roadlinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet)
 
       roadlinks.map(_.municipalityCode)
         .foreach(validateUserMunicipalityAccess(user))
