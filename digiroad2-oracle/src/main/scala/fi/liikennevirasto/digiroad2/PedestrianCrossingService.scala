@@ -2,8 +2,9 @@ package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossingToBePersisted, OraclePedestrianCrossingDao, PedestrianCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OraclePedestrianCrossingDao, PedestrianCrossing, PedestrianCrossingToBePersisted}
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -12,13 +13,13 @@ import slick.jdbc.StaticQuery.interpolation
 
 case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 
-class PedestrianCrossingService(val vvhClient: VVHClient) extends PointAssetOperations {
+class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing
   type PersistedAsset = PedestrianCrossing
 
   override def typeId: Int = 200
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = OraclePedestrianCrossingDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: PedestrianCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)

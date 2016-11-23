@@ -69,7 +69,11 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
       roadAddressLink =>
         Map(
           "muokattu_viimeksi" -> roadAddressLink.modifiedAt.getOrElse(""),
-          geometryWKT(roadAddressLink.geometry, roadAddressLink.startAddressM, roadAddressLink.endAddressM),
+          geometryWKT(
+              if(roadAddressLink.sideCode == SideCode.BothDirections || roadAddressLink.sideCode == SideCode.AgainstDigitizing )
+                roadAddressLink.geometry.reverse
+              else roadAddressLink.geometry
+            , roadAddressLink.startAddressM, roadAddressLink.endAddressM),
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
           "link_source" -> roadAddressLink.roadLinkSource.value,

@@ -416,15 +416,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return true;
     }
 
+    return selectedMassTransitStopModel.isAdministratorELY();
+  };
+
+  var ownedByHSL = function(){
     var properties = selectedMassTransitStopModel.getProperties();
-
-    var owner = _.find(properties, function(property) {
-      return property.publicId === "tietojen_yllapitaja"; });
-
-    return typeof owner != 'undefined' &&
-      typeof owner.values != 'undefined' &&  owner.values.length > 0 && _.contains(_.map(owner.values, function (value) {
-        return value.propertyValue;
-      }), "2");
+    return selectedMassTransitStopModel.isAdministratorHSL(properties) && selectedMassTransitStopModel.isAdminClassState(properties);
   };
 
   var mouseUpHandler = function(asset) {
@@ -465,7 +462,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (distance > movementLimit && !movementPermissionConfirmed)
     {
       requestingMovePermission = true;
-      if (ownedByELY()){
+      if (ownedByELY() || ownedByHSL()){
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';

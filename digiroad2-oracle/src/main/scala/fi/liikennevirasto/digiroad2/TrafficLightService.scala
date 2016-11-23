@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{TrafficLightToBePersisted, OracleTrafficLightDao, TrafficLight}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficLightDao, TrafficLight, TrafficLightToBePersisted}
 
 case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 
-class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations {
+class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
   type PersistedAsset = TrafficLight
 
@@ -23,7 +24,7 @@ class TrafficLightService(val vvhClient: VVHClient) extends PointAssetOperations
     persistedAsset.copy(floating = floating)
   }
 
-  override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[VVHRoadlink]): Seq[TrafficLight] = {
+  override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficLight] = {
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
