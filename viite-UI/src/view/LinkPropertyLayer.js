@@ -106,7 +106,7 @@
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.id === floatlink.id;
         });
-        selectRoadLink(feature);
+        selectControl.select(feature);
       };
     };
 
