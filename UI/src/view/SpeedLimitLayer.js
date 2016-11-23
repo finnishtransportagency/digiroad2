@@ -357,17 +357,10 @@ window.SpeedLimitLayer = function(params) {
     highlightMultipleSpeedLimitFeatures();
   };
 
-  var setSelectionStyleAndHighlightFeature = function(showHistorySpeedLimits) {
-    var vectorLayerToUse;
-
-    if ((typeof showHistorySpeedLimits != 'undefined') && showHistorySpeedLimits === 'true') {
-      vectorLayerToUse = vectorLayerHistory;
-    } else {
-      vectorLayerToUse = vectorLayer;
-    }
-    vectorLayerToUse.styleMap = selectionStyle;
+  var setSelectionStyleAndHighlightFeature = function() {
+    vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures();
-    vectorLayerToUse.redraw();
+    vectorLayer.redraw();
   };
 
   var speedLimitOnSelect = function(feature) {

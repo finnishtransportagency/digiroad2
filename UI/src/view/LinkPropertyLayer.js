@@ -415,8 +415,6 @@
         highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
-      //TODO If the history layer doesn't need to be selected we don't need that
-      historyLayer.reselectRoadLink();
       if (selectedLinkProperty.isDirty()) {
         me.deactivateSelection();
       }
