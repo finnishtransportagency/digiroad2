@@ -483,6 +483,13 @@ object RoadAddressDAO {
     }
   }
 
+  def getNextRoadAddressId(): Long = {
+    sql"""
+       Select Max(ra.id) + 1
+       From Road_Address ra
+      """.as[Long].firstOption.get
+  }
+
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
   implicit val getTrack = GetResult[Track]( r=> Track.apply(r.nextInt()))

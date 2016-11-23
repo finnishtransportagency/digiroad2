@@ -342,6 +342,54 @@ object RoadAddressLinkBuilder {
     }
   }
 
+  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): RoadAddress = {
+    if (roadAddresses.size == 1) {
+      roadAddresses.head
+    } else {
+      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
+
+      groupedRoadAddresses.foreach(record => {
+        val withoutCalibrationPoints = record._2.filter(_.calibrationPoints.equals((None, None)))
+        val withCalibrationPoints = record._2.filterNot(dis => withoutCalibrationPoints.contains(dis))
+
+      withCalibrationPoints.length match {
+        case 0 => {
+          new RoadAddress(RoadAddressDAO.getNextRoadAddressId(), record._1._1, record._1._2,
+            Track.apply(record._1._3), Discontinuity.Continuous, withoutCalibrationPoints.minBy(_.startAddrMValue).startAddrMValue,
+            withoutCalibrationPoints.maxBy(_.endAddrMValue).endAddrMValue, record._1._4, record._1._5, record._1._6,
+            withoutCalibrationPoints.minBy(_.startMValue).startMValue, withoutCalibrationPoints.maxBy(_.endMValue).endMValue,
+            (None,None), false)
+        }
+        case 1 => {
+          withCalibrationPoints.head.calibrationPoints match {
+            case (None, _) => {
+              val calibrationPointAtStart = withCalibrationPoints.head.calibrationPoints._1.get
+              new RoadAddress(RoadAddressDAO.getNextRoadAddressId(), record._1._1, record._1._2,
+                Track.apply(record._1._3), Discontinuity.Continuous, calibrationPointAtStart.addressMValue,
+                withoutCalibrationPoints.maxBy(_.endAddrMValue).endAddrMValue, record._1._4, record._1._5, record._1._6,
+                calibrationPointAtStart.segmentMValue, withoutCalibrationPoints.maxBy(_.endMValue).endMValue,
+                (None,None), false)
+            }
+            case (_,None) => {
+
+            }
+            case (_,_) =>
+
+          }
+        }
+        case _ => {
+
+        }
+
+      }
+      })
+      null
+    }
+  }
+
+
+
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
 
     val roadLinkType = roadLink.attributes.contains("SUBTYPE") && roadLink.attributes("SUBTYPE") == ComplementarySubType match {
