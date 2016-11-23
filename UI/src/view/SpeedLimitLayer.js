@@ -27,6 +27,9 @@ window.SpeedLimitLayer = function(params) {
     collection.fetch(map.getExtent()).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
+    if (isActive) {
+      showSpeedLimitsHistory();
+    }
   };
   this.removeLayerFeatures = function() {
     vectorLayer.removeAllFeatures();
@@ -497,7 +500,7 @@ window.SpeedLimitLayer = function(params) {
     var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
     map.setLayerIndex(vectorLayerHistory, roadLinksLayerIndex - 1);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
-    drawSpeedLimits(historySpeedLimits, isActive);
+    drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -524,7 +527,7 @@ window.SpeedLimitLayer = function(params) {
     me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    drawSpeedLimits(selectedSpeedLimit.get());
+    drawSpeedLimits(selectedSpeedLimit.get(), vectorLayer);
   };
 
   var handleSpeedLimitCancelled = function() {
@@ -581,7 +584,6 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var redrawSpeedLimits = function(speedLimitChains) {
-    isActive = false;
     doubleClickSelectControl.deactivate();
     vectorLayer.removeAllFeatures();
     indicatorLayer.clearMarkers();
@@ -590,10 +592,10 @@ window.SpeedLimitLayer = function(params) {
     }
 
     var speedLimits = _.flatten(speedLimitChains);
-    drawSpeedLimits(speedLimits);
+    drawSpeedLimits(speedLimits, vectorLayer);
   };
 
-  var drawSpeedLimits = function(speedLimits) {
+  var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
       return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
@@ -603,20 +605,14 @@ window.SpeedLimitLayer = function(params) {
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
-    var vectorLayerToUse;
-    if (isActive === true) {
-      vectorLayerHistory.setVisibility(isActive);
-      vectorLayerToUse = vectorLayerHistory;
-    } else {
-      vectorLayerToUse = vectorLayer;
-    }
-    vectorLayerToUse.addFeatures(lineFeatures(lowSpeedLimits));
-    vectorLayerToUse.addFeatures(dottedLineFeatures(highSpeedLimits));
-    vectorLayerToUse.addFeatures(limitSigns(speedLimitsWithAdjustments));
+    layerToUse.setVisibility(true);
+    layerToUse.addFeatures(lineFeatures(lowSpeedLimits));
+    layerToUse.addFeatures(dottedLineFeatures(highSpeedLimits));
+    layerToUse.addFeatures(limitSigns(speedLimitsWithAdjustments));
 
     if (selectedSpeedLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+      var feature = _.find(layerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
       if (feature) {
         selectControl.select(feature);
       }
