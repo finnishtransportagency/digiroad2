@@ -227,6 +227,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     retval.flatMap(x => x._2).toSeq
   }
 
+  def getRoadAddressLink(id: Long) = {
+
+    val (addresses,missedRL) = withDynTransaction {
+      (RoadAddressDAO.fetchByLinkId(Set(id), true),
+        RoadAddressDAO.getMissingRoadAddresses(Set(id)))
+    }
+    logger.info("addresses read" + addresses.size + " / " + missedRL.size)
+    val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
+    logger.info("roadlinks read" + roadLinks.size + " / " + vvhHistoryLinks.size)
+    (addresses.size, roadLinks.size) match {
+      case (0,0) => List()
+      case (_,0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (0,_) => missedRL.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (_,_) => addresses.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+    }
+  }
+
   def roadClass(roadAddressLink: RoadAddressLink) = {
     val C1 = new Contains(1 to 39)
     val C2 = new Contains(40 to 99)

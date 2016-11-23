@@ -132,15 +132,20 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long]): List[RoadAddress] = {
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false): List[RoadAddress] = {
     if (linkIds.size > 1000) {
-      return fetchByLinkIdMassQuery(linkIds)
+      return fetchByLinkIdMassQuery(linkIds, includeFloating)
     }
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
       case true => return List()
       case false => s""" where pos.link_id in ($linkIdString)"""
     }
+    val floating = if (!includeFloating)
+      "AND floating='0'"
+    else
+      ""
+
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
@@ -151,7 +156,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND floating='0' and t.id < t2.id
+        $where $floating and t.id < t2.id
       """
     queryList(query)
   }
@@ -197,9 +202,13 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def fetchByLinkIdMassQuery(linkIds: Set[Long]): List[RoadAddress] = {
+  def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[RoadAddress] = {
     MassQuery.withIds(linkIds) {
       idTableName =>
+        val floating = if (!includeFloating)
+          "AND floating='0'"
+        else
+          ""
         val query =
           s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
@@ -211,7 +220,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where floating='0' and t.id < t2.id
+        where t.id < t2.id $floating
       """
         queryList(query)
     }

@@ -438,6 +438,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Nil
   }
 
+  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+    val historyData = vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds)
+    val currentData = vvhClient.fetchByLinkIdsF(roadAddressesLinkIds)
+    val (hist, curr) = Await.result(historyData.zip(currentData), atMost = Duration.Inf)
+    withDynSession {
+      (enrichRoadLinksFromVVH(curr, Seq()), hist)
+    }
+  }
+
   /**
     * Returns road links and change data from VVH by bounding box and road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH and SpeedLimitService.get.
     */

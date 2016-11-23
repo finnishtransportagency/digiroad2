@@ -422,6 +422,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
   }
 
+  def fetchByLinkIdsF(linkIds: Set[Long]) = {
+    Future(fetchByLinkIds(linkIds))
+  }
+
   /**
     * Returns VVH road link by mml id.
     * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
