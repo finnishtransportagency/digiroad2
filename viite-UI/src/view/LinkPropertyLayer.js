@@ -103,7 +103,10 @@
 
     var createMouseClickHandler = function(floatlink) {
       return function(){
-        selectedLinkProperty.open(floatlink.linkId, floatlink.id, true);
+        var feature = _.find(roadLayer.layer.features, function (feat) {
+          return feat.attributes.id === floatlink.id;
+        });
+        selectRoadLink(feature);
       };
     };
 
