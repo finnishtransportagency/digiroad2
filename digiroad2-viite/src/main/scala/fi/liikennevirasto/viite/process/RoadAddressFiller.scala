@@ -96,11 +96,11 @@ object RoadAddressFiller {
       extendToGeometry,
       dropShort
     )
-    val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
+    val initialChangeSet = AddressChangeSet(Set.empty, Seq.empty[LRMValueAdjustment], Seq.empty[MissingRoadAddress])
 
     roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc
-      val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)
+      val segments = roadAddressMap.getOrElse(roadLink.linkId, Seq.empty[RoadAddressLink])
       val validSegments = segments.filterNot { segment => changeSet.toFloatingAddressIds.contains(segment.id) }
 
       val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>

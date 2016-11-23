@@ -178,7 +178,6 @@ object RoadAddressDAO {
     val geomFilter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
     val filter = roadNumbers.map(n => "road_number >= " + n._1 + " and road_number <= " + n._2)
       .mkString("(", ") OR (", ")")
-    //.foldLeft("")((c, r) => c + ") OR (" + r)
     val where = roadNumbers.isEmpty match {
       case true => return List()
       case false => s""" where track_code in (0,1) AND $filter"""

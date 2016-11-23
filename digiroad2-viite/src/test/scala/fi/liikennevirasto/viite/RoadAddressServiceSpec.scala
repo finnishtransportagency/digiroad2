@@ -139,7 +139,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val (linkId) = sql""" Select pos.LINK_ID
                                 From ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
                                 Order By ra.id asc""".as[Long].firstOption.get
-      val roadLink = RoadLink(linkId, Nil, 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink(linkId, Seq.empty[Point], 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
     val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
