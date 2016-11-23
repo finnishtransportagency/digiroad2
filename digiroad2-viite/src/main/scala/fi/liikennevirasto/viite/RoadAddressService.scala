@@ -189,7 +189,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits).groupBy(_.linkId)
     }
 
-    val vvhRoadLinks = roadLinkService.getRoadLinksFromVVH(addresses.keySet)
+    val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet)
     val combined = addresses.mapValues(combineGeom)
     val roadLinks = vvhRoadLinks.map( rl => rl -> combined(rl.linkId)).toMap
 
