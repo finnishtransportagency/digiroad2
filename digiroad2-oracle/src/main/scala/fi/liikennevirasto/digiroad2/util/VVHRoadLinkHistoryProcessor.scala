@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.{Point, GeometryUtils, VVHRoadlink}
 import org.geotools.filter.function.GeometryTransformation
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ArrayBuffer
@@ -49,9 +49,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
       rl =>
         val roadlink = roadLinks.find(r => Some(r.linkId) == newLinkId(rl) || (r.linkId == rl.linkId && includeCurrentLinks))
         roadlink.exists(r =>
-          //TODO add the within tolerence with min and max to geometry utils
-          //GeometryUtils.withinTolerance(r.geometry, rl.geometry, minimumChange, maximumChange)
-          compareGeoOfLinks(r, rl)
+          compareGeometry(r.geometry, rl.geometry)
         )
     }
 
@@ -60,19 +58,18 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
 
   /**
     *
-    * @param historyLink link nro 1
-    * @param currentLink link nro 2
+    * @param geom1 geometry 1
+    * @param geom2 geometry 2
     * @return true when distance is greater than minimum but less than maximum else false. Also true if number of geometries is different
     */
-  private def compareGeoOfLinks( historyLink: VVHRoadlink, currentLink: VVHRoadlink): Boolean = {
-    if (historyLink.geometry.size == currentLink.geometry.size) {
-      val geometryComparison = historyLink.geometry.zip(currentLink.geometry)
-      for (comparison  <- geometryComparison) {
-        // Check if geometry is with in bounds
-        if (comparison._1.distance2DTo(comparison._2) >= minimumChange &&  comparison._1.distance2DTo(comparison._2) <= maximumChange)
-          return true
+  private def compareGeometry(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
+    geom1.size == geom2.size &&
+      geom1.zip(geom2).exists {
+        case (p1, p2) => {
+          val lenght = GeometryUtils.geometryLength(Seq(p1,p2))
+          lenght >= minimumChange && lenght <= maximumChange
+        }
+        case _ => false
       }
-    }
-    false
   }
 }
