@@ -10,9 +10,9 @@
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
-    var roadLinkLayer = new OpenLayers.Layer.Boxes(layerName);
-    map.addLayer(roadLinkLayer);
-    roadLinkLayer.setVisibility(true);
+    var floatingMarkerLayer = new OpenLayers.Layer.Boxes(layerName);
+    map.addLayer(floatingMarkerLayer);
+    floatingMarkerLayer.setVisibility(true);
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -77,9 +77,7 @@
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 
-      _.each(roadLinkLayer.markers, function(marker) {
-        roadLinkLayer.removeMarker(marker);
-      });
+      floatingMarkerLayer.clearMarkers();
 
       if(zoom > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -88,8 +86,8 @@
         _.each(floatingRoadMarkers, function(floatlink) {
           var mouseClickHandler = createMouseClickHandler(floatlink);
           var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          marker.events.register('click', roadLinkLayer, mouseClickHandler);
-          roadLinkLayer.addMarker(marker);
+          marker.events.register('click', floatingMarkerLayer, mouseClickHandler);
+          floatingMarkerLayer.addMarker(marker);
         });
       }
 
