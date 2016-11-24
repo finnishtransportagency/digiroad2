@@ -420,6 +420,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join enumerated_value e on s.enumerated_value_id = e.id
          where
          a.asset_type_id = 20
+         and (a.modified_by is null or a.modified_by != 'vvh_generated')
          and floating = 0
          and (
            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
@@ -447,6 +448,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where
           a.asset_type_id = $assetTypeId
+          and (a.modified_by is null or a.modified_by != 'vvh_generated')
           and (
             (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
             or
