@@ -3,6 +3,10 @@
     var className = 'road-link';
     var title = 'Tielinkki';
 
+    var historyRoadLinkCheckBox = '<div class="check-box-container">' +
+        '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+        '</div>';
+
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -60,7 +64,7 @@
         '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
         '</div>';
     }).join('');
-    functionalClassLegend.append(functionalClassLegendEntries);
+    functionalClassLegend.append(functionalClassLegendEntries).append(historyRoadLinkCheckBox);
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
     var linkTypes = [
@@ -83,7 +87,7 @@
         '<div class="symbol linear linear-asset-' + linkType[0] + '" />' +
         '</div>';
     }).join('');
-    linkTypeLegend.append(linkTypeLegendEntries);
+    linkTypeLegend.append(linkTypeLegendEntries).append(historyRoadLinkCheckBox);
 
     var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
     var verticalLevels = [
@@ -129,9 +133,26 @@
       elements.expanded.find('input[name="dataset"]').change(function(event) {
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
+
+        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        eventbus.trigger('roadLinkHistory:hide');
+
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
         linkPropertiesModel.setDataset(datasetName);
+
+        bindHistoryEventHandlers(legendContainer);
+      });
+    };
+
+    var bindHistoryEventHandlers = function(checkboxContainer){
+      checkboxContainer.find('input[type="checkbox"]').on('change', function(event) {
+        var eventTarget = $(event.currentTarget);
+        if(eventTarget.prop('checked')){
+          eventbus.trigger('roadLinkHistory:show');
+        } else {
+          eventbus.trigger('roadLinkHistory:hide');
+        }
       });
     };
 
@@ -149,6 +170,8 @@
 
     elements.expanded.find('.legend-container').append(functionalClassLegend);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+
+    bindHistoryEventHandlers(elements.expanded);
 
     function show() {
       editModeToggle.toggleEditMode(applicationModel.isReadOnly());

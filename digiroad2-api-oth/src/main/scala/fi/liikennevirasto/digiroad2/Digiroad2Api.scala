@@ -294,6 +294,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinks = roadLinkService.getRoadLinksHistoryFromVVH(boundingRectangle, municipalities)
+
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     Map(
       "linkId" -> roadLink.linkId,
@@ -334,6 +345,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
       case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
     }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
+  }
+
+  get("/roadlinks/history") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadLinksHistoryFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   get("/roadlinks/mml/:mmlId") {
@@ -560,6 +582,36 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       speedLimitService.get(boundingRectangle, municipalities).map { linkPartition =>
+        linkPartition.map { link =>
+          Map(
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "linkId" -> link.linkId,
+            "sideCode" -> link.sideCode,
+            "trafficDirection" -> link.trafficDirection,
+            "value" -> link.value.map(_.value),
+            "points" -> link.geometry,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime
+          )
+        }
+      }
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/speedlimits/history") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      speedLimitService.getHistory(boundingRectangle, municipalities).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),

@@ -142,7 +142,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
 
-  private val roadLinkData_Service = "Roadlink_data"
+  private val roadLinkDataService = "Roadlink_data"
 
 
 
@@ -220,8 +220,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     URLEncoder.encode(definition, "UTF-8")
   }
 
-
-
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
     if (fetchGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
     else "f=pjson"
@@ -234,7 +232,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def queryByRoadNumbersBoundsAndMunicipalities(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
-    val url = vvhRestApiEndPoint + roadLinkData_Service + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -251,7 +249,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     */
   def queryByMunicipalitesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = vvhRestApiEndPoint + roadLinkData_Service + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -377,7 +375,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     */
   def queryByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = vvhRestApiEndPoint + roadLinkData_Service + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -394,7 +392,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
-    val url = vvhRestApiEndPoint + roadLinkData_Service + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -463,7 +461,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = vvhRestApiEndPoint + roadLinkData_Service + "/FeatureServer/query?" +
+      val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
@@ -553,6 +551,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "MTKHEREFLIP",
       "VALIDFROM",
       "GEOMETRY_EDITED_DATE",
+      "END_DATE",
+      "LINKID_NEW",
       "CREATED_DATE",
       "LAST_EDITED_DATE",
       "SURFACETYPE",
@@ -581,8 +581,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
 
     val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
-    val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("LAST_EDITED_DATE")){
+      lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
+    var geometryEditedDate : Option[Long] = Option(0)
+      if(attributes.contains("GEOMETRY_EDITED_DATE")){
+        geometryEditedDate =  Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
 
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
     latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
@@ -629,15 +635,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
     curr - (curr % (24L*oneHourInMs))
   }
-
-
-
-
-
-
-
-
-
 }
 
 class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){

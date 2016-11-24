@@ -5,7 +5,7 @@ import java.util.Properties
 import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -444,6 +444,28 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (hist, curr) = Await.result(historyData.zip(currentData), atMost = Duration.Inf)
     withDynSession {
       (enrichRoadLinksFromVVH(curr, Seq()), hist)
+    }
+  }
+
+  def getViiteRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
+    val historyData = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities),atMost = Duration.Inf)
+    val groupedData = historyData.groupBy(_.linkId)
+    groupedData.foreach { gd =>
+      gd._2.foreach { rl =>
+
+      }
+    }
+
+  }
+
+  def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
+    val (historyRoadLinks, roadlinks) = Await.result(vvhClient.fetchVVHRoadlinkHistoryF(bounds, municipalities).zip(vvhClient.fetchVVHRoadlinksF(bounds, municipalities)), atMost = Duration.Inf)
+    val linkprocessor = new VVHRoadLinkHistoryProcessor()
+    // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
+    val filtteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
+
+    withDynTransaction {
+      enrichRoadLinksFromVVH(filtteredHistoryLinks)
     }
   }
 

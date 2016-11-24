@@ -16,6 +16,12 @@
       };
     });
 
+    this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks/history?bbox=' + boundingBox
+      };
+    });
+
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/manoeuvres?bbox=' + boundingBox
@@ -97,6 +103,12 @@
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
       return {
         url: 'api/speedlimits?bbox=' + boundingBox
+      };
+    });
+
+    this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/speedlimits/history?bbox=' + boundingBox
       };
     });
 
