@@ -89,7 +89,9 @@ trait MassTransitStopService extends PointAssetOperations {
   private def enrichStopIfInTierekisteri(persistedStop: Option[PersistedMassTransitStop]) = {
 
     if (MassTransitStopOperations.isStoredInTierekisteri(persistedStop) && tierekisteriEnabled) {
-      val liViId = MassTransitStopOperations.liviIdValueOption(persistedStop.map(_.propertyData).get).map(_.propertyValue)
+      val properties = persistedStop.map(_.propertyData).get
+      val liViProp = properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId)
+      val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
       val tierekisteriStop = liViId.flatMap(tierekisteriClient.fetchMassTransitStop)
       tierekisteriStop.isEmpty match {
         case true => (persistedStop, true)
