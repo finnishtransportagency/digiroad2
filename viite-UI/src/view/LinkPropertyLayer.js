@@ -128,7 +128,7 @@
           id: roadLink.id,
           type: 'overlay',
           linkType: roadLink.linkType,
-          zIndex: roadLink.zIndex
+          zIndex: 2
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
