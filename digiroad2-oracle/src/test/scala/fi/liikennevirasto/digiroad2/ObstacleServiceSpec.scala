@@ -12,28 +12,33 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 
 
 
 class ObstacleServiceSpec extends FunSuite with Matchers {
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
   val testUser = User(
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlink(1611317)).thenReturn(Seq(
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinkFromVVH(1611317)).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockVVHClient.fetchVVHRoadlink(1191950690)).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkFromVVH(1191950690)).thenReturn(Seq(
     VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)).headOption)
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  val service = new ObstacleService(mockVVHClient) {
+  val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -52,8 +57,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
@@ -67,8 +72,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
@@ -133,7 +138,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       id = 1,
       username = "Hannu",
       configuration = Configuration(authorizedMunicipalities = Set(235)))
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val roadLink = VVHRoadlink(5797521, 853, Seq(Point(240863.911, 6700590.15),
       Point(240864.188, 6700595.048),
       Point(240863.843, 6700601.473),
@@ -149,12 +154,12 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       Point(240881.381, 6700685.655),
       Point(240885.898, 6700689.602)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)
-    when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-      roadLink))
-    when(mockVVHClient.fetchVVHRoadlink(5797521)).thenReturn(Seq(
-      roadLink).headOption)
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+      roadLink).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinkFromVVH(5797521)).thenReturn(Seq(
+      roadLink).map(toRoadLink).headOption)
 
-    val service = new ObstacleService(mockVVHClient) {
+    val service = new ObstacleService(mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
     }

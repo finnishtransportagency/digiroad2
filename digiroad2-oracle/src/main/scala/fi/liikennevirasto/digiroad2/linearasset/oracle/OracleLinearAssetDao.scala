@@ -161,7 +161,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByLinkId = vvhClient.fetchVVHRoadlinks(links.map(_._1).toSet)
+    val roadLinksByLinkId = vvhClient.fetchByLinkIds(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -442,6 +442,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
          join enumerated_value e on s.enumerated_value_id = e.id
          where
          a.asset_type_id = 20
+         and (a.modified_by is null or a.modified_by != 'vvh_generated')
          and floating = 0
          and (
            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
@@ -469,6 +470,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where
           a.asset_type_id = $assetTypeId
+          and (a.modified_by is null or a.modified_by != 'vvh_generated')
           and (
             (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
             or
@@ -506,7 +508,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
-    val roadLinksByLinkId = vvhClient.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
+    val roadLinksByLinkId = vvhClient.fetchByLinkIds(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -614,6 +616,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
 
   /**
     * Returns the municipality code of a Asset by it's Id
+ *
     * @param assetId The Id of the Asset
     * @return Type: Int - The Municipality Code
     */
@@ -641,7 +644,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,
                        vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(vvhClient.fetchVVHRoadlink(linkId).get.municipalityCode)
+    municipalityValidation(vvhClient.fetchByLinkId(linkId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
 
@@ -980,6 +983,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * When invoked will expire all assets of a given type.
     * It is required that the invoker takes care of the transaction.
+ *
     * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
     */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {

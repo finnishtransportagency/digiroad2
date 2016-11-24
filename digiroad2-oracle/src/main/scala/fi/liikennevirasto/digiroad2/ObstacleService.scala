@@ -1,18 +1,19 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
 
-class ObstacleService(val vvhClient: VVHClient) extends PointAssetOperations {
+class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingObstacle
   type PersistedAsset = Obstacle
 
   override def typeId: Int = 220
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[VVHRoadlink]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: Obstacle, floating: Boolean) = {
     persistedAsset.copy(floating = floating)

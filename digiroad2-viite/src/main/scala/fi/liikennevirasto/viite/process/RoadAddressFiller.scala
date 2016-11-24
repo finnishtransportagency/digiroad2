@@ -3,17 +3,13 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.{Discontinuity, MissingRoadAddress, RoadAddress}
-import org.joda.time.DateTime
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
-import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder}
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressFiller {
-  case class LRMValueAdjustment(id: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
+  case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],
@@ -22,16 +18,15 @@ object RoadAddressFiller {
   private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
-  private val MinAllowedRoadAddressLength = 0.5
-  private val AnomalyNoAddressGiven = 1
-  private val AnomalyNotFullyCovered = 2
-  private val AnomalyIllogical = 3
-  private val AnomalyNoAnomaly = 0
-
+  private val MaxDistanceDiffAllowed = 1.0 /*Temporary restriction from PO: Filler limit on modifications
+                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+                                            cut more than that then nothing is done to the road address LRM data.
+                                            */
+  private val MinAllowedRoadAddressLength = 0.1
 
   private def capToGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val (overflowingSegments, passThroughSegments) = segments.partition(_.endMValue - MaxAllowedMValueError > linkLength)
+    val (overflowingSegments, passThroughSegments) = segments.partition(x => (x.endMValue - MaxAllowedMValueError > linkLength) && (x.endMValue - linkLength <= MaxDistanceDiffAllowed))
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(endMValue = linkLength),
         LRMValueAdjustment(s.id, roadLink.linkId, None, Option(linkLength)))
@@ -41,7 +36,8 @@ object RoadAddressFiller {
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val (overflowingSegments, passThroughSegments) = segments.partition(_.startMValue + Epsilon > linkLength)
+    val (overflowingSegments, passThroughSegments) = segments.partition(x => x.startMValue + Epsilon > linkLength)
+
     val droppedSegmentIds = overflowingSegments.map (s => s.id)
 
     (passThroughSegments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ droppedSegmentIds))
@@ -51,9 +47,11 @@ object RoadAddressFiller {
     if (segments.isEmpty)
       return (segments, changeSet)
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val lastSegment = segments.maxBy(_.endMValue)
-    val restSegments = segments.tail
-    val (adjustments) = lastSegment.endMValue < linkLength - MaxAllowedMValueError match {
+    val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)
+    val lastSegment = sorted.head
+    val restSegments = sorted.tail
+    val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
+    val (adjustments) = (lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff match {
       case true => (restSegments ++ Seq(lastSegment.copy(endMValue = linkLength)), Seq(LRMValueAdjustment(lastSegment.id, lastSegment.linkId, None, Option(linkLength))))
       case _ => (segments, Seq())
     }
@@ -61,6 +59,8 @@ object RoadAddressFiller {
   }
 
   private def dropShort(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
+    if (segments.size < 2)
+      return (segments, changeSet)
     val (droppedSegments, passThroughSegments) = segments.partition (s => s.length < MinAllowedRoadAddressLength)
     val droppedSegmentIds = droppedSegments.map(_.id).toSet
 
