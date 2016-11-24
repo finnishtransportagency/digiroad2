@@ -246,7 +246,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.id === link.id;
+          return link.id !== 0 && feature.attributes.id === link.id || link.id === 0 && feature.attributes.linkId === link.linkId;
         });
         if (feature) {
           _.each(selectControl.layer.selectedFeatures, function (selectedFeature){
@@ -256,6 +256,7 @@
           });
         }
       });
+      eventListener.listenTo(eventbus, 'linkProperties:reselect', reselectRoadLink);
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);

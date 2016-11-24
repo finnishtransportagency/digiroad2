@@ -233,9 +233,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       (RoadAddressDAO.fetchByLinkId(Set(id), true),
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
-    logger.info("addresses read" + addresses.size + " / " + missedRL.size)
     val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
-    logger.info("roadlinks read" + roadLinks.size + " / " + vvhHistoryLinks.size)
     (addresses.size, roadLinks.size) match {
       case (0,0) => List()
       case (_,0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
