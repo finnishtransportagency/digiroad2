@@ -435,7 +435,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val groupedData = historyData.groupBy(_.linkId)
       groupedData.mapValues(_.maxBy(_.endDate)).values.toSeq
     } else
-      Seq.empty[VVHHistoryRoadLink]
+      Nil
   }
 
   def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
@@ -659,7 +659,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     onlyFunctionalClassIsSet || onlyLinkTypeIsSet
   }
 
-  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Seq.empty[ChangeInfo]): Seq[RoadLink] = {
+  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
       vvhRoadLink.get.featureClass match {
