@@ -581,7 +581,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
       when(mockVVHHistoryClient.fetchVVHRoadlinkHistoryF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
-      val serviceResult = service.getViiteRoadLinksHistoryFromVVH(Set(linkId))
+      val serviceResult = service.getViiteRoadLinksHistoryFromVVH(Set[Long](linkId))
       serviceResult.length should be (1)
       serviceResult.head.linkId should be (linkId)
       serviceResult.head.endDate should be (1000)

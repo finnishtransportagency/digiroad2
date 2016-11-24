@@ -788,6 +788,14 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     Future(fetchVVHRoadlinkHistory(linkIds))
   }
 
+  /**
+  * Returns VVH road links. Uses Scala Future for concurrent operations.
+  * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+  */
+  def fetchVVHRoadlinkHistoryF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds, municipalities))
+  }
+
   private def makeFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -798,7 +806,6 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
       }
     filter
   }
-
 
   private def linkIdFilter(linkIds: Set[Long]): String = {
     makeFilter("LINKID", linkIds)
@@ -839,6 +846,23 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
       }
     }
   }
+
+  /**
+  * Returns VVH road link history data in bounding box area. Municipalities are optional.
+  * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+  * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+  */
+  def fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    val definition = historyLayerDefinition(withMunicipalityFilter(municipalities))
+    val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHFeature)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }
 }
 
 
