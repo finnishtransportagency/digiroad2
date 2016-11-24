@@ -164,11 +164,17 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    roads.filterNot(r => linkLengths.get(r._1).isDefined).foreach{
+    val floatingLinks = vvhClient.historyData.fetchVVHRoadlinkHistory(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    print(s"${DateTime.now()} - ")
+    println(floatingLinks.size + " links can be saved as floating addresses")
+
+    roads.filterNot(r => linkLengths.get(r._1).isDefined || floatingLinks.get(r._1).nonEmpty).foreach{
       row => println("Suppressed row ID %d with reason 1: 'LINK-ID is not found in the VVH Interface' %s".format(row._16, printRow(row)))
     }
 
-    val (lrmPositions, warningRows) = linkLengths.flatMap {
+    val allLinkLengths = linkLengths ++ floatingLinks.mapValues(x => GeometryUtils.geometryLength(x.geometry))
+
+    val (lrmPositions, warningRows) = allLinkLengths.flatMap {
       case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
     }.partition(x => x._3 != x._4)
 
@@ -192,6 +198,7 @@ class AssetDataImporter {
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
         mmlIdMaps.get(mmlId).get -> devLinkId
       }.partition { case (pid, did) => pid != did }
+      print(s"${DateTime.now()} - ")
       println("Removing the non-differing mmlId+linkId combinations from mapping: %d road links".format(same.size))
       differ
     } else {
@@ -204,9 +211,9 @@ class AssetDataImporter {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "created_date, geometry) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "created_date, geometry, floating) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,0.0,?,?,0.0,?)))")
+      "?,?,0.0,0.0,?,?,0.0,?)), ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
     lrmPositions.zip(ids).foreach { case ((id, linkId, startM, endM), (lrmId)) =>
@@ -238,6 +245,7 @@ class AssetDataImporter {
       addressPS.setDouble(14, address._15)
       addressPS.setDouble(15, address._16)
       addressPS.setDouble(16, endAddrM - startAddrM)
+      addressPS.setInt(17, if (floatingLinks.contains(linkId)) 1 else 0)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()

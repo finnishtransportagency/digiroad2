@@ -40,6 +40,7 @@ object RoadLinkType{
   case object UnknownRoadLinkType extends RoadLinkType { def value = 0 }
   case object NormalRoadLinkType extends RoadLinkType { def value = 1 }
   case object ComplementaryRoadLinkType extends RoadLinkType { def value = 3 }
+  case object FloatingRoadLinkType extends RoadLinkType { def value = -1 }
 }
 
 /**
@@ -426,6 +427,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     sql"""select l.link_id, l.link_type, l.modified_date, l.modified_by
             from link_type l
             join #$idTableName i on i.id = l.link_id""".as[(Long, Int, DateTime, String)].list
+  }
+
+  def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long]): Seq[VVHHistoryRoadLink] = {
+    if (roadAddressesLinkIds.nonEmpty) {
+      val historyData = Await.result(vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds), atMost = Duration.Inf)
+      val groupedData = historyData.groupBy(_.linkId)
+      groupedData.mapValues(_.maxBy(_.endDate)).values.toSeq
+    } else
+      Nil
+  }
+
+  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+    val historyData = vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds)
+    val currentData = vvhClient.fetchByLinkIdsF(roadAddressesLinkIds)
+    val (hist, curr) = Await.result(historyData.zip(currentData), atMost = Duration.Inf)
+    withDynSession {
+      (enrichRoadLinksFromVVH(curr, Seq()), hist)
+    }
   }
 
   /**

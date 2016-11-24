@@ -113,13 +113,7 @@ var RoadStyles = function() {
         var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        if(roadLink.roadLinkType === 3){
-          roadLink.zIndex = 1;
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-        } else {
-          roadLink.zIndex = 0;
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-        }
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
       });
       usingLayerSpecificStyleProvider(function() {
         vectorLayer.addFeatures(features);
