@@ -745,12 +745,15 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   private val roadLinkDataHistoryService = "Roadlink_data_history"
 
   private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
+    val definitionStart = "[{"
+    val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => "&outFields=" + URLEncoder.encode("\"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SE,ROADNAME_SM,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,CREATED_DATE,SOURCEINFO,SURFACETYPE,SUBTYPE,END_DATE,END_DATE\"", "UTF-8")
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID""""
     }
-    val definition = filter + fieldSelection
-    definition
+    val definitionEnd = "}]"
+    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
+    URLEncoder.encode(definition, "UTF-8")
   }
 
   private def extractVVHHistoricFeature(feature: Map[String, Any]): VVHHistoryRoadLink = {
@@ -853,16 +856,15 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
   */
   def fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = historyLayerDefinition(withMunicipalityFilter(municipalities))
-    val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
-      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
-
-      fetchVVHFeatures(url) match {
-        case Left(features) => features.map(extractVVHFeature)
-        case Right(error) => throw new VVHClientException(error.toString)
-      }
+    val definitions = historyLayerDefinition(withMunicipalityFilter(municipalities))
+    val url= vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
+    s"layerDefs=$definitions&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+    "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
     }
+  }
 }
 
 
