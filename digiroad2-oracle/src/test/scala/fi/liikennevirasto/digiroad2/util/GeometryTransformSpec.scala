@@ -163,4 +163,18 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
     roadAddress.road should be (110)
   }
+
+  test("Resolve road address -> coordinate") {
+    assume(connectedToVKM)
+    val address = RoadAddress(None, 110, 1, Track.Combined, 3697, None)
+    val (coord) = transform.addressToCoords(address)
+    coord.size should be (1)
+    coord.head.x shouldNot be (0.0)
+    coord.head.y shouldNot be (0.0)
+    val (newAddress, side) = transform.resolveAddressAndLocation(coord.head, 270, includePedestrian = Option(true))
+    newAddress.road should be (address.road)
+    newAddress.roadPart should be (address.roadPart)
+    newAddress.track.value should be (address.track.value)
+    Math.abs(newAddress.mValue - address.mValue) < 5 should be (true)
+  }
 }

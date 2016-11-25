@@ -38,7 +38,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchByLinkIds(Set(1611447l)))
         .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksFromVVH(Set(1611447l))
+      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.find {
         _.linkId == 1611447
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
@@ -52,7 +52,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchByLinkIds(Set(1611447l)))
         .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLinks = service.getRoadLinksFromVVH(Set(1611447l))
+      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.find {_.linkId == 1611447}.map(_.functionalClass) should be(Some(4))
       dynamicSession.rollback()
     }
@@ -135,10 +135,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set()))
         .thenReturn(Promise.successful(List(
-        VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
-        VVHRoadlink(456l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.TractorRoad),
-        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers),
-        VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath))).future)
+          VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
+          VVHRoadlink(456l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.TractorRoad),
+          VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers),
+          VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath))).future)
 
       sqlu"""delete from incomplete_link where municipality_code = 91""".execute
       sqlu"""insert into incomplete_link(id, link_id, municipality_code) values(3123123123, 456, 91)""".execute
@@ -565,6 +565,26 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       roadLinksList should have length (4)
       roadLinksList.filter(_.attributes.contains("SUBTYPE")) should have length(2)
+    }
+  }
+
+  test("Verify the returning of the correct VVHHistoryRoadLink"){
+    val municipalityId = 235
+    val linkId = 1234
+    val firstRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 100, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
+    val secondRoadLink = new VVHHistoryRoadLink(linkId, municipalityId, Seq.empty, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, 1000, attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SUBTYPE" -> BigInt(3)))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHHistoryClient = MockitoSugar.mock[VVHHistoryClient]
+    val service = new TestService(mockVVHClient)
+
+    OracleDatabase.withDynTransaction {
+      when(mockVVHClient.historyData).thenReturn(mockVVHHistoryClient)
+      when(mockVVHHistoryClient.fetchVVHRoadlinkHistoryF(any[Set[Long]])).thenReturn(Future(Seq(firstRoadLink, secondRoadLink)))
+      val serviceResult = service.getViiteRoadLinksHistoryFromVVH(Set[Long](linkId))
+      serviceResult.length should be (1)
+      serviceResult.head.linkId should be (linkId)
+      serviceResult.head.endDate should be (1000)
     }
   }
 }

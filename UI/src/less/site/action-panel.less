@@ -89,6 +89,14 @@
   .road-link-legend {
     display: block;
   }
+  .check-box-container{
+    margin-bottom: -22px;
+    padding: 10px;
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
 }
 
 .point-asset {
@@ -249,6 +257,12 @@
     .speed-limit-40  { .linear-asset-legend-entry(@speed-limit-3, @linear-asset-node-3); }
     .speed-limit-30  { .linear-asset-legend-entry(@speed-limit-2, @linear-asset-node-2); }
     .speed-limit-20  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
+  }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
   }
 }
 

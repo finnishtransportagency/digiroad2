@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SideCode, UnknownLinkType}
+import fi.liikennevirasto.viite.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadType}
@@ -56,12 +57,13 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   test("encode road adress") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
-    val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality, UnknownLinkType, NormalRoadLinkType, RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
+    val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality, UnknownLinkType, NormalRoadLinkType,  NormalLinkInterface, RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
       "id" -> 63298,
       "link_id" -> 5171208,
+      "link_source" -> 1,
       "road_number" -> 5,
       "road_part_number" -> 205,
       "track_code" -> 1,

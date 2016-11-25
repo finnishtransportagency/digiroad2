@@ -24,7 +24,10 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          eventbus.once('linkProperties:available');
+          eventbus.once('roadLinks:afterDraw', function () {
+            models.selectedLinkProperty.open(response.linkId, response.id, true);
+            eventbus.trigger('linkProperties:reselect');
+          });
           map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
         });
       },

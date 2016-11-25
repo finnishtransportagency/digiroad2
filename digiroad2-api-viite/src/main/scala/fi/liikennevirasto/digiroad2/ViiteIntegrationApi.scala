@@ -5,9 +5,8 @@ import java.util.Locale
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.RoadType.{PrivateRoadType, UnknownOwnerRoad}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.BasicAuthSupport
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -77,6 +76,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
             , roadAddressLink.startAddressM, roadAddressLink.endAddressM),
           "id" -> roadAddressLink.id,
           "link_id" -> roadAddressLink.linkId,
+          "link_source" -> roadAddressLink.roadLinkSource.value,
           "road_number" -> roadAddressLink.roadNumber,
           "road_part_number" -> roadAddressLink.roadPartNumber,
           "track_code" -> roadAddressLink.trackCode,

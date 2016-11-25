@@ -166,7 +166,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     //Get all road links from vvh that are not on the RoadLinks sequence passed as parameter
     val linkIds = allLinkIds(manoeuvre)
     val additionalRoadLinks = linkIds.forall(id => roadLinks.exists(_.linkId == id)) match {
-      case false => roadLinkService.getRoadLinksFromVVH(linkIds.toSet -- roadLinks.map(_.linkId))
+      case false => roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet -- roadLinks.map(_.linkId))
       case true => Seq()
     }
 

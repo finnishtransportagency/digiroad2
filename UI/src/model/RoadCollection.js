@@ -58,13 +58,24 @@
 
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
+    var roadLinkGroupsHistory = [];
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
     };
 
+    var roadLinksHistory = function() {
+      return _.flatten(roadLinkGroupsHistory);
+    };
+
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
+        return roadLink.isSelected();
+      });
+    };
+
+    var getSelectedRoadLinksHistory = function() {
+      return _.filter(roadLinksHistory(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
@@ -75,7 +86,7 @@
           return roadLink.getId();
         });
         var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
-          return _.map(roadLinkGroup, function(roadLink) {
+            return _.map(roadLinkGroup, function(roadLink) {
               return new RoadLinkModel(roadLink);
             });
         });
@@ -85,6 +96,25 @@
           });
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
+      });
+    };
+
+    this.fetchHistory = function (boundingBox) {
+      backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
+        var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {
+          return roadLink.getId();
+        });
+        var fetchedRoadLinkModels = _.map(fetchedHistoryRoadLinks, function(roadLinkGroup) {
+          return _.map(roadLinkGroup, function(roadLink) {
+            return new RoadLinkModel(roadLink);
+          });
+        });
+        roadLinkGroupsHistory = _.reject(fetchedRoadLinkModels, function(roadLinkGroupHistory) {
+          return _.some(roadLinkGroupHistory, function(roadLink) {
+            _.contains(selectedIds, roadLink.getId());
+          });
+        }).concat(getSelectedRoadLinksHistory());
+        eventbus.trigger('roadLinks:historyFetched');
       });
     };
 
@@ -109,6 +139,12 @@
       });
     };
 
+    this.getAllHistory = function() {
+      return _.map(roadLinksHistory(), function(roadLinkHistory){
+        return roadLinkHistory.getData();
+      });
+    };
+
     this.get = function(ids) {
       return _.map(ids, function(id) {
         return _.find(roadLinks(), function(road) { return road.getId() === id; });
@@ -125,6 +161,11 @@
 
     this.reset = function(){
       roadLinkGroups = [];
+      roadLinkGroupsHistory = [];
+    };
+
+    this.resetHistory = function(){
+      roadLinkGroupsHistory = [];
     };
   };
 })(this);

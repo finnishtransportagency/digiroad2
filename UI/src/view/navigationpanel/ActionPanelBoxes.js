@@ -79,6 +79,10 @@
                '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
              '</div>';
     }).join('');
+    var speedLimitHistoryCheckBox = [
+      '<div class="check-box-container">',
+          '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+    '</div>'].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
@@ -87,6 +91,7 @@
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
+            speedLimitHistoryCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -127,6 +132,15 @@
     function hide() {
       element.hide();
     }
+
+    elements.expanded.find('input[type=checkbox]').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      if (eventTarget.prop('checked')) {
+        eventbus.trigger('speedLimits:showSpeedLimitsHistory');
+      } else {
+        eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
+      }
+    });
 
     return {
       title: 'Nopeusrajoitus',

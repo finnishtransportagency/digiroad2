@@ -356,7 +356,7 @@ trait LinearAssetOperations {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until)
     }
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(persistedLinearAssets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
 
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>

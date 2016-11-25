@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, LinearAssetUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -47,8 +47,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo]) = {
-    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+  private def getFilledTopologyAndRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {
+    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks, showSpeedLimitsHistory)
     val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(change, roadLinks)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
 
@@ -87,11 +87,22 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * Returns speed limits history for Digiroad2Api /history speedlimits GET endpoint.
+    */
+  def getHistory(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksHistoryFromVVH(bounds, municipalities)
+    withDynTransaction {
+      val (filledTopology, roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, Seq(), true)
+      LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
+    }
+  }
+
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
     }
-    val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksByLinkIdsFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
 
     persistedSpeedLimits.flatMap { speedLimit =>
       roadLinks.find(_.linkId == speedLimit.linkId).map { roadLink =>

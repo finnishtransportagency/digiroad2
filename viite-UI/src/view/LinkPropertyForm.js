@@ -58,6 +58,11 @@
       [5, 'Jatkuva']
     ];
 
+    var floatingText = [
+      [0, 'Ei'],
+      [-1, 'Kyllä']
+    ];
+
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -77,6 +82,16 @@
       if(selectedLinkProperty.count() == 1){
         return mmlId;
       }
+    };
+
+    var getFloatingType = function(floatingValue) {
+      var floatingType =  _.find(floatingText, function (f) {
+        return f[0] === floatingValue;
+      });
+      if(typeof floatingType == 'undefined'){
+        floatingType = [0, 'Ei'];
+      }
+      return floatingType && floatingType[1];
     };
 
     var dynamicField = function(labelText){
@@ -121,11 +136,21 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
+    var notificationPart = function(displayNotification) {
+      if(displayNotification)
+        return '' +
+          '<div class="form-group form-notification">' +
+          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa sijainti.</p>' +
+          '</div>';
+      else
+        return '';
+    };
+
     var template = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var staticSegmentIdField = selectedLinkProperty.count() == 1 ? staticField('SEGMENTIN ID', 'segmentId') : '';
+      var compactForm = selectedLinkProperty.get()[0].roadLinkType === -1;
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -141,12 +166,17 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
+        (!compactForm ?
         staticField('ALKUETÄISYYS', 'startAddressM') +
         staticField('LOPPUETÄISUUS', 'endAddressM') +
-        staticField('ELY', 'elyCode') +
+        staticField('ELY', 'elyCode') : '') +
         roadTypes +
+        (!compactForm ?
         staticField('JATKUVUUS', 'discontinuity') +
-        endDateField +
+        staticField('KELLUVA', 'floating') +
+        endDateField : '') +
+        (compactForm ?
+        notificationPart(true):'')  +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -198,6 +228,8 @@
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.endDate = linkProperties.endDate || '';
         linkProperties.roadType = linkProperties.roadType || '';
+        linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+        linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

@@ -53,18 +53,18 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("Update without geometry") {
     runWithRollback {
-      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
       RoadAddressDAO.update(address)
     }
   }
 
   test("Updating a geometry is executed in SQL server") {
     runWithRollback {
-      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
       RoadAddressDAO.update(address, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000))).
+      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000)), false).
         _1.exists(_.id == address.id) should be (true)
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000))).
+      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000)), false).
         _1.exists(_.id == address.id) should be (false)
     }
   }
@@ -72,7 +72,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("Set road address to floating and update the geometry as well") {
     runWithRollback {
-      val address = RoadAddressDAO.getAllRoadAddressesByRange(1L, 1L).head
+      val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
       RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
     }
   }
