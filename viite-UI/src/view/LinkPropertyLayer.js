@@ -86,7 +86,8 @@
         _.each(floatingRoadMarkers, function(floatlink) {
           var mouseClickHandler = createMouseClickHandler(floatlink);
           var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          marker.events.register('click', floatingMarkerLayer, mouseClickHandler);
+          marker.events.register('click',marker, mouseClickHandler);
+          marker.events.registerPriority('dblclick',marker, mouseClickHandler);
           floatingMarkerLayer.addMarker(marker);
         });
       }
@@ -101,10 +102,17 @@
 
     var createMouseClickHandler = function(floatlink) {
       return function(){
+        selectControl.unselectAll();
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.id === floatlink.id;
         });
-        selectControl.select(feature);
+        if(event.type === 'click'){
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else if (event.type === 'dblclick'){
+          selectControl.select(_.assign({singleLinkSelect: true}, feature));
+        } else {
+          selectControl.unselectAll();
+        }
       };
     };
 
