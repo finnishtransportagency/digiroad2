@@ -119,9 +119,16 @@ object DataFixture {
       RoadAddressDAO.getValidRoadNumbers.foreach( road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
-        println(replacements)
-      }
-      )
+        roadAddresses.foreach{ case (linkId, list) =>
+          val currReplacement = replacements(linkId)
+          if (list.size != currReplacement.size) {
+            val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
+            val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            RoadAddressDAO.remove(removed)
+            RoadAddressDAO.create(created)
+          }
+        }
+      })
     }
   }
 

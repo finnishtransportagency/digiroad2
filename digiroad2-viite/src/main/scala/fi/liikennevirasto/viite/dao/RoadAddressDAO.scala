@@ -122,6 +122,8 @@ object RoadAddressDAO {
     formatter.parseDateTime(string)
   }
 
+  val dateFormatter = ISODateTimeFormat.basicDate()
+
   def optDateTimeParse(string: String): Option[DateTime] = {
     try {
       if (string==null || string == "")
@@ -535,5 +537,68 @@ object RoadAddressDAO {
         $where AND floating='1' and t.id < t2.id
       """
     queryList(query)
+  }
+
+  /**
+    * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
+    * @param roadAddresses Seq[RoadAddress]
+    * @return Number of updated rows
+    */
+  def remove(roadAddresses: Seq[RoadAddress]): Int = {
+    val idString = roadAddresses.map(_.id).mkString(",")
+    val query =
+      s"""
+          UPDATE ROAD_ADDRESS SET VALID_TO = sysdate WHERE id IN ($idString)
+        """
+    Q.updateNA(query).first
+  }
+
+  def create(roadAddresses: Seq[RoadAddress]): Seq[Long] = {
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
+      "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+      "VALID_FROM, geometry, floating) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
+      "?,?,0.0,?,?,?,0.0,?)), ?)")
+    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+      lrmPositionPS.setLong(1, lrmId)
+      lrmPositionPS.setLong(2, address.linkId)
+      lrmPositionPS.setLong(3, address.sideCode.value)
+      lrmPositionPS.setDouble(4, address.startMValue)
+      lrmPositionPS.setDouble(5, address.endMValue)
+      lrmPositionPS.addBatch()
+      addressPS.setLong(1, address.id)
+      addressPS.setLong(2, lrmId)
+      addressPS.setLong(3, address.roadNumber)
+      addressPS.setLong(4, address.roadPartNumber)
+      addressPS.setLong(5, address.track.value)
+      addressPS.setLong(6, address.discontinuity.value)
+      addressPS.setLong(7, address.startAddrMValue)
+      addressPS.setLong(8, address.endAddrMValue)
+      addressPS.setString(9, address.startDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      addressPS.setString(10, address.endDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      addressPS.setString(11, "-") //TODO: Created by is missing
+      val (p1, p2) = (address.geom.head, address.geom.last)
+      addressPS.setDouble(12, p1.x)
+      addressPS.setDouble(13, p1.y)
+      addressPS.setDouble(14, address.startAddrMValue)
+      addressPS.setDouble(15, p2.x)
+      addressPS.setDouble(16, p2.y)
+      addressPS.setDouble(17, address.endAddrMValue)
+      addressPS.setInt(18, if (address.floating) 1 else 0)
+      addressPS.addBatch()
+    }
+    lrmPositionPS.executeBatch()
+    addressPS.executeBatch()
+    lrmPositionPS.close()
+    addressPS.close()
+    roadAddresses.map(_.id)
   }
 }

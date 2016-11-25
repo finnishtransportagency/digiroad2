@@ -54,7 +54,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Fuse road address should not merge consecutive road addresses if sidecode differs") {
+  test("Fuse road address should not merge consecutive road addresses if side code differs") {
     OracleDatabase.withDynSession {
       val roadAddress = Seq(
         RoadAddress(1, 1, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
