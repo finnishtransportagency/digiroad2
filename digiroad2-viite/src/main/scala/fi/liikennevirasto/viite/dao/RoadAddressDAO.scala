@@ -14,6 +14,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.model.Anomaly
@@ -458,11 +459,8 @@ object RoadAddressDAO {
     }
   }
 
-  def getNextRoadAddressId(): Long = {
-    sql"""
-       Select Max(ra.id) + 1
-       From Road_Address ra
-      """.as[Long].firstOption.get
+  def getNextRoadAddressId: Long = {
+    Queries.nextViitePrimaryKeyId.as[Long].first
   }
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))

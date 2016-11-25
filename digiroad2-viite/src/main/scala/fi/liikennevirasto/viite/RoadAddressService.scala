@@ -412,7 +412,7 @@ object RoadAddressLinkBuilder {
             val endMSegment = withoutCalibrationPoints.maxBy(_.endMValue)
             val combinedGeometry = Seq(startMSegment.geom.head, endMSegment.geom.last)
 
-            RoadAddress(RoadAddressDAO.getNextRoadAddressId(), record._1._1, record._1._2,
+            RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
               Track.apply(record._1._3), Discontinuity.Continuous, withoutCalibrationPoints.minBy(_.startAddrMValue).startAddrMValue,
               withoutCalibrationPoints.maxBy(_.endAddrMValue).endAddrMValue, record._1._4, record._1._5, record._1._6,
               startMSegment.startMValue, endMSegment.endMValue,
@@ -422,7 +422,7 @@ object RoadAddressLinkBuilder {
             withCalibrationPoints.head.calibrationPoints match {
               case (None, _) => {
                 val calibrationPointAtStart = withCalibrationPoints.head.calibrationPoints._1.get
-                new RoadAddress(RoadAddressDAO.getNextRoadAddressId(), record._1._1, record._1._2,
+                RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
                   Track.apply(record._1._3), Discontinuity.Continuous, calibrationPointAtStart.addressMValue,
                   withoutCalibrationPoints.maxBy(_.endAddrMValue).endAddrMValue, record._1._4, record._1._5, record._1._6,
                   calibrationPointAtStart.segmentMValue, withoutCalibrationPoints.maxBy(_.endMValue).endMValue,
