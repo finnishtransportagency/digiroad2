@@ -391,9 +391,9 @@ object RoadAddressLinkBuilder {
     }
   }
 
-  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): RoadAddress = {
+  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
     if (roadAddresses.size == 1) {
-      roadAddresses.head
+      roadAddresses
     } else {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))

@@ -5,6 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -106,6 +107,22 @@ object DataFixture {
     ))
     println(s"complementary road address import completed at time: ${DateTime.now()}")
     println()
+  }
+
+  private def combineMultipleSegmentsOnLinks(): Unit ={
+    val eventBus = new DummyEventBus
+    val roadLinkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, eventBus)
+    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+        val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
+        val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
+        println(replacements)
+      }
+      )
+    }
   }
 
   def main(args:Array[String]) : Unit = {
