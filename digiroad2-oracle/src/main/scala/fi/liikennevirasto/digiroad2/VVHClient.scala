@@ -799,6 +799,17 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     Future(fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds, municipalities))
   }
 
+  /**
+    * For testing purposes
+    * @param bounds
+    * @param municipalities
+    * @return
+    */
+  def uRLgenerator(bounds: BoundingRectangle,municipalities: Set[Int]) :String ={
+    historyURLGenerator(bounds:BoundingRectangle,municipalities: Set[Int])
+  }
+
+
   private def makeFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -856,16 +867,18 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
   */
   def fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = historyLayerDefinition(withMunicipalityFilter(municipalities))
-    val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
-      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
-
+   val url= historyURLGenerator(bounds,municipalities)
       fetchVVHFeatures(url) match {
         case Left(features) => features.map(extractVVHFeature)
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }
+  def historyURLGenerator(bounds:BoundingRectangle,municipalities: Set[Int]):String ={
+    val definitions = historyLayerDefinition(withMunicipalityFilter(municipalities))
+    vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
+    s"layerDefs=$definitions&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+    "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+  }
 }
 
 
