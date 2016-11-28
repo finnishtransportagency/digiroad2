@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, BoundingRectangle, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -350,16 +350,22 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Returns changed linear assets after given date. Used by ChangeApi /:assetType GET endpoint.
+    * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
+    *
+    * @param typeId
+    * @param since
+    * @param until
+    * @return Changed linear assets
     */
   def getChanged(typeId: Int, since: DateTime, until: DateTime): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
     persistedLinearAssets.flatMap { persistedLinearAsset =>
-      roadLinks.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
+      roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
         val endPoints: Set[Point] =
           try {
