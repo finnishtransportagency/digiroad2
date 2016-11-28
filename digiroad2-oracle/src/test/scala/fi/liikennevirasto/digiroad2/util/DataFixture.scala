@@ -459,6 +459,12 @@ object DataFixture {
   }
 
   private def checkTierekisteriBusStopsWithoutOTHLiviId(boundsOffset: Double = 10): Unit ={
+    case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
+    def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
+      persistedStop.propertyData.
+        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.propertyValue.isEmpty))
+    }
+
     println("\nGet the list of tierekisteri bus stops that doesn't have livi id in OTH")
     println(DateTime.now())
 
@@ -469,7 +475,7 @@ object DataFixture {
 
     println("Processing %d TR bus stops".format(trBusStops.length))
 
-    trBusStops.foreach{
+    val busStops = trBusStops.flatMap{
       trStop =>
         try {
           val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
@@ -482,22 +488,35 @@ object DataFixture {
               val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
               val filter = s" where $boundingBoxFilter and a.asset_type_id = 10"
               val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
-                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop)))
+                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop))).
+                filterNot(hasLiviIdPropertyValue)
 
               if(persistedStops.isEmpty){
-                println("Couldn't find any asset of the nearest TR bus stop with livi Id "+ trStop.liviId)
+                println("Couldn't find any stop nearest TR bus stop without livi Id. TR Livi Id "+trStop.liviId)
+                None
               }else{
                 val (peristedStop, distance) = persistedStops.map(stop => (stop, stopPoint.distance2DTo(Point(stop.lon, stop.lat, 0)))).minBy(_._2)
-                println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" distance "+distance)
+                println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" national ID "+peristedStop.nationalId+" distance "+distance)
+                Some(NearestBusStops(trStop, peristedStop, distance))
               }
-            case _ =>
-                println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+            case _ => {
+              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+              None
+            }
           }
         }catch {
           case e: VKMClientException => {
             println("VKM throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
+            None
           }
         }
+    }
+
+    val nearestBusStops = busStops.groupBy(busStop => busStop.othBusStop.linkId).mapValues(busStop => busStop.minBy(_.distance)).values
+
+    nearestBusStops.foreach{
+      nearestBusStop =>
+        println("Persist livi Id "+nearestBusStop.trBusStop.liviId+" at OTH bus stop id "+nearestBusStop.othBusStop.id+" with national id "+nearestBusStop.othBusStop.nationalId+" and distance "+nearestBusStop.distance)
     }
 
     println("\n")
