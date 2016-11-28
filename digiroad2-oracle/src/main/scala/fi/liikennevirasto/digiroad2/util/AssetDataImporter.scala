@@ -1254,5 +1254,18 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       """.execute
     }
 
+    /**
+    * Adds text property to TEXT_PROPERTY_VALUE table.
+    *
+    * @param assetId
+    * @param propertyVal
+    * @param vname
+    */
+    def createTextPropertyValue(assetId: Long, propertyVal: Long, vname : String, modifiedBy: String) = {
+      sqlu"""
+          INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
+          VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,$modifiedBy)
+        """.execute
+    }
 }
 
