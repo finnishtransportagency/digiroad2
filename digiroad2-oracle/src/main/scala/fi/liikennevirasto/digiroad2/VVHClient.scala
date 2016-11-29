@@ -745,15 +745,12 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   private val roadLinkDataHistoryService = "Roadlink_data_history"
 
   private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
-    val definitionStart = "[{"
-    val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID""""
+      case _ => "&outFields=" + URLEncoder.encode("\"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SE,ROADNAME_SM,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,CREATED_DATE,SOURCEINFO,SURFACETYPE,SUBTYPE,END_DATE,END_DATE\"", "UTF-8")
     }
-    val definitionEnd = "}]"
-    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
-    URLEncoder.encode(definition, "UTF-8")
+    val definition = filter + fieldSelection
+    definition
   }
 
   private def extractVVHHistoricFeature(feature: Map[String, Any]): VVHHistoryRoadLink = {
