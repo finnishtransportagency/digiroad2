@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, BoundingRectangle, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.{OracleLinearAssetDao, PersistedSpeedLimit}
@@ -98,14 +98,22 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  /**
+    * This method returns speed limits that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
+    *
+    * @param sinceDate
+    * @param untilDate
+    * @return Changed speed limits
+    */
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
     }
     val roadLinks = roadLinkServiceImplementation.getRoadLinksByLinkIdsFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
     persistedSpeedLimits.flatMap { speedLimit =>
-      roadLinks.find(_.linkId == speedLimit.linkId).map { roadLink =>
+      roadLinksWithoutWalkways.find(_.linkId == speedLimit.linkId).map { roadLink =>
         ChangedSpeedLimit(
           speedLimit = SpeedLimit(
             id = speedLimit.id,
