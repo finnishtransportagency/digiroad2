@@ -147,7 +147,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
 
 
-  private def withFilter[T](attributeName: String, ids: Set[T]): String = {
+  protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
         ""
@@ -795,7 +795,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   * Returns VVH road links. Uses Scala Future for concurrent operations.
   * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
   */
-  def fetchVVHRoadlinkHistoryF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+  def fetchVVHRoadlinkHistoryMunicipalityF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds, municipalities))
   }
 
@@ -811,7 +811,15 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
   }
 
   private def linkIdFilter(linkIds: Set[Long]): String = {
-    makeFilter("LINKID", linkIds)
+    withFilter("LINKID", linkIds)
+  }
+
+  private def layersMapToFeaturesMap(map: Map[String, Any]): Option[Any] = {
+    val layerZero = map.get("layers")
+    layerZero match {
+      case Some(layerList) => layerList.asInstanceOf[List[Map[String, Any]]].headOption.flatMap(x => x.get("features"))
+      case _ => None
+    }
   }
 
   private def fetchVVHHistoryFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -820,7 +828,13 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     val response = client.execute(request)
     try {
       val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-      content.get("features") match{
+      val mapping = {
+        if (content.contains("layers"))
+          layersMapToFeaturesMap(content)
+        else
+          content.get("features")
+      }
+      mapping match{
         case Some(features) =>
           Left(features.asInstanceOf[List[Map[String, Any]]])
         case _ =>
@@ -841,8 +855,9 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
       Nil
     else {
       val definition = historyLayerDefinition(linkIdFilter(linkIds))
-      val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/0/query?" +
-        definition + queryParameters()
+      val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?layerDefs=" +
+        definition + "&" +
+        queryParameters()
       fetchVVHHistoryFeatures(url) match {
         case Left(features) => features.map(extractVVHHistoricFeature)
         case Right(error) => throw new VVHClientException(error.toString)
