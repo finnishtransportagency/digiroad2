@@ -318,7 +318,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH change data. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)
     */
-  def queryChangesByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)]): Future[Seq[ChangeInfo]] = {
+  def queryChangesByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
     val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
