@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.DateTimeFormat
 
@@ -146,4 +146,7 @@ object MassTransitStopValidityPeriod {
   val Future = "future"
 }
 
-case class BoundingRectangle(leftBottom: Point, rightTop: Point)
+case class BoundingRectangle(leftBottom: Point, rightTop: Point) {
+  def diagonal: Vector3d = leftBottom - rightTop
+  def area: Double = diagonal.x*diagonal.y
+}

@@ -475,7 +475,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getViiteRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                          municipalities: Set[Int] = Set(), everything: Boolean,
                                          publicRoads: Boolean): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.queryChangesByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers)
+    val (changes, links) = Await.result(vvhClient.queryChangesByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities)
       .zip(everything match {
         case true => vvhClient.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
         case false=> vvhClient.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads)
@@ -486,6 +486,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  /**
+    * Returns road links without change data for Viite from VVH by bounding box and road numbers and municipalities.
+    */
+  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
+                                         municipalities: Set[Int] = Set(),
+                                         publicRoads: Boolean): Seq[RoadLink] = {
+    val links = Await.result(
+      vvhClient.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
+      atMost = Duration.Inf)
+
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, Seq()), Seq())._1
+    }
+  }
   /**
     * Returns road links and change data from VVH by road numbers and municipalities. Used by RoadLinkService.getRoadLinksFromVVH
     */
@@ -514,9 +528,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (getRoadLinksByLinkIdsFromVVH(linkIds), Seq())
   }
 
-  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(),
+  def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
                                everything: Boolean, publicRoads: Boolean) : Seq[RoadLink] =
-    getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
+    if (bounds.area < 1E6)
+      getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
+    else
+      getViiteRoadLinksFromVVH(bounds, roadNumbers, municipalities, publicRoads)
 
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
