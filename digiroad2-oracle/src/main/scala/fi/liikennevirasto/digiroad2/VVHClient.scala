@@ -804,8 +804,8 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
       if (ids.isEmpty) {
         ""
       } else {
-        val query = ids.mkString("%2C")
-        s"where=$attributeName+IN+%28$query%29"
+        val query = ids.mkString(",")
+        s"where=$attributeName IN ($query)"
       }
     filter
   }
