@@ -31,11 +31,20 @@
 
     var roadClassLegend = $('<div class="panel-section panel-legend linear-asset-legend road-class-legend"></div>');
 
+    var floatingLegend = $('' +
+      '<div class="legend-entry">' +
+      '<div class="label">Irti geometriasta</div>' +
+      '</div>' +
+      '<div class="floating-flag-with-stick-image"></div>'+
+      '<div class="legend-entry">' +
+      '<div class="symbol linear linear-asset-12" /></div>' +
+      '</div>');
+
     var calibrationPointPicture = $('' +
-        '<div class="legend-entry">' +
-          '<div class="label">Kalibrointipiste</div>' +
-        '</div>' +
-        '<div class="calibration-point-image"></div>');
+      '<div class="legend-entry">' +
+      '<div class="label">Kalibrointipiste</div>' +
+      '</div>' +
+      '<div class="calibration-point-image"></div>');
 
     var roadClasses = [
       [1, 'Valtatie (1-39)'],
@@ -58,6 +67,7 @@
         '</div>';
     }).join('');
     roadClassLegend.append(roadClassLegendEntries);
+    roadClassLegend.append(floatingLegend);
     roadClassLegend.append(calibrationPointPicture);
 
     var editModeToggle = new EditModeToggleButton({

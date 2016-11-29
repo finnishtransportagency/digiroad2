@@ -1296,4 +1296,39 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       println("%s %s %s".format(ids, dir, details))
     }
   }
+
+  test("Should filter out speed limits on walkways from TN-ITS message") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink2 = RoadLink(200, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id) VALUES (1, 100)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (1, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (1,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (2, 200)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (2, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2, 2)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (2,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (3, 300)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (3, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (3,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+
+      val result = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
+      result.length should be(1)
+      result.head.link.linkType should not be (TractorRoad)
+      result.head.link.linkType should not be (CycleOrPedestrianPath)
+
+      dynamicSession.rollback()
+    }
+  }
 }

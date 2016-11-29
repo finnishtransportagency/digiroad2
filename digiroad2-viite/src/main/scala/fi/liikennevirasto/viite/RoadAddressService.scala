@@ -17,6 +17,10 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
 
@@ -76,21 +80,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean = false, publicRoads: Boolean = false) = {
-    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
-      everything || publicRoads || roadNumberLimits.exists {
-        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
-      }
-    }
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val complementaryLinks = roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities)
-    val complementedRoadLinks = roadLinks ++ complementaryLinks
-    val linkIds = complementedRoadLinks.map(_.linkId).toSet
+  private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                                      everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
+    val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
+    val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
+    val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
+    (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
+  }
 
+  private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
-      RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating = false)._1.partition(_.floating)
+      RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating)._1.partition(_.floating)
     }
 
     val floating = floatingAddresses.groupBy(_.linkId)
@@ -104,8 +104,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val ra = floating.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
     }.toMap
+    (floatingViiteRoadLinks, addresses, floating)
+  }
 
+  def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                          everything: Boolean = false, publicRoads: Boolean = false) = {
+    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
+      everything || publicRoads || roadNumberLimits.exists {
+        case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
+      }
+    }
+    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+    val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
+    val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingLinkIds = linkIds -- floating.keySet
 
     val missedRL = withDynTransaction {
@@ -124,7 +138,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
-    val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
