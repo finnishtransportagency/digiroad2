@@ -438,25 +438,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Nil
   }
 
-//  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
-//    val historyData = vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds)
-//    val currentData = vvhClient.fetchByLinkIdsF(roadAddressesLinkIds)
-//    val (hist, curr) = Await.result(historyData.zip(currentData), atMost = Duration.Inf)
-//    withDynSession {
-//      (enrichRoadLinksFromVVH(curr, Seq()), hist)
-//    }
-//  }
-
-//  def getViiteRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
-//    val historyData = Await.result(vvhClient.historyData.fetchVVHRoadlinkHistoryF(bounds, municipalities),atMost = Duration.Inf)
-//    val groupedData = historyData.groupBy(_.linkId)
-//    groupedData.foreach { gd =>
-//      gd._2.foreach { rl =>
-//
-//      }
-//    }
-//
-//  }
+  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+    val historyData = vvhClient.historyData.fetchVVHRoadlinkHistoryF(roadAddressesLinkIds)
+    val currentData = vvhClient.fetchByLinkIdsF(roadAddressesLinkIds)
+    val (hist, curr) = Await.result(historyData.zip(currentData), atMost = Duration.Inf)
+    withDynSession {
+      (enrichRoadLinksFromVVH(curr, Seq()), hist)
+    }
+  }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
     val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchVVHRoadlinkHistoryMunicipalityF(bounds, municipalities).zip(vvhClient.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
