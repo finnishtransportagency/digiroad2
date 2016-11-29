@@ -23,7 +23,7 @@ object FeatureClass {
 
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(), constructionType: Int = 0) extends RoadLinkLike {
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),  constructionType: ConstructionType = ConstructionType.InUse) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -500,7 +500,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val linkStatus = attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
-    linkStatus == BigInt(0) || linkStatus == BigInt(1) || linkStatus == BigInt(3)
+    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
   protected def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
@@ -527,10 +527,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
     else
       0
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
-    val constructionType = attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt].toInt
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, constructionType)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -545,7 +544,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
-      "CONSTRUCTIONTYPE",
+      "CONSTRUCTIONTYPE",//TODO Remove this attribure from here because now is a instance variable
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",
@@ -607,6 +606,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .map(_.toInt)
       .map(AdministrativeClass.apply)
       .getOrElse(Unknown)
+  }
+
+  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+    Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(ConstructionType.apply)
+      .getOrElse(ConstructionType.InUse)
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
