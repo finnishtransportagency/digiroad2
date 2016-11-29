@@ -230,7 +230,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
     */
   def queryByRoadNumbersBoundsAndMunicipalities(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
-    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, includeAllPublicRoads, "")
+    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
+      withRoadNumbersFilter(roadNumbers, includeAllPublicRoads)
+    else
+      ""
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
