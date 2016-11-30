@@ -327,7 +327,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
-      "constructionType" -> roadLink.constructionType.toString)
+      "constructionType" -> roadLink.constructionType.value)
   }
 
   get("/roadlinks") {

@@ -59,6 +59,11 @@
       new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
 
+    var linkStatusRules = [
+      new OpenLayersRule().where('constructionType').is(1).use({ strokeColor: '#ff9900' }),
+      new OpenLayersRule().where('constructionType').is(3).use({ strokeColor: '#cc99ff'})
+    ];
+
     //History rules
     var unknownLinkTypeHistoryDefaultRules = [
       new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
@@ -106,6 +111,7 @@
     functionalClassDefaultStyle.addRules(overlayRules);
     functionalClassDefaultStyle.addRules(linkTypeSizeRules);
     functionalClassDefaultStyle.addRules(overlayDefaultOpacity);
+    functionalClassDefaultStyle.addRules(linkStatusRules);
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
 
     var functionalClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -130,6 +136,8 @@
     functionalClassSelectionSelectStyle.addRules(linkTypeSizeRules);
     functionalClassSelectionDefaultStyle.addRules(overlayUnselectedOpacity);
     functionalClassSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    functionalClassSelectionDefaultStyle.addRules(linkStatusRules);
+    functionalClassSelectionSelectStyle.addRules(linkStatusRules);
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: functionalClassSelectionSelectStyle,
       default: functionalClassSelectionDefaultStyle
