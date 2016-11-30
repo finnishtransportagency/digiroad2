@@ -3,9 +3,9 @@
     var className = 'road-link';
     var title = 'Tielinkki';
 
-    var historyRoadLinkCheckBox = '<div class="check-box-container">' +
+    var historyRoadLinkCheckBox = '<div class="panel-section"><div class="check-box-container">' +
         '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
-        '</div>';
+        '</div></div>';
 
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
@@ -64,7 +64,7 @@
         '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
         '</div>';
     }).join('');
-    functionalClassLegend.append(functionalClassLegendEntries).append(historyRoadLinkCheckBox);
+    functionalClassLegend.append(functionalClassLegendEntries);
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
     var linkTypes = [
@@ -87,7 +87,7 @@
         '<div class="symbol linear linear-asset-' + linkType[0] + '" />' +
         '</div>';
     }).join('');
-    linkTypeLegend.append(linkTypeLegendEntries).append(historyRoadLinkCheckBox);
+    linkTypeLegend.append(linkTypeLegendEntries);
 
     var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
     var verticalLevels = [
@@ -114,6 +114,26 @@
       'vertical-level': verticalLevelLegend
     };
 
+    var datasetHistoryCheckbox = {
+      'administrative-class': undefined,
+      'functional-class': historyRoadLinkCheckBox,
+      'link-type': historyRoadLinkCheckBox,
+      'vertical-level': undefined
+    };
+
+    var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
+    var constructionTypes = [
+      [1, 'Rakenteilla'], //Under construction
+      [3, 'Suunnitteilla'] //Planned
+    ];
+    var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
+      return '<div class="legend-entry">' +
+          '<div class="label">' + constructionType[1] + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+          '</div>';
+    }).join('');
+    constructionTypeLegend.append(constructionTypeLegendEntries);
+
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
       reset: function() {},
@@ -139,6 +159,12 @@
 
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
+        legendContainer.append(constructionTypeLegend);
+
+        var historyCheckBox = datasetHistoryCheckbox[datasetName];
+        if(historyCheckBox)
+          legendContainer.append(historyCheckBox);
+
         linkPropertiesModel.setDataset(datasetName);
 
         bindHistoryEventHandlers(legendContainer);
@@ -168,7 +194,10 @@
 
     bindExternalEventHandlers();
 
-    elements.expanded.find('.legend-container').append(functionalClassLegend);
+    var initialLegendContainer = elements.expanded.find('.legend-container');
+    initialLegendContainer.append(functionalClassLegend);
+    initialLegendContainer.append(constructionTypeLegend);
+    initialLegendContainer.append(historyRoadLinkCheckBox);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
     bindHistoryEventHandlers(elements.expanded);
