@@ -154,6 +154,7 @@
     functionalClassHistoryDefaultStyle.addRules(overlayHistoryRules);
     functionalClassHistoryDefaultStyle.addRules(linkTypeSizeHistoryRules);
     functionalClassHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    functionalClassHistoryDefaultStyle.addRules(linkStatusRules);
     var functionalClassHistoryDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassHistoryDefaultStyle });
 
     var functionalClassHistorySelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -178,6 +179,8 @@
     functionalClassHistorySelectionSelectStyle.addRules(linkTypeSizeHistoryRules);
     functionalClassHistorySelectionDefaultStyle.addRules(overlayUnselectedOpacity);
     functionalClassHistorySelectionSelectStyle.addRules(overlayDefaultOpacity);
+    functionalClassHistorySelectionDefaultStyle.addRules(linkStatusRules);
+    functionalClassHistorySelectionSelectStyle.addRules(linkStatusRules);
     var functionalClassHistorySelectionStyleMap = new OpenLayers.StyleMap({
       select: functionalClassHistorySelectionSelectStyle,
       default: functionalClassHistorySelectionDefaultStyle
@@ -192,6 +195,7 @@
     administrativeClassDefaultStyle.addRules(zoomLevelRules);
     administrativeClassDefaultStyle.addRules(administrativeClassRules);
     administrativeClassDefaultStyle.addRules(linkTypeSizeRules);
+    administrativeClassDefaultStyle.addRules(linkStatusRules);
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
     var administrativeClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -210,6 +214,8 @@
     administrativeClassSelectionSelectStyle.addRules(administrativeClassRules);
     administrativeClassSelectionDefaultStyle.addRules(linkTypeSizeRules);
     administrativeClassSelectionSelectStyle.addRules(linkTypeSizeRules);
+    administrativeClassSelectionDefaultStyle.addRules(linkStatusRules);
+    administrativeClassSelectionSelectStyle.addRules(linkStatusRules);
     var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: administrativeClassSelectionSelectStyle,
       default: administrativeClassSelectionDefaultStyle
@@ -241,6 +247,7 @@
     linkTypeDefaultStyle.addRules(overlayRules);
     linkTypeDefaultStyle.addRules(linkTypeSizeRules);
     linkTypeDefaultStyle.addRules(overlayDefaultOpacity);
+    linkTypeDefaultStyle.addRules(linkStatusRules);
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
 
     var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -265,6 +272,8 @@
     linkTypeSelectionSelectStyle.addRules(linkTypeSizeRules);
     linkTypeSelectionSelectStyle.addRules(overlayUnselectedOpacity);
     linkTypeSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    linkTypeSelectionDefaultStyle.addRules(linkStatusRules);
+    linkTypeSelectionSelectStyle.addRules(linkStatusRules);
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       select: linkTypeSelectionSelectStyle,
       default: linkTypeSelectionDefaultStyle
@@ -281,6 +290,7 @@
     linkTypeHistoryDefaultStyle.addRules(overlayHistoryRules);
     linkTypeHistoryDefaultStyle.addRules(linkTypeSizeHistoryRules);
     linkTypeHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    linkTypeHistoryDefaultStyle.addRules(linkStatusRules);
     var linkTypeHistoryDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeHistoryDefaultStyle });
 
     var linkTypeHistorySelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -305,6 +315,8 @@
     linkTypeHistorySelectionSelectStyle.addRules(linkTypeSizeHistoryRules);
     linkTypeHistorySelectionSelectStyle.addRules(overlayUnselectedOpacity);
     linkTypeHistorySelectionSelectStyle.addRules(overlayDefaultOpacity);
+    linkTypeHistorySelectionDefaultStyle.addRules(linkStatusRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkStatusRules);
     var linkTypeHistorySelectionStyleMap = new OpenLayers.StyleMap({
       select: linkTypeHistorySelectionSelectStyle,
       default: linkTypeHistorySelectionDefaultStyle
@@ -339,6 +351,7 @@
     verticalLevelDefaultStyle.addRules(overlayRules);
     verticalLevelDefaultStyle.addRules(linkTypeSizeRules);
     verticalLevelDefaultStyle.addRules(overlayDefaultOpacity);
+    verticalLevelDefaultStyle.addRules(linkStatusRules);
     var verticalLevelDefaultStyleMap = new OpenLayers.StyleMap({ default: verticalLevelDefaultStyle });
 
     // Vertical level selection style map
@@ -366,6 +379,8 @@
     verticalLevelSelectionSelectStyle.addRules(linkTypeSizeRules);
     verticalLevelSelectionSelectStyle.addRules(overlayUnselectedOpacity);
     verticalLevelSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    verticalLevelSelectionDefaultStyle.addRules(linkStatusRules);
+    verticalLevelSelectionSelectStyle.addRules(linkStatusRules);
     var verticalLevelSelectionStyleMap = new OpenLayers.StyleMap({
       select: verticalLevelSelectionSelectStyle,
       default: verticalLevelSelectionDefaultStyle
