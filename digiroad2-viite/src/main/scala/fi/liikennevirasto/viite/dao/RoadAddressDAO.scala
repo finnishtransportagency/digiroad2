@@ -359,6 +359,14 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def updateMergedSegmentsByLinkId (linkId: Long) = {
+    val query =
+      s"""
+          Update ROAD_ADDRESS ra Set valid_to = sysdate Where ra.lrm_position_id In (Select ra2.lrm_position_id From road_address ra2, lrm_position lrm Where ra2.lrm_position_id=lrm.id And lrm.link_id = ${linkId})
+        """
+    Q.updateNA(query).first
+  }
+
   def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)
@@ -541,6 +549,7 @@ object RoadAddressDAO {
 
   /**
     * Remove Road Addresses (mark them as removed). Don't use more than 1000 road addresses at once.
+    *
     * @param roadAddresses Seq[RoadAddress]
     * @return Number of updated rows
     */
@@ -601,4 +610,5 @@ object RoadAddressDAO {
     addressPS.close()
     roadAddresses.map(_.id)
   }
+
 }

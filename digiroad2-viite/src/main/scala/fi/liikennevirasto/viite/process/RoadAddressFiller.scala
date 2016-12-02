@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressFiller {
@@ -13,7 +13,8 @@ object RoadAddressFiller {
   case class AddressChangeSet(
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],
-                               missingRoadAddresses: Seq[MissingRoadAddress])
+                               missingRoadAddresses: Seq[MissingRoadAddress],
+                               toMergeRoadAddresses: Seq[RoadAddress])
   private val MaxAllowedMValueError = 0.001
   private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
@@ -96,7 +97,7 @@ object RoadAddressFiller {
       extendToGeometry,
       dropShort
     )
-    val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
+    val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil, Nil)
 
     roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
       val (existingSegments, changeSet) = acc

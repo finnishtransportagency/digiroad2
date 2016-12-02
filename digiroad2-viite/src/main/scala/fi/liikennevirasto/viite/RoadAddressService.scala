@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.LinkGeomSource.{ComplimentaryLinkInterface, HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.viite.RoadType._
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
@@ -137,6 +138,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+    //TODO uncomment after DRVVH-414 filled to the changeSet.toMergeRoadAddresses to apply merge of segments in DB
+//    eventbus.publish("roadAddress:mergeRoadAddress", changeSet.toMergeRoadAddresses)
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
@@ -298,6 +301,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def createSingleMissingRoadAddress(missingAddress: MissingRoadAddress) = {
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
+  }
+
+  def mergeRoadAddress(toMergeRoadAddress: Seq[RoadAddress]) = {
+    withDynTransaction {
+      toMergeRoadAddress.foreach(updateMergedSegments)
+      createMergedSegments(toMergeRoadAddress)
+    }
+  }
+
+  def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
+    RoadAddressDAO.create(mergedRoadAddress)
+  }
+
+  def updateMergedSegments(toMergeRoadAddresses: RoadAddress) = {
+    RoadAddressDAO.updateMergedSegmentsByLinkId(toMergeRoadAddresses.linkId)
   }
 
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
