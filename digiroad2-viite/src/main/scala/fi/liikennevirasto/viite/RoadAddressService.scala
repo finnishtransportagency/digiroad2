@@ -81,7 +81,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                      everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
+                                              everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
@@ -174,7 +174,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
@@ -329,8 +330,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   */
 
   def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
-    val complimentaryLinks = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+    val roadLinks =
+      {
+        val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
+        if (tempRoadLinks == null)
+          Seq.empty[RoadLink]
+        else tempRoadLinks
+      }
+    val complimentaryLinks = {
+      val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+      if (tempComplimentary == null)
+        Seq.empty[RoadLink]
+      else tempComplimentary
+    }
     val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
 
     val addresses =
@@ -430,109 +442,12 @@ object RoadAddressLinkBuilder {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
 
-      val fusedRoadAddresses: Seq[RoadAddress] = groupedRoadAddresses.flatMap { case (record) =>
-        val (withoutCalibrationPoints, withCalibrationPoints) = record._2.partition(_.calibrationPoints.equals((None, None)))
-
-        val sideCode = roadAddresses.head.sideCode
-        if (!roadAddresses.forall(_.sideCode == roadAddresses.head.sideCode))
-          throw new InvalidAddressDataException("Mixed sidecodes present")
-
-        val startMSegment = withoutCalibrationPoints.minBy(_.startMValue)
-        val endMSegment = withoutCalibrationPoints.maxBy(_.endMValue)
-        fusionDecider(withCalibrationPoints, withoutCalibrationPoints, startMSegment, endMSegment, record, sideCode)
-      }.toSeq
+      var fusedRoadAddresses: Seq[RoadAddress] = Seq.empty[RoadAddress]
+      groupedRoadAddresses.foreach(record => {
+        fusedRoadAddresses = fusedRoadAddresses ++ RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
+      })
       fusedRoadAddresses
     }
-  }
-
-  private def fusionDecider(withCalibrationPoints: Seq[RoadAddress], withoutCalibrationPoints: Seq[RoadAddress], startMSegment: RoadAddress,
-                            endMSegment: RoadAddress, record: ((Long, Long, Int, Option[DateTime], Option[DateTime], Long), Seq[RoadAddress]),
-                            sideCode: SideCode): Seq[RoadAddress] = {
-    val fusedRoadAddresses: Seq[RoadAddress] =
-      withCalibrationPoints.length match {
-        case 0 => {
-          val combinedGeometry = Seq(startMSegment.geom.head, endMSegment.geom.last)
-          Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._6, record._1._2,
-            Track.apply(record._1._3), Discontinuity.Continuous, endMSegment.startAddrMValue,
-            endMSegment.endAddrMValue, record._1._4, record._1._5, record._1._6,
-            startMSegment.startMValue, endMSegment.endMValue,
-            sideCode, (None,None), false, combinedGeometry))
-        }
-        case 1 => {
-          withCalibrationPoints.head.calibrationPoints match {
-            case (None, _) => {
-              val calibrationPointAtEnd = withCalibrationPoints.head.calibrationPoints._1.get
-              Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-                Track.apply(record._1._3), Discontinuity.Continuous, startMSegment.startAddrMValue,
-                calibrationPointAtEnd.addressMValue, record._1._4, record._1._5, record._1._6,
-                startMSegment.startMValue ,calibrationPointAtEnd.segmentMValue,
-                sideCode, (None,None), false, GeometryUtils.truncateGeometry(startMSegment.geom ++
-                  record._2.filter(_.id != startMSegment.id).flatMap(_.geom) ++
-                  withCalibrationPoints.head.geom, startMSegment.startMValue, calibrationPointAtEnd.segmentMValue)))
-            }
-            case (_,None) => {
-              val calibrationPointAtStart = withCalibrationPoints.head.calibrationPoints._1.get
-              Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-                Track.apply(record._1._3), Discontinuity.Continuous, startMSegment.startAddrMValue,
-                calibrationPointAtStart.addressMValue, record._1._4, record._1._5, record._1._6,
-                startMSegment.startMValue, calibrationPointAtStart.segmentMValue,
-                sideCode, (None,None), false, GeometryUtils.truncateGeometry(withCalibrationPoints.head.geom ++
-                  record._2.filter(_.id != endMSegment.id).flatMap(_.geom) ++
-                  endMSegment.geom, calibrationPointAtStart.segmentMValue, endMSegment.endMValue)))
-            }
-            case (_,_) => {
-              //Fusing calibration points first
-              val minimalStartSegmentCalibrationPoint = withCalibrationPoints.map(_.calibrationPoints._1.get).minBy(_.segmentMValue)
-              val maximumEndSegmentCalibrationPoint = withCalibrationPoints.map(_.calibrationPoints._2.get).maxBy(_.segmentMValue)
-
-              Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-                Track.apply(record._1._3), Discontinuity.Continuous, minimalStartSegmentCalibrationPoint.addressMValue,
-                maximumEndSegmentCalibrationPoint.addressMValue, record._1._4, record._1._5, record._1._6,
-                minimalStartSegmentCalibrationPoint.segmentMValue, maximumEndSegmentCalibrationPoint.segmentMValue,
-                sideCode, (None,None), false, GeometryUtils.truncateGeometry(withCalibrationPoints.head.geom, minimalStartSegmentCalibrationPoint.segmentMValue, maximumEndSegmentCalibrationPoint.segmentMValue)),
-
-                //Now fusing non calibration points
-                RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-                  Track.apply(record._1._3), Discontinuity.Continuous, startMSegment.startAddrMValue,
-                  endMSegment.endAddrMValue, record._1._4, record._1._5, record._1._6,
-                  startMSegment.startMValue, endMSegment.endMValue,
-                  sideCode, (None,None), false, GeometryUtils.truncateGeometry(withoutCalibrationPoints.flatMap(_.geom),startMSegment.startMValue, endMSegment.endMValue)))
-            }
-          }
-
-        }
-        case _ => {
-          //Fusing all the calibrationPoints
-          val minStartCalibrationPoint = withCalibrationPoints.minBy(_.startMValue)
-          val maxEndCalibrationPoint = withCalibrationPoints.maxBy(_.endMValue)
-
-          val restCalibrationPoints = withCalibrationPoints.filter(cp => cp.id != minStartCalibrationPoint.id || cp.id != maxEndCalibrationPoint.id)
-
-          Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-            Track.apply(record._1._3), Discontinuity.Continuous, minStartCalibrationPoint.startAddrMValue,
-            maxEndCalibrationPoint.endAddrMValue, record._1._4, record._1._5, record._1._6,
-            minStartCalibrationPoint.startMValue, maxEndCalibrationPoint.endMValue,
-            sideCode, (None,None), false, GeometryUtils.truncateGeometry(minStartCalibrationPoint.geom ++
-              restCalibrationPoints.flatMap(_.geom) ++
-              maxEndCalibrationPoint.geom, minStartCalibrationPoint.startMValue, maxEndCalibrationPoint.endMValue)))
-
-          //Fusing all the non calibration road addresses
-
-          val minStart = withoutCalibrationPoints.minBy(_.startMValue)
-          val maxEnd = withoutCalibrationPoints.maxBy(_.endMValue)
-
-          val restNonCalibrationPoints = withoutCalibrationPoints.filter(cp => cp.id != minStart.id || cp.id != maxEnd.id)
-
-          Seq(RoadAddress(RoadAddressDAO.getNextRoadAddressId, record._1._1, record._1._2,
-            Track.apply(record._1._3), Discontinuity.Continuous, minStart.startAddrMValue,
-            maxEnd.endAddrMValue, record._1._4, record._1._5, record._1._6,
-            minStart.startMValue, maxEnd.endMValue,
-            sideCode, (None,None), false, GeometryUtils.truncateGeometry(minStart.geom ++
-              restNonCalibrationPoints.flatMap(_.geom) ++
-              maxEnd.geom, minStart.startMValue, maxEnd.endMValue)))
-        }
-      }
-    fusedRoadAddresses
   }
 
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
@@ -620,5 +535,124 @@ object RoadAddressLinkBuilder {
     val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
     latestDateString
   }
+
+  /**
+    * Fuse recursively
+    *
+    * @param unprocessed road addresses ordered by the startMValue
+    * @param ready recursive value
+    * @return road addresses fused in reverse order
+    */
+  private def fuseRoadAddressInGroup(unprocessed: Seq[RoadAddress], ready: Seq[RoadAddress] = Nil): Seq[RoadAddress] = {
+    if (ready.isEmpty)
+      fuseRoadAddressInGroup(unprocessed.tail, Seq(unprocessed.head))
+    else if (unprocessed.isEmpty)
+      ready
+    else
+      {
+        fuseRoadAddressInGroup(unprocessed.tail, fuseTwo(unprocessed.head, ready.head) ++ ready.tail)
+      }
+  }
+
+  /**
+    * Fusing Two RoadAddresses in One
+    *
+    * @param nextSegment
+    * @param previouusSegment
+    * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
+    */
+  private def fuseTwo(nextSegment: RoadAddress, previouusSegment: RoadAddress): Seq[RoadAddress] = {
+    val tempId = -1000
+
+    val cpNext = nextSegment.calibrationPoints
+    val cpPrevious = previouusSegment.calibrationPoints
+
+    if(nextSegment.roadNumber     == previouusSegment.roadNumber &&
+      nextSegment.roadPartNumber  == previouusSegment.roadPartNumber &&
+      nextSegment.track.value     == previouusSegment.track.value &&
+      nextSegment.startDate       == previouusSegment.startDate &&
+      nextSegment.endDate         == previouusSegment.endDate &&
+      nextSegment.linkId          == previouusSegment.linkId &&
+      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) {
+
+
+
+      val startAddrMValue: Long = {
+        val leftStart = nextSegment.startAddrMValue
+        val rightStart = previouusSegment.startAddrMValue
+        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
+        if(calibrationPoints.isEmpty)
+          Math.min(leftStart,rightStart)
+         else
+          calibrationPoints.minBy(_.addressMValue).addressMValue
+      }
+
+      val endAddrMValue: Long = {
+        val leftEnd = nextSegment.endAddrMValue
+        val rightEnd = previouusSegment.endAddrMValue
+        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
+        if(calibrationPoints.isEmpty)
+          Math.max(leftEnd,rightEnd)
+        else
+          calibrationPoints.maxBy(_.addressMValue).addressMValue
+      }
+
+      val startMValue: Double = {
+        val leftStart = nextSegment.startMValue
+        val rightStart = previouusSegment.startMValue
+        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
+        if(calibrationPoints.isEmpty)
+          Math.min(leftStart,rightStart)
+        else
+          calibrationPoints.minBy(_.segmentMValue).segmentMValue
+      }
+
+      val endMValue: Double = {
+        val leftEnd = nextSegment.endMValue
+        val rightEnd = previouusSegment.endMValue
+        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
+        if(calibrationPoints.isEmpty)
+          Math.max(leftEnd,rightEnd)
+        else
+          calibrationPoints.maxBy(_.segmentMValue).segmentMValue
+      }
+
+      val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+        val left = {
+          if (!cpNext._1.isEmpty && cpPrevious._1.isEmpty)
+            cpNext._1
+          else if (cpNext._1.isEmpty && !cpPrevious._1.isEmpty)
+            cpPrevious._1
+          else if (!(cpNext._1.isEmpty && cpPrevious._1.isEmpty))
+            Seq(cpNext._1, cpPrevious._1).minBy(_.get.segmentMValue)
+          else None
+        }
+        val right = {
+          if (!cpNext._2.isEmpty && cpPrevious._2.isEmpty)
+            cpNext._1
+          else if (cpNext._2.isEmpty && !cpPrevious._2.isEmpty)
+            cpPrevious._1
+          else if (!(cpNext._2.isEmpty && cpPrevious._2.isEmpty))
+            Seq(cpNext._2, cpPrevious._2).maxBy(_.get.segmentMValue)
+          else None
+        }
+        (left, right)
+      }
+
+      if(nextSegment.sideCode.value != previouusSegment.sideCode.value)
+        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previouusSegment.id} cannot have different side codes.")
+
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
+
+      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
+        nextSegment.track, nextSegment.discontinuity, startAddrMValue,
+        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
+        startMValue, endMValue,
+        nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
+
+    } else Seq(nextSegment, previouusSegment)
+
+  }
+
 
 }
