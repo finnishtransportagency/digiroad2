@@ -2,23 +2,22 @@ package fi.liikennevirasto.digiroad2
 
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
-import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 
-import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import com.github.tototoshi.slick.MySQLJodaSupport._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -1053,7 +1052,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getComplementaryRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
-    val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchByMunicipalityAndRoadNumbers(municipality, Seq()), Duration.create(1, TimeUnit.HOURS))
+    val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchComplimentaryByMunicipality(municipality), Duration.create(1, TimeUnit.HOURS))
     withDynTransaction {
       (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
     }._1

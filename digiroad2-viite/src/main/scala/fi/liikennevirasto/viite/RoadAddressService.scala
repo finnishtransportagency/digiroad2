@@ -8,19 +8,18 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.LinkGeomSource.{ComplimentaryLinkInterface, HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.viite.RoadType._
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
@@ -331,14 +330,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
     val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
+    val complimentaryLinks = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+    val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
-    val knownRoadLinks = roadLinks.filter(rl => {
+    val knownRoadLinks = roadLinksWithComplimentary.filter(rl => {
       addresses.contains(rl.linkId)
     })
 
@@ -347,7 +348,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplimentary, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
