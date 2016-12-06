@@ -171,11 +171,13 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      if (mapState.zoom < minimumContentZoomLevel()) {
-        vectorLayer.removeAllFeatures();
-        roadCollection.resetHistory();
+      if(isActive){
+        if (mapState.zoom < minimumContentZoomLevel()) {
+          vectorLayer.removeAllFeatures();
+          roadCollection.resetHistory();
+        }
+        handleRoadsVisibility();
       }
-      handleRoadsVisibility();
     };
 
     var handleRoadsVisibility = function() {
