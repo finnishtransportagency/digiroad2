@@ -156,8 +156,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       assetLock.synchronized {
         val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
         massTransitStops.find(_.id == 300000).get.stopTypes should be(Seq(2))
-        massTransitStops.find(_.id == 300001).get.stopTypes should be(Stream(2, 3, 4))
-        massTransitStops.find(_.id == 300003).get.stopTypes should be(Stream(2, 3))
+        massTransitStops.find(_.id == 300001).get.stopTypes.sorted should be(Seq(2, 3, 4))
+        massTransitStops.find(_.id == 300003).get.stopTypes.sorted should be(Seq(2, 3))
       }
     }
   }
