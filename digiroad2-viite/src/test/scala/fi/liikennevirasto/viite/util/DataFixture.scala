@@ -41,8 +41,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-        )
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -110,9 +110,6 @@ object DataFixture {
   }
 
   private def combineMultipleSegmentsOnLinks(): Unit ={
-    val eventBus = new DummyEventBus
-    val roadLinkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
-    val roadAddressService = new RoadAddressService(roadLinkService, eventBus)
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
@@ -130,6 +127,7 @@ object DataFixture {
         }
       })
     }
+    println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -160,8 +158,11 @@ object DataFixture {
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
+      case Some("fuse_multi_segment_road_addresses") => {
+        combineMultipleSegmentsOnLinks()
+      }
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address")
+        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
     }
   }
 }

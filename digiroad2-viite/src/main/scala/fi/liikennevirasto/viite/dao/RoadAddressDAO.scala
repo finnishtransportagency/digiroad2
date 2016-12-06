@@ -14,7 +14,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.model.Anomaly
@@ -260,12 +260,12 @@ object RoadAddressDAO {
         select pos.link_id
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where road_number = $roadNumber AND (valid_from is null or valid_from >= sysdate) and
-          (valid_to is null or valid_to <= sysdate)
+        where road_number = $roadNumber AND (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
         GROUP BY link_id
         HAVING COUNT(*) > 1) AND
-        road_number = $roadNumber AND (valid_from is null or valid_from >= sysdate) and
-          (valid_to is null or valid_to <= sysdate)
+        road_number = $roadNumber AND (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -577,7 +577,9 @@ object RoadAddressDAO {
       lrmPositionPS.setDouble(4, address.startMValue)
       lrmPositionPS.setDouble(5, address.endMValue)
       lrmPositionPS.addBatch()
-      addressPS.setLong(1, address.id)
+      addressPS.setLong(1, if (address.id == -1000) {
+        Sequences.nextViitePrimaryKeySeqValue
+      } else address.id)
       addressPS.setLong(2, lrmId)
       addressPS.setLong(3, address.roadNumber)
       addressPS.setLong(4, address.roadPartNumber)
@@ -594,7 +596,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, "-") //TODO: Created by is missing
-      val (p1, p2) = (address.geom.head, address.geom.last)
+    val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)
