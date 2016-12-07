@@ -137,8 +137,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
-    //TODO uncomment after DRVVH-414 filled to the changeSet.toMergeRoadAddresses to apply merge of segments in DB
-//    eventbus.publish("roadAddress:mergeRoadAddress", changeSet.toMergeRoadAddresses)
+    eventbus.publish("roadAddress:mergeRoadAddress", changeSet.toMergeRoadAddresses)
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
@@ -562,10 +561,17 @@ object RoadAddressLinkBuilder {
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
   private def fuseTwo(nextSegment: RoadAddress, previouusSegment: RoadAddress): Seq[RoadAddress] = {
-    val tempId = -1000
-
     val cpNext = nextSegment.calibrationPoints
     val cpPrevious = previouusSegment.calibrationPoints
+    val calibrationPointss = Seq(cpNext._1, cpPrevious._1).flatten
+    def getMValues[T](leftMValue: T, rightMValue: T, minMax: (T, T) => T, getValue: Seq[CalibrationPoint] => T)={
+      if(calibrationPointss.isEmpty)
+        minMax(leftMValue,rightMValue)
+      else
+        getValue(calibrationPointss)
+    }
+
+    val tempId = -1000
 
     if(nextSegment.roadNumber     == previouusSegment.roadNumber &&
       nextSegment.roadPartNumber  == previouusSegment.roadPartNumber &&
@@ -576,65 +582,20 @@ object RoadAddressLinkBuilder {
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) {
 
 
-
-      val startAddrMValue: Long = {
-        val leftStart = nextSegment.startAddrMValue
-        val rightStart = previouusSegment.startAddrMValue
-        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
-        if(calibrationPoints.isEmpty)
-          Math.min(leftStart,rightStart)
-         else
-          calibrationPoints.minBy(_.addressMValue).addressMValue
-      }
-
-      val endAddrMValue: Long = {
-        val leftEnd = nextSegment.endAddrMValue
-        val rightEnd = previouusSegment.endAddrMValue
-        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
-        if(calibrationPoints.isEmpty)
-          Math.max(leftEnd,rightEnd)
-        else
-          calibrationPoints.maxBy(_.addressMValue).addressMValue
-      }
-
-      val startMValue: Double = {
-        val leftStart = nextSegment.startMValue
-        val rightStart = previouusSegment.startMValue
-        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
-        if(calibrationPoints.isEmpty)
-          Math.min(leftStart,rightStart)
-        else
-          calibrationPoints.minBy(_.segmentMValue).segmentMValue
-      }
-
-      val endMValue: Double = {
-        val leftEnd = nextSegment.endMValue
-        val rightEnd = previouusSegment.endMValue
-        val calibrationPoints = Seq(cpNext._1, cpPrevious._1).flatten
-        if(calibrationPoints.isEmpty)
-          Math.max(leftEnd,rightEnd)
-        else
-          calibrationPoints.maxBy(_.segmentMValue).segmentMValue
-      }
+      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previouusSegment.startAddrMValue, Math.min, cp => cp.minBy(_.addressMValue).addressMValue)
+      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previouusSegment.endAddrMValue, Math.max, cp => cp.maxBy(_.addressMValue).addressMValue)
+      val startMValue = getMValues[Double](nextSegment.startMValue, previouusSegment.startMValue, Math.min, cp => cp.minBy(_.segmentMValue).segmentMValue)
+      val endMValue = getMValues[Double](nextSegment.endMValue, previouusSegment.endMValue, Math.max, cp => cp.maxBy(_.segmentMValue).segmentMValue)
 
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-        val left = {
-          if (!cpNext._1.isEmpty && cpPrevious._1.isEmpty)
-            cpNext._1
-          else if (cpNext._1.isEmpty && !cpPrevious._1.isEmpty)
-            cpPrevious._1
-          else if (!(cpNext._1.isEmpty && cpPrevious._1.isEmpty))
-            Seq(cpNext._1, cpPrevious._1).minBy(_.get.segmentMValue)
-          else None
+        val calibrations = Seq(cpNext._1, cpPrevious._1).flatten
+        val left = calibrations.isEmpty match{
+          case true => None
+          case false => Some(calibrations.minBy(_.segmentMValue))
         }
-        val right = {
-          if (!cpNext._2.isEmpty && cpPrevious._2.isEmpty)
-            cpNext._1
-          else if (cpNext._2.isEmpty && !cpPrevious._2.isEmpty)
-            cpPrevious._1
-          else if (!(cpNext._2.isEmpty && cpPrevious._2.isEmpty))
-            Seq(cpNext._2, cpPrevious._2).maxBy(_.get.segmentMValue)
-          else None
+        val right = calibrations.isEmpty match{
+          case true => None
+          case false => Some(calibrations.maxBy(_.segmentMValue))
         }
         (left, right)
       }
@@ -644,7 +605,7 @@ object RoadAddressLinkBuilder {
 
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
 
-      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
+      Seq(RoadAddress(-1000, nextSegment.roadNumber, nextSegment.roadPartNumber,
         nextSegment.track, nextSegment.discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
         startMValue, endMValue,
