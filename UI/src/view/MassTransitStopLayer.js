@@ -42,7 +42,18 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   administrativeClassDefaultStyle.addRules(administrativeClassRules);
   administrativeClassDefaultStyle.addRules(zoomLevelRules);
   administrativeClassDefaultStyle.addRules(linkStatusRules);
-  var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
+
+  var administrativeClassSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    strokeWidth: 6,
+    strokeOpacity: 1,
+    strokeColor: "#5eaedf"
+  }));
+  administrativeClassSelectStyle.addRules(zoomLevelRules);
+
+  var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({
+    default: administrativeClassDefaultStyle,
+    select: administrativeClassSelectStyle
+  });
 
   roadLayer.setLayerSpecificStyleMapProvider('massTransitStop', function() {
     return administrativeClassDefaultStyleMap;
