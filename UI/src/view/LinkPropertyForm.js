@@ -123,7 +123,7 @@
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
-            staticField('LINKIN STATUS', 'constructionType') +
+            staticField('Linkin tila', 'constructionType') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
