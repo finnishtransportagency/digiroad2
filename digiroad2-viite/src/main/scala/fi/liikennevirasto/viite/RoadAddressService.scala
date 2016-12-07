@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -137,7 +137,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
-    eventbus.publish("roadAddress:mergeRoadAddress", changeSet.toMergeRoadAddresses)
+
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
@@ -174,6 +174,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    eventbus.publish("roadAddress:mergeRoadAddress", fusedRoadAddresses.filter(_.id == -1000))
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
@@ -480,7 +481,7 @@ object RoadAddressLinkBuilder {
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, NormalRoadLinkType, null, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, null, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
