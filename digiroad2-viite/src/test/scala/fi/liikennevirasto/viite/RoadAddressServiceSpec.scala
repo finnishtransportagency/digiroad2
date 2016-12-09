@@ -228,15 +228,17 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       reset(localMockEventBus)
       val links = localRoadAddressService.getRoadAddressLinks(BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385)), Seq(), Set())
       links.size should be (1)
-      verify(localMockEventBus, times(3)).publish(any[String], captor.capture)
+      verify(localMockEventBus, times(4)).publish(any[String], captor.capture)
       val capturedAdjustments = captor.getAllValues
-      val adj0 = capturedAdjustments.get(0)
-      val adj1 = capturedAdjustments.get(1)
-      val adj2 = capturedAdjustments.get(2)
-      adj0.size should be (0)
-      adj1.size should be (1)
-      adj2.size should be (0)
-      adj1.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
+      val merging = capturedAdjustments.get(0)
+      val missing = capturedAdjustments.get(1)
+      val adjusting = capturedAdjustments.get(2)
+      val floating = capturedAdjustments.get(3)
+      merging.size should be (0)
+      missing.size should be (0)
+      adjusting.size should be (1)
+      floating.size should be (0)
+      adjusting.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
     }
   }
 

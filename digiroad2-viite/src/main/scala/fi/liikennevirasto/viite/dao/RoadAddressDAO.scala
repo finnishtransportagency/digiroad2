@@ -75,10 +75,12 @@ object RoadAddressDAO {
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
     val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
-    val floatingFilter = if(fetchOnlyFloating)
-      " and ra.floating = 1"
-    else
-      ""
+
+    val floatingFilter = fetchOnlyFloating match {
+      case true => " and ra.floating = 1"
+      case false => ""
+    }
+
     val query = s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
