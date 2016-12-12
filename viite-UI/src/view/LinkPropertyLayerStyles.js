@@ -24,10 +24,10 @@
     ];
 
     var floatingRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.8, graphicZIndex: -99 })
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
     ];
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.3, graphicZIndex: -99})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: -99})
     ];
 
     var typeFilter = function(type) {
@@ -83,9 +83,9 @@
     ];
 
     var linkTypeSizeRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([9, 10]).use({ strokeWidth: 10}),
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([11, 12, 13]).use({ strokeWidth: 20}),
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeWidth: 30})
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([9, 10]).use({ strokeWidth: 15}),
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([11, 12, 13]).use({ strokeWidth: 25}),
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeWidth: 50})
     ];
 
     var overlayDefaultOpacity = [
@@ -127,12 +127,6 @@
 
     // -- Road classification styles
 
-    var typeSpecificStyleLookup = {
-      overlay: { strokeOpacity: 1.0 },
-      other: { strokeOpacity: 0.7 },
-      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
-      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
-    };
 
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
@@ -148,10 +142,9 @@
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
-    roadClassDefaultStyle.addRules(floatingRoadAddressRules);
     roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
+    roadClassDefaultStyle.addRules(floatingRoadAddressRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
-    roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('unknown'),
@@ -189,23 +182,21 @@
     roadClassSelectionSelectStyle.addRules(borderRules);
     roadClassSelectionDefaultStyle.addRules(borderUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(borderDefaultOpacity);
-    roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
-    roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(complementaryRoadAddressUnselectedRules);
     roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
+    roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
     });
 
-    roadClassSelectionStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     roadClassSelectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
 
-    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.15,
@@ -219,7 +210,6 @@
       default: selectionDefaultStyle,
       select: selectionSelectStyle
     });
-    selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
     selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var isUnknown = function(roadLink) {

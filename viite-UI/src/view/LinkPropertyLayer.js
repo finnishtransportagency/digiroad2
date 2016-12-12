@@ -188,7 +188,7 @@
       var adminClass = 'Municipality';
       var roadClasses = [1,2,3,4,5,6,7,8,9,10,11];
       var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
-        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass);
+        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass) && roadLink.roadLinkType !== -1 && !(roadLink.roadLinkType === -1 && roadLink.roadClasses === 3);
       });
       var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
       roadLayer.layer.addFeatures(features);
@@ -202,8 +202,7 @@
         var attributes = {
           id: roadLink.id,
           type: 'underlay',
-          linkType: roadLink.linkType,
-          zIndex: roadLink.zIndex
+          linkType: roadLink.roadLinkType
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
