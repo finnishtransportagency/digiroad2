@@ -14,6 +14,64 @@
       });
     };
 
+   var idOrRoadNumber = function(input) {
+     var currenthttplocation = window.location.href;
+     if ((currenthttplocation.indexOf("massTransitStop") > -1 || currenthttplocation.indexOf("#") == -1 )) {
+       //Masstransitstop & roadnumber search
+     }
+     else if (currenthttplocation.indexOf("linkProperty") > -1) {
+//       searchRoadLink(input.text);
+        //getCoordinatesFromRoadAddress(parseRoad(input.text));
+       /*var roadlinkIDsearch=backend.getcoordinatesFromLinkID(input.text)
+         .then(function (result) {
+           console.log(result);
+           var lon = _.get(result, 'x');
+           var lat = _.get(result, 'y');
+
+           var title = constructTitle("test");
+           if (lon && lat) {
+             return [{title: title, lon: lon, lat: lat}];
+           } else {
+             return $.Deferred().reject('Tuntematon Hakuehto');
+           }
+         });*/
+       //Somehow combine
+       return getCoordinatesFromRoadAddress(parseRoad(input.text));
+
+     }
+     else if (currenthttplocation.indexOf("speedLimit") > -1) {
+       //SpeedLimit  & roadnumber search
+     }
+
+     function parseRoad(input) {
+         var parsed = _.map(_.words(input), _.parseInt);
+         var output = { type: 'road', roadNumber: parsed[0], section: parsed[1], distance: parsed[2], lane: parsed[3] };
+         return _.omit(output, _.isUndefined);
+       }
+
+
+
+     function searchRoadLink(linkID) {
+       $.ajax({
+         url: "api/roadlinks/" + linkID,
+         dataType: "text",
+         data: {get_param: 'value'},
+         success: function (data) {
+           var obj = JSON.parse(data);
+           eventbus.trigger('coordinates:selected', {lon: obj.middlePoint.x, lat: obj.middlePoint.y});
+           window.location.hash = "#linkProperty/" + linkID;
+         },
+         error: function () {
+         }
+       });
+     }
+   };
+
+
+    var  MasstransitstopLiviIdSearch = function(input) {
+    //add here what to do when masstransitstop with livi-id
+    };
+
     var getCoordinatesFromRoadAddress = function(road) {
       var constructTitle = function(result) {
         var address = _.get(result, 'alkupiste.tieosoitteet[0]');
@@ -59,6 +117,8 @@
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromRoadAddress,
+        idOrRoadNumber:idOrRoadNumber,
+        MasstransitstopLiviId: MasstransitstopLiviIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 

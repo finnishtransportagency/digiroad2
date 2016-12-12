@@ -3,12 +3,19 @@
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
     var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
-
+    var idOrRoad = /^\d+$/;
     var matchedCoordinates = input.match(coordinateRegex);
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
+    }
+    else if(window.location.href.indexOf("massTransitStop") > -1 && input.toLowerCase().indexOf("livi") > -1){
+      return {type: 'MasstransitstopLiviId', text: input};
     } else if (input.match(streetRegex)) {
-      return { type: 'street', address: input };
+      return {type: 'street', address: input};
+    }
+    else if (input.match(idOrRoad)) {
+      return { type: 'idOrRoadNumber', text:input};
+
     } else if (input.match(roadRegex)) {
       return parseRoad(input);
     } else {
