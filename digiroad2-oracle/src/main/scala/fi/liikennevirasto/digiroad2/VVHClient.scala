@@ -544,7 +544,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
-      "CONSTRUCTIONTYPE",//TODO Remove this attribure from here because now is a instance variable
+      "CONSTRUCTIONTYPE",//TODO Remove this attribute from here when VVHHistoryRoadLink have a different way to get the ConstructionType like VVHRoadlink
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",

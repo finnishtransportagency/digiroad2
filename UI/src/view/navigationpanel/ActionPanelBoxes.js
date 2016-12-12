@@ -188,7 +188,7 @@
         '  </div>'
     ].join('');
 
-    var historyLegend = [
+    var constructionTypeLegend = [
       '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
       '    <div class="legend-entry">',
       '      <div class="label">Rakenteilla</div>',
@@ -229,7 +229,7 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
-      historyLegend,
+      constructionTypeLegend,
       '</div>'].join('');
 
     var elements = {
