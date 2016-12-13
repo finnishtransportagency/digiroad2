@@ -123,11 +123,7 @@
     };
 
     var title = function() {
-      if (selectedLinkProperty.count() == 1) {
-        return '<span>Segmentin ID: ' + _.first(selectedLinkProperty.get()).id + '</span>';
-      } else {
-        return '<span>Ominaisuustiedot</span>';
-      }
+        return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
 
     var buttons =

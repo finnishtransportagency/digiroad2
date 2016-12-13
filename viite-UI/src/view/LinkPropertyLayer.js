@@ -19,7 +19,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.id !== 'undefined') {
+      if(typeof feature.attributes.linkId !== 'undefined') {
         selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
         unhighlightFeatures();
         currentRenderIntent = 'select';
@@ -104,7 +104,7 @@
       return function(){
         selectControl.unselectAll();
         var feature = _.find(roadLayer.layer.features, function (feat) {
-          return feat.attributes.id === floatlink.id;
+          return feat.attributes.linkId === floatlink.linkId;
         });
         if(event.type === 'click'){
           selectControl.select(_.assign({singleLinkSelect: false}, feature));
@@ -133,7 +133,7 @@
         });
         var attributes = {
           dashedLineFeature: roadLink[dashedLineFeature],
-          id: roadLink.id,
+          linkId: roadLink.linkId,
           type: 'overlay',
           linkType: roadLink.linkType,
           zIndex: 2
@@ -200,7 +200,7 @@
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var attributes = {
-          id: roadLink.id,
+          linkId: roadLink.linkId,
           type: 'underlay',
           linkType: roadLink.roadLinkType
         };
@@ -210,7 +210,7 @@
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.features, function (feature) {
-        return selectedLinkProperty.isSelectedById(feature.attributes.id);
+        return selectedLinkProperty.isSelectedByLinkId(feature.attributes.linkId);
       });
     };
 
@@ -251,11 +251,11 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return link.id !== 0 && feature.attributes.id === link.id || link.id === 0 && feature.attributes.linkId === link.linkId;
+          return link.linkId !== 0 && feature.attributes.linkId === link.linkId;
         });
         if (feature) {
           _.each(selectControl.layer.selectedFeatures, function (selectedFeature){
-            if(selectedFeature.attributes.id !== feature.attributes.id) {
+            if(selectedFeature.attributes.linkId !== feature.attributes.linkId) {
               selectControl.select(feature);
             }
           });

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -10,16 +10,16 @@ import fi.liikennevirasto.viite.LinkGeomSource.{ComplimentaryLinkInterface, Hist
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.liikennevirasto.viite.process.RoadAddressFiller
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
@@ -81,7 +81,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                      everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
+                                              everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
@@ -138,6 +138,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
+
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
@@ -172,16 +173,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map(ra => {
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    eventbus.publish("roadAddress:mergeRoadAddress", fusedRoadAddresses.filter(_.id == -1000))
+    fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
       missing.map(m => RoadAddressLinkBuilder.build(rl, m)).filter(_.length > 0.0)
   }
 
   def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-   roadAddrSeq.map( ra => {
-     RoadAddressLinkBuilder.build(rl, ra)
-   })
+    roadAddrSeq.map( ra => {
+      RoadAddressLinkBuilder.build(rl, ra)
+    })
   }
 
   private def combineGeom(roadAddresses: Seq[RoadAddress]) = {
@@ -300,6 +303,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
+  def mergeRoadAddress(toMergeRoadAddress: Seq[RoadAddress]) = {
+    withDynTransaction {
+      toMergeRoadAddress.foreach(updateMergedSegments)
+      createMergedSegments(toMergeRoadAddress)
+    }
+  }
+
+  def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
+    RoadAddressDAO.create(mergedRoadAddress)
+  }
+
+  def updateMergedSegments(toMergeRoadAddresses: RoadAddress) = {
+    RoadAddressDAO.updateMergedSegmentsByLinkId(toMergeRoadAddresses.linkId)
+  }
+
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
     withDynTransaction {
       // TODO: add geometry if it is somehow available
@@ -312,15 +330,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   */
 
   def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
-    val roadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
+    val roadLinks =
+      {
+        val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
+        if (tempRoadLinks == null)
+          Seq.empty[RoadLink]
+        else tempRoadLinks
+      }
+    val complimentaryLinks = {
+      val tempComplimentary = roadLinkService.getComplementaryRoadLinksFromVVH(municipality)
+      if (tempComplimentary == null)
+        Seq.empty[RoadLink]
+      else tempComplimentary
+    }
+    val roadLinksWithComplimentary = roadLinks ++ complimentaryLinks
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
-    val knownRoadLinks = roadLinks.filter(rl => {
+    val knownRoadLinks = roadLinksWithComplimentary.filter(rl => {
       addresses.contains(rl.linkId)
     })
 
@@ -329,7 +360,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
     }.toMap
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplimentary, viiteRoadLinks)
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
@@ -404,6 +435,21 @@ object RoadAddressLinkBuilder {
     }
   }
 
+  def fuseRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
+    if (roadAddresses.size == 1) {
+      roadAddresses
+    } else {
+      val groupedRoadAddresses = roadAddresses.groupBy(record =>
+        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
+
+      var fusedRoadAddresses: Seq[RoadAddress] = Seq.empty[RoadAddress]
+      groupedRoadAddresses.foreach(record => {
+        fusedRoadAddresses = fusedRoadAddresses ++ RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
+      })
+      fusedRoadAddresses
+    }
+  }
+
   def build(roadLink: RoadLink, roadAddress: RoadAddress) = {
 
     val roadLinkType = roadLink.attributes.contains("SUBTYPE") && roadLink.attributes("SUBTYPE") == ComplementarySubType match {
@@ -435,7 +481,7 @@ object RoadAddressLinkBuilder {
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, NormalRoadLinkType, null, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, null, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
@@ -489,5 +535,92 @@ object RoadAddressLinkBuilder {
     val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
     latestDateString
   }
+
+  /**
+    * Fuse recursively
+    *
+    * @param unprocessed road addresses ordered by the startMValue
+    * @param ready recursive value
+    * @return road addresses fused in reverse order
+    */
+  private def fuseRoadAddressInGroup(unprocessed: Seq[RoadAddress], ready: Seq[RoadAddress] = Nil): Seq[RoadAddress] = {
+    if (ready.isEmpty)
+      fuseRoadAddressInGroup(unprocessed.tail, Seq(unprocessed.head))
+    else if (unprocessed.isEmpty)
+      ready
+    else
+      {
+        fuseRoadAddressInGroup(unprocessed.tail, fuseTwo(unprocessed.head, ready.head) ++ ready.tail)
+      }
+  }
+
+  /**
+    * Fusing Two RoadAddresses in One
+    *
+    * @param nextSegment
+    * @param previouusSegment
+    * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
+    */
+  private def fuseTwo(nextSegment: RoadAddress, previouusSegment: RoadAddress): Seq[RoadAddress] = {
+    val cpNext = nextSegment.calibrationPoints
+    val cpPrevious = previouusSegment.calibrationPoints
+    val calibrationPointss = Seq(cpNext._1, cpPrevious._1).flatten
+    def getMValues[T](leftMValue: T, rightMValue: T, minMax: (T, T) => T, getValue: Seq[CalibrationPoint] => T)={
+      if(calibrationPointss.isEmpty)
+        minMax(leftMValue,rightMValue)
+      else
+        getValue(calibrationPointss)
+    }
+
+    val tempId = -1000
+
+    if(nextSegment.roadNumber     == previouusSegment.roadNumber &&
+      nextSegment.roadPartNumber  == previouusSegment.roadPartNumber &&
+      nextSegment.track.value     == previouusSegment.track.value &&
+      nextSegment.startDate       == previouusSegment.startDate &&
+      nextSegment.endDate         == previouusSegment.endDate &&
+      nextSegment.linkId          == previouusSegment.linkId &&
+      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) {
+
+
+      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previouusSegment.startAddrMValue, Math.min, cp => cp.minBy(_.addressMValue).addressMValue)
+      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previouusSegment.endAddrMValue, Math.max, cp => cp.maxBy(_.addressMValue).addressMValue)
+      val startMValue = getMValues[Double](nextSegment.startMValue, previouusSegment.startMValue, Math.min, cp => cp.minBy(_.segmentMValue).segmentMValue)
+      val endMValue = getMValues[Double](nextSegment.endMValue, previouusSegment.endMValue, Math.max, cp => cp.maxBy(_.segmentMValue).segmentMValue)
+
+      val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+        val calibrations = Seq(cpNext._1, cpPrevious._1).flatten
+        val left = calibrations.isEmpty match{
+          case true => None
+          case false => Some(calibrations.minBy(_.segmentMValue))
+        }
+        val right = calibrations.isEmpty match{
+          case true => None
+          case false => Some(calibrations.maxBy(_.segmentMValue))
+        }
+        (left, right)
+      }
+
+      if(nextSegment.sideCode.value != previouusSegment.sideCode.value)
+        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previouusSegment.id} cannot have different side codes.")
+
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
+      val discontinuity = {
+        if(nextSegment.endMValue > previouusSegment.endMValue) {
+          nextSegment.discontinuity
+        } else
+          previouusSegment.discontinuity
+      }
+
+      Seq(RoadAddress(-1000, nextSegment.roadNumber, nextSegment.roadPartNumber,
+        nextSegment.track, discontinuity, startAddrMValue,
+        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
+        startMValue, endMValue,
+        nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
+
+    } else Seq(nextSegment, previouusSegment)
+
+  }
+
 
 }

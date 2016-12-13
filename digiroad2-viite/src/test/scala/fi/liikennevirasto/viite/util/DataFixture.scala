@@ -5,6 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
@@ -40,8 +41,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-        )
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -108,6 +109,27 @@ object DataFixture {
     println()
   }
 
+  private def combineMultipleSegmentsOnLinks(): Unit ={
+    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+        val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
+        val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
+        roadAddresses.foreach{ case (linkId, list) =>
+          val currReplacement = replacements(linkId)
+          if (list.size != currReplacement.size) {
+            val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
+            val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            RoadAddressDAO.remove(removed)
+            RoadAddressDAO.create(created)
+          }
+        }
+      })
+    }
+    println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -136,8 +158,11 @@ object DataFixture {
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
+      case Some("fuse_multi_segment_road_addresses") => {
+        combineMultipleSegmentsOnLinks()
+      }
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address")
+        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
     }
   }
 }

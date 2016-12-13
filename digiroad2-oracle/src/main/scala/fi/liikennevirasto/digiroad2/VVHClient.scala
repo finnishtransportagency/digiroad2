@@ -676,6 +676,20 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
+  /**
+    * Returns VVH complementary road links in a municipality
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
+    */
+  def queryComplimentaryByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
@@ -692,6 +706,15 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalityAndRoadNumbers(municipality, roadNumbers))
   }
+
+  /**
+    * Returns VVH complimentary road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
+    */
+  def fetchComplimentaryByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryComplimentaryByMunicipality(municipality))
+  }
+
 
   private def resolveComplementaryVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
