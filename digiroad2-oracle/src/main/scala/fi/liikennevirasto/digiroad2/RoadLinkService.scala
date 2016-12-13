@@ -115,6 +115,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
   /**
+    * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
+    *
+    * @param bounds
+    * @param municipalities
+    * @return Road links
+    */
+  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
+  getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
+
+  /**
     * This method is utilized to find adjacent links of a road link.
     *
     * @param bounds
@@ -186,6 +196,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes)
+    }
+  }
+
+  /**
+    * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
+    *
+    * @param bounds
+    * @param municipalities
+    * @return Road links and change data
+    */
+  def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val complementaryLinks = Await.result(vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities), Duration.Inf)
+    val (changes, links) = Await.result(vvhClient.queryChangesByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
     }
   }
 

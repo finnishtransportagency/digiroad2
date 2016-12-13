@@ -294,6 +294,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
@@ -383,6 +393,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     roadLinkService.getIncompleteLinks(includedMunicipalities)
+  }
+
+  get("/roadlinks/complementaries"){
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadlinksWithComplementaryFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   put("/linkproperties") {
