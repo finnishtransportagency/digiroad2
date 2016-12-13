@@ -4,6 +4,22 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.DateTimeFormat
 
+sealed trait ConstructionType {
+  def value: Int
+}
+
+object ConstructionType{
+  val values = Set[ConstructionType](InUse, UnderConstruction, Planned)
+
+  def apply(intValue: Int): ConstructionType = {
+    values.find(_.value == intValue).getOrElse(InUse)
+  }
+
+  case object InUse extends ConstructionType { def value = 0 }
+  case object UnderConstruction extends ConstructionType { def value = 1 }
+  case object Planned extends ConstructionType { def value = 3 }
+}
+
 sealed trait LinkType
 {
   def value: Int

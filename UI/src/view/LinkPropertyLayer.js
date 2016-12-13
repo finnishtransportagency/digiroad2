@@ -386,16 +386,18 @@
 
     var drawDashedLineFeatures = function(roadLinks, layer) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+        return _.contains(dashedFunctionalClasses, roadLink.functionalClass) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks, layer) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
+      var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedLinkTypes, roadLink.linkType);
+        return _.contains(dashedLinkTypes, roadLink.linkType) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };

@@ -587,4 +587,37 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       serviceResult.head.endDate should be (1000)
     }
   }
+
+  test("Only road links with construction type 'in use' should be saved to incomplete_link table (not 'under construction' or 'planned')") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val vvhRoadLink1 = VVHRoadlink(1, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+      val vvhRoadLink2 = VVHRoadlink(2, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.UnderConstruction)
+      val vvhRoadLink3 = VVHRoadlink(3, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
+      val vvhRoadLink4 = VVHRoadlink(4, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
+      when(mockVVHClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)).future)
+      when(mockVVHClient.queryChangesByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
+      val service = new TestService(mockVVHClient, mockEventBus)
+
+      val roadLinks = service.getRoadLinksFromVVH(91)
+
+      // Return all road links (all are incomplete here)
+      val roadLink1 = RoadLink(1,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse)
+      val roadLink2 = RoadLink(2,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.UnderConstruction)
+      val roadLink3 = RoadLink(3,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.Planned)
+      val roadLink4 = RoadLink(4,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse)
+      roadLinks.equals(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+
+      // Pass only incomplete road links with construction type 'in use' to be saved with actor
+      val changeSet = RoadLinkChangeSet(Seq(), List(IncompleteLink(1,91,Municipality), IncompleteLink(4,91,Municipality)))
+      verify(mockEventBus).publish(
+        org.mockito.Matchers.eq("linkProperties:changed"),
+        org.mockito.Matchers.eq(changeSet))
+
+      dynamicSession.rollback()
+    }
+  }
+
+
 }

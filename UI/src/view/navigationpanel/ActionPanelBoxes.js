@@ -188,6 +188,19 @@
         '  </div>'
     ].join('');
 
+    var constructionTypeLegend = [
+      '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+      '    <div class="legend-entry">',
+      '      <div class="label">Rakenteilla</div>',
+      '      <div class="symbol linear construction-type-1"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Suunnitteilla</div>',
+      '     <div class="symbol linear construction-type-3"/>',
+      '   </div>',
+      '  </div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
@@ -216,6 +229,7 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
+      constructionTypeLegend,
       '</div>'].join('');
 
     var elements = {

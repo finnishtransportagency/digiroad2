@@ -23,7 +23,7 @@ object FeatureClass {
 
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map()) extends RoadLinkLike {
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),  constructionType: ConstructionType = ConstructionType.InUse) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -488,15 +488,22 @@ class VVHClient(vvhRestApiEndPoint: String) {
       val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
       val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
+      optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     } finally {
       response.close()
     }
   }
 
-  protected def roadLinkInUse(feature: Map[String, Any]): Boolean = {
+  /**
+    * Constructions Types Allows to return
+    * In Use - 0
+    * Under Construction - 1
+    * Planned - 3
+    */
+  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
+    val linkStatus = attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
+    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
   protected def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
@@ -525,7 +532,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -540,7 +547,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
-      "CONSTRUCTIONTYPE",
+      "CONSTRUCTIONTYPE",//TODO Remove this attribute from here when VVHHistoryRoadLink have a different way to get the ConstructionType like VVHRoadlink
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",
@@ -602,6 +609,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .map(_.toInt)
       .map(AdministrativeClass.apply)
       .getOrElse(Unknown)
+  }
+
+  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+    Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(ConstructionType.apply)
+      .getOrElse(ConstructionType.InUse)
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
