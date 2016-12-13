@@ -1,5 +1,7 @@
 (function(root) {
   root.LocationSearch = function(backend, applicationModel) {
+    var selectedLayer;
+
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
@@ -15,11 +17,10 @@
     };
 
    var idOrRoadNumber = function(input) {
-     var currenthttplocation = window.location.href;
-     if ((currenthttplocation.indexOf("massTransitStop") > -1 || currenthttplocation.indexOf("#") == -1 )) {
+     if (selectedLayer === 'massTransitStop') {
        //Masstransitstop & roadnumber search
      }
-     else if (currenthttplocation.indexOf("linkProperty") > -1) {
+     else if (selectedLayer === 'linkProperty') {
 //       searchRoadLink(input.text);
         //getCoordinatesFromRoadAddress(parseRoad(input.text));
        /*var roadlinkIDsearch=backend.getcoordinatesFromLinkID(input.text)
@@ -39,7 +40,7 @@
        return getCoordinatesFromRoadAddress(parseRoad(input.text));
 
      }
-     else if (currenthttplocation.indexOf("speedLimit") > -1) {
+     else if (selectedLayer === 'speedLimit') {
        //SpeedLimit  & roadnumber search
      }
 
@@ -112,7 +113,8 @@
         });
       }
 
-      var input = LocationInputParser.parse(searchString);
+      selectedLayer = applicationModel.getSelectedLayer();
+      var input = LocationInputParser.parse(searchString, selectedLayer);
       var resultByInputType = {
         coordinate: resultFromCoordinates,
         street: geocode,

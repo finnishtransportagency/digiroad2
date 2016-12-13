@@ -1,5 +1,5 @@
 (function(root) {
-  var parse = function(input) {
+  var parse = function(input, selectedLayer) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
     var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
@@ -8,7 +8,7 @@
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
     }
-    else if(window.location.href.indexOf("massTransitStop") > -1 && input.toLowerCase().indexOf("livi") > -1){
+    else if (selectedLayer === 'massTransitStop' && input.toLowerCase().indexOf("livi") > -1){
       return {type: 'MasstransitstopLiviId', text: input};
     } else if (input.match(streetRegex)) {
       return {type: 'street', address: input};
