@@ -33,7 +33,11 @@
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            //if (result.assetId) {
+            //  eventbus.trigger('id:selected', { lon: result.lon, lat: result.lat, assetId: result.assetId });
+            //} else {
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            //}
           }
         }).fail(showDialog);
       };

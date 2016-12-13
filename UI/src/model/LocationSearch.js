@@ -19,6 +19,16 @@
    var idOrRoadNumber = function(input) {
      if (selectedLayer === 'massTransitStop') {
        //Masstransitstop & roadnumber search
+       return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
+         var lon = result.lon;
+         var lat = result.lat;
+         var title = input.text + ' (valtakunnallinen id)';
+         if (lon && lat) {
+           return [{ title: title, lon: lon, lat: lat, assetId: result.id }];
+         } else {
+           return $.Deferred().reject('Tuntematon valtakunnallinen id');
+         }
+       });
      }
      else if (selectedLayer === 'linkProperty') {
 //       searchRoadLink(input.text);
@@ -119,7 +129,7 @@
         coordinate: resultFromCoordinates,
         street: geocode,
         road: getCoordinatesFromRoadAddress,
-        idOrRoadNumber:idOrRoadNumber,
+        idOrRoadNumber: idOrRoadNumber,
         MasstransitstopLiviId: MasstransitstopLiviIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };

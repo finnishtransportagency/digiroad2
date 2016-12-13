@@ -65,6 +65,16 @@
       }
     }, this);
 
+    eventbus.on('id:selected', function(position) {
+      //console.log(position);
+      if (geometrycalculator.isInBounds(map.getMaxExtent(), position.lon, position.lat)) {
+        map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
+      } else {
+        instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
+      }
+    }, this);
+
+
     eventbus.on('map:moved', mapMovedHandler, this);
 
     eventbus.on('coordinates:marked', drawCenterMarker, this);
