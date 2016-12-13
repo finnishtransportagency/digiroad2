@@ -463,7 +463,7 @@ object RoadAddressLinkBuilder {
       case _ => null
     }
 
-    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLinkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
