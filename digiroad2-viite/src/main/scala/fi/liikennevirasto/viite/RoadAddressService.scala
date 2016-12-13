@@ -605,9 +605,15 @@ object RoadAddressLinkBuilder {
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previouusSegment.id} cannot have different side codes.")
 
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
+      val discontinuity = {
+        if(nextSegment.endMValue > previouusSegment.endMValue) {
+          nextSegment.discontinuity
+        } else
+          previouusSegment.discontinuity
+      }
 
       Seq(RoadAddress(-1000, nextSegment.roadNumber, nextSegment.roadPartNumber,
-        nextSegment.track, nextSegment.discontinuity, startAddrMValue,
+        nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
         startMValue, endMValue,
         nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
