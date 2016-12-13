@@ -714,6 +714,16 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road links filtered by walkways (MTKCLASS=12314). Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService..
+    *
+    */
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByBoundsAndMunicipalities(bounds, municipalities).filter(_.attributes("MTKCLASS").equals(12314)))
+  }
+
+
+  /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
     */
