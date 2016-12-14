@@ -38,7 +38,6 @@
        }
 
 
-
    var roadnumberandroadlinksearch= function (input) {
      var roadnlinksearch= $.get("api/roadlinks/"+input.text).fail(function (){return "";});
      var roadnumbersearch=backend.getCoordinatesFromRoadAddress(input.text);
