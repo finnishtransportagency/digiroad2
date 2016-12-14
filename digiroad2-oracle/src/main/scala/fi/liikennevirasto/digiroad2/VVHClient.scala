@@ -23,7 +23,8 @@ object FeatureClass {
 
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),  constructionType: ConstructionType = ConstructionType.InUse) extends RoadLinkLike {
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
+                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -532,7 +533,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), extractLinkGeomSource(attributes))
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -616,6 +617,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .map(_.toInt)
       .map(ConstructionType.apply)
       .getOrElse(ConstructionType.InUse)
+  }
+
+  protected def extractLinkGeomSource(attributes: Map[String, Any]): LinkGeomSource = {
+    Option(attributes("LINK_SOURCE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(LinkGeomSource.apply)
+      .getOrElse(LinkGeomSource.Unknown)
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(

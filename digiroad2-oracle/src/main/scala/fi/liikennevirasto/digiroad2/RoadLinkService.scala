@@ -802,7 +802,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),
         propertyRows.linkTypeValue(link.linkId),
         modifiedAt.map(DateTimePropertyFormat.print),
-        modifiedBy, link.attributes, link.constructionType)
+        modifiedBy, link.attributes, link.constructionType, link.linkSource)
     }
   }
 
