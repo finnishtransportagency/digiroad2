@@ -395,6 +395,10 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
+    this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
+      return $.get('api/massTransitStops/' + nationalId);
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {
