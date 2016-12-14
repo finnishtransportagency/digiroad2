@@ -18,13 +18,13 @@
 
    var idOrRoadNumber = function(input) {
      if (selectedLayer === 'massTransitStop') {
-       //Masstransitstop & roadnumber search
+       // TODO: Combine with road address (road number) search
        return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
          var lon = result.lon;
          var lat = result.lat;
          var title = input.text + ' (valtakunnallinen id)';
          if (lon && lat) {
-           return [{ title: title, lon: lon, lat: lat, assetId: result.id }];
+           return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
          } else {
            return $.Deferred().reject('Tuntematon valtakunnallinen id');
          }

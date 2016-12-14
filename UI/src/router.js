@@ -170,6 +170,11 @@
       router.navigate('massTransitStop/' + asset.nationalId);
     });
 
+    // Focus to mass transit stop asset after national id search
+    eventbus.on('nationalId:selected', function (result) {
+      router.navigate('massTransitStop/' + result.nationalId, {trigger: true});
+    });
+
     eventbus.on('linkProperties:unselected', function () {
       router.navigate('linkProperty');
     });
