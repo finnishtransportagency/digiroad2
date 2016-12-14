@@ -101,7 +101,7 @@
     };
 
     var createMouseClickHandler = function(floatlink) {
-      return function(){
+      return function(event){
         selectControl.unselectAll();
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
