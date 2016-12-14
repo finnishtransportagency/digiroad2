@@ -176,7 +176,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
     val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
     if(roadAddressesToRegister.size > 0)
-      eventbus.publish("roadAddress:mergeRoadAddress", fusedRoadAddresses.filter(_.id == -1000))
+      eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister)
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
