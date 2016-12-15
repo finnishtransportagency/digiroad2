@@ -3,20 +3,24 @@
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
     var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
-    var idOrRoad = /^\d+$/;
+    var idOrRoadRegex = /^\d+$/;
+    var liviIdRegex = /^\w+\d+$/;
+
     var matchedCoordinates = input.match(coordinateRegex);
+    var matchedStreet = input.match(streetRegex);
+    var matchedRoad = input.match(roadRegex);
+    var matchedIdOrRoad = input.match(idOrRoadRegex);
+    var matchedLiviId = input.match(liviIdRegex);
+
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
-    }
-    else if (selectedLayer === 'massTransitStop' && input.toLowerCase().indexOf("livi") > -1){
-      return {type: 'MasstransitstopLiviId', text: input};
-    } else if (input.match(streetRegex)) {
+    } else if (matchedLiviId) {
+      return {type: 'massTransitStopLiviId', text: input};
+    } else if (matchedStreet) {
       return {type: 'street', address: input};
-    }
-    else if (input.match(idOrRoad)) {
+    } else if (matchedIdOrRoad) {
       return { type: 'idOrRoadNumber', text:input};
-
-    } else if (input.match(roadRegex)) {
+    } else if (matchedRoad) {
       return parseRoad(input);
     } else {
       return { type: 'invalid' };
