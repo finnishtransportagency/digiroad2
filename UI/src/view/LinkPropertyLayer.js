@@ -255,6 +255,7 @@
     var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
+    var isComplementaryActive = false;
 
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
@@ -360,9 +361,13 @@
       eventbus.trigger('linkProperties:available');
     };
 
-    this.refreshView = function() {
-      roadCollection.fetch(map.getExtent());
-      historyLayer.refreshView();
+    this.refreshView = function () {
+      if (isComplementaryActive) {
+        me.refreshViewWithComplementary();
+      } else {
+        roadCollection.fetch(map.getExtent());
+        historyLayer.refreshView();
+      }
     };
 
     this.refreshViewWithComplementary = function() {
@@ -462,7 +467,7 @@
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
-      eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', me.refreshView());
+      eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
     };
 
     var cancelSelection = function() {
@@ -479,7 +484,13 @@
     };
 
     var showRoadLinksWithComplementary = function() {
+      isComplementaryActive = true;
       me.refreshViewWithComplementary();
+    };
+
+    var hideRoadLinksWithComplementary = function() {
+      isComplementaryActive = false;
+      me.refreshView();
     };
 
     var handleLinkPropertyChanged = function(eventListener) {
