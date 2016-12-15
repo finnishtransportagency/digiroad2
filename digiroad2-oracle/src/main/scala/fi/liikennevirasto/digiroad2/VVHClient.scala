@@ -24,7 +24,7 @@ object FeatureClass {
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.Unknown) extends RoadLinkLike {
+                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -532,8 +532,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
       0
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
+    //TODO Use here the extractLinkGeomSource method when we start having LINK_SOURCE at VVH Interface
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), extractLinkGeomSource(attributes))
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
+
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -677,7 +679,8 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
     resolveComplementaryVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
+      //TODO Remove the map after have LINK_SOURCE at VVH Interface
+      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
@@ -694,7 +697,8 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
     resolveComplementaryVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
+      //TODO Remove the map after have LINK_SOURCE at VVH Interface
+      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
@@ -708,7 +712,8 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       s"layerDefs=$definition&${queryParameters()}"
 
     resolveComplementaryVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
+      //TODO Remove the map after have LINK_SOURCE at VVH Interface
+      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }

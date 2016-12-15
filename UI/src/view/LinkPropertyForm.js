@@ -112,7 +112,7 @@
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
             '</div>' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Geometrian lähde: <%- %></p>' +
+              '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
             staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
             '<div class="form-group editable">' +
