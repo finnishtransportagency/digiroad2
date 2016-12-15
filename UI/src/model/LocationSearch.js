@@ -16,30 +16,28 @@
       });
     };
 
-   var idOrRoadNumber = function(input) {
-     if (selectedLayer === 'massTransitStop') {
-       // TODO: Combine with road address (road number) search
-       return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
-         var lon = result.lon;
-         var lat = result.lat;
-         var title = input.text + ' (valtakunnallinen id)';
-         if (lon && lat) {
-           return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
-         } else {
-           return $.Deferred().reject('Tuntematon valtakunnallinen id');
-         }
-       });
-     }
-     else if (selectedLayer === 'linkProperty') {
-       return roadNumberAndRoadLinkSearch(input);
-
-
-     }
-     else if (selectedLayer === 'speedLimit') {
-       //SpeedLimit  & roadnumber search
-     }
-   };
-
+    var idOrRoadNumber = function(input) {
+      if (selectedLayer === 'massTransitStop') {
+        return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
+          var lon = result.lon;
+          var lat = result.lat;
+          var title = input.text + ' (valtakunnallinen id)';
+          if (lon && lat) {
+            return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
+          } else {
+            return $.Deferred().reject('Tuntematon valtakunnallinen id');
+          }
+        });
+      }
+      else if (selectedLayer === 'linkProperty')
+      {
+        return roadNumberAndRoadLinkSearch(input);
+      }
+      else if (selectedLayer === 'speedLimit') {
+      } else {
+        return getCoordinatesFromRoadAddress({roadNumber: input.text});
+      }
+    };
 
 
     var roadNumberAndRoadLinkSearch= function(input) {
@@ -66,9 +64,9 @@
           var title = "link-ID: " + input.text;
           if (title.indexOf("link-ID") > -1) {
             if (returnObject.length > 0) {
-              returnObject.push({title: title, lon: x, lat: y, distance: 0});
+              returnObject.push({title: title, lon: x, lat: y});
             } else {
-              returnObject = [{title: title, lon: x, lat: y, distance: 0}];
+              returnObject = [{title: title, lon: x, lat: y}];
             }
           }
         }
@@ -97,7 +95,7 @@
           } else {
             return $.Deferred().reject('Tuntematon tieosoite');
           }
-      });
+        });
     };
 
     var resultFromCoordinates = function(coordinates) {
