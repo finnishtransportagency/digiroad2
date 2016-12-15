@@ -365,6 +365,11 @@
       historyLayer.refreshView();
     };
 
+    this.refreshViewWithComplementary = function() {
+      roadCollection.fetchWithComplementary(map.getExtent());
+      historyLayer.refreshView();
+    };
+
     this.isDirty = function() {
       return selectedLinkProperty.isDirty();
     };
@@ -456,6 +461,8 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
+      eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
+      eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', me.refreshView());
     };
 
     var cancelSelection = function() {
@@ -469,6 +476,10 @@
       unselectRoadLink();
       historyLayer.unselectFeatureRoadLink();
       me.refreshView();
+    };
+
+    var showRoadLinksWithComplementary = function() {
+      me.refreshViewWithComplementary();
     };
 
     var handleLinkPropertyChanged = function(eventListener) {
