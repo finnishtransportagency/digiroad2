@@ -24,7 +24,7 @@ object FeatureClass {
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
+                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.Unknown) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -139,14 +139,12 @@ object ChangeType {
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
+  protected val linkGeomSource =  LinkGeomSource.NormalLinkInterface
 
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
 
   private val roadLinkDataService = "Roadlink_data"
-
-
-
 
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
@@ -532,9 +530,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
       0
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
-    //TODO Use here the extractLinkGeomSource method when we start having LINK_SOURCE at VVH Interface
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
+      extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource)
 
   }
 
@@ -667,6 +665,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkComplementaryService = "Roadlink_complimentary"
+  override val linkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -679,8 +678,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
     resolveComplementaryVVHFeatures(url) match {
-      //TODO Remove the map after have LINK_SOURCE at VVH Interface
-      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
+      case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
@@ -697,11 +695,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
     resolveComplementaryVVHFeatures(url) match {
-      //TODO Remove the map after have LINK_SOURCE at VVH Interface
-      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
+      case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
+
   /**
     * Returns VVH complementary road links in a municipality
     * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
@@ -712,8 +710,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
       s"layerDefs=$definition&${queryParameters()}"
 
     resolveComplementaryVVHFeatures(url) match {
-      //TODO Remove the map after have LINK_SOURCE at VVH Interface
-      case Left(features) => features.map(extractVVHFeature).map(r => r.copy(linkSource = LinkGeomSource.ComplimentaryLinkInterface))
+      case Left(features) => features.map(extractVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
@@ -806,6 +803,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkDataHistoryService = "Roadlink_data_history"
+  override val linkGeomSource = LinkGeomSource.HistoryLinkInterface
 
   private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
     val definitionStart = "[{"
