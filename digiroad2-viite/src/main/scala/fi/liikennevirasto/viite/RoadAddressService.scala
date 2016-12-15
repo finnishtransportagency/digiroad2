@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
@@ -534,7 +534,8 @@ object RoadAddressLinkBuilder {
     val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
     val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
+    val timezone = DateTimeZone.forOffsetHours(0)
+    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
     latestDateString
   }
 
