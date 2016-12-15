@@ -33,11 +33,11 @@
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];
-            //if (result.assetId) {
-            //  eventbus.trigger('id:selected', { lon: result.lon, lat: result.lat, assetId: result.assetId });
-            //} else {
+            if (result.nationalId) {
+              eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
+            } else {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-            //}
+            }
           }
         }).fail(showDialog);
       };
