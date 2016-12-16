@@ -15,7 +15,11 @@
         }
       });
     };
-
+    /**
+     * Matches search to layer user initiated search in order to return correct ID types in search result
+     * @param input
+     * @returns {*}
+     */
     var idOrRoadNumber = function(input) {
       if (selectedLayer === 'massTransitStop') {
         return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
@@ -34,66 +38,72 @@
         return roadNumberAndRoadLinkSearch(input);
       }
       else if (selectedLayer === 'speedLimit') {
+
       } else {
         return getCoordinatesFromRoadAddress({roadNumber: input.text});
       }
     };
 
-
+    /**
+     * Used to retrive roadlink and roadlink from their API's then combine results in return
+     * @param input
+     * @returns {*}
+     */
     var roadNumberAndRoadLinkSearch= function(input) {
-      var roadLinkSearch = $.get("api/roadlinks/" + input.text);
+      var roadLinkSearch =backend.getRoadLinkToPromise(input.text);
       var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input.text);
-      var returnObject = [];
       return $.when(
         roadLinkSearch, roadNumberSearch).then(function(linkdata,roadData) {
-        var constructTitle = function(result) {
-          var address = _.get(result, 'alkupiste.tieosoitteet[0]');
-          var titleParts = [_.get(address, 'tie'), _.get(address, 'osa'), _.get(address, 'etaisyys'), _.get(address, 'ajorata')];
-          return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
-        };
-        var lon = _.get(roadData, 'alkupiste.tieosoitteet[0].point.x');
-        var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
-        var titleD = constructTitle(roadData);
-        if (lon && lat) {
-          returnObject = [{title: titleD, lon: lon, lat: lat}];
-        }
+        var returnObject = roadLocationAPIResultParser(roadData);
         var linkFound =_.get(linkdata[0], 'Success');
         if (linkFound == "1") {
           var x = _.get(linkdata[0], 'middlePoint.x');
           var y = _.get(linkdata[0], 'middlePoint.y');
           var title = "link-ID: " + input.text;
-          if (title.indexOf("link-ID") > -1) {
             if (returnObject.length > 0) {
               returnObject.push({title: title, lon: x, lat: y});
             } else {
               returnObject = [{title: title, lon: x, lat: y}];
             }
-          }
+        }
+        if (returnObject.length===0){
+          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
         }
         return returnObject;
       });
     };
 
-
-    var  massTransitStopLiviIdSearch = function(input) {
-      //add here what to do when masstransitstop with livi-id
-    };
-
-    var getCoordinatesFromRoadAddress = function(road) {
+    function roadLocationAPIResultParser(roadData){
       var constructTitle = function(result) {
         var address = _.get(result, 'alkupiste.tieosoitteet[0]');
         var titleParts = [_.get(address, 'tie'), _.get(address, 'osa'), _.get(address, 'etaisyys'), _.get(address, 'ajorata')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
+      var lon = _.get(roadData, 'alkupiste.tieosoitteet[0].point.x');
+      var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
+      var titleD = constructTitle(roadData);
+      if (lon && lat) {
+        return  [{title: titleD, lon: lon, lat: lat}];
+      } else
+      {
+        return [];
+      }
+    }
+    var  massTransitStopLiviIdSearch = function(input) {
+      //add here what to do when masstransitstop with livi-id
+    };
+
+    var getCoordinatesFromRoadAddress = function(road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance, road.lane)
-        .then(function(result) {
-          var lon = _.get(result, 'alkupiste.tieosoitteet[0].point.x');
-          var lat = _.get(result, 'alkupiste.tieosoitteet[0].point.y');
-          var title = constructTitle(result);
-          if (lon && lat) {
-            return [{ title: title, lon: lon, lat: lat }];
-          } else {
+        .then(function(resultfromapi) {
+          var searchResult = roadLocationAPIResultParser(resultfromapi);
+          if (searchResult.length === 0)
+          {
             return $.Deferred().reject('Tuntematon tieosoite');
+          }
+          else
+          {
+            return searchResult;
           }
         });
     };
