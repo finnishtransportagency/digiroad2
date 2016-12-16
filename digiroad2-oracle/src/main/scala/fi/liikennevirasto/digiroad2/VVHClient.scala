@@ -139,7 +139,7 @@ object ChangeType {
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
-  protected val linkGeomSource =  LinkGeomSource.NormalLinkInterface
+  protected val linkGeomSource :LinkGeomSource =  LinkGeomSource.NormalLinkInterface
 
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
@@ -545,6 +545,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   protected def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
       "MTKID",
+      "MTKCLASS",
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
@@ -665,7 +666,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkComplementaryService = "Roadlink_complimentary"
-  override val linkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
+  override val linkGeomSource : LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -766,8 +767,14 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road link by linkid
+    * Used by VVHClient.fetchComplementaryRoadlinks
+    */
+  def fetchComplementaryRoadlink(linkId: Long): Option[VVHRoadlink] = fetchComplementaryRoadlinks(Set(linkId)).headOption
+
+  /**
     * Returns VVH road links.
-    * Used by RoadLinkService.getComplementaryLinkMiddlePointByLinkId(linkId).
+    * Used by RoadLinkService.getComplementaryLinkMiddlePointByLinkId(linkId) and VVHClient.fetchComplementaryRoadlink.
     */
    def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
@@ -803,7 +810,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkDataHistoryService = "Roadlink_data_history"
-  override val linkGeomSource = LinkGeomSource.HistoryLinkInterface
+  override val linkGeomSource : LinkGeomSource = LinkGeomSource.HistoryLinkInterface
 
   private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
     val definitionStart = "[{"

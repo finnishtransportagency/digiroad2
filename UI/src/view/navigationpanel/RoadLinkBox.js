@@ -12,6 +12,12 @@
           '</div>' +
         '</div>';
 
+    var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+          '</div>' +
+        '</div>';
+
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -119,11 +125,11 @@
       'vertical-level': verticalLevelLegend
     };
 
-    var datasetHistoryCheckbox = {
-      'administrative-class': undefined,
+    var datasetAllCheckboxs = {
+      'administrative-class': roadLinkComplementaryCheckBox,
       'functional-class': roadLinkCheckBoxs,
       'link-type': roadLinkCheckBoxs,
-      'vertical-level': undefined
+      'vertical-level': roadLinkComplementaryCheckBox
     };
 
     var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
@@ -159,16 +165,24 @@
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
 
-        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        var complementaryCheckboxChecked = legendContainer.find('#complementaryCheckbox').prop('checked');
+
+        legendContainer.find('#historyCheckbox').prop('checked', false);
         eventbus.trigger('roadLinkHistory:hide');
 
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
         legendContainer.append(constructionTypeLegend);
 
-        var historyCheckBox = datasetHistoryCheckbox[datasetName];
-        if(historyCheckBox)
-          legendContainer.append(historyCheckBox);
+        var allCheckBoxs = datasetAllCheckboxs[datasetName];
+        if (allCheckBoxs) {
+          legendContainer.append(allCheckBoxs);
+          if (complementaryCheckboxChecked) {
+            legendContainer.find('#complementaryCheckbox').prop('checked', true);
+          } else {
+            legendContainer.find('#complementaryCheckbox').prop('checked', false);
+          }
+        }
 
         linkPropertiesModel.setDataset(datasetName);
 
@@ -185,11 +199,16 @@
         }
       });
 
-      checkboxContainer.find('#complementaryCheckbox').on('change', function(event) {
-        if($(event.currentTarget).prop('checked')){
+      checkboxContainer.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
           eventbus.trigger('roadLinkComplementary:show');
         } else {
-          eventbus.trigger('roadLinkComplementary:hide');
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('roadLinkComplementary:hide');
+          }
         }
       });
     };

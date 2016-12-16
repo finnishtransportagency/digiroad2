@@ -322,7 +322,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def updateLinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
                            direction: TrafficDirection, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
-    val vvhRoadLink = vvhClient.fetchByLinkId(linkId)
+    val vvhRoadLink = vvhClient.fetchByLinkId(linkId) match {
+      case Some(vvhRoadLink) => Some(vvhRoadLink)
+      case None => vvhClient.complementaryData.fetchComplementaryRoadlink(linkId)
+    }
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)
       withDynTransaction {

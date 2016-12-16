@@ -489,6 +489,8 @@
     };
 
     var hideRoadLinksWithComplementary = function() {
+      selectedLinkProperty.close();
+      unselectRoadLink();
       isComplementaryActive = false;
       me.refreshView();
     };
