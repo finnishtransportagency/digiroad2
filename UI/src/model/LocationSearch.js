@@ -59,7 +59,7 @@
         if (linkFound == "1") {
           var x = _.get(linkdata[0], 'middlePoint.x');
           var y = _.get(linkdata[0], 'middlePoint.y');
-          var title = "link-ID: " + input.text;
+          var title = "Link-ID: " + input.text;
             if (returnObject.length > 0) {
               returnObject.push({title: title, lon: x, lat: y});
             } else {
@@ -83,7 +83,7 @@
       var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
       var titleD = constructTitle(roadData);
       if (lon && lat) {
-        return  [{title: titleD, lon: lon, lat: lat}];
+        return  [{title: titleD, lon: lon, lat: lat, type:"linkid"}];
       } else
       {
         return [];

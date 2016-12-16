@@ -17,7 +17,15 @@
           .sortBy('distance')
           .map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+if (result.title.indexOf("Link-ID")>-1){
+  window.location.hash = "#linkProperty/";
+  eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+  window.location.hash = "#linkProperty/" + coordinatesText.val();
+} else
+  {
+    eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+  }
+
             });
           }).value();
 
@@ -35,7 +43,13 @@
             var result = results[0];
             if (result.nationalId) {
               eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
-            } else {
+            }
+            else if (result.title.indexOf("Link-ID")>-1){
+              window.location.hash = "#linkProperty/";
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              window.location.hash = "#linkProperty/" + coordinatesText.val();
+            }
+            else {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
             }
           }
