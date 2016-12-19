@@ -533,9 +533,11 @@ object RoadAddressLinkBuilder {
     val createdDate = toLong(attributes.get("CREATED_DATE"))
     val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
     val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
+    val endDate = toLong(attributes.get("END_DATE"))
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
+    val withHistoryLatestDate = compareDateMillisOptions(latestDate, endDate)
     val timezone = DateTimeZone.forOffsetHours(0)
-    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
+    val latestDateString = withHistoryLatestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
     latestDateString
   }
 
