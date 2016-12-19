@@ -210,7 +210,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     changeSet.adjustedMValues.map(_.linkId) should be (Seq(l4, l5))
   }
 
-  test("LRM modifications are published"){
+  ignore("LRM modifications are published"){
     val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
