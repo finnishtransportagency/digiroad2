@@ -88,10 +88,12 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra)
       returning.nonEmpty should be (true)
       returning.head should be (id)
-      RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(1)
+      val newSize = currentSize + 1
+      RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(newSize)
     }
   }
 
