@@ -71,8 +71,10 @@ trait MassTransitStopService extends PointAssetOperations {
   val geometryTransform = new GeometryTransform
 
   lazy val massTransitStopEnumeratedPropertyValues = {
-    val properties = Queries.getEnumeratedPropertyValues(typeId)
-    properties.map(epv => epv.publicId -> epv.values).toMap
+    withDynSession{
+      val properties = Queries.getEnumeratedPropertyValues(typeId)
+      properties.map(epv => epv.publicId -> epv.values).toMap
+    }
   }
 
   def withDynSession[T](f: => T): T
