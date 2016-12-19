@@ -1,0 +1,2332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Maastotiedot xmlns="http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02 http://xml.nls.fi/XML/Schema/Maastotietojarjestelma/MTK/201202/Maastotiedot.xsd" srsName="EPSG:3067, EPSG:5717" aikaleima="2013-11-25T16:10:38.000+02:00">
+    <tieviivat>
+        <Tieviiva gid="1457964389" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-09-10</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">375295.264 6678420.423 36.410 375290.952 6678385.118 35.027</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12314</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>2</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <kuntatunnus>49</kuntatunnus>
+        </Tieviiva>
+        <Tieviiva gid="1457942735" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-09-10</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372979.766 6678584.604 31.882 373001.741 6678580.943 31.752</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12314</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>2</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <kuntatunnus>235</kuntatunnus>
+        </Tieviiva>
+        <Tieviiva gid="1140002832" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">375295.264 6678420.423 36.410 375290.952 6678385.118 35.027</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12314</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>2</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <kuntatunnus>49</kuntatunnus>
+        </Tieviiva>
+        <Tieviiva gid="362957313" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372979.766 6678584.604 31.882 373001.741 6678580.943 31.752</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12314</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>2</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <kuntatunnus>235</kuntatunnus>
+        </Tieviiva>
+        <Tieviiva gid="362956845" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373509.319 6676366.283 37.551 373512.026 6676376.042 38.083 373515.320 6676386.954 38.691 373518.498 6676401.579 39.434 373522.974 6676417.237 40.156 373527.274 6676432.980 40.671 373531.214 6676447.346 40.912 373535.968 6676464.820 40.935 373546.402 6676492.390 40.479 373563.474 6676522.758 39.027 373574.351 6676536.462 37.963 373584.911 6676547.918 37.043 373609.455 6676566.506 35.168 373630.430 6676577.924 33.868 373659.781 6676590.245 33.069</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12122</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>2</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <minOsoitenumeroVasen>6</minOsoitenumeroVasen>
+            <maxOsoitenumeroVasen>16</maxOsoitenumeroVasen>
+            <minOsoitenumeroOikea>3</minOsoitenumeroOikea>
+            <maxOsoitenumeroOikea>11</maxOsoitenumeroOikea>
+            <nimi_suomi kieli="fin">Kauppalantie</nimi_suomi>
+            <nimi_ruotsi kieli="swe">Köpingsvägen</nimi_ruotsi>
+            <kuntatunnus>235</kuntatunnus>
+        </Tieviiva>
+        <Tieviiva gid="1341535242" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373574.262 6676646.283 28.502 373565.143 6676670.348 25.727 373556.818 6676682.970 24.285 373550.373 6676689.952 23.738</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>12314</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <valmiusaste>0</valmiusaste>
+            <paallyste>1</paallyste>
+            <yksisuuntaisuus>0</yksisuuntaisuus>
+            <minOsoitenumeroOikea>5</minOsoitenumeroOikea>
+            <maxOsoitenumeroOikea>5</maxOsoitenumeroOikea>
+            <nimi_suomi kieli="fin">Borgintie</nimi_suomi>
+            <nimi_ruotsi kieli="swe">Borgsvägen</nimi_ruotsi>
+            <kuntatunnus>49</kuntatunnus>
+        </Tieviiva>
+    </tieviivat>
+    <tiesymbolit>
+        <Tiesymboli gid="1457936599" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-09-10</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372549.765 6678286.604 25.391</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438576447" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">375278.815 6677762.561 27.142</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1457936600" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-09-10</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372767.265 6678081.549 63.629</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438577028" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373494.182 6677669.918 39.838</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438577029" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373208.410 6677301.777 37.609</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438577027" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373957.359 6677788.325 31.818</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438576445" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374634.273 6676758.247 23.287</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438576443" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374614.857 6676663.287 24.204</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1438576444" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374601.384 6676620.283 24.569</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1170405265" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <suunta>3345</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372549.765 6678286.604 25.391</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="395633261" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>22409</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">375278.815 6677762.561 27.142</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1171158768" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <suunta>12358</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372767.265 6678081.549 63.629</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1191950683" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>4499</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373494.182 6677669.918 39.838</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1191950744" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>10292</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373208.410 6677301.777 37.609</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="1191950668" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>3287</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">373957.359 6677788.325 31.818</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="395633211" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>16475</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374634.273 6676758.247 23.287</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="395633191" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>12757</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374614.857 6676663.287 24.204</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+        <Tiesymboli gid="395633201" dimension="3">
+            <sijaintitarkkuus>15000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>5906</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374601.384 6676620.283 24.569</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>12200</kohdeluokka>
+        </Tiesymboli>
+    </tiesymbolit>
+    <autoliikennealueet>
+        <Autoliikennealue gid="402759010" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372799.801 6678308.560 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">372810.336 6678289.153 27.344 372778.498 6678297.150 27.001 372768.593 6678310.302 26.158 372766.250 6678318.058 26.021 372834.553 6678333.250 26.377 372844.380 6678310.010 27.089 372810.336 6678289.153 27.344</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="1154678795" dimension="3">
+            <sijaintitarkkuus>7500</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372569.733 6678316.897 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">372558.398 6678287.703 23.743 372541.225 6678330.292 27.299 372574.198 6678348.840 25.704 372594.853 6678308.399 23.948 372564.050 6678290.805 23.804 372558.398 6678287.703 23.743</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="1154678790" dimension="3">
+            <sijaintitarkkuus>7500</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372508.253 6678283.924 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">372543.629 6678282.894 25.322 372488.675 6678257.134 24.560 372472.875 6678288.389 25.411 372525.082 6678314.836 25.728 372534.356 6678310.027 25.987 372543.629 6678282.894 25.322</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="402759065" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372463.936 6678028.914 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">372448.329 6678046.808 46.939 372488.949 6678033.123 47.937 372489.087 6678027.770 47.943 372484.879 6678027.580 47.697 372485.224 6678009.998 48.091 372479.924 6678011.003 47.830 372445.712 6678022.869 46.952 372448.329 6678046.808 46.939</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="402759060" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-09-10</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372525.100 6678021.932 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">372498.788 6678031.148 48.423 372558.723 6678030.714 49.651 372557.300 6678016.267 50.025 372496.241 6678008.734 48.802 372498.788 6678031.148 48.423</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="416774343" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374189.638 6677197.588 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374216.646 6677196.947 26.457 374214.976 6677204.767 25.843 374197.054 6677200.943 25.529 374199.347 6677190.195 25.787 374167.505 6677182.573 25.453 374162.955 6677210.496 25.336 374281.288 6677227.344 24.798 374285.029 6677202.630 25.874 374258.015 6677197.545 25.886 374256.816 6677203.213 25.890 374216.646 6677196.947 26.457</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="1088502448" dimension="3">
+            <sijaintitarkkuus>7500</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374140.323 6677113.012 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374123.653 6677140.277 24.836 374145.279 6677145.155 23.337 374154.214 6677098.950 22.129 374157.007 6677086.874 22.016 374147.267 6677084.620 22.071 374127.739 6677088.998 22.187 374129.159 6677094.921 22.332 374132.354 6677094.119 22.198 374125.618 6677130.514 23.452 374123.653 6677140.277 24.836</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="1088502474" dimension="3">
+            <sijaintitarkkuus>7500</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374078.829 6676975.957 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374155.863 6676947.871 20.357 374009.072 6676982.662 19.774 374014.067 6677000.470 19.856 374085.298 6676981.714 19.997 374096.479 6677028.411 20.166 374113.512 6677023.666 20.412 374105.419 6676976.997 20.249 374159.943 6676964.236 20.356 374155.863 6676947.871 20.357</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="416774378" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374214.092 6676880.845 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374191.065 6676869.865 20.450 374192.298 6676872.554 20.474 374186.801 6676874.722 20.585 374193.508 6676901.289 20.474 374194.980 6676906.735 20.460 374203.065 6676904.881 20.592 374224.854 6676899.444 20.935 374231.973 6676897.747 21.115 374223.936 6676864.604 21.086 374218.843 6676865.268 20.882 374218.509 6676861.879 20.820 374190.584 6676868.816 20.397 374191.065 6676869.865 20.450</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="416774353" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374224.527 6676971.661 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374195.496 6677019.642 21.418 374229.162 6677029.939 22.041 374255.110 6676948.800 21.641 374254.578 6676943.885 21.627 374207.384 6676951.587 20.866 374193.606 6677015.194 21.367 374195.496 6677019.642 21.418</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="416774408" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374680.970 6676817.067 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374745.044 6676858.235 25.599 374739.529 6676831.975 25.883 374730.088 6676821.473 25.775 374675.633 6676805.941 24.651 374670.489 6676811.885 24.367 374678.395 6676849.892 24.510 374700.415 6676855.756 25.014 374721.725 6676858.882 25.013 374734.610 6676860.199 25.368 374745.044 6676858.235 25.599</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+        <Autoliikennealue gid="416774398" dimension="3">
+            <sijaintitarkkuus>20000</sijaintitarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374457.664 6676936.392 0.000</gml:pos>
+                </Piste>
+                <Alue>
+                    <gml:exterior>
+                        <gml:LinearRing>
+                            <gml:posList srsDimension="3">374471.954 6676935.499 24.219 374469.193 6676920.785 24.348 374462.260 6676921.115 24.252 374460.819 6676913.794 23.933 374449.636 6676914.921 24.024 374451.017 6676918.250 24.258 374445.751 6676921.509 24.373 374427.523 6676924.097 24.151 374421.148 6676918.114 24.017 374409.151 6676920.058 24.143 374410.634 6676925.171 24.332 374409.079 6676928.418 24.448 374402.585 6676933.844 24.691 374403.171 6676939.405 24.545 374436.339 6676979.328 24.691 374455.654 6676976.744 24.418 374474.617 6676949.691 23.998 374471.954 6676935.499 24.219</gml:posList>
+                        </gml:LinearRing>
+                    </gml:exterior>
+                </Alue>
+            </sijainti>
+            <kohderyhma>64</kohderyhma>
+            <kohdeluokka>32421</kohdeluokka>
+        </Autoliikennealue>
+    </autoliikennealueet>
+    <rautatiet>
+        <Rautatie gid="1438572945" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">375216.904 6677397.455 30.436 375187.141 6677381.280 30.786 375152.812 6677362.964 31.069 375130.713 6677352.337 31.217 375105.533 6677341.221 31.363 375085.836 6677332.744 31.454 375064.800 6677324.837 31.524 375039.500 6677315.947 31.561 375014.905 6677307.112 31.635 374988.275 6677299.553 31.525 374960.161 6677292.510 31.287 374934.391 6677286.602 31.066 374908.594 6677280.452 30.905 374882.820 6677275.506 30.704 374865.890 6677272.352 30.514 374726.697 6677249.267 29.041</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572946" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374769.514 6677251.450 29.495 374842.152 6677263.232 30.281 374889.735 6677271.442 30.760 374920.548 6677277.371 31.039 374985.305 6677293.530 31.403 375012.599 6677302.151 31.547 375056.481 6677317.373 31.532 375093.507 6677331.081 31.394 375144.061 6677353.374 31.155 375163.560 6677362.676 31.011 375189.212 6677377.019 30.813 375214.332 6677390.742 30.608</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573164" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374629.595 6677239.559 27.685 374671.417 6677245.968 28.190 374868.181 6677279.141 29.900 374891.683 6677283.966 30.133 374964.216 6677299.287 30.624 375016.467 6677314.682 31.099 375071.505 6677334.015 31.018 375120.338 6677354.947 30.739 375156.556 6677371.620 30.595 375191.500 6677390.496 30.366 375216.974 6677405.061 29.992</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572949" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.424 6676967.408 21.843 373608.517 6677001.191 22.173 373649.765 6677023.874 22.451 373670.700 6677034.478 22.457</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572950" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373670.700 6677034.478 22.457 373680.522 6677039.031 22.674</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572953" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373671.858 6677029.827 22.440 373681.996 6677035.258 22.710</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572930" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374163.693 6677177.291 25.626 374184.200 6677182.151 25.861 374200.510 6677185.658 25.777 374221.377 6677189.566 25.685 374272.432 6677197.780 25.807 374351.755 6677210.383 25.927 374406.195 6677218.931 26.067 374486.637 6677231.485 26.386 374508.244 6677234.206 26.552 374527.780 6677235.177 26.745 374539.611 6677235.720 26.808</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572931" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.018 6677171.329 25.593 374195.544 6677179.465 26.074 374222.579 6677185.031 25.968 374539.611 6677235.720 26.808</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572932" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.018 6677171.329 25.593 374230.628 6677181.346 26.228 374232.177 6677181.585 26.209 374423.716 6677212.048 26.342 374593.917 6677238.316 27.441</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573123" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374164.699 6677161.774 24.067 374431.001 6677203.041 26.464 374602.750 6677230.106 27.553</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573124" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.799 6677156.706 23.861 374216.383 6677164.385 26.220 374327.180 6677181.344 26.400 374414.815 6677195.266 26.432 374509.322 6677210.093 26.723 374602.839 6677225.443 27.528</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572938" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374626.218 6677228.949 27.776 374650.971 6677232.327 28.054 374767.466 6677251.108 29.488 374769.514 6677251.450 29.495</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572914" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374726.697 6677249.267 29.041 374738.110 6677249.481 29.131 374752.616 6677250.258 29.276 374769.514 6677251.450 29.495</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572913" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374690.882 6677243.845 28.557 374699.139 6677245.056 28.679 374726.697 6677249.267 29.041</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573121" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.750 6677230.106 27.553 374625.665 6677233.729 27.758</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573122" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.839 6677225.443 27.528 374626.218 6677228.949 27.776</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573174" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.787 6677238.825 27.391 374605.015 6677238.958 27.819 374619.166 6677239.530 27.892 374625.590 6677239.548 27.657</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572919" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374629.595 6677239.559 27.685 374661.653 6677242.021 28.211 374690.882 6677243.845 28.557</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572933" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374625.665 6677233.729 27.758 374690.882 6677243.845 28.557</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572924" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374625.590 6677239.548 27.657 374629.595 6677239.559 27.685</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572918" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374539.611 6677235.720 26.808 374550.840 6677236.236 26.895 374593.917 6677238.316 27.441</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573173" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374593.917 6677238.316 27.441 374594.325 6677238.319 27.447 374602.787 6677238.825 27.391</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572916" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373883.523 6677123.518 25.397 373980.125 6677138.742 25.446 374085.732 6677156.209 25.936</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572936" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373983.722 6677127.647 25.483 373987.396 6677128.244 25.506 374007.255 6677131.382 25.647 374031.818 6677135.261 25.785 374062.385 6677140.037 25.924 374120.110 6677148.693 26.076 374141.075 6677152.645 26.004</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572917" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374085.732 6677156.209 25.936 374086.857 6677156.393 25.943 374133.160 6677163.766 26.163</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572928" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374085.732 6677156.209 25.936 374114.978 6677163.732 26.089 374138.748 6677170.170 25.220</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572929" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374138.748 6677170.170 25.220 374163.693 6677177.291 25.626</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572935" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374140.841 6677157.678 25.698 374164.699 6677161.774 24.067</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572937" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374141.075 6677152.645 26.004 374165.799 6677156.706 23.861</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573172" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374138.667 6677165.074 25.926 374142.385 6677165.956 26.992 374165.018 6677171.329 25.593</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573171" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374133.160 6677163.766 26.163 374138.667 6677165.074 25.926</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572915" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374064.136 6677145.022 26.047 374081.160 6677149.410 26.058 374114.067 6677158.317 26.104 374133.160 6677163.766 26.163</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572934" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374064.136 6677145.022 26.047 374066.511 6677145.388 26.021 374140.841 6677157.678 25.698</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572912" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374040.852 6677141.327 25.859 374045.103 6677142.098 25.909 374064.136 6677145.022 26.047</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572951" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373680.522 6677039.031 22.674 373686.143 6677041.989 22.674 373725.361 6677059.656 23.021 373771.657 6677078.640 23.544 373821.127 6677095.876 23.972 373861.951 6677108.530 24.455 373870.199 6677110.630 24.563 373898.698 6677117.829 24.756 373935.745 6677125.169 25.088 373970.179 6677130.720 25.391 374006.890 6677136.593 25.642 374040.852 6677141.327 25.859</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572954" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373681.996 6677035.258 22.710 373702.444 6677044.311 22.764 373738.246 6677060.171 23.139 373780.378 6677077.267 23.566 373824.387 6677092.241 24.004 373866.006 6677104.392 24.453 373913.952 6677115.716 24.881 373961.484 6677124.036 25.273 373983.722 6677127.647 25.483</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572920" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373983.722 6677127.647 25.483 374003.285 6677132.672 25.642 374016.734 6677135.983 25.725 374040.852 6677141.327 25.859</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572771" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372623.346 6676693.588 24.637 372639.585 6676689.040 24.493 372657.780 6676683.943 24.411 372662.625 6676682.591 24.359 372705.267 6676670.877 24.166 372733.787 6676662.497 23.992 372776.339 6676651.124 23.794 372823.490 6676641.405 23.294 372875.253 6676635.462 23.124 372913.416 6676632.916 23.042 372934.023 6676633.106 22.763 372977.692 6676635.475 22.577 372992.661 6676636.972 22.531 373020.104 6676641.054 22.373 373054.237 6676647.811 22.146 373082.091 6676654.596 22.086 373095.142 6676658.250 22.015 373122.538 6676667.201 21.836 373151.909 6676678.834 21.667 373181.353 6676691.948 21.553 373211.575 6676707.499 21.417 373235.993 6676721.333 21.258 373259.022 6676736.039 21.248 373282.139 6676752.141 21.082 373301.120 6676767.182 21.037 373319.926 6676783.259 20.923 373335.354 6676796.378 20.854</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572772" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373391.772 6676839.889 20.872 373358.157 6676810.337 20.812 373325.402 6676781.386 20.829 373296.893 6676758.083 21.022 373258.442 6676730.057 21.248 373218.827 6676706.136 21.395 373176.540 6676684.973 21.494 373134.810 6676667.846 21.753 373092.739 6676653.568 21.905 373056.708 6676644.084 22.193 373013.442 6676635.620 22.448 373005.144 6676634.616 22.503 372994.973 6676633.396 22.461 372948.807 6676629.782 22.822 372901.552 6676629.488 22.951 372852.041 6676633.367 23.242 372824.246 6676636.141 23.417 372796.385 6676641.483 23.480 372745.446 6676653.691 24.116 372705.284 6676666.106 24.172 372626.436 6676687.611 24.889 372622.239 6676688.842 24.766</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572770" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372584.949 6676704.438 24.920 372623.346 6676693.588 24.637</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572773" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372622.239 6676688.842 24.766 372585.233 6676700.366 23.784 372583.441 6676700.899 24.894</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572760" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373436.832 6676878.667 21.035 373391.772 6676839.889 20.872</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572766" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.424 6676967.408 21.843 373508.681 6676938.992 21.628 373466.737 6676908.071 21.306 373462.411 6676904.668 21.273 373432.935 6676881.486 20.993</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572767" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373436.832 6676878.667 21.035 373486.416 6676917.473 21.350 373522.916 6676943.075 21.667 373551.163 6676961.649 21.767</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572952" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.163 6676961.649 21.767 373568.468 6676972.155 21.829 373623.758 6677004.862 22.213 373671.858 6677029.827 22.440</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438572777" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372127.111 6676697.932 23.786 372130.307 6676698.705 23.854 372188.661 6676711.566 24.485 372262.308 6676725.532 25.218 372349.616 6676732.919 25.626 372414.557 6676732.056 25.721 372473.494 6676727.036 25.668 372480.225 6676726.194 25.652 372486.821 6676725.260 25.639 372493.763 6676724.279 25.581 372494.095 6676724.232 25.582 372497.251 6676723.785 25.628 372501.479 6676723.187 25.532 372519.577 6676720.222 25.516 372525.353 6676719.140 25.476 372554.860 6676712.742 25.195 372584.949 6676704.438 24.920</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1438573148" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372583.441 6676700.899 24.894 372563.540 6676706.361 25.007 372547.437 6676710.158 25.106 372510.799 6676717.343 25.371 372452.774 6676724.812 25.570 372384.192 6676728.875 25.649 372318.642 6676727.377 25.474 372248.593 6676719.622 25.065 372194.034 6676708.660 24.476 372131.882 6676694.294 23.825</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040458" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">375216.904 6677397.455 30.436 375187.141 6677381.280 30.786 375152.812 6677362.964 31.069 375130.713 6677352.337 31.217 375105.533 6677341.221 31.363 375085.836 6677332.744 31.454 375064.800 6677324.837 31.524 375039.500 6677315.947 31.561 375014.905 6677307.112 31.635 374988.275 6677299.553 31.525 374960.161 6677292.510 31.287 374934.391 6677286.602 31.066 374908.594 6677280.452 30.905 374882.820 6677275.506 30.704 374865.890 6677272.352 30.514 374726.697 6677249.267 29.041</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040464" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374769.514 6677251.450 29.495 374842.152 6677263.232 30.281 374889.735 6677271.442 30.760 374920.548 6677277.371 31.039 374985.305 6677293.530 31.403 375012.599 6677302.151 31.547 375056.481 6677317.373 31.532 375093.507 6677331.081 31.394 375144.061 6677353.374 31.155 375163.560 6677362.676 31.011 375189.212 6677377.019 30.813 375214.332 6677390.742 30.608</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1058709357" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374629.595 6677239.559 27.685 374671.417 6677245.968 28.190 374868.181 6677279.141 29.900 374891.683 6677283.966 30.133 374964.216 6677299.287 30.624 375016.467 6677314.682 31.099 375071.505 6677334.015 31.018 375120.338 6677354.947 30.739 375156.556 6677371.620 30.595 375191.500 6677390.496 30.366 375216.974 6677405.061 29.992</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040494" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.424 6676967.408 21.843 373608.517 6677001.191 22.173 373649.765 6677023.874 22.451 373670.700 6677034.478 22.457</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040518" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373671.858 6677029.827 22.440 373681.996 6677035.258 22.710</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040500" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373670.700 6677034.478 22.457 373680.522 6677039.031 22.674</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040350" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374163.693 6677177.291 25.626 374184.200 6677182.151 25.861 374200.510 6677185.658 25.777 374221.377 6677189.566 25.685 374272.432 6677197.780 25.807 374351.755 6677210.383 25.927 374406.195 6677218.931 26.067 374486.637 6677231.485 26.386 374508.244 6677234.206 26.552 374527.780 6677235.177 26.745 374539.611 6677235.720 26.808</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040374" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.018 6677171.329 25.593 374230.628 6677181.346 26.228 374232.177 6677181.585 26.209 374423.716 6677212.048 26.342 374593.917 6677238.316 27.441</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040362" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.018 6677171.329 25.593 374195.544 6677179.465 26.074 374222.579 6677185.031 25.968 374539.611 6677235.720 26.808</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="746824424" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374164.699 6677161.774 24.067 374431.001 6677203.041 26.464 374602.750 6677230.106 27.553</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="746824436" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374165.799 6677156.706 23.861 374216.383 6677164.385 26.220 374327.180 6677181.344 26.400 374414.815 6677195.266 26.432 374509.322 6677210.093 26.723 374602.839 6677225.443 27.528</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040410" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374626.218 6677228.949 27.776 374650.971 6677232.327 28.054 374767.466 6677251.108 29.488 374769.514 6677251.450 29.495</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040224" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374726.697 6677249.267 29.041 374738.110 6677249.481 29.131 374752.616 6677250.258 29.276 374769.514 6677251.450 29.495</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040212" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374690.882 6677243.845 28.557 374699.139 6677245.056 28.679 374726.697 6677249.267 29.041</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="746775044" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.839 6677225.443 27.528 374626.218 6677228.949 27.776</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="746775032" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.750 6677230.106 27.553 374625.665 6677233.729 27.758</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1060035976" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374602.787 6677238.825 27.391 374605.015 6677238.958 27.417 374619.166 6677239.530 27.582 374625.590 6677239.548 27.657</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040260" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374629.595 6677239.559 27.685 374661.653 6677242.021 28.211 374690.882 6677243.845 28.557</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040380" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374625.665 6677233.729 27.758 374690.882 6677243.845 28.557</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040302" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374625.590 6677239.548 27.657 374629.595 6677239.559 27.685</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040254" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374539.611 6677235.720 26.808 374550.840 6677236.236 26.895 374593.917 6677238.316 27.441</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1060035964" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374593.917 6677238.316 27.441 374594.325 6677238.319 27.447 374602.787 6677238.825 27.391</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040398" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373983.722 6677127.647 25.483 373987.396 6677128.244 25.506 374007.255 6677131.382 25.647 374031.818 6677135.261 25.785 374062.385 6677140.037 25.924 374120.110 6677148.693 26.076 374141.075 6677152.645 26.004</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040236" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373883.523 6677123.518 25.397 373980.125 6677138.742 25.446 374085.732 6677156.209 25.936</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040242" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374085.732 6677156.209 25.936 374086.857 6677156.393 25.943 374133.160 6677163.766 26.163</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040338" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374085.732 6677156.209 25.936 374114.978 6677163.732 26.089 374138.748 6677170.170 25.220</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040344" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374138.748 6677170.170 25.220 374163.693 6677177.291 25.626</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040392" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374140.841 6677157.678 25.698 374164.699 6677161.774 24.067</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040404" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374141.075 6677152.645 26.004 374165.799 6677156.706 23.861</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1060035948" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374138.667 6677165.074 25.926 374142.385 6677165.956 25.879 374165.018 6677171.329 25.593</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1060035936" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374133.160 6677163.766 26.163 374138.667 6677165.074 25.926</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040386" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374064.136 6677145.022 26.047 374066.511 6677145.388 26.021 374140.841 6677157.678 25.698</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040230" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374064.136 6677145.022 26.047 374081.160 6677149.410 26.058 374114.067 6677158.317 26.104 374133.160 6677163.766 26.163</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040206" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">374040.852 6677141.327 25.859 374045.103 6677142.098 25.909 374064.136 6677145.022 26.047</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040506" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373680.522 6677039.031 22.674 373686.143 6677041.989 22.674 373725.361 6677059.656 23.021 373771.657 6677078.640 23.544 373821.127 6677095.876 23.972 373861.951 6677108.530 24.455 373870.199 6677110.630 24.563 373898.698 6677117.829 24.756 373935.745 6677125.169 25.088 373970.179 6677130.720 25.391 374006.890 6677136.593 25.642 374040.852 6677141.327 25.859</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040524" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373681.996 6677035.258 22.710 373702.444 6677044.311 22.764 373738.246 6677060.171 23.139 373780.378 6677077.267 23.566 373824.387 6677092.241 24.004 373866.006 6677104.392 24.453 373913.952 6677115.716 24.881 373961.484 6677124.036 25.273 373983.722 6677127.647 25.483</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040266" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373983.722 6677127.647 25.483 374003.285 6677132.672 25.642 374016.734 6677135.983 25.725 374040.852 6677141.327 25.859</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215393" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372623.346 6676693.588 24.637 372639.585 6676689.040 24.493 372657.780 6676683.943 24.411 372662.625 6676682.591 24.359 372705.267 6676670.877 24.166 372733.787 6676662.497 23.992 372776.339 6676651.124 23.794 372823.490 6676641.405 23.294 372875.253 6676635.462 23.124 372913.416 6676632.916 23.042 372934.023 6676633.106 22.763 372977.692 6676635.475 22.577 372992.661 6676636.972 22.531 373020.104 6676641.054 22.373 373054.237 6676647.811 22.146 373082.091 6676654.596 22.086 373095.142 6676658.250 22.015 373122.538 6676667.201 21.836 373151.909 6676678.834 21.667 373181.353 6676691.948 21.553 373211.575 6676707.499 21.417 373235.993 6676721.333 21.258 373259.022 6676736.039 21.248 373282.139 6676752.141 21.082 373301.120 6676767.182 21.037 373319.926 6676783.259 20.923 373335.354 6676796.378 20.854</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215399" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373391.772 6676839.889 20.872 373358.157 6676810.337 20.812 373325.402 6676781.386 20.829 373296.893 6676758.083 21.022 373258.442 6676730.057 21.248 373218.827 6676706.136 21.395 373176.540 6676684.973 21.494 373134.810 6676667.846 21.753 373092.739 6676653.568 21.905 373056.708 6676644.084 22.193 373013.442 6676635.620 22.448 373005.144 6676634.616 22.503 372994.973 6676633.396 22.461 372948.807 6676629.782 22.822 372901.552 6676629.488 22.951 372852.041 6676633.367 23.242 372824.246 6676636.141 23.417 372796.385 6676641.483 23.480 372745.446 6676653.691 24.116 372705.284 6676666.106 24.172 372626.436 6676687.611 24.889 372622.239 6676688.842 24.766</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215405" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372622.239 6676688.842 24.766 372585.233 6676700.366 24.889 372583.441 6676700.899 24.894</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215387" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>3000</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372584.949 6676704.438 24.920 372623.346 6676693.588 24.637</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>1</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215315" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373436.832 6676878.667 21.035 373391.772 6676839.889 20.872</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215351" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.424 6676967.408 21.843 373508.681 6676938.992 21.628 373466.737 6676908.071 21.306 373462.411 6676904.668 21.273 373432.935 6676881.486 20.993</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215357" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373436.832 6676878.667 21.035 373486.416 6676917.473 21.350 373522.916 6676943.075 21.667 373551.163 6676961.649 21.767</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="417040512" dimension="3">
+            <sijaintitarkkuus>3000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>1</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">373551.163 6676961.649 21.767 373568.468 6676972.155 21.829 373623.758 6677004.862 22.213 373671.858 6677029.827 22.440</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="1020946459" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372583.441 6676700.899 24.894 372563.540 6676706.361 25.007 372547.437 6676710.158 25.106 372510.799 6676717.343 25.371 372452.774 6676724.812 25.570 372384.192 6676728.875 25.649 372318.642 6676727.377 25.474 372248.593 6676719.622 25.065 372194.034 6676708.660 24.476 372131.882 6676694.294 23.825</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+        <Rautatie gid="407215429" dimension="3">
+            <sijaintitarkkuus>800</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <kulkutapa>2</kulkutapa>
+            <sijainti>
+                <Murtoviiva>
+                    <gml:posList srsDimension="3">372127.111 6676697.932 23.786 372130.307 6676698.705 23.854 372188.661 6676711.566 24.485 372262.308 6676725.532 25.218 372349.616 6676732.919 25.626 372414.557 6676732.056 25.721 372473.494 6676727.036 25.668 372480.225 6676726.194 25.652 372486.821 6676725.260 25.639 372493.763 6676724.279 25.581 372494.095 6676724.232 25.582 372497.251 6676723.785 25.628 372501.479 6676723.187 25.532 372519.577 6676720.222 25.516 372525.353 6676719.140 25.476 372554.860 6676712.742 25.195 372584.949 6676704.438 24.920</gml:posList>
+                </Murtoviiva>
+            </sijainti>
+            <kohderyhma>25</kohderyhma>
+            <kohdeluokka>14111</kohdeluokka>
+            <tasosijainti>0</tasosijainti>
+            <sahkoisyys>1</sahkoisyys>
+            <valmiusaste>0</valmiusaste>
+        </Rautatie>
+    </rautatiet>
+    <rautatieliikennepaikat>
+        <Rautatieliikennepaikka gid="1438573328" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374230.628 6677181.346 26.228</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>14200</kohdeluokka>
+        </Rautatieliikennepaikka>
+        <Rautatieliikennepaikka gid="1438573324" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2010-12-30</alkupvm>
+            <loppupvm>2013-08-28</loppupvm>
+            <suunta>-15707</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372657.780 6676683.943 24.411</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>14200</kohdeluokka>
+        </Rautatieliikennepaikka>
+        <Rautatieliikennepaikka gid="433329167" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>-14169</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">374230.628 6677181.346 26.228</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>14200</kohdeluokka>
+        </Rautatieliikennepaikka>
+        <Rautatieliikennepaikka gid="407215610" dimension="3">
+            <sijaintitarkkuus>5000</sijaintitarkkuus>
+            <korkeustarkkuus>201</korkeustarkkuus>
+            <aineistolahde>1</aineistolahde>
+            <alkupvm>2013-08-28</alkupvm>
+            <suunta>-18439</suunta>
+            <sijainti>
+                <Piste>
+                    <gml:pos srsDimension="3">372657.780 6676683.943 24.411</gml:pos>
+                </Piste>
+            </sijainti>
+            <kohderyhma>45</kohderyhma>
+            <kohdeluokka>14200</kohdeluokka>
+        </Rautatieliikennepaikka>
+    </rautatieliikennepaikat>
+</Maastotiedot>
+        <!--  Luontiaika: 145000ms -->

@@ -79,6 +79,10 @@
                '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
              '</div>';
     }).join('');
+    var speedLimitHistoryCheckBox = [
+      '<div class="check-box-container">',
+          '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+    '</div>'].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
@@ -87,6 +91,7 @@
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
+            speedLimitHistoryCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -127,6 +132,15 @@
     function hide() {
       element.hide();
     }
+
+    elements.expanded.find('input[type=checkbox]').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      if (eventTarget.prop('checked')) {
+        eventbus.trigger('speedLimits:showSpeedLimitsHistory');
+      } else {
+        eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
+      }
+    });
 
     return {
       title: 'Nopeusrajoitus',
@@ -174,6 +188,19 @@
         '  </div>'
     ].join('');
 
+    var constructionTypeLegend = [
+      '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+      '    <div class="legend-entry">',
+      '      <div class="label">Rakenteilla</div>',
+      '      <div class="symbol linear construction-type-1"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Suunnitteilla</div>',
+      '     <div class="symbol linear construction-type-3"/>',
+      '   </div>',
+      '  </div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
@@ -202,6 +229,7 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
+      constructionTypeLegend,
       '</div>'].join('');
 
     var elements = {
@@ -256,7 +284,7 @@
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles)) {
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium') || _.isEmpty(roles) || _.contains(roles, 'busStopMaintainer')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);

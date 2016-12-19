@@ -1,8 +1,24 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.DateTimeFormat
+
+sealed trait ConstructionType {
+  def value: Int
+}
+
+object ConstructionType{
+  val values = Set[ConstructionType](InUse, UnderConstruction, Planned)
+
+  def apply(intValue: Int): ConstructionType = {
+    values.find(_.value == intValue).getOrElse(InUse)
+  }
+
+  case object InUse extends ConstructionType { def value = 0 }
+  case object UnderConstruction extends ConstructionType { def value = 1 }
+  case object Planned extends ConstructionType { def value = 3 }
+}
 
 sealed trait LinkType
 {
@@ -117,11 +133,16 @@ object Asset {
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
 }
 
+abstract class AbstractProperty {
+  def publicId: String
+  def values: Seq[PropertyValue]
+}
+
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
+case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None)
-case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
+case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 
 object PropertyTypes {
@@ -141,4 +162,7 @@ object MassTransitStopValidityPeriod {
   val Future = "future"
 }
 
-case class BoundingRectangle(leftBottom: Point, rightTop: Point)
+case class BoundingRectangle(leftBottom: Point, rightTop: Point) {
+  def diagonal: Vector3d = leftBottom - rightTop
+  def area: Double = diagonal.x*diagonal.y
+}

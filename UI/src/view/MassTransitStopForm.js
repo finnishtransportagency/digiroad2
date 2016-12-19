@@ -52,7 +52,7 @@
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
-        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin? Kyllä/Ei', {
+        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin?', {
           successCallback: function () {
             element.prop('disabled', true);
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
@@ -108,7 +108,7 @@
       var readOnly = true;
       poistaSelected = false;
       var streetViewHandler;
-      var isAdministratorELYKeskus = false;   // variable to show some of equipment fields read-only for ELY-keskus bus stops and hide inventory date if ELY-keskus is not chosen as administrator
+      var isTRMassTransitStop = false;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -283,11 +283,16 @@
           enumValues = _.filter(enumValues, function(value){
             return value.propertyValue != '2';
           });
+          if(selectedMassTransitStopModel.isAdminClassState()){
+            enumValues = _.filter(enumValues, function(value){
+              return value.propertyValue != '3';
+            });
+          }
         }
 
-        var isELYKeskusReadOnlyEquipment = isAdministratorELYKeskus && isReadOnlyEquipment(property);
+        var isTRReadOnlyEquipment = isTRMassTransitStop && isReadOnlyEquipment(property);
 
-        if (readOnly || isELYKeskusReadOnlyEquipment) {
+        if (readOnly || isTRReadOnlyEquipment) {
           element = $('<p />').addClass('form-control-static');
 
           if (property.values && property.values[0]) {
@@ -360,8 +365,7 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          // Don't show inventory date field if administrator is other than ELY-keskus
-          var hideInventoryDate = property.publicId === "inventointipaiva" && !isAdministratorELYKeskus ? "style='visibility:hidden'":"";
+          var hideInventoryDate = property.publicId === "inventointipaiva" && !isTRMassTransitStop ? "style='visibility:hidden'":"";
           element = $('<input type="text"' +  hideInventoryDate + '/>').addClass('form-control').attr('id', property.publicId ).on('keyup datechange', _.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
@@ -516,15 +520,11 @@
       };
 
       var getAssetForm = function() {
-        var properties = sortAndFilterProperties(selectedMassTransitStopModel.getProperties());
+        var allProperties = selectedMassTransitStopModel.getProperties();
+        var properties = sortAndFilterProperties(allProperties);
 
-        // Check if 'tietojen_yllapitaja' property has value 'ELY-keskus' in model and set isAdministratorELYKeskus
-        var administratorProperty = _.find(properties, function(property){
-          return property.publicId === 'tietojen_yllapitaja';
-        });
-        if (administratorProperty && administratorProperty.values && administratorProperty.values[0]) {
-          isAdministratorELYKeskus = (administratorProperty.values[0].propertyValue === '2');
-        }
+        setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
+        disableFormIfTRMassTransitStopHasEndDate(properties);
 
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
@@ -562,13 +562,38 @@
         return assetForm;
       };
 
-function streetViewTemplates(longi,lati,heading) {
-      var streetViewTemplate  = _.template(
-          '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
-          '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
-          '</a>');
-  backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
-  return streetViewTemplate;
+      function setIsTRMassTransitStopValue(properties) {
+        var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
+        var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
+        var isAdminClassState = selectedMassTransitStopModel.isAdminClassState(properties);
+
+        isTRMassTransitStop = isAdministratorELY || (isAdministratorHSL && isAdminClassState);
+      }
+
+      function disableFormIfTRMassTransitStopHasEndDate(properties) {
+
+        var isBusStopExpired = _.some(properties, function(property){
+          return property.publicId === 'viimeinen_voimassaolopaiva' &&
+              _.some(property.values, function(value){ return value.propertyValue !== ""; });
+        });
+
+        if (isBusStopExpired && isTRMassTransitStop)  {
+          readOnly = true;
+        }
+
+        if(!isBusStopExpired && isTRMassTransitStop && !isBusStopMaintainer){
+          readOnly = true;
+        }
+
+      }
+
+      function streetViewTemplates(longi,lati,heading) {
+            var streetViewTemplate  = _.template(
+                '<a target="_blank" href="//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
+                '<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml;" src="">' +
+                '</a>');
+        backend.getMassTransitStopStreetViewUrl(lati,longi,heading);
+        return streetViewTemplate;
       }
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
@@ -609,13 +634,14 @@ function streetViewTemplates(longi,lati,heading) {
         }
 
         var properties = selectedMassTransitStopModel.getProperties();
-        var condition = false;
 
-        for (var i = 0; i < properties.length; i++){
-          if(properties[i].values[0] !== undefined) {
-            condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-          }
-        }
+        var owner = _.find(properties, function(property) {
+          return property.publicId === "tietojen_yllapitaja"; });
+
+        var condition = typeof owner != 'undefined' &&
+          typeof owner.values != 'undefined' &&  owner.values > 0 && _.contains(_.map(owner.values, function (value) {
+          return value.propertyValue;
+        }), "2");
 
          if(isBusStopMaintainer === true && condition) {
            eventbus.trigger('application:controledTR',condition);
@@ -666,12 +692,12 @@ function streetViewTemplates(longi,lati,heading) {
 
         // Handle form reload after administrator change
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue == '2';}))) {
-          isAdministratorELYKeskus = true;
+          isTRMassTransitStop = true;
           property.propertyType = "single_choice";
           renderAssetForm();
         }
         if (property.publicId === 'tietojen_yllapitaja' && (_.find(property.values, function (value) {return value.propertyValue != '2';}))) {
-          isAdministratorELYKeskus = false;
+          isTRMassTransitStop = false;
           property.propertyType = "single_choice";
           renderAssetForm();
         }
@@ -680,7 +706,7 @@ function streetViewTemplates(longi,lati,heading) {
           property.propertyType = "single_choice";
         }
 
-        if (property.publicId === 'tietojen_yllapitaja' && isAdministratorELYKeskus && event.id){
+        if (property.publicId === 'tietojen_yllapitaja' && isTRMassTransitStop && event.id){
           new GenericConfirmPopup(
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});

@@ -4,13 +4,18 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
+import fi.liikennevirasto.digiroad2.MassTransitStopService
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
@@ -32,8 +37,34 @@ object DataFixture {
   lazy val vvhClient: VVHClient = {
     new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
   }
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  }
   lazy val obstacleService: ObstacleService = {
-    new ObstacleService(vvhClient)
+    new ObstacleService(roadLinkService)
+  }
+  lazy val tierekisteriClient: TierekisteriClient = {
+    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+  lazy val eventbus: DigiroadEventBus = {
+    new DigiroadEventBus
+  }
+
+  lazy val massTransitStopService: MassTransitStopService = {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
+      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
+      override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
+      override val tierekisteriEnabled = true
+    }
+    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
+  }
+
+  lazy val geometryTransform: GeometryTransform = {
+    new GeometryTransform()
   }
 
   def flyway: Flyway = {
@@ -348,7 +379,7 @@ object DataFixture {
 
     if(assets.length > 0){
 
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -378,7 +409,7 @@ object DataFixture {
 
     if(assets.length > 0){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -396,6 +427,145 @@ object DataFixture {
     }
   }
 
+  def verifyRoadLinkAdministrativeClassChanged(): Unit = {
+    println("\nVerify if roadlink administrator class and floating reason of mass transit stop asset was modified")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    val administrationClassPublicId = "linkin_hallinnollinen_luokka"
+
+    OracleDatabase.withDynTransaction {
+
+      val administrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
+
+      municipalities.foreach { municipality =>
+        println("Start processing municipality %d".format(municipality))
+
+        println("Start verification if road link administrative class is changed")
+        verifyIsChanged(administrationClassPublicId, administrationClassPropertyId, municipality)
+
+        println("End processing municipality %d".format(municipality))
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  private def updateTierekisteriBusStopsWithoutOTHLiviId(dryRun: Boolean, boundsOffset: Double = 10): Unit ={
+    case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
+    def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
+      persistedStop.propertyData.
+        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.propertyValue.isEmpty))
+    }
+
+    println("\nGet the list of tierekisteri bus stops that doesn't have livi id in OTH")
+    println(DateTime.now())
+
+    val existingLiviIds = dataImporter.getExistingLiviIds()
+
+    val trBusStops = tierekisteriClient.fetchActiveMassTransitStops().
+      filterNot(stop => existingLiviIds.contains(stop.liviId))
+
+    val liviIdPropertyId = dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")
+
+    println("Processing %d TR bus stops".format(trBusStops.length))
+
+    val busStops = trBusStops.flatMap{
+      trStop =>
+        try {
+          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
+
+          stopPointOption match {
+            case Some(stopPoint) =>
+              val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
+              val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
+              val bounds = BoundingRectangle(leftPoint, rightPoint)
+              val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+              val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate)"
+              val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
+                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop))).
+                filterNot(hasLiviIdPropertyValue)
+
+              if(persistedStops.isEmpty){
+                println("Couldn't find any stop nearest TR bus stop without livi Id. TR Livi Id "+trStop.liviId)
+                None
+              }else{
+                val (peristedStop, distance) = persistedStops.map(stop => (stop, stopPoint.distance2DTo(Point(stop.lon, stop.lat, 0)))).minBy(_._2)
+                println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" national ID "+peristedStop.nationalId+" distance "+distance)
+                Some(NearestBusStops(trStop, peristedStop, distance))
+              }
+            case _ => {
+              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+              None
+            }
+          }
+        }catch {
+          case e: VKMClientException => {
+            println("VKM throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
+            None
+          }
+        }
+    }
+
+    val nearestBusStops = busStops.groupBy(busStop => busStop.othBusStop.linkId).mapValues(busStop => busStop.minBy(_.distance)).values
+
+    OracleDatabase.withDynTransaction{
+      nearestBusStops.foreach{
+        nearestBusStop =>
+          println("Persist livi Id "+nearestBusStop.trBusStop.liviId+" at OTH bus stop id "+nearestBusStop.othBusStop.id+" with national id "+nearestBusStop.othBusStop.nationalId+" and distance "+nearestBusStop.distance)
+          if(!dryRun)
+            dataImporter.createTextPropertyValue(nearestBusStop.othBusStop.id, liviIdPropertyId, nearestBusStop.trBusStop.liviId, "g1_busstop_fix")
+      }
+    }
+
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+
+
+  private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
+    val floatingReasonPublicId = "kellumisen_syy"
+    val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
+
+    val typeId = 10
+    //Get all no floating mass transit stops by municipality id
+    val assets = dataImporter.getNonFloatingAssetsWithNumberPropertyValue(typeId, propertyPublicId, municipality)
+
+    println("Processing %d assets not floating".format(assets.length))
+
+    if (assets.length > 0) {
+
+      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+
+      assets.foreach {
+        _ match {
+          case (assetId, linkId, None) =>
+            println("Asset with asset-id: %d doesn't have Administration Class value.".format(assetId))
+          case (assetId, linkId, adminClass) =>
+            val roadlink = roadLinks.find(_.linkId == linkId)
+            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadlink) match {
+              case (_, Some(reason)) =>
+                dataImporter.updateFloating(assetId, true)
+                dataImporter.updateNumberPropertyData(floatingReasonPropertyId, assetId, reason.value)
+              case (_, None) =>
+                println("Don't exist modifications in Administration Class at the asset with id %d .".format(assetId))
+            }
+        }
+      }
+    }
+  }
+
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
@@ -407,6 +577,69 @@ object DataFixture {
     }
 
     linearAssetService.expireImportRoadLinksVVHtoOTH(assetTypeId)
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
+    println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
+    println(DateTime.now())
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var missedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get a List of All Bus Stops present in Tierekisteri
+    val busStopsTR = tierekisteriClient.fetchActiveMassTransitStops
+
+    //Save Tierekisteri LiviIDs into a List
+    val liviIdsListTR = busStopsTR.map(_.liviId)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      //Get all road links from VVH
+      val roadLinks = vvhClient.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
+
+      persistedStop.foreach { stop =>
+        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
+        val stopLiviId = stop.propertyData.
+          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
+          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+        if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
+
+          //Add a list of missing stops with road addresses is available
+          missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
+
+          try {
+            //Create missed Bus Stop at the Tierekisteri
+            if(!dryRun)
+              massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None)
+          } catch {
+            case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+          }
+        }
+      }
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of missing stops with road addresses is available
+    println("List of missing stops with road addresses is available:")
+    missedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
 
     println("\n")
     println("Complete at time: ")
@@ -482,12 +715,22 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case Some ("import_road_addresses") =>
         importRoadAddresses()
+      case Some ("verify_roadLink_administrative_class_changed") =>
+        verifyRoadLinkAdministrativeClassChanged()
+      case Some("check_TR_bus_stops_without_OTH_LiviId") =>
+        updateTierekisteriBusStopsWithoutOTHLiviId(true)
+      case Some("set_TR_bus_stops_without_OTH_LiviId") =>
+        updateTierekisteriBusStopsWithoutOTHLiviId(false)
+      case Some("check_bus_stop_matching_between_OTH_TR") =>
+        val dryRun = args.length == 2 && args(1) == "dry-run"
+        checkBusStopMatchingBetweenOTHandTR(dryRun)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason")
+        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
+        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR")
     }
   }
 }

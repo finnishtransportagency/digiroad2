@@ -89,6 +89,12 @@
   .road-link-legend {
     display: block;
   }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
 }
 
 .point-asset {
@@ -250,6 +256,12 @@
     .speed-limit-30  { .linear-asset-legend-entry(@speed-limit-2, @linear-asset-node-2); }
     .speed-limit-20  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
   }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
 }
 
 .functional-class-legend {
@@ -271,6 +283,19 @@
     .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
     .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
     .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
+  }
+}
+
+.construction-type-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      display: block;
+      font-size: @font-size-xs;
+      line-height: @line-height-base;
+    }
+    .construction-type-1 { .linear-asset-legend-entry(@construction-type-1, @construction-type-node-1); }
+    .construction-type-3 { .linear-asset-legend-entry(@construction-type-3, @construction-type-node-3); }
   }
 }
 

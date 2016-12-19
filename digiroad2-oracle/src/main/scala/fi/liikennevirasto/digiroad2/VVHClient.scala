@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.{DateTime, DateTimeZone}
@@ -22,12 +23,16 @@ object FeatureClass {
 
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),  constructionType: ConstructionType = ConstructionType.InUse) extends RoadLinkLike {
+  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+}
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L)
 
+case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
+                              trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map())
 /**
   * Numerical values for change types from VVH ChangeInfo Api
   */
@@ -134,9 +139,15 @@ class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  private val serviceName = "Roadlink_data"
+  lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
+  lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
 
-  private def withFilter[T](attributeName: String, ids: Set[T]): String = {
+  private val roadLinkDataService = "Roadlink_data"
+
+
+
+
+  protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
         ""
@@ -161,7 +172,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
-  private def withMunicipalityFilter(municipalities: Set[Int]): String = {
+  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
 
@@ -169,7 +180,20 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
 
-  private def withLinkIdFilter(linkIds: Set[Long]): String = {
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s""""where":"($filter)","""
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+
+  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
     withFilter("LINKID", linkIds)
   }
 
@@ -177,46 +201,41 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MTKID", mmlIds)
   }
 
-  private def combineFiltersWithAnd(filter1: String, filter2: String) = {
+  protected def combineFiltersWithAnd(filter1: String, filter2: String) = {
     filter1.isEmpty match {
       case true => filter2
       case _ => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
     }
   }
 
-  private def combineFiltersWithOr(filter1: String, filter2: String) = {
-    filter1.isEmpty match {
-      case true => filter2
-      case _ => "%s OR %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
-    }
-  }
-
-  private def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
+  protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
     val definitionStart = "[{"
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
     URLEncoder.encode(definition, "UTF-8")
   }
 
-  private def queryParameters(fetchGeometry: Boolean = true): String = {
+  protected def queryParameters(fetchGeometry: Boolean = true): String = {
     if (fetchGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
     else "f=pjson"
   }
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
-    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+    * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
     */
-  def fetchVVHRoadlinksWithRoadNumbers(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = true): Seq[VVHRoadlink] = {
-    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadnumberFilters))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+  def queryByRoadNumbersBoundsAndMunicipalities(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
+    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
+      withRoadNumbersFilter(roadNumbers, includeAllPublicRoads)
+    else
+      ""
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), roadNumberFilters))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -228,28 +247,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
-    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+    * Used by VVHClient.fetchByMunicipalitiesAndBoundsF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+    * PointAssetOperations.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadlinksWithLinkIds(bounds: BoundingRectangle, linkIds: Set[Long], municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(withLinkIdFilter(linkIds))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
-      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
-  }
-  /**
-    * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
-    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
-    */
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+  def queryByMunicipalitesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
 
@@ -261,34 +264,45 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
     */
-  def fetchVVHRoadlinksF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(fetchVVHRoadlinks(bounds, municipalities))
+  def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalitesAndBounds(bounds, municipalities))
   }
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
     */
-  def fetchVVHRoadlinksWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                        includeAllPublicRoads: Boolean): Future[Seq[VVHRoadlink]] = {
-    Future(fetchVVHRoadlinksWithRoadNumbers(bounds, roadNumbers, municipalities, includeAllPublicRoads))
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
+    Future(queryByRoadNumbersBoundsAndMunicipalities(bounds, roadNumbers, municipalities, includeAllPublicRoads))
   }
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(municipality).
+    * Used by RoadLinkService.reloadRoadLinksAndChangesFromVVH(municipality),
+    * RoadLinkService.getVVHRoadLinksF(municipality).
     */
-  def fetchVVHRoadlinksF(municipality: Int): Future[Seq[VVHRoadlink]] = {
-    Future(fetchByMunicipality(municipality))
+  def fetchByMunicipalityF(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipality(municipality))
   }
 
+  /**
+    * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
+    */
+  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
+  }
   /**
     * Returns VVH change data. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, bounds2),
+    * RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, bounds2).
     */
-  def fetchChangesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
+  def queryChangesByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
     val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
@@ -305,13 +319,11 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH change data. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)
     */
-  def fetchChangesWithRoadNumbersF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)]): Future[Seq[ChangeInfo]] = {
+  def queryChangesByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
     val municipalityFilter = withMunicipalityFilter(municipalities)
-    //val roadNumberFilter = withRoadNumberFilter(roadNumbers)
     val definition = layerDefinition(municipalityFilter, Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
-//    val definition = layerDefinition(combineFilters(municipalityFilter, roadNumberFilter), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
@@ -326,9 +338,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH change data. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(municipality).
+    * Used by RoadLinkService.reloadRoadLinksAndChangesFromVVH(municipality).
     */
-  def fetchChangesF(municipality: Int): Future[Seq[ChangeInfo]] = {
+  def queryChangesByMunicipalityF(municipality: Int): Future[Seq[ChangeInfo]] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
 
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
@@ -361,11 +373,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links by municipality.
-    * Used by VVHClient.fetchVVHRoadlinksF(municipality), RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization.
+    * Used by VVHClient.fetchByMunicipalityF(municipality),
+    * RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization(vvhHost).
     */
-  def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+  def queryByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -376,12 +389,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links by municipality.
-    * Used by RoadAddressService.getMissingRoadAddresses
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
+    * RoadLinkService.getViiteRoadLinksFromVVH(municipality, roadNumbers).
     */
-  def fetchByMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
-    val roadnumberFilters = roadNumbers.map(n => withRoadNumberFilter(n, includeAllPublicRoads = true)).foldLeft("")((r,c) => combineFiltersWithOr(r,c))
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadnumberFilters))
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+  def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
 
     fetchVVHFeatures(url) match {
@@ -390,35 +404,40 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+
   /**
-    * Returns VVH road link by link id.
-    * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api /manoeuvres DELETE endpoint, Digiroad2Api /manoeuvres PUT endpoint,
+    * Returns VVH road link by linkid
+    * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api &#47;manoeuvres DELETE endpoint, Digiroad2Api manoeuvres PUT endpoint,
     * CsvImporter.updateAssetByExternalIdLimitedByRoadType, RoadLinkService,getRoadLinkMiddlePointByLinkId, RoadLinkService.updateLinkProperties, RoadLinkService.getRoadLinkGeometry,
     * RoadLinkService.updateAutoGeneratedProperties, LinearAssetService.split, LinearAssetService.separate, MassTransitStopService.fetchRoadLink, PointAssetOperations.getById
     * and OracleLinearAssetDao.createSpeedLimit.
     */
-  def fetchVVHRoadlink(linkId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(linkId)).headOption
+  def fetchByLinkId(linkId: Long): Option[VVHRoadlink] = fetchByLinkIds(Set(linkId)).headOption
 
   /**
     * Returns VVH road links by link ids.
-    * Used by VVHClient.fetchVVHRoadlink, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
+    * Used by VVHClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
     * OracleLinearAssetDao.getLinksWithLengthFromVVH, OracleLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
     */
-  def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+  def fetchByLinkIds(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchVVHRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
+  }
+
+  def fetchByLinkIdsF(linkIds: Set[Long]) = {
+    Future(fetchByLinkIds(linkIds))
   }
 
   /**
     * Returns VVH road link by mml id.
     * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
     */
-  def fetchVVHRoadlinkByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinksByMmlIds(Set(mmlId)).headOption
+  def fetchByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchByMmlIds(Set(mmlId)).headOption
 
   /**
     * Returns VVH road links by mml ids.
-    * Used by VVHClient.fetchVVHRoadlinkByMmlId and LinkIdImporter.updateTable
+    * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
     */
-  def fetchVVHRoadlinksByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
+  def fetchByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchVVHRoadlinks(mmlIds, None, true, roadLinkFromFeature, withMmlIdFilter)
   }
 
@@ -434,7 +453,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links.
-    * Used by VVHClient.fetchVVHRoadlinks(linkIds), VVHClient.fetchVVHRoadlinksByMmlIds and VVHClient.fetchVVHRoadlinks
+    * Used by VVHClient.fetchByLinkIds, VVHClient.fetchByMmlIds and VVHClient.fetchVVHRoadlinks
     */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
@@ -445,7 +464,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
-      val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/query?" +
+      val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
         s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
       fetchVVHFeatures(url) match {
         case Left(features) => features.map { feature =>
@@ -460,7 +479,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   case class VVHError(content: Map[String, Any], url: String)
 
-  private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+  protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -469,28 +488,35 @@ class VVHClient(vvhRestApiEndPoint: String) {
       val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
       val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
+      optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     } finally {
       response.close()
     }
   }
 
-  private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
+  /**
+    * Constructions Types Allows to return
+    * In Use - 0
+    * Under Construction - 1
+    * Planned - 3
+    */
+  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
+    val linkStatus = attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
+    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
-  private def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
+  protected def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
     feature("attributes").asInstanceOf[Map[String, Any]]
   }
 
-  private def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
+  protected def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
     paths.head
   }
 
-  private def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
+  protected def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(point(0), point(1), extractMeasure(point(2)).get)
     })
@@ -498,26 +524,30 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
+    val mtkClass = attributes("MTKCLASS")
+    val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
+      attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
+    else
+      0
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes))
   }
 
-  private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
+  protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
     roadLinkFromFeature(attributes, path)
   }
 
-  private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
+  protected def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
       "MTKID",
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
-      "CONSTRUCTIONTYPE",
+      "CONSTRUCTIONTYPE",//TODO Remove this attribute from here when VVHHistoryRoadLink have a different way to get the ConstructionType like VVHRoadlink
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",
@@ -531,13 +561,19 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "MTKHEREFLIP",
       "VALIDFROM",
       "GEOMETRY_EDITED_DATE",
-      "SURFACETYPE").contains(x)
+      "END_DATE",
+      "LINKID_NEW",
+      "CREATED_DATE",
+      "LAST_EDITED_DATE",
+      "SURFACETYPE",
+      "SUBTYPE",
+      "END_DATE").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
   }
 
-  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath
@@ -547,10 +583,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
       (a, b) match {
         case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-          if (firstModifiedAt > secondModifiedAt)
-            Some(firstModifiedAt)
-          else
-            Some(secondModifiedAt)
+          Some(Math.max(firstModifiedAt, secondModifiedAt))
         case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
         case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
         case (None, None) => None
@@ -558,18 +591,31 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
 
     val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
-    val lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
-    val geometryEditedDate = Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("LAST_EDITED_DATE")){
+      lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
+    var geometryEditedDate : Option[Long] = Option(0)
+      if(attributes.contains("GEOMETRY_EDITED_DATE")){
+        geometryEditedDate =  Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+    }
 
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
     latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
+  protected def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(AdministrativeClass.apply)
       .getOrElse(Unknown)
+  }
+
+  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+    Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(ConstructionType.apply)
+      .getOrElse(ConstructionType.InUse)
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
@@ -577,7 +623,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
 
-  private def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
+  protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     Option(attributes("DIRECTIONTYPE").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
@@ -587,7 +633,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
-  private def extractMeasure(value: Any): Option[Double] = {
+  protected def extractMeasure(value: Any): Option[Double] = {
     value match {
       case null => None
       case _ => Some(value.toString.toDouble)
@@ -607,5 +653,277 @@ class VVHClient(vvhRestApiEndPoint: String) {
     curr - (curr % (24L*oneHourInMs))
   }
 }
+
+class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
+
+  private val roadLinkComplementaryService = "Roadlink_complimentary"
+
+  /**
+    * Returns VVH road links in bounding box area. Municipalities are optional.
+    * Used by VVHClient.fetchByBoundsAndMunicipalitiesF.
+    */
+  def queryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withMunicipalityFilter(municipalities), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
+    * Returns VVH complementary road links in a municipality
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
+    */
+  def queryByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), roadNumberFilters), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+  /**
+    * Returns VVH complementary road links in a municipality
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
+    */
+  def queryComplimentaryByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(bounds, municipalities).
+    */
+  def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByBoundsAndMunicipalities(bounds, municipalities))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
+    */
+  def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalityAndRoadNumbers(municipality, roadNumbers))
+  }
+
+  /**
+    * Returns VVH complimentary road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
+    */
+  def fetchComplimentaryByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryComplimentaryByMunicipality(municipality))
+  }
+
+
+  private def resolveComplementaryVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
+      val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
+      val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
+      optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
+    } finally {
+      response.close()
+    }
+  }
+
+  /**
+    * Returns VVH road links.
+    * Used by RoadLinkService.getComplementaryLinkMiddlePointByLinkId(linkId).
+    */
+   def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
+  }
+
+  /**
+    * Returns VVH road links.
+    * Used by VVHClient.fetchComplementaryRoadlinks(linkId).
+    */
+  def fetchComplementaryRoadlinks[T](linkIds: Set[Long],
+                                     fieldSelection: Option[String],
+                                     fetchGeometry: Boolean,
+                                     resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                                     filter: Set[Long] => String): Seq[T] = {
+    val batchSize = 1000
+    val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
+    idGroups.par.flatMap { ids =>
+      val definition = layerDefinition(filter(ids), fieldSelection)
+      val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+        s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map { feature =>
+          val attributes = extractFeatureAttributes(feature)
+          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
+          resultTransition(attributes, geometry)
+        }
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
+  }
+}
+
+class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
+
+  private val roadLinkDataHistoryService = "Roadlink_data_history"
+
+  private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
+    val definitionStart = "[{"
+    val layerSelection = """"layerId":0,"""
+    val fieldSelection = customFieldSelection match {
+      case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID,CREATED_DATE""""
+    }
+    val definitionEnd = "}]"
+    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
+    URLEncoder.encode(definition, "UTF-8")
+  }
+
+  private def extractVVHHistoricFeature(feature: Map[String, Any]): VVHHistoryRoadLink = {
+    val attributes = extractFeatureAttributes(feature)
+    val path = extractFeatureGeometry(feature)
+    historicRoadLinkFromFeature(attributes,path)
+  }
+
+  private def historicRoadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHHistoryRoadLink = {
+    val linkGeometry: Seq[Point] = path.map(point => {
+      Point(point(0), point(1), extractMeasure(point(2)).get)
+    })
+    val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
+    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
+    val createdDate = attributes("CREATED_DATE").asInstanceOf[BigInt].longValue()
+    val endTime = attributes("END_DATE").asInstanceOf[BigInt].longValue()
+    val mtkClass = attributes("MTKCLASS")
+    val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
+      attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
+    else
+      0
+    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+
+    VVHHistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+      extractTrafficDirection(attributes), featureClass, createdDate, endTime, extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+  }
+
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
+  def fetchVVHRoadlinkHistoryF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
+    Future(fetchVVHRoadlinkHistory(linkIds))
+  }
+
+  /**
+  * Returns VVH road links. Uses Scala Future for concurrent operations.
+  * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+  */
+  def fetchVVHRoadlinkHistoryMunicipalityF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds, municipalities))
+  }
+
+  private def makeFilter[T](attributeName: String, ids: Set[T]): String = {
+    val filter =
+      if (ids.isEmpty) {
+        ""
+      } else {
+        val query = ids.mkString(",")
+        s"where=$attributeName IN ($query)"
+      }
+    filter
+  }
+
+  private def linkIdFilter(linkIds: Set[Long]): String = {
+    withFilter("LINKID", linkIds)
+  }
+
+  private def layersMapToFeaturesMap(map: Map[String, Any]): Option[Any] = {
+    val layerZero = map.get("layers")
+    layerZero match {
+      case Some(layerList) => layerList.asInstanceOf[List[Map[String, Any]]].headOption.flatMap(x => x.get("features"))
+      case _ => None
+    }
+  }
+
+  private def fetchVVHHistoryFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      val mapping = {
+        if (content.contains("layers"))
+          layersMapToFeaturesMap(content)
+        else
+          content.get("features")
+      }
+      mapping match{
+        case Some(features) =>
+          Left(features.asInstanceOf[List[Map[String, Any]]])
+        case _ =>
+          Right(VVHError(content, url))
+      }
+    } finally {
+      response.close()
+    }
+  }
+
+  /**
+    * Returns VVH road link history data in bounding box area. Municipalities are optional.
+    * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+    * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+    */
+  def fetchVVHRoadlinkHistory(linkIds: Set[Long] = Set()): Seq[VVHHistoryRoadLink] = {
+    if (linkIds.isEmpty)
+      Nil
+    else {
+      val definition = historyLayerDefinition(linkIdFilter(linkIds))
+      val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?layerDefs=" +
+        definition + "&" +
+        queryParameters()
+      fetchVVHHistoryFeatures(url) match {
+        case Left(features) => features.map(extractVVHHistoricFeature)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }
+  }
+
+  /**
+  * Returns VVH road link history data in bounding box area. Municipalities are optional.
+  * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
+  * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
+  */
+  def fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    val definitions = historyLayerDefinition(withMunicipalityFilter(municipalities))
+    val url= vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?" +
+    s"layerDefs=$definitions&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+    "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+}
+
+
+
 
 

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.pointasset.oracle.TrafficLight
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -8,19 +9,23 @@ import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 class TrafficLightServiceSpec  extends FunSuite with Matchers {
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
   val testUser = User(
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
-      TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
-  val service = new TrafficLightService(mockVVHClient) {
+  val service = new TrafficLightService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
 
     override def withDynSession[T](f: => T): T = f
@@ -40,8 +45,8 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600070).get
@@ -88,10 +93,10 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Update traffic light") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockVVHClient.fetchByMunicipality(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-    when(mockVVHClient.fetchByMunicipality(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksFromVVH(91)).thenReturn(Seq(
+      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
       val beforeUpdate = service.getByMunicipality(235).find(_.id == 600070).get

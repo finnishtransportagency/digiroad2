@@ -16,6 +16,12 @@
       };
     });
 
+    this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/roadlinks/history?bbox=' + boundingBox
+      };
+    });
+
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/manoeuvres?bbox=' + boundingBox
@@ -97,6 +103,12 @@
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
       return {
         url: 'api/speedlimits?bbox=' + boundingBox
+      };
+    });
+
+    this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/speedlimits/history?bbox=' + boundingBox
       };
     });
 
@@ -362,15 +374,15 @@
         getJson();
     };
 
-    this.expireAsset = function(massTransitStopIds, success, failure) {
+    this.copyMassTransitStopAsset = function(id, data, successCallback, errorCallback) {
       $.ajax({
         contentType: "application/json",
-        type: "DELETE",
-        url: "api/massTransitStops",
-        data: JSON.stringify({massTransitStopIds: massTransitStopIds}),
+        type: "PUT",
+        url: "api/massTransitStops/copy/" + id,
+        data: JSON.stringify(data),
         dataType: "json",
-        success: success,
-        error: failure
+        success: successCallback,
+        error: errorCallback
       });
     };
 

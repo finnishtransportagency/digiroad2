@@ -21,8 +21,8 @@ import slick.jdbc.{StaticQuery => Q}
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  when(mockVVHClient.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLink = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -73,7 +73,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update prohibition") {
-    when(mockVVHClient.fetchVVHRoadlink(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockVVHClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     runWithRollback {
       ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
@@ -1696,6 +1696,41 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to > = sysdate and rownum = 1""".as[(Int, Int)].first
       val municipalityCode = service.getMunicipalityCodeByAssetId(assetId)
       municipalityCode should be(assetMunicipalityCode)
+    }
+  }
+
+  test("Should filter out linear assets on walkways from TN-ITS message") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink2 = RoadLink(200, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val heightLimitAssetId = 70
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id) VALUES (1, 100)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1, 1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (2, 200)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2, 2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2, 2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (3, 300)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3, 3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+
+      val result = service.getChanged(heightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
+      result.length should be(1)
+      result.head.link.linkType should not be (TractorRoad)
+      result.head.link.linkType should not be (CycleOrPedestrianPath)
+
+      dynamicSession.rollback()
     }
   }
 

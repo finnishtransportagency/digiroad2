@@ -1,5 +1,5 @@
 (function(selectedMassTransitStop) {
-  selectedMassTransitStop.initialize = function(backend) {
+  selectedMassTransitStop.initialize = function(backend, roadCollection) {
     var usedKeysFromFetchedAsset = [
       'bearing',
       'lat',
@@ -11,6 +11,9 @@
       'floating'];
     var massTransitStopTypePublicId = "pysakin_tyyppi";
     var administratorInfoPublicId = "tietojen_yllapitaja";
+    var PRECONDITION_FAILED_412 = 412;
+    var NON_AUTHORITATIVE_INFORMATION_203 = 203;
+    var FAILED_DEPENDENCY_424 = 424;
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
@@ -210,9 +213,11 @@
     var save = function() {
       if (currentAsset.id === undefined) {
         backend.createAsset(currentAsset.payload, function(errorObject) {
-          if (errorObject.status == 555) {
+          if (errorObject.status == FAILED_DEPENDENCY_424) {
             eventbus.trigger('asset:creationTierekisteriFailed');
-          }else{
+          } else if(errorObject.status == PRECONDITION_FAILED_412) {
+            eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
+          } else {
             eventbus.trigger('asset:creationFailed');
           }
           close();
@@ -225,13 +230,21 @@
         backend.updateAsset(currentAsset.id, payload, function(asset) {
           changedProps = [];
           assetHasBeenModified = false;
-          open(asset);
-          eventbus.trigger('asset:saved', asset, positionUpdated);
+          if(currentAsset.id != asset.id){
+            eventbus.trigger('massTransitStop:expired', currentAsset);
+            eventbus.trigger('asset:created', asset);
+          }else{
+            open(asset);
+            eventbus.trigger('asset:saved', asset, positionUpdated);
+          }
+
         }, function (errorObject) {
           backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
-            if (errorObject.status == 555) {
-              eventbus.trigger('asset:updateTierekisteriFailed');
+            if (errorObject.status == FAILED_DEPENDENCY_424) {
+              eventbus.trigger('asset:updateTierekisteriFailed', asset);
+            } else if(errorObject.status == PRECONDITION_FAILED_412) {
+              eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
             } else {
               eventbus.trigger('asset:updateFailed', asset);
             }
@@ -264,14 +277,6 @@
       return currentAsset;
     };
 
-    var expireMassTransitStopById = function(massTransitStop) {
-      backend.expireAsset([massTransitStop.id], function() {
-        eventbus.trigger('massTransitStop:expireSuccess', massTransitStop);
-      },function(){
-        eventbus.trigger('massTransitStop:expireFailed', massTransitStop);
-      });
-    };
-
     var copyDataFromOtherMasTransitStop = function (other) {
       currentAsset.payload = other.payload;
       currentAsset.propertyMetadata = other.propertyMetadata;
@@ -289,7 +294,12 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        backend.getMassTransitStopByNationalId(assetNationalId, function(asset) {
+        backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+            if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+              eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+            }
+          }
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -317,6 +327,12 @@
       }
     };
 
+    var getRoadLink = function(){
+      if(_.isEmpty(currentAsset))
+        return {};
+      return roadCollection.getRoadLinkByLinkId(currentAsset.roadLinkId ? currentAsset.roadLinkId : currentAsset.linkId);
+    };
+
     var deleteMassTransitStop = function (poistaSelected) {
       if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
@@ -324,7 +340,7 @@
           eventbus.trigger('massTransitStopDeleted', currAsset);
         }, function (errorObject) {
           cancel();
-          if (errorObject.status == 555) {
+          if (errorObject.status == FAILED_DEPENDENCY_424) {
             eventbus.trigger('asset:deleteTierekisteriFailed');
           }
         });
@@ -350,6 +366,42 @@
       }
     }
 
+    function isAdminClassState(properties){
+      if(!properties)
+        properties = getProperties();
+
+      var adminClassProperty = _.find(properties, function(property){
+        return property.publicId === 'linkin_hallinnollinen_luokka';
+      });
+
+      if (adminClassProperty && !_.isEmpty(adminClassProperty.values))
+        return _.some(adminClassProperty.values, function(value){ return value.propertyValue === '1'; });
+
+      //Get administration class from roadlink
+      var stopRoadlink = getRoadLink();
+      return stopRoadlink ? (stopRoadlink.getData().administrativeClass === 'State') : false;
+    }
+
+    function isAdministratorHSL(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='3'; });
+      });
+    }
+
+    function isAdministratorELY(properties){
+      if(!properties)
+        properties = getProperties();
+
+      return _.some(properties, function(property){
+        return property.publicId === 'tietojen_yllapitaja' &&
+            _.some(property.values, function(value){return value.propertyValue ==='2'; });
+      });
+    }
+
     return {
       close: close,
       save: save,
@@ -373,9 +425,11 @@
       pikavuoroIsAlone: pikavuoroIsAlone,
       copyDataFromOtherMasTransitStop: copyDataFromOtherMasTransitStop,
       getCurrentAsset: getCurrentAsset,
-      expireMassTransitStopById: expireMassTransitStopById,
-      deleteMassTransitStop: deleteMassTransitStop
-
+      deleteMassTransitStop: deleteMassTransitStop,
+      getRoadLink: getRoadLink,
+      isAdminClassState: isAdminClassState,
+      isAdministratorELY: isAdministratorELY,
+      isAdministratorHSL: isAdministratorHSL
     };
   };
 

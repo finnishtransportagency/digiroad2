@@ -32,7 +32,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
 
-  when(mockVVHClient.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
+  when(mockVVHClient.fetchByLinkIds(Set(362964704l, 362955345l, 362955339l)))
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -48,8 +48,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("create new speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
-      when(mockVVHClient.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
+      when(mockVVHClient.fetchByLinkId(1l)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchByLinkIds(Set(1l))).thenReturn(Seq(roadLink))
 
       val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
@@ -62,8 +62,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("split existing speed limit") {
     runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockVVHClient.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
-      when(mockVVHClient.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
+      when(mockVVHClient.fetchByLinkId(388562360l)).thenReturn(Some(roadLink))
+      when(mockVVHClient.fetchByLinkIds(Set(388562360l))).thenReturn(Seq(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_) => Unit)
 
       val existing = speedLimits.find(_.id == 200097).get
@@ -985,7 +985,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
 
-      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+      when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(List(vvhRoadLink))
 
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
@@ -1128,7 +1128,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
-      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+      when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
 
       val topology = service.get(municipalityCode)
       topology.forall(sl => sl.id == 22696720 || sl.id == 0)  should be (true)
@@ -1162,6 +1162,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   /**
     * Raw SQL table columns for asset (some removed), raw sql table columns for lrm position added with asset id
+ *
     * @param speed
     * @param data
     */
@@ -1247,7 +1248,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
-      when(mockVVHClient.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
+      when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
 
       val topology = service.get(municipalityCode).sortBy(_.startMeasure).sortBy(_.linkId)
       topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), sl.vvhTimeStamp))
@@ -1293,6 +1294,41 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       println("N/A")
     } else {
       println("%s %s %s".format(ids, dir, details))
+    }
+  }
+
+  test("Should filter out speed limits on walkways from TN-ITS message") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink2 = RoadLink(200, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""insert into lrm_position (id, link_id) VALUES (1, 100)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (1, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (1,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (2, 200)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (2, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (2, 2)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (2,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES (3, 300)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values (3, 20, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (3,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+
+      val result = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
+      result.length should be(1)
+      result.head.link.linkType should not be (TractorRoad)
+      result.head.link.linkType should not be (CycleOrPedestrianPath)
+
+      dynamicSession.rollback()
     }
   }
 }

@@ -260,11 +260,12 @@ class MassTransitStopDao {
   def expireMassTransitStop(username: String, id: Long) = {
     sqlu"""
              update asset
-             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             set valid_to = sysdate -1, modified_date = sysdate, modified_by = $username
              where id = $id
           """.execute
   }
 
+  //TODO: Fixme. Is distinct needed?
   def getPropertyDescription(propertyPublicId : String, value: String) = {
     sql"""
        Select distinct
@@ -274,7 +275,8 @@ class MassTransitStopDao {
                  when np.value is not null then to_char(np.value)
                  else null
                end as display_value
-       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
+       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on
+         tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
        Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
       """.as[String].list
   }
@@ -287,4 +289,61 @@ class MassTransitStopDao {
     sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
+
+  def updateLrmPosition(id: Long, mValue: Double, linkId: Long) {
+    sqlu"""
+           update lrm_position
+           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId
+           where id = (
+            select lrm.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = $id)
+      """.execute
+  }
+
+  def insertLrmPosition(id: Long, mValue: Double, linkId: Long) {
+    sqlu"""
+           insert into lrm_position (id, start_measure, end_measure, link_id)
+           values ($id, $mValue, $mValue, $linkId)
+      """.execute
+  }
+
+  def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
+    val typeId = 10
+    sqlu"""
+           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
+           values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
+           $floating)
+      """.execute
+  }
+
+  def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
+
+    sqlu"""
+           insert into asset_link(asset_id, position_id)
+           values ($assetId, $lrmPositionId)
+      """.execute
+  }
+
+  def updateBearing(id: Long, position: Position) {
+    position.bearing.foreach { bearing =>
+      sqlu"""
+           update asset
+           set bearing = $bearing
+           where id = $id
+        """.execute
+    }
+  }
+
+  def updateMunicipality(id: Long, municipalityCode: Int) {
+    sqlu"""
+           update asset
+           set municipality_code = $municipalityCode
+           where id = $id
+      """.execute
+  }
+
 }

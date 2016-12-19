@@ -5,7 +5,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
-  var movementPermission = false;
+  var movementPermissionConfirmed = false;
+  var requestingMovePermission  = false;
 
   var selectedControl = 'Select';
 
@@ -13,12 +14,49 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var clickCoords;
   var assetIsMoving = false;
 
-  eventbus.on('massTransitStop:expireFailed', function(){
-    selectedMassTransitStopModel.cancel();
+  var administrativeClassRules = [
+    new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+    new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+    new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+    new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+  ];
+
+  var zoomLevelRules = [
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[9], { pointRadius: 0 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[10], { pointRadius: 10 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[11], { pointRadius: 12 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[12], { pointRadius: 13 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[13], { pointRadius: 14 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[14], { pointRadius: 16 })),
+    new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[15], { pointRadius: 16 }))
+  ];
+
+  var linkStatusRules = [
+    new OpenLayersRule().where('constructionType').is(1).use({ strokeColor: '#ff9900' }),
+    new OpenLayersRule().where('constructionType').is(3).use({ strokeColor: '#cc99ff'})
+  ];
+  var administrativeClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    strokeOpacity: 0.7,
+    rotation: '${rotation}'
+  }));
+  administrativeClassDefaultStyle.addRules(administrativeClassRules);
+  administrativeClassDefaultStyle.addRules(zoomLevelRules);
+  administrativeClassDefaultStyle.addRules(linkStatusRules);
+
+  var administrativeClassSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    strokeWidth: 6,
+    strokeOpacity: 1,
+    strokeColor: "#5eaedf"
+  }));
+  administrativeClassSelectStyle.addRules(zoomLevelRules);
+
+  var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({
+    default: administrativeClassDefaultStyle,
+    select: administrativeClassSelectStyle
   });
-  eventbus.on('massTransitStop:expireSuccess', function (asset) {
-    destroyAsset(asset);
-    selectedMassTransitStopModel.save();
+
+  roadLayer.setLayerSpecificStyleMapProvider('massTransitStop', function() {
+    return administrativeClassDefaultStyleMap;
   });
 
   var hideAsset = function(asset) {
@@ -29,29 +67,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var showAsset = function(asset) {
     asset.massTransitStop.getMarker().display(true);
     assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
-  };
-
-  var mouseUpHandler = function(asset) {
-    clickTimestamp = null;
-    unregisterMouseUpHandler(asset);
-    if (assetIsMoving) {
-      selectedMassTransitStopModel.move({
-        lon: selectedMassTransitStopModel.get('lon'),
-        lat: selectedMassTransitStopModel.get('lat'),
-        bearing: selectedMassTransitStopModel.get('bearing'),
-        roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
-        linkId: selectedMassTransitStopModel.get('linkId')
-      });
-      eventbus.trigger('asset:moveCompleted');
-      assetIsMoving = false;
-    }
-  };
-
-  var mouseUp = function(asset) {
-    return function(evt) {
-      OpenLayers.Event.stop(evt);
-      mouseUpHandler(asset);
-    };
   };
 
   var mouseDown = function(asset) {
@@ -77,7 +92,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return function() {
       var selectAsset = function() {
         selectedMassTransitStopModel.change(asset.data);
-        movementPermission = false;
+        movementPermissionConfirmed = false;
       };
 
       if (selectedControl === 'Select') {
@@ -410,7 +425,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var deselectAsset = function(asset) {
     if (asset) {
-      movementPermission = false;
+      movementPermissionConfirmed = false;
       unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
@@ -436,9 +451,51 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         { x: lonlat.lon, y: lonlat.lat});
       lonlat.lon = position.x;
       lonlat.lat = position.y;
-      restrictMovement(busStopPoint, lonlat, angle, nearestLine,lonlat);
 
+      doMovement(angle, nearestLine, lonlat, false);
    }
+  };
+
+  var ownedByELY = function () {
+    if(applicationModel.isReadOnly()){
+      return true;
+    }
+
+    return selectedMassTransitStopModel.isAdministratorELY();
+  };
+
+  var ownedByHSL = function(){
+    var properties = selectedMassTransitStopModel.getProperties();
+    return selectedMassTransitStopModel.isAdministratorHSL(properties) && selectedMassTransitStopModel.isAdminClassState(properties);
+  };
+
+  var mouseUpHandler = function(asset) {
+    clickTimestamp = null;
+    unregisterMouseUpHandler(asset);
+    if (assetIsMoving) {
+
+      var busStopPoint = new OpenLayers.LonLat(selectedAsset.data.originalLon, selectedAsset.data.originalLat);
+      var lonlat = {
+        lon: selectedMassTransitStopModel.get('lon'),
+        lat: selectedMassTransitStopModel.get('lat')
+      };
+      var angle = selectedMassTransitStopModel.get('bearing');
+      var nearestLine = {
+        roadLinkId: selectedMassTransitStopModel.get('roadLinkId'),
+        linkId: selectedMassTransitStopModel.get('linkId')
+      };
+
+      restrictMovement(busStopPoint, lonlat, angle, nearestLine, lonlat);
+
+      assetIsMoving = false;
+    }
+  };
+
+  var mouseUp = function(asset) {
+    return function(evt) {
+      OpenLayers.Event.stop(evt);
+      mouseUpHandler(asset);
+    };
   };
 
   var restrictMovement = function (busStop, currentPoint, angle, nearestLine, coordinates) {
@@ -447,9 +504,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
     var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(busStop, currentPoint));
 
-    if (distance > movementLimit && !movementPermission)
+    if (distance > movementLimit && !movementPermissionConfirmed)
     {
-      if (controlledByTR()){
+      requestingMovePermission = true;
+      if (ownedByELY() || ownedByHSL()){
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
@@ -458,58 +516,46 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       new GenericConfirmPopup(popupMessageToShow,{
         successCallback: function(){
           doMovement(angle, nearestLine, coordinates, true);
-          movementPermission = true;
+          movementPermissionConfirmed = true;
+          requestingMovePermission = false;
         },
         closeCallback: function(){
           //Moves the stop to the original position
+          var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), busStop.lon, busStop.lat);
+          var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
           doMovement(angle, nearestLine, busStop, false);
-          movementPermission = false;
+          movementPermissionConfirmed = false;
+          requestingMovePermission = false;
         }
       });
     }
     else
     {
-      doMovement(angle, nearestLine, coordinates, false);
+      doMovement(angle, nearestLine, coordinates, true);
     }
   };
 
-  var controlledByTR = function () {
-    var properties = selectedMassTransitStopModel.getProperties();
-    var condition = false;
-    for (var i = 0; i < properties.length; i++){
-      if(properties[i].values[0] !== undefined) {
-        condition = condition || properties[i].publicId === "tietojen_yllapitaja" && properties[i].values[0].propertyValue === "2";
-      }
-    }
-    return condition;
-  };
+  var doMovement= function(angle, nearestLine, coordinates, disableMarkerMovement) {
+    selectedAsset.data.bearing = angle;
+    selectedAsset.data.roadDirection = angle;
+    selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
+    selectedAsset.roadLinkId = nearestLine.roadLinkId;
+    selectedAsset.data.lon = coordinates.lon;
+    selectedAsset.data.lat = coordinates.lat;
 
-  var doMovement= function(angle, nearestLine, coordinates, checkCondition) {
-    roadLayer.selectRoadLink(nearestLine);
-    if (checkCondition && controlledByTR()){
-      //Should create a new Asset
-      var pastAsset = selectedMassTransitStopModel.getCurrentAsset();
-      closeAsset(pastAsset);
-      createNewAsset(coordinates, true);
-      //On this point selectedMassTransitStopModel should contain the newly created asset
-      selectedMassTransitStopModel.copyDataFromOtherMasTransitStop(pastAsset);
-      selectedMassTransitStopModel.expireMassTransitStopById(pastAsset);
-    } else {
-      selectedAsset.data.bearing = angle;
-      selectedAsset.data.roadDirection = angle;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
-      selectedAsset.roadLinkId = nearestLine.roadLinkId;
-      selectedAsset.data.lon = coordinates.lon;
-      selectedAsset.data.lat = coordinates.lat;
+    if (!disableMarkerMovement){
+      roadLayer.selectRoadLink(nearestLine);
       moveMarker(coordinates);
-      selectedMassTransitStopModel.move({
-        lon: coordinates.lon,
-        lat: coordinates.lat,
-        bearing: angle,
-        roadLinkId: nearestLine.roadLinkId,
-        linkId: nearestLine.linkId
-      });
     }
+
+    selectedMassTransitStopModel.move({
+      lon: coordinates.lon,
+      lat: coordinates.lat,
+      bearing: angle,
+      roadLinkId: nearestLine.roadLinkId,
+      linkId: nearestLine.linkId
+    });
+
   };
 
   var moveMarker = function(lonlat) {
@@ -601,7 +647,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       createNewAsset(map.getLonLatFromPixel(pixel), false);
     } else {
       if (selectedMassTransitStopModel.isDirty()) {
-        new Confirm();
+        if(!requestingMovePermission)
+          new Confirm();
       } else {
         selectedMassTransitStopModel.close();
       }
@@ -639,8 +686,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:created', handleAssetCreated);
     eventListener.listenTo(eventbus, 'asset:fetched', handleAssetFetched);
     eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
-    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed', cancelCreate);
-    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed', cancelUpdate);
+    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
+    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
@@ -660,6 +707,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       closeAsset();
       destroyAsset(asset);
       eventbus.trigger("asset:closed");
+    });
+    eventListener.listenTo(eventbus, 'massTransitStop:expired', function(asset){
+      destroyAsset(asset);
+    });
+    eventListener.listenTo(eventbus, 'massTransitStop:movementPermission', function(movementPermission){
+      movementPermissionConfirmed = movementPermission;
     });
   };
 

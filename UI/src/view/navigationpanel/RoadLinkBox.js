@@ -3,6 +3,10 @@
     var className = 'road-link';
     var title = 'Tielinkki';
 
+    var historyRoadLinkCheckBox = '<div class="panel-section"><div class="check-box-container">' +
+        '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+        '</div></div>';
+
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -110,6 +114,26 @@
       'vertical-level': verticalLevelLegend
     };
 
+    var datasetHistoryCheckbox = {
+      'administrative-class': undefined,
+      'functional-class': historyRoadLinkCheckBox,
+      'link-type': historyRoadLinkCheckBox,
+      'vertical-level': undefined
+    };
+
+    var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
+    var constructionTypes = [
+      [1, 'Rakenteilla'], //Under construction
+      [3, 'Suunnitteilla'] //Planned
+    ];
+    var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
+      return '<div class="legend-entry">' +
+          '<div class="label">' + constructionType[1] + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+          '</div>';
+    }).join('');
+    constructionTypeLegend.append(constructionTypeLegendEntries);
+
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
       reset: function() {},
@@ -129,9 +153,32 @@
       elements.expanded.find('input[name="dataset"]').change(function(event) {
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
+
+        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        eventbus.trigger('roadLinkHistory:hide');
+
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
+        legendContainer.append(constructionTypeLegend);
+
+        var historyCheckBox = datasetHistoryCheckbox[datasetName];
+        if(historyCheckBox)
+          legendContainer.append(historyCheckBox);
+
         linkPropertiesModel.setDataset(datasetName);
+
+        bindHistoryEventHandlers(legendContainer);
+      });
+    };
+
+    var bindHistoryEventHandlers = function(checkboxContainer){
+      checkboxContainer.find('input[type="checkbox"]').on('change', function(event) {
+        var eventTarget = $(event.currentTarget);
+        if(eventTarget.prop('checked')){
+          eventbus.trigger('roadLinkHistory:show');
+        } else {
+          eventbus.trigger('roadLinkHistory:hide');
+        }
       });
     };
 
@@ -147,8 +194,13 @@
 
     bindExternalEventHandlers();
 
-    elements.expanded.find('.legend-container').append(functionalClassLegend);
+    var initialLegendContainer = elements.expanded.find('.legend-container');
+    initialLegendContainer.append(functionalClassLegend);
+    initialLegendContainer.append(constructionTypeLegend);
+    initialLegendContainer.append(historyRoadLinkCheckBox);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
+
+    bindHistoryEventHandlers(elements.expanded);
 
     function show() {
       editModeToggle.toggleEditMode(applicationModel.isReadOnly());

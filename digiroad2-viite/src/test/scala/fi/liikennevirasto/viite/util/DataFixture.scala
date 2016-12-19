@@ -4,8 +4,10 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
-import fi.liikennevirasto.viite.process.{ContinuityChecker, LinkRoadAddressCalculator}
+import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
@@ -35,13 +37,17 @@ object DataFixture {
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
       val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
-      val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-      assert(adjusted.size == roads.size) // Must not lose any
-      val (changed, unchanged) = adjusted.partition(ra =>
-        roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-      )
-      println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-      changed.foreach(RoadAddressDAO.update)
+      try {
+        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+        assert(adjusted.size == roads.size) // Must not lose any
+        val (changed, unchanged) = adjusted.partition(ra =>
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
+        println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+        changed.foreach(addr => RoadAddressDAO.update(addr, None))
+      } catch {
+        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
+      }
       partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
     }
   }
@@ -56,10 +62,15 @@ object DataFixture {
     }
   }
 
-  def importRoadAddresses(): Unit = {
+  def importRoadAddresses(isDevDatabase: Boolean): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.importRoadAddressData(Conversion.database(), vvhClient)
+    val vvhClientProd = if (isDevDatabase) {
+      Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+    } else {
+      None
+    }
+    dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd)
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }
@@ -70,6 +81,53 @@ object DataFixture {
     dataImporter.updateMissingRoadAddresses(vvhClient)
     println(s"Missing address update complete at time: ${DateTime.now()}")
     println()
+  }
+
+  def findFloatingRoadAddresses(): Unit = {
+    println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    OracleDatabase.withDynTransaction {
+      val checker = new FloatingChecker(roadLinkService)
+      val roads = checker.checkRoadNetwork()
+      println(s"${roads.size} segment(s) found")
+      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id, None))
+    }
+    println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  private def importComplementaryRoadAddress(): Unit ={
+    println(s"\nCommencing complementary road address import at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+    }
+    SqlScriptRunner.runViiteScripts(List(
+      "insert_complementary_geometry_data.sql"
+    ))
+    println(s"complementary road address import completed at time: ${DateTime.now()}")
+    println()
+  }
+
+  private def combineMultipleSegmentsOnLinks(): Unit ={
+    println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+        val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
+        val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
+        roadAddresses.foreach{ case (linkId, list) =>
+          val currReplacement = replacements(linkId)
+          if (list.size != currReplacement.size) {
+            val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
+            val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
+            RoadAddressDAO.remove(removed)
+            RoadAddressDAO.create(created)
+          }
+        }
+      })
+    }
+    println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -90,13 +148,21 @@ object DataFixture {
     }
 
     args.headOption match {
+      case Some ("find_floating_road_addresses") =>
+        findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
-        importRoadAddresses()
+        importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
+      case Some("import_complementary_road_address") =>
+        importComplementaryRoadAddress()
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing")
+      case Some("fuse_multi_segment_road_addresses") => {
+        combineMultipleSegmentsOnLinks()
+      }
+      case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
+        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
     }
   }
 }

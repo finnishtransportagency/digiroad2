@@ -5,6 +5,7 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadLayer = params.roadLayer,
       layerName = 'speedLimit';
+  var isActive = false;
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -26,10 +27,14 @@ window.SpeedLimitLayer = function(params) {
     collection.fetch(map.getExtent()).then(function() {
       eventbus.trigger('layer:speedLimit:' + event);
     });
+    if (isActive) {
+      showSpeedLimitsHistory();
+    }
   };
   this.removeLayerFeatures = function() {
     vectorLayer.removeAllFeatures();
     indicatorLayer.clearMarkers();
+    vectorLayerHistory.setVisibility(false);
   };
   var me = this;
 
@@ -275,6 +280,62 @@ window.SpeedLimitLayer = function(params) {
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
   selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
+
+  //History rules
+  var overlayStyleRuleHistory = _.partial(createZoomAndTypeDependentRule, 'overlay');
+  var overlayStyleRulesHistory = [
+    overlayStyleRuleHistory(9, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+    overlayStyleRuleHistory(10, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 10' }),
+    overlayStyleRuleHistory(11, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 15' }),
+    overlayStyleRuleHistory(12, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(13, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
+    overlayStyleRuleHistory(14, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' }),
+    overlayStyleRuleHistory(15, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' })
+  ];
+
+  var validityDirectionStyleRulesHistory = [
+    createZoomDependentOneWayRule(9, { strokeWidth: 0.5 }),
+    createZoomDependentOneWayRule(10, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(11, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(12, { strokeWidth: 4 }),
+    createZoomDependentOneWayRule(13, { strokeWidth: 4 }),
+    createZoomDependentOneWayRule(14, { strokeWidth: 5 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 5 })
+  ];
+
+  var speedLimitFeatureSizeLookupHistory = {
+    9: {strokeWidth: 1, pointRadius: 0},
+    10: {strokeWidth: 2, pointRadius: 10},
+    11: {strokeWidth: 4, pointRadius: 12},
+    12: {strokeWidth: 5, pointRadius: 13},
+    13: {strokeWidth: 5, pointRadius: 14},
+    14: {strokeWidth: 7, pointRadius: 16},
+    15: {strokeWidth: 12, pointRadius: 16}
+  };
+
+  var typeSpecificStyleLookupHistory = {
+    overlay: { strokeOpacity: 0.8 },
+    other: { strokeOpacity: 0.5 },
+    unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
+    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
+  };
+
+  var historyStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    strokeOpacity: 0.15,
+    graphicOpacity: 0.3
+  }));
+  var historyStyleMap = new OpenLayers.StyleMap({ default: historyStyle });
+  historyStyleMap.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
+  historyStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookupHistory, uiState);
+  historyStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookupHistory);
+  historyStyle.addRules(overlayStyleRulesHistory);
+  historyStyle.addRules(validityDirectionStyleRulesHistory);
+  historyStyle.addRules(oneWayOverlayStyleRules);
+
+  var vectorLayerHistory = new OpenLayers.Layer.Vector(layerName, { styleMap: historyStyleMap});
+  vectorLayerHistory.setOpacity(1);
+  vectorLayerHistory.setVisibility(false);
+
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
   vectorLayer.setVisibility(false);
@@ -368,6 +429,7 @@ window.SpeedLimitLayer = function(params) {
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
     vectorLayer.redraw();
+    vectorLayerHistory.setVisibility(true);
   };
 
   var changeTool = function(tool) {
@@ -417,6 +479,28 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
+    eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+  };
+
+  var showSpeedLimitsHistory = function() {
+    collection.fetchHistory(map.getExtent());
+  };
+
+  var hideSpeedLimitsHistory = function() {
+    vectorLayerHistory.setVisibility(false);
+    isActive = false;
+    vectorLayerHistory.removeAllFeatures();
+  };
+
+  var drawSpeedLimitsHistory = function (historySpeedLimitChains) {
+    isActive = true;
+    map.addLayer(vectorLayerHistory);
+    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
+    map.setLayerIndex(vectorLayerHistory, roadLinksLayerIndex - 1);
+    var historySpeedLimits = _.flatten(historySpeedLimitChains);
+    drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -443,7 +527,7 @@ window.SpeedLimitLayer = function(params) {
     me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    drawSpeedLimits(selectedSpeedLimit.get());
+    drawSpeedLimits(selectedSpeedLimit.get(), vectorLayer);
   };
 
   var handleSpeedLimitCancelled = function() {
@@ -508,10 +592,10 @@ window.SpeedLimitLayer = function(params) {
     }
 
     var speedLimits = _.flatten(speedLimitChains);
-    drawSpeedLimits(speedLimits);
+    drawSpeedLimits(speedLimits, vectorLayer);
   };
 
-  var drawSpeedLimits = function(speedLimits) {
+  var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
       return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
@@ -521,13 +605,14 @@ window.SpeedLimitLayer = function(params) {
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
-    vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
-    vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
-    vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
+    layerToUse.setVisibility(true);
+    layerToUse.addFeatures(lineFeatures(lowSpeedLimits));
+    layerToUse.addFeatures(dottedLineFeatures(highSpeedLimits));
+    layerToUse.addFeatures(limitSigns(speedLimitsWithAdjustments));
 
     if (selectedSpeedLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+      var feature = _.find(layerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
       if (feature) {
         selectControl.select(feature);
       }
@@ -589,6 +674,7 @@ window.SpeedLimitLayer = function(params) {
   var hideLayer = function(map) {
     reset();
     vectorLayer.setVisibility(false);
+    vectorLayerHistory.setVisibility(false);
     indicatorLayer.setVisibility(false);
     me.stop();
     me.hide();

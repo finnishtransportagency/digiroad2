@@ -149,5 +149,10 @@
     if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
     else return firstVertex;
   };
+
+  root.pointsToLineString = function(points) {
+    var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
+    return new OpenLayers.Geometry.LineString(openlayersPoints);
+  };
 })(window.GeometryUtils = window.GeometryUtils || {});
 

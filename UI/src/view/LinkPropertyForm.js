@@ -41,6 +41,12 @@
       [4, 'Silta, Taso 4']
     ];
 
+    var constructionTypes= [
+      [0, 'Käytössä'], //In Use
+      [1, 'Rakenteilla'], //Under Construction
+      [3, 'Suunnitteilla'] //Planned
+    ];
+
     var getLocalizedLinkType = function(linkType) {
       var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
       return localizedLinkType && localizedLinkType[1];
@@ -49,6 +55,11 @@
     var getVerticalLevelType = function(verticalLevel){
       var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
       return verticalLevelType && verticalLevelType[1];
+    };
+
+    var getConstructionType = function(constructionTypeId){
+      var constructionType = _.find(constructionTypes, function(value) { return value[0] === constructionTypeId; });
+      return constructionType && constructionType[1];
     };
 
     var checkIfMultiSelection = function(mmlId){
@@ -112,6 +123,7 @@
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
+            staticField('Linkin tila', 'constructionType') +
           '</div>' +
         '</div>' +
       '<footer>' + buttons + '</footer>', options);
@@ -159,6 +171,7 @@
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
+        linkProperties.constructionType = getConstructionType(linkProperties.constructionType) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

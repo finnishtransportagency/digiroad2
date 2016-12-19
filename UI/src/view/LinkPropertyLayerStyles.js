@@ -59,6 +59,47 @@
       new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
 
+    var linkStatusRules = [
+      new OpenLayersRule().where('constructionType').is(1).use({ strokeColor: '#ff9900' }),
+      new OpenLayersRule().where('constructionType').is(3).use({ strokeColor: '#cc99ff'})
+    ];
+
+    //History rules
+    var unknownLinkTypeHistoryDefaultRules = [
+      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
+    var unknownFunctionalClassHistoryDefaultRules = [
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
+    var zoomLevelHistoryRules = [
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, { strokeWidth: 1 }, { pointRadius: 0 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, { strokeWidth: 2 }, { pointRadius: 10 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, { strokeWidth: 4 }, { pointRadius: 12 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, { strokeWidth: 5 }, { pointRadius: 13 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, { strokeWidth: 5 }, { pointRadius: 14 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, { strokeWidth: 7 }, { pointRadius: 16 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, { strokeWidth: 7 }, { pointRadius: 16 }))
+    ];
+
+    var linkTypeSizeHistoryRules = [
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).use({ strokeWidth: 3 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 1 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 2 }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 16' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+    ];
+
+    var overlayHistoryRules = [
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 15' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' })
+    ];
+
     // --- Functional class style maps
 
     var functionalClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -70,6 +111,7 @@
     functionalClassDefaultStyle.addRules(overlayRules);
     functionalClassDefaultStyle.addRules(linkTypeSizeRules);
     functionalClassDefaultStyle.addRules(overlayDefaultOpacity);
+    functionalClassDefaultStyle.addRules(linkStatusRules);
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
 
     var functionalClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -94,9 +136,54 @@
     functionalClassSelectionSelectStyle.addRules(linkTypeSizeRules);
     functionalClassSelectionDefaultStyle.addRules(overlayUnselectedOpacity);
     functionalClassSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    functionalClassSelectionDefaultStyle.addRules(linkStatusRules);
+    functionalClassSelectionSelectStyle.addRules(linkStatusRules);
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: functionalClassSelectionSelectStyle,
       default: functionalClassSelectionDefaultStyle
+    });
+
+    // --- Functional history class style maps
+
+    var functionalClassHistoryDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      rotation: '${rotation}'}));
+    functionalClassHistoryDefaultStyle.addRules(functionalClassRules);
+    functionalClassHistoryDefaultStyle.addRules(unknownFunctionalClassHistoryDefaultRules);
+    functionalClassHistoryDefaultStyle.addRules(zoomLevelHistoryRules);
+    functionalClassHistoryDefaultStyle.addRules(overlayHistoryRules);
+    functionalClassHistoryDefaultStyle.addRules(linkTypeSizeHistoryRules);
+    functionalClassHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    functionalClassHistoryDefaultStyle.addRules(linkStatusRules);
+    var functionalClassHistoryDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassHistoryDefaultStyle });
+
+    var functionalClassHistorySelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var functionalClassHistorySelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
+    functionalClassHistorySelectionDefaultStyle.addRules(functionalClassRules);
+    functionalClassHistorySelectionSelectStyle.addRules(functionalClassRules);
+    functionalClassHistorySelectionDefaultStyle.addRules(unknownFunctionalClassUnselectedRules);
+    functionalClassHistorySelectionSelectStyle.addRules(unknownFunctionalClassHistoryDefaultRules);
+    functionalClassHistorySelectionDefaultStyle.addRules(zoomLevelHistoryRules);
+    functionalClassHistorySelectionSelectStyle.addRules(zoomLevelHistoryRules);
+    functionalClassHistorySelectionDefaultStyle.addRules(overlayHistoryRules);
+    functionalClassHistorySelectionSelectStyle.addRules(overlayHistoryRules);
+    functionalClassHistorySelectionDefaultStyle.addRules(linkTypeSizeHistoryRules);
+    functionalClassHistorySelectionSelectStyle.addRules(linkTypeSizeHistoryRules);
+    functionalClassHistorySelectionDefaultStyle.addRules(overlayUnselectedOpacity);
+    functionalClassHistorySelectionSelectStyle.addRules(overlayDefaultOpacity);
+    functionalClassHistorySelectionDefaultStyle.addRules(linkStatusRules);
+    functionalClassHistorySelectionSelectStyle.addRules(linkStatusRules);
+    var functionalClassHistorySelectionStyleMap = new OpenLayers.StyleMap({
+      select: functionalClassHistorySelectionSelectStyle,
+      default: functionalClassHistorySelectionDefaultStyle
     });
 
     // --- Administrative class style maps ---
@@ -108,6 +195,7 @@
     administrativeClassDefaultStyle.addRules(zoomLevelRules);
     administrativeClassDefaultStyle.addRules(administrativeClassRules);
     administrativeClassDefaultStyle.addRules(linkTypeSizeRules);
+    administrativeClassDefaultStyle.addRules(linkStatusRules);
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
     var administrativeClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -126,6 +214,8 @@
     administrativeClassSelectionSelectStyle.addRules(administrativeClassRules);
     administrativeClassSelectionDefaultStyle.addRules(linkTypeSizeRules);
     administrativeClassSelectionSelectStyle.addRules(linkTypeSizeRules);
+    administrativeClassSelectionDefaultStyle.addRules(linkStatusRules);
+    administrativeClassSelectionSelectStyle.addRules(linkStatusRules);
     var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: administrativeClassSelectionSelectStyle,
       default: administrativeClassSelectionDefaultStyle
@@ -157,6 +247,7 @@
     linkTypeDefaultStyle.addRules(overlayRules);
     linkTypeDefaultStyle.addRules(linkTypeSizeRules);
     linkTypeDefaultStyle.addRules(overlayDefaultOpacity);
+    linkTypeDefaultStyle.addRules(linkStatusRules);
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
 
     var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -181,9 +272,54 @@
     linkTypeSelectionSelectStyle.addRules(linkTypeSizeRules);
     linkTypeSelectionSelectStyle.addRules(overlayUnselectedOpacity);
     linkTypeSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    linkTypeSelectionDefaultStyle.addRules(linkStatusRules);
+    linkTypeSelectionSelectStyle.addRules(linkStatusRules);
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       select: linkTypeSelectionSelectStyle,
       default: linkTypeSelectionDefaultStyle
+    });
+
+    // --- Link type history style maps
+
+    var linkTypeHistoryDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}'}));
+    linkTypeHistoryDefaultStyle.addRules(linkTypeRules);
+    linkTypeHistoryDefaultStyle.addRules(unknownLinkTypeHistoryDefaultRules);
+    linkTypeHistoryDefaultStyle.addRules(zoomLevelHistoryRules);
+    linkTypeHistoryDefaultStyle.addRules(overlayHistoryRules);
+    linkTypeHistoryDefaultStyle.addRules(linkTypeSizeHistoryRules);
+    linkTypeHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    linkTypeHistoryDefaultStyle.addRules(linkStatusRules);
+    var linkTypeHistoryDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeHistoryDefaultStyle });
+
+    var linkTypeHistorySelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var linkTypeHistorySelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
+    linkTypeHistorySelectionDefaultStyle.addRules(linkTypeRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkTypeRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(unknownLinkTypeUnselectedRules);
+    linkTypeHistorySelectionSelectStyle.addRules(unknownLinkTypeHistoryDefaultRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(zoomLevelHistoryRules);
+    linkTypeHistorySelectionSelectStyle.addRules(zoomLevelHistoryRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(overlayHistoryRules);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayHistoryRules);
+    linkTypeHistorySelectionDefaultStyle.addRules(linkTypeSizeHistoryRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkTypeSizeHistoryRules);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayUnselectedOpacity);
+    linkTypeHistorySelectionSelectStyle.addRules(overlayDefaultOpacity);
+    linkTypeHistorySelectionDefaultStyle.addRules(linkStatusRules);
+    linkTypeHistorySelectionSelectStyle.addRules(linkStatusRules);
+    var linkTypeHistorySelectionStyleMap = new OpenLayers.StyleMap({
+      select: linkTypeHistorySelectionSelectStyle,
+      default: linkTypeHistorySelectionDefaultStyle
     });
 
     // --- Vertical level style maps
@@ -215,6 +351,7 @@
     verticalLevelDefaultStyle.addRules(overlayRules);
     verticalLevelDefaultStyle.addRules(linkTypeSizeRules);
     verticalLevelDefaultStyle.addRules(overlayDefaultOpacity);
+    verticalLevelDefaultStyle.addRules(linkStatusRules);
     var verticalLevelDefaultStyleMap = new OpenLayers.StyleMap({ default: verticalLevelDefaultStyle });
 
     // Vertical level selection style map
@@ -242,6 +379,8 @@
     verticalLevelSelectionSelectStyle.addRules(linkTypeSizeRules);
     verticalLevelSelectionSelectStyle.addRules(overlayUnselectedOpacity);
     verticalLevelSelectionSelectStyle.addRules(overlayDefaultOpacity);
+    verticalLevelSelectionDefaultStyle.addRules(linkStatusRules);
+    verticalLevelSelectionSelectStyle.addRules(linkStatusRules);
     var verticalLevelSelectionStyleMap = new OpenLayers.StyleMap({
       select: verticalLevelSelectionSelectStyle,
       default: verticalLevelSelectionDefaultStyle
@@ -252,7 +391,11 @@
       var styleMaps = {
         'functional-class': {
           'default': functionalClassDefaultStyleMap,
-          'select': functionalClassSelectionStyleMap
+          'select': functionalClassSelectionStyleMap,
+          'history': {
+            'default': functionalClassHistoryDefaultStyleMap,
+            'select': functionalClassHistorySelectionStyleMap
+          }
         },
         'administrative-class': {
           'default': administrativeClassDefaultStyleMap,
@@ -260,7 +403,11 @@
         },
         'link-type': {
           'default': linkTypeDefaultStyleMap,
-          'select': linkTypeSelectionStyleMap
+          'select': linkTypeSelectionStyleMap,
+          'history': {
+            'default': linkTypeHistoryDefaultStyleMap,
+            'select': linkTypeHistorySelectionStyleMap
+          }
         },
         'vertical-level': {
           'default': verticalLevelDefaultStyleMap,
