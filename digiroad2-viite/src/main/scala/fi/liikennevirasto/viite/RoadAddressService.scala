@@ -84,7 +84,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                                               everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
-    val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration(7000, "millis"))
+    val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
     (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
   }
 
@@ -173,7 +173,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    val fusedRoadAddresses = Seq[RoadAddress]()//  RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
     val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
     if(roadAddressesToRegister.size > 0)
       eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister)
