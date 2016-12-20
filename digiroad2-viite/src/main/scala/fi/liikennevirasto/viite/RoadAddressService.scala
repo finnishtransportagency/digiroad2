@@ -173,7 +173,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = Seq[RoadAddress]()//  RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
     val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
     if(roadAddressesToRegister.size > 0)
       eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister)
@@ -444,11 +444,9 @@ object RoadAddressLinkBuilder {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
 
-      var fusedRoadAddresses: Seq[RoadAddress] = Seq.empty[RoadAddress]
-      groupedRoadAddresses.foreach(record => {
-        fusedRoadAddresses = fusedRoadAddresses ++ RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
-      })
-      fusedRoadAddresses
+      groupedRoadAddresses.map(record =>
+        RoadAddressLinkBuilder.fuseRoadAddressNonRecursive(record._2.sortBy(_.startMValue))
+      ).flatten.toSeq
     }
   }
 
@@ -557,6 +555,27 @@ object RoadAddressLinkBuilder {
       {
         fuseRoadAddressInGroup(unprocessed.tail, fuseTwo(unprocessed.head, ready.head) ++ ready.tail)
       }
+  }
+
+  private def fuseRoadAddressNonRecursive(roadAddress: Seq[RoadAddress]): Seq[RoadAddress] = {
+    if(roadAddress.size == 1)
+      return roadAddress
+
+    var currentRoadAddress = roadAddress.head
+    roadAddress.tail.map{
+      rd =>
+        val fused = fuseTwo(rd, currentRoadAddress)
+        if(rd == roadAddress.last) {
+          fused
+        } else {
+          currentRoadAddress = fused.head
+          if(fused.size == 1){
+            Nil
+          } else{
+            fused.tail
+          }
+        }
+    }.flatten
   }
 
   /**
