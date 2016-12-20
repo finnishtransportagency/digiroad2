@@ -177,6 +177,14 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
+    var drawDarkDashedLineFeatures = function(roadLinks) {
+      var constructionTypeValues = [1];
+      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType);
+      });
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedRoadLinks, 'constructionType'));
+    };
+
     var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -194,6 +202,21 @@
       roadLayer.layer.addFeatures(features);
     };
 
+    var createDarkDashedLineFeatures = function(roadLinks, dashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          dashedLineFeature: roadLink[dashedLineFeature],
+          linkId: roadLink.linkId,
+          type: 'overlay-dark',
+          linkType: roadLink.linkType,
+          zIndex: 1
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
     var createBorderLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
@@ -238,6 +261,7 @@
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
         drawBorderLineFeatures(roadLinks);
+        drawDarkDashedLineFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }

@@ -49,6 +49,7 @@
       });
     };
 
+    var darkOverlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay-dark');
     var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
     var borderStyleRule = _.partial(createZoomAndTypeDependentRule, 'underlay');
 
@@ -70,6 +71,15 @@
       overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
       overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
       overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
+    ];
+    var darkOverlayRules = [
+      darkOverlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      darkOverlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      darkOverlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      darkOverlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      darkOverlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      darkOverlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
+      darkOverlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
     ];
 
     var borderRules = [
@@ -101,6 +111,13 @@
     var borderUnselectedOpacity = [
       new OpenLayersRule().where('type').is('underlay').use({ strokeOpacity: 0.3 })
     ];
+    var darkOverlayDefaultOpacity = [
+      new OpenLayersRule().where('type').is('overlay-dark').use({ strokeOpacity: 1.0 })
+    ];
+
+    var darkOverlayUnselectedOpacity = [
+      new OpenLayersRule().where('type').is('overlay-dark').use({ strokeOpacity: 0.3 })
+    ];
 
     var roadClassRules = [
       new OpenLayersRule().where('roadClass').is('1').use({ strokeColor: '#ff0000'}),
@@ -116,6 +133,8 @@
       new OpenLayersRule().where('roadClass').is('11').use({ strokeColor: '#444444'}),
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#a4a4a2'})
     ];
+
+    var constructionTypeRule = [new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#ff9900', graphicZIndex: 0})];
 
     var streetSectionRules = [
       // -- TODO
@@ -144,6 +163,8 @@
     roadClassDefaultStyle.addRules(borderRules);
     roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
     roadClassDefaultStyle.addRules(floatingRoadAddressRules);
+    roadClassDefaultStyle.addRules(constructionTypeRule);
+    roadClassDefaultStyle.addRules(darkOverlayRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
@@ -186,6 +207,12 @@
     roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
     roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
+    roadClassSelectionDefaultStyle.addRules(constructionTypeRule);
+    roadClassSelectionSelectStyle.addRules(constructionTypeRule);
+    roadClassSelectionDefaultStyle.addRules(darkOverlayRules);
+    roadClassSelectionSelectStyle.addRules(darkOverlayRules);
+    roadClassSelectionDefaultStyle.addRules(darkOverlayUnselectedOpacity);
+    roadClassSelectionSelectStyle.addRules(darkOverlayDefaultOpacity);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
