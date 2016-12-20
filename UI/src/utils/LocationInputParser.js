@@ -4,7 +4,7 @@
     var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
     var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
     var idOrRoadRegex = /^\d+$/;
-    var liviIdRegex = /^\w+\d+$/;
+    var liviIdRegex = /^[LlIiVv]{4}([0-9]+)+$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     var matchedStreet = input.match(streetRegex);
