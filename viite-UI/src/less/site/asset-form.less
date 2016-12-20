@@ -81,7 +81,7 @@
         font-size: @font-icon-size-base;
         color: @warning;
         content: '\e805';
-      }      
+      }
     }
   }
 
@@ -124,7 +124,8 @@
       }
       margin-left: 10px;
 
-      .form-control-static {
+      .form-control-static,
+      .form-control-static-floating {
         width: auto;
         margin-right: 10px;
       }
@@ -264,6 +265,12 @@
     margin-top: 5px;
   }
 
+  .control-label-floating {
+    width: @control-label-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xxs;
+  }
+
   .form-control.sub-control {
     width: auto;
   }
@@ -276,6 +283,10 @@
   .btn-block {
     width: 210px;
     margin-top: 6px;
+  }
+
+  .form-control-static-floating {
+    width: 210px;
   }
 
   .asset-log-info {

@@ -1,6 +1,7 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var compactForm = false;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -95,6 +96,7 @@
     };
 
     var dynamicField = function(labelText){
+      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field;
       //If other fields get the same treatment they can be added here
       if(labelText === 'TIETYYPPI'){
@@ -107,23 +109,40 @@
             roadTypes = roadTypes + ", " + roadType;
           }
         });
-        field = '<div class="form-group">' +
+        if(floatingTransfer){
+          field = '<div class="form-group">' +
+            '<label class="control-label-floating">' + labelText + '</label>' +
+            '<p class="form-control-static-floating">' + roadTypes + '</p>' +
+            '</div>' ;
+        } else {
+          field = '<div class="form-group">' +
             '<label class="control-label">' + labelText + '</label>' +
             '<p class="form-control-static">' + roadTypes + '</p>' +
-            '</div>' ;
+            '</div>';
+          }
       }
       return field;
     };
 
     var staticField = function(labelText, dataField) {
-      return '<div class="form-group">' +
+      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
+      var field;
+      if(floatingTransfer){
+        field = '<div class="form-group">' +
+        '<label class="control-label-floating">' + labelText + '</label>' +
+        '<p class="form-control-static-floating"><%- ' + dataField + ' %></p>' +
+        '</div>';
+      } else {
+        field = '<div class="form-group">' +
         '<label class="control-label">' + labelText + '</label>' +
         '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
         '</div>';
+      }
+      return field;
     };
 
     var title = function() {
-        return '<span>Tieosoitteen ominaisuustiedot</span>';
+      return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
 
     var buttons =
@@ -132,7 +151,7 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
-    var notificationPart = function(displayNotification) {
+    var notification = function(displayNotification) {
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
@@ -142,11 +161,21 @@
         return '';
     };
 
+    var notificationFloatingTransfer = function(displayNotification) {
+      if(displayNotification)
+        return '' +
+          '<div class="form-group form-notification">' +
+          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
+          '</div>';
+      else
+        return '';
+    };
+
+
     var template = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var compactForm = selectedLinkProperty.get()[0].roadLinkType === -1;
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -172,7 +201,43 @@
         staticField('KELLUVA', 'floating') +
         endDateField : '') +
         (compactForm ?
-        notificationPart(true):'')  +
+          notification(true):'')  +
+        '</div>' +
+        '</div>' +
+        '<footer>' + buttons + '</footer>', options);
+    };
+
+    var templateFloatingTransfer = function(options) {
+      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
+        staticField('LAKKAUTUS', 'endDate') : '';
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+
+      return _.template('' +
+        '<header>' +
+        title() + buttons +
+        '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
+        (!compactForm ?
+        staticField('ALKUETÄISYYS', 'startAddressM') +
+        staticField('LOPPUETÄISUUS', 'endAddressM') +
+        staticField('ELY', 'elyCode') : '') +
+        roadTypes +
+        (!compactForm ?
+        staticField('JATKUVUUS', 'discontinuity') +
+        staticField('KELLUVA', 'floating') +
+        endDateField : '') +
+        (compactForm ?
+          notificationFloatingTransfer(true):'')  +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -196,6 +261,7 @@
         rootElement.find('.form-controls').toggle(!readOnly);
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
+        compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -227,23 +293,31 @@
         linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
         linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
-        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
+        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
-        var functionalClassOptionTags = _.map(functionalClasses, function(value) {
+        var functionalClassOptionTags = _.map(functionalClasses, function (value) {
           var selected = value == linkProperties.functionalClass ? " selected" : "";
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
-        var linkTypesOptionTags = _.map(linkTypes, function(value) {
+        var linkTypesOptionTags = _.map(linkTypes, function (value) {
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-          functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-          linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
-        rootElement.html(template(options,linkProperties)(linkProperties));
+        var options = {
+          imports: {
+            trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+          }
+        };
+        if (!applicationModel.isReadOnly() && compactForm){
+          rootElement.html(templateFloatingTransfer(options, linkProperties)(linkProperties));
+        } else  {
+          rootElement.html(template(options, linkProperties)(linkProperties));
+        }
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
