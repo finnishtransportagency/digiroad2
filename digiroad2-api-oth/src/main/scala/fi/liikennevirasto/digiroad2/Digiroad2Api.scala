@@ -180,6 +180,29 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/massTransitStops/livi/:liviId") {
+    def validateMunicipalityAuthorization(id: String)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + id))
+    }
+    val liviId = params("liviId")
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByLiviId(liviId, validateMunicipalityAuthorization(liviId))
+
+    val massTransitStop = massTransitStopReturned.map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating,
+        "propertyData" -> stop.propertyData)
+    }
+    massTransitStop.getOrElse(NotFound("Mass transit stop " + liviId + " not found"))
+  }
+
   get("/massTransitStops/floating") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {

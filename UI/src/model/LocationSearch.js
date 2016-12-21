@@ -90,7 +90,16 @@
       }
     }
     var  massTransitStopLiviIdSearch = function(input) {
-      //add here what to do when masstransitstop with livi-id
+      return backend.getMassTransitStopByLiviIdForSearch(input.text).then(function(result) {
+        var lon = result.lon;
+        var lat = result.lat;
+        var title = input.text + ' (Livi-tunnus)';
+        if (lon && lat) {
+          return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
+        } else {
+          return $.Deferred().reject('Tuntematon Livi-tunnus');
+        }
+      });
     };
 
     var getCoordinatesFromRoadAddress = function(road) {
@@ -136,7 +145,7 @@
         street: geocode,
         road: getCoordinatesFromRoadAddress,
         idOrRoadNumber: idOrRoadNumber,
-        massTransitStopLiviId: massTransitStopLiviIdSearch,
+        liviId: massTransitStopLiviIdSearch,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 

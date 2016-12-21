@@ -404,6 +404,10 @@
       return $.get('api/massTransitStops/' + nationalId);
     };
 
+    this.getMassTransitStopByLiviIdForSearch = function(liviId) {
+      return $.get('api/massTransitStops/livi/' + liviId);
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {
