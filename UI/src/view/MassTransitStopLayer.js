@@ -714,6 +714,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'massTransitStop:movementPermission', function(movementPermission){
       movementPermissionConfirmed = movementPermission;
     });
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', function(showRoadLinksWithComplementary){ roadCollection.fetchWithComplementary(map.getExtent()) });
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', function(hideRoadLinksWithComplementary){ roadCollection.fetch(map.getExtent()) });
   };
 
   var startListening = function() {

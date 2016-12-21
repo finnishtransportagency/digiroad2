@@ -201,6 +201,14 @@
       '  </div>'
     ].join('');
 
+    var roadLinkComplementaryCheckBox = [
+      '  <div class="panel-section roadLink-complementary-checkbox">',
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+          '</div>' +
+      '</div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
@@ -230,6 +238,7 @@
       '  </div>',
       roadTypeLegend,
       constructionTypeLegend,
+      roadLinkComplementaryCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -260,6 +269,20 @@
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
+
+      elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger('roadLinkComplementaryBS:show');
+        } else {
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('roadLinkComplementaryBS:hide');
+          }
+        }
+      });
+
     };
 
     var toggleRoadType = function(bool) {
