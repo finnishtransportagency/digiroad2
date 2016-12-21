@@ -81,8 +81,8 @@
       return $.when(
         roadLinkSearch, roadNumberSearch).then(function(linkdata,roadData) {
         var returnObject = roadLocationAPIResultParser(roadData);
-        var linkFound =_.get(linkdata[0], 'Success');
-        if (linkFound == "1") {
+        var linkFound =_.get(linkdata[0], 'success');
+        if (linkFound ===true) {
           var x = _.get(linkdata[0], 'middlePoint.x');
           var y = _.get(linkdata[0], 'middlePoint.y');
           var title = "Link-ID: " + input.text;

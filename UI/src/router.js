@@ -50,7 +50,7 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          if (response.Success== "1"){
+          if (response.success=== true){
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
