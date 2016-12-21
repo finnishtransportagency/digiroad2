@@ -407,6 +407,10 @@
       return $.get('api/speedlimit/sid/?segmentid=' + sid);
     };
 
+    this.getMassTransitStopByLiviIdForSearch = function(liviId) {
+      return $.get('api/massTransitStops/livi/' + liviId);
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {
