@@ -574,6 +574,36 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       validateUserMunicipalityAccess(user))
   }
 
+    get("/speedlimit/sid/")
+    {
+      val user=userProvider.getCurrentUser() // check user rights
+      val segmentID =params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
+      val  speedLimit= speedLimitService.find(segmentID.toLong)
+     speedLimit match {
+       case Some(speedLimit) =>
+         {
+           roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match
+             {
+             case Some(location) =>
+               {
+                 Map ("success" -> true,
+                   "linkId" ->  speedLimit.linkId,
+                   "latitude" -> location._2.y,
+                   "longitude"-> location._2.x
+                 )
+               }
+             case None =>
+               {
+                 Map("success" -> false)
+               }}
+         }
+       case None =>
+         {
+           Map("success" -> false)
+         }
+     }
+    }
+
   get("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities

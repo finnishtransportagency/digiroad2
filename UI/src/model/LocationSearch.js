@@ -38,10 +38,36 @@
         return roadNumberAndRoadLinkSearch(input);
       }
       else if (selectedLayer === 'speedLimit') {
-
+      return speedLimitSearch(input.text);
       } else {
         return getCoordinatesFromRoadAddress({roadNumber: input.text});
       }
+    };
+    /**
+     * Retrives roadnumber and speedlimits with given number
+     * @param input
+     * @returns {*}
+     */
+
+    var speedLimitSearch = function(input){
+      var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input);
+      var speedlimitSearch= backend.getSpeedLimitsLinkIDFromSegmentID(input);
+      return $.when(
+        speedlimitSearch, roadNumberSearch).then(function(speedlimitdata,roadData) {
+        var returnObject = roadLocationAPIResultParser(roadData);
+        var linkFound =_.get(speedlimitdata[0], 'success');
+        if (linkFound === true) {
+          var linkid = _.get(speedlimitdata[0], 'linkId');
+          var y = _.get(speedlimitdata[0], 'latitude');
+          var x= _.get(speedlimitdata[0], 'longitude');
+          var title = "Speed Limit-ID: " + input;
+            returnObject.push({title: title, lon: x, lat: y, linkid:linkid});
+        }
+        if (returnObject.length===0){
+          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+        }
+        return returnObject;
+        });
     };
 
     /**
