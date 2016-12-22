@@ -116,21 +116,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+    val fetchVVHStartTime = System.currentTimeMillis()
     val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val fetchVVHEndTime = System.currentTimeMillis()
+    logger.info("End fetch vvh road links in "+((fetchVVHEndTime-fetchVVHStartTime)*0.001)+" sec")
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingLinkIds = linkIds -- floating.keySet
 
+    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
+    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
+    logger.info("End fetch missing road address in "+((fetchMissingRoadAddressEndTime-fetchMissingRoadAddressStartTime)*0.001)+" sec")
 
+    val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed)
     }.toMap
+    val buildEndTime = System.currentTimeMillis()
+    logger.info("End building road address in "+((buildEndTime-buildStartTime)*0.001)+" sec")
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
 
@@ -173,10 +182,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
-    val fusedRoadAddresses = Seq[RoadAddress]()//RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    /*
     val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
     if(roadAddressesToRegister.size > 0)
-      eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister)
+      eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister
+    */
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++

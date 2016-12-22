@@ -90,7 +90,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and t.id < t2.id
+        where $filter $floatingFilter and t.id < t2.id and (ra.valid_to > sysdate or ra.valid_to is null)
       """
     (queryList(query), Seq())
   }
