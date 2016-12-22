@@ -61,7 +61,8 @@
       [99,'Tuntematon']
     ];
     var constructionTypes = [
-        [1, 'Tuntematon, rakenteilla']
+      [0, 'Rakenteilla'],
+      [1, 'Tuntematon, rakenteilla']
     ];
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
       return '<div class="legend-entry">' +
