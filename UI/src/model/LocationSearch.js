@@ -30,20 +30,11 @@
      */
     var idOrRoadNumber = function(input) {
       if (selectedLayer === 'massTransitStop') {
-        return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
-          var lon = result.lon;
-          var lat = result.lat;
-          var title = input.text + ' (valtakunnallinen id)';
-          if (lon && lat) {
-            return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
-          } else {
-            return $.Deferred().reject('Tuntematon valtakunnallinen id');
-          }
-        });
+        return roadNumberAndNationalIdSearch(input);
       } else if (selectedLayer === 'linkProperty') {
         return roadNumberAndRoadLinkSearch(input);
       } else if (selectedLayer === 'speedLimit') {
-        return roadNumberandSpeedLimitSearch(input.text);
+        return roadNumberAndSpeedLimitSearch(input.text);
       } else {
         return getCoordinatesFromRoadAddress({roadNumber: input.text});
       }
@@ -55,7 +46,7 @@
      * @param input
      * @returns {*}
      */
-    var roadNumberandSpeedLimitSearch = function(input){
+    var roadNumberAndSpeedLimitSearch = function(input){
       var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input);
       var speedlimitSearch= backend.getSpeedLimitsLinkIDFromSegmentID(input);
       return $.when(
@@ -77,7 +68,7 @@
     };
 
     /**
-     * Link id search, combined with road number seach
+     * Link id search, combined with road number search
      *
      * @param input
      * @returns {*}
@@ -102,6 +93,26 @@
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
         }
         return returnObject;
+      });
+    };
+
+    /**
+     * Mass transit stop national id search, combined with road number search
+     *
+     * @param input
+     * @returns {*}
+     */
+    var roadNumberAndNationalIdSearch = function(input) {
+      // TODO: Combine with road number search
+      return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
+        var lon = result.lon;
+        var lat = result.lat;
+        var title = input.text + ' (valtakunnallinen id)';
+        if (lon && lat) {
+          return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
+        } else {
+          return $.Deferred().reject('Tuntematon valtakunnallinen id');
+        }
       });
     };
 
