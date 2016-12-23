@@ -177,12 +177,13 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
-    var drawDarkDashedLineFeatures = function(roadLinks) {
+    var drawUnknownUnderConstructionFeatures = function(roadLinks) {
       var constructionTypeValues = [1];
+      var type = 'unknownConstructionType';
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(constructionTypeValues, roadLink.constructionType);
+        return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.anomaly === 1;
       });
-      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedRoadLinks, 'constructionType'));
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedRoadLinks, type));
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks) {
@@ -201,14 +202,16 @@
       var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
       roadLayer.layer.addFeatures(features);
     };
-
-    var createDarkDashedLineFeatures = function(roadLinks, dashedLineFeature) {
+    var createDarkDashedLineFeatures = function(roadLinks, type){
+      return darkDashedLineFeatures(roadLinks, type).concat(calculateMidPointForMarker(roadLinks, type));
+    };
+    var darkDashedLineFeatures = function(roadLinks, darkDashedLineFeature) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var attributes = {
-          dashedLineFeature: roadLink[dashedLineFeature],
+          dashedLineFeature: roadLink[darkDashedLineFeature],
           linkId: roadLink.linkId,
           type: 'overlay-dark',
           linkType: roadLink.linkType,
@@ -216,6 +219,17 @@
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
+    };
+    var calculateMidPointForMarker = function(roadLinks, type){
+      return _.map(roadLinks, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var attributes = {type: type, linkId: link.linkId};
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      });
     };
     var createBorderLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -227,7 +241,8 @@
           type: 'underlay',
           linkType: roadLink.roadLinkType
         };
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        var attributes2 = _.merge(_.cloneDeep(roadLink), attributes);
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes2);
       }));
     };
 
@@ -261,7 +276,7 @@
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
         drawBorderLineFeatures(roadLinks);
-        drawDarkDashedLineFeatures(roadLinks);
+        drawUnknownUnderConstructionFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }

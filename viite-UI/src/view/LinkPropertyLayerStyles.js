@@ -135,6 +135,7 @@
     ];
 
     var constructionTypeRule = [new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#ff9900', graphicZIndex: 0})];
+    var unknownConstructionTypeRule = [new OpenLayersRule().where('type').is('unknownConstructionType').use({externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})];
 
     var streetSectionRules = [
       // -- TODO
@@ -165,6 +166,7 @@
     roadClassDefaultStyle.addRules(floatingRoadAddressRules);
     roadClassDefaultStyle.addRules(constructionTypeRule);
     roadClassDefaultStyle.addRules(darkOverlayRules);
+    roadClassDefaultStyle.addRules(unknownConstructionTypeRule);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
@@ -209,6 +211,8 @@
     roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(constructionTypeRule);
     roadClassSelectionSelectStyle.addRules(constructionTypeRule);
+    roadClassSelectionDefaultStyle.addRules(unknownConstructionTypeRule);
+    roadClassSelectionSelectStyle.addRules(unknownConstructionTypeRule);
     roadClassSelectionDefaultStyle.addRules(darkOverlayRules);
     roadClassSelectionSelectStyle.addRules(darkOverlayRules);
     roadClassSelectionDefaultStyle.addRules(darkOverlayUnselectedOpacity);
