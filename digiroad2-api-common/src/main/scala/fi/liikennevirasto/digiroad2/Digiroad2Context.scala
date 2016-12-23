@@ -76,7 +76,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 
 class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
+    case w: RoadAddressMerge => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
     case _                    => println("roadAddressMerger: Received unknown message")
   }
 }
