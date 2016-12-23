@@ -473,7 +473,7 @@ object DataFixture {
     val trBusStops = tierekisteriClient.fetchActiveMassTransitStops().
       filterNot(stop => existingLiviIds.contains(stop.liviId))
 
-    val liviIdPropertyId = dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")
+    val liviIdPropertyId = OracleDatabase.withDynSession {dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")}
 
     println("Processing %d TR bus stops".format(trBusStops.length))
 
