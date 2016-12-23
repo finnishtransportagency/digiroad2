@@ -361,12 +361,15 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def updateMergedSegmentsByLinkId (linkId: Long) = {
+  def updateMergedSegmentsById (ids: Set[Long]): Int = {
     val query =
       s"""
-          Update ROAD_ADDRESS ra Set valid_to = sysdate Where ra.lrm_position_id In (Select ra2.lrm_position_id From road_address ra2, lrm_position lrm Where ra2.lrm_position_id=lrm.id And lrm.link_id = ${linkId})
+          Update ROAD_ADDRESS ra Set valid_to = sysdate where id in (${ids.mkString(",")})
         """
-    Q.updateNA(query).first
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
   }
 
   def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
