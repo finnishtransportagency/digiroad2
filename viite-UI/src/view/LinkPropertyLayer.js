@@ -241,8 +241,7 @@
           type: 'underlay',
           linkType: roadLink.roadLinkType
         };
-        var attributes2 = _.merge(_.cloneDeep(roadLink), attributes);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes2);
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
     };
 
