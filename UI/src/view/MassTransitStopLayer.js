@@ -38,7 +38,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   ];
   var administrativeClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.7,
-    rotation: '${rotation}'
+    rotation: '${rotation}',
+    strokeWidth: 5,
+    strokeColor: "#a4a4a2"
   }));
   administrativeClassDefaultStyle.addRules(administrativeClassRules);
   administrativeClassDefaultStyle.addRules(zoomLevelRules);
@@ -721,6 +723,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
     eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', show);
+    eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
   };
 
   var startListening = function() {

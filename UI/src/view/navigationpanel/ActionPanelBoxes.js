@@ -289,6 +289,7 @@
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
 
       elements.expanded.find('.road-link-legend').toggle(bool);
+      elements.expanded.find('.construction-type-legend').toggle(bool);
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
     };
 
