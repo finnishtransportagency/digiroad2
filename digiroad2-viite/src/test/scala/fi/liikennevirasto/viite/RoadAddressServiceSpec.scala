@@ -96,11 +96,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadNumber = partitionedRoadLinks.head.head.roadNumber
       val trackCode = partitionedRoadLinks.head.head.trackCode
       val segmentId = partitionedRoadLinks.head.head.id
+      val constructionType = partitionedRoadLinks.head.head.constructionType.value
 
       segmentId should not be None
       roadNumber should be (5)
       roadPartNumber should be (205)
       trackCode should be (1)
+      constructionType should be (0)
     }
   }
 
