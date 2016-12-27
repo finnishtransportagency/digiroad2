@@ -123,19 +123,6 @@
       } else if(labelText === 'VALITUT LINKIT'){
         var linkIds = "";
         var dynLinks = "";
-
-        // _.each(selectedLinkProperty.get(), function(slp){
-        //   var linkid = slp.linkId;
-        //   if (linkIds.length === 0) {
-        //     dynLinks = '<p class="form-control-static-floating">'+
-        //       '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-        //       linkid + '</p>'
-        //   } else {
-        //     dynLinks = dynLinks + '<p class="form-control-static-floating">'+
-        //       '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-        //       linkid + '</p>'
-        //   }
-        // });
         _.each(selectedLinkProperty.get(), function(slp){
           var linkid = slp.linkId;
           if (linkIds.length === 0) {
