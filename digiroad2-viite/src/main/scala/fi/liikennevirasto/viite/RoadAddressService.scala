@@ -457,9 +457,9 @@ object RoadAddressLinkBuilder {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
 
-      groupedRoadAddresses.flatMap(record =>
-        RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
-      ).toSeq
+      groupedRoadAddresses.flatMap{ case (_, record) =>
+        RoadAddressLinkBuilder.fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+      }.toSeq
     }
   }
 
