@@ -120,6 +120,37 @@
             '<p class="form-control-static">' + roadTypes + '</p>' +
             '</div>';
           }
+      } else if(labelText === 'VALITUT LINKIT'){
+        var linkIds = "";
+        var dynLinks = "";
+
+        // _.each(selectedLinkProperty.get(), function(slp){
+        //   var linkid = slp.linkId;
+        //   if (linkIds.length === 0) {
+        //     dynLinks = '<p class="form-control-static-floating">'+
+        //       '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+        //       linkid + '</p>'
+        //   } else {
+        //     dynLinks = dynLinks + '<p class="form-control-static-floating">'+
+        //       '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+        //       linkid + '</p>'
+        //   }
+        // });
+        _.each(selectedLinkProperty.get(), function(slp){
+          var linkid = slp.linkId;
+          if (linkIds.length === 0) {
+            field = '<div class="form-group">' +
+              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+              '<p class="form-control-static-floating">' + linkid + '</p>' +
+              '</div>' ;
+          } else {
+            field = field + '<div class="form-group">' +
+              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+              '<p class="form-control-static-floating">' + linkid + '</p>' +
+              '</div>' ;
+          }
+        });
+
       }
       return field;
     };
@@ -201,8 +232,7 @@
         staticField('KELLUVA', 'floating') +
         endDateField : '') +
         (compactForm ?
-          notification(true):'')  +
-        '</div>' +
+        notification(true) :'')  +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
     };
@@ -211,7 +241,7 @@
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-
+      var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -237,7 +267,9 @@
         staticField('KELLUVA', 'floating') +
         endDateField : '') +
         (compactForm ?
-          notificationFloatingTransfer(true):'')  +
+          notificationFloatingTransfer(true) +
+          staticField('VALITUT LINKIT:', '') +
+          linkIds :'')  +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
