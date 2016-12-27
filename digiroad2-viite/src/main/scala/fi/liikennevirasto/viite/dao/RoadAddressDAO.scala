@@ -85,12 +85,14 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
-        from road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2
+        from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and t.id < t2.id and (ra.valid_to > sysdate or ra.valid_to is null)
+        where $filter $floatingFilter and (ra.valid_to > sysdate or ra.valid_to is null)
       """
     (queryList(query), Seq())
   }
@@ -361,12 +363,15 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def updateMergedSegmentsByLinkId (linkId: Long) = {
+  def updateMergedSegmentsById (ids: Set[Long]): Int = {
     val query =
       s"""
-          Update ROAD_ADDRESS ra Set valid_to = sysdate Where ra.lrm_position_id In (Select ra2.lrm_position_id From road_address ra2, lrm_position lrm Where ra2.lrm_position_id=lrm.id And lrm.link_id = ${linkId})
+          Update ROAD_ADDRESS ra Set valid_to = sysdate where id in (${ids.mkString(",")})
         """
-    Q.updateNA(query).first
+    if (ids.isEmpty)
+      0
+    else
+      Q.updateNA(query).first
   }
 
   def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {

@@ -183,11 +183,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
-    /*
+    val kept = fusedRoadAddresses.map(_.id).toSet
+    val removed = roadAddrSeq.map(_.id).toSet.diff(kept)
     val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
-    if(roadAddressesToRegister.size > 0)
-      eventbus.publish("roadAddress:mergeRoadAddress", roadAddressesToRegister
-    */
+    if(roadAddressesToRegister.nonEmpty)
+      eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
@@ -316,19 +316,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
-  def mergeRoadAddress(toMergeRoadAddress: Seq[RoadAddress]) = {
+  def mergeRoadAddress(data: RoadAddressMerge) = {
     withDynTransaction {
-      toMergeRoadAddress.foreach(updateMergedSegments)
-      createMergedSegments(toMergeRoadAddress)
+      updateMergedSegments(data.merged)
+      createMergedSegments(data.created)
     }
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
-    RoadAddressDAO.create(mergedRoadAddress)
+    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group))
   }
 
-  def updateMergedSegments(toMergeRoadAddresses: RoadAddress) = {
-    RoadAddressDAO.updateMergedSegmentsByLinkId(toMergeRoadAddresses.linkId)
+  def updateMergedSegments(expiredIds: Set[Long]) = {
+    expiredIds.grouped(500).foreach(group => RoadAddressDAO.updateMergedSegmentsById(group))
   }
 
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
@@ -425,6 +425,8 @@ object LinkGeomSource{
   case object UnknownLinkInterface extends LinkGeomSource {def value = 99;}
 }
 
+case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
+
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
@@ -456,9 +458,9 @@ object RoadAddressLinkBuilder {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
 
-      groupedRoadAddresses.map(record =>
-        RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
-      ).flatten.toSeq
+      groupedRoadAddresses.flatMap{ case (_, record) =>
+        RoadAddressLinkBuilder.fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+      }.toSeq
     }
   }
 

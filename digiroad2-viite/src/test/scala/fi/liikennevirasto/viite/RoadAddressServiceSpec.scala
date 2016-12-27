@@ -19,6 +19,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 class RoadAddressServiceSpec extends FunSuite with Matchers{
@@ -213,35 +214,36 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     changeSet.adjustedMValues.map(_.linkId) should be (Seq(l4, l5))
   }
 
-  ignore("LRM modifications are published"){
+  test("LRM modifications are published"){
     val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
+    val boundingRectangle = BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385))
+    val filter = OracleDatabase.boundingBoxFilter(boundingRectangle, "geometry")
     runWithRollback {
       val modificationDate = "1455274504000l"
       val modificationUser = "testUser"
-      val (linkId, endM) = sql""" Select pos.LINK_ID, pos.end_measure
-                                From ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
-                                Order By ra.id asc""".as[(Long, Double)].firstOption.get
+      val query = s"""select pos.LINK_ID, pos.end_measure
+        from ROAD_ADDRESS ra inner join LRM_POSITION pos on ra.LRM_POSITION_ID = pos.id
+        where $filter and (ra.valid_to > sysdate or ra.valid_to is null) order by ra.id asc"""
+      val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
       when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
       when(localMockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
       when(localMockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq.empty)
       val captor: ArgumentCaptor[Iterable[Any]] = ArgumentCaptor.forClass(classOf[Iterable[Any]])
       reset(localMockEventBus)
-      val links = localRoadAddressService.getRoadAddressLinks(BoundingRectangle(Point(533341.472,6988382.846), Point(533333.28,6988419.385)), Seq(), Set())
+      val links = localRoadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), Set())
       links.size should be (1)
       verify(localMockEventBus, times(3)).publish(any[String], captor.capture)
       val capturedAdjustments = captor.getAllValues
-      val merging = capturedAdjustments.get(0)
-      val missing = capturedAdjustments.get(1)
-      val adjusting = capturedAdjustments.get(2)
-      val floating = if(capturedAdjustments.size() == 4) capturedAdjustments.get(3) else Set.empty
-      merging.size should be (0)
-      missing.size should be (1)
-      adjusting.size should be (0)
+      val missing = capturedAdjustments.get(0)
+      val adjusting = capturedAdjustments.get(1)
+      val floating = capturedAdjustments.get(2)
+      missing.size should be (0)
+      adjusting.size should be (1)
       floating.size should be (0)
-      missing.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
+      adjusting.head.asInstanceOf[LRMValueAdjustment].endMeasure should be (Some(endM+.5))
     }
   }
 
