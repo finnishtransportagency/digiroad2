@@ -168,6 +168,7 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
+      '<button class="save btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-primary" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -295,13 +296,16 @@
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.btn-move').toggle(false);
         if(compactForm){
+
           if(!applicationModel.isReadOnly()){
             rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
           } else {
             rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
-
           }
+          rootElement.find('.form-controls').toggle(!readOnly && compactForm);
+          rootElement.find('.btn-move').toggle(!readOnly && compactForm);
         }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
