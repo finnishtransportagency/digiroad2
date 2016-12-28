@@ -46,7 +46,20 @@ if (result.title.indexOf("Link-ID")>-1){
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            if (result.nationalId) {
+              eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
+            }
+            else if (result.title.indexOf("Link-ID")>-1){
+              window.location.hash = "#linkProperty/";
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              window.location.hash = "#linkProperty/" + coordinatesText.val();
+            } else if (result.title.indexOf("Speed Limit-ID")>-1) {
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+            }
+            else {
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            }
           }
         }).fail(showDialog);
       };
