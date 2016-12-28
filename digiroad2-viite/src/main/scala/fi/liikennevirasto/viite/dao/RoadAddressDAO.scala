@@ -2,27 +2,23 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
 
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationCode._
-import org.joda.time.format.DateTimeFormat
-import org.slf4j.LoggerFactory
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import oracle.spatial.geometry.JGeometry
-import oracle.sql.STRUCT
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, StaticQuery => Q}
 
 
 //JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
@@ -148,9 +144,9 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false): List[RoadAddress] = {
+  def fetchByLinkId(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true): List[RoadAddress] = {
     if (linkIds.size > 1000) {
-      return fetchByLinkIdMassQuery(linkIds, includeFloating)
+      return fetchByLinkIdMassQuery(linkIds, includeFloating, includeHistory)
     }
     val linkIdString = linkIds.mkString(",")
     val where = linkIds.isEmpty match {
@@ -159,6 +155,10 @@ object RoadAddressDAO {
     }
     val floating = if (!includeFloating)
       "AND floating='0'"
+    else
+      ""
+    val history = if (!includeHistory)
+      "AND ra.end_date is null"
     else
       ""
 
@@ -172,7 +172,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating and t.id < t2.id
+        $where $floating $history and t.id < t2.id
       """
     queryList(query)
   }
@@ -217,11 +217,15 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false): List[RoadAddress] = {
+  def fetchByLinkIdMassQuery(linkIds: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true): List[RoadAddress] = {
     MassQuery.withIds(linkIds) {
       idTableName =>
         val floating = if (!includeFloating)
           "AND floating='0'"
+        else
+          ""
+        val history = if (!includeHistory)
+          "AND ra.end_date is null"
         else
           ""
         val query =
@@ -235,7 +239,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where t.id < t2.id $floating
+        where t.id < t2.id $floating $history
       """
         queryList(query)
     }
