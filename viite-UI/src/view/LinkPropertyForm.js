@@ -2,6 +2,7 @@
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var compactForm = false;
+    var options;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -51,7 +52,7 @@
       [9, 'Omistaja selvittämättä']
     ];
 
-    var discontinuitys = [
+    var discontinuities = [
       [1, 'Tien loppu'],
       [2, 'Epäjatkuva'],
       [3, 'ELY:n raja'],
@@ -65,7 +66,7 @@
     ];
 
     var getDiscontinuityType = function(discontinuity){
-      var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
+      var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
     };
 
@@ -124,17 +125,19 @@
         var linkIds = "";
         var dynLinks = "";
         _.each(selectedLinkProperty.get(), function(slp){
-          var linkid = slp.linkId;
+          var linkid = slp.linkId.toString();
           if (linkIds.length === 0) {
             field = '<div class="form-group">' +
               '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
               '<p class="form-control-static-floating">' + linkid + '</p>' +
               '</div>' ;
-          } else {
+            linkIds = linkid;
+          } else if(linkIds.search(linkid) === -1){
             field = field + '<div class="form-group">' +
               '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
               '<p class="form-control-static-floating">' + linkid + '</p>' +
               '</div>' ;
+            linkIds = linkIds + ", " + linkid;
           }
         });
 
@@ -209,22 +212,18 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
-        (!compactForm ?
         staticField('ALKUETÄISYYS', 'startAddressM') +
         staticField('LOPPUETÄISUUS', 'endAddressM') +
-        staticField('ELY', 'elyCode') : '') +
+        staticField('ELY', 'elyCode') +
         roadTypes +
-        (!compactForm ?
         staticField('JATKUVUUS', 'discontinuity') +
         staticField('KELLUVA', 'floating') +
-        endDateField : '') +
-        (compactForm ?
-        notification(true) :'')  +
+        endDateField  +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
     };
 
-    var templateFloatingTransfer = function(options) {
+    var templateFloating = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
@@ -233,7 +232,7 @@
         '<header>' +
         title() + buttons +
         '</header>' +
-        '<div class="wrapper read-only">' +
+        '<div class="wrapper read-only-floating">' +
         '<div class="form form-horizontal form-dark">' +
         '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
@@ -244,19 +243,37 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
-        (!compactForm ?
-        staticField('ALKUETÄISYYS', 'startAddressM') +
-        staticField('LOPPUETÄISUUS', 'endAddressM') +
-        staticField('ELY', 'elyCode') : '') +
         roadTypes +
-        (!compactForm ?
-        staticField('JATKUVUUS', 'discontinuity') +
-        staticField('KELLUVA', 'floating') +
-        endDateField : '') +
-        (compactForm ?
-          notificationFloatingTransfer(true) +
-          staticField('VALITUT LINKIT:', '') +
-          linkIds :'')  +
+        notification(true)   +
+        '</div>' +
+        '</div>' +
+        '<footer>' + buttons + '</footer>', options);
+    };
+
+    var templateFloatingEditMode = function(options) {
+      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
+        staticField('LAKKAUTUS', 'endDate') : '';
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      var linkIds = dynamicField('VALITUT LINKIT');
+      return _.template('' +
+        '<header>' +
+        title() + buttons +
+        '</header>' +
+        '<div class="wrapper edit-mode-floating">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIENUMERO', 'roadPartNumber') +
+        staticField('TIENUMERO', 'trackCode') +
+        roadTypes +
+        notificationFloatingTransfer(true) +
+        staticField('VALITUT LINKIT:', '') +
+        linkIds  +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -278,6 +295,14 @@
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        if(compactForm){
+          if(!applicationModel.isReadOnly()){
+            rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+          } else {
+            rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+
+          }
+        }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
@@ -325,16 +350,20 @@
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        var options = {
+        options = {
           imports: {
             trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
             functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
             linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
           }
         };
-        if (!applicationModel.isReadOnly() && compactForm){
-          rootElement.html(templateFloatingTransfer(options, linkProperties)(linkProperties));
-        } else  {
+        if (compactForm){
+          if(!applicationModel.isReadOnly()){
+            rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
+          } else {
+            rootElement.html(templateFloating(options, linkProperties)(linkProperties));
+          }
+        } else {
           rootElement.html(template(options, linkProperties)(linkProperties));
         }
         rootElement.find('.traffic-direction').change(function(event) {
