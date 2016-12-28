@@ -58,7 +58,7 @@
           var y = _.get(speedlimitdata[0], 'latitude');
           var x= _.get(speedlimitdata[0], 'longitude');
           var title = "Speed Limit-ID: " + input;
-            returnObject.push({title: title, lon: x, lat: y, linkid:linkid});
+            returnObject.push({title: title, lon: x, lat: y, linkid:linkid, resultType:"SpeedLimit"});
         }
         if (returnObject.length===0){
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
@@ -78,20 +78,15 @@
       var roadNumberSearch = backend.getCoordinatesFromRoadAddress(input.text);
       return $.when(roadLinkSearch, roadNumberSearch).then(function(linkdata,roadData) {
         var returnObject = roadLocationAPIResultParser(roadData);
-        var linkFound =_.get(linkdata[0], 'success');
-        if (linkFound === true) {
+        if (_.get(linkdata[0], 'success')) {
           var x = _.get(linkdata[0], 'middlePoint.x');
           var y = _.get(linkdata[0], 'middlePoint.y');
           var title = "Link-ID: " + input.text;
-            if (returnObject.length > 0) {
-              returnObject.push({title: title, lon: x, lat: y});
-            } else {
-              returnObject = [{title: title, lon: x, lat: y}];
-            }
+          returnObject.push({title: title, lon: x, lat: y, resultType: "Link-id"});
         }
-        if (returnObject.length === 0){
+          if (returnObject.length === 0){
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
+          }
         return returnObject;
       });
     };
@@ -109,7 +104,7 @@
           var lon = _.get(result[0], 'lon');
           var lat = _.get(result[0], 'lat');
           var title = input.text + ' (valtakunnallinen id)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text});
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text,resultType:"Mtstop"});
          }
         if (returnObject.length === 0){
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
@@ -134,7 +129,7 @@
       var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
       var title = constructTitle(roadData);
       if (lon && lat) {
-        return  [{title: title, lon: lon, lat: lat}];
+        return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
       } else {
         return [];
       }
@@ -152,9 +147,9 @@
         if (_.get(result[0], 'success')) {
           var lon = _.get(result[0], 'lon');
           var lat = _.get(result[0], 'lat');
-          var nationalid=_.get(result[0], 'lat');
+          var nationalid=_.get(result[0], 'nationalId');
           var title = input.text + ' (Livi-tunnus)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text});
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalid, resultType:"Mtstop"});
         }
           if (returnObject.length === 0){
             return $.Deferred().reject('Haulla ei löytynyt tuloksia');

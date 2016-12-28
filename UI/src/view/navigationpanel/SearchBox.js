@@ -17,15 +17,16 @@
           .sortBy('distance')
           .map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
-if (result.title.indexOf("Link-ID")>-1){
+if (result.resultType.indexOf("Link-id")>-1){
   window.location.hash = "#linkProperty/";
   eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
   window.location.hash = "#linkProperty/" + coordinatesText.val();
-} else if (result.title.indexOf("Speed Limit-ID")>-1) {
+} else if (result.resultType.indexOf("SpeedLimit")>-1) {
   eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
   eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
-} else if (result.nationalId) {
-  eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
+} else if (result.resultType.indexOf("Mtstop")>-1) {
+  window.location.hash = "#massTransitStop/";
+  window.location.hash="#massTransitStop/"+result.nationalId;
 }
   else
   {
@@ -46,14 +47,15 @@ if (result.title.indexOf("Link-ID")>-1){
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];
-            if (result.nationalId) {
-              eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
+            if (result.resultType.indexOf("Mtstop")>-1) {
+              window.location.hash="#massTransitStop/"+result.nationalId;
             }
-            else if (result.title.indexOf("Link-ID")>-1){
+            else if (result.resultType.indexOf("Link-id")>-1) {
               window.location.hash = "#linkProperty/";
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
               window.location.hash = "#linkProperty/" + coordinatesText.val();
-            } else if (result.title.indexOf("Speed Limit-ID")>-1) {
+            }
+            else if (result.resultType.indexOf("SpeedLimit")>-1) {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
               eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
             }
