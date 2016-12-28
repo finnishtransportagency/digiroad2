@@ -226,7 +226,8 @@ Returns empty result as Json message, not as page not found
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "propertyData" -> stop.propertyData)
+        "propertyData" -> stop.propertyData,
+        "success" -> true)
     }
     massTransitStop.getOrElse(Map("success" -> false))
   }

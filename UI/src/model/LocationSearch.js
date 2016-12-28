@@ -152,8 +152,9 @@
         if (_.get(result[0], 'success')) {
           var lon = _.get(result[0], 'lon');
           var lat = _.get(result[0], 'lat');
+          var nationalid=_.get(result[0], 'lat');
           var title = input.text + ' (Livi-tunnus)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: result.nationalId});
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text});
         }
           if (returnObject.length === 0){
             return $.Deferred().reject('Haulla ei löytynyt tuloksia');
