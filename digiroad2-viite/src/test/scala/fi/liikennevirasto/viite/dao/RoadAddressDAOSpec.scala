@@ -97,6 +97,31 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Create Road Address With Calibration Point") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (2)
+    }
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (3)
+    }
+  }
+
   test("Delete Road Addresses") {
     runWithRollback {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 206)
