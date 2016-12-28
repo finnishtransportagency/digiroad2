@@ -223,3 +223,20 @@ Tuntemattomia tieosoitesegmenttej&auml; voi valita ja tarkastella klikkailemalla
 ![Tuntemattoman tieosoitesegmentin puuttelliset ominaisuustiedot](k11.JPG)
 
 _Tuntematon tieosoitesegmentti valittuna. Ominaisuustietotaulun tiedot ovat puuttelliset._
+
+6. Geometriasta irti olevat tieosoitesegmentit
+--------------------------
+Geometriasta irti olevilla tieosoitesegmenteilla tarkoitetaan sellaisia segmentteja jotka eiv&auml;t l&ouml;yd&auml; omaa tielinkin ID:ta vastaavaa lineaarilokaatiota k&auml;yt&ouml;ss&auml; olevista linkeist&auml;.
+
+Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml;ksi jokaisella tieosoitesegmentilla on punainen huomiolippu. Linkin voi valita huomiolippua tai keltaista korostusta klikkaamalla (1).  
+
+![Geometriasta irti oleva tieosoitesegmentti](k12.JPG)
+
+_Geometriasta irti olevia tieosoitesegmentteja. Yksitt&auml;isen segmentin tiedot saa n&auml;kyviin tuplaklikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
+
+Kohteen valinta noudattaa samaa logiikka kuin muidenkin kohteiden tapauksessa. Klikkaamalla kerran sovellus valitsee kartalta ruudulla n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Tuplaklikkaus valitsee yhden tieosoitesegmentin. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tien keskiviivaan. 
+
+Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustieton&auml;kym&auml;&auml;n. Geometriasta irti olevalla kohteella on ominaisuustieton&auml;kym&auml;ss&auml; huomiolaatikko joka varoittaa tien geometrian muuttuneen (2).
+
+
+

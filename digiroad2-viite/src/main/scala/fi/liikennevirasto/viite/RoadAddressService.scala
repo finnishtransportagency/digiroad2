@@ -6,14 +6,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.LinkGeomSource.{ComplimentaryLinkInterface, HistoryLinkInterface, NormalLinkInterface}
+import fi.liikennevirasto.viite.LinkGeomSource.{ComplimentaryLinkInterface, HistoryLinkInterface, NormalLinkInterface, UnknownLinkInterface}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
-import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
@@ -116,21 +116,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+    val fetchVVHStartTime = System.currentTimeMillis()
     val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val fetchVVHEndTime = System.currentTimeMillis()
+    logger.info("End fetch vvh road links in "+((fetchVVHEndTime-fetchVVHStartTime)*0.001)+" sec")
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingLinkIds = linkIds -- floating.keySet
 
+    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
+    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
+    logger.info("End fetch missing road address in "+((fetchMissingRoadAddressEndTime-fetchMissingRoadAddressStartTime)*0.001)+" sec")
 
+    val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
       val ra = addresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed)
     }.toMap
+    val buildEndTime = System.currentTimeMillis()
+    logger.info("End building road address in "+((buildEndTime-buildStartTime)*0.001)+" sec")
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
 
@@ -174,7 +183,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def buildRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress], missing: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
-    eventbus.publish("roadAddress:mergeRoadAddress", fusedRoadAddresses.filter(_.id == -1000))
+    val kept = fusedRoadAddresses.map(_.id).toSet
+    val removed = roadAddrSeq.map(_.id).toSet.diff(kept)
+    val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
+    if(roadAddressesToRegister.nonEmpty)
+      eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
     fusedRoadAddresses.map(ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     }) ++
@@ -303,19 +316,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
-  def mergeRoadAddress(toMergeRoadAddress: Seq[RoadAddress]) = {
+  def mergeRoadAddress(data: RoadAddressMerge) = {
     withDynTransaction {
-      toMergeRoadAddress.foreach(updateMergedSegments)
-      createMergedSegments(toMergeRoadAddress)
+      updateMergedSegments(data.merged)
+      createMergedSegments(data.created)
     }
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
-    RoadAddressDAO.create(mergedRoadAddress)
+    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group))
   }
 
-  def updateMergedSegments(toMergeRoadAddresses: RoadAddress) = {
-    RoadAddressDAO.updateMergedSegmentsByLinkId(toMergeRoadAddresses.linkId)
+  def updateMergedSegments(expiredIds: Set[Long]) = {
+    expiredIds.grouped(500).foreach(group => RoadAddressDAO.updateMergedSegmentsById(group))
   }
 
   def setRoadAddressFloating(ids: Set[Long]): Unit = {
@@ -347,7 +360,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, false, false).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
@@ -400,16 +413,19 @@ object RoadType {
   case object UnknownOwnerRoad extends RoadType { def value = 9; def displayValue = "Omistaja selvittämättä" }
 }
 object LinkGeomSource{
-  val values = Set(NormalLinkInterface, ComplimentaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
+  val values = Set(NormalLinkInterface, ComplimentaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface, UnknownLinkInterface)
 
-  def apply(intValue: Int): LinkGeomSource = values.find(_.value == intValue).orNull
+  def apply(intValue: Int): LinkGeomSource = values.find(_.value == intValue).getOrElse(UnknownLinkInterface)
 
   case object NormalLinkInterface extends LinkGeomSource {def value = 1;}
   case object ComplimentaryLinkInterface extends LinkGeomSource {def value = 2;}
   case object SuravageLinkInterface extends LinkGeomSource {def value = 3;} // Not yet implemented
   case object FrozenLinkInterface extends LinkGeomSource {def value = 4;} // Not yet implemented
   case object HistoryLinkInterface extends LinkGeomSource {def value = 5;}
+  case object UnknownLinkInterface extends LinkGeomSource {def value = 99;}
 }
+
+case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
@@ -442,11 +458,9 @@ object RoadAddressLinkBuilder {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
         (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
 
-      var fusedRoadAddresses: Seq[RoadAddress] = Seq.empty[RoadAddress]
-      groupedRoadAddresses.foreach(record => {
-        fusedRoadAddresses = fusedRoadAddresses ++ RoadAddressLinkBuilder.fuseRoadAddressInGroup(record._2.sortBy(_.startMValue))
-      })
-      fusedRoadAddresses
+      groupedRoadAddresses.flatMap{ case (_, record) =>
+        RoadAddressLinkBuilder.fuseRoadAddressInGroup(record.sortBy(_.startMValue))
+      }.toSeq
     }
   }
 
@@ -460,13 +474,13 @@ object RoadAddressLinkBuilder {
     val roadLinkSource = roadLinkType  match {
       case NormalRoadLinkType => NormalLinkInterface
       case ComplementaryRoadLinkType => ComplimentaryLinkInterface
-      case _ => null
+      case _ => UnknownLinkInterface
     }
 
     val geom = GeometryUtils.truncateGeometry(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLinkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLinkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -481,7 +495,7 @@ object RoadAddressLinkBuilder {
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, null, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, roadLink.constructionType, UnknownLinkInterface, getRoadType(roadLink.administrativeClass, roadLink.linkType),
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
@@ -495,7 +509,7 @@ object RoadAddressLinkBuilder {
     val geom = GeometryUtils.truncateGeometry2D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
-      length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, HistoryLinkInterface, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
+      length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, HistoryLinkInterface, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
       historyRoadLink.attributes, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track.value, municipalityRoadMaintainerMapping.getOrElse(historyRoadLink.municipalityCode, -1), roadAddress.discontinuity.value,
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
@@ -531,8 +545,11 @@ object RoadAddressLinkBuilder {
     val createdDate = toLong(attributes.get("CREATED_DATE"))
     val lastEditedDate = toLong(attributes.get("LAST_EDITED_DATE"))
     val geometryEditedDate = toLong(attributes.get("GEOMETRY_EDITED_DATE"))
+    val endDate = toLong(attributes.get("END_DATE"))
     val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    val latestDateString = latestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime)).map(toIso8601.print(_))
+    val withHistoryLatestDate = compareDateMillisOptions(latestDate, endDate)
+    val timezone = DateTimeZone.forOffsetHours(0)
+    val latestDateString = withHistoryLatestDate.orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime, timezone)).map(toIso8601.print(_))
     latestDateString
   }
 
@@ -558,67 +575,63 @@ object RoadAddressLinkBuilder {
     * Fusing Two RoadAddresses in One
     *
     * @param nextSegment
-    * @param previouusSegment
+    * @param previousSegment
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
-  private def fuseTwo(nextSegment: RoadAddress, previouusSegment: RoadAddress): Seq[RoadAddress] = {
+  private def fuseTwo(nextSegment: RoadAddress, previousSegment: RoadAddress): Seq[RoadAddress] = {
     val cpNext = nextSegment.calibrationPoints
-    val cpPrevious = previouusSegment.calibrationPoints
-    val calibrationPointss = Seq(cpNext._1, cpPrevious._1).flatten
-    def getMValues[T](leftMValue: T, rightMValue: T, minMax: (T, T) => T, getValue: Seq[CalibrationPoint] => T)={
-      if(calibrationPointss.isEmpty)
-        minMax(leftMValue,rightMValue)
-      else
-        getValue(calibrationPointss)
+    val cpPrevious = previousSegment.calibrationPoints
+    def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
+                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T])={
+      /*  Take the value from Calibration Point if available or then use the given operation
+          Starting calibration point from previous segment if available or then it's the starting calibration point for
+          the next segment. If neither, use the min or max operation given as an argument.
+          Similarily for ending calibration points. Cases where the calibration point truly is between segments is
+          left unprocessed.
+       */
+      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue,rightMValue))
     }
 
     val tempId = -1000
 
-    if(nextSegment.roadNumber     == previouusSegment.roadNumber &&
-      nextSegment.roadPartNumber  == previouusSegment.roadPartNumber &&
-      nextSegment.track.value     == previouusSegment.track.value &&
-      nextSegment.startDate       == previouusSegment.startDate &&
-      nextSegment.endDate         == previouusSegment.endDate &&
-      nextSegment.linkId          == previouusSegment.linkId &&
-      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) {
+    if(nextSegment.roadNumber     == previousSegment.roadNumber &&
+      nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
+      nextSegment.track.value     == previousSegment.track.value &&
+      nextSegment.startDate       == previousSegment.startDate &&
+      nextSegment.endDate         == previousSegment.endDate &&
+      nextSegment.linkId          == previousSegment.linkId &&
+      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
 
-      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previouusSegment.startAddrMValue, Math.min, cp => cp.minBy(_.addressMValue).addressMValue)
-      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previouusSegment.endAddrMValue, Math.max, cp => cp.maxBy(_.addressMValue).addressMValue)
-      val startMValue = getMValues[Double](nextSegment.startMValue, previouusSegment.startMValue, Math.min, cp => cp.minBy(_.segmentMValue).segmentMValue)
-      val endMValue = getMValues[Double](nextSegment.endMValue, previouusSegment.endMValue, Math.max, cp => cp.maxBy(_.segmentMValue).segmentMValue)
+      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previousSegment.startAddrMValue, Math.min, (cpp, _) => cpp.map(_.addressMValue))
+      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previousSegment.endAddrMValue, Math.max, (_, cpn) => cpn.map(_.addressMValue))
+      val startMValue = getMValues[Double](nextSegment.startMValue, previousSegment.startMValue, Math.min, (_, _) => None)
+      val endMValue = getMValues[Double](nextSegment.endMValue, previousSegment.endMValue, Math.max, (_, _) => None)
 
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-        val calibrations = Seq(cpNext._1, cpPrevious._1).flatten
-        val left = calibrations.isEmpty match{
-          case true => None
-          case false => Some(calibrations.minBy(_.segmentMValue))
-        }
-        val right = calibrations.isEmpty match{
-          case true => None
-          case false => Some(calibrations.maxBy(_.segmentMValue))
-        }
-        (left, right)
+        val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
+        val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
+        (left.map(_.copy(segmentMValue = startMValue)), right.map(_.copy(segmentMValue = endMValue)))
       }
 
-      if(nextSegment.sideCode.value != previouusSegment.sideCode.value)
-        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previouusSegment.id} cannot have different side codes.")
+      if(nextSegment.sideCode.value != previousSegment.sideCode.value)
+        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
 
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
       val discontinuity = {
-        if(nextSegment.endMValue > previouusSegment.endMValue) {
+        if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
         } else
-          previouusSegment.discontinuity
+          previousSegment.discontinuity
       }
 
-      Seq(RoadAddress(-1000, nextSegment.roadNumber, nextSegment.roadPartNumber,
+      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
         startMValue, endMValue,
         nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
 
-    } else Seq(nextSegment, previouusSegment)
+    } else Seq(nextSegment, previousSegment)
 
   }
 

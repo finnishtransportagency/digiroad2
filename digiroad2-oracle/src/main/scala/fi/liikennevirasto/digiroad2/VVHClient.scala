@@ -9,6 +9,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -141,6 +142,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val linkGeomSource :LinkGeomSource =  LinkGeomSource.NormalLinkInterface
 
+  lazy val logger = LoggerFactory.getLogger(getClass)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
 
@@ -479,6 +481,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   case class VVHError(content: Map[String, Any], url: String)
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+    val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -490,6 +493,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
       optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     } finally {
       response.close()
+      val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
+      if(fetchVVHTimeSec > 1)
+        logger.info("fetch vvh took "+fetchVVHTimeSec+" sec with the following url "+url)
     }
   }
 
