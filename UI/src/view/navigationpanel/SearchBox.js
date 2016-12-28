@@ -24,12 +24,13 @@ if (result.title.indexOf("Link-ID")>-1){
 } else if (result.title.indexOf("Speed Limit-ID")>-1) {
   eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
   eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+} else if (result.nationalId) {
+  eventbus.trigger('nationalId:selected', { lon: result.lon, lat: result.lat, nationalId: result.nationalId });
 }
   else
   {
     eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
   }
-
             });
           }).value();
 

@@ -401,7 +401,7 @@
     };
 
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
-      return $.get('api/massTransitStops/' + nationalId);
+      return $.get('api/massTransitStopsSafe/' + nationalId);
     };
     this.getSpeedLimitsLinkIDFromSegmentID = function(sid) {
       return $.get('api/speedlimit/sid/?segmentid=' + sid);

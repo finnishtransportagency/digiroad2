@@ -103,16 +103,18 @@
      * @returns {*}
      */
     var roadNumberAndNationalIdSearch = function(input) {
-      // TODO: Combine with road number search
-      return backend.getMassTransitStopByNationalIdForSearch(input.text).then(function(result) {
-        var lon = result.lon;
-        var lat = result.lat;
-        var title = input.text + ' (valtakunnallinen id)';
-        if (lon && lat) {
-          return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
-        } else {
-          return $.Deferred().reject('Tuntematon valtakunnallinen id');
+      return $.when(backend.getMassTransitStopByNationalIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
+        var returnObject = roadLocationAPIResultParser(roadData);
+         if (_.get(result[0], 'success')) {
+          var lon = _.get(result[0], 'lon');
+          var lat = _.get(result[0], 'lat');
+          var title = input.text + ' (valtakunnallinen id)';
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text});
+         }
+        if (returnObject.length === 0){
+          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
         }
+            return returnObject;
       });
     };
 
@@ -145,18 +147,20 @@
      * @returns {*}
      */
     var  massTransitStopLiviIdSearch = function(input) {
-      return backend.getMassTransitStopByLiviIdForSearch(input.text).then(function(result) {
-        var lon = result.lon;
-        var lat = result.lat;
-        var title = input.text + ' (Livi-tunnus)';
-        if (lon && lat) {
-          return [{ title: title, lon: lon, lat: lat, nationalId: result.nationalId }];
-        } else {
-          return $.Deferred().reject('Tuntematon Livi-tunnus');
+      return $.when(backend.getMassTransitStopByLiviIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
+        var returnObject = roadLocationAPIResultParser(roadData);
+        if (_.get(result[0], 'success')) {
+          var lon = _.get(result[0], 'lon');
+          var lat = _.get(result[0], 'lat');
+          var title = input.text + ' (Livi-tunnus)';
+          returnObject.push({title: title, lon: lon, lat: lat, nationalId: result.nationalId});
         }
+          if (returnObject.length === 0){
+            return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+          }
+          return returnObject;
       });
     };
-
     /**
      * Get road address coordinates
      *

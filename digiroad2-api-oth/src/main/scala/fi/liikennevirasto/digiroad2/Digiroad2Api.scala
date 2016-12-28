@@ -180,6 +180,34 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+/**
+Returns empty result as Json message, not as page not found
+*/
+    get("/massTransitStopsSafe/:nationalId") {
+      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+      }
+      val nationalId = params("nationalId").toLong
+      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+      massTransitStopReturned._1 match {
+        case Some(stop) =>
+          Map ("id" -> stop.id,
+            "nationalId" -> stop.nationalId,
+            "stopTypes" -> stop.stopTypes,
+            "lat" -> stop.lat,
+            "lon" -> stop.lon,
+            "validityDirection" -> stop.validityDirection,
+            "bearing" -> stop.bearing,
+            "validityPeriod" -> stop.validityPeriod,
+            "floating" -> stop.floating,
+            "propertyData" -> stop.propertyData,
+            "success" -> true)
+        case None =>
+          Map("success" -> false)
+      }
+    }
+
   get("/massTransitStops/livi/:liviId") {
     def validateMunicipalityAuthorization(id: String)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
@@ -200,7 +228,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData)
     }
-    massTransitStop.getOrElse(NotFound("Mass transit stop " + liviId + " not found"))
+    massTransitStop.getOrElse(Map("success" -> false))
   }
 
   get("/massTransitStops/floating") {
@@ -599,7 +627,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     get("/speedlimit/sid/")
     {
-      val user=userProvider.getCurrentUser() // check user rights
+      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+      }
       val segmentID =params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
       val  speedLimit= speedLimitService.find(segmentID.toLong)
      speedLimit match {
