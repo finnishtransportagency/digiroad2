@@ -17,21 +17,21 @@
           .sortBy('distance')
           .map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
-if (result.resultType.indexOf("Link-id")>-1){
-  window.location.hash = "#linkProperty/";
-  eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-  window.location.hash = "#linkProperty/" + coordinatesText.val();
-} else if (result.resultType.indexOf("SpeedLimit")>-1) {
-  eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-  eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
-} else if (result.resultType.indexOf("Mtstop")>-1) {
-  window.location.hash = "#massTransitStop/";
-  window.location.hash="#massTransitStop/"+result.nationalId;
-}
-  else
-  {
-    eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-  }
+              if (result.resultType.indexOf("Link-id")>-1){
+                window.location.hash = "#linkProperty/";
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+                window.location.hash = "#linkProperty/" + coordinatesText.val();
+              } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+                eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+              } else if (result.resultType.indexOf("Mtstop")>-1) {
+                window.location.hash = "#massTransitStop/";
+                window.location.hash="#massTransitStop/"+result.nationalId;
+              }
+              else
+              {
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              }
             });
           }).value();
 
