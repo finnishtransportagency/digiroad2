@@ -22,8 +22,10 @@
                 eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
                 window.location.hash = "#linkProperty/" + coordinatesText.val();
               } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+                eventbus.once('layer:speedLimit:moved', function() {
+                  eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+                });
                 eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-                eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
               } else if (result.resultType.indexOf("Mtstop")>-1) {
                 window.location.hash = "#massTransitStop/";
                 window.location.hash="#massTransitStop/"+result.nationalId;
@@ -54,10 +56,11 @@
               window.location.hash = "#linkProperty/";
               eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
               window.location.hash = "#linkProperty/" + coordinatesText.val();
-            }
-            else if (result.resultType.indexOf("SpeedLimit")>-1) {
+            } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+              eventbus.once('layer:speedLimit:moved', function() {
+                eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+              });
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-              eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
             }
             else {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
