@@ -575,67 +575,63 @@ object RoadAddressLinkBuilder {
     * Fusing Two RoadAddresses in One
     *
     * @param nextSegment
-    * @param previouusSegment
+    * @param previousSegment
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
-  private def fuseTwo(nextSegment: RoadAddress, previouusSegment: RoadAddress): Seq[RoadAddress] = {
+  private def fuseTwo(nextSegment: RoadAddress, previousSegment: RoadAddress): Seq[RoadAddress] = {
     val cpNext = nextSegment.calibrationPoints
-    val cpPrevious = previouusSegment.calibrationPoints
-    val calibrationPointss = Seq(cpNext._1, cpPrevious._1).flatten
-    def getMValues[T](leftMValue: T, rightMValue: T, minMax: (T, T) => T, getValue: Seq[CalibrationPoint] => T)={
-      if(calibrationPointss.isEmpty)
-        minMax(leftMValue,rightMValue)
-      else
-        getValue(calibrationPointss)
+    val cpPrevious = previousSegment.calibrationPoints
+    def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
+                      getValue: (Option[CalibrationPoint], Option[CalibrationPoint]) => Option[T])={
+      /*  Take the value from Calibration Point if available or then use the given operation
+          Starting calibration point from previous segment if available or then it's the starting calibration point for
+          the next segment. If neither, use the min or max operation given as an argument.
+          Similarily for ending calibration points. Cases where the calibration point truly is between segments is
+          left unprocessed.
+       */
+      getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue,rightMValue))
     }
 
     val tempId = -1000
 
-    if(nextSegment.roadNumber     == previouusSegment.roadNumber &&
-      nextSegment.roadPartNumber  == previouusSegment.roadPartNumber &&
-      nextSegment.track.value     == previouusSegment.track.value &&
-      nextSegment.startDate       == previouusSegment.startDate &&
-      nextSegment.endDate         == previouusSegment.endDate &&
-      nextSegment.linkId          == previouusSegment.linkId &&
-      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) {
+    if(nextSegment.roadNumber     == previousSegment.roadNumber &&
+      nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
+      nextSegment.track.value     == previousSegment.track.value &&
+      nextSegment.startDate       == previousSegment.startDate &&
+      nextSegment.endDate         == previousSegment.endDate &&
+      nextSegment.linkId          == previousSegment.linkId &&
+      !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
 
-      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previouusSegment.startAddrMValue, Math.min, cp => cp.minBy(_.addressMValue).addressMValue)
-      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previouusSegment.endAddrMValue, Math.max, cp => cp.maxBy(_.addressMValue).addressMValue)
-      val startMValue = getMValues[Double](nextSegment.startMValue, previouusSegment.startMValue, Math.min, cp => cp.minBy(_.segmentMValue).segmentMValue)
-      val endMValue = getMValues[Double](nextSegment.endMValue, previouusSegment.endMValue, Math.max, cp => cp.maxBy(_.segmentMValue).segmentMValue)
+      val startAddrMValue = getMValues[Long](nextSegment.startAddrMValue, previousSegment.startAddrMValue, Math.min, (cpp, _) => cpp.map(_.addressMValue))
+      val endAddrMValue = getMValues[Long](nextSegment.endAddrMValue, previousSegment.endAddrMValue, Math.max, (_, cpn) => cpn.map(_.addressMValue))
+      val startMValue = getMValues[Double](nextSegment.startMValue, previousSegment.startMValue, Math.min, (_, _) => None)
+      val endMValue = getMValues[Double](nextSegment.endMValue, previousSegment.endMValue, Math.max, (_, _) => None)
 
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-        val calibrations = Seq(cpNext._1, cpPrevious._1).flatten
-        val left = calibrations.isEmpty match{
-          case true => None
-          case false => Some(calibrations.minBy(_.segmentMValue))
-        }
-        val right = calibrations.isEmpty match{
-          case true => None
-          case false => Some(calibrations.maxBy(_.segmentMValue))
-        }
-        (left, right)
+        val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
+        val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
+        (left.map(_.copy(segmentMValue = startMValue)), right.map(_.copy(segmentMValue = endMValue)))
       }
 
-      if(nextSegment.sideCode.value != previouusSegment.sideCode.value)
-        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previouusSegment.id} cannot have different side codes.")
+      if(nextSegment.sideCode.value != previousSegment.sideCode.value)
+        throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
 
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry((nextSegment.geom ++ previouusSegment.geom), startMValue, endMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
       val discontinuity = {
-        if(nextSegment.endMValue > previouusSegment.endMValue) {
+        if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
         } else
-          previouusSegment.discontinuity
+          previousSegment.discontinuity
       }
 
-      Seq(RoadAddress(-1000, nextSegment.roadNumber, nextSegment.roadPartNumber,
+      Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.linkId,
         startMValue, endMValue,
         nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
 
-    } else Seq(nextSegment, previouusSegment)
+    } else Seq(nextSegment, previousSegment)
 
   }
 
