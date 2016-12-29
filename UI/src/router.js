@@ -50,9 +50,19 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          eventbus.once('linkProperties:available', function () {
-            models.selectedLinkProperty.open(response.id);
-          });
+          if (response.source == 1) {
+            eventbus.once('linkProperties:available', function () {
+              models.selectedLinkProperty.open(response.id);
+            });
+          } else if (response.source == 2) {
+            eventbus.once('linkProperties:available', function () {
+              eventbus.trigger('roadLinkComplementaryCheckBox:check');
+              eventbus.trigger('roadLinkComplementary:show');
+              eventbus.once('linkProperties:available', function () {
+                models.selectedLinkProperty.open(response.id);
+              });
+            });
+          }
           map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
         });
       },

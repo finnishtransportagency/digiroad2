@@ -47,6 +47,11 @@
       [3, 'Suunnitteilla'] //Planned
     ];
 
+    var linkSources= [
+      [1, 'MML'],
+      [2, 'Täydentävä geometria']
+    ];
+
     var getLocalizedLinkType = function(linkType) {
       var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
       return localizedLinkType && localizedLinkType[1];
@@ -60,6 +65,11 @@
     var getConstructionType = function(constructionTypeId){
       var constructionType = _.find(constructionTypes, function(value) { return value[0] === constructionTypeId; });
       return constructionType && constructionType[1];
+    };
+
+    var getLinkSource = function(linkSourceId){
+      var linkSource = _.find(linkSources, function(value) { return value[0] === linkSourceId; });
+      return linkSource && linkSource[1];
     };
 
     var checkIfMultiSelection = function(mmlId){
@@ -100,6 +110,9 @@
             '</div>' +
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
             staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
             '<div class="form-group editable">' +
@@ -172,6 +185,7 @@
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.constructionType = getConstructionType(linkProperties.constructionType) || '';
+        linkProperties.linkSource = getLinkSource(linkProperties.linkSource) || '';
         linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
