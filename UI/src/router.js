@@ -60,7 +60,7 @@
               eventbus.trigger('roadLinkComplementary:show');
               eventbus.once('linkProperties:available', function () {
                 models.selectedLinkProperty.open(response.id);
-              })
+              });
             });
           }
           map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
