@@ -57,7 +57,7 @@
           var linkid = _.get(speedlimitdata[0], 'linkId');
           var y = _.get(speedlimitdata[0], 'latitude');
           var x= _.get(speedlimitdata[0], 'longitude');
-          var title = "Speed Limit-ID: " + input;
+          var title = "Nopeusrajoitus-ID: " + input;
             returnObject.push({title: title, lon: x, lat: y, linkid:linkid, resultType:"SpeedLimit"});
         }
         if (returnObject.length===0){
