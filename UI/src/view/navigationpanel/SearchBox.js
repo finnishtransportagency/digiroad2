@@ -1,6 +1,6 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
-    var tooltip = "Hae katuosoitteella, tieosoitteella tai koordinaateilla";
+    var tooltip ="Hae katuosoitteella, tieosoitteella, koordinaateilla tai kohteen ID:llä (esim. link_ID tai pysäkin valtakunnallinen_ID)";
     var groupDiv = $('<div class="panel-group search-box"/>');
     var coordinatesDiv = $('<div class="panel"/>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
@@ -50,6 +50,7 @@
           if (results.length === 1) {
             var result = results[0];
             if (result.resultType.indexOf("Mtstop")>-1) {
+              window.location.hash = "#massTransitStop/";
               window.location.hash="#massTransitStop/"+result.nationalId;
             }
             else if (result.resultType.indexOf("Link-id")>-1) {
