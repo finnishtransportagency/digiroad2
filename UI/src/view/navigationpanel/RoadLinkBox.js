@@ -5,16 +5,16 @@
 
     var roadLinkCheckBoxs = '<div class="panel-section">' +
           '<div class="check-box-container">' +
-            '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+            '<input id="historyCheckbox" type="checkbox" /> <span>Näytä poistuneet tielinkit</span>' +
           '</div>' +
           '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
           '</div>' +
         '</div>';
 
     var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
           '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
           '</div>' +
         '</div>';
 
@@ -210,6 +210,10 @@
             eventbus.trigger('roadLinkComplementary:hide');
           }
         }
+      });
+
+      eventbus.on('roadLinkComplementaryCheckBox:check', function() {
+        checkboxContainer.find('#complementaryCheckbox').prop('checked', true);
       });
     };
 

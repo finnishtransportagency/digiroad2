@@ -286,12 +286,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Used by Digiroad2Api /roadlinks/:linkId GET endpoint.
     *
     */
-  def getRoadLinkMiddlePointByLinkId(linkId: Long): Option[(Long, Point)] = {
+  def getRoadLinkMiddlePointByLinkId(linkId: Long): Option[(Long, Point, LinkGeomSource)] = {
     val middlePoint: Option[Point] = vvhClient.fetchByLinkId(linkId)
       .flatMap { vvhRoadLink =>
         GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       }
-    middlePoint.orElse(getComplementaryLinkMiddlePointByLinkId(linkId)).map((linkId, _))
+    middlePoint.map((linkId, _, LinkGeomSource.NormalLinkInterface)).orElse(getComplementaryLinkMiddlePointByLinkId(linkId).map((linkId, _, LinkGeomSource.ComplimentaryLinkInterface)))
   }
 
   def getComplementaryLinkMiddlePointByLinkId(linkId: Long): Option[Point] = {
