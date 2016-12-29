@@ -39,7 +39,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
     val geometry = vvhClient.fetchByLinkId(linkId).get.geometry
-    GeometryUtils.truncateGeometry(geometry, startMeasure, endMeasure)
+    GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleLinearAssetDao) = {

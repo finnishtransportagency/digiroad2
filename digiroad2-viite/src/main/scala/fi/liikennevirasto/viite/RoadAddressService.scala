@@ -477,7 +477,7 @@ object RoadAddressLinkBuilder {
       case _ => UnknownLinkInterface
     }
 
-    val geom = GeometryUtils.truncateGeometry(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLinkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
@@ -617,7 +617,7 @@ object RoadAddressLinkBuilder {
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
 
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry2D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
