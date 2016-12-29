@@ -362,10 +362,10 @@ object RoadAddressDAO {
 
   def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
     sqlu"""
-           insert into missing_road_address (link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code)
-           values (${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
-           ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber},
-           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, ${missingRoadAddress.anomaly.value})
+           insert into missing_road_address
+(select ${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
+           ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber}, ${missingRoadAddress.anomaly.value},
+           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue} FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${missingRoadAddress.linkId}))
            """.execute
   }
 

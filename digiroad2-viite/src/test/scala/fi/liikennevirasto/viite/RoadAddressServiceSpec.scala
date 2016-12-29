@@ -112,13 +112,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadAddressLinks = Seq(
         RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PrivateRoadType,  Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
+      val oldMissingRA = RoadAddressDAO.getMissingRoadAddresses(Set()).size
       roadAddressLinks.foreach { links =>
         RoadAddressDAO.createMissingRoadAddress(
           MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
-            Some(links.roadPartNumber), None, None, Anomaly.apply(1)))
+            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven))
       }
       val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId)
-
+      RoadAddressDAO.getMissingRoadAddresses(Set()) should have size(oldMissingRA)
       linksFromDB(0)._2 should be(0)
       linksFromDB(0)._3 should be(0)
       linksFromDB(0)._4 should be(1)
