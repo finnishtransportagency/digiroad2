@@ -24,7 +24,13 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   def checkRoad(roadNumber: Long) = {
     println(s"Checking road: $roadNumber")
     val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
-    roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    if (roadPartNumbers.size > 3) {
+      roadPartNumbers.sliding(roadPartNumbers.size/3, roadPartNumbers.size/3).toSeq.par.flatMap(l => {
+        l.flatMap(checkRoadPart(roadNumber))
+      })
+    }
+    else
+      roadPartNumbers.flatMap(checkRoadPart(roadNumber))
   }
 
   def checkRoadNetwork() = {
