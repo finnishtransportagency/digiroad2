@@ -352,8 +352,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry2D(rl.geometry, address.startMValue, address.endMValue))
-      RoadAddressDAO.changeRoadAddressFloating(float = roadLink.isEmpty, address.id,
-        addressGeometry)
+      if (roadLink.isEmpty || addressGeometry.isEmpty)
+        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
+      else {
+        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom))
+          RoadAddressDAO.changeRoadAddressFloating(float = false, address.id, addressGeometry)
+      }
     }
   }
   /*
