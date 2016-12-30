@@ -31,7 +31,6 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     val roadNumbers = RoadAddressDAO.getValidRoadNumbers
     println(s"Got ${roadNumbers.size} roads")
     val groupSize = 1+(roadNumbers.size-1)/4
-    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => {println(l)
-      l.flatMap(checkRoad) }).toList
+    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => l.flatMap(checkRoad)).toList
   }
 }
