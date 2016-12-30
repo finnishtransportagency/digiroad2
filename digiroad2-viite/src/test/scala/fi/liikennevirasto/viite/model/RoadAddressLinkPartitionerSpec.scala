@@ -3,8 +3,8 @@ package fi.liikennevirasto.viite.model
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.viite.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import org.scalatest.{FunSuite, Matchers}
 
