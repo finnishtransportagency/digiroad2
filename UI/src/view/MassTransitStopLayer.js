@@ -362,7 +362,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
       bearing: bearing,
-      validityDirection: directions_decode[nearestLine.direction],
+      validityDirection: directions_decode[nearestLine.trafficDirection],
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,
