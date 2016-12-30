@@ -363,9 +363,12 @@ object RoadAddressDAO {
   def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
     sqlu"""
            insert into missing_road_address
-(select ${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
-           ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber}, ${missingRoadAddress.anomaly.value},
-           ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue} FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${missingRoadAddress.linkId}))
+           (select ${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
+             ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber}, ${missingRoadAddress.anomaly.value},
+             ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue} FROM dual
+            WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${missingRoadAddress.linkId}) AND
+              NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (pos.id = lrm_position_id)
+                WHERE link_id = ${missingRoadAddress.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
            """.execute
   }
 
