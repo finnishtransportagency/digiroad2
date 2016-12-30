@@ -118,11 +118,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
     val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("End fetch vvh road links in "+((fetchVVHEndTime-fetchVVHStartTime)*0.001)+" sec")
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val fetchVVHEndTime = System.currentTimeMillis()
+    logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime-fetchVVHStartTime)*0.001))
     val missingLinkIds = linkIds -- floating.keySet
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
@@ -130,7 +130,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
-    logger.info("End fetch missing road address in "+((fetchMissingRoadAddressEndTime-fetchMissingRoadAddressStartTime)*0.001)+" sec")
+    logger.info("End fetch missing road address in %.3f sec".format((fetchMissingRoadAddressEndTime-fetchMissingRoadAddressStartTime)*0.001))
 
     val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
@@ -139,7 +139,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildRoadAddressLink(rl, ra, missed)
     }.toMap
     val buildEndTime = System.currentTimeMillis()
-    logger.info("End building road address in "+((buildEndTime-buildStartTime)*0.001)+" sec")
+    logger.info("End building road address in %.3f sec".format((buildEndTime-buildStartTime)*0.001))
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
 

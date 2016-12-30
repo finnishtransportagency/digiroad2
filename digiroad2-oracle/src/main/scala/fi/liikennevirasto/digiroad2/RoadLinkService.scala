@@ -207,8 +207,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val complementaryLinks = Await.result(vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities), Duration.Inf)
-    val (changes, links) = Await.result(vvhClient.queryChangesByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+    val fut = for{
+      f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
+      f2Result <- vvhClient.queryChangesByBoundsAndMunicipalitiesF(bounds, municipalities)
+      f3Result <- vvhClient.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
+    } yield (f1Result, f2Result, f3Result)
+
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
     withDynTransaction {
       (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
