@@ -352,7 +352,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry2D(rl.geometry, address.startMValue, address.endMValue))
-      if (roadLink.isEmpty || addressGeometry.isEmpty)
+      if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
       else {
         if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom))
