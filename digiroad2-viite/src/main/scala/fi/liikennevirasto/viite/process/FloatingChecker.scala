@@ -9,11 +9,14 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadPart(roadNumber: Long)(roadPartNumber: Long) = {
     def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[VVHRoadlink]): Boolean = {
-      !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue)
+      !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
+      !roadLinks.exists(rl => GeometryUtils.areAdjacent(
+        GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
+        ra.geom))
     }
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
+    val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
     val floatingSegments = roadAddressList.filter(ra => roadLinks.get(ra.linkId).isEmpty || outsideOfGeometry(ra, roadLinks.getOrElse(ra.linkId, Seq())))
     floatingSegments
   }

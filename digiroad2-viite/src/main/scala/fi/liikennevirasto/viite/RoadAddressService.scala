@@ -341,7 +341,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   /**
-    * For easier unit testing
+    * For easier unit testing and use
     * @param ids
     */
   def checkRoadAddressFloatingWithoutTX(ids: Set[Long]): Unit = {
