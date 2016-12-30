@@ -10,9 +10,9 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   def checkRoadPart(roadNumber: Long)(roadPartNumber: Long) = {
     def outsideOfGeometry(ra: RoadAddress, roadLinks: Seq[VVHRoadlink]): Boolean = {
       !roadLinks.exists(rl => GeometryUtils.geometryLength(rl.geometry) > ra.startMValue) ||
-      !roadLinks.exists(rl => GeometryUtils.areAdjacent(
-        GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
-        ra.geom))
+        !roadLinks.exists(rl => GeometryUtils.areAdjacent(
+          GeometryUtils.truncateGeometry2D(rl.geometry, ra.startMValue, ra.endMValue),
+          ra.geom))
     }
     val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
@@ -24,18 +24,14 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
   def checkRoad(roadNumber: Long) = {
     println(s"Checking road: $roadNumber")
     val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
-    if (roadPartNumbers.size > 3) {
-      roadPartNumbers.sliding(roadPartNumbers.size/3, roadPartNumbers.size/3).toSeq.par.flatMap(l => {
-        l.flatMap(checkRoadPart(roadNumber))
-      })
-    }
-    else
-      roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    roadPartNumbers.flatMap(checkRoadPart(roadNumber))
   }
 
-  def checkRoadNetwork() = {
+  def checkRoadNetwork(): List[RoadAddress] = {
     val roadNumbers = RoadAddressDAO.getValidRoadNumbers
     println(s"Got ${roadNumbers.size} roads")
-    roadNumbers.flatMap(checkRoad)
+    val groupSize = 1+(roadNumbers.size-1)/4
+    roadNumbers.sliding(groupSize, groupSize).toSeq.par.flatMap(l => {println(l)
+      l.flatMap(checkRoad) }).toList
   }
 }
