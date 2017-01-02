@@ -59,7 +59,11 @@
           }
         });
       } else {
-        selectedMassTransitStopModel.save();
+          if(selectedMassTransitStopModel.validateDirectionsForSave()){
+              selectedMassTransitStopModel.save();
+          }else{
+              //TODO: ShowPopUpMessage
+          }
       }
     });
     var updateStatus = function() {
