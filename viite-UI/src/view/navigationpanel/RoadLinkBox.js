@@ -61,7 +61,7 @@
       [99,'Tuntematon']
     ];
     var constructionTypes = [
-      [0, 'Rakenteilla'],
+      [0, 'Muu tieverkko, rakenteilla'],
       [1, 'Tuntematon, rakenteilla']
     ];
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
