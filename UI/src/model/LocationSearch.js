@@ -57,7 +57,7 @@
           var linkid = _.get(speedlimitdata[0], 'linkId');
           var y = _.get(speedlimitdata[0], 'latitude');
           var x= _.get(speedlimitdata[0], 'longitude');
-          var title = "Nopeusrajoitus-ID: " + input;
+          var title = input + " (nopeusrajoituksen ID)";
             returnObject.push({title: title, lon: x, lat: y, linkid:linkid, resultType:"SpeedLimit"});
         }
         if (returnObject.length===0){
@@ -81,7 +81,7 @@
         if (_.get(linkdata[0], 'success')) {
           var x = _.get(linkdata[0], 'middlePoint.x');
           var y = _.get(linkdata[0], 'middlePoint.y');
-          var title = "Link-ID: " + input.text;
+          var title = input.text + " (linkin ID)";
           returnObject.push({title: title, lon: x, lat: y, resultType: "Link-id"});
         }
           if (returnObject.length === 0){
@@ -103,7 +103,7 @@
          if (_.get(result[0], 'success')) {
           var lon = _.get(result[0], 'lon');
           var lat = _.get(result[0], 'lat');
-          var title = input.text + ' (valtakunnallinen id)';
+          var title = input.text + ' (valtakunnallinen ID)';
           returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text,resultType:"Mtstop"});
          }
         if (returnObject.length === 0){
@@ -148,7 +148,7 @@
           var lon = _.get(result[0], 'lon');
           var lat = _.get(result[0], 'lat');
           var nationalid=_.get(result[0], 'nationalId');
-          var title = input.text + ' (Livi-tunnus)';
+          var title = input.text + ' (pysäkin Livi-tunniste)';
           returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalid, resultType:"Mtstop"});
         }
           if (returnObject.length === 0){
