@@ -88,6 +88,15 @@
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(function(properties) {
+
+        _.find(properties, function (property) {
+          return property.publicId === 'vaikutussuunta';
+        }).values.map(function (value) {
+          value.propertyValue = String(currentAsset.validityDirection);
+          value.propertyDisplayValue = String(currentAsset.validityDirection);
+          return value;
+        });
+
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
