@@ -177,13 +177,18 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
-    var drawUnknownUnderConstructionFeatures = function(roadLinks) {
+    var drawUnderConstructionFeatures = function(roadLinks) {
       var constructionTypeValues = [1];
-      var type = 'unknownConstructionType';
-      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+      var unknownType = 'unknownConstructionType';
+      var dashedUnknownUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.anomaly === 1;
       });
-      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedRoadLinks, type));
+      var type = 'constructionType';
+      var dashedUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType);
+      });
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnknownUnderConstructionRoadLinks, unknownType));
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnderConstructionRoadLinks, type));
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks) {
@@ -275,7 +280,7 @@
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
         drawBorderLineFeatures(roadLinks);
-        drawUnknownUnderConstructionFeatures(roadLinks);
+        drawUnderConstructionFeatures(roadLinks);
       } else if (linkPropertiesModel.getDataset() === 'link-type') {
         drawDashedLineFeaturesForType(roadLinks);
       }
