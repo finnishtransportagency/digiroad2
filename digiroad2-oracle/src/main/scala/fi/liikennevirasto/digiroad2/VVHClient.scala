@@ -786,6 +786,10 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
   }
 
+  def fetchComplementaryRoadlinksF(linkIds: Set[Long]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchComplementaryRoadlinks(linkIds))
+  }
+
   /**
     * Returns VVH road links.
     * Used by VVHClient.fetchComplementaryRoadlinks(linkId).
