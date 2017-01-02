@@ -12,7 +12,7 @@
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
         var vkmResultToCoordinates = function(r) {
-          return { title: r.address, lon: r.x, lat: r.y};
+          return { title: r.address, lon: r.x, lat: r.y ,resultType:"street" };
         };
         if (resultLength > 0) {
           return _.map(result.results, vkmResultToCoordinates);
@@ -182,7 +182,7 @@
      * @returns {*|String}
      */
     var resultFromCoordinates = function(coordinates) {
-      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon });
+      var result = _.assign({}, coordinates, { title: coordinates.lat + ',' + coordinates.lon, resultType:"coordinates" });
       return $.Deferred().resolve([result]);
     };
 
