@@ -276,14 +276,10 @@
       me.deactivateSelection();
     };
 
-    var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
-      if (linkPropertiesModel.getDataset() === 'functional-class') {
-        drawDashedLineFeatures(roadLinks);
-        drawBorderLineFeatures(roadLinks);
-        drawUnderConstructionFeatures(roadLinks);
-      } else if (linkPropertiesModel.getDataset() === 'link-type') {
-        drawDashedLineFeaturesForType(roadLinks);
-      }
+    var drawDashedLineFeaturesIfApplicable = function (roadLinks) {
+      drawDashedLineFeatures(roadLinks);
+      drawBorderLineFeatures(roadLinks);
+      drawUnderConstructionFeatures(roadLinks);
     };
 
     this.layerStarted = function(eventListener) {
@@ -315,7 +311,7 @@
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
     };
-    
+
     var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
