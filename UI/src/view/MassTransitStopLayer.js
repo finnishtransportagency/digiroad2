@@ -354,7 +354,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var createNewAsset = function(lonlat, placement) {
-    var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
+    var directions_decode = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);

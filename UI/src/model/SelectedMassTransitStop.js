@@ -90,11 +90,11 @@
       backend.getAssetTypeProperties(function(properties) {
 
         _.find(properties, function (property) {
-            if(property.publicId === 'vaikutussuunta'){
-                property.values.propertyValue = String(currentAsset.validityDirection);
-                property.values.propertyDisplayValue = String(currentAsset.validityDirection);
-            }
-            return property;
+          return property.publicId === 'vaikutussuunta';
+        }).values.map(function (value) {
+          value.propertyValue = String(currentAsset.validityDirection);
+          value.propertyDisplayValue = String(currentAsset.validityDirection);
+          return value;
         });
 
         currentAsset.propertyMetadata = properties;
@@ -264,7 +264,7 @@
 
     var validateDirectionsForSave = function () {
         if(roadCollection) {
-            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lat, currentAsset.payload.lon);
+            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
             var linkId = nearestLine.linkId;
             var massTransitStopDirection = currentAsset.payload.validityDirection;
             if (!currentAsset.linkId)
