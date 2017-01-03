@@ -1,6 +1,18 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
 
+    /*
+     Used z-indexing // TODO: Return from API
+
+     4 = complimentary
+     3 = unknownRoadAddress / unknownUnderConstruction
+     2 = floating roadAddresses
+     1 = dashed features dark/light - overlay - overlay-dark
+     0 = normalRoadAddresses / under construction
+     -1 = border features - underlay
+
+     */
+
     var normalRoadAddressUnselectedRules = [
       new OpenLayersRule().where('roadLinkType').is(1).use({graphicZIndex: 0})
     ];
@@ -9,11 +21,11 @@
     ];
 
     var complementaryRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 4})
     ];
 
     var complementaryRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 4})
     ];
 
     var unknownRoadAddressAnomalyRules = [
@@ -24,10 +36,10 @@
     ];
 
     var floatingRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: 2 })
     ];
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: -99})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: 2})
     ];
 
     var typeFilter = function(type) {
