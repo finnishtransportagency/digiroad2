@@ -9,6 +9,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,7 +24,8 @@ object FeatureClass {
 
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map()) extends RoadLinkLike {
+                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
+                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.Unknown) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -138,14 +140,13 @@ object ChangeType {
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
+  protected val linkGeomSource :LinkGeomSource =  LinkGeomSource.NormalLinkInterface
 
+  lazy val logger = LoggerFactory.getLogger(getClass)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
 
   private val roadLinkDataService = "Roadlink_data"
-
-
-
 
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
@@ -480,6 +481,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   case class VVHError(content: Map[String, Any], url: String)
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
+    val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -488,15 +490,25 @@ class VVHClient(vvhRestApiEndPoint: String) {
       val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
       val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
+      optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     } finally {
       response.close()
+      val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
+      if(fetchVVHTimeSec > 1)
+        logger.info("fetch vvh took "+fetchVVHTimeSec+" sec with the following url "+url)
     }
   }
 
-  protected def roadLinkInUse(feature: Map[String, Any]): Boolean = {
+  /**
+    * Constructions Types Allows to return
+    * In Use - 0
+    * Under Construction - 1
+    * Planned - 3
+    */
+  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt] == BigInt(0)
+    val linkStatus = attributes.getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
+    linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
   protected def extractFeatureAttributes(feature: Map[String, Any]): Map[String, Any] = {
@@ -525,7 +537,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
+      extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource)
+
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
@@ -537,10 +551,11 @@ class VVHClient(vvhRestApiEndPoint: String) {
   protected def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
       "MTKID",
+      "MTKCLASS",
       "HORIZONTALACCURACY",
       "VERTICALACCURACY",
       "VERTICALLEVEL",
-      "CONSTRUCTIONTYPE",
+      "CONSTRUCTIONTYPE",//TODO Remove this attribute from here when VVHHistoryRoadLink have a different way to get the ConstructionType like VVHRoadlink
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",
@@ -604,6 +619,20 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .getOrElse(Unknown)
   }
 
+  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+    Option(attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(ConstructionType.apply)
+      .getOrElse(ConstructionType.InUse)
+  }
+
+  protected def extractLinkGeomSource(attributes: Map[String, Any]): LinkGeomSource = {
+    Option(attributes("LINK_SOURCE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(LinkGeomSource.apply)
+      .getOrElse(LinkGeomSource.Unknown)
+  }
+
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
@@ -643,6 +672,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
 class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkComplementaryService = "Roadlink_complimentary"
+  override val linkGeomSource : LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -678,6 +708,21 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH complementary road links in a municipality
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
+    */
+  def queryComplimentaryByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(bounds, municipalities).
     */
@@ -686,12 +731,31 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road links filtered by walkways (MTKCLASS=12314). Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService..
+    *
+    */
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByBoundsAndMunicipalities(bounds, municipalities).filter(_.attributes("MTKCLASS").equals(12314)))
+  }
+
+
+  /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
     */
   def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalityAndRoadNumbers(municipality, roadNumbers))
   }
+
+  /**
+    * Returns VVH complimentary road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getComplementaryRoadLinksFromVVH(municipality).
+    */
+  def fetchComplimentaryByMunicipality(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryComplimentaryByMunicipality(municipality))
+  }
+
 
   private def resolveComplementaryVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
@@ -709,11 +773,21 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road link by linkid
+    * Used by VVHClient.fetchComplementaryRoadlinks
+    */
+  def fetchComplementaryRoadlink(linkId: Long): Option[VVHRoadlink] = fetchComplementaryRoadlinks(Set(linkId)).headOption
+
+  /**
     * Returns VVH road links.
-    * Used by RoadLinkService.getComplementaryLinkMiddlePointByLinkId(linkId).
+    * Used by RoadLinkService.getComplementaryLinkMiddlePointByLinkId(linkId) and VVHClient.fetchComplementaryRoadlink.
     */
    def fetchComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     fetchComplementaryRoadlinks(linkIds, None, true, roadLinkFromFeature, withLinkIdFilter)
+  }
+
+  def fetchComplementaryRoadlinksF(linkIds: Set[Long]): Future[Seq[VVHRoadlink]] = {
+    Future(fetchComplementaryRoadlinks(linkIds))
   }
 
   /**
@@ -746,6 +820,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint){
 
   private val roadLinkDataHistoryService = "Roadlink_data_history"
+  override val linkGeomSource : LinkGeomSource = LinkGeomSource.HistoryLinkInterface
 
   private def historyLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
     val definitionStart = "[{"

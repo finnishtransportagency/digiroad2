@@ -1,8 +1,14 @@
 package fi.liikennevirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import org.joda.time.DateTime
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -76,4 +82,65 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       RoadAddressDAO.changeRoadAddressFloating(true, address.id, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
     }
   }
+
+  test("Create Road Address") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val newSize = currentSize + 1
+      RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(newSize)
+    }
+  }
+
+  test("Create Road Address With Calibration Point") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (2)
+    }
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (3)
+    }
+  }
+
+  test("Delete Road Addresses") {
+    runWithRollback {
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 206)
+      addresses.nonEmpty should be (true)
+      RoadAddressDAO.remove(addresses) should be (addresses.size)
+      sql"""SELECT COUNT(*) FROM ROAD_ADDRESS WHERE ROAD_NUMBER = 5 AND ROAD_PART_NUMBER = 206 AND VALID_TO IS NULL""".as[Long].first should be (0L)
+    }
+  }
+
+  test("test update for merged Road Addresses") {
+    val localMockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+          val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+            Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      localRoadAddressService.mergeRoadAddress(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
+    }
+  }
+
 }

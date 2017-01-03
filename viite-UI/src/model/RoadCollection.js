@@ -3,8 +3,8 @@
     var selected = false;
     var original = _.clone(data);
 
-    var getSegmentId = function() {
-      return data.id;
+    var getId = function() {
+      return data.roadLinkId || data.linkId;
     };
 
     var getData = function() {
@@ -44,7 +44,7 @@
     };
 
     return {
-      getId: getSegmentId,
+      getId: getId,
       getData: getData,
       getPoints: getPoints,
       setLinkProperty: setLinkProperty,

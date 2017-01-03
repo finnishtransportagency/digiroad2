@@ -19,7 +19,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.id !== 'undefined') {
+      if(typeof feature.attributes.linkId !== 'undefined') {
         selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
         unhighlightFeatures();
         currentRenderIntent = 'select';
@@ -101,10 +101,10 @@
     };
 
     var createMouseClickHandler = function(floatlink) {
-      return function(){
+      return function(event){
         selectControl.unselectAll();
         var feature = _.find(roadLayer.layer.features, function (feat) {
-          return feat.attributes.id === floatlink.id;
+          return feat.attributes.linkId === floatlink.linkId;
         });
         if(event.type === 'click'){
           selectControl.select(_.assign({singleLinkSelect: false}, feature));
@@ -133,10 +133,10 @@
         });
         var attributes = {
           dashedLineFeature: roadLink[dashedLineFeature],
-          id: roadLink.id,
+          linkId: roadLink.linkId,
           type: 'overlay',
           linkType: roadLink.linkType,
-          zIndex: 2
+          zIndex: 1
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
@@ -177,6 +177,20 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
+    var drawUnderConstructionFeatures = function(roadLinks) {
+      var constructionTypeValues = [1];
+      var unknownType = 'unknownConstructionType';
+      var dashedUnknownUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.anomaly === 1;
+      });
+      var type = 'constructionType';
+      var dashedUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType);
+      });
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnknownUnderConstructionRoadLinks, unknownType));
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnderConstructionRoadLinks, type));
+    };
+
     var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -188,22 +202,49 @@
       var adminClass = 'Municipality';
       var roadClasses = [1,2,3,4,5,6,7,8,9,10,11];
       var borderLineFeatures = _.filter(roadLinks, function(roadLink) {
-        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass);
+        return _.contains(adminClass, roadLink.administrativeClass) && _.contains(roadClasses, roadLink.roadClass) && roadLink.roadLinkType !== -1 && !(roadLink.roadLinkType === -1 && roadLink.roadClasses === 3);
       });
       var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
       roadLayer.layer.addFeatures(features);
     };
-
+    var createDarkDashedLineFeatures = function(roadLinks, type){
+      return darkDashedLineFeatures(roadLinks, type).concat(calculateMidPointForMarker(roadLinks, type));
+    };
+    var darkDashedLineFeatures = function(roadLinks, darkDashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          dashedLineFeature: roadLink[darkDashedLineFeature],
+          linkId: roadLink.linkId,
+          type: 'overlay-dark',
+          linkType: roadLink.linkType,
+          zIndex: 1
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+    var calculateMidPointForMarker = function(roadLinks, type){
+      return _.map(roadLinks, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var attributes = {type: type, linkId: link.linkId};
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      });
+    };
     var createBorderLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var attributes = {
-          id: roadLink.id,
+          linkId: roadLink.linkId,
           type: 'underlay',
-          linkType: roadLink.linkType,
-          zIndex: roadLink.zIndex
+          linkType: roadLink.roadLinkType
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
@@ -211,7 +252,7 @@
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.features, function (feature) {
-        return selectedLinkProperty.isSelectedById(feature.attributes.id);
+        return selectedLinkProperty.isSelectedByLinkId(feature.attributes.linkId);
       });
     };
 
@@ -235,13 +276,10 @@
       me.deactivateSelection();
     };
 
-    var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
-      if (linkPropertiesModel.getDataset() === 'functional-class') {
-        drawDashedLineFeatures(roadLinks);
-        drawBorderLineFeatures(roadLinks);
-      } else if (linkPropertiesModel.getDataset() === 'link-type') {
-        drawDashedLineFeaturesForType(roadLinks);
-      }
+    var drawDashedLineFeaturesIfApplicable = function (roadLinks) {
+      drawDashedLineFeatures(roadLinks);
+      drawBorderLineFeatures(roadLinks);
+      drawUnderConstructionFeatures(roadLinks);
     };
 
     this.layerStarted = function(eventListener) {
@@ -252,11 +290,11 @@
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return link.id !== 0 && feature.attributes.id === link.id || link.id === 0 && feature.attributes.linkId === link.linkId;
+          return link.linkId !== 0 && feature.attributes.linkId === link.linkId;
         });
         if (feature) {
           _.each(selectControl.layer.selectedFeatures, function (selectedFeature){
-            if(selectedFeature.attributes.id !== feature.attributes.id) {
+            if(selectedFeature.attributes.linkId !== feature.attributes.linkId) {
               selectControl.select(feature);
             }
           });
@@ -273,7 +311,7 @@
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
     };
-    
+
     var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();

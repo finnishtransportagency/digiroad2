@@ -22,6 +22,12 @@
       };
     });
 
+    this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox) {
+      return {
+        url: 'api/roadlinks/complementaries?bbox=' + boundingBox
+      };
+    });
+
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/manoeuvres?bbox=' + boundingBox

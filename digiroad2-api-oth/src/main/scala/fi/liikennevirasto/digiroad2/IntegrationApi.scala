@@ -138,7 +138,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
         "linkType" -> roadLink.linkType.value,
-        "modifiedAt" -> roadLink.modifiedAt) ++ roadLink.attributes
+        "modifiedAt" -> roadLink.modifiedAt,
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes
     }
   }
 

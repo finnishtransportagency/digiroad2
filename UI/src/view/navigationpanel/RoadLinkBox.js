@@ -3,8 +3,19 @@
     var className = 'road-link';
     var title = 'Tielinkki';
 
-    var historyRoadLinkCheckBox = '<div class="check-box-container">' +
-        '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+    var roadLinkCheckBoxs = '<div class="panel-section">' +
+          '<div class="check-box-container">' +
+            '<input id="historyCheckbox" type="checkbox" /> <span>Näytä poistuneet tielinkit</span>' +
+          '</div>' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
+          '</div>' +
+        '</div>';
+
+    var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
+          '</div>' +
         '</div>';
 
     var expandedTemplate = _.template('' +
@@ -64,7 +75,7 @@
         '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
         '</div>';
     }).join('');
-    functionalClassLegend.append(functionalClassLegendEntries).append(historyRoadLinkCheckBox);
+    functionalClassLegend.append(functionalClassLegendEntries);
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
     var linkTypes = [
@@ -87,7 +98,7 @@
         '<div class="symbol linear linear-asset-' + linkType[0] + '" />' +
         '</div>';
     }).join('');
-    linkTypeLegend.append(linkTypeLegendEntries).append(historyRoadLinkCheckBox);
+    linkTypeLegend.append(linkTypeLegendEntries);
 
     var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
     var verticalLevels = [
@@ -114,6 +125,26 @@
       'vertical-level': verticalLevelLegend
     };
 
+    var datasetAllCheckboxs = {
+      'administrative-class': roadLinkComplementaryCheckBox,
+      'functional-class': roadLinkCheckBoxs,
+      'link-type': roadLinkCheckBoxs,
+      'vertical-level': roadLinkComplementaryCheckBox
+    };
+
+    var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
+    var constructionTypes = [
+      [1, 'Rakenteilla'], //Under construction
+      [3, 'Suunnitteilla'] //Planned
+    ];
+    var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
+      return '<div class="legend-entry">' +
+          '<div class="label">' + constructionType[1] + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+          '</div>';
+    }).join('');
+    constructionTypeLegend.append(constructionTypeLegendEntries);
+
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
       reset: function() {},
@@ -134,25 +165,55 @@
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
 
-        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        var complementaryCheckboxChecked = legendContainer.find('#complementaryCheckbox').prop('checked');
+
+        legendContainer.find('#historyCheckbox').prop('checked', false);
         eventbus.trigger('roadLinkHistory:hide');
 
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
+        legendContainer.append(constructionTypeLegend);
+
+        var allCheckBoxs = datasetAllCheckboxs[datasetName];
+        if (allCheckBoxs) {
+          legendContainer.append(allCheckBoxs);
+          if (complementaryCheckboxChecked) {
+            legendContainer.find('#complementaryCheckbox').prop('checked', true);
+          } else {
+            legendContainer.find('#complementaryCheckbox').prop('checked', false);
+          }
+        }
+
         linkPropertiesModel.setDataset(datasetName);
 
-        bindHistoryEventHandlers(legendContainer);
+        bindEventHandlers(legendContainer);
       });
     };
 
-    var bindHistoryEventHandlers = function(checkboxContainer){
-      checkboxContainer.find('input[type="checkbox"]').on('change', function(event) {
-        var eventTarget = $(event.currentTarget);
-        if(eventTarget.prop('checked')){
+    var bindEventHandlers = function(checkboxContainer){
+      checkboxContainer.find('#historyCheckbox').on('change', function(event) {
+        if($(event.currentTarget).prop('checked')){
           eventbus.trigger('roadLinkHistory:show');
         } else {
           eventbus.trigger('roadLinkHistory:hide');
         }
+      });
+
+      checkboxContainer.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger('roadLinkComplementary:show');
+        } else {
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('roadLinkComplementary:hide');
+          }
+        }
+      });
+
+      eventbus.on('roadLinkComplementaryCheckBox:check', function() {
+        checkboxContainer.find('#complementaryCheckbox').prop('checked', true);
       });
     };
 
@@ -168,10 +229,13 @@
 
     bindExternalEventHandlers();
 
-    elements.expanded.find('.legend-container').append(functionalClassLegend);
+    var initialLegendContainer = elements.expanded.find('.legend-container');
+    initialLegendContainer.append(functionalClassLegend);
+    initialLegendContainer.append(constructionTypeLegend);
+    initialLegendContainer.append(roadLinkCheckBoxs);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
-    bindHistoryEventHandlers(elements.expanded);
+    bindEventHandlers(elements.expanded);
 
     function show() {
       editModeToggle.toggleEditMode(applicationModel.isReadOnly());

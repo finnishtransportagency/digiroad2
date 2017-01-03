@@ -188,6 +188,27 @@
         '  </div>'
     ].join('');
 
+    var constructionTypeLegend = [
+      '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+      '    <div class="legend-entry">',
+      '      <div class="label">Rakenteilla</div>',
+      '      <div class="symbol linear construction-type-1"/>',
+      '   </div>',
+      '   <div class="legend-entry">',
+      '     <div class="label">Suunnitteilla</div>',
+      '     <div class="symbol linear construction-type-3"/>',
+      '   </div>',
+      '  </div>'
+    ].join('');
+
+    var roadLinkComplementaryCheckBox = [
+      '  <div class="panel-section roadLink-complementary-checkbox">',
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+          '</div>' +
+      '</div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
@@ -216,6 +237,8 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
+      constructionTypeLegend,
+      roadLinkComplementaryCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -246,12 +269,27 @@
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
+
+      elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger('roadLinkComplementaryBS:show');
+        } else {
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('roadLinkComplementaryBS:hide');
+          }
+        }
+      });
+
     };
 
     var toggleRoadType = function(bool) {
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
 
       elements.expanded.find('.road-link-legend').toggle(bool);
+      elements.expanded.find('.construction-type-legend').toggle(bool);
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
     };
 

@@ -9,25 +9,25 @@
     ];
 
     var complementaryRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 1})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
     ];
 
     var complementaryRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 1})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
     ];
 
     var unknownRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})
     ];
     var unknownRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
+      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})
     ];
 
     var floatingRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.8, graphicZIndex: -99 })
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
     ];
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.3, graphicZIndex: -99})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: -99})
     ];
 
     var typeFilter = function(type) {
@@ -49,6 +49,7 @@
       });
     };
 
+    var darkOverlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay-dark');
     var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
     var borderStyleRule = _.partial(createZoomAndTypeDependentRule, 'underlay');
 
@@ -71,6 +72,15 @@
       overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
       overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
     ];
+    var darkOverlayRules = [
+      darkOverlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      darkOverlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      darkOverlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      darkOverlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      darkOverlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      darkOverlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
+      darkOverlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#000000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
+    ];
 
     var borderRules = [
       borderStyleRule(9, { strokeColor: '#000000', strokeOpacity: 1.0, strokeLinecap: 'round', strokeWidth: 7, graphicZIndex: -1}),
@@ -83,9 +93,9 @@
     ];
 
     var linkTypeSizeRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([9, 10]).use({ strokeWidth: 10}),
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([11, 12, 13]).use({ strokeWidth: 20}),
-      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeWidth: 30})
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([9, 10]).use({ strokeWidth: 15}),
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([11, 12, 13]).use({ strokeWidth: 25}),
+      new OpenLayersRule().where('roadLinkType').is(-1).and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeWidth: 50})
     ];
 
     var overlayDefaultOpacity = [
@@ -100,6 +110,13 @@
     ];
     var borderUnselectedOpacity = [
       new OpenLayersRule().where('type').is('underlay').use({ strokeOpacity: 0.3 })
+    ];
+    var darkOverlayDefaultOpacity = [
+      new OpenLayersRule().where('type').is('overlay-dark').use({ strokeOpacity: 1.0 })
+    ];
+
+    var darkOverlayUnselectedOpacity = [
+      new OpenLayersRule().where('type').is('overlay-dark').use({ strokeOpacity: 0.3 })
     ];
 
     var roadClassRules = [
@@ -117,6 +134,12 @@
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#a4a4a2'})
     ];
 
+    var constructionTypeRules = [
+      new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#a4a4a2', graphicZIndex: 0}),
+      new OpenLayersRule().where('constructionType').is('1').and('anomaly').is(1).use({ strokeColor: '#ff9900', graphicZIndex: 0})
+    ];
+    var unknownConstructionTypeRule = [new OpenLayersRule().where('type').is('unknownConstructionType').use({externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})];
+
     var streetSectionRules = [
       // -- TODO
     ];
@@ -127,12 +150,6 @@
 
     // -- Road classification styles
 
-    var typeSpecificStyleLookup = {
-      overlay: { strokeOpacity: 1.0 },
-      other: { strokeOpacity: 0.7 },
-      roadAddressAnomaly: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
-      cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
-    };
 
     var roadClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
@@ -148,10 +165,12 @@
     roadClassDefaultStyle.addRules(overlayDefaultOpacity);
     roadClassDefaultStyle.addRules(borderDefaultOpacity);
     roadClassDefaultStyle.addRules(borderRules);
-    roadClassDefaultStyle.addRules(floatingRoadAddressRules);
     roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
+    roadClassDefaultStyle.addRules(floatingRoadAddressRules);
+    roadClassDefaultStyle.addRules(constructionTypeRules);
+    roadClassDefaultStyle.addRules(darkOverlayRules);
+    roadClassDefaultStyle.addRules(unknownConstructionTypeRule);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
-    roadClassDefaultStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('unknown'),
@@ -189,23 +208,29 @@
     roadClassSelectionSelectStyle.addRules(borderRules);
     roadClassSelectionDefaultStyle.addRules(borderUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(borderDefaultOpacity);
-    roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
-    roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(complementaryRoadAddressUnselectedRules);
     roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
+    roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
+    roadClassSelectionDefaultStyle.addRules(constructionTypeRules);
+    roadClassSelectionSelectStyle.addRules(constructionTypeRules);
+    roadClassSelectionDefaultStyle.addRules(unknownConstructionTypeRule);
+    roadClassSelectionSelectStyle.addRules(unknownConstructionTypeRule);
+    roadClassSelectionDefaultStyle.addRules(darkOverlayRules);
+    roadClassSelectionSelectStyle.addRules(darkOverlayRules);
+    roadClassSelectionDefaultStyle.addRules(darkOverlayUnselectedOpacity);
+    roadClassSelectionSelectStyle.addRules(darkOverlayDefaultOpacity);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle
     });
 
-    roadClassSelectionStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     roadClassSelectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
     var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
 
-    browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
 
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.15,
@@ -219,7 +244,6 @@
       default: selectionDefaultStyle,
       select: selectionSelectStyle
     });
-    selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
     selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
     var isUnknown = function(roadLink) {

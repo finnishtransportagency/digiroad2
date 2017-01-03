@@ -12,10 +12,10 @@ object GeometryUtils {
   }
 
   def truncateGeometry2D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    truncateGeometry(geometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
+    truncateGeometry3D(geometry.map(p => to2DGeometry(p)), startMeasure, endMeasure)
   }
 
-  def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+  def truncateGeometry3D(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double): Boolean = {
       val (firstPoint, secondPoint) = segment
       val interval = (accumulatedLength, firstPoint.distance2DTo(secondPoint) + accumulatedLength)

@@ -159,7 +159,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "discontinuity" -> roadAddressLink.discontinuity,
       "endDate" -> roadAddressLink.endDate,
       "anomaly" -> roadAddressLink.anomaly.value,
-      "roadLinkType" -> roadAddressLink.roadLinkType.value
+      "roadLinkType" -> roadAddressLink.roadLinkType.value,
+      "constructionType" ->roadAddressLink.constructionType.value
     )
   }
 

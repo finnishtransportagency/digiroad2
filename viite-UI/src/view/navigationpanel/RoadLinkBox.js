@@ -60,6 +60,16 @@
       [11,'Muu tieverkko'],
       [99,'Tuntematon']
     ];
+    var constructionTypes = [
+      [0, 'Muu tieverkko, rakenteilla'],
+      [1, 'Tuntematon, rakenteilla']
+    ];
+    var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
+      return '<div class="legend-entry">' +
+          '<div class="label">' + constructionType[1] + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+          '</div>';
+    }).join('');
     var roadClassLegendEntries = _.map(roadClasses, function(roadClass) {
       return '<div class="legend-entry">' +
         '<div class="label">' + roadClass[1] + '</div>' +
@@ -67,6 +77,7 @@
         '</div>';
     }).join('');
     roadClassLegend.append(roadClassLegendEntries);
+    roadClassLegend.append(constructionTypeLegendEntries);
     roadClassLegend.append(floatingLegend);
     roadClassLegend.append(calibrationPointPicture);
 

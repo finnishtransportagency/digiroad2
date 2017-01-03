@@ -118,6 +118,25 @@
       });
     };
 
+    this.fetchWithComplementary = function(boundingBox) {
+      backend.getRoadLinksWithComplementary(boundingBox, function(fetchedRoadLinks) {
+        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+          return roadLink.getId();
+        });
+        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
+          return _.map(roadLinkGroup, function(roadLink) {
+            return new RoadLinkModel(roadLink);
+          });
+        });
+        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+          return _.some(roadLinkGroup, function(roadLink) {
+            _.contains(selectedIds, roadLink.getId());
+          });
+        }).concat(getSelectedRoadLinks());
+        eventbus.trigger('roadLinks:fetched');
+      });
+    };
+
     this.getRoadsForMassTransitStops = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {

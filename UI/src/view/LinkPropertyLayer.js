@@ -255,6 +255,7 @@
     var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
+    var isComplementaryActive = false;
 
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
@@ -360,8 +361,17 @@
       eventbus.trigger('linkProperties:available');
     };
 
-    this.refreshView = function() {
-      roadCollection.fetch(map.getExtent());
+    this.refreshView = function () {
+      if (isComplementaryActive) {
+        me.refreshViewWithComplementary();
+      } else {
+        roadCollection.fetch(map.getExtent());
+        historyLayer.refreshView();
+      }
+    };
+
+    this.refreshViewWithComplementary = function() {
+      roadCollection.fetchWithComplementary(map.getExtent());
       historyLayer.refreshView();
     };
 
@@ -386,16 +396,18 @@
 
     var drawDashedLineFeatures = function(roadLinks, layer) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+        return _.contains(dashedFunctionalClasses, roadLink.functionalClass) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks, layer) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
+      var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(dashedLinkTypes, roadLink.linkType);
+        return _.contains(dashedLinkTypes, roadLink.linkType) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
       layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
@@ -454,6 +466,8 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
+      eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
+      eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
     };
 
     var cancelSelection = function() {
@@ -466,6 +480,18 @@
     var refreshViewAfterSaving = function() {
       unselectRoadLink();
       historyLayer.unselectFeatureRoadLink();
+      me.refreshView();
+    };
+
+    var showRoadLinksWithComplementary = function() {
+      isComplementaryActive = true;
+      me.refreshViewWithComplementary();
+    };
+
+    var hideRoadLinksWithComplementary = function() {
+      selectedLinkProperty.close();
+      unselectRoadLink();
+      isComplementaryActive = false;
       me.refreshView();
     };
 

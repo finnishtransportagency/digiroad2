@@ -346,6 +346,16 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
@@ -378,7 +388,9 @@ Returns empty result as Json message, not as page not found
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
-      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
+      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
+      "constructionType" -> roadLink.constructionType.value,
+      "linkSource" -> roadLink.linkSource.value)
   }
 
   get("/roadlinks") {
@@ -392,12 +404,12 @@ Returns empty result as Json message, not as page not found
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-  get("/roadlinks/:linkId") {
-    val linkId = params("linkId").toLong
-    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
-      case (id, middlePoint) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint)
-    }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
-  }
+    get("/roadlinks/:linkId") {
+      val linkId = params("linkId").toLong
+      roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
+        case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
+      }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
+    }
 
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
@@ -434,6 +446,17 @@ Returns empty result as Json message, not as page not found
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     roadLinkService.getIncompleteLinks(includedMunicipalities)
+  }
+
+  get("/roadlinks/complementaries"){
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadlinksWithComplementaryFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   put("/linkproperties") {
