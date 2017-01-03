@@ -87,6 +87,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+    get("/roadlinks/adjacent") {
+      val linkid = params("linkid").toLong
+      val roadNumber = params("roadNumber").toLong
+      val roadPartNumber = params("roadPartNumber").toLong
+      val trackCode = params("trackCode").toLong
+      roadAddressService.getFloatingAdjacent(linkid, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+    }
+
+  //  get("/roadaddresslinks/adjacents/:ids") {
+  //    val ids = params("ids").split(',').map(_.toLong)
+  //    roadAddressService.getFloatingAdjacents(ids.toSet).mapValues(_.map(roadAddressLinkToApi))
+  //  }
+
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {

@@ -88,6 +88,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
   }
 
+  def nonPrivatefetchRoadAddressesByBoundingBox(bounds: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
+    fetchRoadAddressesByBoundingBox(bounds, true)
+  }
+
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
       RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating)._1.partition(_.floating)
@@ -375,6 +379,44 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       addresses.foreach(RoadAddressDAO.updateLRM)
     }
+  }
+
+  def getFloatingAdjacent(linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+    val sourceRoadLink = roadLinkService.getViiteRoadLinksHistoryFromVVH(Set(linkId)).headOption
+    val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
+    sourceLinkGeometryOption.map(sourceLinkGeometry => {
+      val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
+      val delta: Vector3d = Vector3d(0.1, 0.1, 0)
+      val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
+      val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
+      val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, bounds2)
+      val (floatingViiteRoadLinks1, addresses1, floating1) = fetchRoadAddressesByBoundingBox(bounds, true)
+      val (floatingViiteRoadLinks2, addresses2, floating2) = fetchRoadAddressesByBoundingBox(bounds2, true)
+      val floatingViiteRoadLinks = floatingViiteRoadLinks1 ++ floatingViiteRoadLinks2
+
+      val floating = floating1 ++ floating2
+      val addresses = addresses1 ++ addresses2
+      val linkIds = roadLinks.map(_.linkId).toSet
+      val missingLinkIds = linkIds -- floating.keySet
+
+      val missedRL = withDynTransaction {
+        RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+      }.groupBy(_.linkId)
+
+      val viiteMissingRoadLinks = roadLinks.map { rl =>
+        val ra = addresses.getOrElse(rl.linkId, Seq())
+        val missed = missedRL.getOrElse(rl.linkId, Seq())
+        rl.linkId -> buildRoadAddressLink(rl, ra, missed)
+      }.flatMap(_._2)
+
+      val viiteFloatingRoadLinks = floatingViiteRoadLinks.filterNot(_._1 == linkId)
+        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)))
+        .filter(_._2.exists(ral => ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode))
+        .filter(_._2.exists(ral => ral.roadLinkType == FloatingRoadLinkType || ral.roadLinkType == UnknownRoadLinkType))
+        .flatMap(_._2).toSeq
+
+      viiteFloatingRoadLinks ++ viiteMissingRoadLinks
+    }).getOrElse(Seq())
   }
 }
 

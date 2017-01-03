@@ -54,7 +54,9 @@
         };
         _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
       }
-
+      // TODO DRVVH - 452
+      if(_.first(current).getData().roadLinkType ===-1)
+      var adjacents = getLinkAdjacents(current);
       return properties;
     };
 
@@ -71,8 +73,21 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
+    };
+
+    //TODO DRVVH - 452 apply changes from getAdjacents to linkProperties
+    var getLinkAdjacents = function(links) {
+      var linkIds;
+      var data = _.first(links).getData();
+      backend.getFloatingAdjacent(data.linkId, data.roadNumber, data.roadPartNumber, data.trackCode, function(adjacents) {
+        if(!_.isEmpty(adjacents))
+        linkIds = linkIds.concat(_.map(adjacents, function (rl) {
+          return rl.linkId;
+        }));
+      });
     };
 
     var openMultiple = function(links) {

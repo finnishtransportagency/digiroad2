@@ -21,6 +21,13 @@
       });
     }, 1000);
 
+    this.getFloatingAdjacent = _.throttle(function(linkid, roadNumber, roadPartNumber, trackCode, callback) {
+        return $.getJSON('api/viite/roadlinks/adjacent?linkid=' + linkid + '&roadNumber=' + roadNumber
+          + '&roadPartNumber=' + roadPartNumber + '&trackCode=' + trackCode, function(data) {
+          return _.isFunction(callback) && callback(data);
+        });
+      }, 1000);
+    
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
