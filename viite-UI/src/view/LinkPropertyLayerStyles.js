@@ -1,18 +1,6 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
 
-    /*
-     Used z-indexing // TODO: Return from API
-
-     4 = complimentary
-     3 = unknownRoadAddress / unknownUnderConstruction
-     2 = floating roadAddresses
-     1 = dashed features dark/light - overlay - overlay-dark
-     0 = normalRoadAddresses / under construction
-     -1 = border features - underlay
-
-     */
-
     var normalRoadAddressUnselectedRules = [
       new OpenLayersRule().where('roadLinkType').is(1).use({graphicZIndex: 0})
     ];
