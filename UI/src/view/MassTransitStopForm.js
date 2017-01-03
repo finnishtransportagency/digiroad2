@@ -338,6 +338,10 @@
           streetViewHandler.update();
         });
 
+        if (!_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
+            element.attr("disabled", true);
+        }
+
         if(property.values && property.values[0]) {
           validityDirection = property.values[0].propertyValue;
         }
