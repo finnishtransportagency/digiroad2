@@ -90,11 +90,11 @@
       backend.getAssetTypeProperties(function(properties) {
 
         _.find(properties, function (property) {
-          return property.publicId === 'vaikutussuunta';
-        }).values.map(function (value) {
-          value.propertyValue = String(currentAsset.validityDirection);
-          value.propertyDisplayValue = String(currentAsset.validityDirection);
-          return value;
+            if(property.publicId === 'vaikutussuunta'){
+                property.values.propertyValue = String(currentAsset.validityDirection);
+                property.values.propertyDisplayValue = String(currentAsset.validityDirection);
+            }
+            return property;
         });
 
         currentAsset.propertyMetadata = properties;
