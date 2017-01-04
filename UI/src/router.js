@@ -50,16 +50,16 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          if (response.success=== true){
+          if (response.success) {
             eventbus.once('linkProperties:available', function () {
               models.selectedLinkProperty.open(response.id);
             });
 
-            if (response.source == 1) {
+            if (response.source === 1) {
               eventbus.once('linkProperties:available', function () {
                 models.selectedLinkProperty.open(response.id);
               });
-            } else if (response.source == 2) {
+            } else if (response.source === 2) {
               eventbus.once('linkProperties:available', function () {
                 eventbus.trigger('roadLinkComplementaryCheckBox:check');
                 eventbus.trigger('roadLinkComplementary:show');
