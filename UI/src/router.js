@@ -77,6 +77,16 @@
         });
       },
 
+      linkPropertyByMml: function (mmlId) {
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByMmlId(mmlId, function (response) {
+          eventbus.once('linkProperties:available', function () {
+            models.selectedLinkProperty.open(response.id);
+          });
+          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+        });
+      },
+
       speedLimit: function (linkId) {
         var roadLinkReceived = backend.getRoadLinkByLinkId(linkId);
         var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
