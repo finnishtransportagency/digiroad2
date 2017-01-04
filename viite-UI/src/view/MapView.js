@@ -23,22 +23,26 @@
     };
 
     var drawCenterMarker = function(position) {
-      var size = new OpenLayers.Size(16, 16);
-      var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h / 2);
-      var icon = new OpenLayers.Icon('./images/center-marker.svg', size, offset);
-
-      centerMarkerLayer.clearMarkers();
-      var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lon, position.lat), icon);
-      centerMarkerLayer.addMarker(marker);
+      var icon = new ol.Feature({
+        geometry: new ol.geom.Point(position.lon, position.lat)
+      });
+      var style = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: './images/center-marker.svg'
+        })
+      });
+      icon.setStyle(style);
+      centerMarkerLayer.clear();
+      centerMarkerLayer.addFeature(icon);
     };
 
     var addCenterMarkerLayerToMap = function(map) {
-      centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
+      centerMarkerLayer = new ol.layer.Vector();
       map.addLayer(centerMarkerLayer);
     };
 
     eventbus.on('application:initialized', function() {
-      var zoom = map.getZoom();
+      var zoom = map.getView().getZoom();
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
@@ -58,8 +62,9 @@
     });
 
     eventbus.on('coordinates:selected', function(position) {
-      if (geometrycalculator.isInBounds(map.getMaxExtent(), position.lon, position.lat)) {
-        map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
+      if (geometrycalculator.isInBounds(map.getView().getExtent(), position.lon, position.lat)) {
+        map.getView().setCenter([position.lon, position.lat]);
+        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }

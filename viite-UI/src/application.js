@@ -79,44 +79,56 @@
   };
 
   var createOpenLayersMap = function(startupParameters) {
-    var map = new OpenLayers.Map({
-      controls: [],
-      units: 'm',
-      maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
-      resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625],
-      projection: 'EPSG:3067',
-      isBaseLayer: true,
-      center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
-      fallThrough: true,
-      theme: null,
-      zoomMethod: null
+    var map = new ol.Map({
+      target: 'mapdiv',
+      layers: [
+        new ol.layer.Tile({
+          source: new ol.source.OSM()
+        })
+      ],
+      view: new ol.View({
+        center: [0, 0],
+        zoom: 4
+      })
     });
-    var base = new OpenLayers.Layer("BaseLayer", {
-      layerId: 0,
-      isBaseLayer: true,
-      displayInLayerSwitcher: false
-    });
-    map.addLayer(base);
-    map.render('mapdiv');
-    map.zoomTo(startupParameters.zoom);
+    // new ol.Map({
+    //   controls: [],
+    //   units: 'm',
+    //   maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
+    //   resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625],
+    //   projection: 'EPSG:3067',
+    //   isBaseLayer: true,
+    //   center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
+    //   fallThrough: true,
+    //   theme: null,
+    //   zoomMethod: null
+    // });
+    // var base = new OpenLayers.Layer("BaseLayer", {
+    //   layerId: 0,
+    //   isBaseLayer: true,
+    //   displayInLayerSwitcher: false
+    // });
+    // map.addLayer(base);
+    // map.render('mapdiv');
+    // map.zoomTo(startupParameters.zoom);
     return map;
   };
 
   var setupMap = function(backend, models, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
 
-    var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
-      wheelDown: function(evt, delta) {
-        if (applicationModel.canZoomOut()) {
-          return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
-        } else {
-          new Confirm();
-        }
-      }
-    });
-
-    map.addControl(new NavigationControl());
-
+    // var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
+    //   wheelDown: function(evt, delta) {
+    //     if (applicationModel.canZoomOut()) {
+    //       return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
+    //     } else {
+    //       new Confirm();
+    //     }
+    //   }
+    // });
+    //
+    // map.addControl(new NavigationControl());
+    //
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) {
@@ -126,19 +138,19 @@
       // TODO: Use arcgis json data
       new TileMapCollection(map, "");
     }
-    var roadLayer = new RoadLayer(map, models.roadCollection);
+    var roadLayer = new RoadLayer3(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    var layers = _.merge({
-      road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)});
+    // var layers = _.merge({
+    //   road: roadLayer,
+    //   linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)});
 
     var mapPluginsContainer = $('#map-plugins');
-    new ScaleBar(map, mapPluginsContainer);
-    new TileMapSelector(mapPluginsContainer);
-    new ZoomBox(map, mapPluginsContainer);
-    new CoordinatesDisplay(map, mapPluginsContainer);
+    // new ScaleBar(map, mapPluginsContainer);
+    // new TileMapSelector(mapPluginsContainer);
+    // new ZoomBox(map, mapPluginsContainer);
+    // new CoordinatesDisplay(map, mapPluginsContainer);
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
