@@ -654,13 +654,12 @@ object DataFixture {
     var persistedStop: Seq[PersistedMassTransitStop] = Seq()
 
     //Get All Municipalities
-/*    val municipalities: Seq[Int] =
+    val municipalities: Seq[Int] =
       OracleDatabase.withDynSession {
         Queries.getMunicipalities
-      }*/
+      }
 
-    //Remove
-    val municipalities: Seq[Int] = Seq(235)
+    println("Bus stops with side code in conflict By Municipality")
 
     municipalities.foreach { municipality =>
       println("Start processing municipality %d".format(municipality))
@@ -676,14 +675,10 @@ object DataFixture {
 
         roadLinkDirectionValue match {
           case Some(trafficDirection) =>
-            if( (roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head != SideCode.apply(massTransitStopDirectionValue.get.toInt)) ){
-              println("Bus stops with side code in conflict")
-              println("National Id: "+ stop.nationalId)
-              println("RoadLink Direction Value: "+ roadLinkDirectionValue.head.toString())
-              println("MassTransitStop Direction Value: "+ SideCode.apply(massTransitStopDirectionValue.get.toInt))
+            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head != SideCode.apply(massTransitStopDirectionValue.get.toInt))) {
+              println("National Id: " + stop.nationalId)
             }
           case _ => {
-            println("The Bus Stop "+ stop.id + " return ERROR when try get RoadLink From VVH")
             None
           }
         }
