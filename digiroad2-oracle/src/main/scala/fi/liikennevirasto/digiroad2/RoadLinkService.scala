@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -105,6 +105,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getCachedRoadLinksAndChanges(municipality)._1
   }
 
+  def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
+    Future(getCachedRoadLinksAndChanges(municipality)._1)
+  }
   /**
     * This method returns road links by bounding box and municipalities.
     *
@@ -711,6 +714,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def isComplete(roadLink: RoadLink): Boolean = {
     roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
+  def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
+    val fut = for {
+      complementary <-getComplementaryRoadLinksFromVVHFuture(municipality)
+      roadLinks <- getRoadLinksFromVVHFuture(municipality)
+    } yield (complementary, roadLinks)
+    val (complementaryResult, roadLinksResult) = Await.result(fut, Duration.Inf)
+    complementaryResult++roadLinksResult
+  }
 
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
@@ -1110,6 +1121,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     withDynTransaction {
       (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
     }._1
+  }
+
+  def getComplementaryRoadLinksFromVVHFuture(municipality: Int): Future [Seq[RoadLink]] = {
+    Future(withDynTransaction {
+      (enrichRoadLinksFromVVH(Await.result(vvhClient.complementaryData.fetchComplimentaryByMunicipality(municipality), Duration.create(1, TimeUnit.HOURS)), Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
+    }._1)
   }
 
   def getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
