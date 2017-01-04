@@ -649,38 +649,29 @@ Returns empty result as Json message, not as page not found
       validateUserMunicipalityAccess(user))
   }
 
-    get("/speedlimit/sid/")
-    {
-      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+  get("/speedlimit/sid/") {
+    val segmentID = params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
+    val speedLimit = speedLimitService.find(segmentID.toLong)
+    speedLimit match {
+      case Some(speedLimit) => {
+        roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match {
+          case Some(location) => {
+            Map ("success" -> true,
+              "linkId" ->  speedLimit.linkId,
+              "latitude" -> location._2.y,
+              "longitude"-> location._2.x
+            )
+          }
+          case None => {
+            Map("success" -> false)
+          }
+        }
       }
-      val segmentID =params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
-      val  speedLimit= speedLimitService.find(segmentID.toLong)
-     speedLimit match {
-       case Some(speedLimit) =>
-         {
-           roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match
-             {
-             case Some(location) =>
-               {
-                 Map ("success" -> true,
-                   "linkId" ->  speedLimit.linkId,
-                   "latitude" -> location._2.y,
-                   "longitude"-> location._2.x
-                 )
-               }
-             case None =>
-               {
-                 Map("success" -> false)
-               }}
-         }
-       case None =>
-         {
-           Map("success" -> false)
-         }
-     }
+      case None => {
+        Map("success" -> false)
+      }
     }
+  }
 
   get("/speedlimits") {
     val user = userProvider.getCurrentUser()
