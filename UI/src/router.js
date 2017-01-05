@@ -72,7 +72,7 @@
           }
           else
           {
-            //might be nice to show error message for user if roadlink  applied to #linkProperty/ url does not exist
+            //TODO might be nice to show error message for user if roadlink  applied to #linkProperty/ url does not exist
           }
         });
       },
