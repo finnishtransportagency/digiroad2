@@ -52,8 +52,7 @@
       return $.when(
         speedlimitSearch, roadNumberSearch).then(function(speedlimitdata,roadData) {
         var returnObject = roadLocationAPIResultParser(roadData);
-        var linkFound =_.get(speedlimitdata[0], 'success');
-        if (linkFound === true) {
+        if (_.get(speedlimitdata[0], 'success')) {
           var linkid = _.get(speedlimitdata[0], 'linkId');
           var y = _.get(speedlimitdata[0], 'latitude');
           var x= _.get(speedlimitdata[0], 'longitude');
