@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -106,8 +107,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
-    Future(getCachedRoadLinksAndChanges(municipality)._1)
+    Future(getCachedRoadLinksAndChanges(municipality)._1.map(_.copy(linkSource =LinkGeomSource.NormalLinkInterface)))
   }
+
+
+
   /**
     * This method returns road links by bounding box and municipalities.
     *
@@ -720,7 +724,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       roadLinks <- getRoadLinksFromVVHFuture(municipality)
     } yield (complementary, roadLinks)
     val (complementaryResult, roadLinksResult) = Await.result(fut, Duration.Inf)
-    complementaryResult++roadLinksResult
+    complementaryResult           ++roadLinksResult
   }
 
   /**
@@ -1062,6 +1066,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val dir = getCacheDirectory
     val cachedFiles = getCacheFiles(municipalityCode, dir)
