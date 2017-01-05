@@ -461,7 +461,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T,
                            filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 500
+    val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
@@ -799,7 +799,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
                                      fetchGeometry: Boolean,
                                      resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                      filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 500
+    val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
@@ -933,14 +933,18 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     if (linkIds.isEmpty)
       Nil
     else {
-      val definition = historyLayerDefinition(linkIdFilter(linkIds))
-      val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?layerDefs=" +
-        definition + "&" +
-        queryParameters()
-      fetchVVHHistoryFeatures(url) match {
-        case Left(features) => features.map(extractVVHHistoricFeature)
-        case Right(error) => throw new VVHClientException(error.toString)
-      }
+      val batchSize = 1000
+      val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
+      idGroups.par.flatMap { ids =>
+        val definition = historyLayerDefinition(linkIdFilter(linkIds))
+        val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?layerDefs=" +
+          definition + "&" +
+          queryParameters()
+        fetchVVHHistoryFeatures(url) match {
+          case Left(features) => features.map(extractVVHHistoricFeature)
+          case Right(error) => throw new VVHClientException(error.toString)
+        }
+      }.toList
     }
   }
 
