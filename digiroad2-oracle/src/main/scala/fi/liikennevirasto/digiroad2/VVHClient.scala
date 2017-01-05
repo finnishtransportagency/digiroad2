@@ -461,7 +461,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T,
                            filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 1000
+    val batchSize = 500
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
@@ -494,8 +494,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 1)
-        logger.info("fetch vvh took "+fetchVVHTimeSec+" sec with the following url "+url)
+      if(fetchVVHTimeSec > 5)
+        logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
     }
   }
 
@@ -799,7 +799,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
                                      fetchGeometry: Boolean,
                                      resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                      filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 1000
+    val batchSize = 500
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)

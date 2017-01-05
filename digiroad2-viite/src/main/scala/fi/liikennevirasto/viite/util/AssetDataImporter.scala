@@ -149,7 +149,7 @@ class AssetDataImporter {
     println("Total of %d link ids".format(lrmList.keys.size))
     val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
 
-    val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
+    val roadLinks = linkIdSet.grouped(2000).flatMap(group =>
       if (complementaryLinks)
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
       else
