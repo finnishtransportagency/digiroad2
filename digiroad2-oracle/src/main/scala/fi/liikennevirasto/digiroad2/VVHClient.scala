@@ -933,10 +933,10 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     if (linkIds.isEmpty)
       Nil
     else {
-      val batchSize = 200
+      val batchSize = 1000
       val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
       idGroups.par.flatMap { ids =>
-        val definition = historyLayerDefinition(linkIdFilter(linkIds))
+        val definition = historyLayerDefinition(linkIdFilter(ids))
         val url = vvhRestApiEndPoint + roadLinkDataHistoryService + "/FeatureServer/query?layerDefs=" +
           definition + "&" +
           queryParameters()
