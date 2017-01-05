@@ -1,19 +1,22 @@
 package fi.liikennevirasto.viite.dao
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import org.joda.time
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, StaticQuery => Q}
+
 
 /**
   * Created by venholat on 12.9.2016.
@@ -113,6 +116,20 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
           val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
             Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       localRoadAddressService.mergeRoadAddress(toBeMergedRoadAddresses)
+    }
+  }
+
+  test("test if floating road address transfer successfully to gap locations") {
+    val beforeCallMethodDatetime = DateTime.now()
+
+    runWithRollback {
+      val linkIds: Set[Long] = Set(3114934l, 3107028l)
+      RoadAddressDAO.expireRoadAddresses(linkIds)
+      val dbResult = sql"""select valid_to FROM road_address where lrm_position_id in (select id from lrm_position where link_id in(3114934, 3107028))""".as[DateTime].list
+      dbResult.size should be (2)
+      dbResult.foreach{ date =>
+        date.getMillis should be >= beforeCallMethodDatetime.getMillis
+      }
     }
   }
 

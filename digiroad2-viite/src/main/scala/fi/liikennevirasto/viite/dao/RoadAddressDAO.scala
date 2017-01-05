@@ -369,6 +369,16 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
+  def expireRoadAddresses (expiredLinkIds: Set[Long]) = {
+    if (!expiredLinkIds.isEmpty) {
+      val query =
+        s"""
+          Update road_address Set valid_to = sysdate Where lrm_position_id in (Select id From lrm_position where link_id in (${expiredLinkIds.mkString(",")}))
+        """
+      Q.updateNA(query).first
+    }
+  }
+
   def getMissingRoadAddresses(linkIds: Set[Long]): List[MissingRoadAddress] = {
     if (linkIds.size > 500) {
       getMissingByLinkIdMassQuery(linkIds)

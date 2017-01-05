@@ -418,6 +418,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       viiteFloatingRoadLinks ++ viiteMissingRoadLinks
     }).getOrElse(Seq())
   }
+
+  def transferFloatingToGap(expiringLinkIds: Set[Long], roadAddress: RoadAddress) = {
+    withDynTransaction {
+      RoadAddressDAO.expireRoadAddresses(expiringLinkIds)
+      RoadAddressDAO.create(Seq(roadAddress))
+    }
+  }
+
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
