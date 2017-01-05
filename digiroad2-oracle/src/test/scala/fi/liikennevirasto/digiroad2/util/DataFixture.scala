@@ -675,7 +675,7 @@ object DataFixture {
 
         roadLinkDirectionValue match {
           case Some(trafficDirection) =>
-            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head != SideCode.apply(massTransitStopDirectionValue.get.toInt))) {
+            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head.toString() != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
               println("National Id: " + stop.nationalId)
             }
           case _ => {
