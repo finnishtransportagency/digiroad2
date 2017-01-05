@@ -19,6 +19,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -104,6 +105,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
     getCachedRoadLinksAndChanges(municipality)._1
   }
+
+  def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
+    Future(getRoadLinksFromVVH(municipality))
+  }
+
+
 
   /**
     * This method returns road links by bounding box and municipalities.
@@ -711,6 +718,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def isComplete(roadLink: RoadLink): Boolean = {
     roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
+  def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
+    val fut = for {
+      complementary <-getComplementaryRoadLinksFromVVHFuture(municipality)
+      roadLinks <- getRoadLinksFromVVHFuture(municipality)
+    } yield (complementary, roadLinks)
+    val (complementaryResult, roadLinksResult) = Await.result(fut, Duration.Inf)
+    complementaryResult           ++roadLinksResult
+  }
 
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
@@ -1051,6 +1066,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val dir = getCacheDirectory
     val cachedFiles = getCacheFiles(municipalityCode, dir)
@@ -1110,6 +1126,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     withDynTransaction {
       (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
     }._1
+  }
+
+  def getComplementaryRoadLinksFromVVHFuture(municipality: Int): Future [Seq[RoadLink]] = {
+    Future(withDynTransaction {
+      (enrichRoadLinksFromVVH(Await.result(vvhClient.complementaryData.fetchComplimentaryByMunicipality(municipality), Duration.create(1, TimeUnit.HOURS)), Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
+    }._1)
   }
 
   def getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[RoadLink] = {
