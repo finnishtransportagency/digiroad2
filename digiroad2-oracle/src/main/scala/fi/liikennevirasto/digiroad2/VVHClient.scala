@@ -933,7 +933,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
     if (linkIds.isEmpty)
       Nil
     else {
-      val batchSize = 1000
+      val batchSize = 200
       val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
       idGroups.par.flatMap { ids =>
         val definition = historyLayerDefinition(linkIdFilter(linkIds))
