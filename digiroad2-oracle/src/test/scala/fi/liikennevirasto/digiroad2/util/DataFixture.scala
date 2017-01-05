@@ -652,6 +652,7 @@ object DataFixture {
     println(DateTime.now())
 
     var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var conflictedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -675,8 +676,10 @@ object DataFixture {
 
         roadLinkDirectionValue match {
           case Some(trafficDirection) =>
+            // Validate if OTH Bus stop are in conflict with road link traffic direction
             if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head.toString() != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
-              println("National Id: " + stop.nationalId)
+              //Add a list of conflicted Bus Stops
+              conflictedBusStopsOTH = conflictedBusStopsOTH ++ List(stop)
             }
           case _ => {
             None
@@ -685,6 +688,12 @@ object DataFixture {
       }
 
       println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of Bus stops with side code in conflict
+    println("List of Bus Stops with side code in conflict:")
+    conflictedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
     }
 
     println("\n")
