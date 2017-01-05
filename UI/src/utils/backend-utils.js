@@ -396,9 +396,25 @@
       return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
 
+    this.getRoadLinkToPromise= function(linkid)
+    {
+     return $.get("api/roadlinks/" + linkid);
+    };
+
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
+    };
+
+    this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
+      return $.get('api/massTransitStopsSafe/' + nationalId);
+    };
+    this.getSpeedLimitsLinkIDFromSegmentID = function(sid) {
+      return $.get('api/speedlimit/sid/?segmentid=' + sid);
+    };
+
+    this.getMassTransitStopByLiviIdForSearch = function(liviId) {
+      return $.get('api/massTransitStops/livi/' + liviId);
     };
 
     function createCallbackRequestor(getParameters) {

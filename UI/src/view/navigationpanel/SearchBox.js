@@ -1,6 +1,6 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
-    var tooltip = "Hae katuosoitteella, tieosoitteella tai koordinaateilla";
+    var tooltip ="Hae katuosoitteella, tieosoitteella, koordinaateilla tai kohteen ID:llä (esim. link_ID tai pysäkin valtakunnallinen_ID)";
     var groupDiv = $('<div class="panel-group search-box"/>');
     var coordinatesDiv = $('<div class="panel"/>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
@@ -17,7 +17,23 @@
           .sortBy('distance')
           .map(function(result) {
             return $('<li></li>').text(result.title).on('click', function() {
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              if (result.resultType.indexOf("Link-id")>-1){
+                window.location.hash = "#linkProperty/";
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+                window.location.hash = "#linkProperty/" + coordinatesText.val();
+              } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+                eventbus.once('layer:speedLimit:moved', function() {
+                  eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+                });
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              } else if (result.resultType.indexOf("Mtstop")>-1) {
+                window.location.hash = "#massTransitStop/";
+                window.location.hash="#massTransitStop/"+result.nationalId;
+              }
+              else
+              {
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              }
             });
           }).value();
 
@@ -33,7 +49,23 @@
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            if (result.resultType.indexOf("Mtstop")>-1) {
+              window.location.hash = "#massTransitStop/";
+              window.location.hash="#massTransitStop/"+result.nationalId;
+            }
+            else if (result.resultType.indexOf("Link-id")>-1) {
+              window.location.hash = "#linkProperty/";
+              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
+              window.location.hash = "#linkProperty/" + coordinatesText.val();
+            } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+              eventbus.once('layer:speedLimit:moved', function() {
+                eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+              });
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            }
+            else {
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            }
           }
         }).fail(showDialog);
       };
