@@ -46,7 +46,22 @@ class JsonSerializer extends VVHSerializer {
       JInt(BigInt(ac.value))
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ( {
+    case JInt(typeInt) => LinkGeomSource(typeInt.toInt)
+  }, {
+    case geomSource: LinkGeomSource =>
+      JInt(BigInt(geomSource.value))
+  }))
+
+  case object ConstructionTypeSerializer extends CustomSerializer[ConstructionType](format => ( {
+    case JInt(typeInt) => ConstructionType(typeInt.toInt)
+  }, {
+    case constructionType: ConstructionType =>
+      JInt(BigInt(constructionType.value))
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
