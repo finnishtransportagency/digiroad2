@@ -88,7 +88,6 @@
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(function(properties) {
-
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
         }).values.map(function (value) {
@@ -96,7 +95,6 @@
           value.propertyDisplayValue = String(currentAsset.validityDirection);
           return value;
         });
-
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
@@ -220,45 +218,45 @@
       });
     };
 
-    var save = function() {
+    var save = function () {
       if (currentAsset.id === undefined) {
-          backend.createAsset(currentAsset.payload, function (errorObject) {
-              if (errorObject.status == FAILED_DEPENDENCY_424) {
-                  eventbus.trigger('asset:creationTierekisteriFailed');
-              } else if (errorObject.status == PRECONDITION_FAILED_412) {
-                  eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
-              } else {
-                  eventbus.trigger('asset:creationFailed');
-              }
-              close();
-          });
+        backend.createAsset(currentAsset.payload, function (errorObject) {
+          if (errorObject.status == FAILED_DEPENDENCY_424) {
+            eventbus.trigger('asset:creationTierekisteriFailed');
+          } else if (errorObject.status == PRECONDITION_FAILED_412) {
+            eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
+          } else {
+            eventbus.trigger('asset:creationFailed');
+          }
+          close();
+        });
       } else {
-          currentAsset.payload.id = currentAsset.id;
-          changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
-          var payload = payloadWithProperties(currentAsset.payload, changedProps);
-          var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
-          backend.updateAsset(currentAsset.id, payload, function (asset) {
-              changedProps = [];
-              assetHasBeenModified = false;
-              if (currentAsset.id != asset.id) {
-                  eventbus.trigger('massTransitStop:expired', currentAsset);
-                  eventbus.trigger('asset:created', asset);
-              } else {
-                  open(asset);
-                  eventbus.trigger('asset:saved', asset, positionUpdated);
-              }
-          }, function (errorObject) {
-              backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
-                  open(asset);
-                  if (errorObject.status == FAILED_DEPENDENCY_424) {
-                      eventbus.trigger('asset:updateTierekisteriFailed', asset);
-                  } else if (errorObject.status == PRECONDITION_FAILED_412) {
-                      eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
-                  } else {
-                      eventbus.trigger('asset:updateFailed', asset);
-                  }
-              });
+        currentAsset.payload.id = currentAsset.id;
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
+        var payload = payloadWithProperties(currentAsset.payload, changedProps);
+        var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
+        backend.updateAsset(currentAsset.id, payload, function (asset) {
+          changedProps = [];
+          assetHasBeenModified = false;
+          if (currentAsset.id != asset.id) {
+            eventbus.trigger('massTransitStop:expired', currentAsset);
+            eventbus.trigger('asset:created', asset);
+          } else {
+            open(asset);
+            eventbus.trigger('asset:saved', asset, positionUpdated);
+          }
+        }, function (errorObject) {
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
+            open(asset);
+            if (errorObject.status == FAILED_DEPENDENCY_424) {
+              eventbus.trigger('asset:updateTierekisteriFailed', asset);
+            } else if (errorObject.status == PRECONDITION_FAILED_412) {
+              eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
+            } else {
+              eventbus.trigger('asset:updateFailed', asset);
+            }
           });
+        });
       }
     };
 
