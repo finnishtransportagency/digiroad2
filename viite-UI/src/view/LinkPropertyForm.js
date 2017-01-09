@@ -124,26 +124,47 @@
       } else if(labelText === 'VALITUT LINKIT'){
         var linkIds = "";
         var dynLinks = "";
+        var id = 0;
         _.each(selectedLinkProperty.get(), function(slp){
+          var divId = "VALITUTLINKIT" + id;
           var linkid = slp.linkId.toString();
           if (linkIds.length === 0) {
-            field = '<div class="form-group">' +
+            field = '<div class="form-group" id=' +divId +'>' +
               '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
               '<p class="form-control-static-floating">' + linkid + '</p>' +
               '</div>' ;
             linkIds = linkid;
           } else if(linkIds.search(linkid) === -1){
-            field = field + '<div class="form-group">' +
+            field = field + '<div class="form-group" id=' +divId +'>' +
               '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
               '<p class="form-control-static-floating">' + linkid + '</p>' +
               '</div>' ;
             linkIds = linkIds + ", " + linkid;
           }
+          id = id + 1;
         });
-
       }
       return field;
     };
+
+    var adjacentsTemplate = '' +
+      '<br><br>' +
+      '<div class="target-link-selection">' +
+      '<label class="control-label-adjacents">LAITTAVISSA OLEVAT TEILINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      '<div class="form-group" id="adjacents">' +
+      '<% _.forEach(adjacentLinks, function(l) { %>' +
+      '<p class="form-control-static"> LINK ID <%= l.linkId %>' +
+      '<span class="marker"><%= l.marker %></span>' +
+      '<span class="edit-buttons">' +
+      '<div class="edit buttons group" id="newSource-<%= l.linkId %>" adjacentLinkId="<%= l.linkId %>">' +
+      '<button class="select-adjacent btn btn-new" id="sourceButton-<%= l.linkId %>" value="<%= l.linkId %>">Valitse</button>' +
+      '</div>' +
+      '</span>' +
+      '</p>' +
+      ' <% }) %>' +
+      '</div>>' +
+      '</div>';
+
 
     var staticField = function(labelText, dataField) {
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -381,6 +402,15 @@
         });
         toggleMode(applicationModel.isReadOnly());
       });
+      
+      eventbus.on('adjacents:added', function(address) {
+        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": address.adjacents}))));
+        $('[id*="sourceButton"]').click(function(event) {
+          console.log("Event attempt 03");
+        });
+      });
+      
+      
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });

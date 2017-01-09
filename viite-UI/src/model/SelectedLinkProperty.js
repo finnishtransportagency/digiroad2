@@ -80,14 +80,23 @@
 
     //TODO DRVVH - 452 apply changes from getAdjacents to linkProperties
     var getLinkAdjacents = function(links) {
-      var linkIds;
+      var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+        "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
+        "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
+        "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
+      var linkIds = {};
       var data = _.first(links).getData();
-      backend.getFloatingAdjacent(data.linkId, data.roadNumber, data.roadPartNumber, data.trackCode, function(adjacents) {
+       backend.getFloatingAdjacent(data.linkId, data.roadNumber, data.roadPartNumber, data.trackCode, function(adjacents) {
         if(!_.isEmpty(adjacents))
-        linkIds = linkIds.concat(_.map(adjacents, function (rl) {
-          return rl.linkId;
-        }));
-      });
+          linkIds = adjacents;
+         if(!applicationModel.isReadOnly())
+           eventbus.trigger("adjacents:added", {"adjacents" : _.map(adjacents, function(a, index){
+             return _.merge({}, a, {"marker": markers[index]});
+           }), "links": _.map(links, function(l){
+             return l.getData();
+           })});
+       });
+      return linkIds;
     };
 
     var openMultiple = function(links) {
@@ -153,6 +162,7 @@
     };
 
     return {
+      getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,
       isDirty: isDirty,
