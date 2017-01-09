@@ -83,17 +83,17 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
-    map.events.register('moveend', this, function() {
-      applicationModel.moveMap(map.getZoom(), map.getExtent());
-    });
-
-    map.events.register('mousemove', map, function(event) {
-      eventbus.trigger('map:mouseMoved', event);
-    }, true);
-
-    map.events.register('click', map, function(event) {
-      eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
-    });
+    // map.events.register('moveend', this, function() {
+    //   applicationModel.moveMap(map.getZoom(), map.getExtent());
+    // });
+    //
+    // map.events.register('mousemove', map, function(event) {
+    //   eventbus.trigger('map:mouseMoved', event);
+    // }, true);
+    //
+    // map.events.register('click', map, function(event) {
+    //   eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
+    // });
 
     addCenterMarkerLayerToMap(map);
 
