@@ -266,6 +266,9 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+      eventListener.listenTo(eventbus, 'ajacents:nextSelected', function(sources, targets){
+        console.log(sources, targets);
+      });
     };
 
     var handleMapClick = function (){

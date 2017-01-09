@@ -405,8 +405,8 @@
       
       eventbus.on('adjacents:added', function(address) {
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": address.adjacents}))));
-        $('[id*="sourceButton"]').click(function(event) {
-          console.log("Event attempt 03");
+        $('[id*="sourceButton"]').click(address,function(event) {
+          eventbus.trigger("ajacents:nextSelected", address.links, event.currentTarget.value);
         });
       });
       
