@@ -6,40 +6,40 @@ import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("truncate empty geometry") {
-    val truncated = truncateGeometry(Nil, 10, 15)
+    val truncated = truncateGeometry3D(Nil, 10, 15)
     truncated should be (Nil)
   }
 
   test("truncation fails when start measure is after end measure") {
-    an [IllegalArgumentException] should be thrownBy truncateGeometry(Nil, 15, 10)
+    an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Nil, 15, 10)
   }
 
   test("truncation fails on one point geometry") {
-    an [IllegalArgumentException] should be thrownBy truncateGeometry(Seq(Point(0.0, 0.0)), 10, 15)
+    an [IllegalArgumentException] should be thrownBy truncateGeometry3D(Seq(Point(0.0, 0.0)), 10, 15)
   }
 
   test("truncate geometry from beginning") {
-    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 6, 10)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 6, 10)
     truncatedGeometry should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
   }
 
   test("truncate geometry from end") {
-    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 0, 6)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 0, 6)
     truncatedGeometry should be (Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
   test("truncate geometry from beginning and end") {
-    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 6)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 6)
     truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(5.0, 0.0), Point(6.0, 0.0)))
   }
 
   test("truncate geometry where start and end point are on the same segment") {
-    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 3)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 2, 3)
     truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(3.0, 0.0)))
   }
 
   test("truncate geometry where start and end point are outside geometry") {
-    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 11.0, 15.0)
+    val truncatedGeometry = truncateGeometry3D(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 11.0, 15.0)
     truncatedGeometry should be(empty)
   }
 

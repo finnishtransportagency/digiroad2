@@ -50,10 +50,30 @@
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
-          eventbus.once('linkProperties:available', function () {
-            models.selectedLinkProperty.open(response.id);
-          });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          if (response.success) {
+            eventbus.once('linkProperties:available', function () {
+              models.selectedLinkProperty.open(response.id);
+            });
+
+            if (response.source === 1) {
+              eventbus.once('linkProperties:available', function () {
+                models.selectedLinkProperty.open(response.id);
+              });
+            } else if (response.source === 2) {
+              eventbus.once('linkProperties:available', function () {
+                eventbus.trigger('roadLinkComplementaryCheckBox:check');
+                eventbus.trigger('roadLinkComplementary:show');
+                eventbus.once('linkProperties:available', function () {
+                  models.selectedLinkProperty.open(response.id);
+                });
+              });
+            }
+            map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          }
+          else
+          {
+            //TODO might be nice to show error message for user if roadlink  applied to #linkProperty/ url does not exist
+          }
         });
       },
 
@@ -168,6 +188,11 @@
 
     eventbus.on('asset:fetched asset:created', function (asset) {
       router.navigate('massTransitStop/' + asset.nationalId);
+    });
+
+    // Focus to mass transit stop asset after national id search
+    eventbus.on('nationalId:selected', function (result) {
+      router.navigate('massTransitStop/' + result.nationalId, {trigger: true});
     });
 
     eventbus.on('linkProperties:unselected', function () {

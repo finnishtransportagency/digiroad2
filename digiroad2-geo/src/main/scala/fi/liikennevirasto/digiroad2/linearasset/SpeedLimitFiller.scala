@@ -21,7 +21,7 @@ object SpeedLimitFiller {
         Seq(MValueAdjustment(segment.id, segment.linkId, 0, roadLinkLength))
       else
         Nil
-    val modifiedSegment = segment.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
+    val modifiedSegment = segment.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
     (modifiedSegment, mAdjustment)
   }
 
@@ -76,7 +76,7 @@ object SpeedLimitFiller {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
     val cappedSegments = overflowingSegments.map { s =>
-      (s.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
+      (s.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
         MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength))
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
@@ -114,7 +114,7 @@ object SpeedLimitFiller {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength}
     remainders.map { segment =>
-      val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
+      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
       SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None)
     }
   }
@@ -243,7 +243,7 @@ object SpeedLimitFiller {
       */
     def updateGeometry(limits: Seq[SpeedLimit], roadLink: RoadLink): (Seq[(SpeedLimit, Option[MValueAdjustment])]) = {
       limits.map { sl =>
-        val newGeom = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, sl.endMeasure)
+        val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, sl.startMeasure, sl.endMeasure)
         GeometryUtils.withinTolerance(newGeom, sl.geometry, MaxAllowedMValueError) match {
           case true => (sl, None)
           case false => (sl.copy(geometry = newGeom), Option(MValueAdjustment(sl.id, sl.linkId, sl.startMeasure, sl.endMeasure)))
@@ -312,7 +312,7 @@ object SpeedLimitFiller {
         val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
         val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure,
-          geometry = GeometryUtils.truncateGeometry(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
+          geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
           vvhTimeStamp = latestTimestamp(toBeFused.head, target))
         val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
@@ -350,11 +350,11 @@ object SpeedLimitFiller {
       val (startAgainst, endAgainst) = firstAndLastLimit(speedLimits, SideCode.AgainstDigitizing)
       val sortedStarts = Seq(startTwoSided, startTowards, startAgainst).flatten.sortBy(_.startMeasure)
       val startChecks = sortedStarts.filter(sl => Math.abs(sl.startMeasure - sortedStarts.head.startMeasure) < Epsilon && sl.startMeasure > MaxAllowedMValueError)
-      val newStarts = startChecks.map(sl => sl.copy(startMeasure = 0.0, geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, sl.endMeasure)))
+      val newStarts = startChecks.map(sl => sl.copy(startMeasure = 0.0, geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, sl.endMeasure)))
       val sortedEnds = Seq(endTwoSided, endTowards, endAgainst).flatten.sortBy(0.0 - _.endMeasure)
       val endChecks = sortedEnds.filter(sl => Math.abs(sl.endMeasure - sortedEnds.head.endMeasure) < Epsilon &&
         Math.abs(roadLink.length - sl.endMeasure) > MaxAllowedMValueError)
-      val newEnds = endChecks.map(sl => sl.copy(endMeasure = roadLink.length, geometry = GeometryUtils.truncateGeometry(roadLink.geometry, sl.startMeasure, roadLink.length)))
+      val newEnds = endChecks.map(sl => sl.copy(endMeasure = roadLink.length, geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, sl.startMeasure, roadLink.length)))
       val newLimits = newStarts ++ newEnds
       (speedLimits.filterNot(sl => newLimits.map(_.id).contains(sl.id)) ++ newLimits,
         changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ newLimits.map(sl => MValueAdjustment(sl.id, roadLink.linkId, sl.startMeasure, sl.endMeasure))))
@@ -366,7 +366,7 @@ object SpeedLimitFiller {
         if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedSpeedLimitLength &&
           Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
-            geometry = GeometryUtils.truncateGeometry(roadLink.geometry, left.startMeasure, right.get.startMeasure),
+            geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             vvhTimeStamp = latestTimestamp(left, right))
           val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
           val recurse = fillBySideCode(speedLimits.tail, roadLink, changeSet)
@@ -512,7 +512,7 @@ object SpeedLimitFiller {
     newStart = Math.min(to.length, Math.max(0.0, newStart))
     newEnd = Math.max(0.0, Math.min(to.length, newEnd))
 
-    val geometry = GeometryUtils.truncateGeometry(
+    val geometry = GeometryUtils.truncateGeometry3D(
       Seq(GeometryUtils.calculatePointFromLinearReference(to.geometry, newStart).getOrElse(to.geometry.head),
         GeometryUtils.calculatePointFromLinearReference(to.geometry, newEnd).getOrElse(to.geometry.last)),
       0, to.length)

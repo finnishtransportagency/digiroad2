@@ -180,6 +180,58 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+/**
+Returns empty result as Json message, not as page not found
+*/
+    get("/massTransitStopsSafe/:nationalId") {
+      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+      }
+      val nationalId = params("nationalId").toLong
+      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+      massTransitStopReturned._1 match {
+        case Some(stop) =>
+          Map ("id" -> stop.id,
+            "nationalId" -> stop.nationalId,
+            "stopTypes" -> stop.stopTypes,
+            "lat" -> stop.lat,
+            "lon" -> stop.lon,
+            "validityDirection" -> stop.validityDirection,
+            "bearing" -> stop.bearing,
+            "validityPeriod" -> stop.validityPeriod,
+            "floating" -> stop.floating,
+            "propertyData" -> stop.propertyData,
+            "success" -> true)
+        case None =>
+          Map("success" -> false)
+      }
+    }
+
+  get("/massTransitStops/livi/:liviId") {
+    def validateMunicipalityAuthorization(id: String)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + id))
+    }
+    val liviId = params("liviId")
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByLiviId(liviId, validateMunicipalityAuthorization(liviId))
+
+    val massTransitStop = massTransitStopReturned.map { stop =>
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating,
+        "propertyData" -> stop.propertyData,
+        "success" -> true)
+    }
+    massTransitStop.getOrElse(Map("success" -> false))
+  }
+
   get("/massTransitStops/floating") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
@@ -294,6 +346,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   private def getRoadLinksHistoryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
@@ -327,7 +389,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
       "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
-      "constructionType" -> roadLink.constructionType.value)
+      "constructionType" -> roadLink.constructionType.value,
+      "linkSource" -> roadLink.linkSource.value)
   }
 
   get("/roadlinks") {
@@ -341,12 +404,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-  get("/roadlinks/:linkId") {
-    val linkId = params("linkId").toLong
-    roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
-      case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
-    }.getOrElse(NotFound("Road link with MML ID " + linkId + " not found"))
-  }
+    get("/roadlinks/:linkId") {
+      val linkId = params("linkId").toLong
+      roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
+        case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
+      }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
+    }
 
   get("/roadlinks/history") {
     response.setHeader("Access-Control-Allow-Headers", "*")
@@ -383,6 +446,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     roadLinkService.getIncompleteLinks(includedMunicipalities)
+  }
+
+  get("/roadlinks/complementaries"){
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox")
+      .map(getRoadlinksWithComplementaryFromVVH(municipalities))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   put("/linkproperties") {
@@ -573,6 +647,30 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
       user.username,
       validateUserMunicipalityAccess(user))
+  }
+
+  get("/speedlimit/sid/") {
+    val segmentID = params.get("segmentid").getOrElse(halt(BadRequest("Bad coordinates")))
+    val speedLimit = speedLimitService.find(segmentID.toLong)
+    speedLimit match {
+      case Some(speedLimit) => {
+        roadLinkService.getRoadLinkMiddlePointByLinkId(speedLimit.linkId) match {
+          case Some(location) => {
+            Map ("success" -> true,
+              "linkId" ->  speedLimit.linkId,
+              "latitude" -> location._2.y,
+              "longitude"-> location._2.x
+            )
+          }
+          case None => {
+            Map("success" -> false)
+          }
+        }
+      }
+      case None => {
+        Map("success" -> false)
+      }
+    }
   }
 
   get("/speedlimits") {

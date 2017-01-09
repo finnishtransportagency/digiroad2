@@ -4,6 +4,25 @@ import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.DateTimeFormat
 
+sealed trait LinkGeomSource{
+  def value: Int
+}
+
+//LINKIN LÄHDE (1 = tielinkkien rajapinta, 2 = täydentävien linkkien rajapinta, 3 = suunnitelmalinkkien rajapinta, 4 = jäädytettyjen linkkien rajapinta, 5 = historialinkkien rajapinta)
+
+object LinkGeomSource{
+  val values = Set(NormalLinkInterface, ComplimentaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
+
+  def apply(intValue: Int): LinkGeomSource = values.find(_.value == intValue).getOrElse(Unknown)
+
+  case object NormalLinkInterface extends LinkGeomSource {def value = 1;}
+  case object ComplimentaryLinkInterface extends LinkGeomSource {def value = 2;}
+  case object SuravageLinkInterface extends LinkGeomSource {def value = 3;}
+  case object FrozenLinkInterface extends LinkGeomSource {def value = 4;}
+  case object HistoryLinkInterface extends LinkGeomSource {def value = 5;}
+  case object Unknown extends LinkGeomSource { def value = 99 }
+}
+
 sealed trait ConstructionType {
   def value: Int
 }

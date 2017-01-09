@@ -1,13 +1,14 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
@@ -112,13 +113,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadAddressLinks = Seq(
         RoadAddressLink(0, 1611616, Seq(Point(374668.195, 6676884.282, 24.48399999999674), Point(374643.384, 6676882.176, 24.42399999999907)), 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, RoadType.PrivateRoadType,  Some("22.09.2016 14:51:28"), Some("dr1_conversion"), Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown, None, None)
       )
+      val oldMissingRA = RoadAddressDAO.getMissingRoadAddresses(Set()).size
       roadAddressLinks.foreach { links =>
         RoadAddressDAO.createMissingRoadAddress(
           MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
-            Some(links.roadPartNumber), None, None, Anomaly.apply(1)))
+            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven))
       }
       val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId)
-
+      RoadAddressDAO.getMissingRoadAddresses(Set()) should have size(oldMissingRA)
       linksFromDB(0)._2 should be(0)
       linksFromDB(0)._3 should be(0)
       linksFromDB(0)._4 should be(1)
@@ -247,4 +249,37 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Floating check gets geometry updated") {
+    val roadLink = VVHRoadlink(5171359L, 1, Seq(Point(0.0, 0.0), Point(0.0, 31.045)), State, TrafficDirection.BothDirections,
+      AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    when(mockRoadLinkService.getCurrentAndComplementaryVVHRoadLinks(Set(5171359L))).thenReturn(Seq(roadLink))
+    runWithRollback {
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171359L))
+      addressList should have size (1)
+      val address = addressList.head
+      address.floating should be (false)
+      address.geom shouldNot be (roadLink.geometry)
+      roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
+      dynamicSession.rollback()
+      val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
+      addressUpdated.geom shouldNot be (address.geom)
+      addressUpdated.geom should be(roadLink.geometry)
+      addressUpdated.floating should be (false)
+    }
+  }
+
+  test("Floating check gets floating flag updated, not geometry") {
+    when(mockRoadLinkService.getCurrentAndComplementaryVVHRoadLinks(Set(5171359L))).thenReturn(Nil)
+    runWithRollback {
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171359L))
+      addressList should have size (1)
+      val address = addressList.head
+      address.floating should be (false)
+      roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
+      dynamicSession.rollback()
+      val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
+      addressUpdated.geom should be (address.geom)
+      addressUpdated.floating should be (true)
+    }
+  }
 }

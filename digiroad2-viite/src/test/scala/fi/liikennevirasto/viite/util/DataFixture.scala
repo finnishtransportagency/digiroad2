@@ -87,11 +87,12 @@ object DataFixture {
     println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
       val roads = checker.checkRoadNetwork()
       println(s"${roads.size} segment(s) found")
-      roads.foreach(r => RoadAddressDAO.changeRoadAddressFloating(float = true, r.id, None))
+      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet)
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()

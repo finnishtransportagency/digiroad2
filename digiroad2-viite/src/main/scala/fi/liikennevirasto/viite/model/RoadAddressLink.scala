@@ -1,14 +1,11 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.asset.{ConstructionType, AdministrativeClass, LinkType, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
 import fi.liikennevirasto.viite.dao.CalibrationPoint
-import fi.liikennevirasto.viite.{LinkGeomSource, RoadType}
+import fi.liikennevirasto.viite.RoadType
 
-/**
-  * Created by venholat on 31.8.2016.
-  */
 case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            length: Double, administrativeClass: AdministrativeClass,
                            linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType, roadLinkSource: LinkGeomSource, roadType: RoadType, modifiedAt: Option[String],modifiedBy: Option[String],

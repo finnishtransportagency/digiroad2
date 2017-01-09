@@ -114,10 +114,10 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val geom = Seq(Point(379483.273,6672835.486), Point(379556.289,6673054.073))
     val roadAddress = Seq(
       RoadAddress(3767413, 101, 1, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, 138834, 0.0, 21.0,
-        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), None), false, GeometryUtils.truncateGeometry(geom, 0.0, 21.0)),
+        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), None), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0)),
 
       RoadAddress(3767414, 101, 1, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, 138834, 21.0, 230.776,
-        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry(geom, 21.0, 230.776))
+        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776))
     )
     val fusedList = RoadAddressLinkBuilder.fuseRoadAddress(roadAddress)
     fusedList should have size (1)
@@ -138,10 +138,10 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val geom = Seq(Point(379483.273,6672835.486), Point(379556.289,6673054.073))
     val roadAddress = Seq(
       RoadAddress(3767413, 101, 1, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, 138834, 0.0, 21.0,
-        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), Some(CalibrationPoint(138834, 21.0, 920L))), false, GeometryUtils.truncateGeometry(geom, 0.0, 21.0)),
+        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), Some(CalibrationPoint(138834, 21.0, 920L))), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0)),
 
       RoadAddress(3767414, 101, 1, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, 138834, 21.0, 230.776,
-        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry(geom, 21.0, 230.776))
+        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776))
     )
     val fusedList = RoadAddressLinkBuilder.fuseRoadAddress(roadAddress)
     fusedList should have size (1)

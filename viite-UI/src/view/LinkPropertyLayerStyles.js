@@ -9,11 +9,11 @@
     ];
 
     var complementaryRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 4})
     ];
 
     var complementaryRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 4})
     ];
 
     var unknownRoadAddressAnomalyRules = [
@@ -24,10 +24,10 @@
     ];
 
     var floatingRoadAddressRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: 2 })
     ];
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: -99})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: 2})
     ];
 
     var typeFilter = function(type) {
@@ -134,7 +134,10 @@
       new OpenLayersRule().where('roadClass').is('99').use({ strokeColor: '#a4a4a2'})
     ];
 
-    var constructionTypeRule = [new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#ff9900', graphicZIndex: 0})];
+    var constructionTypeRules = [
+      new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#a4a4a2', graphicZIndex: 0}),
+      new OpenLayersRule().where('constructionType').is('1').and('anomaly').is(1).use({ strokeColor: '#ff9900', graphicZIndex: 0})
+    ];
     var unknownConstructionTypeRule = [new OpenLayersRule().where('type').is('unknownConstructionType').use({externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})];
 
     var streetSectionRules = [
@@ -164,7 +167,7 @@
     roadClassDefaultStyle.addRules(borderRules);
     roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
     roadClassDefaultStyle.addRules(floatingRoadAddressRules);
-    roadClassDefaultStyle.addRules(constructionTypeRule);
+    roadClassDefaultStyle.addRules(constructionTypeRules);
     roadClassDefaultStyle.addRules(darkOverlayRules);
     roadClassDefaultStyle.addRules(unknownConstructionTypeRule);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
@@ -209,8 +212,8 @@
     roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
     roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
-    roadClassSelectionDefaultStyle.addRules(constructionTypeRule);
-    roadClassSelectionSelectStyle.addRules(constructionTypeRule);
+    roadClassSelectionDefaultStyle.addRules(constructionTypeRules);
+    roadClassSelectionSelectStyle.addRules(constructionTypeRules);
     roadClassSelectionDefaultStyle.addRules(unknownConstructionTypeRule);
     roadClassSelectionSelectStyle.addRules(unknownConstructionTypeRule);
     roadClassSelectionDefaultStyle.addRules(darkOverlayRules);
