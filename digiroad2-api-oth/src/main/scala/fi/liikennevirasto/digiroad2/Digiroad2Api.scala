@@ -260,7 +260,11 @@ Returns empty result as Json message, not as page not found
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val linkId = (parsedBody \ "linkId").extractOpt[Long]
     validateBusStopMaintainerUser(properties)
+    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+      validateBusStopDirections(properties, linkId.get)
+    }
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
@@ -316,6 +320,18 @@ Returns empty result as Json message, not as page not found
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
+  private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
+    val roadLink = roadLinkService.getRoadLinkFromVVH(linkId)
+    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).headOption
+    val massDirection = massTransitStopService
+
+    val busStopDirection = properties.find(prop => prop.publicId == "vaikutussuunta")
+                                     .get.values
+                                     .map(dir => dir.propertyValue).head
+    if((roadLinkDirection.head.toString != SideCode.BothDirections.toString) && (roadLinkDirection.head.toString != SideCode.apply(busStopDirection.toInt).toString))
+      halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+  }
+
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
@@ -326,6 +342,7 @@ Returns empty result as Json message, not as page not found
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
+    validateBusStopDirections(properties, linkId)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
       massTransitStopService.getById(id)

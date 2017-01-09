@@ -232,6 +232,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
+        currentAsset.payload.linkId = currentAsset.linkId;
         changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
