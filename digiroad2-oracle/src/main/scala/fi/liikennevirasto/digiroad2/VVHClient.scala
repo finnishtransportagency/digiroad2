@@ -202,11 +202,22 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MTKID", mmlIds)
   }
 
-  protected def combineFiltersWithAnd(filter1: String, filter2: String) = {
-    filter1.isEmpty match {
-      case true => filter2
-      case _ => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
+  protected def withMtkClassFilter(ids: Set[Long]): String = {
+    withFilter("MTKCLASS", ids)
+  }
+
+  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
+
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
     }
+  }
+
+  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
   }
 
   protected def layerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
@@ -678,8 +689,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByBoundsAndMunicipalitiesF.
     */
-  def queryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(withMunicipalityFilter(municipalities), Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+  def queryByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), extraFilter: Option[String] = None): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), extraFilter),
+      Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS," +
+        "ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT," +
+        "LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
     val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
@@ -736,7 +750,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     *
     */
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(queryByBoundsAndMunicipalities(bounds, municipalities).filter(_.attributes("MTKCLASS").equals(12314)))
+    Future(queryByBoundsAndMunicipalities(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
   }
 
 
