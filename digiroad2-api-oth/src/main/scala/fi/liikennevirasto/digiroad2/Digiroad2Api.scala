@@ -27,6 +27,8 @@ case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: 
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
+case class NewMaintenance(linkId: Long, startMeasure: Double, endMeasure: Double, value: MaintenanceValueWithProperties, sideCode: Int)
+
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
@@ -536,7 +538,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
-      case _ =>
+      case LinearAssetTypes.MaintenanceAssetTypeId =>
+        value.extractOpt[Seq[NewMaintenance]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Maintenance(x.value), x.sideCode, 0, None))
+     case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
     }
   }

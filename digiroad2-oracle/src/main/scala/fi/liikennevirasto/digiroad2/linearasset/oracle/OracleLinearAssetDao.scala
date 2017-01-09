@@ -953,6 +953,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     Some(id)
   }
 
+  def insertMaintenanceValue(assetId: Long, value: Maintenance): Unit = {
+    value.maintenance.propertiesData.foreach( prop => {
+       prop.propertyType match{
+         case "text" =>
+           insertValue(assetId, prop.publicId, prop.value)
+         case "single_choice" =>
+           insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
+       }
+    })
+  }
+
   /**
     * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */

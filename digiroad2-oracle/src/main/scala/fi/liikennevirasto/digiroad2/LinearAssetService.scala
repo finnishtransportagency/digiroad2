@@ -24,6 +24,7 @@ object LinearAssetTypes {
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
+  val MaintenanceAssetTypeId = 290
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
@@ -620,6 +621,8 @@ trait LinearAssetOperations {
         dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)
+      case maintenance: Maintenance =>
+        dao.insertMaintenanceValue(id, maintenance)
     }
     id
   }
