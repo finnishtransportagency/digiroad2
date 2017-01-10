@@ -83,17 +83,19 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
-    // map.events.register('moveend', this, function() {
-    //   applicationModel.moveMap(map.getZoom(), map.getExtent());
-    // });
-    //
-    // map.events.register('mousemove', map, function(event) {
-    //   eventbus.trigger('map:mouseMoved', event);
-    // }, true);
-    //
-    // map.events.register('click', map, function(event) {
-    //   eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
-    // });
+    map.on('moveend', function() {
+      console.log(map.getLayers().getArray()[0].getExtent());
+      applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+    });
+
+    map.on('pointermove', function(event) {
+      eventbus.trigger('map:mouseMoved', event);
+    }, true);
+
+    map.on('singleclick', function(event) {
+      console.log(event.coordinate);
+      eventbus.trigger('map:clicked', { x: event.coordinate.x, y: event.coordinate.y });
+    });
 
     addCenterMarkerLayerToMap(map);
 

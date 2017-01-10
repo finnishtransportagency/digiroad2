@@ -115,7 +115,7 @@
     new LinkPropertyForm(models.selectedLinkProperty);
 
     var layers = _.merge({
-      // road: roadLayer,
+      road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)});
 
     var mapPluginsContainer = $('#map-plugins');
@@ -134,7 +134,7 @@
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
-    // applicationModel.moveMap(map.getZoom(), map.getExtent());
+    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };
