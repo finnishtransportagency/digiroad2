@@ -357,6 +357,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var createNewAsset = function(lonlat, placement) {
+    var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
@@ -364,7 +365,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
       bearing: bearing,
-      validityDirection: validitydirections.sameDirection,
+      validityDirection: default_asset_direction[nearestLine.trafficDirection],
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,

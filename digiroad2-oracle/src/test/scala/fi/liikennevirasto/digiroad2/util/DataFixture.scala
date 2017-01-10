@@ -4,7 +4,7 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, AdministrativeClass}
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.MassTransitStopService
@@ -647,6 +647,62 @@ object DataFixture {
     println("\n")
   }
 
+  def listingBusStopsWithSideCodeConflictWithRoadLinkDirection(): Unit = {
+    println("\nCreate a listing of bus stops on one-way roads in Production that have side code against traffic direction of road link")
+    println(DateTime.now())
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var conflictedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    println("Bus stops with side code in conflict By Municipality")
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      persistedStop.foreach { stop =>
+        val massTransitStopDirectionValue = stop.validityDirection
+
+        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkFromVVH(stop.linkId)
+        val roadLinkDirectionValue = roadLinkOfMassTransitStop.map(rl => rl.trafficDirection).headOption
+
+        roadLinkDirectionValue match {
+          case Some(trafficDirection) =>
+            // Validate if OTH Bus stop are in conflict with road link traffic direction
+            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head.toString() != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
+              //Add a list of conflicted Bus Stops
+              conflictedBusStopsOTH = conflictedBusStopsOTH ++ List(stop)
+            }
+          case _ => {
+            None
+          }
+        }
+      }
+
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of Bus stops with side code in conflict
+    println("List of Bus Stops with side code in conflict:")
+    conflictedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -724,13 +780,15 @@ object DataFixture {
       case Some("check_bus_stop_matching_between_OTH_TR") =>
         val dryRun = args.length == 2 && args(1) == "dry-run"
         checkBusStopMatchingBetweenOTHandTR(dryRun)
+      case Some("listing_bus_stops_with_side_code_conflict_with_roadLink_direction") =>
+        listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
-        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR")
+        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction")
     }
   }
 }
