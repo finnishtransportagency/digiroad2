@@ -107,7 +107,7 @@
 
     var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
       wheelDown: function(evt, delta) {
-        if (applicationModel.canZoomOut()) {
+        if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
           return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
         } else {
           new Confirm();

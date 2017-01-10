@@ -189,7 +189,7 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      '<button class="save btn btn-move" disabled>Siirrä</button>' +
+      '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-primary" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -407,6 +407,10 @@
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": targets}))));
         $('[id*="sourceButton"]').click(sources,function(event) {
           eventbus.trigger("ajacents:nextSelected", sources, event.currentTarget.value);
+          //TODO Uncomment for task 182
+            //rootElement.find('.link-properties button.calculate').attr('disabled', false);
+            //rootElement.find('.link-properties button.cancel').attr('disabled', false);
+            //applicationModel.setActiveButtons(true);
         });
       });
       
@@ -423,6 +427,7 @@
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
         selectedLinkProperty.cancel();
+        applicationModel.setActiveButtons(false);
       });
 
 

@@ -11,6 +11,7 @@
     },
     minZoomForAssets: 6,
     minZoomForRoadLinks: 1,
+    minZoomForEditMode: 10,
     maxZoomLevel: 15
   };
 })();
