@@ -401,6 +401,62 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }.toSeq
   }
 
+  /**
+    * Iterates a set of link ids with Maintenance asset type id and floating flag and returns linear assets. Used by .
+    */
+  def fetchMaintenancesByLinkIds(maintenanceAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+
+    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
+         select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
+                pos.side_code, pos.start_measure,
+                pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
+                a.modified_by, a.modified_date,
+                case when a.valid_to <= sysdate then 1 else 0 end as expired
+           from asset a
+                join asset_link al on a.id = al.asset_id
+                join lrm_position pos on al.position_id = pos.id
+                join text_property_value t on t.asset_id = a.id
+                join #$idTableName i on i.id = pos.link_id
+                join property p on p.id = t.property_id
+          where a.asset_type_id = #$maintenanceAssetTypeId
+            #$floatingFilter
+         union
+         select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
+                pos.link_id, pos.side_code,
+                pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
+                a.created_date, a.modified_by, a.modified_date,
+                case when a.valid_to <= sysdate then 1 else 0 end as expired
+           from asset a
+               join asset_link al on a.id = al.asset_id
+                join lrm_position pos on al.position_id = pos.id
+                join single_choice_value s on s.asset_id = a.id
+                join enumerated_value e on e.id = s.enumerated_value_id
+                join #$idTableName i on i.id = pos.link_id
+                join property p on p.id = e.property_id
+          where a.asset_type_id = #$maintenanceAssetTypeId
+            #$floatingFilter"""
+        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
+    }
+
+    val groupedByAssetId = assets.groupBy(_._1)
+    val groupedByMaintenanceId = groupedByAssetId.mapValues(_.groupBy(_._2))
+
+    groupedByMaintenanceId.map { case (assetId, rowsByMaintenanceId) =>
+      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
+      val maintenanceValues = rowsByMaintenanceId.keys.toSeq.sorted.map { maintenanceId =>
+        val rows = rowsByMaintenanceId(maintenanceId)
+        val propertyId = rows.head._2
+        val propertyValue = rows.head._4
+        val propertyType = rows.head._5
+        val propertyPublicId = rows.head._6
+        val propertyRequired = rows.head._7
+        Properties(propertyPublicId, propertyType, propertyRequired, propertyValue)
+      }
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(MaintenanceValueWithProperties(maintenanceAssetTypeId, maintenanceValues))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
+    }.toSeq
+  }
 
   private def fetchSpeedLimitsByLinkId(linkId: Long) = {
     sql"""

@@ -436,6 +436,7 @@ trait LinearAssetOperations {
         case Some(TextualValue(textValue)) =>
           LinearAssetTypes.getValuePropertyId(typeId)
         case Some(prohibitions: Prohibitions) => ""
+        case Some(maintenance: Maintenance) => ""
         case None => ""
       }
     }
@@ -461,6 +462,8 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
           case Some(prohibitions: Prohibitions) =>
             dao.insertProhibitionValue(id, prohibitions)
+          case Some(maintenance: Maintenance) =>
+            dao.insertMaintenanceValue(id, maintenance)
           case None => None
         }
       }
@@ -630,7 +633,7 @@ trait LinearAssetOperations {
     id
   }
 
-  def validateRequiredProperties(typeId: Int, maintenance: Maintenance): Set[String] = {
+  private def validateRequiredProperties(typeId: Int, maintenance: Maintenance): Set[String] = {
     val mandatoryProperties: Map[String, String] = dao.getRequiredProperties(typeId)
     val nonEmptyMandatoryProperties: Seq[Properties] = maintenance.maintenance.propertiesData.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
