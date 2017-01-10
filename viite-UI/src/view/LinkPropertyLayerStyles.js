@@ -17,11 +17,22 @@
     ];
 
     var unknownRoadAddressAnomalyRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
+      new OpenLayersRule().where('anomaly').is(1).and('gapTransfering').is(undefined).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
     ];
+
     var unknownRoadAddressAnomalyUnselectedRules = [
-      new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
+      new OpenLayersRule().where('anomaly').is(1).and('gapTransfering').is(undefined).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
     ];
+
+    var gapTransferProcessingRules = [
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.8, pointRadius: 14, graphicZIndex: 4})
+    ];
+
+    var gapTransferProcessingUnselectedRules = [
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.3, pointRadius: 14, graphicZIndex: 4})
+    ];
+
+
 
     var floatingRoadAddressRules = [
       new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
@@ -144,6 +155,7 @@
     roadClassDefaultStyle.addRules(borderRules);
     roadClassDefaultStyle.addRules(complementaryRoadAddressRules);
     roadClassDefaultStyle.addRules(floatingRoadAddressRules);
+    roadClassDefaultStyle.addRules(gapTransferProcessingRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
@@ -186,6 +198,8 @@
     roadClassSelectionSelectStyle.addRules(complementaryRoadAddressRules);
     roadClassSelectionDefaultStyle.addRules(floatingRoadAddressUnselectedRules);
     roadClassSelectionSelectStyle.addRules(floatingRoadAddressRules);
+    roadClassSelectionSelectStyle.addRules(gapTransferProcessingUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(gapTransferProcessingRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle

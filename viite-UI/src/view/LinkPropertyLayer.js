@@ -35,7 +35,7 @@
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
       roadLayer.redraw();
-      indicatorLayer.clearMarkers()
+      indicatorLayer.clearMarkers();
       unhighlightFeatures();
     };
 
@@ -57,8 +57,9 @@
 
     var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
+        var gapTransfering = x.data.gapTransfering;
         var canIHighlight = !_.isUndefined(x.attributes.linkId) ? selectedLinkProperty.isSelectedByLinkId(x.attributes.linkId) : selectedLinkProperty.isSelectedById(x.attributes.id);
-        if (canIHighlight) {
+        if(gapTransfering || canIHighlight){
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -276,10 +277,17 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'ajacents:nextSelected adjacents:added', function(sources, targets){
-        drawIndicators(targets);
-        console.log(sources, targets);
+      eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, targets, adjacents){
+        console.log({'sources': sources, 'targets': targets, 'adjacents': adjacents});
+        drawIndicators(adjacents);
+        redrawNextSelectedTarget(targets, adjacents);
       });
+      eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
+        console.log({'sources': sources, 'targets': targets});
+        drawIndicators(targets);
+
+      });
+
     };
 
     
@@ -336,6 +344,22 @@
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
       me.drawSigns(roadLayer.layer, selectedRoadLinks);
+      reselectRoadLink();
+    };
+
+    var redrawNextSelectedTarget= function(targets, adjacents) {
+
+      _.find(roadLayer.layer.features, function(feature) {
+        return targets != 0 && feature.attributes.linkId == targets;
+      }).data.gapTransfering = true;
+      _.find(roadLayer.layer.features, function(feature) {
+        return targets != 0 && feature.attributes.linkId == targets;
+        return targets != 0 && feature.attributes.linkId == targets;
+      }).attributes.gapTransfering = true;
+
+      var feature = _.find(roadLayer.layer.features, function(feature) {
+        return targets != 0 && feature.attributes.linkId == targets;
+      });
       reselectRoadLink();
     };
 

@@ -406,7 +406,7 @@
       eventbus.on('adjacents:added', function(sources, targets) {
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": targets}))));
         $('[id*="sourceButton"]').click(sources,function(event) {
-          eventbus.trigger("ajacents:nextSelected", sources, event.currentTarget.value);
+          eventbus.trigger("adjacents:nextSelected", sources, event.currentTarget.value);
           //TODO Uncomment for task 182
             //rootElement.find('.link-properties button.calculate').attr('disabled', false);
             //rootElement.find('.link-properties button.cancel').attr('disabled', false);
