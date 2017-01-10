@@ -403,10 +403,10 @@
         toggleMode(applicationModel.isReadOnly());
       });
       
-      eventbus.on('adjacents:added', function(address) {
-        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": address.adjacents}))));
-        $('[id*="sourceButton"]').click(address,function(event) {
-          eventbus.trigger("ajacents:nextSelected", address.links, event.currentTarget.value);
+      eventbus.on('adjacents:added', function(sources, targets) {
+        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": targets}))));
+        $('[id*="sourceButton"]').click(sources,function(event) {
+          eventbus.trigger("ajacents:nextSelected", sources, event.currentTarget.value);
         });
       });
       

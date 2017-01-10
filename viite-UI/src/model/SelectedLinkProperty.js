@@ -89,12 +89,14 @@
        backend.getFloatingAdjacent(data.linkId, data.roadNumber, data.roadPartNumber, data.trackCode, function(adjacents) {
         if(!_.isEmpty(adjacents))
           linkIds = adjacents;
-         if(!applicationModel.isReadOnly())
-           eventbus.trigger("adjacents:added", {"adjacents" : _.map(adjacents, function(a, index){
+         if(!applicationModel.isReadOnly()){
+           var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
              return _.merge({}, a, {"marker": markers[index]});
            }), "links": _.map(links, function(l){
              return l.getData();
-           })});
+           })};
+           eventbus.trigger("adjacents:added",calculatedRoads.links, calculatedRoads.adjacents );
+         }
        });
       return linkIds;
     };

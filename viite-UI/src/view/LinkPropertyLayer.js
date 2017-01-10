@@ -10,9 +10,12 @@
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
+    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     var floatingMarkerLayer = new OpenLayers.Layer.Boxes(layerName);
     map.addLayer(floatingMarkerLayer);
+    map.addLayer(indicatorLayer);
     floatingMarkerLayer.setVisibility(true);
+    indicatorLayer.setVisibility(true);
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -32,6 +35,7 @@
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
       roadLayer.redraw();
+      indicatorLayer.clearMarkers()
       unhighlightFeatures();
     };
 
@@ -219,6 +223,13 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
+      var indicators = jQuery.extend(true, [], indicatorLayer.markers);
+      indicatorLayer.clearMarkers();
+      if(indicators.length !== 0){
+        _.forEach(indicators, function(indicator){
+          indicatorLayer.addMarker(createIndicatorFromBounds(indicator.bounds, indicator.div.innerText));
+        });
+      }
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
@@ -244,6 +255,7 @@
     };
 
     this.layerStarted = function(eventListener) {
+      indicatorLayer.setZIndex(1000);
       var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
@@ -266,9 +278,29 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'ajacents:nextSelected', function(sources, targets){
+      eventListener.listenTo(eventbus, 'ajacents:nextSelected adjacents:added', function(sources, targets){
+        drawIndicators(targets);
         console.log(sources, targets);
       });
+    };
+
+    
+    var drawIndicators= function(links){
+      var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+        var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
+        return createIndicatorFromBounds(bounds, link.marker);
+      });
+      _.forEach(indicators, function(indicator){
+        indicatorLayer.addMarker(indicator);
+      });
+    };
+
+    var createIndicatorFromBounds = function(bounds, marker) {
+      var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
+      var box = new OpenLayers.Marker.Box(bounds, "00000000");
+      $(box.div).html(markerTemplate({'marker': marker}));
+      $(box.div).css('overflow', 'visible');
+      return box;
     };
 
     var handleMapClick = function (){
@@ -311,6 +343,7 @@
 
     this.removeLayerFeatures = function() {
       roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+      indicatorLayer.clearMarkers();
     };
 
     var show = function(map) {
