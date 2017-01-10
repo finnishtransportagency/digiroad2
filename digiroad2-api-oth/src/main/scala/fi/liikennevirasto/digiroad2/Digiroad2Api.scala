@@ -564,10 +564,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case false =>
           linearAssetService.clearValue(existingAssets.toSeq, user.username)
       }
-
-    val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
-
-    updatedNumericalIds ++ createdIds
+    try {
+      val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
+      updatedNumericalIds ++ createdIds
+    }catch{
+      case e: RuntimeException => halt(BadRequest("Missing Mandatory Properties"))
+    }
   }
 
   delete("/linearassets") {

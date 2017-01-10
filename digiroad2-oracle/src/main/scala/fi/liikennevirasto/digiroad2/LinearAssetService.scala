@@ -622,9 +622,20 @@ trait LinearAssetOperations {
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)
       case maintenance: Maintenance =>
+        val missingProperties = validateRequiredProperties(typeId, maintenance)
+        if(missingProperties.nonEmpty)
+          throw new RuntimeException("Missing mandatory properties")
         dao.insertMaintenanceValue(id, maintenance)
     }
     id
+  }
+
+  def validateRequiredProperties(typeId: Int, maintenance: Maintenance): Set[String] = {
+    val mandatoryProperties: Map[String, String] = dao.getRequiredProperties(typeId)
+    val nonEmptyMandatoryProperties: Seq[Properties] = maintenance.maintenance.propertiesData.filter { property =>
+      mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
+    }
+    mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
   }
 
   /**

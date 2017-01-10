@@ -99,11 +99,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val prop2 = Properties(123, "huoltotie_huoltovastuu", "single_choice", true, "2")
     val prop3 = Properties(123, "huoltotie_tiehoitokunta", "text", true, "text")
 
-    val t :Seq[Properties] = List(prop1, prop2)
+    val t :Seq[Properties] = List(prop1, prop2, prop3)
 
-    val maintanence = Maintenance(MaintenanceValueWithProperties(190, t))
+    val maintanence = Maintenance(MaintenanceValueWithProperties(290, t))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 190, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 290, "testuser")
       newAssets.length should be(1)
       //TODO: Missing fetch task, to conclude the test
     }
