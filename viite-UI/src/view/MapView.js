@@ -84,7 +84,6 @@
     }, this);
 
     map.on('moveend', function() {
-      console.log(map.getLayers().getArray()[0].getExtent());
       applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
@@ -93,7 +92,6 @@
     }, true);
 
     map.on('singleclick', function(event) {
-      console.log(event.coordinate);
       eventbus.trigger('map:clicked', { x: event.coordinate.x, y: event.coordinate.y });
     });
 

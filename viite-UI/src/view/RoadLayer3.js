@@ -7,19 +7,21 @@
     var layerMinContentZoomLevels = {};
     var layerStyleMaps = {};
     var layerStyleMapProviders = {};
+    var currentZoom = 0;
 
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
-        var zoom = 2048/resolution;
-        var roadLinks = roadCollection.fetch(extent.join(','), zoom);
-        var features = _.map(roadLinks, function(roadLink) {
-          var points = _.map(roadLink.points, function(point) {
-            return [point.x, point.y];
+        var zoom = Math.log(1024/resolution) / Math.log(2);
+        eventbus.once('roadLinks:fetched', function() {
+          var features = _.map(roadCollection.getAll(), function(roadLink) {
+            var points = _.map(roadLink.points, function(point) {
+              return [point.x, point.y];
+            });
+            return new ol.Feature({ geometry: new ol.geom.LineString(points) });
           });
-          return new ol.Feature({ geometry: new ol.Geometry.LineString(points) });
+          loadFeatures(features);
         });
-        console.log(features);
-        loadFeatures(features);
+        roadCollection.fetch(extent.join(','), zoom);
       },
       strategy: ol.loadingstrategy.bbox
     });
@@ -38,11 +40,11 @@
         var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
         var roadWidth = widthBase * widthBase;
         if (applicationModel.isRoadTypeShown()) {
-          // vectorLayer.setStyle({stroke: roadWidth});
+          vectorLayer.setStyle({stroke: roadWidth});
         } else {
-          // vectorLayer.setStyle({stroke: roadWidth});
-          // vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-          // vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+          vectorLayer.setStyle({stroke: roadWidth});
+          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
         }
       }
     };
@@ -55,9 +57,6 @@
     };
 
     var handleRoadsVisibility = function() {
-      console.log(vectorLayer);
-      console.log(vectorLayer.getVisible());
-      console.log(vectorLayer.getSource());
       if (_.isObject(vectorLayer)) {
         vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
       }
@@ -65,8 +64,12 @@
 
     var mapMovedHandler = function(mapState) {
       console.log("map moved");
-      console.log(map.getLayers());
-      vectorSource.clear();
+      console.log("zoom = " + mapState.zoom);
+      if (mapState.zoom !== currentZoom) {
+        currentZoom = mapState.zoom;
+        vectorSource.clear();
+      }
+      // If zoom changes clear the road list
       // if (mapState.zoom >= minimumContentZoomLevel()) {
       //
       //   vectorLayer.setVisible(true);
