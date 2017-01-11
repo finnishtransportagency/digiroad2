@@ -83,7 +83,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limit.expired should be (false)
     }
   }
-
   test("Create new linear asset") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1, 0, None)), 30, "testuser")
@@ -95,13 +94,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create new maintenance") {
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", required = true, "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", required = true, "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", required = true, "text")
 
-    val t :Seq[Properties] = List(prop1, prop2, prop3)
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
 
-    val maintanence = Maintenance(MaintenanceValueWithProperties(290, t))
+    val maintanence = Maintenance(MaintenanceValueWithProperties(290, propertiesSeq))
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 290, "testuser")
       newAssets.length should be(1)
@@ -155,6 +154,28 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
       asset.value should be (Some(prohibition))
       asset.expired should be (false)
+    }
+  }
+
+  test("Should delete maintenance asset"){
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", required = true, "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", required = true, "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", required = true, "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val maintanence = Maintenance(MaintenanceValueWithProperties(290, propertiesSeq))
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+      var asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.value should be (Some(maintanence))
+      asset.expired should be (false)
+
+      val assetId : Seq[Long] = List(asset.id)
+      val deleted = ServiceWithDao.expire( assetId , "testuser")
+      asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.expired should be (true)
     }
   }
 
