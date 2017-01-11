@@ -123,7 +123,6 @@
           }
       } else if(labelText === 'VALITUT LINKIT'){
         var linkIds = "";
-        var dynLinks = "";
         var id = 0;
         _.each(selectedLinkProperty.get(), function(slp){
           var divId = "VALITUTLINKIT" + id;
@@ -246,10 +245,7 @@
     };
 
     var templateFloating = function(options) {
-      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
-        staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -273,11 +269,9 @@
     };
 
     var templateFloatingEditMode = function(options) {
-      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
-        staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
-      return _.template('' +
+      return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
         title() + buttons +
         '</header>' +
@@ -298,7 +292,7 @@
         linkIds  +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer>', options);
+        '<footer>' + buttons + '</footer> </div>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -385,7 +379,7 @@
         if (compactForm){
           if(!applicationModel.isReadOnly()){
             rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
-          } else {
+        } else {
             rootElement.html(templateFloating(options, linkProperties)(linkProperties));
           }
         } else {
@@ -405,6 +399,7 @@
       
       eventbus.on('adjacents:added', function(sources, targets) {
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": targets}))));
+        $('#floatingEditModeForm').show();
         $('[id*="sourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:nextSelected", sources, event.currentTarget.value);
           //TODO Uncomment for task 182
