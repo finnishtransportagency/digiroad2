@@ -149,7 +149,7 @@
 
     var adjacentsTemplate = '' +
       '<br><br>' +
-      '<div class="target-link-selection">' +
+      '<div class="target-link-selection" id="adjacentsData">' +
       '<label class="control-label-adjacents">LAITTAVISSA OLEVAT TEILINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
