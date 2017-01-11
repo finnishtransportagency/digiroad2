@@ -160,13 +160,15 @@
     browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
 
     var typeFilter = function(type) {
-      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+      return new OpenLayers.Filter.Comparison(
+        { type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
     };
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
       filter: typeFilter('roadAddressAnomaly'),
       symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
     });
+
     browseStyle.addRules([unknownLimitStyleRule]);
     var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
     vectorLayer.setOpacity(1);
@@ -279,8 +281,8 @@
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, targets, adjacents){
         console.log({'sources': sources, 'targets': targets, 'adjacents': adjacents});
-        drawIndicators(adjacents);
         redrawNextSelectedTarget(targets, adjacents);
+        drawIndicators(adjacents);
       });
       eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
         console.log({'sources': sources, 'targets': targets});
@@ -350,16 +352,27 @@
     var redrawNextSelectedTarget= function(targets, adjacents) {
 
       _.find(roadLayer.layer.features, function(feature) {
-        return targets != 0 && feature.attributes.linkId == targets;
+        return targets !== 0 && feature.attributes.linkId == targets;
       }).data.gapTransfering = true;
       _.find(roadLayer.layer.features, function(feature) {
-        return targets != 0 && feature.attributes.linkId == targets;
-        return targets != 0 && feature.attributes.linkId == targets;
+        return targets !== 0 && feature.attributes.linkId == targets;
       }).attributes.gapTransfering = true;
+      _.find(roadLayer.layer.features, function(feature) {
+        return targets !== 0 && feature.attributes.linkId == targets;
+      }).data.anomaly = 0;
+      _.find(roadLayer.layer.features, function(feature) {
+        return targets !== 0 && feature.attributes.linkId == targets;
+      }).attributes.anomaly = 0;
+
 
       var feature = _.find(roadLayer.layer.features, function(feature) {
-        return targets != 0 && feature.attributes.linkId == targets;
+        return targets !== 0 && feature.attributes.linkId == targets;
       });
+      // roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'roadAddressAnomaly'));
+      // vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'roadAddressAnomaly'));
+      browseStyleMap.destroy();
+
+      // indicatorLayer.clearMarkers();
       reselectRoadLink();
     };
 
