@@ -404,7 +404,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
       }.groupBy(_.linkId)
 
-      val viiteMissingRoadLinks = distinctRoadLinks.distinct.map { rl =>
+      val viiteMissingRoadLinks = distinctRoadLinks.map { rl =>
         val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
         val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
         rl.linkId -> buildRoadAddressLink(rl, ra, missed)
