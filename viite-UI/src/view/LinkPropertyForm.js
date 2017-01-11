@@ -146,6 +146,18 @@
       return field;
     };
 
+    var aditionalSource = function(linkId){
+      return '' +
+        '<div class = "form-group" id = "aditionalSource">' +
+        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+        '<label class="control-label-floating"> LINK ID:</label>' +
+        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
+        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+        '</div>' +
+
+        '</div>';
+    };
+
     var adjacentsTemplate = '' +
       '<br><br>' +
       '<div class="target-link-selection" id="adjacentsData">' +
@@ -398,7 +410,17 @@
       });
       
       eventbus.on('adjacents:added', function(sources, targets) {
-        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(adjacentsTemplate)(_.merge({}, {"adjacentLinks": targets}))));
+        var floatingAdjacents = _.filter(targets, function(t){
+          return t.roadLinkType == -1;
+        });
+        var adjacents = _.reject(targets, function(t){
+          return t.roadLinkType == -1;
+        });
+        var fullTemplate = floatingAdjacents.length !== 0 ? _.map(floatingAdjacents, function(fa){
+          return aditionalSource(fa.linkId);
+        })[0] + adjacentsTemplate : adjacentsTemplate;
+
+        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
         $('#floatingEditModeForm').show();
         $('[id*="sourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:nextSelected", sources, event.currentTarget.value);
@@ -407,6 +429,10 @@
             //rootElement.find('.link-properties button.cancel').attr('disabled', false);
             //applicationModel.setActiveButtons(true);
         });
+        $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+          eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
+        });
+
       });
       
       
