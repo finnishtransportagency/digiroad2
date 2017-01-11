@@ -396,26 +396,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val floating = floating1 ++ floating2
       val addresses = addresses1 ++ addresses2
-      val linkIds = roadLinks.map(_.linkId).toSet
+      val distinctRoadLinks = roadLinks.distinct
+      val linkIds = distinctRoadLinks.map(_.linkId).toSet
       val missingLinkIds = linkIds -- floating.keySet
 
       val missedRL = withDynTransaction {
         RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
       }.groupBy(_.linkId)
 
-      val viiteMissingRoadLinks = roadLinks.map { rl =>
-        val ra = addresses.getOrElse(rl.linkId, Seq())
-        val missed = missedRL.getOrElse(rl.linkId, Seq())
+      val viiteMissingRoadLinks = distinctRoadLinks.distinct.map { rl =>
+        val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
+        val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
         rl.linkId -> buildRoadAddressLink(rl, ra, missed)
-      }.flatMap(_._2)
+      }
+        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)))
+        .filter(_._2.exists(ral => ral.roadLinkType == UnknownRoadLinkType))
+        .flatMap(_._2)
 
       val viiteFloatingRoadLinks = floatingViiteRoadLinks.filterNot(_._1 == linkId)
         .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)))
         .filter(_._2.exists(ral => ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode))
-        .filter(_._2.exists(ral => ral.roadLinkType == FloatingRoadLinkType || ral.roadLinkType == UnknownRoadLinkType))
+        .filter(_._2.exists(ral => ral.roadLinkType == FloatingRoadLinkType))
         .flatMap(_._2).toSeq
 
-      viiteFloatingRoadLinks ++ viiteMissingRoadLinks
+      viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks
     }).getOrElse(Seq())
   }
 
