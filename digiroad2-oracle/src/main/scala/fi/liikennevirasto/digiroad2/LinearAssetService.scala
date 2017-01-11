@@ -495,6 +495,8 @@ trait LinearAssetOperations {
             dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
           case Some(prohibitions: Prohibitions) =>
             dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
+          case Some(maintenances: Maintenance) =>
+            dao.updateMaintenaceValue(id, maintenances, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -609,6 +611,11 @@ trait LinearAssetOperations {
           dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(id, prohibitions, username)
+        case maintenances: Maintenance =>
+          val missingProperties = validateRequiredProperties(typeId, maintenances)
+          if(missingProperties.nonEmpty)
+            throw new RuntimeException("Missing mandatory properties")
+          dao.updateMaintenaceValue(id, maintenances, username)
       }
     }
 

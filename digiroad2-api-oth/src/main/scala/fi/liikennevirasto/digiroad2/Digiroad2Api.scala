@@ -518,6 +518,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+    val maintenanceParameter: Option[MaintenanceValueWithProperties] = value.extractOpt[MaintenanceValueWithProperties]
     val textualParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
@@ -526,10 +527,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(x) => Some(Prohibitions(x))
     }
 
+    val maintenance = maintenanceParameter match {
+      case None => None
+      case Some(x) => Some(Maintenance(x))
+    }
+
     numericValue
       .map(NumericValue)
       .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
+      .orElse(maintenance)
   }
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -560,7 +567,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val updatedNumericalIds =
       valueOption.nonEmpty match {
         case true =>
-          valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+          try {
+            valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+          }catch{
+            case e: RuntimeException => halt(BadRequest("Missing Mandatory Properties"))
+            case e: IllegalArgumentException => halt(BadRequest("Property not found"))
+          }
         case false =>
           linearAssetService.clearValue(existingAssets.toSeq, user.username)
       }

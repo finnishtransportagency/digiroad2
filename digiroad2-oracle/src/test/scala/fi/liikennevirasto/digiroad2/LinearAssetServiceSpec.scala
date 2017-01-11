@@ -112,6 +112,41 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("update new maintenance") {
+    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "1")
+    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "2")
+    val propIns3 = Properties("huoltotie_postinumero", "text", false, "text prop3")
+    val propIns4 = Properties("huoltotie_puh1" , "text", false, "text prop4")
+    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
+
+    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
+    val maintanenceIns = Maintenance(MaintenanceValueWithProperties(290, propIns))
+
+    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "4")
+    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "1")
+    val propUpd3 = Properties("huoltotie_postinumero", "text", false, "text prop3 Update")
+    val propUpd4 = Properties("huoltotie_puh1" , "text", false, "")
+    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
+    val propUpd6 = Properties("huoltotie_puh2" , "text", false, "text prop puh2")
+
+    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
+    val maintanenceUpd = Maintenance(MaintenanceValueWithProperties(290, propUpd))
+
+    val maintanenceFetch = Maintenance(MaintenanceValueWithProperties(290, propUpd.filterNot(_.publicId == "huoltotie_puh1")))
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanenceIns, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintanenceUpd, "testuser")
+      updAssets.length should be(1)
+
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
+      asset.value should be (Some(maintanenceFetch))
+      asset.expired should be (false)
+    }
+  }
+
   test("Create new prohibition") {
     val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
     runWithRollback {

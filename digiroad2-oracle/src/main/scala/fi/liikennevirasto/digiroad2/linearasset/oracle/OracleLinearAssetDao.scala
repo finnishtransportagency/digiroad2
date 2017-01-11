@@ -993,6 +993,46 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
+    * Updates Maintenace property. Used by LinearAssetService.updateWithoutTransaction.
+    */
+  def updateMaintenaceValue(assetId: Long, value: Maintenance, username: String): Option[Long] = {
+    val assetsUpdated = Queries.updateAssetModified(assetId, username).first
+
+    value.maintenance.propertiesData.foreach { prop =>
+
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
+    prop.propertyType match {
+
+        case "text" => {
+          if (prop.value.isEmpty) {
+            Queries.deleteTextProperty(assetId, propertyId).execute
+          } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+            Queries.insertTextProperty(assetId, propertyId, prop.value).first
+          } else {
+            Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
+          }
+        }
+        case "single_choice" => {
+          if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+            Queries.insertSingleChoiceProperty(assetId, propertyId, prop.value.toInt).first
+          } else {
+            Queries.updateSingleChoiceProperty(assetId, propertyId, prop.value.toInt).firstOption.getOrElse(throw new IllegalArgumentException("Property Single Choice Update: " + prop.publicId + " not found"))
+          }
+        }
+      }
+    }
+      Some(assetId)
+  }
+
+  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](Queries.existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](Queries.existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
   def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
