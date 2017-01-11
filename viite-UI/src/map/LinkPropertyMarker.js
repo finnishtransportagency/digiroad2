@@ -6,8 +6,8 @@
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
       var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
-      box.id = roadlink.id;
-      configureMarkerDiv(box, roadlink.id);
+      box.id = roadlink.linkId;
+      configureMarkerDiv(box, roadlink.linkId);
       renderDefaultState(box, roadlink);
       return box;
     };
@@ -31,16 +31,28 @@
     };
 
     var renderDefaultState = function(box, roadlink) {
-      var defaultMarker = $('<div class="bus-basic-marker root" />')
-        .append(floatingImage());
-      $(box.div).html(defaultMarker);
+      var type = roadlink.roadLinkType === -1 ? true : false;
+      var marker;
+      if(type){
+        marker = $('<div class="bus-basic-marker root" />')
+        .append(appendImage(type));
+        $(box.div).html(marker);
+      } else {
+        marker = $('<div class="bus-basic-marker root" />')
+        .append(appendImage(type));
+        $(box.div).html(anomalousImage());
+      }
       $(box.div).removeClass('selected-asset');
       $(box.div).css("-webkit-transform", "translate(0px,0px)")
         .css("transform", "translate(0px,0px)");
     };
 
-    var floatingImage = function() {
-      return '<img src="images/link-properties/flag-floating.svg">';
+    var appendImage = function(floatingType) {
+      return (floatingType) ? '<img src="images/link-properties/flag-floating.svg">' : '<img src="images/speed-limits/unknown.svg">';
+    };
+
+    var anomalousImage = function() {
+      return '<img src="images/speed-limits/unknown.svg">';
     };
 
     return {

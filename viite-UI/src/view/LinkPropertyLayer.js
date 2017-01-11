@@ -12,9 +12,12 @@
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     var floatingMarkerLayer = new OpenLayers.Layer.Boxes(layerName);
+    var anomalousMarkerLayer = new OpenLayers.Layer.Boxes(layerName);
     map.addLayer(floatingMarkerLayer);
+    map.addLayer(anomalousMarkerLayer);
     map.addLayer(indicatorLayer);
     floatingMarkerLayer.setVisibility(true);
+    anomalousMarkerLayer.setVisibility(true);
     indicatorLayer.setVisibility(true);
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
@@ -75,6 +78,7 @@
 
     var draw = function() {
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
+      cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
 
@@ -83,17 +87,31 @@
       me.drawSigns(roadLayer.layer, roadLinks);
 
       floatingMarkerLayer.clearMarkers();
+      anomalousMarkerLayer.clearMarkers();
 
       if(zoom > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
         });
+
+        var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
+          return roadlink.anomaly === 1;
+        });
+
         _.each(floatingRoadMarkers, function(floatlink) {
           var mouseClickHandler = createMouseClickHandler(floatlink);
           var marker = cachedLinkPropertyMarker.createMarker(floatlink);
           marker.events.register('click',marker, mouseClickHandler);
           marker.events.registerPriority('dblclick',marker, mouseClickHandler);
           floatingMarkerLayer.addMarker(marker);
+        });
+
+        _.each(anomalousRoadMarkers, function(anomalouslink) {
+          var mouseClickHandler = createMouseClickHandler(anomalouslink);
+          var marker = cachedMarker.createMarker(anomalouslink);
+          marker.events.register('click',marker, mouseClickHandler);
+          marker.events.registerPriority('dblclick',marker, mouseClickHandler);
+          anomalousMarkerLayer.addMarker(marker);
         });
       }
 
@@ -368,11 +386,12 @@
       var feature = _.find(roadLayer.layer.features, function(feature) {
         return targets !== 0 && feature.attributes.linkId == targets;
       });
-      // roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'roadAddressAnomaly'));
-      // vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'roadAddressAnomaly'));
-      browseStyleMap.destroy();
 
-      // indicatorLayer.clearMarkers();
+      currentRenderIntent= 'gapTransfer';
+
+      roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
+        return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
+      });
       reselectRoadLink();
     };
 
