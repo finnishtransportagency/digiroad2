@@ -146,12 +146,13 @@
       return field;
     };
 
-    var aditionalSource = function(linkId){
+    var aditionalSource = function(linkId, marker){
       return '' +
         '<div class = "form-group" id = "aditionalSource">' +
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
         '<label class="control-label-floating"> LINK ID:</label>' +
         '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
+        '<span class="marker">' + marker + '</span>' +
         '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
         '</div>' +
 
@@ -164,14 +165,14 @@
       '<label class="control-label-adjacents">LAITTAVISSA OLEVAT TEILINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
-      '<p class="form-control-static"> LINK ID <%= l.linkId %>' +
+      '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+      '<label class="control-label-floating"> LINK ID: </label>' +
+      '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px"><%= l.linkId %></span>' +
       '<span class="marker"><%= l.marker %></span>' +
-      '<span class="edit-buttons">' +
-      '<div class="edit buttons group" id="newSource-<%= l.linkId %>" adjacentLinkId="<%= l.linkId %>">' +
       '<button class="select-adjacent btn btn-new" id="sourceButton-<%= l.linkId %>" value="<%= l.linkId %>">Valitse</button>' +
       '</div>' +
       '</span>' +
-      '</p>' +
+      '</label>' +
       ' <% }) %>' +
       '</div>>' +
       '</div>';
@@ -417,7 +418,7 @@
           return t.roadLinkType == -1;
         });
         var fullTemplate = floatingAdjacents.length !== 0 ? _.map(floatingAdjacents, function(fa){
-          return aditionalSource(fa.linkId);
+          return aditionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
