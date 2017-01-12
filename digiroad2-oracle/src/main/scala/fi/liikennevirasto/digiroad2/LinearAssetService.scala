@@ -344,6 +344,8 @@ trait LinearAssetOperations {
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
         case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
           dao.fetchProhibitionsByIds(typeId, ids)
+        case LinearAssetTypes.MaintenanceAssetTypeId =>
+          dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
