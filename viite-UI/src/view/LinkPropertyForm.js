@@ -338,6 +338,8 @@
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
+        if(compactForm)
+          selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -426,9 +428,11 @@
         $('[id*="sourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:nextSelected", sources, event.currentTarget.value);
           //TODO Uncomment for task 182
-            //rootElement.find('.link-properties button.calculate').attr('disabled', false);
-            //rootElement.find('.link-properties button.cancel').attr('disabled', false);
-            //applicationModel.setActiveButtons(true);
+          //begin
+          // rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          // rootElement.find('.link-properties button.cancel').attr('disabled', false);
+          // applicationModel.setActiveButtons(true);
+          //end
         });
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);

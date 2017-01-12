@@ -55,9 +55,6 @@
         };
         _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, startAddressM, endAddressM);
       }
-      // TODO DRVVH - 452
-      if(_.first(current).getData().roadLinkType ===-1)
-      var adjacents = getLinkAdjacents(current);
       return properties;
     };
 
@@ -79,22 +76,19 @@
       }
     };
 
-    var getLinkAdjacents = function(links) {
+    var getLinkAdjacents = function(link) {
       var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
         "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
         "BA", "BB", "BC", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BK", "BL", "BM", "BN", "BO", "BP", "BQ", "BR", "BS", "BT", "BU", "BV", "BW", "BX", "BY", "BZ",
         "CA", "CB", "CC", "CD", "CE", "CF", "CG", "CH", "CI", "CJ", "CK", "CL", "CM", "CN", "CO", "CP", "CQ", "CR", "CS", "CT", "CU", "CV", "CW", "CX", "CY", "CZ"];
       var linkIds = {};
-      var data = _.first(links).getData();
-       backend.getFloatingAdjacent(data.linkId, data.roadNumber, data.roadPartNumber, data.trackCode, function(adjacents) {
+       backend.getFloatingAdjacent(link.linkId, link.roadNumber, link.roadPartNumber, link.trackCode, function(adjacents) {
         if(!_.isEmpty(adjacents))
           linkIds = adjacents;
          if(!applicationModel.isReadOnly()){
            var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
              return _.merge({}, a, {"marker": markers[index]});
-           }), "links": _.map(links, function(l){
-             return l.getData();
-           })};
+         }), "links": link};
            eventbus.trigger("adjacents:added",calculatedRoads.links, calculatedRoads.adjacents );
          }
        });
@@ -137,13 +131,15 @@
       });
     };
 
-    var addTargetForCalculation = function(target){
+    var addTargets = function(target){
       if(!_.contains(targets,target))
         targets.push(target);
       //TODO bellow trigger refresh next target adjacents in the form
+      var newAdjacents = getLinkAdjacents(target);
+      
     };
 
-    var targetsForCalculation = function(){
+    var getTargets = function(){
       return _.union(targets);
     };
 
@@ -174,8 +170,8 @@
     };
 
     return {
-      addTargetForCalculation: addTargetForCalculation,
-      targetsForCalculation: targetsForCalculation,
+      addTargets: addTargets,
+      getTargets: getTargets,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,
