@@ -286,7 +286,7 @@
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
         '<header>' +
-        title() + buttons +
+        title() +
         '</header>' +
         '<div class="wrapper edit-mode-floating">' +
         '<div class="form form-horizontal form-dark">' +
