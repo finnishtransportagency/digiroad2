@@ -1048,9 +1048,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Updates Maintenace property. Used by LinearAssetService.updateWithoutTransaction.
+    * Updates Maintenance property. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateMaintenaceValue(assetId: Long, value: Maintenance, username: String): Option[Long] = {
+  def updateMaintenanceValue(assetId: Long, value: Maintenance, username: String): Option[Long] = {
     val assetsUpdated = Queries.updateAssetModified(assetId, username).first
 
     value.maintenance.propertiesData.foreach { prop =>

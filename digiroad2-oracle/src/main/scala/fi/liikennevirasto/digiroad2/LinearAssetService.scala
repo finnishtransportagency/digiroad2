@@ -97,6 +97,8 @@ trait LinearAssetOperations {
             dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
             dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+          case LinearAssetTypes.MaintenanceAssetTypeId =>
+            dao.fetchMaintenancesByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case _ =>
             dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
         }
@@ -498,7 +500,7 @@ trait LinearAssetOperations {
           case Some(prohibitions: Prohibitions) =>
             dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
           case Some(maintenances: Maintenance) =>
-            dao.updateMaintenaceValue(id, maintenances, LinearAssetTypes.VvhGenerated)
+            dao.updateMaintenanceValue(id, maintenances, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -617,7 +619,7 @@ trait LinearAssetOperations {
           val missingProperties = validateRequiredProperties(typeId, maintenances)
           if(missingProperties.nonEmpty)
             throw new RuntimeException("Missing mandatory properties")
-          dao.updateMaintenaceValue(id, maintenances, username)
+          dao.updateMaintenanceValue(id, maintenances, username)
       }
     }
 
