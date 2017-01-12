@@ -37,14 +37,16 @@
         marker = $('<div class="bus-basic-marker root" />')
         .append(appendImage(type));
         $(box.div).html(marker);
+        $(box.div).removeClass('selected-asset');
+        $(box.div).css("-webkit-transform", "translate(0px,0px)")
+          .css("transform", "translate(0px,0px)");
       } else {
-        marker = $('<div class="bus-basic-marker root" />')
+        marker = $('<div class="unknown-basic-marker" />')
         .append(appendImage(type));
-        $(box.div).html(appendImage(type));
+        $(box.div).html(marker);
+        $(box.div).removeClass('selected-asset');
+        $(box.div).css("-webkit-transform", "translate(-15px,-10px)");
       }
-      $(box.div).removeClass('selected-asset');
-      $(box.div).css("-webkit-transform", "translate(0px,0px)")
-        .css("transform", "translate(0px,0px)");
     };
 
     var appendImage = function(floatingType) {

@@ -16,14 +16,6 @@
       new OpenLayersRule().where('roadLinkType').is(3).use({graphicZIndex: 1})
     ];
 
-    // var unknownRoadAddressAnomalyRules = [
-    //   new OpenLayersRule().where('anomaly').is(1).and('gapTransfering').is(undefined).use({ strokeColor: '#000000', strokeOpacity: 0.8, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
-    // ];
-    //
-    // var unknownRoadAddressAnomalyUnselectedRules = [
-    //   new OpenLayersRule().where('anomaly').is(1).and('gapTransfering').is(undefined).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 2})
-    // ];
-
     var unknownRoadAddressAnomalyRules = [
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.8, graphicZIndex: 2})
     ];
