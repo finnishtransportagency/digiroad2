@@ -25,7 +25,8 @@
     servicePoints: 250,
     europeanRoads: 260,
     exitNumbers: 270,
-    trafficLights: 280
+    trafficLights: 280,
+    maintenance: 290
   };
 
   root.linearAssetSpecs = [
@@ -316,6 +317,22 @@
         title: '',
         enabled: 'Liittymänumero(t)',
         disabled: 'Ei liittymänumeroa'
+      }
+    },
+    {
+      typeId: assetType.maintenance,
+      defaultValue: 1,
+      singleElementEventCategory: 'maintenance',
+      multiElementEventCategory: 'maintenances',
+      layerName: 'maintenance',
+      title: 'Rautateiden huoltotie',
+      newTitle: 'Uusi päällyste',
+      className: 'paved-road',
+      isSeparable: false,
+      editControlLabels: {
+        title: 'Päällyste',
+        enabled: 'red line',
+        disabled: 'grey line'
       }
     }
   ];
