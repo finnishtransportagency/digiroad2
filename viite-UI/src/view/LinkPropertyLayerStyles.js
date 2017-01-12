@@ -135,7 +135,7 @@
     ];
 
     var constructionTypeRules = [
-      new OpenLayersRule().where('constructionType').is('1').use({ strokeColor: '#a4a4a2', graphicZIndex: 0}),
+      new OpenLayersRule().where('constructionType').is('1').and('roadClass').is('99').use({ strokeColor: '#a4a4a2', graphicZIndex: 0}),
       new OpenLayersRule().where('constructionType').is('1').and('anomaly').is(1).use({ strokeColor: '#ff9900', graphicZIndex: 0})
     ];
     var unknownConstructionTypeRule = [new OpenLayersRule().where('type').is('unknownConstructionType').use({externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})];
