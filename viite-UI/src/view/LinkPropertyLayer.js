@@ -301,6 +301,7 @@
         console.log({'sources': sources, 'targets': targets, 'adjacents': adjacents});
         redrawNextSelectedTarget(targets, adjacents);
         drawIndicators(adjacents);
+        selectedLinkProperty.addTargetForCalculation(targets);
       });
       eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
         console.log({'sources': sources, 'targets': targets});

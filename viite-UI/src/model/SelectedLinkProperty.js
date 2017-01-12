@@ -2,6 +2,7 @@
   root.SelectedLinkProperty = function(backend, roadCollection) {
     var current = [];
     var dirty = false;
+    var targets = [];
 
     var close = function() {
       if (!_.isEmpty(current) && !isDirty()) {
@@ -78,7 +79,6 @@
       }
     };
 
-    //TODO DRVVH - 452 apply changes from getAdjacents to linkProperties
     var getLinkAdjacents = function(links) {
       var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
         "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -137,6 +137,16 @@
       });
     };
 
+    var addTargetForCalculation = function(target){
+      if(!_.contains(targets,target))
+        targets.push(target);
+      //TODO bellow trigger refresh next target adjacents in the form
+    };
+
+    var targetsForCalculation = function(){
+      return _.union(targets);
+    };
+
     var cancel = function() {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
@@ -164,6 +174,8 @@
     };
 
     return {
+      addTargetForCalculation: addTargetForCalculation,
+      targetsForCalculation: targetsForCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,
