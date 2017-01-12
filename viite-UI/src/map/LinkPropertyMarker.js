@@ -40,7 +40,7 @@
       } else {
         marker = $('<div class="bus-basic-marker root" />')
         .append(appendImage(type));
-        $(box.div).html(anomalousImage());
+        $(box.div).html(appendImage(type));
       }
       $(box.div).removeClass('selected-asset');
       $(box.div).css("-webkit-transform", "translate(0px,0px)")
@@ -49,10 +49,6 @@
 
     var appendImage = function(floatingType) {
       return (floatingType) ? '<img src="images/link-properties/flag-floating.svg">' : '<img src="images/speed-limits/unknown.svg">';
-    };
-
-    var anomalousImage = function() {
-      return '<img src="images/speed-limits/unknown.svg">';
     };
 
     return {

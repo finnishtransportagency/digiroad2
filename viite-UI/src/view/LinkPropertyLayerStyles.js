@@ -33,11 +33,11 @@
     ];
 
     var gapTransferProcessingRules = [
-      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.8, pointRadius: 14, graphicZIndex: 4})
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.8, graphicZIndex: 4})
     ];
 
     var gapTransferProcessingUnselectedRules = [
-      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.3, pointRadius: 14, graphicZIndex: 4})
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.3, graphicZIndex: 4})
     ];
 
 

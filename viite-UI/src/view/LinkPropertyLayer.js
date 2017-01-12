@@ -386,13 +386,8 @@
       var feature = _.find(roadLayer.layer.features, function(feature) {
         return targets !== 0 && feature.attributes.linkId == targets;
       });
-
-      currentRenderIntent= 'gapTransfer';
-
-      roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
-        return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
-      });
       reselectRoadLink();
+      draw();
     };
 
     this.removeLayerFeatures = function() {
