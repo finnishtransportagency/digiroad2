@@ -185,7 +185,7 @@
       });
       var type = 'constructionType';
       var dashedUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return _.contains(constructionTypeValues, roadLink.constructionType);
+        return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.roadClass === 99 && roadLink.anomaly === 0;
       });
       roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnknownUnderConstructionRoadLinks, unknownType));
       roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnderConstructionRoadLinks, type));
