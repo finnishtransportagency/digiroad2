@@ -321,18 +321,17 @@
     },
     {
       typeId: assetType.maintenance,
-      defaultValue: 1,
       singleElementEventCategory: 'maintenance',
       multiElementEventCategory: 'maintenances',
       layerName: 'maintenance',
       title: 'Rautateiden huoltotie',
-      newTitle: 'Uusi päällyste',
-      className: 'paved-road',
+      newTitle: 'Uusi rautateiden huoltotie',
+      className: 'maintenance',
       isSeparable: false,
       editControlLabels: {
-        title: 'Päällyste',
-        enabled: 'red line',
-        disabled: 'grey line'
+        title: 'Rajoitus',
+        enabled: 'Rajoitus',
+        disabled: 'Ei rajoitusta'
       }
     }
   ];
