@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -94,6 +95,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val trackCode = params("trackCode").toLong
       roadAddressService.getFloatingAdjacent(linkid, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
+
+  get("/roadlinks/multiSourceAdjacents") {
+      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Double]]]
+      if (roadData.isEmpty){
+        Set.empty
+      } else {
+        val adjacents:Seq[RoadAddressLink] = {
+          roadData.flatMap(rd => {
+            roadAddressService.getFloatingAdjacent(rd.get("linkId").get.toLong,
+              rd.get("roadNumber").get.toLong, rd.get("roadPartNumber").get.toLong, rd.get("trackCode").get.toLong)
+          })
+        }
+        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.toLong)
+        val result = adjacents.filter(adj => {
+          !linkIds.contains(adj.linkId)
+        })
+        result
+      }
+  }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)

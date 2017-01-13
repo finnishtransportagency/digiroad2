@@ -95,6 +95,19 @@
       return linkIds;
     };
 
+    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
+
+      var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
+      var data = _.map(newSources, function (ns){
+        return {"linkId": ns.linkId, "roadNumber": ns.roadNumber, "roadPartNumber": ns.roadPartNumber, "trackCode": ns.trackCode};
+      });
+     backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+        console.log(adjacents);
+      });
+      console.log(existingSources, additionalSourceLinkId);
+    });
+
+
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
       current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
