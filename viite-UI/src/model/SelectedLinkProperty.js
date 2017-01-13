@@ -151,6 +151,7 @@
         return adjacent.linkId == target;
       });
       //TODO bellow trigger refresh next target adjacents in the form
+      if(!_.isEmpty(targetData))
       var newAdjacents = getLinkAdjacents(_.first(targetData));
     };
 
