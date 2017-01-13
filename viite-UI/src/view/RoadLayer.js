@@ -105,13 +105,6 @@ var RoadStyles = function() {
       handleRoadsVisibility();
     };
 
-    var mapMovedEditMode = function(mapState){
-        if(mapState.zoom < 10 ){
-          return Confirm();
-        }
-    };
-
-
     var drawRoadLinks = function(roadLinks, zoom) {
       uiState.zoomLevel = zoom;
       eventbus.trigger('roadLinks:beforeDraw');
@@ -191,8 +184,6 @@ var RoadStyles = function() {
     eventbus.on('road-type:selected', toggleRoadType, this);
 
     eventbus.on('map:moved', mapMovedHandler, this);
-
-    //eventbus.on('map:moved', mapMovedEditMode, this);
 
     eventbus.on('layer:selected', function(layer) {
       activateLayerStyleMap(layer);

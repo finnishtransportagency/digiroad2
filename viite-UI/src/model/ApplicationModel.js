@@ -73,6 +73,9 @@
       isReadOnly: function() {
         return readOnly;
       },
+      isActiveButtons: function() {
+          return activeButtons;
+      },
       isDirty: function() {
         return isDirty();
       },

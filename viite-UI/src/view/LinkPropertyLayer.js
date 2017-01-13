@@ -42,9 +42,38 @@
       unhighlightFeatures();
     };
 
+    var unselectAllRoadLinks = function(options) {
+        // we'll want an option to supress notification here
+        var layers = this.layers || [this.layer],
+            layer, feature, l, numExcept;
+        for(l=0; l<layers.length; ++l) {
+            layer = layers[l];
+            numExcept = 0;
+            //layer.selectedFeatures is null when layer is destroyed and
+            //one of it's preremovelayer listener calls setLayer
+            //with another layer on this control
+            if(layer.selectedFeatures != null) {
+                if(applicationModel.isActiveButtons() && layer.selectedFeatures.length > numExcept)
+                {
+                    return Confirm();
+                }else {
+                    while (layer.selectedFeatures.length > numExcept) {
+                        feature = layer.selectedFeatures[numExcept];
+                        if (!options || options.except != feature) {
+                            this.unselect(feature);
+                        } else {
+                            ++numExcept;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: selectRoadLink,
-      onUnselect: unselectRoadLink
+      onUnselect: unselectRoadLink,
+      unselectAll: unselectAllRoadLinks
     });
 
     map.addControl(selectControl);

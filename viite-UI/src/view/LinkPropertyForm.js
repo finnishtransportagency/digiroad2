@@ -430,8 +430,8 @@
           //TODO Uncomment for task 182
           //begin
           // rootElement.find('.link-properties button.calculate').attr('disabled', false);
-          // rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          // applicationModel.setActiveButtons(true);
+           rootElement.find('.link-properties button.cancel').attr('disabled', false);
+           applicationModel.setActiveButtons(true);
           //end
         });
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
