@@ -338,7 +338,7 @@
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
-        if(compactForm)
+        if(compactForm && !applicationModel.isReadOnly())
           selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
