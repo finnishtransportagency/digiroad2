@@ -22,6 +22,9 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
     expect(LocationInputParser.parse('52\t1 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
     expect(LocationInputParser.parse('52 1')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1 });
     expect(LocationInputParser.parse('52')).to.deep.equal({ type: 'idOrRoadNumber', text: '52' });
+    expect(LocationInputParser.parse('139053')).to.deep.equal({ type: 'idOrRoadNumber', text: '139053' });
+    expect(LocationInputParser.parse('13905300000000000')).to.deep.equal({ type: 'idOrRoadNumber', text: '13905300000000000' });
+    expect(LocationInputParser.parse('O139053','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'O139053' });
     expect(LocationInputParser.parse('OTHJ1','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'OTHJ1' });
     expect(LocationInputParser.parse('E1','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'E1' });
     expect(LocationInputParser.parse('E11','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'E11' });
