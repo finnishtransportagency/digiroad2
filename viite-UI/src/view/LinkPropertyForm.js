@@ -425,8 +425,8 @@
 
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
         $('#floatingEditModeForm').show();
-        $('[id*="sourceButton"]').click(sources,function(event) {
-          eventbus.trigger("adjacents:nextSelected", sources, event.currentTarget.value);
+        $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+          eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
           //TODO Uncomment for task 182
           //begin
           // rootElement.find('.link-properties button.calculate').attr('disabled', false);

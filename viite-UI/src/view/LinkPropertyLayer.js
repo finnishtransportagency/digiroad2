@@ -297,7 +297,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
-      eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, targets, adjacents){
+      eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets){
         console.log({'sources': sources, 'targets': targets, 'adjacents': adjacents});
         redrawNextSelectedTarget(targets, adjacents);
         drawIndicators(adjacents);
