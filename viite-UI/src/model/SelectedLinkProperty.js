@@ -144,12 +144,14 @@
       });
     };
 
-    var addTargets = function(target){
+    var addTargets = function(target, adjacents){
       if(!_.contains(targets,target))
         targets.push(target);
+      var targetData = _.filter(adjacents, function(adjacent){
+        return adjacent.linkId == target;
+      });
       //TODO bellow trigger refresh next target adjacents in the form
-      var newAdjacents = getLinkAdjacents(target);
-      
+      var newAdjacents = getLinkAdjacents(_.first(targetData));
     };
 
     var getTargets = function(){
