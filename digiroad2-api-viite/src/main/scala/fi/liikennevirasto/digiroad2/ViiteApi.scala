@@ -111,7 +111,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val result = adjacents.filter(adj => {
           !linkIds.contains(adj.linkId)
         })
-        result
+        result.map(roadAddressLinkToApi)
       }
   }
 

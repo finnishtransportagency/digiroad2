@@ -332,7 +332,7 @@
         drawIndicators(adjacents);
         selectedLinkProperty.addTargets(targets, adjacents);
       });
-      eventListener.listenTo(eventbus, 'adjacents:added', function(sources,targets){
+      eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
         console.log({'sources': sources, 'targets': targets});
         drawIndicators(targets);
 
@@ -342,6 +342,7 @@
 
     
     var drawIndicators= function(links){
+      indicatorLayer.clearMarkers();
       var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
         return createIndicatorFromBounds(bounds, link.marker);

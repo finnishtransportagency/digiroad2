@@ -155,14 +155,12 @@
         /*'<span class="marker">' + marker + '</span>' +
         '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +*/
         '</div>' +
-
         '</div>';
     };
 
     var adjacentsTemplate = '' +
-      '<br><br>' +
       '<div class="target-link-selection" id="adjacentsData">' +
-      '<label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -413,6 +411,16 @@
       });
       
       eventbus.on('adjacents:added', function(sources, targets) {
+        processAdjacents(sources,targets);
+      });
+
+      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets) {
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        processAdjacents(sources, targets);
+      });
+
+      var processAdjacents = function (sources, targets) {
         var floatingAdjacents = _.filter(targets, function(t){
           return t.roadLinkType == -1;
         });
@@ -430,16 +438,14 @@
           //TODO Uncomment for task 182
           //begin
           // rootElement.find('.link-properties button.calculate').attr('disabled', false);
-           rootElement.find('.link-properties button.cancel').attr('disabled', false);
-           applicationModel.setActiveButtons(true);
+          rootElement.find('.link-properties button.cancel').attr('disabled', false);
+          applicationModel.setActiveButtons(true);
           //end
         });
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
         });
-
-      });
-      
+      };
       
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
