@@ -87,9 +87,17 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks, change)
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  private def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+
+    var roadLinks: Seq[RoadLink] = null
+    if (typeId == LinearAssetTypes.MaintenanceAssetTypeId) {
+      roadLinks = roadLinksExist.filter(_.functionalClass > 4)
+    } else{
+      roadLinks = roadLinksExist
+    }
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+    val removedLinkIdsWithFilterClass = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks.filter(_.functionalClass == 0))
     val existingAssets =
       withDynTransaction {
         typeId match {
