@@ -32,8 +32,6 @@
       new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.3, graphicZIndex: 4})
     ];
 
-
-
     var floatingRoadAddressRules = [
       new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: -99 })
     ];

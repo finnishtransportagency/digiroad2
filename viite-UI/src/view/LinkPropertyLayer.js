@@ -333,11 +333,8 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
         drawIndicators(targets);
-
       });
-
     };
-
     
     var drawIndicators= function(links){
       indicatorLayer.clearMarkers();
@@ -397,7 +394,6 @@
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
-
       _.find(roadLayer.layer.features, function(feature) {
         return targets !== 0 && feature.attributes.linkId == targets;
       }).data.gapTransfering = true;
@@ -410,8 +406,6 @@
       _.find(roadLayer.layer.features, function(feature) {
         return targets !== 0 && feature.attributes.linkId == targets;
       }).attributes.anomaly = 0;
-
-
       var feature = _.find(roadLayer.layer.features, function(feature) {
         return targets !== 0 && feature.attributes.linkId == targets;
       });
