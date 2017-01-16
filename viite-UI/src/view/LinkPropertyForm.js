@@ -174,7 +174,7 @@
       '</span>' +
       '</label>' +
       ' <% }) %>' +
-      '</div>>' +
+      '</div>' +
       '</div>';
 
 
@@ -297,8 +297,8 @@
         '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
         '</div>' +
         staticField('TIENUMERO', 'roadNumber') +
-        staticField('TIENUMERO', 'roadPartNumber') +
-        staticField('TIENUMERO', 'trackCode') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
         roadTypes +
         notificationFloatingTransfer(true) +
         staticField('VALITUT LINKIT:', '') +
