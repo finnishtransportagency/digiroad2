@@ -156,8 +156,12 @@
         return adjacent.linkId == target;
       });
       //TODO bellow trigger refresh next target adjacents in the form
-      if(!_.isEmpty(targetData))
-      var newAdjacents = getLinkAdjacents(_.first(targetData));
+      if(!_.isEmpty(targetData)){
+        
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        getLinkAdjacents(_.first(targetData));
+      }
     };
 
     var getTargets = function(){

@@ -421,13 +421,16 @@
       });
 
       var processAdjacents = function (sources, targets) {
-        var floatingAdjacents = _.filter(targets, function(t){
-          return t.roadLinkType == -1;
-        });
         var adjacents = _.reject(targets, function(t){
           return t.roadLinkType == -1;
         });
-        var fullTemplate = floatingAdjacents.length !== 0 ? _.map(floatingAdjacents, function(fa){
+        if(_.isEmpty(adjacents)) return;
+
+        var floatingAdjacents = _.filter(targets, function(t){
+          return t.roadLinkType == -1;
+        });
+
+        var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
           return aditionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 
@@ -445,6 +448,7 @@
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
         });
+
       };
       
       eventbus.on('linkProperties:changed', function() {
