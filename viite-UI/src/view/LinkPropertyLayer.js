@@ -52,7 +52,7 @@
             //layer.selectedFeatures is null when layer is destroyed and
             //one of it's preremovelayer listener calls setLayer
             //with another layer on this control
-            if(layer.selectedFeatures != null) {
+            if(layer.selectedFeatures !== null) {
                 if(applicationModel.isActiveButtons() && layer.selectedFeatures.length > numExcept)
                 {
                     return Confirm();

@@ -152,8 +152,8 @@
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
         '<label class="control-label-floating"> LINK ID:</label>' +
         '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
-        '<span class="marker">' + marker + '</span>' +
-        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+        /*'<span class="marker">' + marker + '</span>' +
+        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +*/
         '</div>' +
 
         '</div>';
@@ -162,7 +162,7 @@
     var adjacentsTemplate = '' +
       '<br><br>' +
       '<div class="target-link-selection" id="adjacentsData">' +
-      '<label class="control-label-adjacents">LAITTAVISSA OLEVAT TEILINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      '<label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
