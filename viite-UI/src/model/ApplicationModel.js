@@ -83,8 +83,6 @@
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
         canZoomOutEditMode: function () {
-            console.log('zoom: ' + zoom.level);
-            console.log('activeButtons: ' + activeButtons);
           return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
         },
       assetDragDelay: 100,

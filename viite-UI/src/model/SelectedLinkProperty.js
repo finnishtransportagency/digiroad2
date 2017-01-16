@@ -110,7 +110,6 @@
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
        }
       });
-      console.log(existingSources, additionalSourceLinkId);
     });
 
 
