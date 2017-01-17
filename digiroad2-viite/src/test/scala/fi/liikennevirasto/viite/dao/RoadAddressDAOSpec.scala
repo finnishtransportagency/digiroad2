@@ -1,22 +1,19 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
-import org.joda.time
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 
 /**
