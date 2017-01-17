@@ -7,12 +7,21 @@
     var selectedTool = 'Select';
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
+    var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
     var readOnly = true;
+    var activeButtons = false;
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
+        setActiveButtons(false);
         setSelectedTool('Select');
         eventbus.trigger('application:readOnly', newState);
+      }
+    };
+    var setActiveButtons = function(newState){
+      if(activeButtons !== newState){
+        activeButtons = newState;
+        eventbus.trigger('application:activeButtons', newState);
       }
     };
     var roadTypeShown = true;
@@ -60,8 +69,12 @@
         return selectedLayer;
       },
       setReadOnly: setReadOnly,
+      setActiveButtons: setActiveButtons,
       isReadOnly: function() {
         return readOnly;
+      },
+      isActiveButtons: function() {
+          return activeButtons;
       },
       isDirty: function() {
         return isDirty();
@@ -69,6 +82,9 @@
       canZoomOut: function() {
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
+        canZoomOutEditMode: function () {
+          return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
+        },
       assetDragDelay: 100,
       assetGroupingDistance: 36,
       setRoadTypeShown: function(bool) {

@@ -23,6 +23,14 @@
       new OpenLayersRule().where('anomaly').is(1).use({ strokeColor: '#000000', strokeOpacity: 0.3, externalGraphic: 'images/speed-limits/unknown.svg', pointRadius: 14, graphicZIndex: 3})
     ];
 
+    var gapTransferProcessingRules = [
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.8, graphicZIndex: 4})
+    ];
+
+    var gapTransferProcessingUnselectedRules = [
+      new OpenLayersRule().where('gapTransfering').is(true).use({ strokeColor: '#00FF00', strokeOpacity: 0.3, graphicZIndex: 4})
+    ];
+
     var floatingRoadAddressRules = [
       new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: 2 })
     ];
@@ -170,6 +178,7 @@
     roadClassDefaultStyle.addRules(constructionTypeRules);
     roadClassDefaultStyle.addRules(darkOverlayRules);
     roadClassDefaultStyle.addRules(unknownConstructionTypeRule);
+    roadClassDefaultStyle.addRules(gapTransferProcessingRules);
     var roadClassDefaultStyleMap = new OpenLayers.StyleMap({ default: roadClassDefaultStyle });
 
     var unknownLimitStyleRule = new OpenLayers.Rule({
@@ -220,6 +229,8 @@
     roadClassSelectionSelectStyle.addRules(darkOverlayRules);
     roadClassSelectionDefaultStyle.addRules(darkOverlayUnselectedOpacity);
     roadClassSelectionSelectStyle.addRules(darkOverlayDefaultOpacity);
+    roadClassSelectionDefaultStyle.addRules(gapTransferProcessingUnselectedRules);
+    roadClassSelectionSelectStyle.addRules(gapTransferProcessingRules);
     var roadClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: roadClassSelectionSelectStyle,
       default: roadClassSelectionDefaultStyle

@@ -8,7 +8,7 @@
     container.append(element);
     container.find('.plus').click(function() { map.zoomIn(); });
     container.find('.minus').click(function() {
-      if (applicationModel.canZoomOut()) {
+      if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
         map.zoomOut();
       } else {
         new Confirm();

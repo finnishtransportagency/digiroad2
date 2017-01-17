@@ -1,6 +1,8 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var compactForm = false;
+    var options;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -50,7 +52,7 @@
       [9, 'Omistaja selvittämättä']
     ];
 
-    var discontinuitys = [
+    var discontinuities = [
       [1, 'Tien loppu'],
       [2, 'Epäjatkuva'],
       [3, 'ELY:n raja'],
@@ -64,7 +66,7 @@
     ];
 
     var getDiscontinuityType = function(discontinuity){
-      var DiscontinuityType = _.find(discontinuitys, function(x){return x[0] === discontinuity;});
+      var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
     };
 
@@ -95,6 +97,7 @@
     };
 
     var dynamicField = function(labelText){
+      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field;
       //If other fields get the same treatment they can be added here
       if(labelText === 'TIETYYPPI'){
@@ -107,32 +110,101 @@
             roadTypes = roadTypes + ", " + roadType;
           }
         });
-        field = '<div class="form-group">' +
+        if(floatingTransfer){
+          field = '<div class="form-group">' +
+            '<label class="control-label-floating">' + labelText + '</label>' +
+            '<p class="form-control-static-floating">' + roadTypes + '</p>' +
+            '</div>' ;
+        } else {
+          field = '<div class="form-group">' +
             '<label class="control-label">' + labelText + '</label>' +
             '<p class="form-control-static">' + roadTypes + '</p>' +
-            '</div>' ;
+            '</div>';
+          }
+      } else if(labelText === 'VALITUT LINKIT'){
+        var linkIds = "";
+        var id = 0;
+        _.each(selectedLinkProperty.get(), function(slp){
+          var divId = "VALITUTLINKIT" + id;
+          var linkid = slp.linkId.toString();
+          if (linkIds.length === 0) {
+            field = '<div class="form-group" id=' +divId +'>' +
+              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+              '<p class="form-control-static-floating">' + linkid + '</p>' +
+              '</div>' ;
+            linkIds = linkid;
+          } else if(linkIds.search(linkid) === -1){
+            field = field + '<div class="form-group" id=' +divId +'>' +
+              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+              '<p class="form-control-static-floating">' + linkid + '</p>' +
+              '</div>' ;
+            linkIds = linkIds + ", " + linkid;
+          }
+          id = id + 1;
+        });
       }
       return field;
     };
 
-    var staticField = function(labelText, dataField) {
-      return '<div class="form-group">' +
-        '<label class="control-label">' + labelText + '</label>' +
-        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+    var aditionalSource = function(linkId, marker){
+      return '' +
+        '<div class = "form-group" id = "aditionalSource">' +
+        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+        '<label class="control-label-floating"> LINK ID:</label>' +
+        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
+        /*'<span class="marker">' + marker + '</span>' +
+        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +*/
+        '</div>' +
         '</div>';
     };
 
+    var adjacentsTemplate = '' +
+      '<div class="target-link-selection" id="adjacentsData">' +
+      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      '<div class="form-group" id="adjacents">' +
+      '<% _.forEach(adjacentLinks, function(l) { %>' +
+      '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+      '<label class="control-label-floating"> LINK ID: </label>' +
+      '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px"><%= l.linkId %></span>' +
+      '<span class="marker"><%= l.marker %></span>' +
+      '<button class="select-adjacent btn btn-new" id="sourceButton-<%= l.linkId %>" value="<%= l.linkId %>">Valitse</button>' +
+      '</div>' +
+      '</span>' +
+      '</label>' +
+      ' <% }) %>' +
+      '</div>' +
+      '</div>';
+
+
+    var staticField = function(labelText, dataField) {
+      var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
+      var field;
+      if(floatingTransfer){
+        field = '<div class="form-group">' +
+        '<label class="control-label-floating">' + labelText + '</label>' +
+        '<p class="form-control-static-floating"><%- ' + dataField + ' %></p>' +
+        '</div>';
+      } else {
+        field = '<div class="form-group">' +
+        '<label class="control-label">' + labelText + '</label>' +
+        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+        '</div>';
+      }
+      return field;
+    };
+
     var title = function() {
-        return '<span>Tieosoitteen ominaisuustiedot</span>';
+      return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
 
     var buttons =
       '<div class="link-properties form-controls">' +
+      '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-primary" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
-    var notificationPart = function(displayNotification) {
+    var notification = function(displayNotification) {
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
@@ -142,11 +214,21 @@
         return '';
     };
 
+    var notificationFloatingTransfer = function(displayNotification) {
+      if(displayNotification)
+        return '' +
+          '<div class="form-group form-notification">' +
+          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
+          '</div>';
+      else
+        return '';
+    };
+
+
     var template = function(options) {
       var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
         staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-      var compactForm = selectedLinkProperty.get()[0].roadLinkType === -1;
       return _.template('' +
         '<header>' +
         title() + buttons +
@@ -162,20 +244,66 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
-        (!compactForm ?
         staticField('ALKUETÄISYYS', 'startAddressM') +
         staticField('LOPPUETÄISUUS', 'endAddressM') +
-        staticField('ELY', 'elyCode') : '') +
+        staticField('ELY', 'elyCode') +
         roadTypes +
-        (!compactForm ?
         staticField('JATKUVUUS', 'discontinuity') +
         staticField('KELLUVA', 'floating') +
-        endDateField : '') +
-        (compactForm ?
-        notificationPart(true):'')  +
+        endDateField  +
+        '</div>' +
+        '<footer>' + buttons + '</footer>', options);
+    };
+
+    var templateFloating = function(options) {
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      return _.template('' +
+        '<header>' +
+        title() + buttons +
+        '</header>' +
+        '<div class="wrapper read-only-floating">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
+        roadTypes +
+        notification(true)   +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
+    };
+
+    var templateFloatingEditMode = function(options) {
+      var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      var linkIds = dynamicField('VALITUT LINKIT');
+      return _.template('<div style="display: none" id="floatingEditModeForm">' +
+        '<header>' +
+        title() +
+        '</header>' +
+        '<div class="wrapper edit-mode-floating">' +
+        '<div class="form form-horizontal form-dark">' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+        '</div>' +
+        staticField('TIENUMERO', 'roadNumber') +
+        staticField('TIEOSANUMERO', 'roadPartNumber') +
+        staticField('AJORATA', 'trackCode') +
+        roadTypes +
+        notificationFloatingTransfer(true) +
+        staticField('VALITUT LINKIT:', '') +
+        linkIds  +
+        '</div>' +
+        '</div>' +
+        '<footer>' + buttons + '</footer> </div>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -194,8 +322,22 @@
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.btn-move').toggle(false);
+        if(compactForm){
+
+          if(!applicationModel.isReadOnly()){
+            rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+          } else {
+            rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+          }
+          rootElement.find('.form-controls').toggle(!readOnly && compactForm);
+          rootElement.find('.btn-move').toggle(!readOnly && compactForm);
+        }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
+        compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
+        if(compactForm && !applicationModel.isReadOnly())
+          selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -227,23 +369,35 @@
         linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
         linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
-        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
+        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
-        var functionalClassOptionTags = _.map(functionalClasses, function(value) {
+        var functionalClassOptionTags = _.map(functionalClasses, function (value) {
           var selected = value == linkProperties.functionalClass ? " selected" : "";
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
-        var linkTypesOptionTags = _.map(linkTypes, function(value) {
+        var linkTypesOptionTags = _.map(linkTypes, function (value) {
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-          functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-          linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
-        rootElement.html(template(options,linkProperties)(linkProperties));
+        options = {
+          imports: {
+            trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+          }
+        };
+        if (compactForm){
+          if(!applicationModel.isReadOnly()){
+            rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
+        } else {
+            rootElement.html(templateFloating(options, linkProperties)(linkProperties));
+          }
+        } else {
+          rootElement.html(template(options, linkProperties)(linkProperties));
+        }
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
@@ -255,6 +409,48 @@
         });
         toggleMode(applicationModel.isReadOnly());
       });
+      
+      eventbus.on('adjacents:added', function(sources, targets) {
+        processAdjacents(sources,targets);
+      });
+
+      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets) {
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        processAdjacents(sources, targets);
+      });
+
+      var processAdjacents = function (sources, targets) {
+        var adjacents = _.reject(targets, function(t){
+          return t.roadLinkType == -1;
+        });
+        if(_.isEmpty(adjacents)) return;
+
+        var floatingAdjacents = _.filter(targets, function(t){
+          return t.roadLinkType == -1;
+        });
+
+        var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
+          return aditionalSource(fa.linkId, fa.marker);
+        })[0] + adjacentsTemplate : adjacentsTemplate;
+
+        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
+        $('#floatingEditModeForm').show();
+        $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+          eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
+          //TODO Uncomment for task 182
+          //begin
+          // rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          rootElement.find('.link-properties button.cancel').attr('disabled', false);
+          applicationModel.setActiveButtons(true);
+          //end
+        });
+        $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+          eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
+        });
+
+      };
+      
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });
@@ -267,6 +463,7 @@
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
         selectedLinkProperty.cancel();
+        applicationModel.setActiveButtons(false);
       });
 
 
