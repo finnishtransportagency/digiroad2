@@ -144,9 +144,14 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("test if floating road address transfer successfully to gap locations") {
-    val beforeCallMethodDatetime = DateTime.now()
+  test("test if road addresses are expired") {
+    def now(): DateTime = {
+      OracleDatabase.withDynSession {
+        return sql"""select sysdate FROM dual""".as[DateTime].list.head
+      }
+    }
 
+    val beforeCallMethodDatetime = now()
     runWithRollback {
       val linkIds: Set[Long] = Set(3114934, 3107028)
       RoadAddressDAO.expireRoadAddresses(linkIds)
