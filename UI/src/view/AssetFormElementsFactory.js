@@ -68,6 +68,21 @@
   }
 
   function createMaintenanceFormElements(){
-    return MaintenanceFormElements();
+      var accessRightsValues = [
+          { typeId: 1, title: 'Tieoikeus' },
+          { typeId: 2, title: 'Tiekunnan osakkuus' },
+          { typeId: 3, title: 'LiVin hallinnoimalla maa-alueella' },
+          { typeId: 4, title: 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei' +
+              'rautatieliikennealuetta) väylä' },
+          { typeId: 5, title: 'Tuntematon' }
+      ];
+
+      var maintenanceResponsibilityValues = [
+          { typeId: 1, title: 'LiVi' },
+          { typeId: 2, title: 'Muu' },
+          { typeId: 0, title: 'Ei tietoa' }
+      ];
+
+    return MaintenanceFormElements(accessRightsValues, maintenanceResponsibilityValues);
   }
 })(this);
