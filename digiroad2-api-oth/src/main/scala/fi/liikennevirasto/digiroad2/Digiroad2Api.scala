@@ -437,14 +437,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/assetLinearTypeProperties/:assetTypeId") {
-    try {
-      val assetTypeId = params("assetTypeId").toLong
-      assetPropertyService.getProperties(assetTypeId)
-    } catch {
-      case e: Exception => BadRequest("Invalid asset type id: " + params("assetTypeId"))
-    }
-  }
+//  get("/assetLinearTypeProperties/:assetTypeId") {
+//    try {
+//      val assetTypeId = params("assetTypeId").toLong
+//      assetPropertyService.getProperties(assetTypeId)
+//    } catch {
+//      case e: Exception => BadRequest("Invalid asset type id: " + params("assetTypeId"))
+//    }
+//  }
 
   get("/assetPropertyNames/:language") {
     val lang = params("language")

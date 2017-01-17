@@ -38,7 +38,6 @@
       selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
       collection.setSelection(self);
-      self.getProperties();
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
@@ -186,12 +185,6 @@
 
     var getProperty = function(propertyName) {
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
-    };
-
-    this.getProperties = function () {
-        backend.getMaintenanceProperties(function (properties) {
-            eventbus.trigger('properties:fetched' , properties);
-        });
     };
 
     this.getId = function() {
