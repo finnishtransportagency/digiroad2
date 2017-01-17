@@ -148,7 +148,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     val beforeCallMethodDatetime = DateTime.now()
 
     runWithRollback {
-      val linkIds: Set[Long] = Set(3114934l, 3107028l)
+      val linkIds: Set[Long] = Set(3114934, 3107028)
       RoadAddressDAO.expireRoadAddresses(linkIds)
       val dbResult = sql"""select valid_to FROM road_address where lrm_position_id in (select id from lrm_position where link_id in(3114934, 3107028))""".as[DateTime].list
       dbResult.size should be (2)
