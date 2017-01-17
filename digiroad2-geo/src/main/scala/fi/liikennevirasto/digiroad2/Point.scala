@@ -13,6 +13,14 @@ case class Vector3d(x: Double, y: Double, z: Double) {
     }
   }
 
+  def normalize2D(): Vector3d = {
+    if (this.copy(z=0.0).length() != 0) {
+      scale(1 / this.copy(z=0.0).length())
+    } else {
+      scale(0.0)
+    }
+  }
+
   def scale(scalar: Double): Vector3d = {
     Vector3d(x * scalar, y * scalar, z * scalar)
   }
