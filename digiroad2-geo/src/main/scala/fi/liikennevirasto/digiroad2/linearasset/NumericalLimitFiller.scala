@@ -164,7 +164,7 @@ object NumericalLimitFiller {
 
   private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
     dbAssets.map { dbAsset =>
-      val points = GeometryUtils.truncateGeometry(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
+      val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
         dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired,

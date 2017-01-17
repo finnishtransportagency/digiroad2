@@ -14,6 +14,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, StaticQuery => Q}
 
@@ -91,10 +92,37 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra)
       returning.nonEmpty should be (true)
       returning.head should be (id)
-      RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(1)
+      val newSize = currentSize + 1
+      RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(newSize)
+    }
+  }
+
+  test("Create Road Address With Calibration Point") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (2)
+    }
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+        (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val fetch = sql"""select calibration_points from road_address where id = $id""".as[Int].list
+      fetch.head should be (3)
     }
   }
 
@@ -115,7 +143,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
           val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
             Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
-      localRoadAddressService.mergeRoadAddress(toBeMergedRoadAddresses)
+      localRoadAddressService.mergeRoadAddress(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
   }
 

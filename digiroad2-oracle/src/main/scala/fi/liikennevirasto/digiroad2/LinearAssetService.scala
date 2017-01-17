@@ -366,7 +366,7 @@ trait LinearAssetOperations {
 
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
-        val points = GeometryUtils.truncateGeometry(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
+        val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
         val endPoints: Set[Point] =
           try {
           val ep = GeometryUtils.geometryEndpoints(points)

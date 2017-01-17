@@ -88,6 +88,13 @@
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(function(properties) {
+        _.find(properties, function (property) {
+          return property.publicId === 'vaikutussuunta';
+        }).values.map(function (value) {
+          value.propertyValue = String(currentAsset.validityDirection);
+          value.propertyDisplayValue = String(currentAsset.validityDirection);
+          return value;
+        });
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
@@ -104,6 +111,7 @@
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       currentAsset.payload.linkId = position.linkId;
+      currentAsset.payload.validityDirection = position.validityDirection;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
       eventbus.trigger('asset:moved', position);
@@ -210,12 +218,12 @@
       });
     };
 
-    var save = function() {
+    var save = function () {
       if (currentAsset.id === undefined) {
-        backend.createAsset(currentAsset.payload, function(errorObject) {
+        backend.createAsset(currentAsset.payload, function (errorObject) {
           if (errorObject.status == FAILED_DEPENDENCY_424) {
             eventbus.trigger('asset:creationTierekisteriFailed');
-          } else if(errorObject.status == PRECONDITION_FAILED_412) {
+          } else if (errorObject.status == PRECONDITION_FAILED_412) {
             eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
           } else {
             eventbus.trigger('asset:creationFailed');
@@ -224,26 +232,26 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
+        currentAsset.payload.linkId = currentAsset.linkId;
         changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
-        backend.updateAsset(currentAsset.id, payload, function(asset) {
+        backend.updateAsset(currentAsset.id, payload, function (asset) {
           changedProps = [];
           assetHasBeenModified = false;
-          if(currentAsset.id != asset.id){
+          if (currentAsset.id != asset.id) {
             eventbus.trigger('massTransitStop:expired', currentAsset);
             eventbus.trigger('asset:created', asset);
-          }else{
+          } else {
             open(asset);
             eventbus.trigger('asset:saved', asset, positionUpdated);
           }
-
         }, function (errorObject) {
           backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
             open(asset);
             if (errorObject.status == FAILED_DEPENDENCY_424) {
               eventbus.trigger('asset:updateTierekisteriFailed', asset);
-            } else if(errorObject.status == PRECONDITION_FAILED_412) {
+            } else if (errorObject.status == PRECONDITION_FAILED_412) {
               eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
             } else {
               eventbus.trigger('asset:updateFailed', asset);
@@ -251,6 +259,21 @@
           });
         });
       }
+    };
+
+    var validateDirectionsForSave = function () {
+        if(roadCollection) {
+            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+            var linkId = nearestLine.linkId;
+            var massTransitStopDirection = currentAsset.payload.validityDirection;
+            if (!currentAsset.linkId)
+                currentAsset.linkId = linkId;
+            var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
+            var roadLinkDirection = directions_decode[getRoadLink().getData().trafficDirection];
+            return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
+        }else{
+          return false;
+        }
     };
 
     var switchDirection = function() {
@@ -429,7 +452,8 @@
       getRoadLink: getRoadLink,
       isAdminClassState: isAdminClassState,
       isAdministratorELY: isAdministratorELY,
-      isAdministratorHSL: isAdministratorHSL
+      isAdministratorHSL: isAdministratorHSL,
+      validateDirectionsForSave : validateDirectionsForSave
     };
   };
 

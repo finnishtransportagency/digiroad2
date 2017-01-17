@@ -7,6 +7,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
   var movementPermissionConfirmed = false;
   var requestingMovePermission  = false;
+  var isComplementaryActiveBS = false;
 
   var selectedControl = 'Select';
 
@@ -37,7 +38,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   ];
   var administrativeClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.7,
-    rotation: '${rotation}'
+    rotation: '${rotation}',
+    strokeWidth: 5,
+    strokeColor: "#a4a4a2"
   }));
   administrativeClassDefaultStyle.addRules(administrativeClassRules);
   administrativeClassDefaultStyle.addRules(zoomLevelRules);
@@ -354,6 +357,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var createNewAsset = function(lonlat, placement) {
+    var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
@@ -361,7 +365,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
       bearing: bearing,
-      validityDirection: validitydirections.sameDirection,
+      validityDirection: default_asset_direction[nearestLine.trafficDirection],
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,
@@ -664,11 +668,15 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var handleMapMoved = function(mapMoveEvent) {
     if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
       if (mapMoveEvent.selectedLayer === 'massTransitStop') {
-        eventbus.once('roadLinks:fetched', function() {
+        eventbus.once('roadLinks:fetched', function () {
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
           massTransitStopsCollection.refreshAssets(mapMoveEvent);
         });
-        roadCollection.fetch(map.getExtent());
+        if (isComplementaryActiveBS) {
+          roadCollection.fetchWithComplementary(map.getExtent());
+        } else {
+          roadCollection.fetch(map.getExtent());
+        }
       }
     } else {
       if (applicationModel.getSelectedLayer() === 'massTransitStop') {
@@ -714,6 +722,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'massTransitStop:movementPermission', function(movementPermission){
       movementPermissionConfirmed = movementPermission;
     });
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', show);
+    eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
   };
 
   var startListening = function() {
@@ -734,11 +745,27 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      eventbus.once('roadLinks:fetched', function () {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+        massTransitStopsCollection.fetchAssets(map.getExtent());
+      });
+      if (isComplementaryActiveBS) {
+        roadCollection.fetchWithComplementary(map.getExtent());
+      } else {
+        roadCollection.fetch(map.getExtent());
+      }
+    }
+    isComplementaryActiveBS = false;
+  };
+
+  var showWithComplementary = function() {
+    isComplementaryActiveBS = true;
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         massTransitStopsCollection.fetchAssets(map.getExtent());
       });
-      roadCollection.fetch(map.getExtent());
+      roadCollection.fetchWithComplementary(map.getExtent());
     }
   };
 

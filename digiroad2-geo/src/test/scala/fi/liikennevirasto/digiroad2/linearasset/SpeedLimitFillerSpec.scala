@@ -548,8 +548,8 @@ test("should not drop adjusted short speed limit") {
 
   test("should not combine entries that disagree") {
     val rLink = roadLink(2934609, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
-    val geom1 = GeometryUtils.truncateGeometry(rLink.geometry, 42.545,66.463)
-    val geom2 = GeometryUtils.truncateGeometry(rLink.geometry, 0, 42.545)
+    val geom1 = GeometryUtils.truncateGeometry3D(rLink.geometry, 42.545,66.463)
+    val geom2 = GeometryUtils.truncateGeometry3D(rLink.geometry, 0, 42.545)
     val speedLimit = Seq(
       SpeedLimit(1183653,2934609,SideCode.apply(2),TrafficDirection.apply(1),Option(NumericValue(100)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56"))),
       SpeedLimit(1204429,2934609,SideCode.apply(3),TrafficDirection.apply(1),Option(NumericValue(80)),geom1,42.545,66.463,None,None,Option("dr1_conversion"),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59"))),

@@ -186,7 +186,7 @@
           linkId: roadLink.linkId,
           type: 'overlay',
           linkType: roadLink.linkType,
-          zIndex: 2
+          zIndex: 1
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));
@@ -229,6 +229,20 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
+    var drawUnderConstructionFeatures = function(roadLinks) {
+      var constructionTypeValues = [1];
+      var unknownType = 'unknownConstructionType';
+      var dashedUnknownUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.anomaly === 1;
+      });
+      var type = 'constructionType';
+      var dashedUnderConstructionRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(constructionTypeValues, roadLink.constructionType) && roadLink.roadClass === 99 && roadLink.anomaly === 0;
+      });
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnknownUnderConstructionRoadLinks, unknownType));
+      roadLayer.layer.addFeatures(createDarkDashedLineFeatures(dashedUnderConstructionRoadLinks, type));
+    };
+
     var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -245,7 +259,35 @@
       var features = createBorderLineFeatures(borderLineFeatures, 'functionalClass');
       roadLayer.layer.addFeatures(features);
     };
-
+    var createDarkDashedLineFeatures = function(roadLinks, type){
+      return darkDashedLineFeatures(roadLinks, type).concat(calculateMidPointForMarker(roadLinks, type));
+    };
+    var darkDashedLineFeatures = function(roadLinks, darkDashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          dashedLineFeature: roadLink[darkDashedLineFeature],
+          linkId: roadLink.linkId,
+          type: 'overlay-dark',
+          linkType: roadLink.linkType,
+          zIndex: 1
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+    var calculateMidPointForMarker = function(roadLinks, type){
+      return _.map(roadLinks, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var attributes = {type: type, linkId: link.linkId};
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      });
+    };
     var createBorderLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
@@ -293,13 +335,10 @@
       me.deactivateSelection();
     };
 
-    var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
-      if (linkPropertiesModel.getDataset() === 'functional-class') {
-        drawDashedLineFeatures(roadLinks);
-        drawBorderLineFeatures(roadLinks);
-      } else if (linkPropertiesModel.getDataset() === 'link-type') {
-        drawDashedLineFeaturesForType(roadLinks);
-      }
+    var drawDashedLineFeaturesIfApplicable = function (roadLinks) {
+      drawDashedLineFeatures(roadLinks);
+      drawBorderLineFeatures(roadLinks);
+      drawUnderConstructionFeatures(roadLinks);
     };
 
     this.layerStarted = function(eventListener) {
@@ -359,7 +398,7 @@
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
     };
-    
+
     var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();

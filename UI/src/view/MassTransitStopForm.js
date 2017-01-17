@@ -59,7 +59,12 @@
           }
         });
       } else {
-        selectedMassTransitStopModel.save();
+          if(selectedMassTransitStopModel.validateDirectionsForSave()){
+              selectedMassTransitStopModel.save();
+          }else{
+              new GenericConfirmPopup('Pysäkin vaikutussuunta on yksisuuntaisen tielinkin ajosuunnan vastainen. Pysäkkiä ei tallennettu.',
+                  {type: 'alert'});
+          }
       }
     });
     var updateStatus = function() {
@@ -332,6 +337,11 @@
           selectedMassTransitStopModel.switchDirection();
           streetViewHandler.update();
         });
+
+        if (!_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
+            element.attr("disabled", true);
+            element.attr('title','Pysäkin suuntaa ei voi vaihtaa, koska pysäkki on yksisuuntaisella tielinkillä.');
+        }
 
         if(property.values && property.values[0]) {
           validityDirection = property.values[0].propertyValue;

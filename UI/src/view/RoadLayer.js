@@ -25,6 +25,7 @@ var RoadStyles = function() {
     var selectControl;
     var layerStyleMaps = {};
     var layerStyleMapProviders = {};
+    var layerStyleMapRules = {};
     var layerMinContentZoomLevels = {};
     var uiState = { zoomLevel: 9 };
 
@@ -177,6 +178,20 @@ var RoadStyles = function() {
       selectControl.select(feature);
     };
 
+    var toggleRoadTypeWithSpecifiedStyle = function () {
+      if (!stylesUndefined()) {
+        if (applicationModel.isRoadTypeShown()) {
+          vectorLayer.styleMap.styles.default.rules = layerStyleMapRules[applicationModel.getSelectedLayer()];
+        } else {
+          layerStyleMapRules[applicationModel.getSelectedLayer()] = vectorLayer.styleMap.styles.default.rules;
+          vectorLayer.styleMap.styles.default.rules = [];
+          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+        }
+        vectorLayer.redraw();
+      }
+    };
+
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       selectControl.unselectAll();
     }, this);
@@ -211,6 +226,7 @@ var RoadStyles = function() {
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
       createZoomLevelFilter: createZoomLevelFilter,
+      toggleRoadTypeWithSpecifiedStyle: toggleRoadTypeWithSpecifiedStyle,
       uiState: uiState
     };
   };

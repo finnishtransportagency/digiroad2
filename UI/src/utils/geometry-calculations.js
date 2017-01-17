@@ -36,6 +36,7 @@
             id: vector.roadLinkId,
             roadLinkId: vector.roadLinkId,
             linkId: vector.linkId,
+            trafficDirection: vector.trafficDirection,
             start: start_point,
             end: end_point,
             distance: point_distance

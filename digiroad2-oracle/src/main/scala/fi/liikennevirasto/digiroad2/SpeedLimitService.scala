@@ -121,7 +121,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             sideCode = speedLimit.sideCode,
             trafficDirection = roadLink.trafficDirection,
             value = speedLimit.value.map(NumericValue),
-            geometry = GeometryUtils.truncateGeometry(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure),
+            geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure),
             startMeasure = speedLimit.startMeasure,
             endMeasure = speedLimit.endMeasure,
             modifiedBy = speedLimit.modifiedBy, modifiedDateTime = speedLimit.modifiedDate,
@@ -290,7 +290,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
       roadLink.trafficDirection, persistedSpeedLimit.value.map(NumericValue),
-      GeometryUtils.truncateGeometry(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
+      GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
       persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
       persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate, persistedSpeedLimit.vvhTimeStamp, persistedSpeedLimit.geomModifiedDate)

@@ -27,6 +27,7 @@
         if (!selectedAsset.isSelected(feature.attributes)) {
           selectedAsset.open(feature.attributes);
         }
+        toggleMode(applicationModel.isReadOnly());
       }
 
       function pointAssetOnUnselect() {

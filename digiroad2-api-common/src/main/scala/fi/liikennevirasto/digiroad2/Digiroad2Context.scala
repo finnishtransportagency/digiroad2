@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -76,7 +76,7 @@ class RoadAddressUpdater(roadAddressService: RoadAddressService) extends Actor {
 
 class RoadAddressMerger(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Seq[any] => roadAddressService.mergeRoadAddress(w.asInstanceOf[Seq[RoadAddress]])
+    case w: RoadAddressMerge => roadAddressService.mergeRoadAddress(w.asInstanceOf[RoadAddressMerge])
     case _                    => println("roadAddressMerger: Received unknown message")
   }
 }
@@ -90,7 +90,7 @@ class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Acto
 
 class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Set[any] => roadAddressService.setRoadAddressFloating(w.asInstanceOf[Set[Long]])
+    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }

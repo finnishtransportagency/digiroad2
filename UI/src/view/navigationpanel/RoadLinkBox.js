@@ -3,9 +3,20 @@
     var className = 'road-link';
     var title = 'Tielinkki';
 
-    var historyRoadLinkCheckBox = '<div class="panel-section"><div class="check-box-container">' +
-        '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
-        '</div></div>';
+    var roadLinkCheckBoxs = '<div class="panel-section">' +
+          '<div class="check-box-container">' +
+            '<input id="historyCheckbox" type="checkbox" /> <span>Näytä poistuneet tielinkit</span>' +
+          '</div>' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
+          '</div>' +
+        '</div>';
+
+    var roadLinkComplementaryCheckBox = '<div class="panel-section">' +
+          '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /> <span>Näytä täydentävä geometria</span>' +
+          '</div>' +
+        '</div>';
 
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
@@ -114,11 +125,11 @@
       'vertical-level': verticalLevelLegend
     };
 
-    var datasetHistoryCheckbox = {
-      'administrative-class': undefined,
-      'functional-class': historyRoadLinkCheckBox,
-      'link-type': historyRoadLinkCheckBox,
-      'vertical-level': undefined
+    var datasetAllCheckboxs = {
+      'administrative-class': roadLinkComplementaryCheckBox,
+      'functional-class': roadLinkCheckBoxs,
+      'link-type': roadLinkCheckBoxs,
+      'vertical-level': roadLinkComplementaryCheckBox
     };
 
     var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
@@ -154,31 +165,55 @@
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
 
-        legendContainer.find('input[type="checkbox"]').prop('checked', false);
+        var complementaryCheckboxChecked = legendContainer.find('#complementaryCheckbox').prop('checked');
+
+        legendContainer.find('#historyCheckbox').prop('checked', false);
         eventbus.trigger('roadLinkHistory:hide');
 
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
         legendContainer.append(constructionTypeLegend);
 
-        var historyCheckBox = datasetHistoryCheckbox[datasetName];
-        if(historyCheckBox)
-          legendContainer.append(historyCheckBox);
+        var allCheckBoxs = datasetAllCheckboxs[datasetName];
+        if (allCheckBoxs) {
+          legendContainer.append(allCheckBoxs);
+          if (complementaryCheckboxChecked) {
+            legendContainer.find('#complementaryCheckbox').prop('checked', true);
+          } else {
+            legendContainer.find('#complementaryCheckbox').prop('checked', false);
+          }
+        }
 
         linkPropertiesModel.setDataset(datasetName);
 
-        bindHistoryEventHandlers(legendContainer);
+        bindEventHandlers(legendContainer);
       });
     };
 
-    var bindHistoryEventHandlers = function(checkboxContainer){
-      checkboxContainer.find('input[type="checkbox"]').on('change', function(event) {
-        var eventTarget = $(event.currentTarget);
-        if(eventTarget.prop('checked')){
+    var bindEventHandlers = function(checkboxContainer){
+      checkboxContainer.find('#historyCheckbox').on('change', function(event) {
+        if($(event.currentTarget).prop('checked')){
           eventbus.trigger('roadLinkHistory:show');
         } else {
           eventbus.trigger('roadLinkHistory:hide');
         }
+      });
+
+      checkboxContainer.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+          eventbus.trigger('roadLinkComplementary:show');
+        } else {
+          if (applicationModel.isDirty()) {
+            $(event.currentTarget).prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('roadLinkComplementary:hide');
+          }
+        }
+      });
+
+      eventbus.on('roadLinkComplementaryCheckBox:check', function() {
+        checkboxContainer.find('#complementaryCheckbox').prop('checked', true);
       });
     };
 
@@ -197,10 +232,10 @@
     var initialLegendContainer = elements.expanded.find('.legend-container');
     initialLegendContainer.append(functionalClassLegend);
     initialLegendContainer.append(constructionTypeLegend);
-    initialLegendContainer.append(historyRoadLinkCheckBox);
+    initialLegendContainer.append(roadLinkCheckBoxs);
     var element = $('<div class="panel-group ' + className + 's"/>').append(elements.expanded).hide();
 
-    bindHistoryEventHandlers(elements.expanded);
+    bindEventHandlers(elements.expanded);
 
     function show() {
       editModeToggle.toggleEditMode(applicationModel.isReadOnly());

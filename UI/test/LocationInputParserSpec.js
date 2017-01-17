@@ -2,7 +2,7 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
   var expect = chai.expect;
 
   it('parses coordinate pairs', function() {
-   expect(LocationInputParser.parse('123,345')).to.deep.equal({ type: 'coordinate', lat: 123, lon: 345 });
+    expect(LocationInputParser.parse('123,345')).to.deep.equal({ type: 'coordinate', lat: 123, lon: 345 });
   });
 
   it('parses street addresses', function() {
@@ -17,12 +17,20 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
   });
 
   it('parses road addresses', function() {
-   expect(LocationInputParser.parse('52 1 100 0')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100, lane: 0 });
-   expect(LocationInputParser.parse('52 1 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
-   expect(LocationInputParser.parse('52\t1 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
-   expect(LocationInputParser.parse('52 1')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1 });
-   expect(LocationInputParser.parse('52')).to.deep.equal({ type: 'road', roadNumber: 52 });
-   expect(LocationInputParser.parse('52   1')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1 });
+    expect(LocationInputParser.parse('52 1 100 0')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100, lane: 0 });
+    expect(LocationInputParser.parse('52 1 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
+    expect(LocationInputParser.parse('52\t1 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
+    expect(LocationInputParser.parse('52 1')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1 });
+    expect(LocationInputParser.parse('52')).to.deep.equal({ type: 'idOrRoadNumber', text: '52' });
+    expect(LocationInputParser.parse('139053')).to.deep.equal({ type: 'idOrRoadNumber', text: '139053' });
+    expect(LocationInputParser.parse('13905300000000000')).to.deep.equal({ type: 'idOrRoadNumber', text: '13905300000000000' });
+    expect(LocationInputParser.parse('O139053','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'O139053' });
+    expect(LocationInputParser.parse('OTHJ1','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'OTHJ1' });
+    expect(LocationInputParser.parse('E1','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'E1' });
+    expect(LocationInputParser.parse('E11','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'E11' });
+    expect(LocationInputParser.parse('EE111','massTransitStop')).to.deep.equal({ type: 'liviId', text: 'EE111' });
+    expect(LocationInputParser.parse('52   1')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1 });
+
   });
 
   it('returns validation error on unexpected input', function() {

@@ -61,8 +61,10 @@ trait MassTransitStopService extends PointAssetOperations {
   val geometryTransform = new GeometryTransform
 
   lazy val massTransitStopEnumeratedPropertyValues = {
-    val properties = Queries.getEnumeratedPropertyValues(typeId)
-    properties.map(epv => epv.publicId -> epv.values).toMap
+    withDynSession{
+      val properties = Queries.getEnumeratedPropertyValues(typeId)
+      properties.map(epv => epv.publicId -> epv.values).toMap
+    }
   }
 
   def withDynSession[T](f: => T): T
@@ -78,6 +80,28 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
+  }
+
+  def getByLiviId[T <: FloatingAsset](liviId: String, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
+    withDynTransaction {
+      val nationalId = getNationalIdByLiviId(liviId).headOption
+      nationalId match {
+        case Some(id) =>
+          val persistedStop = fetchPointAssets(withNationalId(id)).headOption
+          persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+          persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
+        case None => None
+      }
+    }
+  }
+
+  private def getNationalIdByLiviId(liviId: String): Seq[Long] = {
+    sql"""
+      select a.external_id
+      from text_property_value tp
+      join asset a on a.id = tp.asset_id
+      where tp.property_id = (select p.id from property p where p.public_id = 'yllapitajan_koodi')
+      and tp.value_fi = $liviId""".as[Long].list
   }
 
   /**
@@ -186,6 +210,17 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long, municipalityValidation: Int => Unit): (Option[MassTransitStopWithProperties], Boolean) = {
     getByNationalIdWithTRWarnings(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
+  }
+
+  /**
+    * This method returns mass transit stop by livi-id. It's utilized by livi-id search functionality.
+    *
+    * @param liviId
+    * @param municipalityValidation
+    * @return
+    */
+  def getMassTransitStopByLiviId(liviId: String, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
+    getByLiviId(liviId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
   private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike])

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -110,4 +110,52 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
+    val geom = Seq(Point(379483.273,6672835.486), Point(379556.289,6673054.073))
+    val roadAddress = Seq(
+      RoadAddress(3767413, 101, 1, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, 138834, 0.0, 21.0,
+        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), None), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0)),
+
+      RoadAddress(3767414, 101, 1, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, 138834, 21.0, 230.776,
+        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776))
+    )
+    val fusedList = RoadAddressLinkBuilder.fuseRoadAddress(roadAddress)
+    fusedList should have size (1)
+    val fused = fusedList.head
+    fused.startMValue should be (0.0)
+    fused.endMValue should be (230.776)
+    fused.geom.last should be (Point(379556.289,6673054.073))
+    fused.geom should have size(2)
+    fused.startAddrMValue should be (679L)
+    fused.endAddrMValue should be (923L)
+    fused.track should be (Track.RightSide)
+    fused.calibrationPoints._1.isEmpty should be (false)
+    fused.calibrationPoints._2.isEmpty should be (true)
+
+  }
+
+  test("Fuse road address should use single calibration point for both") {
+    val geom = Seq(Point(379483.273,6672835.486), Point(379556.289,6673054.073))
+    val roadAddress = Seq(
+      RoadAddress(3767413, 101, 1, Track.RightSide, Discontinuous, 679L, 701L, Some(DateTime.parse("1991-01-01")), None, 138834, 0.0, 21.0,
+        SideCode.TowardsDigitizing, (Some(CalibrationPoint(138834, 0.0, 679L)), Some(CalibrationPoint(138834, 21.0, 920L))), false, GeometryUtils.truncateGeometry3D(geom, 0.0, 21.0)),
+
+      RoadAddress(3767414, 101, 1, Track.RightSide, Discontinuous, 701L, 923L, Some(DateTime.parse("1991-01-01")), None, 138834, 21.0, 230.776,
+        SideCode.TowardsDigitizing, (None, None), false, GeometryUtils.truncateGeometry3D(geom, 21.0, 230.776))
+    )
+    val fusedList = RoadAddressLinkBuilder.fuseRoadAddress(roadAddress)
+    fusedList should have size (1)
+    val fused = fusedList.head
+    fused.startMValue should be (0.0)
+    fused.endMValue should be (230.776)
+    fused.geom.last should be (Point(379556.289,6673054.073))
+    fused.geom should have size(2)
+    fused.startAddrMValue should be (679L)
+    fused.endAddrMValue should be (920L)
+    fused.track should be (Track.RightSide)
+    fused.calibrationPoints._1.isEmpty should be (false)
+    fused.calibrationPoints._2.isEmpty should be (false)
+    fused.calibrationPoints._2.get.addressMValue should be (920L)
+    fused.calibrationPoints._2.get.segmentMValue should be (230.776)
+  }
 }
