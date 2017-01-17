@@ -150,10 +150,17 @@ class AssetDataImporter {
     val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
 
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
+      // DEV complementary link load
       if (complementaryLinks)
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
-      else
-        vvhClientProd.getOrElse(vvhClient).fetchByLinkIds(group)
+      else {
+        // If in production or QA environment -> load complementary links, too
+        if (vvhClientProd.isEmpty)
+          vvhClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(group)
+        else
+          // If in DEV environment -> don't load complementary links at this stage (no data for them)
+          vvhClientProd.get.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchComplementaryRoadlinks(group)
+      }
     ).toSeq
 
     val linkLengths = roadLinks.map{
@@ -266,7 +273,9 @@ class AssetDataImporter {
       println (s"${DateTime.now ()} - Old address data removed")
 
       roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = false, vvhClientProd))
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = true, None))
+      // If running in DEV environment then include some testing complementary links
+      if (vvhClientProd.nonEmpty)
+        roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = true, None))
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
