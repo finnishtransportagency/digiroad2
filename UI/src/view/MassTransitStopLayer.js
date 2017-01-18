@@ -749,11 +749,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         massTransitStopsCollection.fetchAssets(map.getExtent());
       });
-      if (isComplementaryActiveBS) {
-        roadCollection.fetchWithComplementary(map.getExtent());
-      } else {
-        roadCollection.fetch(map.getExtent());
-      }
+      roadCollection.fetch(map.getExtent());
     }
     isComplementaryActiveBS = false;
   };
