@@ -203,6 +203,7 @@
       var value = currentValue ? currentValue : '';
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
+
       return template({className: className, optionTags: optionTags, disabled: disabled});
     }
 
@@ -242,14 +243,17 @@
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 
-      var textBoxValues =
-          '<div class="input-unit-combination input-group">' +
-          '<label>Campo Teste</label>' +
-          '  <input ' +
-          '    type="text" ' +
-          '    class="form-control ' + className + '" ' +
-          '    value="' + value + '" ' + disabled + ' >' +
-          '</div>';
+      var textValuePropertyNames = ["Tiehoitokunta", "Nimi",'Osoite', 'Postinumero', 'Postitoimipaikka', 'Puhelin 1', 'Puhelin 2', 'Lisätietoa'];
+      var textBoxValues = _.map(textValuePropertyNames, function (names) {
+        return  '<div class=" form-group input-group">' +
+                '<label>' + names + '</label>' +
+                '<div class="form-group">' +
+                '<input ' +
+                '    type="text" ' +
+                '    class="form-control ' + className + '" ' +
+                '    value="' + value + '" ' + disabled + ' >' +
+                '</div></div>';
+      }).join('');
 
       var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus'});
       var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu'});
