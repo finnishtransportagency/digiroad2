@@ -3,6 +3,7 @@
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
     EuropeanRoadsFormElements: TextualValueFormElements,
     ExitNumbersFormElements: TextualValueFormElements,
+    CreateMaintenanceFormElements: CreateMaintenanceFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
@@ -21,7 +22,12 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
+  function CreateMaintenanceFormElements(unit, editControlLabels, className, defaultValue, possibleValues, accessRightsValues) {
+   var formElem = maintenanceFormElement();
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem, accessRightsValues);
+  }
+
+  function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem, accessRightsValues) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -100,7 +106,7 @@
         '<div class="form-group editable">' +
         '  <label class="control-label">' + editControlLabels.title + '</label>' +
         '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
         '</div>';
     }
   }
@@ -198,6 +204,57 @@
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
       return template({className: className, optionTags: optionTags, disabled: disabled});
+    }
+
+    function inputElementValue(input) {
+      return parseInt(input.val(), 10);
+    }
+  }
+
+  function maintenanceFormElement() {
+    var template =  _.template(
+        '<li>' +
+        '<label><%= label %> </label> ' +
+        '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
+        '</li>');
+
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
+
+    function valueString(currentValue) {
+      return currentValue ? currentValue : '-';
+    }
+
+    function measureInput(currentValue, className, possibleValues, accessRightsValues) {
+      var value = currentValue ? currentValue : '';
+      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+
+      var accessRightsTag = _.map(accessRightsValues, function (value) {
+        var selected = value.typeId === currentValue ? " selected" : "";
+        return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
+      }).join('');
+
+      var maintenanceResponsibilityTag = _.map(possibleValues, function (value) {
+        var selected = value.typeId === currentValue ? " selected" : "";
+        return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
+      }).join('');
+
+      var textBoxValues =
+          '<div class="input-unit-combination input-group">' +
+          '<label>Campo Teste</label>' +
+          '  <input ' +
+          '    type="text" ' +
+          '    class="form-control ' + className + '" ' +
+          '    value="' + value + '" ' + disabled + ' >' +
+          '</div>';
+
+      var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus'});
+      var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu'});
+
+      return '<div class="input-unit-combination"><ul>'+template1.concat(template2)+'</ul>'+textBoxValues+'</div>';
     }
 
     function inputElementValue(input) {
