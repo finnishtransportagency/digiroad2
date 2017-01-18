@@ -199,11 +199,11 @@ class AssetDataImporter {
     val linkIdMapping: Map[Long,Long] = if (vvhClientProd.nonEmpty) {
       print(s"${DateTime.now()} - ")
       println("Converting link ids to DEV link ids")
-      val mmlIdMaps = roadLinks.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+      val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchByMmlIds(grp)).toSeq
-      val fromMmlIdMap = links.map(rl => rl.attributes.get("MTKID").get.asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
+      val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
-        mmlIdMaps.get(mmlId).get -> devLinkId
+        mmlIdMaps(mmlId) -> devLinkId
       }.partition { case (pid, did) => pid != did }
       print(s"${DateTime.now()} - ")
       println("Removing the non-differing mmlId+linkId combinations from mapping: %d road links".format(same.size))
