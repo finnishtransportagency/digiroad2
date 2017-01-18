@@ -108,7 +108,9 @@
     var draw = function() {
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
-      prepareRoadLinkDraw();
+        if(!applicationModel.isActiveButtons() && window.eventbus.on('map:moved')) {
+            prepareRoadLinkDraw();
+        }
       var roadLinks = roadCollection.getAll();
 
       roadLayer.drawRoadLinks(roadLinks, zoom);
@@ -424,7 +426,9 @@
     };
 
     var redrawSelected = function() {
+        if(!applicationModel.isActiveButtons()){
       roadLayer.layer.removeFeatures(getSelectedFeatures());
+        }
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
