@@ -105,14 +105,19 @@
       });
     };
 
-    var draw = function() {
+    var draw = function(action) {
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
         if(!applicationModel.isActiveButtons() && window.eventbus.on('map:moved')) {
             prepareRoadLinkDraw();
         }
       var roadLinks = roadCollection.getAll();
-
+      if(!_.isUndefined(action) && action)
+        _.each(roadLinks, function(roadlink){
+          if(!_.isUndefined(roadlink.gapTransfering) && roadlink.gapTransfering === true){
+            roadlink.gapTransfering = false;
+          }
+        });
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);

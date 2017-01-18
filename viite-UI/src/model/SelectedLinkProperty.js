@@ -173,6 +173,9 @@
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+      targets = [];
+      $('#adjacentsData').remove();
+      if(applicationModel.isActiveButtons()) eventbus.trigger('roadLinks:fetched', true);
     };
 
     var setLinkProperty = function(key, value) {
