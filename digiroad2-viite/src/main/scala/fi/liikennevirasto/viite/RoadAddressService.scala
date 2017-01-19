@@ -356,11 +356,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry2D(rl.geometry, address.startMValue, address.endMValue))
-      if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)
+      if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
+        println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
-      else {
-        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom))
+      } else {
+        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom)) {
+          println("Updating geometry for id %d (link id %d)".format(address.id, address.linkId))
           RoadAddressDAO.changeRoadAddressFloating(float = false, address.id, addressGeometry)
+        }
       }
     }
   }
