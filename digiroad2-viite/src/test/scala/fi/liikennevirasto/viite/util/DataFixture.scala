@@ -47,6 +47,7 @@ object DataFixture {
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
         case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
+          ex.printStackTrace()
       }
       partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
     }
