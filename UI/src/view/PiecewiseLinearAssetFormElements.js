@@ -181,9 +181,9 @@
 
   function dropDownFormElement(unit) {
     var template =  _.template(
-      '<div class="input-unit-combination">' +
-      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
-      '</div>');
+    //  '<div class="input-unit-combination">' +
+      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>'); //+
+   //   '</div>');
 
     return {
       inputElementValue: inputElementValue,
@@ -216,7 +216,7 @@
     var template =  _.template(
         '<li>' +
         '<label><%= label %> </label> ' +
-        '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
+        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>' +
         '</li>');
 
     return {
@@ -243,26 +243,44 @@
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 
-      var textValuePropertyNames = ["Tiehoitokunta", "Nimi",'Osoite', 'Postinumero', 'Postitoimipaikka', 'Puhelin 1', 'Puhelin 2', 'Lisätietoa'];
-      var textBoxValues = _.map(textValuePropertyNames, function (names) {
-        return  '<div class=" form-group input-group">' +
-                '<label>' + names + '</label>' +
-                '<div class="form-group">' +
-                '<input ' +
-                '    type="text" ' +
-                '    class="form-control ' + className + '" ' +
-                '    value="' + value + '" ' + disabled + ' >' +
-                '</div></div>';
+      var textValuePropertyNames = [{'name': "Tiehoitokunta", 'id': "huoltotie_tiehoitokunta" },
+                                    {'name': "Nimi", 'id': "huoltotie_nimi" },
+                                    {'name': "Osoite" , 'id': "huoltotie_osoite"},
+                                    {'name': "Postinumero", 'id': "huoltotie_postinumero"},
+                                    {'name': "Postitoimipaikka", 'id': "huoltotie_Postitoimipaikka"},
+                                    {'name': "Puhelin 1", 'id': "huoltotie_Puhelin1"},
+                                    {'name': "Puhelin 2", 'id': "huoltotie_Puhelin2"},
+                                    {'name': "Lisätietoa", 'id': "huoltotie_Lisätietoa"}];
+
+        var textBoxValues = _.map(textValuePropertyNames, function (prop) {
+       // return  '<div class=" form-group input-group">' +
+          return '<label>' + prop.name + '</label>' +
+                 '<div class="form-group">' +
+                 '<input ' +
+                 '    type="text" ' +
+                 '    class="form-control ' + className + '" id="'+prop.id+'"' +
+                 '    value="' + value + '" ' + disabled + ' >' +
+                 '</div>';//</div>';
       }).join('');
 
-      var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus'});
-      var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu'});
+      var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
+      var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
 
-      return '<div class="input-unit-combination"><ul>'+template1.concat(template2)+'</ul>'+textBoxValues+'</div>';
+      return '<form class="input-unit-combination"><ul>'+template1.concat(template2)+'</ul>'+textBoxValues+'</form>';
     }
 
-    function inputElementValue(input) {
-      return parseInt(input.val(), 10);
-    }
+      function inputElementValue(input) {
+          var things = _.map(input, function (ele) {
+              var mapping = {"SELECT" : "single_choice", "INPUT": "text"};
+              var obj = {
+                  'publicId': ele.id,
+                  'value': ele.value,
+                  'typeId': mapping[String(ele.tagName)]
+              };
+              return obj;
+          });
+
+          return things;
+      }
   }
 })(this);
