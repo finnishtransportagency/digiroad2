@@ -115,10 +115,11 @@
       if(!_.isUndefined(action) && action)
         _.each(roadLinks, function(roadlink){
           if(!_.isUndefined(roadlink.gapTransfering) && roadlink.gapTransfering === true){
-            roadlink.gapTransfering = false;
+            roadlink.gapTransfering = null;
           }
         });
       roadLayer.drawRoadLinks(roadLinks, zoom);
+      //roadLayer.redraw();
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 
@@ -151,7 +152,6 @@
         });
       }
 
-      me.drawRoadNumberMarkers(roadLayer.layer, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
       }
@@ -380,7 +380,19 @@
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
         drawIndicators(targets);
       });
+      eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function(){
+        if(applicationModel.isReadOnly() && !applicationModel.isActiveButtons()){
+          indicatorLayer.clearMarkers();
+        }
+      });
+      eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
+          prepareRoadLinkDraw();
+      });
     };
+
+    var clearIndicators = function () {
+      indicatorLayer.clearMarkers();
+    }
     
     var drawIndicators= function(links){
       indicatorLayer.clearMarkers();

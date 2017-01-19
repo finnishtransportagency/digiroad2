@@ -175,7 +175,11 @@
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
       targets = [];
       $('#adjacentsData').remove();
-      if(applicationModel.isActiveButtons()) eventbus.trigger('roadLinks:fetched', true);
+      if(applicationModel.isActiveButtons()){
+        applicationModel.setActiveButtons(false);
+        eventbus.trigger('roadLinks:fetched', true);
+        eventbus.trigger('roadLinks:deleteSelection');
+      }
     };
 
     var setLinkProperty = function(key, value) {
@@ -196,6 +200,11 @@
     var count = function() {
       return current.length;
     };
+
+    eventbus.on("roadLink:editModeAdjacents", function(){
+      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons())
+        eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
+    });
 
     return {
       addTargets: addTargets,
