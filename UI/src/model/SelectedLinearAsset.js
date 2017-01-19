@@ -221,11 +221,22 @@
     };
 
     this.setValue = function(value) {
-      if (value != selection[0].value) {
-        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-        selection = collection.replaceSegments(selection, newGroup);
-        dirty = true;
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
+      if(Array.isArray(value)){
+        var requiredFields = _.find(value, function (val) {
+            return val.publicId === 'huoltotie_kayttooikeus' && val.publicId === 'huoltotie_huoltovastuu' &&  val.publicId === 'huoltotie_tiehoitokunta';
+        });
+        var areNotFilled = _.some(requiredFields, function(fields){ return fields.value === ''; });
+        if(!areNotFilled){
+            dirty = true;
+            eventbus.trigger(singleElementEvent('valueChanged'), self);
+        }
+      }else{
+          if (value != selection[0].value) {
+              var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+              selection = collection.replaceSegments(selection, newGroup);
+              dirty = true;
+              eventbus.trigger(singleElementEvent('valueChanged'), self);
+          }
       }
     };
 
