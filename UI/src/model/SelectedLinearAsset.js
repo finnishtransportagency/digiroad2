@@ -232,8 +232,12 @@
             selection = collection.replaceSegments(selection, newGroup);
             dirty = true;
             eventbus.trigger(singleElementEvent('valueChanged'), self);
+        }else{
+            dirty = false;
+            eventbus.trigger(singleElementEvent('valueChanged'), self);
         }
-      }else{
+      }
+      else{
           if (value != selection[0].value) {
               newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
               selection = collection.replaceSegments(selection, newGroup);
