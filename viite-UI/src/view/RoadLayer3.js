@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection) {
+  root.RoadLayer3 = function(map, roadCollection,styler) {
     var vectorLayer;
     var drawRoadLinks = function(roadLinks, zoom) {
       console.log("Draw road links");
@@ -12,12 +12,16 @@
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
-        eventbus.once('roadLinks:fetched', function() {
+        eventbus.once('roadLinks:fetched', function(roadLinkGroups) {
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
             });
-            return new ol.Feature({ geometry: new ol.geom.LineString(points) });
+            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+            });
+            feature.roadLinkData = roadLink;
+            feature.setStyle(styler.generateStyleByFeature(feature.roadLinkData, zoom));
+            return feature;
           });
           loadFeatures(features);
         });
@@ -25,6 +29,27 @@
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    //TODO: Since the creation of the Styler, do we need this?
+    function vectorLayerStyle(feature) {
+      if (stylesUndefined()) {
+        var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
+        var roadWidth = widthBase * widthBase;
+        if (applicationModel.isRoadTypeShown()) {
+          return [new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              width: roadWidth
+            })
+          })];
+        } else {
+          return [new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              width: 5
+            })
+          })];
+        }
+      }
+    }
 
     var loadFeatures = function (features) {
       vectorSource.addFeatures(features);
@@ -83,7 +108,8 @@
 
 
     vectorLayer = new ol.layer.Vector({
-      source: vectorSource
+      source: vectorSource,
+      style: vectorLayerStyle
     });
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);

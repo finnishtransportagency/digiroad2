@@ -108,8 +108,8 @@
     // });
 
     var mapOverlay = new MapOverlay($('.container'));
-
-    var roadLayer = new RoadLayer3(map, models.roadCollection);
+    var styler = new Styler();
+    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 

@@ -84,7 +84,7 @@
             _.contains(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinks());
-        eventbus.trigger('roadLinks:fetched');
+        eventbus.trigger('roadLinks:fetched', roadLinkGroups);
       });
     };
 
