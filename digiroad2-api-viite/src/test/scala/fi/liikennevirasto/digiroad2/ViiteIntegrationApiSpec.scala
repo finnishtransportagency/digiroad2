@@ -68,7 +68,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "road_number" -> 5,
       "road_part_number" -> 205,
       "track_code" -> 1,
-      "side_code" -> SideCode.AgainstDigitizing.value,
+      "side_code" -> 3,
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
