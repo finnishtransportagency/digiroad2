@@ -99,7 +99,9 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and (ra.valid_to > sysdate or ra.valid_to is null)
+        where $filter $floatingFilter and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     (queryList(query), Seq())
   }
@@ -174,7 +176,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history and t.id < t2.id
+        $where $floating $history and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -214,7 +218,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id
+        $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -241,7 +247,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where t.id < t2.id $floating $history
+        where t.id < t2.id $floating $history and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
@@ -551,7 +559,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where floating='1' and t.id < t2.id
+        where floating='1' and t.id < t2.id AND
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
@@ -576,7 +586,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND floating='1' and t.id < t2.id
+        $where AND floating='1' and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -601,7 +613,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where and t.id < t2.id
+        $where and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -619,8 +633,10 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        join $idTableName i on i.id = pos.link_id
-        where t.id < t2.id
+        join $idTableName i on i.id = ra.id
+        where t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
