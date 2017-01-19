@@ -100,7 +100,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
 
-    val maintanence = Maintenance(MaintenanceValueWithProperties(290, propertiesSeq))
+    val maintanence = Maintenance(propertiesSeq)
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 290, "testuser")
       newAssets.length should be(1)
@@ -119,7 +119,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val propIns5 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
 
     val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
-    val maintanenceIns = Maintenance(MaintenanceValueWithProperties(290, propIns))
+    val maintanenceIns = Maintenance(propIns)
 
     val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "4")
     val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "1")
@@ -129,9 +129,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val propUpd6 = Properties("huoltotie_puh2" , "text", false, "text prop puh2")
 
     val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
-    val maintanenceUpd = Maintenance(MaintenanceValueWithProperties(290, propUpd))
+    val maintanenceUpd = Maintenance(propUpd)
 
-    val maintanenceFetch = Maintenance(MaintenanceValueWithProperties(290, propUpd.filterNot(_.publicId == "huoltotie_puh1")))
+    val maintanenceFetch = Maintenance(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
 
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanenceIns, 1, 0, None)), 290, "testuser")
@@ -164,7 +164,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
 
-    val maintanence = Maintenance(MaintenanceValueWithProperties(290, propertiesSeq))
+    val maintanence = Maintenance(propertiesSeq)
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintanence, 1, 0, None)), 290, "testuser")
       newAssets.length should be(1)

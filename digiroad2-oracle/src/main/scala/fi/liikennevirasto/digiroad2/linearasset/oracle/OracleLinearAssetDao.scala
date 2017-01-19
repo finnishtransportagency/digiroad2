@@ -453,7 +453,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val propertyRequired = rows.head._7
         Properties(propertyPublicId, propertyType, propertyRequired, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(MaintenanceValueWithProperties(maintenanceAssetTypeId, maintenanceValues))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
   }
 
@@ -509,7 +509,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val propertyRequired = rows.head._7
         Properties(propertyPublicId, propertyType, propertyRequired, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(MaintenanceValueWithProperties(maintenanceAssetTypeId, maintenanceValues))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
   }
 
@@ -1053,7 +1053,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def updateMaintenanceValue(assetId: Long, value: Maintenance, username: String): Option[Long] = {
     val assetsUpdated = Queries.updateAssetModified(assetId, username).first
 
-    value.maintenance.propertiesData.foreach { prop =>
+    value.maintenance.foreach { prop =>
 
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
     prop.propertyType match {
@@ -1105,7 +1105,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   def insertMaintenanceValue(assetId: Long, value: Maintenance): Unit = {
-    value.maintenance.propertiesData.foreach( prop => {
+    value.maintenance.foreach( prop => {
        prop.propertyType match{
          case "text" =>
            insertValue(assetId, prop.publicId, prop.value)

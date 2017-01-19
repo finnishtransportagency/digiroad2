@@ -654,7 +654,7 @@ trait LinearAssetOperations {
 
   private def validateRequiredProperties(typeId: Int, maintenance: Maintenance): Set[String] = {
     val mandatoryProperties: Map[String, String] = dao.getRequiredProperties(typeId)
-    val nonEmptyMandatoryProperties: Seq[Properties] = maintenance.maintenance.propertiesData.filter { property =>
+    val nonEmptyMandatoryProperties: Seq[Properties] = maintenance.maintenance.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
     }
     mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet

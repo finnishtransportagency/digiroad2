@@ -27,7 +27,7 @@ case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: 
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
-case class NewMaintenance(linkId: Long, startMeasure: Double, endMeasure: Double, value: MaintenanceValueWithProperties, sideCode: Int)
+case class NewMaintenance(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
@@ -527,7 +527,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
-    val maintenanceParameter: Option[MaintenanceValueWithProperties] = value.extractOpt[MaintenanceValueWithProperties]
+    val maintenanceParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
@@ -537,6 +537,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 
     val maintenance = maintenanceParameter match {
+      case Some(Nil) => None
       case None => None
       case Some(x) => Some(Maintenance(x))
     }

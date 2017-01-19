@@ -275,7 +275,8 @@
               var obj = {
                   'publicId': ele.id,
                   'value': ele.value,
-                  'typeId': mapping[String(ele.tagName)]
+                  'required': true,
+                  'propertyType': mapping[String(ele.tagName)]
               };
               return obj;
           });

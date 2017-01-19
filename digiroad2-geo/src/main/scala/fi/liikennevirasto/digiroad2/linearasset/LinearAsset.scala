@@ -22,13 +22,13 @@ case class NumericValue(value: Int) extends Value {
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
-case class Maintenance(maintenance: MaintenanceValueWithProperties) extends Value{
+case class Maintenance(maintenance: Seq[Properties]) extends Value{
   override def toJson: Any = maintenance
 }
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class MaintenanceValueWithProperties(typeId: Int, propertiesData: Seq[Properties])
+//case class MaintenanceValueWithProperties(typeId: Int, propertiesData: Seq[Properties])
 case class Properties(publicId: String, propertyType: String, required: Boolean = false, value: String)
 
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
