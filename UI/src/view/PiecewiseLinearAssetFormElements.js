@@ -181,9 +181,9 @@
 
   function dropDownFormElement(unit) {
     var template =  _.template(
-    //  '<div class="input-unit-combination">' +
-      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>'); //+
-   //   '</div>');
+     '<div class="input-unit-combination">' +
+      '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
+      '</div>');
 
     return {
       inputElementValue: inputElementValue,
