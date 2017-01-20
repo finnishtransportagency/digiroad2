@@ -115,6 +115,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
   }
 
+  post("/roadlinks/transferRoadLink") {
+   // val roadData = JSON.parseFull(params.get("data").get).get
+    //TODO roadData each, map and decoding the map
+
+    Set.empty
+  }
+
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     val viiteRoadLinks = zoomLevel match {

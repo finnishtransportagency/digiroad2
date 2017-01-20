@@ -119,7 +119,6 @@
           }
         });
       roadLayer.drawRoadLinks(roadLinks, zoom);
-      //roadLayer.redraw();
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 

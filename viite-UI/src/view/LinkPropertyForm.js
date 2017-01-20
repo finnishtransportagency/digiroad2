@@ -152,8 +152,8 @@
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
         '<label class="control-label-floating"> LINK ID:</label>' +
         '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
-        /*'<span class="marker">' + marker + '</span>' +
-        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +*/
+        '<span class="marker">' + marker + '</span>' +
+        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
         '</div>' +
         '</div>';
     };
@@ -438,12 +438,9 @@
         $('#floatingEditModeForm').show();
         $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
           eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
-          //TODO Uncomment for task 182
-          //begin
-          // rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          rootElement.find('.link-properties button.calculate').attr('disabled', false);
           rootElement.find('.link-properties button.cancel').attr('disabled', false);
           applicationModel.setActiveButtons(true);
-          //end
         });
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
           eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
@@ -464,6 +461,13 @@
       rootElement.on('click', '.link-properties button.cancel', function() {
         selectedLinkProperty.cancel();
         applicationModel.setActiveButtons(false);
+      });
+      rootElement.on('click', '.link-properties button.calculate', function() {
+        //TODO calculate SIIRRA button operations
+        var siirra = selectedLinkProperty.transferingCalculation();
+        // selectedLinkProperty.cancel();
+        //TODO apply
+        applicationModel.setActiveButtons(true);
       });
 
 

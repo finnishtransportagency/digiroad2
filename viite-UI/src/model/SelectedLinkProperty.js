@@ -97,7 +97,7 @@
     };
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
-
+      current.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
       var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
         return {"linkId": ns.linkId, "roadNumber": ns.roadNumber, "roadPartNumber": ns.roadPartNumber, "trackCode": ns.trackCode};
@@ -155,7 +155,6 @@
       var targetData = _.filter(adjacents, function(adjacent){
         return adjacent.linkId == target;
       });
-      //TODO bellow trigger refresh next target adjacents in the form
       if(!_.isEmpty(targetData)){
         
         $('#aditionalSource').remove();
@@ -166,6 +165,25 @@
 
     var getTargets = function(){
       return _.union(targets);
+    };
+
+    var transferingCalculation = function(){
+      var selected = _.first(current).getData();
+      var targetData = [];
+      var sourceData = [];
+      _.each(targets, function (target) {
+        targetData.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData());
+      });
+      _.each(current, function (source){
+        sourceData.push(source.getData());
+      });
+
+      var data = {'sources':sourceData, 'targets':targetData};
+
+      var teste;
+      backend.transferRoadLink(data, function(result) {
+        teste = result;
+      });
     };
 
     var cancel = function() {
@@ -209,6 +227,7 @@
     return {
       addTargets: addTargets,
       getTargets: getTargets,
+      transferingCalculation: transferingCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,

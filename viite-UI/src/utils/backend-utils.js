@@ -32,6 +32,12 @@
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
+
+    this.transferRoadLink = _.throttle(function(roadData, callback) {
+      return $.post('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(roadData), function(data) {
+        return _.isFunction(callback) && callback(data);
+      }, 'json');
+    }, 1000);
     
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
