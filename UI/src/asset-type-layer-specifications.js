@@ -334,9 +334,9 @@
         disabled: 'Ei rajoitusta'
       },
       possibleValues: [
+        {typeId: 0, title: 'Ei tietoa'},
         {typeId: 1, title: 'LiVi'},
-        {typeId: 2, title: 'Muu'},
-        {typeId: 0, title: 'Ei tietoa'}
+        {typeId: 2, title: 'Muu'}
       ],
       accessRightsValues: [
         {typeId: 1, title: 'Tieoikeus'},

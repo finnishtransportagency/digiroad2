@@ -228,16 +228,21 @@
     }
 
     function measureInput(currentValue, className, possibleValues, accessRightsValues) {
-      var value = currentValue ? currentValue : '';
+      var accessRightsValue = _.find(currentValue, function (value) { return value.publicId == "huoltotie_kayttooikeus"; });
+      accessRightsValue = accessRightsValue ? accessRightsValue.value : '';
+
+      var maintenanceResponsibilityValue = _.find(currentValue, function (value) { return value.publicId == "huoltotie_huoltovastuu"; });
+      maintenanceResponsibilityValue = maintenanceResponsibilityValue ? maintenanceResponsibilityValue.value : '';
+
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
       var accessRightsTag = _.map(accessRightsValues, function (value) {
-        var selected = value.typeId === currentValue ? " selected" : "";
+        var selected = value.typeId === accessRightsValue ? " selected" : "";
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 
       var maintenanceResponsibilityTag = _.map(possibleValues, function (value) {
-        var selected = value.typeId === currentValue ? " selected" : "";
+        var selected = value.typeId === maintenanceResponsibilityValue ? " selected" : "";
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 
@@ -250,21 +255,31 @@
                                     {'name': "Puhelin 2", 'id': "huoltotie_puh2"},
                                     {'name': "Lisätietoa", 'id': "huoltotie_lisatieto"}];
 
-        var textBoxValues = _.map(textValuePropertyNames, function (prop) {
-       // return  '<div class=" form-group input-group">' +
-          return '<label>' + prop.name + '</label>' +
-                 '<div class="form-group">' +
-                 '<input ' +
-                 '    type="text" ' +
-                 '    class="form-control ' + className + '" id="'+prop.id+'"' +
-                 '    value="' + value + '" ' + disabled + ' >' +
-                 '</div>';//</div>';
+      var textBoxValues = _.map(textValuePropertyNames, function (prop) {
+        var actualValue;
+
+        if (currentValue) {
+          actualValue = _.find(currentValue, function (value) {
+            return value.publicId == prop.id;
+          });
+          actualValue = actualValue ? actualValue.value : '';
+        } else {
+          actualValue = '';
+        }
+
+        return '<label>' + prop.name + '</label>' +
+            '<div class="form-group">' +
+            '<input ' +
+            '    type="text" ' +
+            '    class="form-control ' + className + '" id="' + prop.id + '"' +
+            '    value="' + actualValue + '" ' + disabled + ' >' +
+            '</div>';
       }).join('');
 
-      var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
-      var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
+      var accessRightsTemplate = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
+      var maintenanceResponsibilityTemplate = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
 
-      return '<form class="input-unit-combination">'+template1.concat(template2)+textBoxValues+'</form>';
+      return '<form class="input-unit-combination">'+accessRightsTemplate.concat(maintenanceResponsibilityTemplate)+textBoxValues+'</form>';
     }
 
       function inputElementValue(input) {
