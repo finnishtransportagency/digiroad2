@@ -237,12 +237,12 @@
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
       var accessRightsTag = _.map(accessRightsValues, function (value) {
-        var selected = value.typeId === accessRightsValue ? " selected" : "";
+        var selected = value.typeId == accessRightsValue ? " selected" : "";
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 
       var maintenanceResponsibilityTag = _.map(possibleValues, function (value) {
-        var selected = value.typeId === maintenanceResponsibilityValue ? " selected" : "";
+        var selected = value.typeId == maintenanceResponsibilityValue ? " selected" : "";
         return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
       }).join('');
 

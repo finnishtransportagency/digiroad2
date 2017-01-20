@@ -247,15 +247,15 @@
       }
     };
 
-    this.setAValue = function(value) {
-      if (value != selection[0].value) {
+    this.setAValue = function (value) {
+      if ((value != selection[0].value) || (Array.isArray(value))) {
         selection[0].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
-    this.setBValue = function(value) {
-      if (value != selection[1].value) {
+    this.setBValue = function (value) {
+      if ((value != selection[1].value) || (Array.isArray(value))) {
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
