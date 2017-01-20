@@ -101,11 +101,25 @@
       });
     }
 
+    function singleChoiceValuesConversion(current, propertiesName){
+        var value = current[1] ? current[1].value : "";
+        var accessRightsValues = { '1': 'Tieoikeus', '2': 'Tiekunnan osakkuus', '3': 'LiVin hallinnoimalla maa-alueella', '4': 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei rautatieliikennealuetta) väylä', '5': 'Tuntematon'};
+        var possibleValues = { '0': 'Ei tietoa', '1': 'LiVi', '2': 'Muu'};
+        if(current[0] == propertiesName[0]){
+            return accessRightsValues[current[1].value];
+        }else{
+            if(current[0] == propertiesName[1]){
+                return possibleValues[current[1].value];
+            }
+            else return value;
+        }
+    }
+
     function obtainFormControl(className, valueString, currentValue){
         var propertiesName = ['Käyttöoikeus','Huoltovastuu','Tiehoitokunta','Nimi','Osoite','Postinumero','Postitoimipaikka','Puhelin 1','Puhelin 2','Lisätietoa'];
         var zipped = _.zip(propertiesName, currentValue);
         return _.map(zipped, function(current){
-            var value = current[1] ? current[1].value : "";
+            var value = singleChoiceValuesConversion(current, propertiesName);
             return '  <p class="form-control-static ' + className + '" style="display:none;">' + current[0] + ': ' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
         }).join('');
     }
