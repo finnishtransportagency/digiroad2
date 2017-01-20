@@ -230,6 +230,11 @@ class AssetDataImporter {
         case true => (address._7, address._8, SideCode.TowardsDigitizing.value)
         case false => (address._8, address._7, SideCode.AgainstDigitizing.value)
       }
+      val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
+        (address._13, address._14, address._15, address._16)
+      else
+        (address._15, address._16, address._13, address._14)
+
       lrmPositionPS.setLong(1, lrmId)
       lrmPositionPS.setLong(2, linkIdMapping.getOrElse(linkId, linkId))
       lrmPositionPS.setLong(3, sideCode)
@@ -247,10 +252,10 @@ class AssetDataImporter {
       addressPS.setString(9, address._10.getOrElse(""))
       addressPS.setString(10, address._11)
       addressPS.setString(11, address._12)
-      addressPS.setDouble(12, address._13)
-      addressPS.setDouble(13, address._14)
-      addressPS.setDouble(14, address._15)
-      addressPS.setDouble(15, address._16)
+      addressPS.setDouble(12, x1)
+      addressPS.setDouble(13, y1)
+      addressPS.setDouble(14, x2)
+      addressPS.setDouble(15, y2)
       addressPS.setDouble(16, endAddrM - startAddrM)
       addressPS.setInt(17, if (floatingLinks.contains(linkId)) 1 else 0)
       addressPS.addBatch()
