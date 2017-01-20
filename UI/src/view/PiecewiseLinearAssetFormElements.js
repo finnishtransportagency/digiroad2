@@ -214,10 +214,8 @@
 
   function maintenanceFormElement() {
     var template =  _.template(
-        '<li>' +
         '<label><%= label %> </label> ' +
-        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>' +
-        '</li>');
+        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
 
     return {
       inputElementValue: inputElementValue,
@@ -247,10 +245,10 @@
                                     {'name': "Nimi", 'id': "huoltotie_nimi" },
                                     {'name': "Osoite" , 'id': "huoltotie_osoite"},
                                     {'name': "Postinumero", 'id': "huoltotie_postinumero"},
-                                    {'name': "Postitoimipaikka", 'id': "huoltotie_Postitoimipaikka"},
-                                    {'name': "Puhelin 1", 'id': "huoltotie_Puhelin1"},
-                                    {'name': "Puhelin 2", 'id': "huoltotie_Puhelin2"},
-                                    {'name': "Lisätietoa", 'id': "huoltotie_Lisätietoa"}];
+                                    {'name': "Postitoimipaikka", 'id': "huoltotie_postitoimipaikka"},
+                                    {'name': "Puhelin 1", 'id': "huoltotie_puh1"},
+                                    {'name': "Puhelin 2", 'id': "huoltotie_puh2"},
+                                    {'name': "Lisätietoa", 'id': "huoltotie_lisatieto"}];
 
         var textBoxValues = _.map(textValuePropertyNames, function (prop) {
        // return  '<div class=" form-group input-group">' +
@@ -266,7 +264,7 @@
       var template1 = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
       var template2 = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
 
-      return '<form class="input-unit-combination"><ul>'+template1.concat(template2)+'</ul>'+textBoxValues+'</form>';
+      return '<form class="input-unit-combination">'+template1.concat(template2)+textBoxValues+'</form>';
     }
 
       function inputElementValue(input) {
@@ -275,7 +273,6 @@
               var obj = {
                   'publicId': ele.id,
                   'value': ele.value,
-                  'required': true,
                   'propertyType': mapping[String(ele.tagName)]
               };
               return obj;

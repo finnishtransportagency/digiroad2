@@ -28,8 +28,7 @@ case class Maintenance(maintenance: Seq[Properties]) extends Value{
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-//case class MaintenanceValueWithProperties(typeId: Int, propertiesData: Seq[Properties])
-case class Properties(publicId: String, propertyType: String, required: Boolean = false, value: String)
+case class Properties(publicId: String, propertyType: String, value: String)
 
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,

@@ -450,8 +450,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val propertyValue = rows.head._4
         val propertyType = rows.head._5
         val propertyPublicId = rows.head._6
-        val propertyRequired = rows.head._7
-        Properties(propertyPublicId, propertyType, propertyRequired, propertyValue)
+        Properties(propertyPublicId, propertyType, propertyValue)
       }
       PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
@@ -506,8 +505,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         val propertyValue = rows.head._4
         val propertyType = rows.head._5
         val propertyPublicId = rows.head._6
-        val propertyRequired = rows.head._7
-        Properties(propertyPublicId, propertyType, propertyRequired, propertyValue)
+        Properties(propertyPublicId, propertyType, propertyValue)
       }
       PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
@@ -1104,16 +1102,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     Some(id)
   }
 
-  def insertMaintenanceValue(assetId: Long, value: Maintenance): Unit = {
-    value.maintenance.foreach( prop => {
-       prop.propertyType match{
-         case "text" =>
-           insertValue(assetId, prop.publicId, prop.value)
-         case "single_choice" =>
-           insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
-       }
-    })
-  }
+    def insertMaintenanceValue(assetId: Long, value: Maintenance): Unit = {
+      value.maintenance.filter(finalProps => finalProps.value != "").foreach(prop => {
+        prop.propertyType match {
+          case "text" =>
+            insertValue(assetId, prop.publicId, prop.value)
+          case "single_choice" =>
+            insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
+        }
+      })
+    }
 
   def getRequiredProperties(typeId: Int): Map[String, String] ={
     val requiredProperties =

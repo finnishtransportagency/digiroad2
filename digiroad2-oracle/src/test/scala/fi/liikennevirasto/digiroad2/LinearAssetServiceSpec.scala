@@ -94,9 +94,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create new maintenance") {
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", required = true, "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", required = true, "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", required = true, "text")
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
 
     val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
 
@@ -112,21 +112,21 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("update new maintenance") {
-    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "1")
-    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "2")
-    val propIns3 = Properties("huoltotie_postinumero", "text", false, "text prop3")
-    val propIns4 = Properties("huoltotie_puh1" , "text", false, "text prop4")
-    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
+    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propIns3 = Properties("huoltotie_postinumero", "text", "text prop3")
+    val propIns4 = Properties("huoltotie_puh1" , "text", "text prop4")
+    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", "text")
 
     val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
     val maintanenceIns = Maintenance(propIns)
 
-    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", true, "4")
-    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", true, "1")
-    val propUpd3 = Properties("huoltotie_postinumero", "text", false, "text prop3 Update")
-    val propUpd4 = Properties("huoltotie_puh1" , "text", false, "")
-    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", true, "text")
-    val propUpd6 = Properties("huoltotie_puh2" , "text", false, "text prop puh2")
+    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", "4")
+    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", "1")
+    val propUpd3 = Properties("huoltotie_postinumero", "text",  "text prop3 Update")
+    val propUpd4 = Properties("huoltotie_puh1" , "text", "")
+    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+    val propUpd6 = Properties("huoltotie_puh2" , "text", "text prop puh2")
 
     val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
     val maintanenceUpd = Maintenance(propUpd)
@@ -158,9 +158,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   }
 
   test("Should delete maintenance asset"){
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", required = true, "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", required = true, "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", required = true, "text")
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
 
     val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
 
