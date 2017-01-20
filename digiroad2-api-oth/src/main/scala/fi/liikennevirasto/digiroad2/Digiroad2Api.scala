@@ -385,6 +385,9 @@ Returns empty result as Json message, not as page not found
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
+    val linkId = roadLink.linkId
+    val roadAddress = roadLinkService.getRoadAddressByLinkId(linkId)
+    //println(linkId + " " + roadAddress)
     Map(
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
