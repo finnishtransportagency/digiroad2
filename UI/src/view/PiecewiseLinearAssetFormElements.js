@@ -101,13 +101,34 @@
       });
     }
 
+    function obtainFormControl(className, valueString, currentValue){
+        var propertiesName = ['Käyttöoikeus','Huoltovastuu','Tiehoitokunta','Nimi','Osoite','Postinumero','Postitoimipaikka','Puhelin 1','Puhelin 2','Lisätietoa'];
+        var zipped = _.zip(propertiesName, currentValue);
+        return _.map(zipped, function(current){
+            var value = current[1] ? current[1].value : "";
+            return '  <p class="form-control-static ' + className + '" style="display:none;">' + current[0] + ': ' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
+        }).join('');
+    }
+
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
-      return '' +
-        '<div class="form-group editable">' +
-        '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
-        '</div>';
+      if(Array.isArray(currentValue)){
+          return '' +
+              '<div class="form-group editable">' +
+              '  <label class="control-label">' + editControlLabels.title + '</label>' +
+              '  <div class=' + className +'>' +
+              obtainFormControl(className, valueString, currentValue)  +
+              '  </div>' +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
+              '</div>';
+
+      }else {
+          return '' +
+              '<div class="form-group editable">' +
+              '  <label class="control-label">' + editControlLabels.title + '</label>' +
+              '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
+              '</div>';
+      }
     }
   }
 
