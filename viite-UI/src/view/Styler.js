@@ -1,9 +1,15 @@
-/**
- * Created by pedrosag on 19-01-2017.
- */
 (function(root) {
   root.Styler = function() {
 
+    var borderWidth = 5;
+
+    /**
+     * Inspired on the LinkPropertyLayerStyles roadClassRules, unknownRoadAddressAnomalyRules and constructionTypeRules.
+     * @param roadClass The roadLink roadClass.
+     * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
+     * @param constructionType The roadLink constructionType.
+     * @returns {string} The default solid color of a line in the RGBA format.
+     */
     var generateStrokeColor = function (roadClass, anomaly, constructionType) {
       if (anomaly !== 1) {
         if(constructionType === 1) {
@@ -34,6 +40,12 @@
       }
     };
 
+    /**
+     * Inspired in the LinkPropertyLayerStyles complementaryRoadAddressRules and unknownRoadAddressAnomalyRules,
+     * @param roadLinkType The roadLink roadLinkType.
+     * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
+     * @returns {number} The zIndex for the feature.
+     */
     var determineZIndex = function (roadLinkType, anomaly){
       var zIndex = 0;
       if (anomaly === 0) {
@@ -45,10 +57,13 @@
       } else {
         zIndex = 3;
       }
-
       return zIndex;
     };
-
+    /**
+     * Will indicate what stroke dimension will be used based on the zoom level provided.
+     * @param zoomLevel The actual zoom level.
+     * @returns {number} The stroke width of a line.
+     */
     var strokeWidthByZoomLevel = function (zoomLevel){
       switch (zoomLevel) {
         case 6 : return 1  ;
@@ -64,16 +79,52 @@
       }
     };
 
+    /**
+     * Method that changes color properties via a multiplicative factor.
+     * @param lineColor The RGBA string of the color.
+     * @param mult The multiplicative parameter. To darken use values between 0 and 1 to brighten use values > 1
+     * @param changeOpacity If we want to change the opacity.
+     * @param changeColor If we want to change the color.
+     * @returns {string} The changed color.
+     */
+    var modifyColorProperties = function(lineColor, mult, changeColor, changeOpacity){
+      var rgba = lineColor.slice(5, lineColor.length-1).split(", ");
+      var red = parseInt(rgba[0]) * (changeColor ? mult : 1);
+      var green = parseInt(rgba[1]) * (changeColor ? mult : 1);
+      var blue = parseInt(rgba[2]) * (changeColor ? mult : 1);
+      var opacity = parseInt(rgba[3]) * (changeOpacity ? mult : 1);
+      return 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + opacity + ')';
+    };
+
+    /**
+     * Method evoked by feature that will determine what kind of style said feature will have.
+     * @param roadLinkData The roadLink details of a feature
+     * @param currentZoom The value of the current application zoom.
+     * @returns {*[ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the border the second is for the line itself.
+     */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var stroke = new ol.style.Stroke({
-        width: strokeWidthByZoomLevel(currentZoom),
-        color: generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType)
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom);
+      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType);
+      var borderColor = modifyColorProperties(lineColor, 0.5, false, true);
+
+       var lineBorder = new ol.style.Stroke({
+        width: strokeWidth + borderWidth,
+        color: borderColor
       });
-      var style = new ol.style.Style({
-        stroke: stroke
+      var line = new ol.style.Stroke({
+        width: strokeWidth,
+        color: lineColor
       });
-      style.setZIndex(determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly));
-      return style;
+      var borderStyle = new ol.style.Style({
+        stroke: lineBorder
+      });
+      var lineStyle = new ol.style.Style({
+        stroke: line
+      });
+      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
+      borderStyle.setZIndex(zIndex);
+      lineStyle.setZIndex(zIndex);
+      return [borderStyle, lineStyle];
     };
 
     return {
