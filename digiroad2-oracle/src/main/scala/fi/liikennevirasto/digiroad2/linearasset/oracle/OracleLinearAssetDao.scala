@@ -1057,10 +1057,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     prop.propertyType match {
 
         case "text" => {
-          if (prop.value.isEmpty) {
-            Queries.deleteTextProperty(assetId, propertyId).execute
-          } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+          if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
             Queries.insertTextProperty(assetId, propertyId, prop.value).first
+          } else if (prop.value.isEmpty){
+            Queries.deleteTextProperty(assetId, propertyId).execute
           } else {
             Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
           }
