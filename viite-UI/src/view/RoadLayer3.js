@@ -20,7 +20,6 @@
             var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
             });
             feature.roadLinkData = roadLink;
-            feature.setStyle(styler.generateStyleByFeature(feature.roadLinkData, zoom));
             return feature;
           });
           loadFeatures(features);
@@ -30,25 +29,8 @@
       strategy: ol.loadingstrategy.bbox
     });
 
-    //TODO: Since the creation of the Styler, do we need this?
     function vectorLayerStyle(feature) {
-      if (stylesUndefined()) {
-        var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
-        var roadWidth = widthBase * widthBase;
-        if (applicationModel.isRoadTypeShown()) {
-          return [new ol.style.Style({
-            stroke: new ol.style.Stroke({
-              width: roadWidth
-            })
-          })];
-        } else {
-          return [new ol.style.Style({
-            stroke: new ol.style.Stroke({
-              width: 5
-            })
-          })];
-        }
-      }
+      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom-2);
     }
 
     var loadFeatures = function (features) {
@@ -59,20 +41,20 @@
       return _.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
         _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()]);
     }
-
-    var changeRoadsWidthByZoomLevel = function() {
-      if (stylesUndefined()) {
-        var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
-        var roadWidth = widthBase * widthBase;
-        if (applicationModel.isRoadTypeShown()) {
-          vectorLayer.setStyle({stroke: roadWidth});
-        } else {
-          vectorLayer.setStyle({stroke: roadWidth});
-          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
-        }
-      }
-    };
+    //
+    // var changeRoadsWidthByZoomLevel = function() {
+    //   if (stylesUndefined()) {
+    //     var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
+    //     var roadWidth = widthBase * widthBase;
+    //     if (applicationModel.isRoadTypeShown()) {
+    //       vectorLayer.setStyle({stroke: roadWidth});
+    //     } else {
+    //       vectorLayer.setStyle({stroke: roadWidth});
+    //       vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+    //       vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+    //     }
+    //   }
+    // };
 
     var minimumContentZoomLevel = function() {
       if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {

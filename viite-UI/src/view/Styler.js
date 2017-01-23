@@ -2,6 +2,7 @@
   root.Styler = function() {
 
     var borderWidth = 5;
+    var dashedLinesRoadClasses = [7, 8, 9, 10];
 
     /**
      * Inspired on the LinkPropertyLayerStyles roadClassRules, unknownRoadAddressAnomalyRules and constructionTypeRules.
@@ -35,7 +36,7 @@
         if(constructionType === 1) {
           return 'rgba(255, 153, 0, 1)';
         } else {
-          return 'rgba(0, 0, 0, 1)';
+          return 'rgba(56, 56, 54, 1)';
         }
       }
     };
@@ -93,7 +94,7 @@
       var green = parseInt(rgba[1]) * (changeColor ? mult : 1);
       var blue = parseInt(rgba[2]) * (changeColor ? mult : 1);
       var opacity = parseInt(rgba[3]) * (changeOpacity ? mult : 1);
-      return 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + opacity + ')';
+      return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity + ')';
     };
 
     /**
@@ -105,16 +106,26 @@
     var generateStyleByFeature = function(roadLinkData, currentZoom){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom);
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType);
-      var borderColor = modifyColorProperties(lineColor, 0.5, false, true);
+      var borderColor = modifyColorProperties(lineColor, 0.75, true, true);
+      var lineCap  = 'square';
 
-       var lineBorder = new ol.style.Stroke({
+      var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
-        color: borderColor
+        color: borderColor,
+        lineCap: lineCap
       });
       var line = new ol.style.Stroke({
         width: strokeWidth,
-        color: lineColor
+        color: lineColor,
+        lineCap: lineCap
       });
+
+      if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
+        lineBorder.setLineDash([20, 60]);
+        line.setLineDash([20, 60]);
+      }
+
+      //Declaration of the Line Styles
       var borderStyle = new ol.style.Style({
         stroke: lineBorder
       });
@@ -123,8 +134,8 @@
       });
       var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
       borderStyle.setZIndex(zIndex);
-      lineStyle.setZIndex(zIndex);
-      return [borderStyle, lineStyle];
+      lineStyle.setZIndex(zIndex+1);
+      return [lineStyle, borderStyle];
     };
 
     return {
