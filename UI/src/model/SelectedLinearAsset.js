@@ -221,35 +221,17 @@
     };
 
     this.setValue = function(value) {
-      var newGroup;
-      if(Array.isArray(value)){
-        var requiredFields = _.filter(value, function (val) {
-            return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
-        });
-        var areNotFilled = _.some(requiredFields, function(fields){ return fields.value === ''; });
-        if(!areNotFilled){
-            newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-            selection = collection.replaceSegments(selection, newGroup);
-            dirty = true;
-            eventbus.trigger(singleElementEvent('valueChanged'), self);
-        }else{
-            dirty = false;
-            eventbus.trigger(singleElementEvent('valueChanged'), self);
-        }
-      }
-      else{
-        if (value != selection[0].value) {
-          newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-          selection = collection.replaceSegments(selection, newGroup);
-          dirty = true;
-          eventbus.trigger(singleElementEvent('valueChanged'), self);
-        }
+      if (value != selection[0].value || Array.isArray(value)) {
+        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
+        selection = collection.replaceSegments(selection, newGroup);
+        dirty = true;
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     function isValueDifferent(selection){
       var nonEmptyValues = _.map(selection, function (select) {
-        return  _.filter(select.value, function(val){ return !_.isEmpty(val.value) });
+        return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
       });
       var zipped = _.zip(nonEmptyValues[0], nonEmptyValues[1]);
       var mapped = _.map(zipped, function (zipper) {
@@ -271,11 +253,18 @@
       var containsEmpty = _.map(requiredFields, function (req) {
         return (_.some(req, function (fields) {
           return fields.value === '';
-        }))
+        }));
       });
       return !(_.some(containsEmpty, function (value) {
         return value;
       })) && isValueDifferent(selection);
+    }
+
+    function requiredFieldsFilled(value) {
+      var requiredFields = _.filter(value, function (val) {
+        return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
+      });
+      return !(_.some(requiredFields, function(fields){ return fields.value === ''; }));
     }
 
     this.setAValue = function (value) {
@@ -329,7 +318,7 @@
             if(this.isSplitOrSeparated() && areMandatoryFieldsFilled(selection)){
                 return validator(selection[0].value);
             }
-            else if (!this.isSplitOrSeparated()) {
+            else if (!this.isSplitOrSeparated() && requiredFieldsFilled(selection[0].value)) {
                 return validator(selection[0].value);
             }
         }
