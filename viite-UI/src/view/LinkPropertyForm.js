@@ -411,6 +411,7 @@
       });
       
       eventbus.on('adjacents:added', function(sources, targets) {
+        applicationModel.removeSpinner();
         processAdjacents(sources,targets);
       });
 
@@ -464,6 +465,7 @@
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
         //TODO calculate SIIRRA button operations
+        //applicationModel.addSpinner();
         var siirra = selectedLinkProperty.transferingCalculation();
         // selectedLinkProperty.cancel();
         //TODO apply

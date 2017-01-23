@@ -78,6 +78,9 @@
         });
 
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+        if(!applicationModel.isReadOnly()){
+          applicationModel.addSpinner();
+        }
       }
     };
 
@@ -220,8 +223,10 @@
     };
 
     eventbus.on("roadLink:editModeAdjacents", function(){
-      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons())
+      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
         eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
+        applicationModel.addSpinner();
+      }
     });
 
     return {

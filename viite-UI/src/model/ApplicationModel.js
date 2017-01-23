@@ -39,6 +39,15 @@
       }
     }
 
+
+    var addSpinner = function () {
+      jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function(){
+      jQuery('.spinner-overlay').remove();
+    };
+
     return {
       moveMap: function(zoom, bbox) {
         var hasZoomLevelChanged = zoom.level !== zoom;
@@ -70,6 +79,8 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      addSpinner: addSpinner,
+      removeSpinner: removeSpinner,
       isReadOnly: function() {
         return readOnly;
       },
