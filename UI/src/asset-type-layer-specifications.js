@@ -329,9 +329,9 @@
       className: 'maintenance',
       isSeparable: false,
       editControlLabels: {
-        title: 'Rajoitus',
-        enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta'
+        title: '',
+        enabled: 'Huoltotie',
+        disabled: 'Ei huoltotietä'
       },
       possibleValues: [
         {typeId: 0, title: 'Ei tietoa'},
