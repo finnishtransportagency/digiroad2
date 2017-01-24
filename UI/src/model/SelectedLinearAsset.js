@@ -314,7 +314,7 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if(Array.isArray(selection[0].value) && Array.isArray(selection[1].value)){
+        if(Array.isArray(selection[0].value)){
             if(this.isSplitOrSeparated() && areMandatoryFieldsFilled(selection)){
                 return validator(selection[0].value);
             }
