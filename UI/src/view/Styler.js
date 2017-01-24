@@ -1,5 +1,3 @@
-//TODO: adjust to OTH needs - this is from Viite
-
 (function(root) {
   root.Styler = function() {
 

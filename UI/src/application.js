@@ -99,7 +99,7 @@
   var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
+      var map = setupMap(backend, models, withTileMaps, startupParameters);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
@@ -171,49 +171,44 @@
     eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
-  var createOpenLayersMap = function(startupParameters) {
-    var map = new OpenLayers.Map({
-      controls: [],
-      units: 'm',
-      maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
-      resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625],
-      projection: 'EPSG:3067',
-      isBaseLayer: true,
-      center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
-      fallThrough: true,
-      theme: null,
-      zoomMethod: null
+  var createOpenLayersMap = function(startupParameters, layers) {
+    var map = new ol.Map({
+      target: 'mapdiv',
+      layers: layers,
+      view: new ol.View({
+        center: [startupParameters.lon, startupParameters.lat],
+        projection: 'EPSG:3067',
+        zoom: startupParameters.zoom,
+        resolutions: [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
+      })
     });
-    var base = new OpenLayers.Layer("BaseLayer", {
-      layerId: 0,
-      isBaseLayer: true,
-      displayInLayerSwitcher: false
-    });
-    map.addLayer(base);
-    map.render('mapdiv');
-    map.zoomTo(startupParameters.zoom);
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
-    var map = createOpenLayersMap(startupParameters);
+  var setupMap = function(backend, models, withTileMaps, startupParameters) {
+    var tileMaps = new TileMapCollection(map, "");
 
-    var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
-      wheelDown: function(evt, delta) {
-        if (applicationModel.canZoomOut()) {
-          return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
-        } else {
-          new Confirm();
-        }
-      }
-    });
+    var map = createOpenLayersMap(startupParameters, tileMaps.layers);
+
+    // TODO
+    // var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
+    //   wheelDown: function(evt, delta) {
+    //     if (applicationModel.canZoomOut()) {
+    //       return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
+    //     } else {
+    //       new Confirm();
+    //     }
+    //   }
+    // });
 
     map.addControl(new NavigationControl());
 
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    var roadLayer = new RoadLayer(map, models.roadCollection);
+    // var roadLayer = new RoadLayer(map, models.roadCollection);
+    var styler = new Styler();
+    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
 
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
