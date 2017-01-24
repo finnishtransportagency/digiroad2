@@ -357,7 +357,7 @@ Returns empty result as Json message, not as page not found
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = roadLinkService.withRoadAddress(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -386,10 +386,8 @@ Returns empty result as Json message, not as page not found
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val linkId = roadLink.linkId
-    val roadAddress = roadLinkService.getRoadAddressByLinkId(linkId)
-    val track = roadAddress match {
-      case Some(x) => Track.apply(x.track.toInt).value
+    val track = roadLink.attributes.get("VIITE_TRACK") match {
+      case Some(x) => x.asInstanceOf[Int]
       case _ => Track.Unknown.value
     }
     Map(

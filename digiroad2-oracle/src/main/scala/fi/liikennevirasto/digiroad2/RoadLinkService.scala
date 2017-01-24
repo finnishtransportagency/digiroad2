@@ -1145,8 +1145,27 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
   }
 
+  def withRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    val addressData = getRoadAddressesByLinkIds(roadLinks.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap
+    roadLinks.map(rl =>
+      if (addressData.contains(rl.linkId))
+        rl.copy(attributes = rl.attributes ++ addressData(rl.linkId).asAttributes)
+      else
+        rl
+    )
+  }
+
   case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Long, sideCode: Long,
-                                 startAddrMValue: Long, endAddrMValue: Long)
+                                 startAddrMValue: Long, endAddrMValue: Long) {
+    def asAttributes: Map[String, Any] = Map("VIITE_ROAD_NUMBER" -> roadNumber,
+      "VIITE_ROAD_NUMBER" -> roadPartNumber,
+      "VIITE_TRACK" -> track,
+      "VIITE_SIDECODE" -> sideCode,
+      "VIITE_START_ADDR" -> startAddrMValue,
+      "VIITE_END_ADDR" -> endAddrMValue)
+  }
+
+  def getRoadAddressesByLinkIds(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = ???
   /**
     * This method fetches road address by link id from Viite ROAD_ADDRESS table using LRM_POSITION
     *
