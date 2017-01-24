@@ -457,7 +457,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Iterates a set of asset ids with MaintenanceRoad asset type id and floating flag and returns linear assets. User by  ??????????.
+    * Iterates a set of asset ids with MaintenanceRoad asset type id and floating flag and returns linear assets. User by LinearAssetService.getPersistedAssetsByIds
     */
   def fetchMaintenancesByIds(maintenanceRoadAssetTypeId: Int, ids: Set[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
