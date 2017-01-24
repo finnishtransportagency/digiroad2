@@ -13,12 +13,13 @@
      * @param constructionType The roadLink constructionType.
      * @returns {string} The default solid color of a line in the RGBA format.
      */
-    var generateStrokeColor = function (roadClass, anomaly, constructionType) {
+    var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType) {
       if (anomaly !== 1) {
         if(constructionType === 1) {
           return 'rgba(164, 164, 162, 0.40)';
-        }
-        else {
+        } else if (roadLinkType === -1) {
+          return 'rgba(247, 254, 46, 0.9)';
+        } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.40)';
             case 2 : return 'rgba(255, 102, 0, 0.40)';
@@ -91,7 +92,7 @@
      * @returns {string} The changed color.
      */
     var modifyColorProperties = function(lineColor, mult, changeColor, changeOpacity){
-      var rgba = lineColor.slice(5, lineColor.length-1).split(", ");
+      var rgba = lineColor.slice(5, lineColor.length - 1).split(", ");
       var red = parseInt(rgba[0]) * (changeColor ? mult : 1);
       var green = parseInt(rgba[1]) * (changeColor ? mult : 1);
       var blue = parseInt(rgba[2]) * (changeColor ? mult : 1);

@@ -82,7 +82,9 @@
   };
 
   geometrycalculator.isInBounds = function(bounds, x, y) {
-    return (x > bounds.left && x < bounds.right && y > bounds.bottom && y < bounds.top);
+    //Bounds is now obtained using via map.getView().calculateExtent(map.getSize())
+    //returning an array with the following; [minx, miny, maxx, maxy]
+    return ((x >= bounds[0] || x <= bounds[2]) && (y >= bounds[1] || y <= bounds[3]));
   };
 
   geometrycalculator.getCentroid = function(points) {
