@@ -39,14 +39,14 @@
       }
     }
 
-
-    var addSpinner = function () {
-      jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-    };
-
-    var removeSpinner = function(){
-      jQuery('.spinner-overlay').remove();
-    };
+    //TODO uncomment for 180 loading
+    // var addSpinner = function () {
+    //   jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    // };
+    //
+    // var removeSpinner = function(){
+    //   jQuery('.spinner-overlay').remove();
+    // };
 
     return {
       moveMap: function(zoom, bbox) {
@@ -79,8 +79,9 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
-      addSpinner: addSpinner,
-      removeSpinner: removeSpinner,
+      //TODO uncomment for 180 loading
+      // addSpinner: addSpinner,
+      // removeSpinner: removeSpinner,
       isReadOnly: function() {
         return readOnly;
       },

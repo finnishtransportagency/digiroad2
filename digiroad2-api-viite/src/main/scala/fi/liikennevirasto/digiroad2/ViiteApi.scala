@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -8,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.CalibrationPoint
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
@@ -115,11 +116,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
   }
 
-  post("/roadlinks/transferRoadLink") {
-   // val roadData = JSON.parseFull(params.get("data").get).get
-    //TODO roadData each, map and decoding the map
+  get("/roadlinks/transferRoadLink") {
+    val (sources, targets) = roadlinksData()
+    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets)
+    result.map(roadAddressLinkToApi)
+  }
 
-    Set.empty
+  private def roadlinksData(): (Seq[String], Seq[String]) = {
+    val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
+    val sources = data.get("sourceLinkIds").get.asInstanceOf[Seq[String]]
+    val targets = data.get("targetLinkIds").get.asInstanceOf[Seq[String]]
+    (sources, targets)
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {

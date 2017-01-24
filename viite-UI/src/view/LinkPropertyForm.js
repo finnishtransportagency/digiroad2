@@ -199,7 +199,8 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
+      // '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
+      '<button class="calculate btn btn-move" enabled>Siirrä</button>' +
       '<button class="save btn btn-primary" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -411,7 +412,8 @@
       });
       
       eventbus.on('adjacents:added', function(sources, targets) {
-        applicationModel.removeSpinner();
+        //TODO uncomment for 180 spinner loading
+        // applicationModel.removeSpinner();
         processAdjacents(sources,targets);
       });
 

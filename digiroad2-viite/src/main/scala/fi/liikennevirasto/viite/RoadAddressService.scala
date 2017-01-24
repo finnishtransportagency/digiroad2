@@ -274,6 +274,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getUniqueRoadAddressLink(id: Long) = {
+
+    val (addresses,missedRL) = withDynTransaction {
+      (RoadAddressDAO.fetchByLinkId(Set(id), true),
+        RoadAddressDAO.getMissingRoadAddresses(Set(id)))
+    }
+    val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
+    val uniqVVHHistoryLinks = vvhHistoryLinks.size match {
+      case 0 => Nil
+      case _ => Seq(vvhHistoryLinks.head)
+    }
+
+    (addresses.size, roadLinks.size) match {
+      case (0,0) => List()
+      case (_,0) => addresses.flatMap(a => uniqVVHHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (0,_) => missedRL.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (_,_) => addresses.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+    }
+  }
+
   def roadClass(roadAddressLink: RoadAddressLink) = {
     val C1 = new Contains(1 to 39)
     val C2 = new Contains(40 to 99)
@@ -456,6 +476,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }).getOrElse(Seq())
   }
 
+  def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String]): Seq[RoadAddressLink] = {
+
+    try {
+      val sourceLinks = sources.flatMap(rd => {
+          getUniqueRoadAddressLink(rd.toLong)
+        })
+      val targetLinks = targets.flatMap(rd => {
+          getUniqueRoadAddressLink(rd.toLong)
+        })
+      RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks)
+    } catch {
+      case e: Exception => {
+        println(e.getCause)
+        println(e.getMessage)
+        Nil
+      }
+    }
+  }
+
   def transferFloatingToGap(expiringLinkIds: Set[Long], roadAddress: RoadAddress) = {
     withDynTransaction {
       RoadAddressDAO.expireRoadAddresses(expiringLinkIds)
@@ -566,6 +605,27 @@ object RoadAddressLinkBuilder {
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2)
+  }
+
+  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    val srcsLength = sources.map(_.length).sum
+    val trgsLength = targets.map(_.length).sum
+
+    val allLinks = sources++targets
+    val allGeom = allLinks.flatMap(_.geometry)
+
+    val minStartAddressM = sources.map(_.startAddressM).min
+    val maxEndAddressM = sources.map(_.endAddressM).max
+
+    val minStartMValue = allLinks.map(_.startMValue).min
+    val maxEndMValue = allLinks.map(_.endMValue).max/*will be filled or cutted automatically since will get max endMValue*/
+    val source = sources.head
+
+    val tempId = -1000
+    val geom = GeometryUtils.truncateGeometry2D(allGeom, minStartMValue, maxEndMValue)
+    Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
+      source.roadType, source.modifiedAt,source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity ,
+      minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, source.startCalibrationPoint, source.endCalibrationPoint))
   }
 
   private def toIntNumber(value: Any) = {

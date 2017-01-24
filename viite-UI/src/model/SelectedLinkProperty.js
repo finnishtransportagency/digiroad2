@@ -78,9 +78,10 @@
         });
 
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
-        if(!applicationModel.isReadOnly()){
-          applicationModel.addSpinner();
-        }
+        //TODO uncomment for 180 spinner loading
+        // if(!applicationModel.isReadOnly()){
+        //   applicationModel.addSpinner();
+        // }
       }
     };
 
@@ -172,19 +173,20 @@
 
     var transferingCalculation = function(){
       var selected = _.first(current).getData();
-      var targetData = [];
-      var sourceData = [];
+      var targetDataIds = [];
+      var sourceDataIds = [];
       _.each(targets, function (target) {
-        targetData.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData());
+        targetDataIds.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData().linkId.toString());
       });
       _.each(current, function (source){
-        sourceData.push(source.getData());
+        sourceDataIds.push(source.getData().linkId.toString());
       });
+      //TODO remove 2 lines above. it was created due to testing purposes
+      sourceDataIds = ["3114934","3107028"];
+      targetDataIds = ["3114946","499976891"];
+      var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
-      var data = {'sources':sourceData, 'targets':targetData};
-
-      var teste;
-      backend.transferRoadLink(data, function(result) {
+      backend.getTansferResult(data, function(result) {
         teste = result;
       });
     };
@@ -222,11 +224,12 @@
       return current.length;
     };
 
+    //TODO uncomment for 180 spinner loading
     eventbus.on("roadLink:editModeAdjacents", function(){
-      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
+      // if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
         eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-        applicationModel.addSpinner();
-      }
+        // applicationModel.addSpinner();
+      // }
     });
 
     return {

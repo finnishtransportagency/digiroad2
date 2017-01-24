@@ -33,12 +33,12 @@
       });
     }, 1000);
 
-    this.transferRoadLink = _.throttle(function(roadData, callback) {
-      return $.post('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(roadData), function(data) {
+    this.getTansferResult = _.throttle(function(dataTransfer, callback) {
+      return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(dataTransfer), function(data) {
         return _.isFunction(callback) && callback(data);
-      }, 'json');
+      });
     }, 1000);
-    
+
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

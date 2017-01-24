@@ -25,7 +25,9 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
+      //TODO uncomment for 180 spinner loading
+      // if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
+      if(typeof feature.attributes.linkId !== 'undefined') {
         selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
         unhighlightFeatures();
         currentRenderIntent = 'select';
@@ -372,7 +374,8 @@
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
-        applicationModel.addSpinner();
+        //TODO uncomment for 180 spinner loading
+        // applicationModel.addSpinner();
         redrawNextSelectedTarget(targets, adjacents);
         drawIndicators(adjacents);
         selectedLinkProperty.addTargets(targets, adjacents);
