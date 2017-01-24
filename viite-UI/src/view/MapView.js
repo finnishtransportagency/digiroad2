@@ -1,7 +1,8 @@
+//noinspection ThisExpressionReferencesGlobalObjectJS
 (function(root) {
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
-    var centerMarkerLayer;
+    var centerMarkerLayer = new ol.source.Vector({});
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -23,22 +24,35 @@
     };
 
     var drawCenterMarker = function(position) {
-      var icon = new ol.Feature({
-        geometry: new ol.geom.Point(position.lon, position.lat)
-      });
-      var style = new ol.style.Style({
+        //Create a new Feature with the exact point in the center of the map
+        var icon = new ol.Feature({
+        //geometry: new ol.geom.Point(map.getView().getCenter())
+          geometry: new ol.geom.Point(position)
+        });
+
+        //create the style of the icon of the 'Merkistse' Button
+        var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
-          src: './images/center-marker.svg'
+          //src: '../images/center-marker.svg'
+          src: '../images/center-marker.png',
+          scale: 0.025
         })
-      });
-      icon.setStyle(style);
+        });
+
+      //add Icon Style
+      icon.setStyle(styleIcon);
+      //clear the previous icon
       centerMarkerLayer.clear();
+      //add icon to vector source
       centerMarkerLayer.addFeature(icon);
-    };
+      };
+
+    var vectorLayer = new ol.layer.Vector({
+      source: centerMarkerLayer
+    });
 
     var addCenterMarkerLayerToMap = function(map) {
-      centerMarkerLayer = new ol.layer.Vector();
-      map.addLayer(centerMarkerLayer);
+      map.addLayer(vectorLayer);
     };
 
     eventbus.on('application:initialized', function() {
@@ -92,7 +106,7 @@
     }, true);
 
     map.on('singleclick', function(event) {
-      eventbus.trigger('map:clicked', { x: event.coordinate.x, y: event.coordinate.y });
+      eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
 
     addCenterMarkerLayerToMap(map);
