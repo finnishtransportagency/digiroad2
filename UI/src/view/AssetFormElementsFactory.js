@@ -10,7 +10,7 @@
       winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements,
       europeanRoads: PiecewiseLinearAssetFormElements.EuropeanRoadsFormElements,
       exitNumbers: PiecewiseLinearAssetFormElements.ExitNumbersFormElements,
-      maintenance: PiecewiseLinearAssetFormElements.CreateMaintenanceFormElements
+      maintenanceRoad: PiecewiseLinearAssetFormElements.CreateMaintenanceRoadFormElements
     };
     return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }

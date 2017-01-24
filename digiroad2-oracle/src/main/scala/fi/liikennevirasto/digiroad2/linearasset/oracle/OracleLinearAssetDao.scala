@@ -402,9 +402,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Iterates a set of link ids with Maintenance asset type id and floating flag and returns linear assets. Used by ??????????.
+    * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     */
-  def fetchMaintenancesByLinkIds(maintenanceAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
@@ -420,7 +420,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join text_property_value t on t.asset_id = a.id
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = t.property_id
-          where a.asset_type_id = #$maintenanceAssetTypeId
+          where a.asset_type_id = #$maintenanceRoadAssetTypeId
             #$floatingFilter
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
@@ -435,31 +435,31 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join enumerated_value e on e.id = s.enumerated_value_id
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = e.property_id
-          where a.asset_type_id = #$maintenanceAssetTypeId
+          where a.asset_type_id = #$maintenanceRoadAssetTypeId
             #$floatingFilter"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
-    val groupedByMaintenanceId = groupedByAssetId.mapValues(_.groupBy(_._2))
+    val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
 
-    groupedByMaintenanceId.map { case (assetId, rowsByMaintenanceId) =>
+    groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
       val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
-      val maintenanceValues = rowsByMaintenanceId.keys.toSeq.sorted.map { maintenanceId =>
-        val rows = rowsByMaintenanceId(maintenanceId)
+      val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
+        val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
         val propertyValue = rows.head._4
         val propertyType = rows.head._5
         val propertyPublicId = rows.head._6
         Properties(propertyPublicId, propertyType, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
   }
 
   /**
-    * Iterates a set of asset ids with Maintenance asset type id and floating flag and returns linear assets. User by  ??????????.
+    * Iterates a set of asset ids with MaintenanceRoad asset type id and floating flag and returns linear assets. User by  ??????????.
     */
-  def fetchMaintenancesByIds(maintenanceAssetTypeId: Int, ids: Set[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchMaintenancesByIds(maintenanceRoadAssetTypeId: Int, ids: Set[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
@@ -475,7 +475,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join text_property_value t on t.asset_id = a.id
                 join #$idTableName i on i.id = a.id
                 join property p on p.id = t.property_id
-          where a.asset_type_id = #$maintenanceAssetTypeId
+          where a.asset_type_id = #$maintenanceRoadAssetTypeId
             #$floatingFilter
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
@@ -490,24 +490,24 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join enumerated_value e on e.id = s.enumerated_value_id
                 join #$idTableName i on i.id = a.id
                 join property p on p.id = e.property_id
-          where a.asset_type_id = #$maintenanceAssetTypeId
+          where a.asset_type_id = #$maintenanceRoadAssetTypeId
             #$floatingFilter"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
-    val groupedByMaintenanceId = groupedByAssetId.mapValues(_.groupBy(_._2))
+    val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
 
-    groupedByMaintenanceId.map { case (assetId, rowsByMaintenanceId) =>
+    groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
       val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
-      val maintenanceValues = rowsByMaintenanceId.keys.toSeq.sorted.map { maintenanceId =>
-        val rows = rowsByMaintenanceId(maintenanceId)
+      val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
+        val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
         val propertyValue = rows.head._4
         val propertyType = rows.head._5
         val propertyPublicId = rows.head._6
         Properties(propertyPublicId, propertyType, propertyValue)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Maintenance(maintenanceValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceAssetTypeId, vvhTimeStamp, geomModifiedDate)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate)
     }.toSeq
   }
 
@@ -1046,12 +1046,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Updates Maintenance property. Used by LinearAssetService.updateWithoutTransaction.
+    * Updates MaintenanceRoad property. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateMaintenanceValue(assetId: Long, value: Maintenance, username: String): Option[Long] = {
+  def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
     val assetsUpdated = Queries.updateAssetModified(assetId, username).first
 
-    value.maintenance.foreach { prop =>
+    value.maintenanceRoad.foreach { prop =>
 
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
     prop.propertyType match {
@@ -1102,8 +1102,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     Some(id)
   }
 
-    def insertMaintenanceValue(assetId: Long, value: Maintenance): Unit = {
-      value.maintenance.filter(finalProps => finalProps.value != "").foreach(prop => {
+    def insertMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad): Unit = {
+      value.maintenanceRoad.filter(finalProps => finalProps.value != "").foreach(prop => {
         prop.propertyType match {
           case "text" =>
             insertValue(assetId, prop.publicId, prop.value)

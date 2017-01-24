@@ -26,7 +26,7 @@
     europeanRoads: 260,
     exitNumbers: 270,
     trafficLights: 280,
-    maintenance: 290
+    maintenanceRoad: 290
   };
 
   root.linearAssetSpecs = [
@@ -320,13 +320,13 @@
       }
     },
     {
-      typeId: assetType.maintenance,
-      singleElementEventCategory: 'maintenance',
+      typeId: assetType.maintenanceRoad,
+      singleElementEventCategory: 'maintenanceRoad',
       multiElementEventCategory: 'maintenances',
-      layerName: 'maintenance',
+      layerName: 'maintenanceRoad',
       title: 'Rautateiden huoltotie',
       newTitle: 'Uusi rautateiden huoltotie',
-      className: 'maintenance',
+      className: 'maintenanceRoad',
       isSeparable: false,
       editControlLabels: {
         title: '',

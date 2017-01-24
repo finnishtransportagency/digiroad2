@@ -293,10 +293,6 @@
       $.get('api/assetTypeProperties/10', callback);
     };
 
-    // this.getMaintenanceProperties = function(callback) {
-    //   $.get('api/assetLinearTypeProperties/290', callback);
-    // };
-
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

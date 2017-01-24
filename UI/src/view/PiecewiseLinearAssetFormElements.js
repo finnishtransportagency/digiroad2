@@ -3,7 +3,7 @@
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
     EuropeanRoadsFormElements: TextualValueFormElements,
     ExitNumbersFormElements: TextualValueFormElements,
-    CreateMaintenanceFormElements: CreateMaintenanceFormElements,
+    CreateMaintenanceRoadFormElements: CreateMaintenanceRoadFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
@@ -22,8 +22,8 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function CreateMaintenanceFormElements(unit, editControlLabels, className, defaultValue, possibleValues, accessRightsValues) {
-   var formElem = maintenanceFormElement();
+  function CreateMaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues, accessRightsValues) {
+   var formElem = maintenanceRoadFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem, accessRightsValues);
   }
 
@@ -265,7 +265,7 @@
     }
   }
 
-  function maintenanceFormElement() {
+  function maintenanceRoadFormElement() {
     var template =  _.template(
         '<label><%= label %> </label> ' +
         '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');

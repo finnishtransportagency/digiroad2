@@ -27,7 +27,7 @@ case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: 
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
-case class NewMaintenance(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
+case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
@@ -518,7 +518,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
-    val maintenanceParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
+    val maintenanceRoadParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
@@ -527,17 +527,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(x) => Some(Prohibitions(x))
     }
 
-    val maintenance = maintenanceParameter match {
+    val maintenanceRoad = maintenanceRoadParameter match {
       case Some(Nil) => None
       case None => None
-      case Some(x) => Some(Maintenance(x))
+      case Some(x) => Some(MaintenanceRoad(x))
     }
 
     numericValue
       .map(NumericValue)
       .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
-      .orElse(maintenance)
+      .orElse(maintenanceRoad)
   }
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -546,8 +546,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
-      case LinearAssetTypes.MaintenanceAssetTypeId =>
-        value.extractOpt[Seq[NewMaintenance]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Maintenance(x.value), x.sideCode, 0, None))
+      case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+        value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
      case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
     }

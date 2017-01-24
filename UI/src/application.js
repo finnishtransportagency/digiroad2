@@ -347,7 +347,7 @@
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
         .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat(getLinearAsset(assetType.maintenance))
+      [].concat(getLinearAsset(assetType.maintenanceRoad))
     ];
 
     function getLinearAsset(typeId) {
