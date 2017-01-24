@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.VKMClientException
+import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -387,7 +388,10 @@ Returns empty result as Json message, not as page not found
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     val linkId = roadLink.linkId
     val roadAddress = roadLinkService.getRoadAddressByLinkId(linkId)
-    //println(linkId + " " + roadAddress)
+    val track = roadAddress match {
+      case Some(x) => Track.apply(x.track.toInt).value
+      case _ => Track.Unknown.value
+    }
     Map(
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
@@ -410,7 +414,8 @@ Returns empty result as Json message, not as page not found
       "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
       "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
       "constructionType" -> roadLink.constructionType.value,
-      "linkSource" -> roadLink.linkSource.value)
+      "linkSource" -> roadLink.linkSource.value,
+      "track" -> track)
   }
 
   get("/roadlinks") {

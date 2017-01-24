@@ -1145,12 +1145,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
   }
 
+  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Long, sideCode: Long,
+                                 startAddrMValue: Long, endAddrMValue: Long)
   /**
     * This method fetches road address by link id from Viite ROAD_ADDRESS table using LRM_POSITION
     *
     * @param linkId
     */
-  def getRoadAddressByLinkId(linkId: Long): Option[(Long, Long, Long, Long, Long, Long, Long)] = {
+  def getRoadAddressByLinkId(linkId: Long): Option[RoadLinkRoadAddress] = {
     withDynTransaction {
       val sql =  s"""
             SELECT pos.LINK_ID, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.TRACK_CODE, pos.SIDE_CODE, MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
@@ -1163,7 +1165,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
               LINK_ID = $linkId
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE
             """
-      Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](sql).firstOption
+      val result = Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](sql).firstOption
+      result.map {
+        case (id, roadNumber, roadPartNUmber, track, sideCode, startAddrMValue, endAddrMValue)
+          => RoadLinkRoadAddress(id, roadNumber, roadPartNUmber, track, sideCode, startAddrMValue, endAddrMValue)
+      }
     }
   }
 
