@@ -3,7 +3,7 @@
 (function(root) {
   root.Styler = function() {
 
-    var borderWidth = 5;
+    var borderWidth = 7;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
 
     /**
@@ -16,29 +16,29 @@
     var generateStrokeColor = function (roadClass, anomaly, constructionType) {
       if (anomaly !== 1) {
         if(constructionType === 1) {
-          return 'rgba(164, 164, 162, 1)';
+          return 'rgba(164, 164, 162, 0.40)';
         }
         else {
           switch (roadClass) {
-            case 1 : return 'rgba(255, 0, 0, 1)';
-            case 2 : return 'rgba(255, 102, 0, 1)';
-            case 3 : return 'rgba(255, 153, 51, 1)';
-            case 4 : return 'rgba(0, 17, 187, 1)';
-            case 5 : return 'rgba(51, 204, 204, 1)';
-            case 6 : return 'rgba(224, 29, 217, 1)';
-            case 7 : return 'rgba(0, 204, 221, 1)';
-            case 8 : return 'rgba(136, 136, 136, 1)';
-            case 9 : return 'rgba(255, 85, 221, 1)';
-            case 10 : return 'rgba(255, 85, 221, 1)';
-            case 11 : return 'rgba(68, 68, 68, 1)';
-            case 99 : return 'rgba(164, 164, 162, 1)';
+            case 1 : return 'rgba(255, 0, 0, 0.40)';
+            case 2 : return 'rgba(255, 102, 0, 0.40)';
+            case 3 : return 'rgba(255, 153, 51, 0.40)';
+            case 4 : return 'rgba(0, 17, 187, 0.40)';
+            case 5 : return 'rgba(51, 204, 204, 0.40)';
+            case 6 : return 'rgba(224, 29, 217, 0.40)';
+            case 7 : return 'rgba(0, 204, 221, 0.40)';
+            case 8 : return 'rgba(136, 136, 136, 0.40)';
+            case 9 : return 'rgba(255, 85, 221, 0.40)';
+            case 10 : return 'rgba(255, 85, 221, 0.40)';
+            case 11 : return 'rgba(68, 68, 68, 0.40)';
+            case 99 : return 'rgba(164, 164, 162, 0.40)';
           }
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 1)';
+          return 'rgba(255, 153, 0, 0.40)';
         } else {
-          return 'rgba(56, 56, 54, 1)';
+          return 'rgba(56, 56, 54, 0.40)';
         }
       }
     };
@@ -95,7 +95,7 @@
       var red = parseInt(rgba[0]) * (changeColor ? mult : 1);
       var green = parseInt(rgba[1]) * (changeColor ? mult : 1);
       var blue = parseInt(rgba[2]) * (changeColor ? mult : 1);
-      var opacity = parseInt(rgba[3]) * (changeOpacity ? mult : 1);
+      var opacity = parseFloat(rgba[3]) * (changeOpacity ? mult : 1);
       return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity + ')';
     };
 
@@ -109,7 +109,7 @@
       var strokeWidth = strokeWidthByZoomLevel(currentZoom);
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType);
       var borderColor = modifyColorProperties(lineColor, 0.75, true, true);
-      var lineCap  = 'square';
+      var lineCap  = 'round';
 
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
