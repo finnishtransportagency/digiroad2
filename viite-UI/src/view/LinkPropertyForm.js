@@ -86,7 +86,7 @@
       }
     };
 
-    var getFloatingType = function(floatingValue) {
+    /*var getFloatingType = function(floatingValue) {
       var floatingType =  _.find(floatingText, function (f) {
         return f[0] === floatingValue;
       });
@@ -94,7 +94,7 @@
         floatingType = [0, 'Ei'];
       }
       return floatingType && floatingType[1];
-    };
+    };*/
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -249,7 +249,6 @@
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
-        staticField('KELLUVA', 'floating') +
         endDateField  +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -366,7 +365,7 @@
         linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
         linkProperties.endDate = linkProperties.endDate || '';
         linkProperties.roadType = linkProperties.roadType || '';
-        linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+        //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
         linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
