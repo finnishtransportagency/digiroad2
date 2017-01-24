@@ -34,27 +34,9 @@
     }
 
     var loadFeatures = function (features) {
+      vectorSource.clear();
       vectorSource.addFeatures(features);
     };
-
-    function stylesUndefined() {
-      return _.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
-        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()]);
-    }
-    //
-    // var changeRoadsWidthByZoomLevel = function() {
-    //   if (stylesUndefined()) {
-    //     var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
-    //     var roadWidth = widthBase * widthBase;
-    //     if (applicationModel.isRoadTypeShown()) {
-    //       vectorLayer.setStyle({stroke: roadWidth});
-    //     } else {
-    //       vectorLayer.setStyle({stroke: roadWidth});
-    //       vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-    //       vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
-    //     }
-    //   }
-    // };
 
     var minimumContentZoomLevel = function() {
       if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
@@ -76,15 +58,6 @@
         currentZoom = mapState.zoom;
         vectorSource.clear();
       }
-      // If zoom changes clear the road list
-      // if (mapState.zoom >= minimumContentZoomLevel()) {
-      //
-      //   vectorLayer.setVisible(true);
-      //   changeRoadsWidthByZoomLevel();
-      // } else {
-      //   vectorLayer.clear();
-      //   roadCollection.reset();
-      // }
       handleRoadsVisibility();
     };
 

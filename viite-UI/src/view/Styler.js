@@ -56,7 +56,7 @@
         if (roadLinkType === 3)
           zIndex = 4;
         else if(roadLinkType === -1) {
-          zIndex = 2;
+          zIndex = 5;
         }
       } else {
         zIndex = 3;
@@ -108,7 +108,7 @@
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom);
-      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType);
+      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       var borderColor = modifyColorProperties(lineColor, 0.75, true, true);
       var lineCap  = 'round';
 
