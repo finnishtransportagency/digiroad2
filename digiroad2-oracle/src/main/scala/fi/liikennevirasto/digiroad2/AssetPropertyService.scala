@@ -26,12 +26,6 @@ class AssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvide
     }
   }
 
-//  def getProperties(assetTypeId: Long): Seq[Property] = {
-//    databaseTransaction.withDynTransaction{
-//      Queries.availableProperties(assetTypeId)
-//    }
-//  }
-
   def assetPropertyNames(language: String): Map[String, String] = {
     AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ databaseTransaction.withDynTransaction {
       Queries.assetPropertyNames(language)

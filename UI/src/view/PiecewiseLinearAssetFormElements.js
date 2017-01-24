@@ -22,12 +22,12 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function CreateMaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues, accessRightsValues) {
+  function CreateMaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
    var formElem = maintenanceRoadFormElement();
-    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem, accessRightsValues);
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem, accessRightsValues) {
+  function formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem) {
     return {
       singleValueElement:  _.partial(singleValueElement, formElem.measureInput, formElem.valueString),
       bindEvents: _.partial(bindEvents, formElem.inputElementValue)
@@ -101,35 +101,8 @@
       });
     }
 
-    function singleChoiceValuesConversion(current, propertiesName){
-        var value = current.propertyValue ? current.propertyValue.value : "";
-        var accessRightsValues = { '1': 'Tieoikeus', '2': 'Tiekunnan osakkuus', '3': 'LiVin hallinnoimalla maa-alueella', '4': 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei rautatieliikennealuetta) väylä', '5': 'Tuntematon'};
-        var possibleValues = { '0': 'Ei tietoa', '1': 'LiVi', '2': 'Muu'};
-        if(current.propertyName == propertiesName[0].name){
-            return accessRightsValues[current.propertyValue.value];
-        }else{
-            if(current.propertyName == propertiesName[1].name){
-                return possibleValues[current.propertyValue.value];
-            }
-            else return value;
-        }
-    }
-
-    function obtainFormControl(className, valueString, currentValue){
-        var propertiesName = [
-            {'name': "Käyttöoikeus", 'id': "huoltotie_kayttooikeus"},
-            {'name': "Huoltovastuu", 'id': "huoltotie_huoltovastuu"},
-            {'name': "Tiehoitokunta", 'id': "huoltotie_tiehoitokunta"},
-            {'name': "Nimi", 'id': "huoltotie_nimi"},
-            {'name': "Osoite", 'id': "huoltotie_osoite"},
-            {'name': "Postinumero", 'id': "huoltotie_postinumero"},
-            {'name': "Postitoimipaikka", 'id': "huoltotie_postitoimipaikka"},
-            {'name': "Puhelin 1", 'id': "huoltotie_puh1"},
-            {'name': "Puhelin 2", 'id': "huoltotie_puh2"},
-            {'name': "Lisätietoa", 'id': "huoltotie_lisatieto"}
-        ];
-
-        var newCurrentValue = _.map(propertiesName, function (property) {
+    function obtainFormControl(className, valueString, currentValue, possibleValues){
+        var newCurrentValue = _.map(possibleValues, function (property) {
             var arrayValue =  _.find(currentValue, function (value) {
                 return (property.id == value.publicId);
             });
@@ -137,9 +110,22 @@
         });
 
         return _.map(newCurrentValue, function(current){
-            var value = singleChoiceValuesConversion(current, propertiesName);
+            var value = singleChoiceValuesConversion(current, possibleValues);
             return '  <p class="form-control-static ' + className + '" style="display:none;">' + current.propertyName + ': ' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
         }).join('');
+    }
+
+    function singleChoiceValuesConversion(current, propertyValues){
+      var value = current.propertyValue ? current.propertyValue.value : "";
+      var property = _.find(propertyValues, function(property){
+        return property.name == current.propertyName;
+      });
+
+      var propertyValue = _.find(property.value, function(value){
+        return value.typeId == current.propertyValue.value;
+      });
+
+      return propertyValue ? propertyValue.title : value;
     }
 
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
@@ -148,9 +134,9 @@
               '<div class="form-group editable">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <div class=' + className +'>' +
-              obtainFormControl(className, valueString, currentValue)  +
+              obtainFormControl(className, valueString, currentValue, possibleValues)  +
               '  </div>' +
-              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
               '</div>';
 
       }else {
@@ -158,7 +144,7 @@
               '<div class="form-group editable">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues, accessRightsValues)) +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
               '</div>';
       }
     }
@@ -281,73 +267,47 @@
       return currentValue ? currentValue : '-';
     }
 
-    function measureInput(currentValue, className, possibleValues, accessRightsValues) {
-      var accessRightsValue = _.find(currentValue, function (value) { return value.publicId == "huoltotie_kayttooikeus"; });
-      accessRightsValue = accessRightsValue ? accessRightsValue.value : '';
+    function measureInput(currentValues, className, possibleValues) {
+      var disabled = _.isUndefined(currentValues) ? 'disabled' : '';
+      var template_aux = _.map(possibleValues, function(values) {
 
-      var maintenanceResponsibilityValue = _.find(currentValue, function (value) { return value.publicId == "huoltotie_huoltovastuu"; });
-      maintenanceResponsibilityValue = maintenanceResponsibilityValue ? maintenanceResponsibilityValue.value : '';
+        resProp = _.find(currentValues, function (value) {
+          return value.publicId == values.id;
+        });
 
-      var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
+      currentValue = _.isUndefined(resProp) ? '' : resProp.value;
 
-      var accessRightsTag = _.map(accessRightsValues, function (value) {
-        var selected = value.typeId == accessRightsValue ? " selected" : "";
-        return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
-      }).join('');
+        switch (values.propType){
+          case "single_choice":
+            var optionTagsLayer = _.map(values.value, function (value) {
+              var selected = value.typeId === parseInt(currentValue) ? " selected" : "";
+              return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
+            }).join('');
 
-      var maintenanceResponsibilityTag = _.map(possibleValues, function (value) {
-        var selected = value.typeId == maintenanceResponsibilityValue ? " selected" : "";
-        return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
-      }).join('');
+            return template({className: className, optionTags: optionTagsLayer, disabled: disabled, label: values.name, id: values.id});
 
-      var textValuePropertyNames = [{'name': "Tiehoitokunta", 'id': "huoltotie_tiehoitokunta" },
-                                    {'name': "Nimi", 'id': "huoltotie_nimi" },
-                                    {'name': "Osoite" , 'id': "huoltotie_osoite"},
-                                    {'name': "Postinumero", 'id': "huoltotie_postinumero"},
-                                    {'name': "Postitoimipaikka", 'id': "huoltotie_postitoimipaikka"},
-                                    {'name': "Puhelin 1", 'id': "huoltotie_puh1"},
-                                    {'name': "Puhelin 2", 'id': "huoltotie_puh2"},
-                                    {'name': "Lisätietoa", 'id': "huoltotie_lisatieto"}];
-
-      var textBoxValues = _.map(textValuePropertyNames, function (prop) {
-        var actualValue;
-
-        if (currentValue) {
-          actualValue = _.find(currentValue, function (value) {
-            return value.publicId == prop.id;
-          });
-          actualValue = actualValue ? actualValue.value : '';
-        } else {
-          actualValue = '';
-        }
-
-        return'<div class="form-group">' +
-            '<label class="control-label">' + prop.name + '</label>' +
-            '<input ' +
-            '    type="text" ' +
-            '    class="form-control ' + className + '" id="' + prop.id + '"' +
-            '    value="' + actualValue + '" ' + disabled + ' >' +
-            '</div>';
-      }).join('');
-
-      var accessRightsTemplate = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
-      var maintenanceResponsibilityTemplate = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
-
-      return '<form class="input-unit-combination form-horizontal ' + className +'">'+accessRightsTemplate.concat(maintenanceResponsibilityTemplate)+textBoxValues+'</form>';
+          case "text" :
+            return ' ' +
+              '<div class="form-group">' +
+                '<label class="control-label">' + values.name + '</label>' +
+                '<input ' +
+                '    type="text" ' +
+                '    class="form-control ' + className + '" id="' + values.id + '"' +
+                '    value="' + currentValue + '" ' + disabled + ' onclick="">' +
+              '</div>';
+        }});
+      return '<form class="input-unit-combination form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
     }
 
       function inputElementValue(input) {
-          var things = _.map(input, function (ele) {
+           return _.map(input, function (propElement) {
               var mapping = {"SELECT" : "single_choice", "INPUT": "text"};
-              var obj = {
-                  'publicId': ele.id,
-                  'value': ele.value,
-                  'propertyType': mapping[String(ele.tagName)]
+              return{
+                  'publicId': propElement.id,
+                  'value': propElement.value,
+                  'propertyType': mapping[String(propElement.tagName)]
               };
-              return obj;
           });
-
-          return things;
       }
   }
 })(this);

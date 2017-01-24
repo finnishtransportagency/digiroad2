@@ -97,7 +97,6 @@ trait LinearAssetOperations {
     }
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
-    val removedLinkIdsWithFilterClass = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks.filter(_.functionalClass == 0))
     val existingAssets =
       withDynTransaction {
         typeId match {
