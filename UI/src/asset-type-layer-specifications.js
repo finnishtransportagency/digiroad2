@@ -329,7 +329,7 @@
       className: 'maintenanceRoad',
       isSeparable: false,
       editControlLabels: {
-        title: '',
+        title: 'Rajoitus',
         enabled: 'Huoltotie',
         disabled: 'Ei huoltotietä'
       },

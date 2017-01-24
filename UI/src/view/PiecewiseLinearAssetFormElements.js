@@ -267,8 +267,9 @@
 
   function maintenanceRoadFormElement() {
     var template =  _.template(
-        '<label><%= label %> </label> ' +
-        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
+        '<div class="form-group">' +
+        '<label class="control-label"><%= label %> </label> ' +
+        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select></div>');
 
     return {
       inputElementValue: inputElementValue,
@@ -320,8 +321,8 @@
           actualValue = '';
         }
 
-        return '<label>' + prop.name + '</label>' +
-            '<div class="form-group">' +
+        return'<div class="form-group">' +
+            '<label class="control-label">' + prop.name + '</label>' +
             '<input ' +
             '    type="text" ' +
             '    class="form-control ' + className + '" id="' + prop.id + '"' +
@@ -332,7 +333,7 @@
       var accessRightsTemplate = template({className: className, optionTags: accessRightsTag, disabled: disabled, label: 'Käyttöoikeus', id: 'huoltotie_kayttooikeus'});
       var maintenanceResponsibilityTemplate = template({className: className, optionTags: maintenanceResponsibilityTag, disabled: disabled, label: 'Huoltovastuu', id: 'huoltotie_huoltovastuu'});
 
-      return '<form class="input-unit-combination">'+accessRightsTemplate.concat(maintenanceResponsibilityTemplate)+textBoxValues+'</form>';
+      return '<form class="input-unit-combination form-horizontal ' + className +'">'+accessRightsTemplate.concat(maintenanceResponsibilityTemplate)+textBoxValues+'</form>';
     }
 
       function inputElementValue(input) {
