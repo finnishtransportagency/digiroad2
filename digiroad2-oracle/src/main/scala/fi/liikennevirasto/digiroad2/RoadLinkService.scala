@@ -1177,7 +1177,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         idTableName =>
           val query = s"""
             SELECT pos.LINK_ID, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.TRACK_CODE, pos.SIDE_CODE,
-              MIN(pos.START_MEASURE), MAX(pos.END_MEASURE), MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
+              MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
             FROM ROAD_ADDRESS ra
             JOIN LRM_POSITION pos on ra.LRM_POSITION_ID = pos.ID
             JOIN $idTableName i on i.ID = pos.LINK_ID
