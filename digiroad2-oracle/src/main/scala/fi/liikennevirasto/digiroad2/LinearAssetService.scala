@@ -89,12 +89,8 @@ trait LinearAssetOperations {
 
   private def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
-    var roadLinks: Seq[RoadLink] = null
-    if (typeId == LinearAssetTypes.MaintenanceRoadAssetTypeId) {
-      roadLinks = roadLinksExist.filter(_.functionalClass > 4)
-    } else{
-      roadLinks = roadLinksExist
-    }
+    // Filter high functional classes from maintenance roads
+    val roadLinks: Seq[RoadLink] = roadLinksExist.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
@@ -622,11 +618,11 @@ trait LinearAssetOperations {
           dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(id, prohibitions, username)
-        case maintenancesRoad: MaintenanceRoad =>
-          val missingProperties = validateRequiredProperties(typeId, maintenancesRoad)
+        case maintenanceRoad: MaintenanceRoad =>
+          val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
           if(missingProperties.nonEmpty)
-            throw new RuntimeException("Missing mandatory properties")
-          dao.updateMaintenanceRoadValue(id, maintenancesRoad, username)
+            throw new MissingMandatoryPropertyException(missingProperties)
+          dao.updateMaintenanceRoadValue(id, maintenanceRoad, username)
       }
     }
 
@@ -645,7 +641,7 @@ trait LinearAssetOperations {
       case maintenanceRoad: MaintenanceRoad =>
         val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
         if(missingProperties.nonEmpty)
-          throw new RuntimeException("Missing mandatory properties")
+          throw new MissingMandatoryPropertyException(missingProperties)
         dao.insertMaintenanceRoadValue(id, maintenanceRoad)
     }
     id
@@ -704,4 +700,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+}
+
+class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
 }
