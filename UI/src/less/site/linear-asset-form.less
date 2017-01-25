@@ -135,34 +135,29 @@
   }
 }
 
-form.maintenanceRoad {
+form.maintenanceRoad,
+.form-control-static.maintenanceRoad,
+form.maintenanceRoad-a,
+form.maintenanceRoad-b {
   width: 300px;
-  margin-left: -87px;
 
-  label {
-    width: 98px !important;
+  .control-label {
+  width: 100px !important;
   }
 
-  .form-control {
+ .form-control {
     width: 190px !important;
     margin-top: 6px !important;
   }
-}
 
-form.maintenanceRoad-a, form.maintenanceRoad-b {
-  width: 300px;
-  margin-left: -12px;
-
-  label {
-    width: 96px !important;
-  }
-
-  .form-control {
-    width: 190px !important;
-    margin-top: 6px !important;
+  p {
+    width: 60%;
   }
 }
 
-div.maintenanceRoad, div.maintenanceRoad-a, div.maintenanceRoad-b {
-  margin-left: 75px;
+.form-editable-maintenanceRoad{
+  > .control-label:first-child {
+    width: 0;
+    max-width: 0;
+  }
 }

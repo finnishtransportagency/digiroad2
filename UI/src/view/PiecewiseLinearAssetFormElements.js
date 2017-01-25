@@ -111,7 +111,8 @@
 
         return _.map(newCurrentValue, function(current){
             var value = singleChoiceValuesConversion(current, possibleValues);
-            return '  <p class="form-control-static ' + className + '" style="display:none;">' + current.propertyName + ': ' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
+            return ' <label class="control-label">' + current.propertyName + ': </label>' +
+                  '  <p class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
         }).join('');
     }
 
@@ -131,17 +132,17 @@
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
       if(Array.isArray(currentValue)){
           return '' +
-              '<div class="form-group editable">' +
-              '  <label class="control-label">' + editControlLabels.title + '</label>' +
-              '  <div class=' + className +'>' +
-              obtainFormControl(className, valueString, currentValue, possibleValues)  +
-              '  </div>' +
-              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
-              '</div>';
+              '<div class="form-group editable form-editable-'+ className +'">' +
+              ' <label class="control-label">' + editControlLabels.title + '</label>' +
+              ' <div class="form-control-static ' + className + '" style="display:none;">' +
+                obtainFormControl(className, valueString, currentValue, possibleValues)  +
+              ' </div>' +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+             '</div>';
 
       }else {
           return '' +
-              '<div class="form-group editable">' +
+              '<div class="form-group editable form-editable-'+ className +'">' +
               '  <label class="control-label">' + editControlLabels.title + '</label>' +
               '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
               singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
