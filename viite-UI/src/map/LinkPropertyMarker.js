@@ -5,7 +5,8 @@
     var createMarker = function(roadlink) {
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
-      var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
+      //TODO - Review the "box" initialization in order to create a box in OL3 (previously OpenLayers.Marker.Box)
+      var box = new ol.Feature(bounds, "ffffff00", 0);
       box.id = roadlink.linkId;
       configureMarkerDiv(box, roadlink.linkId);
       renderDefaultState(box, roadlink);
@@ -13,7 +14,7 @@
     };
 
     var getBounds = function(lon, lat) {
-      return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
+      return ol.extent.boundingExtent(ol.proj.toLonLat([lon, lat, lon, lat]));
     };
 
     var configureMarkerDiv = function(box, id){
@@ -23,9 +24,9 @@
 
     var calculateMiddlePoint = function(link){
       var points = _.map(link.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+        return [point.x, point.y];
       });
-      var lineString = new OpenLayers.Geometry.LineString(points);
+      var lineString = new ol.geom.LineString(points);
       var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
       return middlePoint;
     };
