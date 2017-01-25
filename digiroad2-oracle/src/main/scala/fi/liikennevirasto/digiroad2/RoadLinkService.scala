@@ -1155,7 +1155,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
   }
 
-  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Long, sideCode: Long,
+  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, sideCode: Int,
                                  startAddrMValue: Long, endAddrMValue: Long) {
     def asAttributes: Map[String, Any] = Map("VIITE_ROAD_NUMBER" -> roadNumber,
       "VIITE_ROAD_PART_NUMBER" -> roadPartNumber,
@@ -1186,7 +1186,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
               (START_DATE IS NULL OR START_DATE <= sysdate) AND
               (END_DATE IS NULL OR END_DATE >= sysdate)
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
-          Q.queryNA[(Long, Long, Long, Long, Long, Long, Long)](query).list.map {
+          Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
             case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
             => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
         }

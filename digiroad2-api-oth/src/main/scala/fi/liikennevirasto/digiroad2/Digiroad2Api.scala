@@ -386,9 +386,25 @@ Returns empty result as Json message, not as page not found
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
+    val roadNumber = roadLink.attributes.get("VIITE_ROAD_NUMBER") match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+    val roadPartNumber = roadLink.attributes.get("VIITE_ROAD_PART_NUMBER") match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
     val track = roadLink.attributes.get("VIITE_TRACK") match {
-      case Some(x) => x.asInstanceOf[Long].toInt
+      case Some(x) => x.asInstanceOf[Int]
       case _ => Track.Unknown.value
+    }
+    val startAddrMValue = roadLink.attributes.get("VIITE_START_ADDR") match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+    val endAddrMValue = roadLink.attributes.get("VIITE_END_ADDR") match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
     }
     Map(
       "linkId" -> roadLink.linkId,
@@ -409,11 +425,14 @@ Returns empty result as Json message, not as page not found
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
-      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
+      "roadPartNumber" -> roadPartNumber,
+      "roadNumber" -> roadNumber,
       "constructionType" -> roadLink.constructionType.value,
       "linkSource" -> roadLink.linkSource.value,
-      "track" -> track)
+      "track" -> track,
+      "startAddrMValue" -> startAddrMValue,
+      "endAddrMValue" ->  endAddrMValue
+    )
   }
 
   get("/roadlinks") {
