@@ -221,7 +221,7 @@
     };
 
     this.setValue = function(value) {
-      if (value != selection[0].value) {
+      if (value != selection[0].value || Array.isArray(value)) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
@@ -229,15 +229,53 @@
       }
     };
 
-    this.setAValue = function(value) {
-      if (value != selection[0].value) {
+    function isValueDifferent(selection){
+      var nonEmptyValues = _.map(selection, function (select) {
+        return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
+      });
+      var zipped = _.zip(nonEmptyValues[0], nonEmptyValues[1]);
+      var mapped = _.map(zipped, function (zipper) {
+          if(!zipper[1] || !zipper[0])
+            return true;
+          else
+            return zipper[0].value !== zipper[1].value;
+      });
+      return _.contains(mapped, true);
+    }
+
+
+    function areMandatoryFieldsFilled(selection) {
+      var requiredFields = _.map(selection, function(select){
+        return _.filter(select.value, function (val) {
+          return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
+        });
+      });
+      var containsEmpty = _.map(requiredFields, function (req) {
+        return (_.some(req, function (fields) {
+          return fields.value === '';
+        }));
+      });
+      return !(_.some(containsEmpty, function (value) {
+        return value;
+      })) && isValueDifferent(selection);
+    }
+
+    function requiredFieldsFilled(value) {
+      var requiredFields = _.filter(value, function (val) {
+        return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
+      });
+      return !(_.some(requiredFields, function(fields){ return fields.value === ''; }));
+    }
+
+    this.setAValue = function (value) {
+      if ((value != selection[0].value) || (Array.isArray(value))) {
         selection[0].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
-    this.setBValue = function(value) {
-      if (value != selection[1].value) {
+    this.setBValue = function (value) {
+      if ((value != selection[1].value) || (Array.isArray(value))) {
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
@@ -276,7 +314,15 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if (this.isSplitOrSeparated() && valuesDiffer()) {
+        if(Array.isArray(selection[0].value)){
+            if(this.isSplitOrSeparated() && areMandatoryFieldsFilled(selection)){
+                return validator(selection[0].value);
+            }
+            else if (!this.isSplitOrSeparated() && requiredFieldsFilled(selection[0].value)) {
+                return validator(selection[0].value);
+            }
+        }
+        else if (this.isSplitOrSeparated() && valuesDiffer()) {
           return validator(selection[0].value) && validator(selection[1].value);
         }
         else if (!this.isSplitOrSeparated()) {

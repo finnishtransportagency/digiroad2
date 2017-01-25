@@ -83,13 +83,65 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limit.expired should be (false)
     }
   }
-
   test("Create new linear asset") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
+      asset.expired should be (false)
+    }
+  }
+
+  test("Create new maintenanceRoad") {
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
+      asset.value should be (Some(maintenanceRoad))
+      asset.expired should be (false)
+    }
+  }
+
+  test("update new maintenanceRoad") {
+    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propIns3 = Properties("huoltotie_postinumero", "text", "text prop3")
+    val propIns4 = Properties("huoltotie_puh1" , "text", "text prop4")
+    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
+    val maintenanceRoadIns = MaintenanceRoad(propIns)
+
+    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", "4")
+    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", "1")
+    val propUpd3 = Properties("huoltotie_postinumero", "text",  "text prop3 Update")
+    val propUpd4 = Properties("huoltotie_puh1" , "text", "")
+    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+    val propUpd6 = Properties("huoltotie_puh2" , "text", "text prop puh2")
+
+    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
+    val maintenanceRoadUpd = MaintenanceRoad(propUpd)
+
+    val maintenanceRoadFetch = MaintenanceRoad(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
+      updAssets.length should be(1)
+
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
+      asset.value should be (Some(maintenanceRoadFetch))
       asset.expired should be (false)
     }
   }
@@ -102,6 +154,28 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
       asset.value should be (Some(prohibition))
       asset.expired should be (false)
+    }
+  }
+
+  test("Should delete maintenanceRoad asset"){
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+      var asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.value should be (Some(maintenanceRoad))
+      asset.expired should be (false)
+
+      val assetId : Seq[Long] = List(asset.id)
+      val deleted = ServiceWithDao.expire( assetId , "testuser")
+      asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.expired should be (true)
     }
   }
 

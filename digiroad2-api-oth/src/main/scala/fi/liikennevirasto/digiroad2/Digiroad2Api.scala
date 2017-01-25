@@ -27,6 +27,8 @@ case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: 
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
 
+case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
+
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
@@ -42,10 +44,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
                    val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
   extends ScalatraServlet
-  with JacksonJsonSupport
-  with CorsSupport
-  with RequestHeaderAuthentication
-  with GZipSupport {
+    with JacksonJsonSupport
+    with CorsSupport
+    with RequestHeaderAuthentication
+    with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
@@ -104,35 +106,35 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
-    get("/masstransitstopgapiurl"){
-      val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
-      val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))
-      val heading =params.get("heading").getOrElse(halt(BadRequest("Bad coordinates")))
-      val oldapikeyurl=s"//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=$lat,$lon&fov=110&heading=$heading&pitch=-10&sensor=false'"
-      try {
-        val urlsigner = new GMapUrlSigner()
+  get("/masstransitstopgapiurl"){
+    val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
+    val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))
+    val heading =params.get("heading").getOrElse(halt(BadRequest("Bad coordinates")))
+    val oldapikeyurl=s"//maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=$lat,$lon&fov=110&heading=$heading&pitch=-10&sensor=false'"
+    try {
+      val urlsigner = new GMapUrlSigner()
       Map("gmapiurl" -> urlsigner.signRequest(lat,lon,heading))
-      } catch
-        {
-          case e: Exception => Map("gmapiurl" -> oldapikeyurl)
-        }
-    }
+    } catch
+      {
+        case e: Exception => Map("gmapiurl" -> oldapikeyurl)
+      }
+  }
 
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "municipalityNumber" -> stop.municipalityCode,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating)
+      Map("id" -> stop.id,
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "municipalityNumber" -> stop.municipalityCode,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "validityDirection" -> stop.validityDirection,
+        "bearing" -> stop.bearing,
+        "validityPeriod" -> stop.validityPeriod,
+        "floating" -> stop.floating)
     }
   }
 
@@ -584,6 +586,7 @@ Returns empty result as Json message, not as page not found
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+    val maintenanceRoadParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
 
     val prohibition = prohibitionParameter match {
@@ -592,10 +595,17 @@ Returns empty result as Json message, not as page not found
       case Some(x) => Some(Prohibitions(x))
     }
 
+    val maintenanceRoad = maintenanceRoadParameter match {
+      case Some(Nil) => None
+      case None => None
+      case Some(x) => Some(MaintenanceRoad(x))
+    }
+
     numericValue
       .map(NumericValue)
       .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
+      .orElse(maintenanceRoad)
   }
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -604,6 +614,8 @@ Returns empty result as Json message, not as page not found
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
+      case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+        value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
     }
@@ -621,17 +633,23 @@ Returns empty result as Json message, not as page not found
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
 
-    val updatedNumericalIds =
-      valueOption.nonEmpty match {
-        case true =>
-          valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
-        case false =>
-          linearAssetService.clearValue(existingAssets.toSeq, user.username)
+    val updatedNumericalIds = if (valueOption.nonEmpty) {
+      try {
+        valueOption.map(linearAssetService.update(existingAssets.toSeq, _, user.username)).getOrElse(Nil)
+      } catch {
+        case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
+        case e: IllegalArgumentException => halt(BadRequest("Property not found"))
       }
+    } else {
+      linearAssetService.clearValue(existingAssets.toSeq, user.username)
+    }
 
-    val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
-
-    updatedNumericalIds ++ createdIds
+    try {
+      val createdIds = linearAssetService.create(newLinearAssets, typeId, user.username)
+      updatedNumericalIds ++ createdIds
+    } catch {
+      case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
+    }
   }
 
   delete("/linearassets") {

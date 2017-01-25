@@ -22,9 +22,14 @@ case class NumericValue(value: Int) extends Value {
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
+case class MaintenanceRoad(maintenanceRoad: Seq[Properties]) extends Value{
+  override def toJson: Any = maintenanceRoad
+}
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
+case class Properties(publicId: String, propertyType: String, value: String)
+
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {

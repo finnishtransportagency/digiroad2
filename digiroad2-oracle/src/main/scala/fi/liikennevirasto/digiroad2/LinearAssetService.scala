@@ -24,6 +24,7 @@ object LinearAssetTypes {
   val HazmatTransportProhibitionAssetTypeId = 210
   val EuropeanRoadAssetTypeId = 260
   val ExitNumberAssetTypeId = 270
+  val MaintenanceRoadAssetTypeId = 290
   val numericValuePropertyId: String = "mittarajoitus"
   val europeanRoadPropertyId: String = "eurooppatienumero"
   val exitNumberPropertyId: String = "liittymänumero"
@@ -86,7 +87,10 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks, change)
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  private def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+
+    // Filter high functional classes from maintenance roads
+    val roadLinks: Seq[RoadLink] = roadLinksExist.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
@@ -96,6 +100,8 @@ trait LinearAssetOperations {
             dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
             dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+          case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+            dao.fetchMaintenancesByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case _ =>
             dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
         }
@@ -343,6 +349,8 @@ trait LinearAssetOperations {
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
         case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
           dao.fetchProhibitionsByIds(typeId, ids)
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
@@ -435,6 +443,7 @@ trait LinearAssetOperations {
         case Some(TextualValue(textValue)) =>
           LinearAssetTypes.getValuePropertyId(typeId)
         case Some(prohibitions: Prohibitions) => ""
+        case Some(maintenanceRoad: MaintenanceRoad) => ""
         case None => ""
       }
     }
@@ -460,6 +469,8 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
           case Some(prohibitions: Prohibitions) =>
             dao.insertProhibitionValue(id, prohibitions)
+          case Some(maintenanceRoad: MaintenanceRoad) =>
+            dao.insertMaintenanceRoadValue(id, maintenanceRoad)
           case None => None
         }
       }
@@ -491,6 +502,8 @@ trait LinearAssetOperations {
             dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
           case Some(prohibitions: Prohibitions) =>
             dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
+          case Some(maintenancesRoad: MaintenanceRoad) =>
+            dao.updateMaintenanceRoadValue(id, maintenancesRoad, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -605,6 +618,11 @@ trait LinearAssetOperations {
           dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(typeId), username)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(id, prohibitions, username)
+        case maintenanceRoad: MaintenanceRoad =>
+          val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
+          if(missingProperties.nonEmpty)
+            throw new MissingMandatoryPropertyException(missingProperties)
+          dao.updateMaintenanceRoadValue(id, maintenanceRoad, username)
       }
     }
 
@@ -620,8 +638,21 @@ trait LinearAssetOperations {
         dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)
+      case maintenanceRoad: MaintenanceRoad =>
+        val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
+        if(missingProperties.nonEmpty)
+          throw new MissingMandatoryPropertyException(missingProperties)
+        dao.insertMaintenanceRoadValue(id, maintenanceRoad)
     }
     id
+  }
+
+  private def validateRequiredProperties(typeId: Int, maintenanceRoad: MaintenanceRoad): Set[String] = {
+    val mandatoryProperties: Map[String, String] = dao.getRequiredProperties(typeId)
+    val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.maintenanceRoad.filter { property =>
+      mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
+    }
+    mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
   }
 
   /**
@@ -669,4 +700,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+}
+
+class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
 }
