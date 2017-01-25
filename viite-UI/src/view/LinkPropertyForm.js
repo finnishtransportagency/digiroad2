@@ -336,6 +336,8 @@
         }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
+        if(_.isEmpty(selectedLinkProperty.get()))
+          return;
         compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
         if(compactForm && !applicationModel.isReadOnly())
           selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
