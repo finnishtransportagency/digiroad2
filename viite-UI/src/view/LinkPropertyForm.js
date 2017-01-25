@@ -318,13 +318,14 @@
     };
 
     var bindEvents = function() {
+
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').toggle(false);
-        if(compactForm){
+        if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
 
           if(!applicationModel.isReadOnly()){
             rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
@@ -336,83 +337,82 @@
         }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        if(_.isEmpty(selectedLinkProperty.get()))
-          return;
-        compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
-        if(compactForm && !applicationModel.isReadOnly())
-          selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
-        linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
-        linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-        linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
-        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
-        linkProperties.roadNameFi = linkProperties.roadNameFi || '';
-        linkProperties.roadNameSe = linkProperties.roadNameSe || '';
-        linkProperties.roadNameSm = linkProperties.roadNameSm || '';
-        linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
-        linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-        linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
-        linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-        linkProperties.roadAddress = linkProperties.roadAddress || '';
-        linkProperties.segmentId = linkProperties.segmentId || '';
-        linkProperties.roadNumber = linkProperties.roadNumber || '';
-        if (linkProperties.roadNumber > 0) {
-          linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-          linkProperties.startAddressM = linkProperties.startAddressM || '0';
-          linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
-        } else {
-          linkProperties.roadPartNumber = '';
-          linkProperties.trackCode = '';
-          linkProperties.startAddressM = '';
-        }
-        linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
-        linkProperties.endAddressM = linkProperties.endAddressM || '';
-        linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-        linkProperties.endDate = linkProperties.endDate || '';
-        linkProperties.roadType = linkProperties.roadType || '';
-        linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
-        linkProperties.roadLinkType = linkProperties.roadLinkType || '';
+        if(!_.isEmpty(selectedLinkProperty.get())){
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
+          if(compactForm && !applicationModel.isReadOnly())
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
+          linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
+          linkProperties.modifiedAt = linkProperties.modifiedAt || '';
+          linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
+          linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
+          linkProperties.roadNameFi = linkProperties.roadNameFi || '';
+          linkProperties.roadNameSe = linkProperties.roadNameSe || '';
+          linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+          linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
+          linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
+          linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
+          linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
+          linkProperties.roadAddress = linkProperties.roadAddress || '';
+          linkProperties.segmentId = linkProperties.segmentId || '';
+          linkProperties.roadNumber = linkProperties.roadNumber || '';
+          if (linkProperties.roadNumber > 0) {
+            linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+            linkProperties.startAddressM = linkProperties.startAddressM || '0';
+            linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
+          } else {
+            linkProperties.roadPartNumber = '';
+            linkProperties.trackCode = '';
+            linkProperties.startAddressM = '';
+          }
+          linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
+          linkProperties.endAddressM = linkProperties.endAddressM || '';
+          linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
+          linkProperties.endDate = linkProperties.endDate || '';
+          linkProperties.roadType = linkProperties.roadType || '';
+          linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+          linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
-        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
-          var selected = key === linkProperties.trafficDirection ? " selected" : "";
-          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
-        }).join('');
-        var functionalClassOptionTags = _.map(functionalClasses, function (value) {
-          var selected = value == linkProperties.functionalClass ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-        }).join('');
-        var linkTypesOptionTags = _.map(linkTypes, function (value) {
-          var selected = value[0] == linkProperties.linkType ? " selected" : "";
-          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
-        }).join('');
-        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        options = {
-          imports: {
-            trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+          var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
+            var selected = key === linkProperties.trafficDirection ? " selected" : "";
+            return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var functionalClassOptionTags = _.map(functionalClasses, function (value) {
+            var selected = value == linkProperties.functionalClass ? " selected" : "";
+            return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var linkTypesOptionTags = _.map(linkTypes, function (value) {
+            var selected = value[0] == linkProperties.linkType ? " selected" : "";
+            return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+          }).join('');
+          var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
+          options = {
+            imports: {
+              trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+              functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+              linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+            }
+          };
+          if (compactForm){
+            if(!applicationModel.isReadOnly()){
+              rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
+          } else {
+              rootElement.html(templateFloating(options, linkProperties)(linkProperties));
+            }
+          } else {
+            rootElement.html(template(options, linkProperties)(linkProperties));
           }
+          rootElement.find('.traffic-direction').change(function(event) {
+            selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          });
+          rootElement.find('.functional-class').change(function(event) {
+            selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          });
+          rootElement.find('.link-types').change(function(event) {
+            selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          });
+          toggleMode(applicationModel.isReadOnly());
         };
-        if (compactForm){
-          if(!applicationModel.isReadOnly()){
-            rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
-        } else {
-            rootElement.html(templateFloating(options, linkProperties)(linkProperties));
-          }
-        } else {
-          rootElement.html(template(options, linkProperties)(linkProperties));
-        }
-        rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
-        });
-        rootElement.find('.functional-class').change(function(event) {
-          selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-        });
-        rootElement.find('.link-types').change(function(event) {
-          selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-        });
-        toggleMode(applicationModel.isReadOnly());
       });
-      
       eventbus.on('adjacents:added', function(sources, targets) {
         //TODO uncomment for 180 spinner loading
         // applicationModel.removeSpinner();
@@ -464,16 +464,19 @@
         selectedLinkProperty.save();
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
-        selectedLinkProperty.cancel();
+        var action;
+        if(applicationModel.isActiveButtons())
+          action = "transferring";
+        selectedLinkProperty.cancel(action);
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
         //TODO calculate SIIRRA button operations
         //applicationModel.addSpinner();
         var siirra = selectedLinkProperty.transferingCalculation();
-        // selectedLinkProperty.cancel();
         //TODO apply
         applicationModel.setActiveButtons(true);
+        
       });
 
 

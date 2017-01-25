@@ -181,17 +181,24 @@
       _.each(current, function (source){
         sourceDataIds.push(source.getData().linkId.toString());
       });
-      //TODO remove 2 lines above. it was created due to testing purposes
-      sourceDataIds = ["3114934","3107028"];
-      targetDataIds = ["3114946","499976891"];
+      // //TODO remove 2 lines above. it was created due to testing purposes
+      // sourceDataIds = ["3114934","3107028"];
+      // targetDataIds = ["3114946","499976891"];
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
-      backend.getTansferResult(data, function(result) {
-        teste = result;
+      backend.getTransferResult(data, function(result) {
+        if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
+          eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
+        }
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        $('#feature-attributes').find('.link-properties button.save').attr('disabled', false);
+        $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
       });
+
     };
 
-    var cancel = function() {
+    var cancel = function(action) {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
@@ -200,7 +207,7 @@
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons()){
         applicationModel.setActiveButtons(false);
-        eventbus.trigger('roadLinks:fetched', true);
+        eventbus.trigger('roadLinks:fetched', action);
         eventbus.trigger('roadLinks:deleteSelection');
       }
     };

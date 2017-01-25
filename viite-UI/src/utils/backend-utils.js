@@ -33,7 +33,7 @@
       });
     }, 1000);
 
-    this.getTansferResult = _.throttle(function(dataTransfer, callback) {
+    this.getTransferResult = _.throttle(function(dataTransfer, callback) {
       return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(dataTransfer), function(data) {
         return _.isFunction(callback) && callback(data);
       });

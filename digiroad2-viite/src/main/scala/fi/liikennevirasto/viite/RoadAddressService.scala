@@ -627,9 +627,18 @@ object RoadAddressLinkBuilder {
     val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
-    val minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).min.segmentMValue), Option(allLinks.map(_.startMValue).min))
-    val maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).max.segmentMValue), Option(allLinks.map(_.endMValue).max))
-
+    var minStartMValue = 0.0
+    var maxEndMValue = 0.0
+    if(!allLinks.flatMap(_.startCalibrationPoint).isEmpty){
+      minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
+    } else {
+      allLinks.map(_.startMValue).min
+    }
+    if(!allLinks.flatMap(_.endCalibrationPoint).isEmpty){
+      maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
+    } else {
+      allLinks.map(_.endMValue).max
+    }
     val source = sources.head
 
     val tempId = -1000
@@ -637,7 +646,7 @@ object RoadAddressLinkBuilder {
     Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt,source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity ,
       minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, startCp, endCp))
-  }
+    }
 
   private def toIntNumber(value: Any) = {
     try {
