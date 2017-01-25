@@ -3,7 +3,7 @@
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
     EuropeanRoadsFormElements: TextualValueFormElements,
     ExitNumbersFormElements: TextualValueFormElements,
-    CreateMaintenanceRoadFormElements: CreateMaintenanceRoadFormElements,
+    MaintenanceRoadFormElements: MaintenanceRoadFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
@@ -22,7 +22,7 @@
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function CreateMaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function MaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
    var formElem = maintenanceRoadFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }

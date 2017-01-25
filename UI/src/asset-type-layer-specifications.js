@@ -322,14 +322,14 @@
     {
       typeId: assetType.maintenanceRoad,
       singleElementEventCategory: 'maintenanceRoad',
-      multiElementEventCategory: 'maintenances',
+      multiElementEventCategory: 'maintenanceRoads',
       layerName: 'maintenanceRoad',
       title: 'Rautateiden huoltotie',
       newTitle: 'Uusi rautateiden huoltotie',
       className: 'maintenanceRoad',
       isSeparable: false,
       editControlLabels: {
-        title: 'Rajoitus',
+        title: '',
         enabled: 'Huoltotie',
         disabled: 'Ei huoltotietä'
       },
