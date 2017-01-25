@@ -387,7 +387,7 @@ Returns empty result as Json message, not as page not found
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
     val track = roadLink.attributes.get("VIITE_TRACK") match {
-      case Some(x) => x.asInstanceOf[Int]
+      case Some(x) => x.asInstanceOf[Long].toInt
       case _ => Track.Unknown.value
     }
     Map(
