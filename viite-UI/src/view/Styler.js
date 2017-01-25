@@ -39,7 +39,7 @@
         if(constructionType === 1) {
           return 'rgba(255, 153, 0, 0.40)';
         } else {
-          return 'rgba(56, 56, 54, 0.40)';
+          return 'rgba(56, 56, 54, 1)';
         }
       }
     };
@@ -68,19 +68,27 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType){
+      var width = 0;
+
       switch (zoomLevel) {
-        case 6 : return 1  ;
-        case 7 : return 2  ;
-        case 8 : return 3  ;
-        case 9 : return 3  ;
-        case 10: return 5  ;
-        case 11: return 8  ;
-        case 12: return 10 ;
-        case 13: return 10 ;
-        case 14: return 14 ;
-        case 15: return 14 ;
+        case 6 : width = 1  ;
+        case 7 : width = 2  ;
+        case 8 : width = 3  ;
+        case 9 : width = 3  ;
+        case 10: width = 5  ;
+        case 11: width = 8  ;
+        case 12: width = 10 ;
+        case 13: width = 10 ;
+        case 14: width = 14 ;
+        case 15: width = 14 ;
       }
+
+      if (roadLinkType === -1){
+        width = width + 1;
+      }
+
+      return width;
     };
 
     /**
@@ -107,7 +115,7 @@
      * @returns {*[ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the border the second is for the line itself.
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom);
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType);
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       var borderColor = modifyColorProperties(lineColor, 0.75, true, true);
       var lineCap  = 'round';
