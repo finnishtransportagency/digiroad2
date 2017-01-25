@@ -72,20 +72,50 @@
       var width = 0;
 
       switch (zoomLevel) {
-        case 6 : width = 1  ;
-        case 7 : width = 2  ;
-        case 8 : width = 3  ;
-        case 9 : width = 3  ;
-        case 10: width = 5  ;
-        case 11: width = 8  ;
-        case 12: width = 10 ;
-        case 13: width = 10 ;
-        case 14: width = 14 ;
-        case 15: width = 14 ;
+        case 6 : {
+          width = 1;
+          break;
+        }
+        case 7 : {
+          width = 2;
+          break;
+        }
+        case 8 : {
+          width = 3;
+          break;
+        }
+        case 9 : {
+          width = 3;
+          break;
+        }
+        case 10: {
+          width = 5;
+          break;
+        }
+        case 11: {
+          width = 8;
+          break;
+        }
+        case 12: {
+          width = 10;
+          break;
+        }
+        case 13: {
+          width = 10;
+          break;
+        }
+        case 14: {
+          width = 14;
+          break;
+        }
+        case 15: {
+          width = 14;
+          break;
+        }
       }
 
       if (roadLinkType === -1){
-        width = width + 1;
+        width = width + 9;
       }
 
       return width;
