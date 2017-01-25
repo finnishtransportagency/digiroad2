@@ -187,8 +187,8 @@
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
         linkProperties.track = linkProperties.track || '';
-        linkProperties.startAddrMValue = linkProperties.startAddrMValue || '';
-        linkProperties.endAddrMValue = linkProperties.endAddrMValue || '';
+        linkProperties.startAddrMValue = isNaN(parseFloat(linkProperties.startAddrMValue)) ? '' : linkProperties.startAddrMValue;
+        linkProperties.endAddrMValue = isNaN(parseFloat(linkProperties.endAddrMValue)) ? '' : linkProperties.endAddrMValue;
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.constructionType = getConstructionType(linkProperties.constructionType) || '';
         linkProperties.linkSource = getLinkSource(linkProperties.linkSource) || '';
