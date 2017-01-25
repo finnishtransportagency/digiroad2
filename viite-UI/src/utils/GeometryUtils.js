@@ -128,7 +128,7 @@
 
   root.calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
-    var vertices = lineString.getVertices();
+    var vertices = lineString.getFlatCoordinates();
     var firstVertex = _.first(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
