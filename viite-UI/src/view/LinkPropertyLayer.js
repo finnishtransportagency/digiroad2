@@ -22,6 +22,37 @@
     // anomalousMarkerLayer.setVisibility(true);
     // indicatorLayer.setVisibility(true);
 
+    var selectSingleClick = new ol.interaction.Select({
+      multi: true
+    });
+    map.addInteraction(selectSingleClick);
+
+    selectSingleClick.on('select',function(event) {
+      var source = roadLayer.layer.getSource();
+      var extent = map.getView().calculateExtent(map.getSize());
+      var visibleFeatures = source.getFeaturesInExtent(extent);
+      if(event.selected.length !== 0){
+        //We are selecting features
+        var featuresToFade = _.filter(visibleFeatures, function(vf) {
+          return !_.contains(_.map(event.selected, function(s) {
+            return s.roadLinkData.linkId;
+          }), vf.roadLinkData.linkId);
+        });
+
+      }
+
+      if(event.deselected.length !== 0){
+        //We are deselecting features
+        var featuresToEnhance = _.filter(visibleFeatures, function(vf) {
+          return !_.contains(_.map(event.deselected, function(s) {
+            return s.roadLinkData.linkId;
+          }), vf.roadLinkData.linkId);
+        });
+      }
+
+      console.log("Entered click event.");
+      console.log("This is the event object:" + event);
+    });
     // roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
     //   return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     // });
