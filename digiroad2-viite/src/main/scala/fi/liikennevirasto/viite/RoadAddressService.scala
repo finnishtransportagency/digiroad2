@@ -608,24 +608,35 @@ object RoadAddressLinkBuilder {
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val srcsLength = sources.map(_.length).sum
-    val trgsLength = targets.map(_.length).sum
-
+    def getMValues (cp: Option[Double], fl: Option[Double]): Double = {
+      (cp, fl) match {
+        case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
+        case (None, Some(mVal)) => mVal
+        case (Some(calibrationPoint), None) => calibrationPoint
+        case (None, None) => 0.0
+      }
+    }
     val allLinks = sources++targets
     val allGeom = allLinks.flatMap(_.geometry)
 
+    val allStartCp = sources.flatMap(_.startCalibrationPoint)++targets.flatMap(_.startCalibrationPoint)
+    val allEndCp = sources.flatMap(_.endCalibrationPoint)++targets.flatMap(_.endCalibrationPoint)
+    val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
+    val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
+    val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
+    val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
+    val minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).min.segmentMValue), Option(allLinks.map(_.startMValue).min))
+    val maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).max.segmentMValue), Option(allLinks.map(_.endMValue).max))
 
-    val minStartMValue = allLinks.map(_.startMValue).min
-    val maxEndMValue = allLinks.map(_.endMValue).max/*will be filled or cutted automatically since will get max endMValue*/
     val source = sources.head
 
     val tempId = -1000
     val geom = GeometryUtils.truncateGeometry2D(allGeom, minStartMValue, maxEndMValue)
     Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt,source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity ,
-      minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, source.startCalibrationPoint, source.endCalibrationPoint))
+      minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, startCp, endCp))
   }
 
   private def toIntNumber(value: Any) = {
