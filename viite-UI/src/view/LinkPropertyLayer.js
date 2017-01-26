@@ -74,7 +74,10 @@
           roadLayer.layer.setOpacity(0.2);
         }
         selectedLinkProperty.close();
-        selectedLinkProperty.open(event.selected[0].roadLinkData.linkId, event.selected[0].roadLinkData.id, true);
+        var selection = _.find(event.selected, function(selectionTarget){
+          return !_.isUndefined(selectionTarget.roadLinkData);
+        });
+        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
