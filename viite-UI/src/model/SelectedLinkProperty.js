@@ -78,10 +78,9 @@
         });
 
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
-        //TODO uncomment for 180 spinner loading
-        // if(!applicationModel.isReadOnly()){
-        //   applicationModel.addSpinner();
-        // }
+        if(!applicationModel.isReadOnly()){
+          applicationModel.addSpinner();
+        }
       }
     };
 
@@ -181,9 +180,6 @@
       _.each(current, function (source){
         sourceDataIds.push(source.getData().linkId.toString());
       });
-      // //TODO remove 2 lines above. it was created due to testing purposes
-      // sourceDataIds = ["3114934","3107028"];
-      // targetDataIds = ["3114946","499976891"];
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
       backend.getTransferResult(data, function(result) {
@@ -231,12 +227,11 @@
       return current.length;
     };
 
-    //TODO uncomment for 180 spinner loading
     eventbus.on("roadLink:editModeAdjacents", function(){
-      // if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
+      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
         eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-        // applicationModel.addSpinner();
-      // }
+        applicationModel.addSpinner();
+      }
     });
 
     return {

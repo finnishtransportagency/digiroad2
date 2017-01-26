@@ -199,8 +199,7 @@
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      // '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="calculate btn btn-move" enabled>Siirrä</button>' +
+      '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-primary" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -414,15 +413,16 @@
         };
       });
       eventbus.on('adjacents:added', function(sources, targets) {
-        //TODO uncomment for 180 spinner loading
-        // applicationModel.removeSpinner();
         processAdjacents(sources,targets);
+        applicationModel.removeSpinner();
+
       });
 
       eventbus.on('adjacents:aditionalSourceFound', function(sources, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
         processAdjacents(sources, targets);
+        applicationModel.removeSpinner();
       });
 
       var processAdjacents = function (sources, targets) {
@@ -448,6 +448,7 @@
           applicationModel.setActiveButtons(true);
         });
         $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+          applicationModel.addSpinner();
           eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
         });
 
@@ -466,26 +467,20 @@
       rootElement.on('click', '.link-properties button.cancel', function() {
         var action;
         if(applicationModel.isActiveButtons())
-          action = "transferring";
+          action = applicationModel.actionCalculating;
         selectedLinkProperty.cancel(action);
+        // selectedLinkProperty.cancel();
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
-        //TODO calculate SIIRRA button operations
-        //applicationModel.addSpinner();
-        var siirra = selectedLinkProperty.transferingCalculation();
-        //TODO apply
+        applicationModel.addSpinner();
+        selectedLinkProperty.transferingCalculation();
         applicationModel.setActiveButtons(true);
         
       });
-
-
       eventbus.on('layer:selected', function(layer) {
-
       });
-
     };
-
     bindEvents();
   };
 })(this);

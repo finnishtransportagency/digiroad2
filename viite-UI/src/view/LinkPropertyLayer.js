@@ -25,9 +25,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      //TODO uncomment for 180 spinner loading
-      // if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
-      if(typeof feature.attributes.linkId !== 'undefined') {
+      if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
         selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
         unhighlightFeatures();
         currentRenderIntent = 'select';
@@ -113,24 +111,23 @@
         if(!applicationModel.isActiveButtons() && window.eventbus.on('map:moved')) {
             prepareRoadLinkDraw();
         }
-      if(!_.isUndefined(action) && _.isEqual(action, "transferred")){
+      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)){
         var roadLinks = roadCollection.getAllTmp();
       } else {
         var roadLinks = roadCollection.getAll();
       }
-      //nextTarget selected
-      if(!_.isUndefined(action) && _.isEqual(action, "transferring"))
+      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculating))
         _.each(roadLinks, function(roadlink){
           if(!_.isUndefined(roadlink.gapTransfering) && roadlink.gapTransfering === true){
             roadlink.gapTransfering = null;
           }
         });
-      //Siirra action
-      if(!_.isUndefined(action) && _.isEqual(action, "transferred") && !_.isUndefined(changedIds))
+      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated) && !_.isUndefined(changedIds))
         _.each(roadLinks, function(roadlink){
           if(_.contains(changedIds, roadlink.linkId)){
             roadlink.gapTransfering = null;
             roadlink.anomaly=0;
+            roadlink.markers=null;
           }
         });
 
@@ -170,7 +167,7 @@
       if (zoom > zoomlevels.minZoomForAssets) {
         me.drawCalibrationMarkers(roadLayer.layer, roadLinks);
       }
-      if(!_.isUndefined(action) && _.isEqual(action, "transferred")){
+      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)){
         redrawSelected(action);
       } else {
         redrawSelected();
@@ -395,8 +392,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
-        //TODO uncomment for 180 spinner loading
-        // applicationModel.addSpinner();
+        applicationModel.addSpinner();
         redrawNextSelectedTarget(targets, adjacents);
         drawIndicators(adjacents);
         selectedLinkProperty.addTargets(targets, adjacents);
@@ -413,9 +409,9 @@
           afterTransferLinks.push(road);
         });
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
-        selectedLinkProperty.cancel();
-        draw("transferred", changedIds);
-        clearIndicators();
+        // selectedLinkProperty.cancel();
+        draw(applicationModel.actionCalculated, changedIds);
+        // selectedLinkProperty.cancel(applicationModel.actionCalculating);
         // drawIndicators(roadLinks);
         eventbus.trigger('adjacents:roadTransferForm');        
       });
@@ -485,7 +481,7 @@
         if(!applicationModel.isActiveButtons()){
       roadLayer.layer.removeFeatures(getSelectedFeatures());
         }
-      if(!_.isUndefined(action) && _.isEqual(action, "transferred")){
+      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)){
         var selectedRoadLinks = roadCollection.getAllTmp();
       } else {
         var selectedRoadLinks = selectedLinkProperty.get();
