@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
+  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel,styler) {
     var layerName = 'linkProperty';
     var cachedLinkPropertyMarker = null;
     var cachedMarker = null;
@@ -39,37 +39,41 @@
      //roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
      //  return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
      //});
+    
+    /**
+     * We declare the type of interaction we want the map to be able to respond.
+     * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+     * @type {ol.interaction.Select}
+     */
     var selectSingleClick = new ol.interaction.Select({
-      multi: true
+      //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
+      multi: true,
+      //The new/temporary layer needs to have a style function as well, we define it here.
+      style: function(feature, resolution) {
+        var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+        var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
+        featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
+        return featureStyle;
+      }
     });
+
+    //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);
 
+    /**
+     * We now declare what kind of custom actions we want when the interaction happens.
+     * Note that 'select' is triggered when a feature is either selected or deselected.
+     * The event holds the selected features in the events.selected and the deselected in event.deselected.
+     */
     selectSingleClick.on('select',function(event) {
-      var source = roadLayer.layer.getSource();
-      var extent = map.getView().calculateExtent(map.getSize());
-      var visibleFeatures = source.getFeaturesInExtent(extent);
-      if(event.selected.length !== 0){
-        //We are selecting features
-        var featuresToFade = _.filter(visibleFeatures, function(vf) {
-          return !_.contains(_.map(event.selected, function(s) {
-            return s.roadLinkData.linkId;
-          }), vf.roadLinkData.linkId);
-        });
-
+      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
+      if(event.selected.length !== 0 && roadLayer.layer.getOpacity() === 1) {
+        roadLayer.layer.setOpacity(0.2);
+      } else if (event.selected.length === 0 && event.deselected.length !== 0){
+        roadLayer.layer.setOpacity(1);
       }
-
-      if(event.deselected.length !== 0){
-        //We are deselecting features
-        var featuresToEnhance = _.filter(visibleFeatures, function(vf) {
-          return !_.contains(_.map(event.deselected, function(s) {
-            return s.roadLinkData.linkId;
-          }), vf.roadLinkData.linkId);
-        });
-      }
-
-      console.log("Entered click event.");
-      console.log("This is the event object:" + event);
     });
+
     // roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
     //   return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     // });
@@ -200,7 +204,8 @@
 
       me.drawRoadNumberMarkers(roadLayer.source, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
-        me.drawCalibrationMarkers(roadLayer.source, roadLinks);
+        //TODO: De-comment back once this throws no errors.
+        // me.drawCalibrationMarkers(roadLayer.source, roadLinks);
       }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
