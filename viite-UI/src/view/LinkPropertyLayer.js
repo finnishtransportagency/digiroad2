@@ -48,6 +48,8 @@
     var selectSingleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       multi: true,
+      //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
+      layer: roadLayer.layer,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
         var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
@@ -69,6 +71,7 @@
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if(event.selected.length !== 0 && roadLayer.layer.getOpacity() === 1) {
         roadLayer.layer.setOpacity(0.2);
+        selectedLinkProperty.open(event.selected[0].roadLinkData.linkId, event.selected[0].roadLinkData.id, true);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         roadLayer.layer.setOpacity(1);
       }
