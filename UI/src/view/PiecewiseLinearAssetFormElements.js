@@ -254,9 +254,8 @@
 
   function maintenanceRoadFormElement() {
     var template =  _.template(
-        '<div class="form-group">' +
         '<label class="control-label"><%= label %> </label> ' +
-        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select></div>');
+        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
 
     return {
       inputElementValue: inputElementValue,
@@ -289,15 +288,13 @@
 
           case "text" :
             return ' ' +
-              '<div class="form-group">' +
                 '<label class="control-label">' + values.name + '</label>' +
                 '<input ' +
                 '    type="text" ' +
                 '    class="form-control ' + className + '" id="' + values.id + '"' +
-                '    value="' + currentValue + '" ' + disabled + ' onclick="">' +
-              '</div>';
+                '    value="' + currentValue + '" ' + disabled + ' onclick="">';
         }});
-      return '<form class="input-unit-combination form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
+      return '<form class="input-unit-combination form-group form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
     }
 
       function inputElementValue(input) {
