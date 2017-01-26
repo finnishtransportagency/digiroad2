@@ -5,8 +5,28 @@
     var createMarker = function(roadlink) {
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
-      //TODO - Review the "box" initialization in order to create a box in OL3 (previously OpenLayers.Marker.Box)
-      var box = new ol.Feature(bounds, "ffffff00", 0);
+      var box = new ol.Feature({
+        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])
+      });
+
+      var boxStyleFloat = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: '../images/link-properties/flag-floating-plus-stick.png',
+          anchor: [0, 1]
+        })
+      });
+
+      var boxStyleUnknown = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: "images/speed-limits/unknown.svg"
+        })
+      });
+
+      if(roadlink.roadLinkType==-1){
+        box.setStyle(boxStyleFloat);
+      } else {
+        box.setStyle(boxStyleUnknown);
+      }
       box.id = roadlink.linkId;
       configureMarkerDiv(box, roadlink.linkId);
       renderDefaultState(box, roadlink);
@@ -14,7 +34,7 @@
     };
 
     var getBounds = function(lon, lat) {
-      return ol.extent.boundingExtent(ol.proj.toLonLat([lon, lat, lon, lat]));
+      return [lon, lat, lat, lon];
     };
 
     var configureMarkerDiv = function(box, id){

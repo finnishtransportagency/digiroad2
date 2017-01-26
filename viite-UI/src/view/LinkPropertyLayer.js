@@ -187,18 +187,19 @@
         _.each(floatingRoadMarkers, function(floatlink) {
           var mouseClickHandler = createMouseClickHandler(floatlink);
           var marker = cachedLinkPropertyMarker.createMarker(floatlink);
+          //TODO - Click marker events
           /*marker.events.add('click',marker, mouseClickHandler);
           marker.events.add('dblclick',marker, mouseClickHandler);*/
-          //floatingMarkerLayer.addMarker(marker);
-          floatingMarkerVector.addFeature(marker);
+          floatingMarkerLayer.getSource().addFeature(marker);
       });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var mouseClickHandler = createMouseClickHandler(anomalouslink);
           var marker = cachedMarker.createMarker(anomalouslink);
+          //TODO - Click marker events
           /*marker.events.add('click',marker, mouseClickHandler);
           marker.events.add('dblclick',marker, mouseClickHandler);*/
-          anomalousMarkerVector.addFeature(marker);
+          anomalousMarkerLayer.getSource().addFeature(marker);
         });
       }
 

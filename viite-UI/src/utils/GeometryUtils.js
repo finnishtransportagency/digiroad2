@@ -111,7 +111,7 @@
   };
 
   var distanceOfPoints = function (end, start) {
-    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
   };
   root.distanceOfPoints = distanceOfPoints;
 
@@ -128,7 +128,7 @@
 
   root.calculateMidpointOfLineString = function (lineString) {
     var length = lineString.getLength();
-    var vertices = lineString.getFlatCoordinates();
+    var vertices = lineString.getCoordinates();
     var firstVertex = _.first(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
@@ -137,6 +137,8 @@
       if (accumulatedDistance < length / 2) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
+        vertex = {x: vertex[0], y: vertex[1]};
+        acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] }
         return {
           midpoint: {
             x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
