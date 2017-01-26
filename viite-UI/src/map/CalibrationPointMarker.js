@@ -14,8 +14,8 @@
     var createCalibrationPointMarker = function() {
       var markerGraphics = _.clone(defaultMarkerGraphics);
 //      markerGraphics.rotation = 90;
-      return new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(data.x, data.y),
+      return new ol.Feature.Vector(
+        new ol.geom.Point(data.x, data.y),
         null,
         markerGraphics
       );

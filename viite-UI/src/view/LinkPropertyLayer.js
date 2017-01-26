@@ -36,9 +36,9 @@
     indicatorLayer.setVisible(true);
 
 
-     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
-       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
-     });
+     //roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
+     //  return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
+     //});
     var selectSingleClick = new ol.interaction.Select({
       multi: true
     });
