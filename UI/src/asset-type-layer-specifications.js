@@ -344,10 +344,7 @@
         {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
         {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
         {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"}]
-    }
-  ];
-
-  root.experimentalLinearAssetSpecs = [
+    },
     {
       typeId: assetType.numberOfLanes,
       singleElementEventCategory: 'laneCount',
@@ -361,9 +358,13 @@
       editControlLabels: {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
-        disabled: 'Linkin mukainen tyypillinen kaistamäärä'
+        disabled: 'Ei tietoa'
       }
     }
+  ];
+
+  root.experimentalLinearAssetSpecs = [
+
   ];
 
   root.pointAssetSpecs = [
