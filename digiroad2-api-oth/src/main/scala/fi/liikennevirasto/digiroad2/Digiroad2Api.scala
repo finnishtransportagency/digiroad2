@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.VKMClientException
+import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -358,7 +359,7 @@ Returns empty result as Json message, not as page not found
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = roadLinkService.withRoadAddress(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -406,10 +407,28 @@ Returns empty result as Json message, not as page not found
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> roadLink.attributes.get("ROADPARTNUMBER"),
-      "roadNumber" -> roadLink.attributes.get("ROADNUMBER"),
+      "roadPartNumber" -> extractLongValue(roadLink, "VIITE_ROAD_PART_NUMBER"),
+      "roadNumber" -> extractLongValue(roadLink, "VIITE_ROAD_NUMBER"),
       "constructionType" -> roadLink.constructionType.value,
-      "linkSource" -> roadLink.linkSource.value)
+      "linkSource" -> roadLink.linkSource.value,
+      "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
+      "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
+      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR")
+    )
+  }
+
+  private def extractIntValue(roadLink: RoadLink, value: String) = {
+    roadLink.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Int]
+      case _ => None
+    }
+  }
+
+  private def extractLongValue(roadLink: RoadLink, value: String) = {
+    roadLink.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
   }
 
   get("/roadlinks") {

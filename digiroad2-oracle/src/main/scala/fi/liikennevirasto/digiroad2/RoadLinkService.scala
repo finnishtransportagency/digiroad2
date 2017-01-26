@@ -1145,4 +1145,53 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
   }
 
+  def withRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    val addressData = getRoadAddressesByLinkIds(roadLinks.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap
+    roadLinks.map(rl =>
+      if (addressData.contains(rl.linkId))
+        rl.copy(attributes = rl.attributes ++ addressData(rl.linkId).asAttributes)
+      else
+        rl
+    )
+  }
+
+  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, sideCode: Int,
+                                 startAddrMValue: Long, endAddrMValue: Long) {
+    def asAttributes: Map[String, Any] = Map("VIITE_ROAD_NUMBER" -> roadNumber,
+      "VIITE_ROAD_PART_NUMBER" -> roadPartNumber,
+      "VIITE_TRACK" -> track,
+      "VIITE_SIDECODE" -> sideCode,
+      "VIITE_START_ADDR" -> startAddrMValue,
+      "VIITE_END_ADDR" -> endAddrMValue)
+  }
+
+  /**
+    * This method fetches road addresses by link ids from Viite ROAD_ADDRESS table using LRM_POSITION
+    *
+    * @param linkIds
+    * @return
+    */
+  def getRoadAddressesByLinkIds(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
+    withDynTransaction {
+      MassQuery.withIds(linkIds) {
+        idTableName =>
+          val query = s"""
+            SELECT pos.LINK_ID, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.TRACK_CODE, pos.SIDE_CODE,
+              MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
+            FROM ROAD_ADDRESS ra
+            JOIN LRM_POSITION pos on ra.LRM_POSITION_ID = pos.ID
+            JOIN $idTableName i on i.ID = pos.LINK_ID
+            WHERE (VALID_FROM IS NULL OR VALID_FROM <= sysdate) AND
+              (VALID_TO IS NULL OR VALID_TO >= sysdate) AND
+              (START_DATE IS NULL OR START_DATE <= sysdate) AND
+              (END_DATE IS NULL OR END_DATE >= sysdate)
+            GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
+          Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
+            case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+            => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+        }
+      }
+    }
+  }
+
 }

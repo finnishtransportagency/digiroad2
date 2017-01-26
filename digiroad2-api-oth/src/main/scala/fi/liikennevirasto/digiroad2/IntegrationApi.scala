@@ -344,7 +344,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber))
+        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
