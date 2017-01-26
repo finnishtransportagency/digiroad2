@@ -65,7 +65,7 @@
         var roadNumbers = extractUniqueValues(selectedData, 'roadNumber');
         var roadPartNumbers = {roadPartNumber: null};
         var startAddrMValue = {startAddrMValue: null};
-        var endAddrMValue = {startAddrMValue: null};
+        var endAddrMValue = {endAddrMValue: null};
         // Don't show address data if multiple roads (with distinct road numbers) are selected
         if (roadNumbers !== null && roadNumbers.length > 0 && !roadNumbers.match("/,/")) {
           roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
