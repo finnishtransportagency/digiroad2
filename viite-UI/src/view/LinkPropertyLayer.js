@@ -69,10 +69,14 @@
      */
     selectSingleClick.on('select',function(event) {
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
-      if(event.selected.length !== 0 && roadLayer.layer.getOpacity() === 1) {
-        roadLayer.layer.setOpacity(0.2);
-        // selectedLinkProperty.open(event.selected[0].roadLinkData.linkId, event.selected[0].roadLinkData.id, true);
+      if(event.selected.length !== 0) {
+        if (roadLayer.layer.getOpacity() === 1) {
+          roadLayer.layer.setOpacity(0.2);
+        }
+        selectedLinkProperty.close();
+        selectedLinkProperty.open(event.selected[0].roadLinkData.linkId, event.selected[0].roadLinkData.id, true);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
+        selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
       }
     });
