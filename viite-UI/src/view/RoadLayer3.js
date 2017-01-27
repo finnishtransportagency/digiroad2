@@ -33,7 +33,6 @@
     }
 
     var loadFeatures = function (features) {
-      //TODO: putting this here causes a evocation loop of the following event: 'roadLinks:fetched', try to find an alternative to clear the source before drawing
       vectorSource.clear(true);
       vectorSource.addFeatures(features);
     };
