@@ -3,6 +3,38 @@
 
     var borderWidth = 7;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
+    //TODO thoses rule configurations on the LinkPropertyLayerStyle
+    //TODO create support  for externalGraphic
+    var functionalClassRules = [
+      new StyleRule().where('functionalClass').is(1).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new StyleRule().where('functionalClass').is(2).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new StyleRule().where('functionalClass').is(3).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new StyleRule().where('functionalClass').is(4).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new StyleRule().where('functionalClass').is(5).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new StyleRule().where('functionalClass').is(6).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new StyleRule().where('functionalClass').is(7).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+    ];
+
+    var unknownFunctionalClassDefaultRules = [
+      new StyleRule().where('functionalClass').is(99).use({ stroke : { color: '#888', opacity: 0.6}, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
+    //TODO create support  for pointRadius
+    var zoomLevelRules = [
+      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3 }, pointRadius: 0 }),
+      new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5 }, pointRadius: 10 }),
+      new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 8 }, pointRadius: 12 }),
+      new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10 }, pointRadius: 13 }),
+      new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10 }, pointRadius: 14 }),
+      new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14 }, pointRadius: 16 }),
+      new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14 }, pointRadius: 16 })
+    ];
+
+    var styleProvider = new StyleRuleProvider({stroke : { color: "#a4a4a2", opacity: 0.7 }});
+    styleProvider.addRules(functionalClassRules);
+    styleProvider.addRules(unknownFunctionalClassDefaultRules);
+    styleProvider.addRules(zoomLevelRules);
 
     /**
      * Inspired on the LinkPropertyLayerStyles roadClassRules, unknownRoadAddressAnomalyRules and constructionTypeRules.
@@ -106,6 +138,13 @@
      * @returns {*[ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the border the second is for the line itself.
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
+      console.log(roadLinkData.functionalClass);
+      roadLinkData.zoomLevel = currentZoom;
+
+      var returnedStyle = styleProvider.getStyle(roadLinkData);
+
+      return [ returnedStyle ];
+/*
       var strokeWidth = strokeWidthByZoomLevel(currentZoom);
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType);
       var borderColor = modifyColorProperties(lineColor, 0.75, true, true);
@@ -137,7 +176,7 @@
       var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
       borderStyle.setZIndex(zIndex);
       lineStyle.setZIndex(zIndex+1);
-      return [lineStyle, borderStyle];
+      return [lineStyle, borderStyle];*/
     };
 
     return {
