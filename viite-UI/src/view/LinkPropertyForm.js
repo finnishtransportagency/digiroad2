@@ -441,10 +441,6 @@
           return t.roadLinkType == -1;
         });
 
-        // var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-        //   return aditionalSource(fa.linkId, fa.marker);
-        // })[0] + adjacentsTemplate : adjacentsTemplate;
-
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
           return aditionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
