@@ -175,6 +175,12 @@
       '</div>' +
       '</div>';
 
+    var afterCalculationTemplate ='' +
+      '<div class="form-group" id="afterCalculationInfo">' +
+      ' <br><br><p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">TARKISTA TEKEMÄSI MUUTOKSET KARTTANÄKYMÄSTÄ.</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENA</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS HALUAT KORJATA TEKEMÄSI MUUTOKSIA, PAINA PERUUTA</span></p>' +
+      '</div>';
 
     var staticField = function(labelText, dataField) {
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -435,7 +441,11 @@
           return t.roadLinkType == -1;
         });
 
-        var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
+        // var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
+        //   return aditionalSource(fa.linkId, fa.marker);
+        // })[0] + adjacentsTemplate : adjacentsTemplate;
+
+        var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
           return aditionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 

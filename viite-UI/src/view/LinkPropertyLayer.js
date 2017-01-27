@@ -423,19 +423,15 @@
     
     var drawIndicators= function(links){
       indicatorLayer.clearMarkers();
-      var filteredLinks = links;
-      var changedIds = roadCollection.getChangedIds();
-      if(applicationModel.getCurrentAction()===applicationModel.actionCalculated)
-        filteredLinks = _.filter(links, function(roadlink){
-        return !_.contains(changedIds, roadlink.linkId.toString());
-      });
-      var indicators = me.mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
-        var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-        return createIndicatorFromBounds(bounds, link.marker);
-      });
-      _.forEach(indicators, function(indicator){
-        indicatorLayer.addMarker(indicator);
-      });
+      if(applicationModel.getCurrentAction()!==applicationModel.actionCalculated){
+        var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
+          return createIndicatorFromBounds(bounds, link.marker);
+        });
+        _.forEach(indicators, function(indicator){
+          indicatorLayer.addMarker(indicator);
+        });
+      }
     };
 
     var createIndicatorFromBounds = function(bounds, marker) {
