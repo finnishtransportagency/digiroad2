@@ -63,7 +63,7 @@
       return properties;
     };
 
-    var open = function(linkId, id, singleLinkSelect) {
+    var open = function(linkId, id, singleLinkSelect, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         close();
@@ -76,6 +76,17 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+
+        if(!singleLinkSelect){
+         var selectedOL3Features = _.filter(visibleFeatures, function(vf){
+            return (_.some(get(), function(s){
+                return s.linkId === vf.roadLinkData.linkId;
+              })) && (_.some(get(), function(s){
+                return s.mmlId === vf.roadLinkData.mmlId;
+              }));
+          });
+          eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
+        }
 
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
