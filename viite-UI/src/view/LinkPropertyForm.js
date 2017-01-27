@@ -441,6 +441,8 @@
 
         $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
         $('#floatingEditModeForm').show();
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
+          eventbus.trigger("adjacents:roadTransferForm");
         $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
           eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
           rootElement.find('.link-properties button.calculate').attr('disabled', false);
@@ -468,16 +470,24 @@
         var action;
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
+        applicationModel.setCurrentAction(action);
         selectedLinkProperty.cancel(action);
-        // selectedLinkProperty.cancel();
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
         applicationModel.addSpinner();
-        selectedLinkProperty.transferingCalculation();
+        selectedLinkProperty.transferringCalculation();
         applicationModel.setActiveButtons(true);
         
       });
+      eventbus.on('adjacents:roadTransferForm', function() {
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        rootElement.find('.link-properties button.save').attr('disabled', false);
+        rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        applicationModel.removeSpinner();
+      });
+
       eventbus.on('layer:selected', function(layer) {
       });
     };

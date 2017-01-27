@@ -105,7 +105,7 @@
       });
     };
 
-    var draw = function(action, changedIds) {
+    var draw = function(action, changedTargetIds) {
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
         if(!applicationModel.isActiveButtons() && window.eventbus.on('map:moved')) {
@@ -120,14 +120,6 @@
         _.each(roadLinks, function(roadlink){
           if(!_.isUndefined(roadlink.gapTransfering) && roadlink.gapTransfering === true){
             roadlink.gapTransfering = null;
-          }
-        });
-      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated) && !_.isUndefined(changedIds))
-        _.each(roadLinks, function(roadlink){
-          if(_.contains(changedIds, roadlink.linkId)){
-            roadlink.gapTransfering = null;
-            roadlink.anomaly=0;
-            roadlink.markers=null;
           }
         });
 
@@ -393,9 +385,11 @@
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
         applicationModel.addSpinner();
-        redrawNextSelectedTarget(targets, adjacents);
-        drawIndicators(adjacents);
-        selectedLinkProperty.addTargets(targets, adjacents);
+          redrawNextSelectedTarget(targets, adjacents);
+        if(applicationModel.getCurrentAction()!==applicationModel.actionCalculated){
+          drawIndicators(adjacents);
+          selectedLinkProperty.addTargets(targets, adjacents);
+        }
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
         drawIndicators(targets);
@@ -409,11 +403,9 @@
           afterTransferLinks.push(road);
         });
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
-        // selectedLinkProperty.cancel();
-        draw(applicationModel.actionCalculated, changedIds);
-        // selectedLinkProperty.cancel(applicationModel.actionCalculating);
-        // drawIndicators(roadLinks);
-        eventbus.trigger('adjacents:roadTransferForm');        
+        applicationModel.setCurrentAction(applicationModel.actionCalculated);
+        selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
+        roadCollection.setChangedIds(changedIds);
       });
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function(){
         if(applicationModel.isReadOnly() && !applicationModel.isActiveButtons()){
@@ -431,7 +423,13 @@
     
     var drawIndicators= function(links){
       indicatorLayer.clearMarkers();
-      var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+      var filteredLinks = links;
+      var changedIds = roadCollection.getChangedIds();
+      if(applicationModel.getCurrentAction()===applicationModel.actionCalculated)
+        filteredLinks = _.filter(links, function(roadlink){
+        return !_.contains(changedIds, roadlink.linkId.toString());
+      });
+      var indicators = me.mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
         var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
         return createIndicatorFromBounds(bounds, link.marker);
       });

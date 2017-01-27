@@ -170,7 +170,7 @@
       return _.union(targets);
     };
 
-    var transferingCalculation = function(){
+    var transferringCalculation = function(){
       var selected = _.first(current).getData();
       var targetDataIds = [];
       var sourceDataIds = [];
@@ -186,24 +186,24 @@
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
         }
-        $('#aditionalSource').remove();
-        $('#adjacentsData').remove();
-        $('#feature-attributes').find('.link-properties button.save').attr('disabled', false);
-        $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
       });
 
     };
 
-    var cancel = function(action) {
+    var cancel = function(action, changedTargetIds) {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
       targets = [];
+      if(_.isEmpty(changedTargetIds)){
+        roadCollection.resetTmp();
+        roadCollection.resetChangedIds();
+      }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons()){
         applicationModel.setActiveButtons(false);
-        eventbus.trigger('roadLinks:fetched', action);
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
         eventbus.trigger('roadLinks:deleteSelection');
       }
     };
@@ -237,7 +237,7 @@
     return {
       addTargets: addTargets,
       getTargets: getTargets,
-      transferingCalculation: transferingCalculation,
+      transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,

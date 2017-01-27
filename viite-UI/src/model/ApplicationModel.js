@@ -12,6 +12,7 @@
     var activeButtons = false;
     var actionCalculating = 0;
     var actionCalculated = 1;
+    var currentAction;
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -41,15 +42,25 @@
       }
     }
 
+    var getCurrentAction = function() {
+      return currentAction;
+    };
+
+    var setCurrentAction = function(action) {
+      return currentAction = action;
+    };
+
     var addSpinner = function () {
       jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
     };
-    
+
     var removeSpinner = function(){
       jQuery('.spinner-overlay').remove();
     };
 
     return {
+      getCurrentAction: getCurrentAction,
+      setCurrentAction: setCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
       moveMap: function(zoom, bbox) {
