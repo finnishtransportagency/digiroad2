@@ -216,7 +216,13 @@
       me.drawRoadNumberMarkers(roadLayer.source, roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         //TODO: De-comment back once this throws no errors.
-        // me.drawCalibrationMarkers(roadLayer.source, roadLinks);
+        var actualPoints =  me.drawCalibrationMarkers(roadLayer.source, roadLinks);
+
+         _.each(actualPoints, function(actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint.point);
+          floatingMarkerLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+
       }
       redrawSelected();
       eventbus.trigger('linkProperties:available');
