@@ -24,7 +24,6 @@
           });
           loadFeatures(features);
         });
-        roadCollection.fetch(extent.join(','), zoom);
       },
       strategy: ol.loadingstrategy.bbox
     });
@@ -35,7 +34,7 @@
 
     var loadFeatures = function (features) {
       //TODO: putting this here causes a evocation loop of the following event: 'roadLinks:fetched', try to find an alternative to clear the source before drawing
-      // vectorSource.clear();
+      vectorSource.clear(true);
       vectorSource.addFeatures(features);
     };
 
@@ -59,6 +58,7 @@
         currentZoom = mapState.zoom;
         vectorSource.clear();
       }
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom);
       handleRoadsVisibility();
     };
 

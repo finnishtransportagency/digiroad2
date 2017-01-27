@@ -138,7 +138,7 @@
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
         vertex = {x: vertex[0], y: vertex[1]};
-        acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] }
+        acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] };
         return {
           midpoint: {
             x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
