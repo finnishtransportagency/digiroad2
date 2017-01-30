@@ -619,6 +619,8 @@ object RoadAddressLinkBuilder {
     val allLinks = sources++targets
     val allGeom = allLinks.flatMap(_.geometry)
 
+    var orderedGeometry = allLinks
+
     val allStartCp = sources.flatMap(_.startCalibrationPoint)++targets.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)++targets.flatMap(_.endCalibrationPoint)
     val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
@@ -632,12 +634,12 @@ object RoadAddressLinkBuilder {
     if(!allLinks.flatMap(_.startCalibrationPoint).isEmpty){
       minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
     } else {
-      allLinks.map(_.startMValue).min
+      minStartMValue = allLinks.map(_.startMValue).min
     }
     if(!allLinks.flatMap(_.endCalibrationPoint).isEmpty){
       maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     } else {
-      allLinks.map(_.endMValue).max
+      maxEndMValue = allLinks.map(_.endMValue).max
     }
     val source = sources.head
 
