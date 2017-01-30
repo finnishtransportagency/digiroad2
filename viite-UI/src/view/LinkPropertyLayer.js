@@ -271,23 +271,17 @@
         _.each(floatingRoadMarkers, function(floatlink) {
           var mouseClickHandler = createMouseClickHandler(floatlink);
           var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          //TODO - Click marker events
-          /*marker.events.add('click',marker, mouseClickHandler);
-          marker.events.add('dblclick',marker, mouseClickHandler);*/
           floatingMarkerLayer.getSource().addFeature(marker);
-      });
+        });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var mouseClickHandler = createMouseClickHandler(anomalouslink);
           var marker = cachedMarker.createMarker(anomalouslink);
-          //TODO - Click marker events
-          /*marker.events.add('click',marker, mouseClickHandler);
-          marker.events.add('dblclick',marker, mouseClickHandler);*/
           anomalousMarkerLayer.getSource().addFeature(marker);
         });
       }
 
-      me.drawRoadNumberMarkers(roadLayer.source, roadLinks);
+      //me.drawRoadNumberMarkers(floatingMarkerLayer.getSource(), roadLinks);
       if (zoom > zoomlevels.minZoomForAssets) {
         var actualPoints =  me.drawCalibrationMarkers(roadLayer.source, roadLinks);
          _.each(actualPoints, function(actualPoint) {
@@ -523,13 +517,13 @@
     };
 
     var drawIndicators= function(links){
-       indicatorLayer.clearMarkers();
+       //indicatorLayer.clear();
        var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
          var bounds = ol.extent.boundingExtent([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
          return createIndicatorFromBounds(bounds, link.marker);
        });
        _.forEach(indicators, function(indicator){
-         indicatorLayer.addMarker(indicator);
+         indicatorLayer.getSource().addFeature(indicator);
        });
     };
 

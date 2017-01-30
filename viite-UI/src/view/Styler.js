@@ -142,10 +142,11 @@
      * Method evoked by feature that will determine what kind of style said feature will have.
      * @param roadLinkData The roadLink details of a feature
      * @param currentZoom The value of the current application zoom.
-     * @returns {*[ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the border the second is for the line itself.
+     * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType);
+      var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       var borderColor = modifyColorProperties(lineColor, 1.45, true, false);
       borderColor = modifyColorProperties(borderColor,0.75, false, true);
@@ -161,10 +162,15 @@
         color: lineColor,
         lineCap: lineCap
       });
+      var underline = new ol.style.Stroke({
+        width: strokeWidth,
+        color: underLineColor,
+        lineCap: lineCap
+      });
 
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
-        lineBorder.setLineDash([20, 60]);
-        line.setLineDash([20, 60]);
+        //lineBorder.setLineDash([5, 25]);
+        line.setLineDash([5, 25]);
       }
 
       //Declaration of the Line Styles
@@ -174,10 +180,14 @@
       var lineStyle = new ol.style.Style({
         stroke: line
       });
+      var underlineStyle = new ol.style.Style({
+        stroke: underline
+      });
       var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
       borderStyle.setZIndex(zIndex);
-      lineStyle.setZIndex(zIndex+1);
-      return [lineStyle, borderStyle];
+      underlineStyle.setZIndex(zIndex+1);
+      lineStyle.setZIndex(zIndex+2);
+      return [borderStyle , underlineStyle, lineStyle];
     };
 
     return {
