@@ -118,7 +118,7 @@
 
         var selection = _.find(event.selected, function(selectionTarget){
           return !_.isUndefined(selectionTarget.roadLinkData);
-        });        
+        });
         selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
@@ -131,6 +131,31 @@
       _.each(ol3Features, function(feature){
         selectSingleClick.getFeatures().push(feature);
       });
+    });
+
+    var selectMarkers = new ol.interaction.Select({
+        condition: ol.events.condition.click,
+        layers: [floatingMarkerLayer, anomalousMarkerLayer]
+      });
+
+    map.addInteraction(selectMarkers);
+
+    selectMarkers.on('select',function(event) {
+       if(event.selected.length !== 0) {
+        if (floatingMarkerLayer.getOpacity() === 1 && anomalousMarkerLayer.getOpacity() === 1) {
+          floatingMarkerLayer.setOpacity(0.2);
+          anomalousMarkerLayer.setOpacity(0.2);
+        }
+        selectedLinkProperty.close();
+         var selection = _.find(event.selected, function(selectionTarget){
+           return !_.isUndefined(selectionTarget.roadLinkData);
+         });
+        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true);
+       } else if (event.selected.length === 0 && event.deselected.length !== 0){
+         selectedLinkProperty.close();
+         floatingMarkerLayer.setOpacity(1);
+         anomalousMarkerLayer.setOpacity(1);
+       }
     });
 
     // roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {

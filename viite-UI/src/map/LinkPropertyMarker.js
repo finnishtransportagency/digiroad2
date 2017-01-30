@@ -24,12 +24,14 @@
 
       if(roadlink.roadLinkType==-1){
         box.setStyle(boxStyleFloat);
+
       } else {
         box.setStyle(boxStyleUnknown);
       }
       box.id = roadlink.linkId;
       configureMarkerDiv(box, roadlink.linkId);
       renderDefaultState(box, roadlink);
+      box.roadLinkData = roadlink;
       return box;
     };
 
