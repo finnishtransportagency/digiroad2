@@ -254,7 +254,7 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var currentRenderIntent = 'default';
-    //var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
+    var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     var isComplementaryActive = false;
 
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
@@ -268,9 +268,9 @@
     //  return undefined;
     //});
 
-    //roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
-    //  return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
-    //});
+    roadLayer.setLayerSpecificStyleProvider(layerName, function() {
+      return linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
+    });
 
     var selectRoadLink = function(feature) {
       selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);

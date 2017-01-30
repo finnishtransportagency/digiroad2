@@ -207,8 +207,7 @@
 
     if (withTileMaps) { new TileMapCollection(map); }
     // var roadLayer = new RoadLayer(map, models.roadCollection);
-    var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
+    var roadLayer = new RoadLayer3(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
     //new ManoeuvreForm(models.selectedManoeuvreSource);

@@ -1,5 +1,7 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
+
+    /*
     var functionalClassRules = [
       new OpenLayersRule().where('functionalClass').is(1).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
       new OpenLayersRule().where('functionalClass').is(2).use({ strokeColor: '#f00', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
@@ -385,40 +387,74 @@
       select: verticalLevelSelectionSelectStyle,
       default: verticalLevelSelectionDefaultStyle
     });
+*/
+
+    //TODO thoses rule configurations on the LinkPropertyLayerStyle
+    //TODO create support  for externalGraphic
+    var functionalClassRules = [
+      new StyleRule().where('functionalClass').is(1).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new StyleRule().where('functionalClass').is(2).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new StyleRule().where('functionalClass').is(3).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new StyleRule().where('functionalClass').is(4).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new StyleRule().where('functionalClass').is(5).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new StyleRule().where('functionalClass').is(6).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new StyleRule().where('functionalClass').is(7).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+    ];
+
+    var unknownFunctionalClassDefaultRules = [
+      new StyleRule().where('functionalClass').is(99).use({ stroke : { color: '#888', opacity: 0.6}, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+
+    //TODO create support  for pointRadius
+    var zoomLevelRules = [
+      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3 }, pointRadius: 0 }),
+      new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5 }, pointRadius: 10 }),
+      new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 8 }, pointRadius: 12 }),
+      new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10 }, pointRadius: 13 }),
+      new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10 }, pointRadius: 14 }),
+      new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14 }, pointRadius: 16 }),
+      new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14 }, pointRadius: 16 })
+    ];
+
+    var styleProvider = new StyleRuleProvider({stroke : { color: "#a4a4a2", opacity: 0.7 }});
+    styleProvider.addRules(functionalClassRules);
+    styleProvider.addRules(unknownFunctionalClassDefaultRules);
+    styleProvider.addRules(zoomLevelRules);
 
     // --- Style map selection
-    var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
+    var getDatasetSpecificStyle = function(dataset, renderIntent) {
       var styleMaps = {
         'functional-class': {
-          'default': functionalClassDefaultStyleMap,
-          'select': functionalClassSelectionStyleMap,
+          'default': styleProvider,
+          'select': styleProvider,
           'history': {
-            'default': functionalClassHistoryDefaultStyleMap,
-            'select': functionalClassHistorySelectionStyleMap
+            'default': styleProvider,
+            'select': styleProvider
           }
         },
         'administrative-class': {
-          'default': administrativeClassDefaultStyleMap,
-          'select': administrativeClassSelectionStyleMap
+          'default': styleProvider,
+          'select': styleProvider
         },
         'link-type': {
-          'default': linkTypeDefaultStyleMap,
-          'select': linkTypeSelectionStyleMap,
+          'default': styleProvider,
+          'select': styleProvider,
           'history': {
-            'default': linkTypeHistoryDefaultStyleMap,
-            'select': linkTypeHistorySelectionStyleMap
+            'default': styleProvider,
+            'select': styleProvider
           }
         },
         'vertical-level': {
-          'default': verticalLevelDefaultStyleMap,
-          'select': verticalLevelSelectionStyleMap
+          'default': styleProvider,
+          'select': styleProvider
         }
       };
       return styleMaps[dataset][renderIntent];
     };
 
     return {
-      getDatasetSpecificStyleMap: getDatasetSpecificStyleMap
+      getDatasetSpecificStyle: getDatasetSpecificStyle
     };
   };
 })(this);
