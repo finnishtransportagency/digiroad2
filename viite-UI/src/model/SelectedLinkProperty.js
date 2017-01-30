@@ -182,8 +182,10 @@
     var cancel = function() {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
-      var originalData = _.first(current).getData();
-      eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+      if(!_.isUndefined(_.first(current))){
+        var originalData = _.first(current).getData();
+        eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+      }
     };
 
     var setLinkProperty = function(key, value) {

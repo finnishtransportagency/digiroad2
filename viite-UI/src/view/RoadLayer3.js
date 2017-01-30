@@ -1,18 +1,13 @@
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection,styler) {
     var vectorLayer;
-    var drawRoadLinks = function(roadLinks, zoom) {
-      console.log("Draw road links");
-    };
     var layerMinContentZoomLevels = {};
-    var layerStyleMaps = {};
-    var layerStyleMapProviders = {};
     var currentZoom = 0;
 
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
-        eventbus.once('roadLinks:fetched', function(roadLinkGroups) {
+        eventbus.once('roadLinks:fetched', function() {
           var features = _.map(roadCollection.getAll(), function(roadLink) {
             var points = _.map(roadLink.points, function(point) {
               return [point.x, point.y];
