@@ -723,53 +723,55 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Filtered by "Private"
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
-      filteredRoadLinkByAdminClass = filteredRoadLinkByAdminClass ++ roadLinks.filter(p => (p.administrativeClass == Private))
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(p => (p.administrativeClass == Private))
+
 
       println("End processing municipality %d".format(municipality))
-    }
-    //Obtain all existing RoadLinkId by AssetType
-    val assetCreated = withDynTransaction {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
 
-    //Exclude existing RoadLinkId
-    val filteredRoadLinksByNonCreated = filteredRoadLinkByAdminClass.filterNot(f => assetCreated.contains(f.linkId))
+      //Obtain all existing RoadLinkId by AssetType
+      //val assetCreated = withDynTransaction {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
+      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
+      //Exclude existing RoadLinkId
+      val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
 
-    println ("Total register    -> " + filteredRoadLinkByAdminClass.size)
-    println ("Total creates     -> " + assetCreated.size)
-    println ("Total reg - creat -> " + filteredRoadLinksByNonCreated.size)
+      println ("Total register    -> " + roadLinks.size)
+      println ("Total creates     -> " + assetCreated.size)
+      println ("Total reg - creat -> " + filteredRoadLinksByNonCreated.size)
 
-    if (filteredRoadLinksByNonCreated.size != 0) {
-      withDynTransaction {
-        //Create new Assets for the RoadLinks from VVH
-        filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
+      if (filteredRoadLinksByNonCreated.size != 0) {
+       // withDynTransaction {
+        OracleDatabase.withDynSession {
+          //Create new Assets for the RoadLinks from VVH
+          filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
-          val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
+            val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
 
-          roadLinkProp.linkType match {
-            case asset.SingleCarriageway =>
+            roadLinkProp.linkType match {
+              case asset.SingleCarriageway =>
 
-              roadLinkProp.trafficDirection match {
-                case asset.TrafficDirection.BothDirections => {
-                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 1)
-                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 1)
+                roadLinkProp.trafficDirection match {
+                  case asset.TrafficDirection.BothDirections => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 1)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 1)
+                  }
+                  case _ => {
+                    None
+                  }
                 }
-                case _ => {
-                  None
+              case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
+                roadLinkProp.trafficDirection match {
+                  case asset.TrafficDirection.BothDirections => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 2)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 2)
+                  }
+                  case _ => {
+                    None
+                  }
                 }
+              case _ => {
+                None
               }
-            case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
-              roadLinkProp.trafficDirection match {
-                case asset.TrafficDirection.BothDirections => {
-                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 2)
-                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 2)
-                }
-                case _ => {
-                  None
-                }
-              }
-            case _ => {
-                  None
-                }
+            }
           }
         }
       }
