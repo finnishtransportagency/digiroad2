@@ -1285,8 +1285,35 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       }else{
         sqlu"update text_property_value set value_fi = $vname, modified_date = sysdate, modified_by = $modifiedBy where asset_id = $assetId and property_id = $propertyVal".execute
       }
-
-
     }
+
+  def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
+    sqlu"""
+         into asset(id, asset_type_id, created_by, created_date)
+         values ($assetId, $typeId, $Modifier, sysdate)""".execute
+
+    sqlu"""
+         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)""".execute
+
+    sqlu"""
+         into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId)""".execute
+
+    insertNumberPropertyData(300077, assetId, value)
+  }
+
+  def getAllLinkIdByAsset(typeId: Long) =
+  {
+       sql"""
+            select pos.link_id
+            from ASSET a
+            join ASSET_LINK al on a.id = al.asset_id
+            join LRM_POSITION pos on al.position_id = pos.id
+            where a.asset_type_id = $typeId""".as[(Long)].list
+  }
 }
 
