@@ -708,13 +708,15 @@ object DataFixture {
     println(DateTime.now())
 
     val LanesNumberAssetTypeId = 140
-    var filteredRoadLinkByAdminClass: Seq[RoadLink] = Seq()
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
     OracleDatabase.withDynSession {
       Queries.getMunicipalities
     }
+
+    //Obtain all existing RoadLinkId by AssetType
+    val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
 
     println("Obtaining all Road Links By Municipality")
 
@@ -725,12 +727,8 @@ object DataFixture {
       //Filtered by "Private"
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(p => (p.administrativeClass == Private))
 
-
       println("End processing municipality %d".format(municipality))
 
-      //Obtain all existing RoadLinkId by AssetType
-      //val assetCreated = withDynTransaction {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
-      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
       //Exclude existing RoadLinkId
       val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
 
@@ -739,13 +737,11 @@ object DataFixture {
       println ("Total reg - creat -> " + filteredRoadLinksByNonCreated.size)
 
       if (filteredRoadLinksByNonCreated.size != 0) {
-       // withDynTransaction {
         OracleDatabase.withDynSession {
           //Create new Assets for the RoadLinks from VVH
           filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
             val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
-
             roadLinkProp.linkType match {
               case asset.SingleCarriageway =>
 
