@@ -148,22 +148,20 @@
     var generateStyleByFeature = function(roadLinkData, currentZoom){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType);
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
-      var middleLineColor; 
-      //var middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
-      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
+      var middleLineColor;
       var borderColor;
+      var lineCap;
+      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
-
+        lineCap  = 'square';
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
-        //var lineCap  = 'round';
+        lineCap  = 'round';
         middleLineColor = lineColor;
-
       }
-      var lineCap  = 'square';
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
         color: borderColor,
@@ -186,14 +184,7 @@
       });
 
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
-        //lineBorder.setLineDash([5, 25])
-        if(roadLinkData.roadClass >= 7){
-          //var middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
-          //lineBorder.setLineDash([5, 25])
-          //var borderColorDash = modifyColorProperties(lineColor, 1.45, true, false);
-          //borderColor = modifyColorProperties(lineColor, 1, true, false);
-          line.setLineDash([5, 20]);
-        }
+        line.setLineDash([5, 20]);
       }
 
       //Declaration of the Line Styles
