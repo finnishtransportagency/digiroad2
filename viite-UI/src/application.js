@@ -96,16 +96,6 @@
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
-    // TODO
-    // var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
-    //   wheelDown: function(evt, delta) {
-    //     if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
-    //       return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
-    //     } else {
-    //       new Confirm();
-    //     }
-    //   }
-    // });
 
     var mapOverlay = new MapOverlay($('.container'));
     var styler = new Styler();

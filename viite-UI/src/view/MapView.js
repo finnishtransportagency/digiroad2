@@ -16,24 +16,20 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      if (mapState.zoom < minZoomForContent()) {
-        if (isInitialized && mapState.hasZoomLevelChanged) {
-          showAssetZoomDialog();
-        }
+      if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
+        showAssetZoomDialog();
       }
     };
 
     var drawCenterMarker = function(position) {
         //Create a new Feature with the exact point in the center of the map
         var icon = new ol.Feature({
-        //geometry: new ol.geom.Point(map.getView().getCenter())
           geometry: new ol.geom.Point(position)
         });
 
         //create the style of the icon of the 'Merkistse' Button
         var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
-          //src: '../images/center-marker.svg'
           src: '../images/center-marker.png',
           scale: 0.025
         })
