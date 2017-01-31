@@ -719,21 +719,24 @@ object DataFixture {
     println("Obtaining all Road Links By Municipality")
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
-    // municipalities.foreach { municipality =>
-    val municipality = 5
-    println("Start processing municipality %d".format(municipality))
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
 
-    //Filtered by "Private"
-    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
-    filteredRoadLinkByAdminClass = filteredRoadLinkByAdminClass ++ roadLinks.filter(p => (p.administrativeClass == Private))
+      //Filtered by "Private"
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      filteredRoadLinkByAdminClass = filteredRoadLinkByAdminClass ++ roadLinks.filter(p => (p.administrativeClass == Private))
 
-    println("End processing municipality %d".format(municipality))
-
+      println("End processing municipality %d".format(municipality))
+    }
     //Obtain all existing RoadLinkId by AssetType
     val assetCreated = withDynTransaction {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
 
     //Exclude existing RoadLinkId
     val filteredRoadLinksByNonCreated = filteredRoadLinkByAdminClass.filterNot(f => assetCreated.contains(f.linkId))
+
+    println ("Total register    -> " + filteredRoadLinkByAdminClass.size)
+    println ("Total creates     -> " + assetCreated.size)
+    println ("Total reg - creat -> " + filteredRoadLinksByNonCreated.size)
 
     if (filteredRoadLinksByNonCreated.size != 0) {
       withDynTransaction {
@@ -742,17 +745,11 @@ object DataFixture {
 
           val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
 
-          println("Road link -> " + roadLinkProp.linkId)
-            println("Road link direction ->" + roadLinkProp.trafficDirection)
-            println("Road link linkType  ->" + roadLinkProp.linkType)
-            println("Road link Measure   ->" + endMeasure)
-
           roadLinkProp.linkType match {
             case asset.SingleCarriageway =>
 
               roadLinkProp.trafficDirection match {
                 case asset.TrafficDirection.BothDirections => {
-                  println("SingleCarriageway -> BothDirections")
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 1)
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 1)
                 }
@@ -763,7 +760,6 @@ object DataFixture {
             case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
               roadLinkProp.trafficDirection match {
                 case asset.TrafficDirection.BothDirections => {
-                  println("Motorway  -> BothDirections")
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 2)
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 2)
                 }
@@ -778,8 +774,6 @@ object DataFixture {
         }
       }
     }
-    // municipality}
-
     println("\n")
     println("Complete at time: ")
     println(DateTime.now())
