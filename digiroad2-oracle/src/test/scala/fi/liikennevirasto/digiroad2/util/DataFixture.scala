@@ -720,7 +720,7 @@ object DataFixture {
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
     // municipalities.foreach { municipality =>
-    val municipality = 235
+    val municipality = 5
     println("Start processing municipality %d".format(municipality))
 
     //Filtered by "Private"
@@ -741,11 +741,18 @@ object DataFixture {
         filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
           val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
+
+          println("Road link -> " + roadLinkProp.linkId)
+            println("Road link direction ->" + roadLinkProp.trafficDirection)
+            println("Road link linkType  ->" + roadLinkProp.linkType)
+            println("Road link Measure   ->" + endMeasure)
+
           roadLinkProp.linkType match {
             case asset.SingleCarriageway =>
 
               roadLinkProp.trafficDirection match {
                 case asset.TrafficDirection.BothDirections => {
+                  println("SingleCarriageway -> BothDirections")
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 1)
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 1)
                 }
@@ -756,6 +763,7 @@ object DataFixture {
             case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
               roadLinkProp.trafficDirection match {
                 case asset.TrafficDirection.BothDirections => {
+                  println("Motorway  -> BothDirections")
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 2)
                   dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 2)
                 }

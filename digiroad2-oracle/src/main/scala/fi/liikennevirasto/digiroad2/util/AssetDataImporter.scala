@@ -1290,15 +1290,15 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-
+    println("insert new Asset")
     sqlu"""
          into asset(id, asset_type_id, created_by, created_date)
          values ($assetId, $typeId, $Modifier, sysdate)""".execute
-
+    println("insert new lrm position")
     sqlu"""
          into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)""".execute
-
+    println("insert new Asset link")
     sqlu"""
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)""".execute
@@ -1308,6 +1308,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
   def getAllLinkIdByAsset(typeId: Long) =
   {
+    println("select all Asset")
        sql"""
             select pos.link_id
             from ASSET a
