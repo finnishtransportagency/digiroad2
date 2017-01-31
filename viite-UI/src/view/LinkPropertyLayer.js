@@ -7,7 +7,6 @@
     var me = this;
     var eventListener = _.extend({running: false}, eventbus);
     var zoom = 7;
-    //TODO - Show markers on Layer
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
     var indicatorVector = new ol.source.Vector({});
     var floatingMarkerVector = new ol.source.Vector({});
@@ -40,7 +39,7 @@
      */
     var selectDoubleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
-      multi: true,
+      //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
       layer: roadLayer.layer,
       //Limit this interaction to the doubleClick
@@ -64,7 +63,7 @@
      */
     selectDoubleClick.on('select',function(event) {
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
-      if(event.selected.length !== 0) {
+      if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
           roadLayer.layer.setOpacity(0.2);
         }
@@ -76,12 +75,13 @@
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
+        map.getView().setZoom(map.getView().getZoom()+1);
       }
     });
 
     var selectSingleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
-      multi: true,
+      //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
       layer: roadLayer.layer,
       //Limit this interaction to the singleClick
@@ -130,6 +130,7 @@
     });
 
     var selectMarkers = new ol.interaction.Select({
+      toggleCondition: ol.events.condition.never,
       condition: ol.events.condition.click,
       layers: [floatingMarkerLayer, anomalousMarkerLayer]
     });
@@ -263,7 +264,8 @@
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
       var indicators = jQuery.extend(true, [], indicatorLayer.markers);
-      indicatorLayer.clearMarkers();
+      //indicatorLayer.clearMarkers();
+      indicatorLayer.clear();
       if(indicators.length !== 0){
         _.forEach(indicators, function(indicator){
           indicatorLayer.addMarker(createIndicatorFromBounds(indicator.bounds, indicator.div.innerText));
