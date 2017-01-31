@@ -306,7 +306,7 @@ module.exports = function(grunt) {
           grunt.file.write(options.file, data);
         };
 
-        exec('git rev-parse HEAD', function (err, stdout) {
+        exec('git rev-parse --short HEAD', function (err, stdout) {
           if (err) {
             grunt.log.error(err);
             return done(false);
