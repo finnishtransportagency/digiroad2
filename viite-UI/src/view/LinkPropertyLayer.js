@@ -123,7 +123,7 @@
           }
         });
 
-      roadLayer.drawRoadLinks(roadLinks, zoom);
+      roadLayer.drawRoadLinks(roadLinks, zoom, action);
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawSigns(roadLayer.layer, roadLinks);
 
@@ -443,14 +443,19 @@
     };
 
     var handleMapClick = function (){
-      selectedLinkProperty.cancel();
-      selectedLinkProperty.close();
+      if(!applicationModel.isActiveButtons()){
+        selectedLinkProperty.cancel();
+        selectedLinkProperty.close();
+      }
+
     };
 
     var cancelSelection = function() {
-      selectedLinkProperty.cancel();
-      selectedLinkProperty.close();
-      unselectRoadLink();
+      if(!applicationModel.isActiveButtons()) {
+        selectedLinkProperty.cancel();
+        selectedLinkProperty.close();
+        unselectRoadLink();
+      }
     };
 
     var refreshViewAfterSaving = function() {
@@ -475,7 +480,7 @@
         if(!applicationModel.isActiveButtons()){
       roadLayer.layer.removeFeatures(getSelectedFeatures());
         }
-      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)){
+      if((!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)) || !_.isEmpty(roadCollection.getAllTmp())){
         var selectedRoadLinks = roadCollection.getAllTmp();
       } else {
         var selectedRoadLinks = selectedLinkProperty.get();

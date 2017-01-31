@@ -202,7 +202,8 @@
       }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons()){
-        applicationModel.setActiveButtons(false);
+        if(action !== applicationModel.actionCalculated)
+          applicationModel.setActiveButtons(false);
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
         eventbus.trigger('roadLinks:deleteSelection');
       }
