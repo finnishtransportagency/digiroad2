@@ -79,6 +79,15 @@
       }
     });
 
+    //This will control the double click zoom when there is no selection
+    map.on('dblclick', function(event) {
+      _.defer(function(){
+        if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+          map.getView().setZoom(map.getView().getZoom()+1);
+        }
+      });
+    });
+
     var selectSingleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       //multi: true,
