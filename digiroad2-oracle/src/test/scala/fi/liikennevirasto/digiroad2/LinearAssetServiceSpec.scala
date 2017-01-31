@@ -65,10 +65,61 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), NumericValue(2000), "lol")
-      val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(NumericValue(2000)))
-      limit.expired should be (false)
+      //Update Numeric Values By Expiring the Old Asset
+      val limitToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
+
+      //Verify if the new data of the new asset is equal to old asset
+      val limitUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
+
+      limitUpdated.id should not be (limitToUpdate.id)
+      limitUpdated.linkId should be (limitToUpdate.linkId)
+      limitUpdated.sideCode should be (limitToUpdate.sideCode)
+      limitUpdated.value should be (Some(NumericValue(2000)))
+      limitUpdated.startMeasure should be (limitToUpdate.startMeasure)
+      limitUpdated.endMeasure should be (limitToUpdate.endMeasure)
+      limitUpdated.createdBy should be (limitToUpdate.createdBy)
+      limitUpdated.createdDateTime should be (limitToUpdate.createdDateTime)
+      limitUpdated.modifiedBy should be (Some("UnitTestsUser"))
+      limitUpdated.modifiedDateTime should not be empty
+      limitUpdated.expired should be (false)
+      limitUpdated.typeId should be (limitToUpdate.typeId)
+      limitUpdated.vvhTimeStamp should be (limitToUpdate.vvhTimeStamp)
+      limitUpdated.geomModifiedDate should be (limitToUpdate.geomModifiedDate)
+
+      //Verify if old asset is expired
+      val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      limitExpired.expired should be (true)
+    }
+  }
+
+  test("Update Exit number Text Field") {
+    runWithRollback {
+      //Update Text Values By Expiring the Old Asset
+      val assetToUpdate = linearAssetDao.fetchAssetsWithTextualValuesByIds(Set(600068), "liittymänumero").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(600068), TextualValue("Value for Test"), "UnitTestsUser")
+
+      //Verify if the new data of the new asset is equal to old asset
+      val assetUpdated = linearAssetDao.fetchAssetsWithTextualValuesByIds(newAssetIdCreatedWithUpdate.toSet, "liittymänumero").head
+
+      assetUpdated.id should not be (assetToUpdate.id)
+      assetUpdated.linkId should be(assetToUpdate.linkId)
+      assetUpdated.sideCode should be(assetToUpdate.sideCode)
+      assetUpdated.value should be(Some(TextualValue("Value for Test")))
+      assetUpdated.startMeasure should be(assetToUpdate.startMeasure)
+      assetUpdated.endMeasure should be(assetToUpdate.endMeasure)
+      assetUpdated.createdBy should be(assetToUpdate.createdBy)
+      assetUpdated.createdDateTime should be(assetToUpdate.createdDateTime)
+      assetUpdated.modifiedBy should be(Some("UnitTestsUser"))
+      assetUpdated.modifiedDateTime should not be empty
+      assetUpdated.expired should be(false)
+      assetUpdated.typeId should be(assetToUpdate.typeId)
+      assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
+      assetUpdated.geomModifiedDate should be(assetToUpdate.geomModifiedDate)
+
+      //Verify if old asset is expired
+      val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head
+      assetExpired.expired should be(true)
     }
   }
 
@@ -203,9 +254,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId(1))).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -269,9 +320,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
-      ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit).filter(_ != assetId) shouldBe empty
+      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit)
+      newAssetIdAfterUpdate.size should be(1)
 
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(newAssetIdAfterUpdate.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -289,9 +341,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
 
-      val createdId = ids.filter(_ != assetId).head
+      val createdId = ids(1)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.BothDirections.value)

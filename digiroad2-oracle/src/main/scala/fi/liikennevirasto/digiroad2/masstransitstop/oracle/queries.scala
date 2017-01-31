@@ -73,6 +73,19 @@ object Queries {
       update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId
     """
 
+  def updateAssetModifiedByCopyOldOne(assetId: Long, oldCreatedBy: Option[String], oldCreatedDateTime: Option[DateTime],
+                                      updater: String) =
+    sqlu"""
+      update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP,
+          created_by = $oldCreatedBy, created_date = $oldCreatedDateTime where id = $assetId
+    """
+
+  def updateLrmPositionModifiedByCopyOldOne(assetId: Long, oldModifiedDateLrmPos: Option[DateTime]) =
+    sqlu"""
+      update lrm_position set modified_date = $oldModifiedDateLrmPos
+        where id = (select position_id from asset_link where asset_id = $assetId)
+    """
+
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
     val y = point.y
