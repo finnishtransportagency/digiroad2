@@ -1295,7 +1295,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     println("insert new Asset created_by -> " + Modifier)
 
     sqlu"""
-         into asset(id, asset_type_id, created_by, created_date)
+         insert into asset(id, asset_type_id, created_by, created_date)
          values ($assetId, $typeId, $Modifier, sysdate)
     """.execute
     println("insert new lrm position")
@@ -1306,7 +1306,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     println("side_code      -> " + sideCode)
 
     sqlu"""
-         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+         insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)
       """.execute
 
@@ -1315,7 +1315,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     println("lrmPositionId - > " + lrmPositionId)
 
     sqlu"""
-         into asset_link(asset_id, position_id)
+         insert into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
       """.execute
 
