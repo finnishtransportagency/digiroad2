@@ -234,7 +234,6 @@
           floatingMarkerLayer.getSource().addFeature(calMarker.getMarker(true));
         });
       }
-      redrawSelected();
       activateSelection();
       eventbus.trigger('linkProperties:available');
     };
@@ -354,13 +353,6 @@
       $(box.div).html(markerTemplate({'marker': marker}));
       $(box.div).css('overflow', 'visible');
       return box;
-    };
-
-    var redrawSelected = function() {
-      var selectedRoadLinks = selectedLinkProperty.get();
-      _.each(selectedRoadLinks,  function(selectedLink) {
-        roadLayer.drawRoadLink(selectedLink);
-      });
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
