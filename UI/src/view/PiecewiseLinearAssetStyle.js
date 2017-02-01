@@ -1,63 +1,84 @@
 (function(root) {
   root.PiecewiseLinearAssetStyle = function(applicationModel) {
     var expirationRules = [
-      new OpenLayersRule().where('expired').is(true).use({strokeColor: '#7f7f7c'}),
-      new OpenLayersRule().where('expired').is(false).use({strokeColor: '#ff0000'})
+      new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
+      new StyleRule().where('expired').is(false).use({ stroke : { color: '#ff0000'}})
     ];
 
     var zoomLevelRules = [
-      new OpenLayersRule().where('level', applicationModel.zoom).is(9).use(RoadLayerSelectionStyle.linkSizeLookup[9]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(10).use(RoadLayerSelectionStyle.linkSizeLookup[10]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(11).use(RoadLayerSelectionStyle.linkSizeLookup[11]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(12).use(RoadLayerSelectionStyle.linkSizeLookup[12]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(13).use(RoadLayerSelectionStyle.linkSizeLookup[13]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(14).use(RoadLayerSelectionStyle.linkSizeLookup[14]),
-      new OpenLayersRule().where('level', applicationModel.zoom).is(15).use(RoadLayerSelectionStyle.linkSizeLookup[15])
+      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3 }}),
+      new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5 }}),
+      new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 8 }}),
+      new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10 }}),
+      new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10 }}),
+      new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14 }}),
+      new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14 }})
     ];
 
     var oneWayRules = [
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(9).use({ strokeWidth: 2 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(10).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(11).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(12).use({ strokeWidth: 5 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(13).use({ strokeWidth: 5 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(14).use({ strokeWidth: 8 }),
-      new OpenLayersRule().where('sideCode').isIn([2,3]).and('level', applicationModel.zoom).is(15).use({ strokeWidth: 8 }),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(9).use({ stroke: {width: 2 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(10).use({ stroke: {width: 4 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(11).use({ stroke: {width: 4 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(12).use({ stroke: {width: 5 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(13).use({ stroke: {width: 5 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(14).use({ stroke: {width: 8 }}),
+      new StyleRule().where('sideCode').isIn([2,3]).and('zoomLevel', applicationModel.zoom).is(15).use({ stroke: {width: 8 }})
     ];
 
     var featureTypeRules = [
-      new OpenLayersRule().where('type').is('line').use({ strokeOpacity: 0.7 }),
-      new OpenLayersRule().where('type').is('cutter').use({ externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 })
+      new StyleRule().where('type').is('line').use({ stroke : { opacity: 0.7  }}),
+      new StyleRule().where('type').is('cutter').use({ externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 })
     ];
 
-    var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    // var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
+    // browseStyle.addRules(expirationRules);
+    // browseStyle.addRules(zoomLevelRules);
+    // browseStyle.addRules(oneWayRules);
+    // browseStyle.addRules(featureTypeRules);
+    // var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+    // var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    //     strokeOpacity: 0.15
+    // }));
+    // var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+    //    strokeOpacity: 0.7
+    // }));
+    // selectionDefaultStyle.addRules(expirationRules);
+    // selectionDefaultStyle.addRules(zoomLevelRules);
+    // selectionDefaultStyle.addRules(oneWayRules);
+    // selectionSelectStyle.addRules(featureTypeRules);
+    // var selectionStyle = new OpenLayers.StyleMap({
+    //    default: selectionDefaultStyle,
+    //    select: selectionSelectStyle
+    // });
+
+
+    var browseStyle = new StyleRuleProvider();
     browseStyle.addRules(expirationRules);
     browseStyle.addRules(zoomLevelRules);
     browseStyle.addRules(oneWayRules);
     browseStyle.addRules(featureTypeRules);
-    var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+    //var browseStyleMap = new ol.style.Style({ default: browseStyle });
 
-    var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeOpacity: 0.15
-    }));
-    var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeOpacity: 0.7
-    }));
+    var selectionDefaultStyle = new StyleRuleProvider({stroke : { opacity: 0.15 }});
+    var selectionSelectStyle = new StyleRuleProvider({stroke : { opacity: 0.7 }});
+
     selectionDefaultStyle.addRules(expirationRules);
     selectionDefaultStyle.addRules(zoomLevelRules);
     selectionDefaultStyle.addRules(oneWayRules);
     selectionSelectStyle.addRules(featureTypeRules);
-    var selectionStyle = new OpenLayers.StyleMap({
-      default: selectionDefaultStyle,
-      select: selectionSelectStyle
+
+    var selectionStyle = new StyleRuleProvider({
+        default: selectionDefaultStyle
     });
 
     var lineFeatures = function(linearAssets) {
       return _.flatten(_.map(linearAssets, function(linearAsset) {
         var points = _.map(linearAsset.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAsset);
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+        feature.setProperties(linearAsset);
+        return feature;
       }));
     };
 
@@ -77,7 +98,7 @@
     };
 
     return {
-      browsing: browseStyleMap,
+      browsing: browseStyle,
       selection: selectionStyle,
       renderFeatures: renderFeatures
     };

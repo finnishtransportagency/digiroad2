@@ -99,7 +99,7 @@
   var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, withTileMaps, startupParameters);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
@@ -185,7 +185,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, withTileMaps, startupParameters) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -211,35 +211,35 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
     //new ManoeuvreForm(models.selectedManoeuvreSource);
-    //_.forEach(linearAssets, function(linearAsset) {
-    //  LinearAssetForm.initialize(
-    //    linearAsset.selectedLinearAsset,
-    //    linearAsset.singleElementEventCategory,
-    //    AssetFormElementsFactory.construct(linearAsset),
-    //    linearAsset.newTitle,
-    //    linearAsset.title);
-    //});
+    _.forEach(linearAssets, function(linearAsset) {
+     LinearAssetForm.initialize(
+       linearAsset.selectedLinearAsset,
+       linearAsset.singleElementEventCategory,
+       AssetFormElementsFactory.construct(linearAsset),
+       linearAsset.newTitle,
+       linearAsset.title);
+    });
 
     //_.forEach(pointAssets, function(pointAsset) {
     //  PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
     //});
 
-    //var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-    //  acc[asset.layerName] = new LinearAssetLayer({
-    //    map: map,
-    //    application: applicationModel,
-    //    collection: asset.collection,
-    //    selectedLinearAsset: asset.selectedLinearAsset,
-    //    roadCollection: models.roadCollection,
-    //    roadLayer: roadLayer,
-    //    layerName: asset.layerName,
-    //    multiElementEventCategory: asset.multiElementEventCategory,
-    //    singleElementEventCategory: asset.singleElementEventCategory,
-    //    style: PiecewiseLinearAssetStyle(applicationModel),
-    //    formElements: AssetFormElementsFactory.construct(asset)
-    //  });
-    //  return acc;
-    //}, {});
+    var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
+     acc[asset.layerName] = new LinearAssetLayer({
+       map: map,
+       application: applicationModel,
+       collection: asset.collection,
+       selectedLinearAsset: asset.selectedLinearAsset,
+       roadCollection: models.roadCollection,
+       roadLayer: roadLayer,
+       layerName: asset.layerName,
+       multiElementEventCategory: asset.multiElementEventCategory,
+       singleElementEventCategory: asset.singleElementEventCategory,
+       style: PiecewiseLinearAssetStyle(applicationModel),
+       formElements: AssetFormElementsFactory.construct(asset)
+     });
+     return acc;
+    }, {});
 
     //var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
     //  acc[asset.layerName] = new PointAssetLayer({
@@ -258,7 +258,7 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
       /*
        massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
        speedLimit: new SpeedLimitLayer({
@@ -271,7 +271,7 @@
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
        */
-    }/*, linearAssetLayers, pointAssetLayers*/);
+    }, linearAssetLayers/*, pointAssetLayers*/);
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);

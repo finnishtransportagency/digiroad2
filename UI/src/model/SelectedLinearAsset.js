@@ -102,7 +102,7 @@
       eventbus.trigger(singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: selection };
+          return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }

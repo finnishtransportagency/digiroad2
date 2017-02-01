@@ -32,7 +32,7 @@ window.LinearAssetLayer = function(params) {
     };
 
     var remove = function() {
-      vectorLayer.removeFeatures(scissorFeatures);
+      //vectorLayer.removeFeatures(scissorFeatures);
       scissorFeatures = [];
     };
 
@@ -130,13 +130,27 @@ window.LinearAssetLayer = function(params) {
 
   var uiState = { zoomLevel: 9 };
 
-  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
+  var vectorSource = new ol.source.Vector();
+  var vectorLayer = new ol.layer.Vector({
+    source : vectorSource,
+    style : function(feature){
+      return style.browsing.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) );
+      }
+  });
+
+ // var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
   vectorLayer.setOpacity(1);
-  vectorLayer.setVisibility(false);
+  vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
 
-  var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
-  map.addLayer(indicatorLayer);
+  // var indicatorVector = new ol.source.Vector({});
+  // var indicatorLayer = new ol.layer.Vector({
+  //     source : indicatorVector,
+  //     style : style.browsing
+  // });
+  //var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+  //map.addLayer(indicatorLayer);
+  // indicatorLayer.setVisible(true);
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
@@ -155,28 +169,43 @@ window.LinearAssetLayer = function(params) {
   };
 
   var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = style.selection;
+    vectorLayer.styleMap = style.browsing;
     highlightLinearAssetFeatures();
-    vectorLayer.redraw();
+   // vectorLayer.redraw();
   };
 
   var linearAssetOnSelect = function(feature) {
-    selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
-    setSelectionStyleAndHighlightFeature();
-  };
-
-  var linearAssetOnUnselect = function() {
-    if (selectedLinearAsset.exists()) {
-      selectedLinearAsset.close();
+    //selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
+    if(feature.selected.length !== 0) {
+      selectedLinearAsset.open(feature.selected[0].values_, true);
+      setSelectionStyleAndHighlightFeature();
+    }else{
+      if(feature.selected.length === 0 && feature.deselected.length > 0){
+        if (selectedLinearAsset.exists()) {
+           selectedLinearAsset.close();
+        }
+      }
     }
   };
 
-  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-    onSelect: linearAssetOnSelect,
-    onUnselect: linearAssetOnUnselect
+  // var linearAssetOnUnselect = function() {
+  //   if (selectedLinearAsset.exists()) {
+  //     selectedLinearAsset.close();
+  //   }
+  // };
+
+  var selectControl = new ol.interaction.Select({
+    layers : [ vectorLayer ],
+    condition : ol.events.condition.singleClick
   });
-  map.addControl(selectControl);
-  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
+
+  map.addInteraction(selectControl);
+  selectControl.on('select', linearAssetOnSelect);
+
+  // selectControl.on('unselect', linearAssetOnUnselect);
+
+  // map.addControl(selectControl);
+ // var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
   var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
     selectedLinearAsset.openMultiple(linearAssets);
@@ -214,27 +243,27 @@ window.LinearAssetLayer = function(params) {
 
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
-    vectorLayer.redraw();
+    //vectorLayer.redraw();
   };
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      doubleClickSelectControl.deactivate();
+    //doubleClickSelectControl.deactivate();
       linearAssetCutter.activate();
     } else if (tool === 'Select') {
       linearAssetCutter.deactivate();
-      doubleClickSelectControl.activate();
+    //doubleClickSelectControl.activate();
     }
-    updateMassUpdateHandlerState();
+   //updateMassUpdateHandlerState();
   };
 
   var updateMassUpdateHandlerState = function() {
     if (!application.isReadOnly() &&
         application.getSelectedTool() === 'Select' &&
         application.getSelectedLayer() === layerName) {
-      massUpdateHandler.activate();
+     // massUpdateHandler.activate();
     } else {
-      massUpdateHandler.deactivate();
+     // massUpdateHandler.deactivate();
     }
   };
 
@@ -282,11 +311,12 @@ window.LinearAssetLayer = function(params) {
   var displayConfirmMessage = function() { new Confirm(); };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
-    doubleClickSelectControl.deactivate();
+    // doubleClickSelectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    var selectedLinearAssetFeatures = _.filter(vectorLayer.features, function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
-    vectorLayer.removeFeatures(selectedLinearAssetFeatures);
+    var selectedLinearAssetFeatures = _.filter(vectorSource.getFeatures(), function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
+    //vectorLayer.removeFeatures(selectedLinearAssetFeatures);
+    vectorSource.clear();
     drawLinearAssets(selectedLinearAsset.get());
     decorateSelection();
   };
@@ -294,30 +324,31 @@ window.LinearAssetLayer = function(params) {
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
     changeTool(application.getSelectedTool());
-    updateMassUpdateHandlerState();
+    // updateMassUpdateHandlerState();
   };
   this.refreshView = function(event) {
-    vectorLayer.setVisibility(true);
-    adjustStylesByZoomLevel(map.getZoom);
-    collection.fetch(map.getExtent()).then(function() {
+    vectorLayer.setVisible(true);
+    adjustStylesByZoomLevel(map.getView().getZoom());
+    collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
       eventbus.trigger('layer:linearAsset:' + event);
     });
   };
   this.activateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.activate();
+    // updateMassUpdateHandlerState();
+    // doubleClickSelectControl.activate();
+      map.addInteraction(selectControl);
   };
   this.deactivateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.deactivate();
+    // updateMassUpdateHandlerState();
+    // doubleClickSelectControl.deactivate();
   };
   this.removeLayerFeatures = function() {
-    vectorLayer.removeAllFeatures();
-    indicatorLayer.clearMarkers();
+  //  vectorLayer.removeAllFeatures();
+ //   indicatorLayer.clearMarkers();
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    doubleClickSelectControl.activate();
+   // doubleClickSelectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };
@@ -326,6 +357,7 @@ window.LinearAssetLayer = function(params) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
 
     var markerContainer = function(position) {
+        //ol.extent.boundingExtent
       var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
       return new OpenLayers.Marker.Box(bounds, "00000000");
     };
@@ -370,10 +402,10 @@ window.LinearAssetLayer = function(params) {
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
-    doubleClickSelectControl.deactivate();
+    //doubleClickSelectControl.deactivate();
     me.removeLayerFeatures();
     if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
-      doubleClickSelectControl.activate();
+      //doubleClickSelectControl.activate();
     }
 
     var linearAssets = _.flatten(linearAssetChains);
@@ -382,7 +414,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var drawLinearAssets = function(linearAssets) {
-    vectorLayer.addFeatures(style.renderFeatures(linearAssets));
+    vectorLayer.getSource().addFeatures(style.renderFeatures(linearAssets));
   };
 
   var decorateSelection = function() {
@@ -412,21 +444,21 @@ window.LinearAssetLayer = function(params) {
   };
 
   var reset = function() {
-    selectControl.unselectAll();
+ //   selectControl.unselectAll();
     vectorLayer.styleMap = style.browsing;
     linearAssetCutter.deactivate();
   };
 
   var show = function(map) {
-    vectorLayer.setVisibility(true);
-    indicatorLayer.setVisibility(true);
+    vectorLayer.setVisible(true);
+ //   indicatorLayer.setVisible(true);
     me.show(map);
   };
 
   var hideLayer = function() {
     reset();
-    vectorLayer.setVisibility(false);
-    indicatorLayer.setVisibility(false);
+    vectorLayer.setVisible(false);
+//    indicatorLayer.setVisible(false);
     me.stop();
     me.hide();
   };

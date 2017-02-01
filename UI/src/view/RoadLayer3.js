@@ -74,7 +74,8 @@
 
       if(stylesUndefined()){
         //TODO get default style for road
-        throw "Any style provider for "+applicationModel.getSelectedLayer();
+        //throw "Any style provider for "+applicationModel.getSelectedLayer();
+          return new ol.style.Style();
       }
 
       var stylerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();

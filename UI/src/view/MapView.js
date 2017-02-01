@@ -84,7 +84,7 @@
     }, this);
 
     map.on('moveend', function() {
-      applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      applicationModel.moveMap(map.getView().getZoom(), map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     });
 
     map.on('pointermove', function(event) {
@@ -92,7 +92,7 @@
     }, true);
 
     map.on('singleclick', function(event) {
-      eventbus.trigger('map:clicked', { x: event.coordinate.x, y: event.coordinate.y });
+        eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
 
     addCenterMarkerLayerToMap(map);
