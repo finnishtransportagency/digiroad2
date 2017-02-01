@@ -1046,20 +1046,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Updates MaintenanceRoad property. Used by LinearAssetService.updateWithoutTransaction.
+    * Updates MaintenanceRoad property. Used by LinearAssetService.updateProjected.
     */
   def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
-    val assetsUpdated = Queries.updateAssetModified(assetId, username).first
-
     value.maintenanceRoad.foreach { prop =>
-
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
-    prop.propertyType match {
-
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
+      prop.propertyType match {
         case "text" => {
           if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
             Queries.insertTextProperty(assetId, propertyId, prop.value).first
-          } else if (prop.value.isEmpty){
+          } else if (prop.value.isEmpty) {
             Queries.deleteTextProperty(assetId, propertyId).execute
           } else {
             Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
@@ -1074,7 +1070,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         }
       }
     }
-      Some(assetId)
+    Some(assetId)
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {

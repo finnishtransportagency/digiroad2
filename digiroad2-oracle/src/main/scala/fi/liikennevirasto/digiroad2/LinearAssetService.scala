@@ -518,7 +518,16 @@ trait LinearAssetOperations {
     */
   private def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String): Option[Long] = {
     //Get Old Asset
-    val oldAsset = dao.fetchLinearAssetsByIds(Set(assetId), valuePropertyId).head
+    val oldAsset =
+      valueToUpdate match {
+        case NumericValue(intValue) =>
+          dao.fetchLinearAssetsByIds(Set(assetId), valuePropertyId).head
+        case TextualValue(textValue) =>
+          dao.fetchAssetsWithTextualValuesByIds(Set(assetId), valuePropertyId).head
+        case maintenanceRoad: MaintenanceRoad =>
+          dao.fetchMaintenancesByIds(valuePropertyId.toInt, Set(assetId)).head
+        case _ => return None
+      }
 
     //Expire the old asset
     dao.updateExpiration(assetId, expired = true, username)
@@ -651,7 +660,7 @@ trait LinearAssetOperations {
           val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
           if (missingProperties.nonEmpty)
             throw new MissingMandatoryPropertyException(missingProperties)
-          dao.updateMaintenanceRoadValue(id, maintenanceRoad, username)
+          updateValueByExpiration(id, maintenanceRoad, LinearAssetTypes.MaintenanceRoadAssetTypeId.toString(), username)
         case _ =>
           Some(id)
       }
