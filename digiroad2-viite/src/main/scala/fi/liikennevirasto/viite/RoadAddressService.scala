@@ -617,9 +617,7 @@ object RoadAddressLinkBuilder {
       }
     }
     val allLinks = sources++targets
-    val allGeom = allLinks.flatMap(_.geometry)
-
-    var orderedGeometry = allLinks
+    val allGeom = targets.flatMap(_.geometry)
 
     val allStartCp = sources.flatMap(_.startCalibrationPoint)++targets.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)++targets.flatMap(_.endCalibrationPoint)
