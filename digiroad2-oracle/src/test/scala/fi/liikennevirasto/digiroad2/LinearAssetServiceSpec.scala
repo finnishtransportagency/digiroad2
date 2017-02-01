@@ -1860,4 +1860,40 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Verify if TN-ITS message contains the correct messages after update a NumericValue Field") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadLink1 = RoadLink(1611374, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val totalWeightLimitAssetId = 30
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+
+      //Linear assets that have been changed in OTH between given date values Before Update
+      val resultBeforeUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+
+      //Update Numeric Values
+      val assetToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
+      val assetUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
+
+      //Linear assets that have been changed in OTH between given date values After Update
+      val resultAfterUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+
+      val oldAssetInMessage = resultAfterUpdate.find { changedLinearAsset => changedLinearAsset.linearAsset.id == assetToUpdate.id }
+      val newAssetInMessage = resultAfterUpdate.find { changedLinearAsset => changedLinearAsset.linearAsset.id == assetUpdated.id }
+
+      resultAfterUpdate.size should be (resultBeforeUpdate.size + 1)
+      oldAssetInMessage.size should be (1)
+      newAssetInMessage.size should be (1)
+
+      oldAssetInMessage.head.linearAsset.expired should be (true)
+      oldAssetInMessage.head.linearAsset.value should be (assetToUpdate.value)
+
+      dynamicSession.rollback()
+    }
+  }
+
 }
