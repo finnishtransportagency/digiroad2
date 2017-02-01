@@ -90,7 +90,7 @@
     };
 
     var reselectRoadLink = function() {
-      var originalOnSelectHandler = selectControl.onSelect;
+      /*var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
       if (!_.isEmpty(features)) {
@@ -98,6 +98,7 @@
         highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
+      */
     };
 
     var selectRoadLink = function(roadLink) {
@@ -182,13 +183,13 @@
 
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisibility(map.getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisibility(map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
     var refreshView = function(){
       if(isActive)
-        roadCollection.fetchHistory(map.getExtent());
+        ;//roadCollection.fetchHistory(map.getExtent());
     };
 
     var showLayer = function(){
@@ -328,9 +329,9 @@
       if (!applicationModel.isReadOnly() &&
           applicationModel.getSelectedTool() === 'Select' &&
           applicationModel.getSelectedLayer() === layerName) {
-        massUpdateHandler.activate();
+        //massUpdateHandler.activate();
       } else {
-        massUpdateHandler.deactivate();
+        //massUpdateHandler.deactivate();
       }
     };
 
@@ -349,7 +350,7 @@
       var roadLinks = roadCollection.getAll();
       var roadLinkHistory =  roadCollection.getAllHistory();
 
-      roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks, roadLayer.layer);
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
 
@@ -365,13 +366,13 @@
       if (isComplementaryActive) {
         me.refreshViewWithComplementary();
       } else {
-        roadCollection.fetch(map.getExtent());
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
         //historyLayer.refreshView();
       }
     };
 
     this.refreshViewWithComplementary = function() {
-      roadCollection.fetchWithComplementary(map.getExtent());
+      roadCollection.fetchWithComplementary( map.getView().calculateExtent(map.getSize()));
       //historyLayer.refreshView();
     };
 
@@ -419,6 +420,7 @@
     };
 
     var reselectRoadLink = function() {
+      /*
       me.activateSelection();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
@@ -432,6 +434,7 @@
       if (selectedLinkProperty.isDirty()) {
         me.deactivateSelection();
       }
+      */
     };
 
     var prepareRoadLinkDraw = function() {
@@ -509,7 +512,7 @@
     };
 
     var redrawSelected = function() {
-      roadLayer.layer.removeFeatures(getSelectedFeatures());
+      //roadLayer.layer.removeFeatures(getSelectedFeatures());
       //historyLayer.removeSelectedFeatures();
 
       var selectedRoadLinks = selectedLinkProperty.get();
@@ -518,19 +521,19 @@
         //historyLayer.drawRoadLink(selectedLink);
       });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks, roadLayer.layer);
-      drawDashedLineFeaturesIfApplicable(selectedRoadLinks, historyLayer.layer);
+      //drawDashedLineFeaturesIfApplicable(selectedRoadLinks, historyLayer.layer);
       me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
       //me.drawOneWaySigns(historyLayer.layer, selectedRoadLinks);
       reselectRoadLink();
     };
 
     this.removeLayerFeatures = function() {
-      roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+      //roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
       //historyLayer.removeFeatures();
     };
 
     var show = function(map) {
-      //me.show(map);
+      me.show(map);
     };
 
     var hideLayer = function() {

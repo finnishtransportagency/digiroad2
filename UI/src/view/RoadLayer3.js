@@ -7,23 +7,26 @@
     var uiState = { zoomLevel: 9 };
 
     var vectorSource = new ol.source.Vector({
-      loader: function(extent, resolution, projection) {
-        var zoom = Math.log(1024/resolution) / Math.log(2);
-
-        eventbus.once('roadLinks:fetched', function() {
-          var features = _.map(roadCollection.getAll(), function(roadLink) {
-            var points = _.map(roadLink.points, function(point) {
-              return [point.x, point.y];
-            });
-            return new ol.Feature(_.merge({},roadLink, { geometry: new ol.geom.LineString(points)}));
-            //feature.roadLinkData = roadLink;
-            //return feature;
-          });
-          vectorSource.addFeatures(features);
-        });
-
-        roadCollection.fetch(extent.join(','), zoom);
-      },
+      //loader: function(extent, resolution, projection) {
+      //  var zoom = Math.log(1024/resolution) / Math.log(2);
+      //  //setZoomLevel(zoom);
+      //
+      //
+      //  eventbus.once('roadLinks:fetched', function() {
+      //    vectorSource.clear();
+      //    var features = _.map(roadCollection.getAll(), function(roadLink) {
+      //      var points = _.map(roadLink.points, function(point) {
+      //        return [point.x, point.y];
+      //      });
+      //      return new ol.Feature(_.merge({},roadLink, { geometry: new ol.geom.LineString(points)}));
+      //      //feature.roadLinkData = roadLink;
+      //      //return feature;
+      //    });
+      //    vectorSource.addFeatures(features);
+      //  });
+      //
+      //  roadCollection.fetch(extent.join(','), zoom);
+      //},
       strategy: ol.loadingstrategy.bbox
     });
 
@@ -76,8 +79,10 @@
 
       var stylerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
 
-      //TODO maybe the properties and zoom are not enough
-      return stylerProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) );
+      var styles = stylerProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}), feature);
+
+      return [styles];
+
 
     }
 
@@ -159,12 +164,13 @@
 
     var mapMovedHandler = function(mapState) {
       //TODO be sure about the less 2 in the zoom
+      /*
       var zoom = mapState.zoom - 2;
       if (zoom !== uiState.zoomLevel) {
         uiState.zoomLevel = zoom;
         vectorSource.clear();
       }
-
+*/
       // If zoom changes clear the road list
       // if (mapState.zoom >= minimumContentZoomLevel()) {
       //

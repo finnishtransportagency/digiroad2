@@ -1,7 +1,7 @@
 (function(root) {
     root.StyleRule = function(){
         var expressionFn = [];
-        var style;
+        var styles = [];
 
         var runExpression = function(expression, obj, previousCondition){
             if(previousCondition)
@@ -35,6 +35,26 @@
                 throw 'You must have a "where" function before use the "or" function.';
             var expression = generateExpression(property, propertyValue);
             expression.compareExpressions = function(arg1, arg2) { return arg1 || arg2; };
+            return this;
+        };
+
+        this.isDefined = function(){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
+            expression.compare = function(propertyValue){
+                return !_.isUndefined(propertyValue);
+            };
+            return this;
+        };
+
+        this.isUndefined = function(){
+            var expression = expressionFn[expressionFn.length-1];
+            if(!expression || expression.compare)
+                throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
+            expression.compare = function(propertyValue){
+                return _.isUndefined(propertyValue);
+            };
             return this;
         };
 
@@ -86,7 +106,7 @@
         };
 
         this.use = function(obj){
-            style = obj;
+            styles.push(obj);
             return this;
         };
 
@@ -102,33 +122,97 @@
         };
 
         this._get = function(){
-            return style;
+            return styles;
         };
     };
 
     root.StyleRuleProvider = function(defaultStyle){
+
+        var mergeColorOpacity = function(color, opacity){
+            var rgb = {};
+
+            if(color.substring(0, 1) != '#' || !opacity) { return color; }
+
+            if (color.length == 7) {
+                rgb.r = parseInt(color.substring(1, 3), 16);
+                rgb.g = parseInt(color.substring(3, 5), 16);
+                rgb.b = parseInt(color.substring(5, 7), 16);
+            }
+            else if (color.length == 4) {
+                rgb.r = parseInt(color.substring(1, 2) + color.substring(1, 2), 16);
+                rgb.g = parseInt(color.substring(2, 3) + color.substring(2, 3), 16);
+                rgb.b = parseInt(color.substring(3, 4) + color.substring(3, 4), 16);
+            }
+            else {
+                return color;
+            }
+
+            rgb.css = 'rgb' + (opacity ? 'a' : '') + '(';
+            rgb.css += rgb.r + ',' + rgb.g + ',' + rgb.b;
+            rgb.css += (opacity ? ',' + opacity : '') + ')';
+
+            return rgb.css;
+        };
+
         var stateRules = [];
         var defaultRuleName = 'default';
         var openLayerStyleClassConfigs = [
-            { name: 'stroke', type: ol.style.Stroke },
-            { name: 'fill', type: ol.style.Fill },
-            { name: 'image', type: ol.style.Image },
-            { name: 'text', type: ol.style.Text }
+            {
+                name: 'stroke',
+                factory: function(settings){
+                    if(settings.color)
+                        settings.color = mergeColorOpacity(settings.color, settings.opacity);
+
+                    return {
+                        stroke: new ol.style.Stroke(settings)
+                    };
+                }
+            },
+            {
+                name: 'fill',
+                factory: function(settings){
+                    return { fill: new ol.style.Fill(settings) };
+                }
+            },
+            {
+                name: 'icon',
+                factory: function(settings, feature){
+                    //TODO add support to configure this on the style rule
+                    settings.rotation = feature.getProperties().rotation;
+                    return { geometry: feature.getGeometry(), image:  new ol.style.Icon((settings)) };
+                }
+            },
+            {
+                name: 'text',
+                factory: function(settings){
+                    return { text: new ol.style.Text(settings) };
+                }
+            },
+            {
+                name: 'middlePointIcon',
+                factory: function(settings, feature) {
+                    /*
+                    return {
+                        geometry: new ol.geom.Point(end)
+                    }*/
+                    return {};
+                }
+            }
         ];
 
-        var getOpenLayerStyleClass = function(name){
+        var getOpenLayerStyleConf = function(name){
             for(var i in openLayerStyleClassConfigs)
                 if(openLayerStyleClassConfigs[i].name == name)
-                    return openLayerStyleClassConfigs[i].type;
+                    return openLayerStyleClassConfigs[i];
             return undefined;
         };
 
-        var createOpenLayerStyle = function(configObj){
+        var createOpenLayerStyle = function(configObj, feature){
             var styleOptions = {};
             for(var propertyName in configObj){
-                var olType = getOpenLayerStyleClass(propertyName);
-                if(olType)
-                    styleOptions[propertyName] = new olType(configObj[propertyName]);
+                var olConf = getOpenLayerStyleConf(propertyName);
+                if(olConf)
+                    _.merge(styleOptions, olConf.factory(configObj[propertyName], feature));
                 else
                     styleOptions[propertyName] = configObj[propertyName];
             }
@@ -157,20 +241,24 @@
             setRulesByName(name, allRules);
         };
 
-        this.getStyle = function(context){
-           return this.getStyleByName(defaultRuleName, context);
+        this.getStyle = function(context, feature){
+           return this.getStyleByName(defaultRuleName, context, feature);
         };
 
-        this.getStyleByName = function(name, context){
+        this.getStyleByName = function(name, context, feature){
             var allRules = getRulesByName(name);
             var configObj = _.merge({}, defaultStyle);
+            var returnStyles = [];
             for(var i=0; i < allRules.length; i++){
                 var rule = allRules[i];
                 if(rule._match(context)){
-                    configObj = _.merge(configObj, rule._get());
+                    var styles = rule._get();
+                    for(var j=0; j < styles.length ; j++){
+                        configObj = _.merge(configObj, styles[j]);
+                    }
                 }
             }
-            return createOpenLayerStyle(configObj);
+            return createOpenLayerStyle(configObj, feature);
         };
     };
 })(this);

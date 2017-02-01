@@ -392,18 +392,24 @@
     //TODO thoses rule configurations on the LinkPropertyLayerStyle
     //TODO create support  for externalGraphic
     var functionalClassRules = [
-      new StyleRule().where('functionalClass').is(1).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
-      new StyleRule().where('functionalClass').is(2).use({ stroke : { color: '#f00'}, externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
-      new StyleRule().where('functionalClass').is(3).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
-      new StyleRule().where('functionalClass').is(4).use({ stroke : { color: '#f5d'}, externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
-      new StyleRule().where('functionalClass').is(5).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
-      new StyleRule().where('functionalClass').is(6).use({ stroke : { color: '#01b'}, externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
-      new StyleRule().where('functionalClass').is(7).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
-      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'}, externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+      new StyleRule().where('functionalClass').is(1).use({ stroke : { color: '#f00'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('functionalClass').is(2).use({ stroke : { color: '#f00'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('functionalClass').is(3).use({ stroke : { color: '#f5d'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
+      new StyleRule().where('functionalClass').is(4).use({ stroke : { color: '#f5d'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
+      new StyleRule().where('functionalClass').is(5).use({ stroke : { color: '#01b'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
+      new StyleRule().where('functionalClass').is(6).use({ stroke : { color: '#01b'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
+      new StyleRule().where('functionalClass').is(7).use({ stroke : { color: '#888'} }),//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
+      new StyleRule().where('functionalClass').is(8).use({ stroke : { color: '#888'} })//.use({ middlePointIcon: { src: 'images/link-properties/arrow-drop-grey.svg' } })
+    ];
+
+    //TODO svg only appear if we set a color why!!!????
+    var functionalClassIconRules = [
+      new StyleRule().where('rotation').isDefined().use({ icon: { color: '#000000',  scale: 0.2, rotateWithView: true, src: 'images/link-properties/arrow-drop-red.svg'} } ),
+
     ];
 
     var unknownFunctionalClassDefaultRules = [
-      new StyleRule().where('functionalClass').is(99).use({ stroke : { color: '#888', opacity: 0.6}, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new StyleRule().where('functionalClass').is(99).use({ stroke : { color: '#888', opacity: 0.6}})
     ];
 
     //TODO create support  for pointRadius
@@ -421,6 +427,10 @@
     styleProvider.addRules(functionalClassRules);
     styleProvider.addRules(unknownFunctionalClassDefaultRules);
     styleProvider.addRules(zoomLevelRules);
+    styleProvider.addRules(functionalClassIconRules);
+
+    //functionalClassHistoryDefaultStyle.addRules(overlayDefaultOpacity);
+    //functionalClassHistoryDefaultStyle.addRules(linkStatusRules);
 
     // --- Style map selection
     var getDatasetSpecificStyle = function(dataset, renderIntent) {
