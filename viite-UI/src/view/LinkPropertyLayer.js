@@ -62,6 +62,9 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
+      if(selectSingleClick.getFeatures().getLength() !== 0){
+        selectSingleClick.getFeatures().clear();
+      }
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
@@ -110,6 +113,9 @@
       var source = roadLayer.layer.getSource();
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleFeatures = source.getFeaturesInExtent(extent);
+      if(selectDoubleClick.getFeatures().getLength() !== 0){
+        selectDoubleClick.getFeatures().clear();
+      }
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if(event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
