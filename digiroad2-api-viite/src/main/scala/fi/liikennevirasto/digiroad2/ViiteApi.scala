@@ -90,25 +90,36 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
     get("/roadlinks/adjacent") {
-      val linkid = params("linkid").toLong
-      val roadNumber = params("roadNumber").toLong
-      val roadPartNumber = params("roadPartNumber").toLong
-      val trackCode = params("trackCode").toLong
-      roadAddressService.getFloatingAdjacent(linkid, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+        val data = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Map[String,Any]]
+        val chainLinks = data.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+          rl.toLong
+        }).toSet[Long]
+        val linkId = data.get("linkId").get.asInstanceOf[Double].toLong
+        val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
+        val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
+        val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
+        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
 
   get("/roadlinks/multiSourceAdjacents") {
-      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Double]]]
+      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Any]]]
       if (roadData.isEmpty){
         Set.empty
       } else {
         val adjacents:Seq[RoadAddressLink] = {
           roadData.flatMap(rd => {
-            roadAddressService.getFloatingAdjacent(rd.get("linkId").get.toLong,
-              rd.get("roadNumber").get.toLong, rd.get("roadPartNumber").get.toLong, rd.get("trackCode").get.toLong)
+            val chainLinks = rd.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+              rl.toLong
+            }).toSet[Long]
+            val linkId = rd.get("linkId").get.asInstanceOf[Double].toLong
+            val roadNumber = rd.get("roadNumber").get.asInstanceOf[Double].toLong
+            val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
+            val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
+            roadAddressService.getFloatingAdjacent(chainLinks, linkId,
+              roadNumber, roadPartNumber, trackCode)
           })
         }
-        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.toLong)
+        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
         val result = adjacents.filter(adj => {
           !linkIds.contains(adj.linkId)
         })

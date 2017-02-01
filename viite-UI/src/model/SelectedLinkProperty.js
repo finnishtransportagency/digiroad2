@@ -86,7 +86,18 @@
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};
-       backend.getFloatingAdjacent(link.linkId, link.roadNumber, link.roadPartNumber, link.trackCode, function(adjacents) {
+      var chainLinks = [];
+      _.each(current, function(link){
+        chainLinks.push(link.getData().linkId)
+      });
+      _.each(targets, function(link){
+        chainLinks.push(parseInt(targets))
+      });
+      var data = {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)};
+
+       backend.getFloatingAdjacent(data, function(adjacents) {
+         //TODO alterar a obtencao dos floating adjacents de modo a enviar tambem os selecionados para ignorar um endPoint que ja tenha ligacao
         if(!_.isEmpty(adjacents))
           linkIds = adjacents;
          if(!applicationModel.isReadOnly()){
@@ -101,9 +112,17 @@
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       current.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
+      var chainLinks = [];
+      _.each(current, function(link){
+        chainLinks.push(link.getData().linkId)
+      });
+      _.each(targets, function(link){
+        chainLinks.push(parseInt(targets))
+      });
       var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
-        return {"linkId": ns.linkId, "roadNumber": ns.roadNumber, "roadPartNumber": ns.roadPartNumber, "trackCode": ns.trackCode};
+        return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
+          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
@@ -111,6 +130,8 @@
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
+       } else {
+        applicationModel.removeSpinner();
        }
       });
     });

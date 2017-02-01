@@ -21,11 +21,11 @@
       });
     }, 1000);
 
-    this.getFloatingAdjacent = _.throttle(function(linkid, roadNumber, roadPartNumber, trackCode, callback) {
-        return $.getJSON('api/viite/roadlinks/adjacent?linkid=' + linkid + '&roadNumber=' + roadNumber + '&roadPartNumber=' + roadPartNumber + '&trackCode=' + trackCode, function(data) {
-          return _.isFunction(callback) && callback(data);
-        });
-      }, 1000);
+    this.getFloatingAdjacent = _.throttle(function(roadData, callback) {
+      return $.getJSON('api/viite/roadlinks/adjacent?roadData=' +JSON.stringify(roadData), function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
 
     this.getAdjacentsFromMultipleSources = _.throttle(function(roadData, callback) {
       return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' +JSON.stringify(roadData), function(data) {

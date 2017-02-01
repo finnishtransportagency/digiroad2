@@ -356,6 +356,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   /**
     * Checks that if the geometry is found and updates the geometry to match or sets it floating if not found
+    *
     * @param ids
     */
   def checkRoadAddressFloating(ids: Set[Long]): Unit = {
@@ -366,6 +367,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   /**
     * For easier unit testing and use
+    *
     * @param ids
     */
   def checkRoadAddressFloatingWithoutTX(ids: Set[Long]): Unit = {
@@ -434,8 +436,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdjacent(linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
-    val sourceRoadLink = roadLinkService.getViiteRoadLinksHistoryFromVVH(Set(linkId)).headOption
+  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+    val chainRoadLinks = roadLinkService.getViiteRoadLinksHistoryFromVVH(chainLinks)
+    val sourceRoadLink = chainRoadLinks.filter(_.linkId == linkId).headOption
     val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
@@ -461,18 +464,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
         val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
         rl.linkId -> buildRoadAddressLink(rl, ra, missed)
-      }
-        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)))
-        .filter(_._2.exists(ral => ral.roadLinkType == UnknownRoadLinkType))
-        .flatMap(_._2)
+      }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
+          && ral.roadLinkType == UnknownRoadLinkType ))
+      .filterNot(_._2.exists(ral =>
+          chainRoadLinks.filterNot(_.linkId == linkId).exists{ cl =>
+            GeometryUtils.areAdjacent(ral.geometry, cl.geometry)
+          }
+        ))
+      .flatMap(_._2)
 
-      val viiteFloatingRoadLinks = floatingViiteRoadLinks.filterNot(_._1 == linkId)
-        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)))
-        .filter(_._2.exists(ral => ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode))
-        .filter(_._2.exists(ral => ral.roadLinkType == FloatingRoadLinkType))
+      val viiteFloatingRoadLinks = floatingViiteRoadLinks
+          .filterNot(_._1 == linkId)
+          .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
+          && ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode
+          && ral.roadLinkType == FloatingRoadLinkType))
         .flatMap(_._2).toSeq
 
-      viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks
+      (viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks)
     }).getOrElse(Seq())
   }
 
@@ -480,11 +488,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     try {
       val sourceLinks = sources.flatMap(rd => {
-          getUniqueRoadAddressLink(rd.toLong)
-        })
+        getUniqueRoadAddressLink(rd.toLong)
+      })
       val targetLinks = targets.flatMap(rd => {
-          getUniqueRoadAddressLink(rd.toLong)
-        })
+        getUniqueRoadAddressLink(rd.toLong)
+      })
       RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks)
     } catch {
       case e: Exception => {
