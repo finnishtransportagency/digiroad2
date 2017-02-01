@@ -445,20 +445,22 @@
           return aditionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 
-        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
-        $('#floatingEditModeForm').show();
-        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-          eventbus.trigger("adjacents:roadTransferForm");
-        $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
-          eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
-          rootElement.find('.link-properties button.calculate').attr('disabled', false);
-          rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          applicationModel.setActiveButtons(true);
-        });
-        $('[id*="aditionalSourceButton"]').click(sources,function(event) {
-          applicationModel.addSpinner();
-          eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
-        });
+        if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
+            $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
+            $('#floatingEditModeForm').show();
+            if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
+              eventbus.trigger("adjacents:roadTransferForm");
+            $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+              eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
+              rootElement.find('.link-properties button.calculate').attr('disabled', false);
+              rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              applicationModel.setActiveButtons(true);
+            });
+            $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+              applicationModel.addSpinner();
+              eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
+            });
+        }
 
       };
       

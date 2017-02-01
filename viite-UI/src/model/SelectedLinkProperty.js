@@ -78,7 +78,7 @@
         });
 
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
-        if(!applicationModel.isReadOnly()){
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
           applicationModel.addSpinner();
         }
       }
@@ -223,10 +223,13 @@
       }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons()){
-        if(action !== applicationModel.actionCalculated)
+        if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+          eventbus.trigger('roadLinks:deleteSelection');
+          eventbus.trigger('roadLinks:unselected');
+        }
         eventbus.trigger('roadLinks:deleteSelection');
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
     };
 
@@ -252,7 +255,9 @@
     eventbus.on("roadLink:editModeAdjacents", function(){
       if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
         eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-        applicationModel.addSpinner();
+        if(get()[0].roadLinkType === -1) {
+          applicationModel.addSpinner();
+        }
       }
     });
 
