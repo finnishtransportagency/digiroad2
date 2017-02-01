@@ -31,7 +31,6 @@
     anomalousMarkerLayer.setVisible(true);
     indicatorLayer.setVisible(true);
 
-
     /**
      * We declare the type of interaction we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
@@ -78,7 +77,6 @@
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
-        map.getView().setZoom(map.getView().getZoom()+1);
       }
     });
 
@@ -144,6 +142,7 @@
       addFeaturesToSelection(ol3Features);
     });
 
+    //select Markers on the map (Floating Markers and Anomalous Markers)
     var selectMarkers = new ol.interaction.Select({
       toggleCondition: ol.events.condition.never,
       condition: ol.events.condition.click,
@@ -152,6 +151,7 @@
 
     map.addInteraction(selectMarkers);
 
+    //set opacity on the markers when the other markers aren't selected
     selectMarkers.on('select',function(event) {
       if(event.selected.length !== 0) {
         if (floatingMarkerLayer.getOpacity() === 1 && anomalousMarkerLayer.getOpacity() === 1) {
@@ -179,6 +179,7 @@
       }
     };
 
+    //deactivate Selection of the roads or the markers in the map
     var deactivateSelection = function() {
       map.removeInteraction(selectDoubleClick);
       map.removeInteraction(selectSingleClick);
@@ -191,12 +192,13 @@
       map.addInteraction(selectMarkers);
     };
 
-    var unselectRoadLink = function() {
+	var unselectRoadLink = function() {
       selectedLinkProperty.close();
       clearHighlights();
       indicatorLayer.getSource().clear();
     };
 
+	
     var highlightFeatures = function() {
       clearHighlights();
       var featuresToHighlight = [];
@@ -278,7 +280,6 @@
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
       var indicators = jQuery.extend(true, [], indicatorLayer.markers);
-      //indicatorLayer.clearMarkers();
       indicatorLayer.clear();
       if(indicators.length !== 0){
         _.forEach(indicators, function(indicator){
@@ -305,6 +306,10 @@
       activateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       roadLayer.layer.setOpacity(1);
+      //deactivateSelection();
+      if(selectDoubleClick.getFeatures().getLength() !== 0){
+         selectDoubleClick.getFeatures().clear();
+      }
     };
 
     this.refreshView = function() {
@@ -314,7 +319,7 @@
     };
 
     var refreshViewAfterSaving = function() {
-      unselectRoadLink();
+	    unselectRoadLink();
       me.refreshView();
     };
 
@@ -396,11 +401,11 @@
     var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
-      unselectRoadLink();
+	    unselectRoadLink();
     };
 
     var hideLayer = function() {
-      unselectRoadLink();
+	    unselectRoadLink();
       me.stop();
       me.hide();
     };

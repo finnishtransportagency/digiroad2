@@ -30,8 +30,11 @@
         //create the style of the icon of the 'Merkistse' Button
         var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
-          src: '../images/center-marker.png',
+          src: 'images/center-marker.png',
           scale: 0.025
+          //src: 'images/center-marker.svg',
+          //size: [1500,736],
+          //scale: 1
         })
         });
 
