@@ -465,17 +465,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
         rl.linkId -> buildRoadAddressLink(rl, ra, missed)
       }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
-          && ral.roadLinkType == UnknownRoadLinkType ))
-      .filterNot(_._2.exists(ral =>
+        && ral.roadLinkType == UnknownRoadLinkType ))
+        .filterNot(_._2.exists(ral =>
           chainRoadLinks.filterNot(_.linkId == linkId).exists{ cl =>
             GeometryUtils.areAdjacent(ral.geometry, cl.geometry)
           }
         ))
-      .flatMap(_._2)
+        .flatMap(_._2)
 
       val viiteFloatingRoadLinks = floatingViiteRoadLinks
-          .filterNot(_._1 == linkId)
-          .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
+        .filterNot(_._1 == linkId)
+        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
           && ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode
           && ral.roadLinkType == FloatingRoadLinkType))
         .flatMap(_._2).toSeq

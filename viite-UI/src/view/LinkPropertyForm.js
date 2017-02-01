@@ -435,7 +435,6 @@
         var adjacents = _.reject(targets, function(t){
           return t.roadLinkType == -1;
         });
-        if(_.isEmpty(adjacents)) return;
 
         var floatingAdjacents = _.filter(targets, function(t){
           return t.roadLinkType == -1;
