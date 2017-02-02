@@ -708,6 +708,8 @@ object DataFixture {
     println(DateTime.now())
 
     val LanesNumberAssetTypeId = 140
+    val NumberOfRoadLanesMotorway = 2;
+    val NumberOfRoadLanesSingleCarriageway = 1;
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -715,26 +717,25 @@ object DataFixture {
       Queries.getMunicipalities
     }
 
-    //Obtain all existing RoadLinkId by AssetType
-    val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId)}
 
     println("Obtaining all Road Links By Municipality")
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
-    municipalities.foreach { municipality =>
+   // municipalities.foreach { municipality =>
+      val municipality = 5
       println("Start processing municipality %d".format(municipality))
 
       //Filtered by "Private"
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(p => (p.administrativeClass == Private))
-
+      println ("Total roadlink    -> " + roadLinks.size)
+      //Obtain all existing RoadLinkId by AssetType
+      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))}
+      println ("Total creates before    -> " + assetCreated.size)
       println("End processing municipality %d".format(municipality))
 
-      //Exclude existing RoadLinkId
+      //Exclude previously roadlink created
       val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
-
-      println ("Total register    -> " + roadLinks.size)
-      println ("Total creates     -> " + assetCreated.size)
-      println ("Total reg - creat -> " + filteredRoadLinksByNonCreated.size)
+      println ("Total to insert -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
         OracleDatabase.withDynSession {
@@ -747,8 +748,9 @@ object DataFixture {
 
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 1)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 1)
+                    println("insert single")
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
                   }
                   case _ => {
                     None
@@ -757,8 +759,15 @@ object DataFixture {
               case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, 2)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, 2)
+                    println("insert motorway")
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
+                  }
+                  case asset.TrafficDirection.TowardsDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
+                  }
+                  case asset.TrafficDirection.AgainstDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
                     None
@@ -769,9 +778,10 @@ object DataFixture {
               }
             }
           }
-        }
+      //  }
       }
     }
+
     println("\n")
     println("Complete at time: ")
     println(DateTime.now())
