@@ -731,13 +731,16 @@ object DataFixture {
 
       //Obtain all existing RoadLinkId by AssetType
       //val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))}
-      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, Seq(499823540))}
+      OracleDatabase.withDynSession {
+        val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, Seq(499823540))
+        println ("Total creates before    -> " + assetCreated.size)
+      }
 
-      println ("Total creates before    -> " + assetCreated.size)
-      println("End processing municipality %d".format(municipality))
+
+
 
       //Exclude previously roadlink created
-      val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
+     /* val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
       println ("Total to insert -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
@@ -781,9 +784,10 @@ object DataFixture {
               }
             }
           }
-      //  }
+        }
       }
-    }
+        println("End processing municipality %d".format(municipality))
+    //}*/
 
     println("\n")
     println("Complete at time: ")
