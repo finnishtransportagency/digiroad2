@@ -708,8 +708,8 @@ object DataFixture {
     println(DateTime.now())
 
     val LanesNumberAssetTypeId = 140
-    val NumberOfRoadLanesMotorway = 2;
-    val NumberOfRoadLanesSingleCarriageway = 1;
+    val NumberOfRoadLanesMotorway = 2
+    val NumberOfRoadLanesSingleCarriageway = 1
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -730,68 +730,67 @@ object DataFixture {
       println ("Total roadlink    -> " + roadLinks.size)
 
       //Obtain all existing RoadLinkId by AssetType
-      OracleDatabase.withDynSession {
-        val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
-        println ("Total creates before    -> " + assetCreated.size)
+      val assetCreated: Seq[Long] =
+      OracleDatabase.withDynTransaction{
+         dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
       }
+
+      println ("Total creates before1    -> " + assetCreated.size)
       //OracleDatabase.withDynSession {
       OracleDatabase.withDynTransaction{
         val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, Seq(499823540))
         println ("Total creates before1    -> " + assetCreated.size)
       }
 
-
-
-
       //Exclude previously roadlink created
-     /* val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
+      val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
       println ("Total to insert -> " + filteredRoadLinksByNonCreated.size )
 
-      if (filteredRoadLinksByNonCreated.size != 0) {
-        OracleDatabase.withDynSession {
-          //Create new Assets for the RoadLinks from VVH
-          filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
+    /*if (filteredRoadLinksByNonCreated.size != 0) {
+      OracleDatabase.withDynSession {
+        //Create new Assets for the RoadLinks from VVH
+        filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
-            val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
-            roadLinkProp.linkType match {
-              case asset.SingleCarriageway =>
+          val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
+          roadLinkProp.linkType match {
+            case asset.SingleCarriageway =>
 
-                roadLinkProp.trafficDirection match {
-                  case asset.TrafficDirection.BothDirections => {
-                    println("insert single")
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
-                  }
-                  case _ => {
-                    None
-                  }
+              roadLinkProp.trafficDirection match {
+                case asset.TrafficDirection.BothDirections => {
+                  println("insert single")
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
                 }
-              case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
-                roadLinkProp.trafficDirection match {
-                  case asset.TrafficDirection.BothDirections => {
-                    println("insert motorway")
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
-                  }
-                  case asset.TrafficDirection.TowardsDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
-                  }
-                  case asset.TrafficDirection.AgainstDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
-                  }
-                  case _ => {
-                    None
-                  }
+                case _ => {
+                  None
                 }
-              case _ => {
-                None
               }
+            case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
+              roadLinkProp.trafficDirection match {
+                case asset.TrafficDirection.BothDirections => {
+                  println("insert motorway")
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
+                }
+                case asset.TrafficDirection.TowardsDigitizing => {
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
+                }
+                case asset.TrafficDirection.AgainstDigitizing => {
+                  dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
+                }
+                case _ => {
+                  None
+                }
+              }
+            case _ => {
+              None
             }
           }
         }
       }
-        println("End processing municipality %d".format(municipality))
-    //}*/
+    }
+      println("End processing municipality %d".format(municipality))
+  //}*/
 
     println("\n")
     println("Complete at time: ")
