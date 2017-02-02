@@ -99,7 +99,8 @@
       }
     };
     this.hide = function() {
-      roadLayer.clear();
+      //roadLayer.clear();
+      layer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
 

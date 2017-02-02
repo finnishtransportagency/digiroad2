@@ -11,6 +11,7 @@
     var indicatorVector = new ol.source.Vector({});
     var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
+    var calibrationPointVector = new ol.source.Vector({});
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
@@ -24,11 +25,17 @@
       source: anomalousMarkerVector
     });
 
+    var calibrationPointLayer = new ol.layer.Vector({
+      source: calibrationPointVector
+    });
+
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
+    map.addLayer(calibrationPointLayer);
     map.addLayer(indicatorLayer);
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
+    calibrationPointLayer.setVisible(true);
     indicatorLayer.setVisible(true);
 
     /**
@@ -45,10 +52,10 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-        var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-        var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
-        featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
-        return featureStyle;
+          var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+          var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
+          featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
+          return featureStyle;
       }
     });
 
@@ -114,18 +121,19 @@
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
       }
+       var selection = _.find(event.selected, function(selectionTarget){
+          return !_.isUndefined(selectionTarget.roadLinkData);
+        });
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
+      if(!_.isUndefined(selection)){
       if(event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
           roadLayer.layer.setOpacity(0.2);
         }
         selectedLinkProperty.close();
-
-        var selection = _.find(event.selected, function(selectionTarget){
-          return !_.isUndefined(selectionTarget.roadLinkData);
-        });
         selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
-      } else if (event.selected.length === 0 && event.deselected.length !== 0){
+            }
+        } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
       }
@@ -165,6 +173,7 @@
         selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
+        roadLayer.layer.setOpacity(1);
         floatingMarkerLayer.setOpacity(1);
         anomalousMarkerLayer.setOpacity(1);
       }
@@ -245,10 +254,10 @@
       }
 
       if (zoom > zoomlevels.minZoomForAssets) {
-        var actualPoints =  me.drawCalibrationMarkers(roadLayer.source, roadLinks);
+        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
         _.each(actualPoints, function(actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint.point);
-          floatingMarkerLayer.getSource().addFeature(calMarker.getMarker(true));
+          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
         });
       }
       activateSelection();
