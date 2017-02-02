@@ -724,20 +724,22 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Filtered by "Private"
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(p => (p.administrativeClass == Private))
-      println ("Total roadlink    -> " + roadLinks.size)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      println ("Total roadlink by municipality -> " + roadLinks.size)
 
-      //Obtain all existing RoadLinkId by AssetType
+      //Obtain all existing RoadLinkId by AssetType and roadLinks
       val assetCreated: Seq[Long] =
       OracleDatabase.withDynTransaction{
         dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
       }
+      println ("Total created previously       -> " + assetCreated.size)
 
-      println ("Total creates before -> " + assetCreated.size)
+      val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == Private))
+      println ("Total RoadLink by Class        -> " + roadLinksFilteredByClass.size)
 
       //Exclude previously roadlink created
-      val filteredRoadLinksByNonCreated = roadLinks.filterNot(f => assetCreated.contains(f.linkId))
-      println ("Total to insert -> " + filteredRoadLinksByNonCreated.size )
+      val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetCreated.contains(f.linkId))
+      println ("Max possibles to insert        -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
         OracleDatabase.withDynSession {
