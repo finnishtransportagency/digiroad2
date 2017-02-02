@@ -111,5 +111,21 @@
     addCenterMarkerLayerToMap(map);
 
     setCursor(applicationModel.getSelectedTool());
+
+
+    map.getViewport().style.cursor = "initial";
+
+    map.on('pointerdrag', function(evt) {
+      //map.on('pointermove', function(evt) {
+      map.getViewport().style.cursor = "move";
+      console.log("pointerdrag");
+      map.getViewport().style.cursor = "move";
+    });
+
+    map.on('pointerup', function(evt) {
+      map.getViewport().style.cursor = "initial";
+      console.log("pointerup");
+    });
+
   };
 })(this);
