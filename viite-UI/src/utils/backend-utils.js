@@ -39,6 +39,19 @@
       });
     }, 1000);
 
+
+    this.createRoadAddress = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

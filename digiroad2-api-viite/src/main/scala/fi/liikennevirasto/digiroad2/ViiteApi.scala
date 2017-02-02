@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
@@ -131,6 +131,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (sources, targets) = roadlinksData()
     val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets)
     result.map(roadAddressLinkToApi)
+  }
+
+  put("/roadlinks/roadaddress") {
+
+//    val roadAddress = RoadAddress()
+
+//    case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+//                           discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+//                           endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+//                           calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+//                           geom: Seq[Point])
+
+//    roadAddressService.transferFloatingToGap(linkIds, roadAddress)
+
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

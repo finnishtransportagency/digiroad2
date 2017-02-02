@@ -172,6 +172,26 @@
         eventbus.trigger('linkProperties:updateFailed');
       });
     };
+    
+    var saveTransfer = function() {
+      eventbus.trigger('linkProperties:saving');
+      var linkIds = [];
+      _.each(current, function(link){
+        linkIds.push(link.getData().linkId)
+      });
+      _.each(targets, function(link){
+        linkIds.push(parseInt(targets))
+      });
+      var roadAddress = roadCollection.getRoadLinkByLinkId(parseInt(current[0].getData().linkId)).getData();
+      var data = {'linkIds': linkIds, 'roadAddress': roadAddress}
+
+      backend.createRoadAddress(data, function() {
+        dirty = false;
+        eventbus.trigger('linkProperties:saved');
+      }, function() {
+        eventbus.trigger('linkProperties:updateFailed');
+      });
+    };
 
     var addTargets = function(target, adjacents){
       if(!_.contains(targets,target))
@@ -270,6 +290,7 @@
       open: open,
       isDirty: isDirty,
       save: save,
+      saveTransfer: saveTransfer,
       cancel: cancel,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,

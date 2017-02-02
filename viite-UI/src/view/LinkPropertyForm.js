@@ -471,7 +471,12 @@
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
-        selectedLinkProperty.save();
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
+        {
+          selectedLinkProperty.saveTransfer();
+        } else {
+          selectedLinkProperty.save();
+        }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
         var action;
