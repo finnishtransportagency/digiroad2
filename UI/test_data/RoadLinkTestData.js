@@ -241,6 +241,7 @@
       "linkId": 9,
       "administrativeClass": "State",
       "linkType": 2,
+      "trafficDirection": "BothDirections",
       "points": [{
         "x": 374728.64,
         "y": 6677446.365

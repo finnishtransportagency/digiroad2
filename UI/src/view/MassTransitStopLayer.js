@@ -544,7 +544,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectedAsset.data.roadDirection = angle;
     selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
     selectedAsset.roadLinkId = nearestLine.roadLinkId;
-    selectedAsset.trafficDirection = nearestLine.trafficDirection;
     selectedAsset.data.lon = coordinates.lon;
     selectedAsset.data.lat = coordinates.lat;
 
@@ -559,7 +558,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       bearing: angle,
       roadLinkId: nearestLine.roadLinkId,
       linkId: nearestLine.linkId,
-      trafficDirection: nearestLine.trafficDirection
+      validityDirection: selectedAsset.data.validityDirection
     });
 
   };

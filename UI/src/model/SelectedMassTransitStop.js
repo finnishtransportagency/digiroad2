@@ -266,13 +266,11 @@
             var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
             var linkId = nearestLine.linkId;
 
-            //var massTransitStopDirection =  currentAsset.payload.validityDirection;
-            var massTransitStopDirection =  _.isUndefined(currentAsset.payload.validityDirection)? parseInt(getValidityDirection()) : currentAsset.payload.validityDirection;
+            var massTransitStopDirection =  currentAsset.payload.validityDirection;
             if (!currentAsset.linkId)
                 currentAsset.linkId = linkId;
             var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
             var roadLinkDirection = directions_decode[nearestLine.trafficDirection];
-            //var roadLinkDirection = directions_decode[getRoadLink().getData().trafficDirection];
             return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
         }else{
           return false;
@@ -280,8 +278,7 @@
     };
 
     var switchDirection = function() {
-      var validityDirection = validitydirections.switchDirection(_.isUndefined(get('validityDirection')) ? parseInt(getValidityDirection()) : get('validityDirection'));
-      //var validityDirection = validitydirections.switchDirection(get('validityDirection'));
+      var validityDirection = validitydirections.switchDirection(get('validityDirection'));
       setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
       currentAsset.payload.validityDirection = validityDirection;
     };
@@ -340,10 +337,6 @@
       return getPropertyValue({ propertyData: getProperties() }, 'nimi_suomeksi');
     };
 
-    var getValidityDirection = function () {
-      return getPropertyValueValue({propertyData: getProperties()}, 'vaikutussuunta');
-    };
-
     var getDirection = function() {
       return getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
     };
@@ -395,17 +388,6 @@
       } else {
         return value.propertyValue;
       }
-    }
-
-    function getPropertyValueValue(asset, propertyName) {
-      return _.chain(asset.propertyData)
-        .find(function (property) { return property.publicId === propertyName; })
-        .pick('values')
-        .values()
-        .flatten()
-        .map(function (value) { return value.propertyValue;})
-        .value()
-        .join(', ');
     }
 
     function isAdminClassState(properties){
