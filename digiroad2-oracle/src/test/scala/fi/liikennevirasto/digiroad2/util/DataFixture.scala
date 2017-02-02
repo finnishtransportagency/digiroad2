@@ -731,7 +731,8 @@ object DataFixture {
 
       //Obtain all existing RoadLinkId by AssetType
       //val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))}
-      OracleDatabase.withDynSession {
+      //OracleDatabase.withDynSession {
+      OracleDatabase.withDynTransaction{
         val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, Seq(499823540))
         println ("Total creates before    -> " + assetCreated.size)
       }
