@@ -147,7 +147,9 @@
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType);
+      //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
+      //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
       var middleLineColor;
       var borderColor;
       var lineCap;
