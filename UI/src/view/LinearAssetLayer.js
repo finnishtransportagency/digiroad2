@@ -169,7 +169,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = style.browsing;
+    vectorLayer.styleMap = style.selection;
     highlightLinearAssetFeatures();
    // vectorLayer.redraw();
   };
@@ -207,26 +207,71 @@ window.LinearAssetLayer = function(params) {
   // map.addControl(selectControl);
  // var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
-  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
-    selectedLinearAsset.openMultiple(linearAssets);
+  // var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
+  //   selectedLinearAsset.openMultiple(linearAssets);
+  //
+  //   LinearAssetMassUpdateDialog.show({
+  //     count: selectedLinearAsset.count(),
+  //     onCancel: cancelSelection,
+  //     onSave: function(value) {
+  //       selectedLinearAsset.saveMultiple(value);
+  //       activateBrowseStyle();
+  //       selectedLinearAsset.closeMultiple();
+  //     },
+  //     validator: selectedLinearAsset.validator,
+  //     formElements: params.formElements
+  //   });
+  // });
 
-    LinearAssetMassUpdateDialog.show({
-      count: selectedLinearAsset.count(),
-      onCancel: cancelSelection,
-      onSave: function(value) {
-        selectedLinearAsset.saveMultiple(value);
-        activateBrowseStyle();
-        selectedLinearAsset.closeMultiple();
-      },
-      validator: selectedLinearAsset.validator,
-      formElements: params.formElements
+    // a normal select interaction to handle click
+    var select = new ol.interaction.Select();
+    map.addInteraction(select);
+
+    map.on('click', function () {
+        select.getFeatures().clear();
     });
-  });
+
+    var boxHandler = new BoxSelectControl(map, onStart, onEnd);
+
+    var showDialog = function (linearAssets) {
+        selectedLinearAsset.openMultiple(linearAssets);
+
+        LinearAssetMassUpdateDialog.show({
+            count: selectedLinearAsset.count(),
+            onCancel: cancelSelection,
+            onSave: function (value) {
+                selectedLinearAsset.saveMultiple(value);
+                activateBrowseStyle();
+                selectedLinearAsset.closeMultiple();
+            },
+            validator: selectedLinearAsset.validator,
+            formElements: params.formElements
+        });
+    };
+
+    function onEnd(extent) {
+        if (selectedLinearAsset.isDirty()) {
+            displayConfirmMessage();
+        } else {
+            var linearAssets = [];
+            vectorLayer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
+                linearAssets.push(feature.values_);
+            });
+            if (linearAssets.length > 0) {
+                selectedLinearAsset.close();
+                showDialog(linearAssets);
+            }
+        }
+    }
+
+  function onStart(){
+     select.getFeatures().clear();
+  }
 
   function cancelSelection() {
     selectedLinearAsset.closeMultiple();
     activateBrowseStyle();
-    collection.fetch(map.getExtent());
+    collection.fetch(map.getView().calculateExtent(map.getSize()));
   }
 
   var handleLinearAssetUnSelected = function(eventListener, selection) {
@@ -237,7 +282,7 @@ window.LinearAssetLayer = function(params) {
     });
 
     vectorLayer.styleMap = style.browsing;
-    vectorLayer.redraw();
+    //vectorLayer.redraw();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
 
@@ -254,16 +299,18 @@ window.LinearAssetLayer = function(params) {
       linearAssetCutter.deactivate();
     //doubleClickSelectControl.activate();
     }
-   //updateMassUpdateHandlerState();
+   updateMassUpdateHandlerState();
   };
 
   var updateMassUpdateHandlerState = function() {
     if (!application.isReadOnly() &&
         application.getSelectedTool() === 'Select' &&
         application.getSelectedLayer() === layerName) {
-     // massUpdateHandler.activate();
+        boxHandler.activate();
+        //massUpdateHandler.activate();
     } else {
-     // massUpdateHandler.deactivate();
+        boxHandler.deactivate();
+        //massUpdateHandler.deactivate();
     }
   };
 
@@ -272,7 +319,7 @@ window.LinearAssetLayer = function(params) {
       selectControl.unhighlight(feature);
     });
     vectorLayer.styleMap = style.browsing;
-    vectorLayer.redraw();
+    //vectorLayer.redraw();
   };
 
   var bindEvents = function(eventListener) {
@@ -304,7 +351,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetSaved = function() {
-    collection.fetch(map.getExtent());
+    collection.fetch(map.getView().calculateExtent(map.getSize()));
     applicationModel.setSelectedTool('Select');
   };
 
@@ -324,7 +371,7 @@ window.LinearAssetLayer = function(params) {
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
     changeTool(application.getSelectedTool());
-    // updateMassUpdateHandlerState();
+    updateMassUpdateHandlerState();
   };
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
@@ -334,12 +381,12 @@ window.LinearAssetLayer = function(params) {
     });
   };
   this.activateSelection = function() {
-    // updateMassUpdateHandlerState();
+     updateMassUpdateHandlerState();
     // doubleClickSelectControl.activate();
       map.addInteraction(selectControl);
   };
   this.deactivateSelection = function() {
-    // updateMassUpdateHandlerState();
+     updateMassUpdateHandlerState();
     // doubleClickSelectControl.deactivate();
   };
   this.removeLayerFeatures = function() {
