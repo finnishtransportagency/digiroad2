@@ -529,7 +529,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   protected def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
-    paths.head
+    paths.reduceLeft((geom, nextPart) => geom ++ nextPart.tail)
   }
 
   protected def roadLinkFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
