@@ -41,6 +41,7 @@
     /**
      * We declare the type of interaction we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+     * This interaction is restricted to a double click.
      * @type {ol.interaction.Select}
      */
     var selectDoubleClick = new ol.interaction.Select({
@@ -101,6 +102,13 @@
       });
     });
 
+    /**
+     * We declare the type of interaction we want the map to be able to respond.
+     * A selected feature is moved to a new/temporary layer out of the default roadLayer.
+     * This interaction is restricted to a single click (there is a 250 ms enforced
+     * delay between single clicks in order to diferentiate from double click).
+     * @type {ol.interaction.Select}
+     */
     var selectSingleClick = new ol.interaction.Select({
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       //multi: true,
@@ -117,12 +125,23 @@
       }
     });
 
+    //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);
 
+    /**
+     * We now declare what kind of custom actions we want when the interaction happens.
+     * Note that 'select' is triggered when a feature is either selected or deselected.
+     * The event holds the selected features in the events.selected and the deselected in event.deselected.
+     *
+     * In this particular case we are fetching every roadLinkAddress and anomaly marker in view and
+     * sending them to the selectedLinkProperty.open for further processing.
+     */
     selectSingleClick.on('select',function(event) {
-      var source = roadLayer.layer.getSource();
       var extent = map.getView().calculateExtent(map.getSize());
-      var visibleFeatures = source.getFeaturesInExtent(extent);
+      var roadSource = roadLayer.layer.getSource();
+      var visibleRoads = roadSource.getFeaturesInExtent(extent);
+      var visibleAnomalyMarkers = anomalousMarkerLayer.getSource().getFeaturesInExtent(extent);
+      var visibleFeatures = visibleRoads.concat(visibleAnomalyMarkers);
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
       }
@@ -148,12 +167,20 @@
       }
     });
 
+    /**
+     * Simple method that will add various open layers 3 features to a selection.
+     * @param ol3Features
+     */
     var addFeaturesToSelection = function (ol3Features) {
       _.each(ol3Features, function(feature){
         selectSingleClick.getFeatures().push(feature);
       });
     };
 
+    /**
+     * Event triggred by the selectedLinkProperty.open() returning all the open layers 3 features
+     * that need to be included in the selection.
+     */
     eventbus.on('linkProperties:ol3Selected',function(ol3Features){
       selectSingleClick.getFeatures().clear();
       addFeaturesToSelection(ol3Features);
@@ -188,6 +215,9 @@
       }
     });
 
+    /**
+     * This is remove all the features from all the selections.
+     */
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
@@ -197,13 +227,24 @@
       }
     };
 
-    //deactivate Selection of the roads or the markers in the map
+    /**
+     * This will remove all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     * -selectMarkers
+     */
     var deactivateSelection = function() {
       map.removeInteraction(selectDoubleClick);
       map.removeInteraction(selectSingleClick);
       map.removeInteraction(selectMarkers);
     };
 
+    /**
+     * This will add all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     * -selectMarkers
+     */
     var activateSelection = function () {
       map.addInteraction(selectDoubleClick);
       map.addInteraction(selectSingleClick);

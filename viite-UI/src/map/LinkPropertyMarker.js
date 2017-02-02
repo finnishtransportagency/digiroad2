@@ -13,13 +13,15 @@
         image: new ol.style.Icon({
           src: 'images/link-properties/flag-floating-plus-stick.png',
           anchor: [0, 1]
-        })
+        }),
+        zIndex: 10
       });
 
       var boxStyleUnknown = new ol.style.Style({
         image: new ol.style.Icon({
           src: "images/speed-limits/unknown.svg"
-        })
+        }),
+        zIndex: 10
       });
 
       if(roadlink.roadLinkType==-1){
