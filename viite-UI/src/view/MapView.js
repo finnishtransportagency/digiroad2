@@ -112,16 +112,16 @@
 
     setCursor(applicationModel.getSelectedTool());
 
-
+    //initial cursor when the map user is not dragging the map
     map.getViewport().style.cursor = "initial";
 
+    //when the map is moving (the user is dragging the map)
+    //only work's when the developer options in the browser aren't open
     map.on('pointerdrag', function(evt) {
-      //map.on('pointermove', function(evt) {
-      map.getViewport().style.cursor = "move";
-      console.log("pointerdrag");
       map.getViewport().style.cursor = "move";
     });
 
+    //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
       map.getViewport().style.cursor = "initial";
       console.log("pointerup");
