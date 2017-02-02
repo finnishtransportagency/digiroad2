@@ -186,7 +186,7 @@
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-        linkProperties.track = linkProperties.track || '';
+        linkProperties.track = isNaN(parseFloat(linkProperties.track)) ? '' : linkProperties.track;
         linkProperties.startAddrMValue = isNaN(parseFloat(linkProperties.startAddrMValue)) ? '' : linkProperties.startAddrMValue;
         linkProperties.endAddrMValue = isNaN(parseFloat(linkProperties.endAddrMValue)) ? '' : linkProperties.endAddrMValue;
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
