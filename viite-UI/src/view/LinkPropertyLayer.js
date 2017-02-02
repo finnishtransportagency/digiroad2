@@ -75,6 +75,9 @@
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
           roadLayer.layer.setOpacity(0.2);
+          floatingMarkerLayer.setOpacity(0.2);
+          anomalousMarkerLayer.setOpacity(0.2);
+
         }
         selectedLinkProperty.close();
         var selection = _.find(event.selected, function(selectionTarget){
@@ -84,6 +87,8 @@
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
+        floatingMarkerLayer.setOpacity(1);
+        anomalousMarkerLayer.setOpacity(1);
       }
     });
 
@@ -129,6 +134,8 @@
       if(event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
           roadLayer.layer.setOpacity(0.2);
+          floatingMarkerLayer.setOpacity(0.2);
+          anomalousMarkerLayer.setOpacity(0.2);
         }
         selectedLinkProperty.close();
         selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
@@ -136,6 +143,8 @@
         } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
+        floatingMarkerLayer.setOpacity(1);
+        anomalousMarkerLayer.setOpacity(1);
       }
     });
 
