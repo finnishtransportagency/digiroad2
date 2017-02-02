@@ -728,8 +728,11 @@ object DataFixture {
       //Filtered by "Private"
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(p => (p.administrativeClass == Private))
       println ("Total roadlink    -> " + roadLinks.size)
+
       //Obtain all existing RoadLinkId by AssetType
-      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))}
+      //val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))}
+      val assetCreated = OracleDatabase.withDynSession {dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, Seq(499823540))}
+
       println ("Total creates before    -> " + assetCreated.size)
       println("End processing municipality %d".format(municipality))
 

@@ -1310,6 +1310,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long]) = {
+    println("" + typeId + " " + linkId)
     MassQuery.withIds(linkId.toSet) { idTableName =>
       sql"""
             select distinct (pos.link_id)
