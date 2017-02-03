@@ -66,6 +66,8 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
+      var extent = map.getView().calculateExtent(map.getSize());
+      var visibleAnomalyMarkers = anomalousMarkerLayer.getSource().getFeaturesInExtent(extent);
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
@@ -81,12 +83,12 @@
         var selection = _.find(event.selected, function(selectionTarget){
           return !_.isUndefined(selectionTarget.roadLinkData);
         });
-        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true);
+        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleAnomalyMarkers);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
-        //floatingMarkerLayer.setOpacity(1);
-        //anomalousMarkerLayer.setOpacity(1);
+        floatingMarkerLayer.setOpacity(1);
+        anomalousMarkerLayer.setOpacity(1);
       }
     });
 
