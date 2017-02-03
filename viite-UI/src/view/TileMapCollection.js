@@ -70,10 +70,7 @@
         if (key === tileMap) {
           layer.setVisible(true);
         } else {
-          if (layer != null) {
-            console.log(layer);
-            layer.setVisible(false);
-          }
+          layer.setVisible(false);
         }
       });
     };
