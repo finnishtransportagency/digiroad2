@@ -42,9 +42,13 @@
 
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
     setupProjections();
-    var map = setupMap(backend, models, withTileMaps, startupParameters);
-    new URLRouter(map, backend, models);
-    eventbus.trigger('application:initialized');
+    fetch('components/WMTSCapabilities.xml').then(function(response) {
+      return response.text();
+    }).then(function(arcConfig) {
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig);
+      new URLRouter(map, backend, models);
+      eventbus.trigger('application:initialized');
+    });
   };
 
   var localizedStrings;
@@ -92,8 +96,8 @@
     return map;
   };
 
-  var setupMap = function(backend, models, withTileMaps, startupParameters) {
-    var tileMaps = new TileMapCollection(map, "");
+  var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig) {
+    var tileMaps = new TileMapCollection(map, arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
