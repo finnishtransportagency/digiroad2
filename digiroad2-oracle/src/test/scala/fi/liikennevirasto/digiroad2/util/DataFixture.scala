@@ -765,16 +765,16 @@ object DataFixture {
               case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    println("insert motorway both ->" + roadLinkProp.linkId)
+                    //println("insert motorway both ->" + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.TowardsDigitizing => {
-                    println("insert motorway towar -> " + roadLinkProp.linkId)
+                    //println("insert motorway towar -> " + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
-                    println("insert motorway again")
+                    //println("insert motorway again")
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
