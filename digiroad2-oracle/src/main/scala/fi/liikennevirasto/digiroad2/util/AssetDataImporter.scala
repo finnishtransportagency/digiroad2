@@ -1290,7 +1290,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val propertyId = sqlu"""select id from property where public_id = 'mittarajoitus'""".first
+    val propertyId = sql"""select id from property where public_id = 'mittarajoitus'""".as[Long].first
 
     sqlu"""
          insert into asset(id, asset_type_id, created_by, created_date)
