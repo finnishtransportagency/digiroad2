@@ -63,7 +63,7 @@
 
     this.saveMultiple = function(value) {
       eventbus.trigger(singleElementEvent('saving'));
-      var partition = _.groupBy(selection, isUnknown);
+      var partition = _.groupBy(_.map(selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
       var unknownLinearAssets = partition[true];
       var knownLinearAssets = partition[false];
 

@@ -1,18 +1,18 @@
 (function(root) {
-  root.BoxSelectControl = function(map, doneFunction) {
-    var getModifierKey = function() {
-      if (navigator.platform.toLowerCase().indexOf('mac') === 0) {
-        return OpenLayers.Handler.MOD_META;
-      } else {
-        return OpenLayers.Handler.MOD_CTRL;
-      }
-    };
-    var boxControl = new OpenLayers.Control();
-    map.addControl(boxControl);
-    var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: doneFunction }, { keyMask: getModifierKey() });
+  root.BoxSelectControl = function(map, onStart, onEnd) {
 
-    var activate = function() { boxHandler.activate(); };
-    var deactivate = function() { boxHandler.deactivate(); };
+    var dragBox = new ol.interaction.DragBox({
+      condition: ol.events.condition.platformModifierKeyOnly
+    });
+
+    dragBox.on('boxstart', onStart);
+    dragBox.on('boxend', function() {
+        var extent = dragBox.getGeometry().getExtent();
+        onEnd(extent);
+    });
+
+    var activate = function() { map.addInteraction(dragBox); };
+    var deactivate = function() { map.removeInteraction(dragBox); };
     return {
       activate: activate,
       deactivate: deactivate
