@@ -125,7 +125,7 @@
             return styles;
         };
     };
-
+    //TODO try to cache the created styles maybe trying to move the creation responsability to the rule
     root.StyleRuleProvider = function(defaultStyle){
 
         var mergeColorOpacity = function(color, opacity){

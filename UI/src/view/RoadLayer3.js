@@ -1,4 +1,20 @@
-//TODO: rewrite functionality from RoadLayer.js
+var RoadStyles = function() {
+
+  var administrativeClassStyleRule = [
+    new StyleRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb' }),
+    new StyleRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00' }),
+    new StyleRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000' }),
+    new StyleRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888' })
+  ];
+
+  var styleProvider = new StyleRuleProvider({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }});
+  styleProvider.addRules(administrativeClassStyleRule);
+
+  return {
+    provider: styleProvider
+  };
+};
+
 (function(root) {
   root.RoadLayer3 = function(map, roadCollection,styler) {
     var vectorLayer;
@@ -32,6 +48,10 @@
 
     var setZoomLevel = function(zoom){
       uiState.zoomLevel = zoom;
+    };
+
+    var clear = function() {
+      vectorSource.clear();
     };
 
     var createRoadLinkFeature = function(roadLink){
@@ -70,41 +90,14 @@
       layerMinContentZoomLevels[layer] = zoomLevel;
     };
 
-    function vectorLayerStyle(feature) {
-
-      if(stylesUndefined()){
-        //TODO get default style for road
-        //throw "Any style provider for "+applicationModel.getSelectedLayer();
-          return new ol.style.Style();
-      }
-
-      var stylerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
-
-      var styles = stylerProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}), feature);
-
-      return [styles];
-
-
+    function vectorLayerStyle(feature, resolution) {
+      var styleProvider = stylesUndefined() ? (new RoadStyles()).provider : layerStyleProviders[applicationModel.getSelectedLayer()]();
+      return styleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}), feature);
     }
 
     function stylesUndefined() {
       return _.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()]);
     }
-
-    //TODO this should be used in the new rule system
-    var enableColorsOnRoadLayer = function() {
-      /*
-      if (stylesUndefined()) {
-        var administrativeClassStyleLookup = {
-          Private: { strokeColor: '#0011bb' },
-          Municipality: { strokeColor: '#11bb00' },
-          State: { strokeColor: '#ff0000' },
-          Unknown: { strokeColor: '#888' }
-        };
-        vectorLayer.styleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-      }
-      */
-    };
 
     //TODO have a look how we remove styles
     var disableColorsOnRoadLayer = function() {
@@ -114,24 +107,28 @@
     };
 
     //TODO have this on the default style rules
-     var changeRoadsWidthByZoomLevel = function() {
-    //   if (stylesUndefined()) {
-    //     var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
-    //     var roadWidth = widthBase * widthBase;
-    //     if (applicationModel.isRoadTypeShown()) {
-    //       vectorLayer.setStyle({stroke: roadWidth});
-    //     } else {
-    //       vectorLayer.setStyle({stroke: roadWidth});
-    //       vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-    //       vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
-    //     }
-    //   }
-     };
+    var changeRoadsWidthByZoomLevel = function() {
+      //var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+      //var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
+      //featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
+      //return featureStyle;
+      //
+      // if (stylesUndefined()) {
+      //   var widthBase = 2 + (map.getView().getZoom() - minimumContentZoomLevel());
+      //   var roadWidth = widthBase * widthBase;
+      //   if (applicationModel.isRoadTypeShown()) {
+      //     vectorLayer.setStyle({stroke: roadWidth});
+      //   } else {
+      //     vectorLayer.setStyle({stroke: roadWidth});
+      //     vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+      //     vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+      //   }
+      // }
+    };
 
     var usingLayerSpecificStyleProvider = function(action) {
       if (!_.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()])) {
         // vectorLayer.style = layerStyleProviders[applicationModel.getSelectedLayer()]();
-        //vectorLayer.styleMap =
       }
       action();
     };
@@ -184,7 +181,6 @@
       handleRoadsVisibility();
     };
 
-
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
       style: vectorLayerStyle
@@ -212,6 +208,7 @@
       setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
+      clear: clear,
       layer: vectorLayer
     };
   };

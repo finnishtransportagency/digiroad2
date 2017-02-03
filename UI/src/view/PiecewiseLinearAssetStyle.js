@@ -1,5 +1,6 @@
 (function(root) {
   root.PiecewiseLinearAssetStyle = function(applicationModel) {
+
     var expirationRules = [
       new StyleRule().where('expired').is(true).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where('expired').is(false).use({ stroke : { color: '#ff0000'}})
@@ -26,50 +27,14 @@
     ];
 
     var featureTypeRules = [
-      new StyleRule().where('type').is('line').use({ stroke : { opacity: 0.7  }}),
       new StyleRule().where('type').is('cutter').use({ externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 })
     ];
 
-    // var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
-    // browseStyle.addRules(expirationRules);
-    // browseStyle.addRules(zoomLevelRules);
-    // browseStyle.addRules(oneWayRules);
-    // browseStyle.addRules(featureTypeRules);
-    // var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
-    // var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    //     strokeOpacity: 0.15
-    // }));
-    // var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    //    strokeOpacity: 0.7
-    // }));
-    // selectionDefaultStyle.addRules(expirationRules);
-    // selectionDefaultStyle.addRules(zoomLevelRules);
-    // selectionDefaultStyle.addRules(oneWayRules);
-    // selectionSelectStyle.addRules(featureTypeRules);
-    // var selectionStyle = new OpenLayers.StyleMap({
-    //    default: selectionDefaultStyle,
-    //    select: selectionSelectStyle
-    // });
-
-
-    var browseStyle = new StyleRuleProvider();
-    browseStyle.addRules(expirationRules);
-    browseStyle.addRules(zoomLevelRules);
-    browseStyle.addRules(oneWayRules);
-    browseStyle.addRules(featureTypeRules);
-    //var browseStyleMap = new ol.style.Style({ default: browseStyle });
-
-    var selectionDefaultStyle = new StyleRuleProvider({stroke : { opacity: 0.15 }});
-    var selectionSelectStyle = new StyleRuleProvider({stroke : { opacity: 0.7 }});
-
-    selectionDefaultStyle.addRules(expirationRules);
-    selectionDefaultStyle.addRules(zoomLevelRules);
-    selectionDefaultStyle.addRules(oneWayRules);
-    selectionSelectStyle.addRules(featureTypeRules);
-
-    var selectionStyle = new StyleRuleProvider({
-        default: selectionDefaultStyle
-    });
+    var browseStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
+    browseStyleProvider.addRules(expirationRules);
+    browseStyleProvider.addRules(zoomLevelRules);
+    browseStyleProvider.addRules(oneWayRules);
+    browseStyleProvider.addRules(featureTypeRules);
 
     var lineFeatures = function(linearAssets) {
       return _.flatten(_.map(linearAssets, function(linearAsset) {
@@ -98,8 +63,8 @@
     };
 
     return {
-      browsing: browseStyle,
-      selection: selectionStyle,
+      browsingStyleProvider: browseStyleProvider,
+      vectorOpacity: 0.15,
       renderFeatures: renderFeatures
     };
   };

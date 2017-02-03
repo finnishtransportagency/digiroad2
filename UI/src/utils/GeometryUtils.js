@@ -22,23 +22,23 @@
   };
 
   var segmentsOfLineString = function (lineString, point) {
-    return _.reduce(lineString.getVertices(), function (acc, vertex, index, vertices) {
-      if (index > 0) {
-        var previousVertex = vertices[index - 1];
-        var segmentGeometry = new OpenLayers.Geometry.LineString([previousVertex, vertex]);
-        var distanceObject = segmentGeometry.distanceTo(point, {details: true});
-        var segment = {
-          distance: distanceObject.distance,
-          splitPoint: {
-            x: distanceObject.x0,
-            y: distanceObject.y0
-          },
-          index: index - 1
-        };
-        return acc.concat([segment]);
-      } else {
+    return _.reduce(lineString.getCoordinates(), function (acc, vertex, index, vertices) {
+      if(index === 0)
         return acc;
-      }
+
+      var previousVertex = vertices[index - 1];
+      var segmentGeometry = new ol.geom.LineString([previousVertex, vertex]);
+      var distanceObject = segmentGeometry.distanceTo(point, {details: true});
+      var segment = {
+        distance: distanceObject.distance,
+        splitPoint: {
+          x: distanceObject.x0,
+          y: distanceObject.y0
+        },
+        index: index - 1
+      };
+      return acc.concat([segment]);
+
     }, []);
   };
 

@@ -24,11 +24,14 @@ window.LinearAssetLayer = function(params) {
   var LinearAssetCutter = function(eventListener, vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
+    var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-      vectorLayer.removeFeatures(scissorFeatures);
-      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y), { type: 'cutter' })];
-      vectorLayer.addFeatures(scissorFeatures);
+      _.each(scissorFeatures, function(feature){
+        vectorSource.removeFeature(feature);
+      });
+      scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
+      vectorSource.addFeatures(scissorFeatures);
     };
 
     var remove = function() {
@@ -58,7 +61,7 @@ window.LinearAssetLayer = function(params) {
       eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut' && !collection.isDirty()) {
-          self.updateByPosition(event.xy);
+          self.updateByPosition(event.coordinate);
         }
       });
     };
@@ -68,39 +71,46 @@ window.LinearAssetLayer = function(params) {
     };
 
     var findNearestLinearAssetLink = function(point) {
-      return _.chain(vectorLayer.features)
-        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
-        .map(function(feature) {
-          return {feature: feature,
-                  distanceObject: feature.geometry.distanceTo(point, {details: true})};
+      return _.chain(vectorSource.getFeatures())
+        .filter(function(feature) {
+          return feature.getGeometry() instanceof ol.geom.LineString;
         })
-        .sortBy(function(x) {
-          return x.distanceObject.distance;
+        .reject(function(feature) {
+          var properties = feature.getProperties();
+          return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
+        })
+        .map(function(feature) {
+          var closestP = feature.getGeometry().getClosestPoint(point);
+          //TODO be sure about this distance
+          var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
+          return {
+            feature: feature,
+            point: closestP,
+            distance: distanceBetweenPoints
+          };
+        })
+        .sortBy(function(nearest) {
+          return nearest.distance;
         })
         .head()
         .value();
     };
 
-    this.updateByPosition = function(position) {
-      var lonlat = map.getLonLatFromPixel(position);
-      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+    this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
-      if (!closestLinearAssetLink) {
-        return;
-      }
-      var distanceObject = closestLinearAssetLink.distanceObject;
-      if (isWithinCutThreshold(distanceObject)) {
-        moveTo(distanceObject.x0, distanceObject.y0);
-      } else {
-        remove();
+      if (closestLinearAssetLink) {
+        if (isWithinCutThreshold(closestLinearAssetLink)) {
+          moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
+        } else {
+          remove();
+        }
       }
     };
 
-    this.cut = function(point) {
+    this.cut = function(mousePoint) {
       var pointsToLineString = function(points) {
-        var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
-        return new OpenLayers.Geometry.LineString(openlayersPoints);
+        var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
+        return new ol.geom.LineString(coordPoints);
       };
 
       var calculateSplitProperties = function(nearestLinearAsset, point) {
@@ -111,16 +121,16 @@ window.LinearAssetLayer = function(params) {
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
-      var pixel = new OpenLayers.Pixel(point.x, point.y);
-      var mouseLonLat = map.getLonLatFromPixel(pixel);
-      var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestLinearAssetLink(mousePoint);
+      //var pixel = new OpenLayers.Pixel(point.x, point.y);
+      //var mouseLonLat = map.getLonLatFromPixel(pixel);
+      //var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
+      var nearest = findNearestLinearAssetLink([mousePoint.x, mousePoint.y]);
 
-      if (!isWithinCutThreshold(nearest.distanceObject)) {
+      if (!isWithinCutThreshold(nearest.distance)) {
         return;
       }
 
-      var nearestLinearAsset = nearest.feature.attributes;
+      var nearestLinearAsset = nearest.feature.getProperties();
       var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
       selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
@@ -133,9 +143,10 @@ window.LinearAssetLayer = function(params) {
   var vectorSource = new ol.source.Vector();
   var vectorLayer = new ol.layer.Vector({
     source : vectorSource,
-    style : function(feature){
-      return style.browsing.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) );
-      }
+    style : function(feature) {
+      //TODO change the provider method getStyle to pass only the feature and aditional infomation obejct
+      return style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}));
+    }
   });
 
  // var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
@@ -169,12 +180,13 @@ window.LinearAssetLayer = function(params) {
   };
 
   var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = style.selection;
+    //vectorLayer.styleMap = style.browsing;
     highlightLinearAssetFeatures();
    // vectorLayer.redraw();
   };
 
   var linearAssetOnSelect = function(feature) {
+
     //selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
     if(feature.selected.length !== 0) {
       selectedLinearAsset.open(feature.selected[0].values_, true);
@@ -194,13 +206,33 @@ window.LinearAssetLayer = function(params) {
   //   }
   // };
 
+
+
   var selectControl = new ol.interaction.Select({
     layers : [ vectorLayer ],
-    condition : ol.events.condition.singleClick
+    condition : ol.events.condition.singleClick,
+    style: function(feature){
+      return feature.setStyle(style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) ));
+    }
   });
 
   map.addInteraction(selectControl);
   selectControl.on('select', linearAssetOnSelect);
+  //TODO we should move this logic to a new 'class' like selctionControl something like that because we will need that for all application
+  var selectFeatures = function(evt){
+    if(evt.selected.length > 0)
+      vectorLayer.setOpacity(style.vectorOpacity);
+    else
+      vectorLayer.setOpacity(1);
+    /*
+    _.each(vectorSource.getFeatures(), function(feature){
+      if(evt.selected.length > 0 && !_.some(evt.selected, function(selectedFeature){ return selectedFeature == feature;}))
+        feature.setStyle(style.selectionStyleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) ));
+      else
+        feature.setStyle(style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}) ));
+    });*/
+  };
+  selectControl.on('select', selectFeatures);
 
   // selectControl.on('unselect', linearAssetOnUnselect);
 
