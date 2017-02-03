@@ -53,10 +53,7 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature) {
-          var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-          var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
-          featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
-          return featureStyle;
+          return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
 
@@ -118,10 +115,7 @@
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        var featureStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-        var opacityIndex = featureStyle[0].stroke_.color_.lastIndexOf(", ");
-        featureStyle[0].stroke_.color_ = featureStyle[0].stroke_.color_.substring(0,opacityIndex) + ", 1)";
-        return featureStyle;
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
 
@@ -199,6 +193,7 @@
     selectMarkers.on('select',function(event) {
       if(event.selected.length !== 0) {
         if (floatingMarkerLayer.getOpacity() === 1 && anomalousMarkerLayer.getOpacity() === 1) {
+          roadLayer.layer.setOpacity(0.2);
           floatingMarkerLayer.setOpacity(0.2);
           anomalousMarkerLayer.setOpacity(0.2);
         }

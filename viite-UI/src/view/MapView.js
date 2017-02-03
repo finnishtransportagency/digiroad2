@@ -124,7 +124,6 @@
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
       map.getViewport().style.cursor = "initial";
-      console.log("pointerup");
     });
 
   };
