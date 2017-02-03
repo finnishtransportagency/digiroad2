@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
@@ -484,7 +485,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }).getOrElse(Seq())
   }
 
-  def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String]): Seq[RoadAddressLink] = {
+  def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
 
     try {
       val sourceLinks = sources.flatMap(rd => {
@@ -493,7 +494,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val targetLinks = targets.flatMap(rd => {
         getUniqueRoadAddressLink(rd.toLong)
       })
-      RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks)
+      RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks, user)
     } catch {
       case e: Exception => {
         println(e.getCause)
@@ -538,7 +539,15 @@ object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
   val ComplementarySubType = 3
-
+  val MaxAllowedMValueError = 0.001
+  val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
+                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
+                             */
+  val MaxDistanceDiffAllowed = 1.0 /*Temporary restriction from PO: Filler limit on modifications
+                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+                                            cut more than that then nothing is done to the road address LRM data.
+                                            */
+  val MinAllowedRoadAddressLength = 0.1
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   lazy val municipalityMapping = OracleDatabase.withDynSession{
@@ -615,7 +624,42 @@ object RoadAddressLinkBuilder {
       roadAddress.calibrationPoints._2)
   }
 
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+  def capToGeometry (geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => (x.endMValue - MaxAllowedMValueError > geomLength) && (x.endMValue - geomLength <= MaxDistanceDiffAllowed))
+    val cappedSegments = overflowingSegments.map { s =>
+      (s.copy(endMValue = geomLength))
+    }
+    (passThroughSegments ++ cappedSegments)
+  }
+
+  def extendToGeometry (geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      if (sourceSegments.isEmpty)
+        return sourceSegments
+      val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
+      val lastSegment = sorted.head
+      val restSegments = sorted.tail
+      val allowedDiff = ((geomLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
+      val adjustments = (lastSegment.endMValue < geomLength - MaxAllowedMValueError) && allowedDiff match {
+        case true => (restSegments ++ Seq(lastSegment.copy(endMValue = geomLength)))
+        case _ => sourceSegments
+      }
+      adjustments
+    }
+
+  def dropShort(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    if (sourceSegments.size < 2)
+      return sourceSegments
+    val passThroughSegments = sourceSegments.partition (s => s.length >= MinAllowedRoadAddressLength)._1
+    passThroughSegments
+  }
+
+  private def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    val passThroughSegments = sourceSegments.partition(x => x.startMValue + Epsilon <= geomLength)._1
+    passThroughSegments
+  }
+
+  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
+
     def getMValues (cp: Option[Double], fl: Option[Double]): Double = {
       (cp, fl) match {
         case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
@@ -624,8 +668,17 @@ object RoadAddressLinkBuilder {
         case (None, None) => 0.0
       }
     }
+
+    val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
+      dropSegmentsOutsideGeometry,
+      capToGeometry,
+      extendToGeometry,
+      dropShort
+    )
+
     val allLinks = sources++targets
-    val allGeom = targets.flatMap(_.geometry)
+    val targetsGeom = targets.flatMap(_.geometry)
+    val targetsGeomLength = targets.map(_.length).sum
 
     val allStartCp = sources.flatMap(_.startCalibrationPoint)++targets.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)++targets.flatMap(_.endCalibrationPoint)
@@ -637,22 +690,25 @@ object RoadAddressLinkBuilder {
     val maxEndAddressM = sources.map(_.endAddressM).max
     var minStartMValue = 0.0
     var maxEndMValue = 0.0
+    val adjustedSegments = adjustTopology.foldLeft(sources){ (previousSource, operation) =>  operation(targetsGeomLength, previousSource)}
+
     if(!allLinks.flatMap(_.startCalibrationPoint).isEmpty){
       minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
     } else {
-      minStartMValue = allLinks.map(_.startMValue).min
+      minStartMValue = adjustedSegments.map(_.startMValue).min
     }
     if(!allLinks.flatMap(_.endCalibrationPoint).isEmpty){
       maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     } else {
-      maxEndMValue = allLinks.map(_.endMValue).max
+      maxEndMValue = adjustedSegments.map(_.endMValue).max
     }
     val source = sources.head
 
     val tempId = -1000
-    val geom = GeometryUtils.truncateGeometry2D(allGeom, minStartMValue, maxEndMValue)
+    val geom = GeometryUtils.truncateGeometry2D(targetsGeom, minStartMValue, maxEndMValue)
+
     Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
-      source.roadType, source.modifiedAt,source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity ,
+      source.roadType, source.modifiedAt, source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity ,
       minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, startCp, endCp))
     }
 

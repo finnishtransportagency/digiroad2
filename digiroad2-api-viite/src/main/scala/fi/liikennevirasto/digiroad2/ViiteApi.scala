@@ -129,21 +129,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/transferRoadLink") {
     val (sources, targets) = roadlinksData()
-    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets)
+    val user = userProvider.getCurrentUser()
+    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
     result.map(roadAddressLinkToApi)
   }
 
   put("/roadlinks/roadaddress") {
-
-//    val roadAddress = RoadAddress()
-
-//    case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
-//                           discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-//                           endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-//                           calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-//                           geom: Seq[Point])
-
-//    roadAddressService.transferFloatingToGap(linkIds, roadAddress)
 
   }
 
