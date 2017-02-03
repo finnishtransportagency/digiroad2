@@ -720,7 +720,6 @@ object DataFixture {
     println("Obtaining all Road Links By Municipality")
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
-   // val  municipalities: Seq[Int] = List(77, 78)
     municipalities.foreach { municipality =>
 
       println("Start processing municipality %d".format(municipality))
@@ -754,7 +753,6 @@ object DataFixture {
 
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    println("insert single -> " + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
                   }
@@ -765,16 +763,13 @@ object DataFixture {
               case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    //println("insert motorway both ->" + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.TowardsDigitizing => {
-                    //println("insert motorway towar -> " + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
-
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
