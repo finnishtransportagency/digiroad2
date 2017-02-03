@@ -88,8 +88,8 @@
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
-        floatingMarkerLayer.setOpacity(1);
-        anomalousMarkerLayer.setOpacity(1);
+        //floatingMarkerLayer.setOpacity(1);
+        //anomalousMarkerLayer.setOpacity(1);
       }
     });
 
@@ -162,8 +162,8 @@
         } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
-        floatingMarkerLayer.setOpacity(1);
-        anomalousMarkerLayer.setOpacity(1);
+        //floatingMarkerLayer.setOpacity(1);
+        //anomalousMarkerLayer.setOpacity(1);
       }
     });
 
@@ -365,6 +365,8 @@
       activateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       roadLayer.layer.setOpacity(1);
+      floatingMarkerLayer.setOpacity(1);
+      anomalousMarkerLayer.setOpacity(1);
       //deactivateSelection();
       if(selectDoubleClick.getFeatures().getLength() !== 0){
          selectDoubleClick.getFeatures().clear();
