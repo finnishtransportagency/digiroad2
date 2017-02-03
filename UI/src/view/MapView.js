@@ -1,7 +1,7 @@
 (function(root) {
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
-    var centerMarkerLayer;
+    var centerMarkerSource = new ol.source.Vector({});
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -22,22 +22,29 @@
       }
     };
 
+    /**
+    * TODO: center-marker.svg was edited in order to have width="16px" height="16px".
+    * With this alteration the svg image seems to lose some information.
+    */
     var drawCenterMarker = function(position) {
       var icon = new ol.Feature({
-        geometry: new ol.geom.Point(position.lon, position.lat)
+        geometry: new ol.geom.Point(position)
       });
       var style = new ol.style.Style({
         image: new ol.style.Icon({
-          src: './images/center-marker.svg'
+          src: 'images/center-marker.svg'
         })
       });
       icon.setStyle(style);
-      centerMarkerLayer.clear();
-      centerMarkerLayer.addFeature(icon);
+      centerMarkerSource.clear();
+      centerMarkerSource.addFeature(icon);
     };
 
+    var centerMarkerLayer = new ol.layer.Vector({
+       source : centerMarkerSource
+    });
+
     var addCenterMarkerLayerToMap = function(map) {
-      centerMarkerLayer = new ol.layer.Vector();
       map.addLayer(centerMarkerLayer);
     };
 
