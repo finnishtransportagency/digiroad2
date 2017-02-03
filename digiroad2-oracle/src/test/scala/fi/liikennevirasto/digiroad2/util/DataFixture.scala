@@ -720,20 +720,23 @@ object DataFixture {
     println("Obtaining all Road Links By Municipality")
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
+   // val  municipalities: Seq[Int] = List(77, 78)
     municipalities.foreach { municipality =>
+
       println("Start processing municipality %d".format(municipality))
 
-      //Filtered by "Private"
+      //Obtain all RoadLink by municipality
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+
       println ("Total roadlink by municipality -> " + roadLinks.size)
 
-      //Obtain all existing RoadLinkId by AssetType and roadLinks
-      val assetCreated: Seq[Long] =
       OracleDatabase.withDynTransaction{
-        dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
-      }
+        //Obtain all existing RoadLinkId by AssetType and roadLinks
+        val assetCreated: Seq[Long] = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
+
       println ("Total created previously       -> " + assetCreated.size)
 
+      //Filter roadLink by Class
       val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == Private))
       println ("Total RoadLink by Class        -> " + roadLinksFilteredByClass.size)
 
@@ -742,7 +745,6 @@ object DataFixture {
       println ("Max possibles to insert        -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
-        OracleDatabase.withDynSession {
           //Create new Assets for the RoadLinks from VVH
           filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
@@ -752,6 +754,7 @@ object DataFixture {
 
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
+                    println("insert single -> " + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
                   }
@@ -762,13 +765,16 @@ object DataFixture {
               case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
+                    println("insert motorway both ->" + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.TowardsDigitizing => {
+                    println("insert motorway towar -> " + roadLinkProp.linkId)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
+                    println("insert motorway again")
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
