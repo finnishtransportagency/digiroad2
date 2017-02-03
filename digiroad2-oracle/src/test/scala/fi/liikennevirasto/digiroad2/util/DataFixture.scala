@@ -774,7 +774,7 @@ object DataFixture {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
-                    //println("insert motorway again")
+
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
