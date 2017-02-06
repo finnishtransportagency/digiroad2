@@ -1860,7 +1860,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Verify if TN-ITS message contains the correct messages after update a NumericValue Field") {
+  test("Verify if we have all changes between given date after update a NumericValue Field in OTH") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
