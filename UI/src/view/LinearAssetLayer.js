@@ -186,27 +186,19 @@ window.LinearAssetLayer = function(params) {
   };
 
   var linearAssetOnSelect = function(feature) {
-
-    //selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
     if(feature.selected.length !== 0) {
       selectedLinearAsset.open(feature.selected[0].values_, true);
       setSelectionStyleAndHighlightFeature();
     }else{
       if(feature.selected.length === 0 && feature.deselected.length > 0){
         if (selectedLinearAsset.exists()) {
-           selectedLinearAsset.close();
+            selectedLinearAsset.close();
         }
       }
     }
   };
 
-  // var linearAssetOnUnselect = function() {
-  //   if (selectedLinearAsset.exists()) {
-  //     selectedLinearAsset.close();
-  //   }
-  // };
-
-
+  var doubleClickSelectControl = new DoubleClickSelectControl(vectorLayer, map, linearAssetOnSelect);
 
   var selectControl = new ol.interaction.Select({
     layers : [ vectorLayer ],
@@ -218,6 +210,7 @@ window.LinearAssetLayer = function(params) {
 
   map.addInteraction(selectControl);
   selectControl.on('select', linearAssetOnSelect);
+
   //TODO we should move this logic to a new 'class' like selctionControl something like that because we will need that for all application
   var selectFeatures = function(evt){
     if(evt.selected.length > 0)
@@ -234,70 +227,45 @@ window.LinearAssetLayer = function(params) {
   };
   selectControl.on('select', selectFeatures);
 
-  // selectControl.on('unselect', linearAssetOnUnselect);
+  map.on('click', function () {
+     selectControl.getFeatures().clear();
+  });
 
-  // map.addControl(selectControl);
- // var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
+  var boxHandler = new BoxSelectControl(map, onStart, onEnd);
 
-  // var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
-  //   selectedLinearAsset.openMultiple(linearAssets);
-  //
-  //   LinearAssetMassUpdateDialog.show({
-  //     count: selectedLinearAsset.count(),
-  //     onCancel: cancelSelection,
-  //     onSave: function(value) {
-  //       selectedLinearAsset.saveMultiple(value);
-  //       activateBrowseStyle();
-  //       selectedLinearAsset.closeMultiple();
-  //     },
-  //     validator: selectedLinearAsset.validator,
-  //     formElements: params.formElements
-  //   });
-  // });
+  var showDialog = function (linearAssets) {
+     selectedLinearAsset.openMultiple(linearAssets);
 
-    // a normal select interaction to handle click
-    var select = new ol.interaction.Select();
-    map.addInteraction(select);
-
-    map.on('click', function () {
-        select.getFeatures().clear();
-    });
-
-    var boxHandler = new BoxSelectControl(map, onStart, onEnd);
-
-    var showDialog = function (linearAssets) {
-        selectedLinearAsset.openMultiple(linearAssets);
-
-        LinearAssetMassUpdateDialog.show({
-            count: selectedLinearAsset.count(),
-            onCancel: cancelSelection,
-            onSave: function (value) {
-                selectedLinearAsset.saveMultiple(value);
-                activateBrowseStyle();
-                selectedLinearAsset.closeMultiple();
-            },
+     LinearAssetMassUpdateDialog.show({
+        count: selectedLinearAsset.count(),
+        onCancel: cancelSelection,
+        onSave: function (value) {
+        selectedLinearAsset.saveMultiple(value);
+           activateBrowseStyle();
+            selectedLinearAsset.closeMultiple();
+         },
             validator: selectedLinearAsset.validator,
             formElements: params.formElements
         });
-    };
+  };
 
-    function onEnd(extent) {
-        if (selectedLinearAsset.isDirty()) {
-            displayConfirmMessage();
-        } else {
-            var linearAssets = [];
-            vectorLayer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
-                linearAssets.push(feature.values_);
-            });
-            if (linearAssets.length > 0) {
-                selectedLinearAsset.close();
-                showDialog(linearAssets);
-            }
+  function onEnd(extent) {
+    if (selectedLinearAsset.isDirty()) {
+        displayConfirmMessage();
+    } else {
+        var linearAssets = [];
+        vectorLayer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
+            linearAssets.push(feature.values_);
+        });
+        if (linearAssets.length > 0) {
+            selectedLinearAsset.close();
+            showDialog(linearAssets);
         }
     }
+  }
 
   function onStart(){
-     select.getFeatures().clear();
+      selectControl.getFeatures().clear();
   }
 
   function cancelSelection() {
@@ -325,11 +293,11 @@ window.LinearAssetLayer = function(params) {
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-    //doubleClickSelectControl.deactivate();
+      doubleClickSelectControl.deactivate();
       linearAssetCutter.activate();
     } else if (tool === 'Select') {
       linearAssetCutter.deactivate();
-    //doubleClickSelectControl.activate();
+      doubleClickSelectControl.activate();
     }
    updateMassUpdateHandlerState();
   };
@@ -390,7 +358,7 @@ window.LinearAssetLayer = function(params) {
   var displayConfirmMessage = function() { new Confirm(); };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
-    // doubleClickSelectControl.deactivate();
+    doubleClickSelectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedLinearAssetFeatures = _.filter(vectorSource.getFeatures(), function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
@@ -414,12 +382,12 @@ window.LinearAssetLayer = function(params) {
   };
   this.activateSelection = function() {
      updateMassUpdateHandlerState();
-    // doubleClickSelectControl.activate();
-      map.addInteraction(selectControl);
+     doubleClickSelectControl.activate();
+     // map.addInteraction(selectControl);
   };
   this.deactivateSelection = function() {
      updateMassUpdateHandlerState();
-    // doubleClickSelectControl.deactivate();
+     doubleClickSelectControl.deactivate();
   };
   this.removeLayerFeatures = function() {
   //  vectorLayer.removeAllFeatures();
@@ -427,7 +395,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-   // doubleClickSelectControl.activate();
+    doubleClickSelectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };
@@ -481,10 +449,10 @@ window.LinearAssetLayer = function(params) {
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
-    //doubleClickSelectControl.deactivate();
+    doubleClickSelectControl.deactivate();
     me.removeLayerFeatures();
     if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
-      //doubleClickSelectControl.activate();
+      doubleClickSelectControl.activate();
     }
 
     var linearAssets = _.flatten(linearAssetChains);

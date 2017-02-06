@@ -1,37 +1,32 @@
 (function(root) {
-  root.DoubleClickSelectControl = function(selectControl, map) {
-    var selectClickHandler = new OpenLayers.Handler.Click(
-      selectControl,
-      {
-        click: function(event) {
-          var feature = selectControl.layer.getFeatureFromEvent(event);
-          if (feature) {
-            selectControl.select(_.assign({singleLinkSelect: false}, feature));
-          } else {
-            selectControl.unselectAll();
-          }
-        },
-        dblclick: function(event) {
-          var feature = selectControl.layer.getFeatureFromEvent(event);
-          if (feature) {
-            selectControl.select(_.assign({singleLinkSelect: true}, feature));
-          } else {
-            map.zoomIn();
-          }
-        }
-      },
-      {
-        single: true,
-        double: true,
-        stopDouble: true,
-        stopSingle: true
+  root.DoubleClickSelectControl = function(layer, map, linearAssetOnSelect) {
+    var eventKey;
+
+    var selectClickHandler = new ol.interaction.Select({
+      layer: layer,
+      condition: function(events){
+         return ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events);
       }
-    );
+    });
+
+    selectClickHandler.on('select', linearAssetOnSelect);
+
+    var doubleClick = function () {
+      _.defer(function(){
+        if(selectClickHandler.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+           map.getView().setZoom(map.getView().getZoom()+1);
+        }
+      });
+    };
+
     var activate = function() {
-      selectClickHandler.activate();
+       map.addInteraction(selectClickHandler);
+       eventKey = map.on('dblclick', doubleClick);
+
     };
     var deactivate = function() {
-      selectClickHandler.deactivate();
+       map.removeInteraction(selectClickHandler);
+       map.unByKey(eventKey);
     };
 
     return {
