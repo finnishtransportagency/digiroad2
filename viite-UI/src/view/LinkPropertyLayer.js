@@ -133,53 +133,32 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select',function(event) {
-      var extent = map.getView().calculateExtent(map.getSize());
-      var roadSource = roadLayer.layer.getSource();
-      var visibleRoads = roadSource.getFeaturesInExtent(extent);
-      var visibleAnomalyMarkers = anomalousMarkerLayer.getSource().getFeaturesInExtent(extent);
-      var visibleFeatures = visibleRoads.concat(visibleAnomalyMarkers);
-      if(selectDoubleClick.getFeatures().getLength() !== 0){
-        selectDoubleClick.getFeatures().clear();
-      }
-       var selection = _.find(event.selected, function(selectionTarget){
+      if(selectMarkers.getFeatures().getLength() === 0) {
+        var visibleFeatures = getVisibleFeatures(true,true,false);
+        if (selectDoubleClick.getFeatures().getLength() !== 0) {
+          selectDoubleClick.getFeatures().clear();
+        }
+        var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.roadLinkData);
         });
-      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
-      if(!_.isUndefined(selection)){
-      if(event.selected.length !== 0) {
-        if (roadLayer.layer.getOpacity() === 1) {
-          roadLayer.layer.setOpacity(0.2);
-          floatingMarkerLayer.setOpacity(0.2);
-          anomalousMarkerLayer.setOpacity(0.2);
-        }
-        selectedLinkProperty.close();
-        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
+        //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
+        if (!_.isUndefined(selection)) {
+          if (event.selected.length !== 0) {
+            if (roadLayer.layer.getOpacity() === 1) {
+              roadLayer.layer.setOpacity(0.2);
+              floatingMarkerLayer.setOpacity(0.2);
+              anomalousMarkerLayer.setOpacity(0.2);
             }
-        } else if (event.selected.length === 0 && event.deselected.length !== 0){
-        selectedLinkProperty.close();
-        roadLayer.layer.setOpacity(1);
-        //floatingMarkerLayer.setOpacity(1);
-        //anomalousMarkerLayer.setOpacity(1);
+            selectedLinkProperty.close();
+            selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
+          }
+        } else if (event.selected.length === 0 && event.deselected.length !== 0) {
+          selectedLinkProperty.close();
+          roadLayer.layer.setOpacity(1);
+          //floatingMarkerLayer.setOpacity(1);
+          //anomalousMarkerLayer.setOpacity(1);
+        }
       }
-    });
-
-    /**
-     * Simple method that will add various open layers 3 features to a selection.
-     * @param ol3Features
-     */
-    var addFeaturesToSelection = function (ol3Features) {
-      _.each(ol3Features, function(feature){
-        selectSingleClick.getFeatures().push(feature);
-      });
-    };
-
-    /**
-     * Event triggred by the selectedLinkProperty.open() returning all the open layers 3 features
-     * that need to be included in the selection.
-     */
-    eventbus.on('linkProperties:ol3Selected',function(ol3Features){
-      selectSingleClick.getFeatures().clear();
-      addFeaturesToSelection(ol3Features);
     });
 
     //select Markers on the map (Floating Markers and Anomalous Markers)
@@ -194,6 +173,7 @@
     //set opacity on the markers when the other markers aren't selected
     selectMarkers.on('select',function(event) {
       if(event.selected.length !== 0) {
+        var visibleFeatures = getVisibleFeatures(true, true, false);
         if (floatingMarkerLayer.getOpacity() === 1 && anomalousMarkerLayer.getOpacity() === 1) {
           roadLayer.layer.setOpacity(0.2);
           floatingMarkerLayer.setOpacity(0.2);
@@ -203,7 +183,7 @@
         var selection = _.find(event.selected, function(selectionTarget){
           return !_.isUndefined(selectionTarget.roadLinkData);
         });
-        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true);
+        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
@@ -211,6 +191,34 @@
         anomalousMarkerLayer.setOpacity(1);
       }
     });
+
+    /**
+     * Simple method that will add various open layers 3 features to a selection.
+     * @param ol3Features
+     */
+    var addFeaturesToSelection = function (ol3Features) {
+      _.each(ol3Features, function(feature){
+        selectSingleClick.getFeatures().push(feature);
+        selectMarkers.getFeatures().push(feature);
+      });
+    };
+
+    /**
+     * Event triggred by the selectedLinkProperty.open() returning all the open layers 3 features
+     * that need to be included in the selection.
+     */
+    eventbus.on('linkProperties:ol3Selected',function(ol3Features){
+      selectSingleClick.getFeatures().clear();
+      addFeaturesToSelection(ol3Features);
+    });
+
+    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers){
+      var extent = map.getView().calculateExtent(map.getSize());
+      var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleAnomalyMarkers =  withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      var visibleFloatingMarkers =  withFloatingMarkers ? floatingMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers);
+    };
 
     /**
      * This is remove all the features from all the selections.
@@ -222,6 +230,13 @@
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
+    };
+
+    var clearLayers = function(){
+      floatingMarkerLayer.getSource().clear();
+      anomalousMarkerLayer.getSource().clear();
+      calibrationPointLayer.getSource().clear();
+      indicatorLayer.getSource().clear();
     };
 
     /**
@@ -412,6 +427,7 @@
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
         drawIndicators(targets);
       });
+      eventListener.listenTo(eventListener, 'map:clearLayers', clearLayers);
     };
 
     var drawIndicators= function(links){
@@ -453,7 +469,7 @@
 
     var show = function(map) {
       vectorLayer.setVisible(true);
-      eventListener.listenTo(eventbus, 'map:clicked', cancelSelection);
+      //eventListener.listenTo(eventbus, 'map:clicked', cancelSelection);
     };
 
     var cancelSelection = function() {

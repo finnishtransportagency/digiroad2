@@ -51,6 +51,7 @@
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
         vectorSource.clear();
+        eventbus.trigger('map:clearLayers');
       }
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom);
       handleRoadsVisibility();
