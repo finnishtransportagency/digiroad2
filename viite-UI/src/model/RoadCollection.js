@@ -59,6 +59,7 @@
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
     var tmpRoadAddresses = [];
+    var tmpNewRoadAddress = [];
     var changedIds = [];
 
     var roadLinks = function() {
@@ -164,11 +165,11 @@
     };
 
     this.setTmpRoadAddresses = function (tmp){
-      return tmpRoadAddresses = tmp;
+      tmpRoadAddresses = tmp;
     };
 
     this.setChangedIds = function (ids){
-      return changedIds = ids;
+      changedIds = ids;
     };
     
     this.reset = function(){
@@ -180,6 +181,14 @@
     this.resetChangedIds = function(){
       changedIds = [];
     };
-    
+
+    this.setNewTmpRoadAddress = function (tmp){
+      tmpNewRoadAddress = tmp;
+    };
+
+    this.getNewTmpRoadAddress = function(){
+      return tmpNewRoadAddress;
+    };
+
   };
 })(this);

@@ -416,7 +416,7 @@
             selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
           });
           toggleMode(applicationModel.isReadOnly());
-        };
+        }
       });
       eventbus.on('adjacents:added', function(sources, targets) {
         processAdjacents(sources,targets);

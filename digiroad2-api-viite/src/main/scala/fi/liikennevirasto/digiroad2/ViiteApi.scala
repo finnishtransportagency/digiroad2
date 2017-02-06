@@ -6,9 +6,11 @@ import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress, RoadAddressCreator}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
+import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
@@ -17,6 +19,9 @@ import org.slf4j.LoggerFactory
 /**
   * Created by venholat on 25.8.2016.
   */
+
+case class newAddressDataExtractor(linkIds: Set[Long], roadAddress: RoadAddressCreator)
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val userProvider: UserProvider = Digiroad2Context.userProvider
@@ -135,7 +140,32 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress") {
+    try{
+    val test = parsedBody.extract[newAddressDataExtractor]
+    val roadAddressData = test.roadAddress
+    val linkIds = test.linkIds
 
+    val roadAddress = new RoadAddress(roadAddressData.id, roadAddressData.roadNumber, roadAddressData.roadPartNumber,
+                                      Track.apply(roadAddressData.trackCode), Discontinuity.apply(roadAddressData.discontinuity),
+                                      roadAddressData.startAddressM, roadAddressData.endAddressM,
+      //TODO - Validate Dates on UI
+      Some(DateTime.now()),
+      None,
+      roadAddressData.linkId, roadAddressData.startMValue, roadAddressData.endMValue,
+      SideCode.apply(roadAddressData.sideCode),
+      roadAddressData.calibrationPoints,
+      false,
+      roadAddressData.points
+      )
+
+    roadAddressService.transferFloatingToGap(linkIds, roadAddress)
+    } catch {
+      case e: Exception => {
+        println(e.getCause)
+        println(e.getMessage)
+        Nil
+      }
+    }
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
@@ -215,10 +245,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> roadAddressLink.startAddressM,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
+      "startDate" -> roadAddressLink.startDate,
       "endDate" -> roadAddressLink.endDate,
       "anomaly" -> roadAddressLink.anomaly.value,
       "roadLinkType" -> roadAddressLink.roadLinkType.value,
-      "constructionType" ->roadAddressLink.constructionType.value
+      "constructionType" ->roadAddressLink.constructionType.value,
+      "startMValue" -> roadAddressLink.startMValue,
+      "endMValue" -> roadAddressLink.endMValue,
+      "sideCode" -> roadAddressLink.sideCode.value
     )
   }
 

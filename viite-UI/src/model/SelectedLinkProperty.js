@@ -88,10 +88,10 @@
       var linkIds = {};
       var chainLinks = [];
       _.each(current, function(link){
-        chainLinks.push(link.getData().linkId)
+        chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        chainLinks.push(parseInt(targets))
+        chainLinks.push(parseInt(targets));
       });
       var data = {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)};
@@ -114,10 +114,10 @@
       current.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
       var chainLinks = [];
       _.each(current, function(link){
-        chainLinks.push(link.getData().linkId)
+        chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        chainLinks.push(parseInt(targets))
+        chainLinks.push(parseInt(link));
       });
       var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
@@ -177,13 +177,13 @@
       eventbus.trigger('linkProperties:saving');
       var linkIds = [];
       _.each(current, function(link){
-        linkIds.push(link.getData().linkId)
+        linkIds.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        linkIds.push(parseInt(targets))
+        linkIds.push(parseInt(link));
       });
-      var roadAddress = roadCollection.getRoadLinkByLinkId(parseInt(current[0].getData().linkId)).getData();
-      var data = {'linkIds': linkIds, 'roadAddress': roadAddress}
+      var roadAddress = roadCollection.getNewTmpRoadAddress()[0];
+      var data = {'linkIds': linkIds, 'roadAddress': roadAddress};
 
       backend.createRoadAddress(data, function() {
         dirty = false;
@@ -226,6 +226,7 @@
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
+          roadCollection.setNewTmpRoadAddress(result);
         }
       });
 
@@ -236,7 +237,6 @@
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
-      targets = [];
       if(_.isEmpty(changedTargetIds)){
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();

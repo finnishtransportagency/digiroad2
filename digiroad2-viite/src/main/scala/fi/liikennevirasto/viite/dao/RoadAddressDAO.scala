@@ -72,6 +72,12 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
+case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+                              constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
+                              id : Long, linkId: Long, mmlId: Long, modifiedAt : String, modifiedBy: String, municipalityCode : Long, points: Seq[Point],
+                              roadClass : Long, roadLinkType: Long, roadNameFi: String, roadNumber : Long, roadPartNumber: Long,
+                              roadType: String, segmentId : Long, sideCode : Int, startAddressM : Long, startDate:String, startMValue: Long, trackCode : Int)
+
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
@@ -674,7 +680,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, "-") //TODO: Created by is missing
-    val (p1, p2) = (address.geom.head, address.geom.last)
+    var (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)

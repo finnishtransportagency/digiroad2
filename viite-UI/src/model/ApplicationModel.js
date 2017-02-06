@@ -47,7 +47,7 @@
     };
 
     var setCurrentAction = function(action) {
-      return currentAction = action;
+      currentAction = action;
     };
 
     var addSpinner = function () {
