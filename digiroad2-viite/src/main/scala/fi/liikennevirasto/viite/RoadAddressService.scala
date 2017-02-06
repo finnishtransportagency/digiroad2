@@ -23,7 +23,6 @@ import scala.concurrent.{Await, Future}
 
 class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
 
-
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
@@ -41,6 +40,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   val PathsClass = 10
   val ConstructionSiteTemporaryClass = 11
   val NoClass = 99
+
+  val MaxAllowedMValueError = 0.001
+  val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
+                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
+                             */
+  val MaxDistanceDiffAllowed = 1.0 /*Temporary restriction from PO: Filler limit on modifications
+                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
+                                            cut more than that then nothing is done to the road address LRM data.
+                                            */
+  val MinAllowedRoadAddressLength = 0.1
 
   class Contains(r: Range) {
     def unapply(i: Int): Boolean = r contains i
@@ -437,7 +446,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
+  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, filterpreviousPoint: Boolean = true): Seq[RoadAddressLink] = {
     val chainRoadLinks = roadLinkService.getViiteRoadLinksHistoryFromVVH(chainLinks)
     val sourceRoadLink = chainRoadLinks.filter(_.linkId == linkId).headOption
     val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
@@ -471,7 +480,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           chainRoadLinks.filterNot(_.linkId == linkId).exists{ cl =>
             GeometryUtils.areAdjacent(ral.geometry, cl.geometry)
           }
-        ))
+        ) && filterpreviousPoint)
         .flatMap(_._2)
 
       val viiteFloatingRoadLinks = floatingViiteRoadLinks
@@ -539,6 +548,7 @@ object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
   val ComplementarySubType = 3
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
   val MaxAllowedMValueError = 0.001
   val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
@@ -548,7 +558,6 @@ object RoadAddressLinkBuilder {
                                             cut more than that then nothing is done to the road address LRM data.
                                             */
   val MinAllowedRoadAddressLength = 0.1
-  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   lazy val municipalityMapping = OracleDatabase.withDynSession{
     MunicipalityDAO.getMunicipalityMapping
@@ -625,7 +634,7 @@ object RoadAddressLinkBuilder {
   }
 
   def capToGeometry (geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => (x.endMValue - MaxAllowedMValueError > geomLength) && (x.endMValue - geomLength <= MaxDistanceDiffAllowed))
+    val (overflowingSegments, passThroughSegments) = sourceSegments.partition(x => (x.endMValue - MaxAllowedMValueError > geomLength))
     val cappedSegments = overflowingSegments.map { s =>
       (s.copy(endMValue = geomLength))
     }
@@ -638,8 +647,7 @@ object RoadAddressLinkBuilder {
       val sorted = sourceSegments.sortBy(_.endMValue)(Ordering[Double].reverse)
       val lastSegment = sorted.head
       val restSegments = sorted.tail
-      val allowedDiff = ((geomLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
-      val adjustments = (lastSegment.endMValue < geomLength - MaxAllowedMValueError) && allowedDiff match {
+      val adjustments = (lastSegment.endMValue < geomLength - MaxAllowedMValueError) match {
         case true => (restSegments ++ Seq(lastSegment.copy(endMValue = geomLength)))
         case _ => sourceSegments
       }
@@ -653,7 +661,7 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  private def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+  def dropSegmentsOutsideGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
     val passThroughSegments = sourceSegments.partition(x => x.startMValue + Epsilon <= geomLength)._1
     passThroughSegments
   }

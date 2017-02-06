@@ -116,13 +116,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
             val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
             roadAddressService.getFloatingAdjacent(chainLinks, linkId,
-              roadNumber, roadPartNumber, trackCode)
+              roadNumber, roadPartNumber, trackCode, false)
           })
         }
         val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
         val result = adjacents.filter(adj => {
           !linkIds.contains(adj.linkId)
-        })
+        }).distinct
         result.map(roadAddressLinkToApi)
       }
   }
