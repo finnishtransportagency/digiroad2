@@ -160,8 +160,10 @@
 
     var adjacentsTemplate = '' +
       '<div class="target-link-selection" id="adjacentsData">' +
-      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
+      '<% if(!_.isEmpty(adjacentLinks)){ %>' +
+      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      ' <% } %>' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID: </label>' +
