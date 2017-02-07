@@ -655,6 +655,8 @@ object RoadAddressLinkBuilder {
       nextSegment.startDate       == previousSegment.startDate &&
       nextSegment.endDate         == previousSegment.endDate &&
       nextSegment.linkId          == previousSegment.linkId &&
+      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
+        previousSegment.startAddrMValue == nextSegment.endAddrMValue) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
 

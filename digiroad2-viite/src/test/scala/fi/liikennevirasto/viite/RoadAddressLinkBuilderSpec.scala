@@ -36,10 +36,12 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
         RoadAddress(1, 1, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
           Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
         RoadAddress(2, 1, 1, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1902-02-02")), None, 12345L, 9.8, 20.2, SideCode.TowardsDigitizing, (None, None), false,
-          Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
+          Seq(Point(0.0, 9.8), Point(0.0, 20.2))),
+        RoadAddress(3, 1, 1, Track.Combined, Discontinuous, 20L, 30L, Some(DateTime.parse("1901-01-01")), None, 12345L, 20.2, 30.2, SideCode.TowardsDigitizing, (None, None), false,
+          Seq(Point(0.0, 20.2), Point(0.0, 30.2)))
       )
       val fused = RoadAddressLinkBuilder.fuseRoadAddress(roadAddress)
-      fused should have size (2)
+      fused should have size (3)
       val ids = roadAddress.map(_.id).toSet
       RoadAddressLinkBuilder.fuseRoadAddress(roadAddress).map(_.id).toSet should be (ids)
     }
