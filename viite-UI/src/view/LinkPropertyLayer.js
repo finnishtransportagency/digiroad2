@@ -99,6 +99,14 @@
       });
     };
 
+    var highlightFeatureByLinkId = function (linkId) {
+      _.each(roadLayer.layer.features, function(x) {
+        if(x.attributes.linkId == linkId){
+          selectControl.highlight(x);
+        }
+      });
+    };
+
     var unhighlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
         selectControl.unhighlight(x);
@@ -391,8 +399,9 @@
           selectedLinkProperty.addTargets(targets, adjacents);
         }
       });
-      eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets){
+      eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
+        highlightFeatureByLinkId(aditionalLinkId);
       });
       eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
           var roadLinks = roadCollection.getAll();
