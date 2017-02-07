@@ -4,7 +4,7 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Private, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, State, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, NumericalLimitFiller, RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.MassTransitStopService
@@ -725,7 +725,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
 
       println ("Total roadlink by municipality -> " + roadLinks.size)
 
@@ -733,15 +733,15 @@ object DataFixture {
         //Obtain all existing RoadLinkId by AssetType and roadLinks
         val assetCreated: Seq[Long] = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
 
-      println ("Total created previously       -> " + assetCreated.size)
+      println ("Total created previously      -> " + assetCreated.size)
 
       //Filter roadLink by Class
-      val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == Private))
-      println ("Total RoadLink by Class        -> " + roadLinksFilteredByClass.size)
+      val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == State))
+      println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
 
       //Exclude previously roadlink created
       val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetCreated.contains(f.linkId))
-      println ("Max possibles to insert        -> " + filteredRoadLinksByNonCreated.size )
+      println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
           //Create new Assets for the RoadLinks from VVH
@@ -753,8 +753,8 @@ object DataFixture {
 
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesSingleCarriageway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesSingleCarriageway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value , NumberOfRoadLanesSingleCarriageway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesSingleCarriageway)
                   }
                   case _ => {
                     None
@@ -763,14 +763,14 @@ object DataFixture {
               case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.TowardsDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 2, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, 3, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
                   }
                   case _ => {
                     None
