@@ -153,27 +153,34 @@
       var middleLineColor;
       var borderColor;
       var lineCap;
+      var borderCap;
+      var middleLineCap;
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
         //lineCap  = 'square';
         lineCap  = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round'; 
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
         lineCap  = 'round';
+        borderCap = 'round';
         middleLineColor = lineColor;
       }
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
         color: borderColor,
-        lineCap: lineCap
+        //lineCap: lineCap
+        lineCap: borderCap,
       });
       var middleLine = new ol.style.Stroke({
         width: strokeWidth,
         color: middleLineColor,
-        lineCap: lineCap
+        lineCap: middleLineCap,
+        //lineCap: lineCap
       });
       var line = new ol.style.Stroke({
         width: strokeWidth,

@@ -80,7 +80,8 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, false);
+      //var visibleFeatures = getVisibleFeatures(true, true, false);
+      var visibleFeatures = getVisibleFeatures(true, true, true);
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
@@ -146,7 +147,8 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true,true,false);
+      //var visibleFeatures = getVisibleFeatures(true,true,false);
+      var visibleFeatures = getVisibleFeatures(true,true,true);
       if (selectDoubleClick.getFeatures().getLength() !== 0) {
         selectDoubleClick.getFeatures().clear();
       }
