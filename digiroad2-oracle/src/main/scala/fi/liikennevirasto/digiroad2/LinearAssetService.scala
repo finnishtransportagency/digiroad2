@@ -533,20 +533,10 @@ trait LinearAssetOperations {
     dao.updateExpiration(assetId, expired = true, username)
 
     //Create New Asset
-    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode, oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5))
+    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
+      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
-    //Update modifiedBy, modifiedAt and update createdBy, createdDateTime to have the same createdBy/createdDate as old asset
-    val assetsUpdated = Queries.updateAssetModifiedByCopyOldOne(newAssetIDcreate, oldAsset.createdBy,
-      oldAsset.createdDateTime, username).first
-
-    //Update modifiedBy from LRM_POSITION table to have the same modifiedBy as old asset
-    val assetsLrmPosUpdated = Queries.updateLrmPositionModifiedByCopyOldOne(newAssetIDcreate, oldAsset.geomModifiedDate).first
-
-    if (assetsUpdated == 1 && assetsLrmPosUpdated == 1) {
       Some(newAssetIDcreate)
-    } else {
-      None
-    }
   }
 
   /**
@@ -667,8 +657,12 @@ trait LinearAssetOperations {
     }
   }
 
-  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String, vvhTimeStamp: Long): Long = {
-    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username, vvhTimeStamp)
+  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double,
+                                       endMeasure: Double, username: String, vvhTimeStamp: Long, fromUpdate: Boolean = false,
+                                       createdByFromUpdate: Option[String] = Some(""),
+                                       createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
+    val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username,
+      vvhTimeStamp, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -678,7 +672,7 @@ trait LinearAssetOperations {
         dao.insertProhibitionValue(id, prohibitions)
       case maintenanceRoad: MaintenanceRoad =>
         val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
-        if(missingProperties.nonEmpty)
+        if (missingProperties.nonEmpty)
           throw new MissingMandatoryPropertyException(missingProperties)
         dao.insertMaintenanceRoadValue(id, maintenanceRoad)
     }
