@@ -4,9 +4,46 @@
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
     <script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
+    <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 
     <script type="text/javascript">
-// TO DO verify if username exists
+
+        function saveFormData() {
+            $.ajax({
+                //verify if user already exist, in case of success open a confirm popup, in case of error NotFound(404) insert a new user
+                url: "/api/userconfig/user/" + $( "input[name=username]" ).val(),
+                type: "get",
+                success: function () {
+                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?');
+
+                    $(".yes").click(function(){
+                        $.ajax({
+                            type: "POST",
+                            url: "api/userconfig/newuser",
+                            data: $(".form-horizontal").serialize(),
+                            success: function()
+                            {
+                                alert("record successfully updated");
+                            }
+                        });
+                    });
+                },
+                error: function (errovalue) {
+                    if (errovalue.status === 404) {
+                        $.ajax({
+                            type: "POST",
+                            url: "api/userconfig/newuser",
+                            data: $(".form-horizontal").serialize(),
+                            success: function()
+                            {
+                                showCreatedUser($( "input[name=username]" ).val());
+                            }
+                        });
+                    }
+                }
+            });
+            return false;
+        }
 
         function getParameterByName(name) {
             name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -15,10 +52,9 @@
             return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
         }
 
-        function showCreatedUser() {
-            var userName = getParameterByName('username')
-            if (userName) {
-                alert('Uusi käyttäjä "' + getParameterByName('username') + '" luotu');
+        function showCreatedUser(username) {
+            if (username) {
+                alert('Uusi käyttäjä "' + username + '" luotu');
                 window.location.search='';
             }
         }
@@ -33,11 +69,12 @@
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 uuden k&auml;ytt&auml;j&auml;n luominen</title>
 </head>
-<body onload="showCreatedUser()">
+<body>
     <div class="page new-user">
+        <div class="container"></div>
         <div class="content-box form-box">
             <header>Luo uusi k&auml;ytt&auml;j&auml;</header>
-            <form class="form form-horizontal" role="form" method="post" action="api/userconfig/newuser">
+            <form class="form form-horizontal" role="form" onsubmit="return saveFormData()">
                 <div class="form-group">
                     <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
                     <input type="text" name="username" class="form-control">
