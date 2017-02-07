@@ -115,9 +115,9 @@
 
     var calculateMeasure = function(link) {
       var points = _.map(link.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+        return [point.x, point.y];
       });
-      return new OpenLayers.Geometry.LineString(points).getLength();
+      return new ol.geom.LineString(points).getLength();
     };
 
     this.splitLinearAsset = function(id, split, callback) {

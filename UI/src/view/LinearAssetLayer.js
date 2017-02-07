@@ -67,7 +67,7 @@ window.LinearAssetLayer = function(params) {
     };
 
     var isWithinCutThreshold = function(linearAssetLink) {
-      return linearAssetLink && linearAssetLink.distance < CUT_THRESHOLD;
+      return linearAssetLink && linearAssetLink < CUT_THRESHOLD;
     };
 
     var findNearestLinearAssetLink = function(point) {
@@ -405,8 +405,13 @@ window.LinearAssetLayer = function(params) {
 
     var markerContainer = function(position) {
         //ol.extent.boundingExtent
-      var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
-      return new OpenLayers.Marker.Box(bounds, "00000000");
+      // var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
+      // return new OpenLayers.Marker.Box(bounds, "00000000");
+
+      var bounds = ol.geom.Polygon.fromExtent([position.x, position.y, position.x, position.y]);
+      return new ol.Feature({
+         geometry : bounds
+      });
     };
 
     var indicatorsForSplit = function() {
@@ -443,9 +448,9 @@ window.LinearAssetLayer = function(params) {
       }
     };
 
-    _.forEach(indicators(), function(indicator) {
-      indicatorLayer.addMarker(indicator);
-    });
+    //_.forEach(indicators(), function(indicator) {
+      vectorLayer.getSource().addFeatures(indicators());
+    //});
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
@@ -454,7 +459,6 @@ window.LinearAssetLayer = function(params) {
     if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
       doubleClickSelectControl.activate();
     }
-
     var linearAssets = _.flatten(linearAssetChains);
     drawLinearAssets(linearAssets);
     decorateSelection();
