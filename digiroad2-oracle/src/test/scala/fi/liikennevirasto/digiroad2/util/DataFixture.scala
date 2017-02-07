@@ -723,6 +723,7 @@ object DataFixture {
 
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
     municipalities.foreach { municipality =>
+
       var countMotorwayBothDir = 0
       var countMotorwayTowardDir  = 0
       var countMotorwayAgainstDir = 0
@@ -798,11 +799,6 @@ object DataFixture {
       println("Inserts Motorway... AgainstDir - " + countMotorwayAgainstDir)
       println("End processing municipality %d".format(municipality))
       println("")
-      //initialize de auxiliary counter
-      countSinglewayBothDir = 0
-      countMotorwayBothDir  = 0
-      countMotorwayTowardDir  = 0
-      countMotorwayAgainstDir  = 0
     }
 
     println("\n")
