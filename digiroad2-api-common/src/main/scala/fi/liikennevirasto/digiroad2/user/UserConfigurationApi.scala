@@ -85,9 +85,9 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
-    val (username, elyNumber, municipalities, hasWriteAccess) =
+    val (username, elyNumber, municipalities, roleName) =
       (request.getParameter("username"), request.getParameter("elyNumber"),
-        request.getParameter("municipalityNumbers"), request.getParameter("hasWriteAccess"))
+        request.getParameter("municipalityNumbers"), request.getParameter("roleName"))
 
     val municipalitiesOfEly = splitToInts(elyNumber) match {
       case None => Set()
@@ -95,8 +95,10 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
-    val role = hasWriteAccess match {
-      case "true" => Set(Role.Premium)
+    val role = roleName match {
+      case "Ylläpitäjä" => Set(Role.Premium)
+      case "ELY-Joukkoliikenteen pysäkkien ylläpitäjä" => Set(Role.BusStopMaintainer)
+      case "Operaattori" => Set(Role.Operator)
       case _ => Set(Role.Viewer)
     }
 

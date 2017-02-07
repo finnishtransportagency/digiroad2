@@ -6,6 +6,8 @@
     <script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
 
     <script type="text/javascript">
+// TO DO verify if username exists
+
         function getParameterByName(name) {
             name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
             var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -51,10 +53,12 @@
                     <span class="help-block">Esim. 091 tai 091, 092</span>
                 </div>
                 <div class="form-group">
-                    <label class="control-label">Oikeuden tyyppi</label>
-                    <select name="hasWriteAccess" class="form-control">
-                        <option value="true">Muokkausoikeus</option>
-                        <option value="false">Katseluoikeus</option>
+                    <label class="control-label">Ylläpitäjän rooli</label>
+                    <select name="roleName" class="form-control">
+                        <option value="true">Ylläpitäjä</option>
+                        <option>Ei ELY-pysäkkien ylläpitäjä</option>
+                        <option>ELY-Joukkoliikenteen pysäkkien ylläpitäjä</option>
+                        <option>Operaattori</option>
                     </select>
                 </div>
                 <div class="form-group form-controls">
