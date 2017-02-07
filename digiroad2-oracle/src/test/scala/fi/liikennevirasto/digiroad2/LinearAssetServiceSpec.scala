@@ -85,7 +85,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limitUpdated.expired should be (false)
       limitUpdated.typeId should be (limitToUpdate.typeId)
       limitUpdated.vvhTimeStamp should be (limitToUpdate.vvhTimeStamp)
-      limitUpdated.geomModifiedDate should be (limitToUpdate.geomModifiedDate)
 
       //Verify if old asset is expired
       val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
@@ -115,7 +114,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       assetUpdated.expired should be(false)
       assetUpdated.typeId should be(assetToUpdate.typeId)
       assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
-      assetUpdated.geomModifiedDate should be(assetToUpdate.geomModifiedDate)
 
       //Verify if old asset is expired
       val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head
