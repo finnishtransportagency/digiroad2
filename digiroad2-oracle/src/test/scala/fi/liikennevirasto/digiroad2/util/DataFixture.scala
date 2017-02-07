@@ -761,7 +761,7 @@ object DataFixture {
                   case asset.TrafficDirection.BothDirections => {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value , NumberOfRoadLanesSingleCarriageway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesSingleCarriageway)
-                    countSinglewayBothDir+=1
+                    countSinglewayBothDir = countSinglewayBothDir + 1
                   }
                   case _ => {
                     None
@@ -772,15 +772,15 @@ object DataFixture {
                   case asset.TrafficDirection.BothDirections => {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayBothDir+=1
+                    countMotorwayBothDir = countMotorwayBothDir + 1
                   }
                   case asset.TrafficDirection.TowardsDigitizing => {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayTowardDir+=1
+                    countMotorwayTowardDir = countMotorwayTowardDir + 1
                   }
                   case asset.TrafficDirection.AgainstDigitizing => {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayAgainstDir+=1
+                    countMotorwayAgainstDir = countMotorwayAgainstDir + 1
                   }
                   case _ => {
                     None
