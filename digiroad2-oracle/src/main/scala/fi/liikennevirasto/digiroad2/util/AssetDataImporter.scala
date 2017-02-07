@@ -7,8 +7,8 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, Obstacle}
-import org.joda.time.format.PeriodFormat
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
+import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -1288,13 +1288,15 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
 
   def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
+    val inputDateFormat = DateTimeFormat.forPattern("yyyyMMdd")
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val propertyId = sql"""select id from property where public_id = 'mittarajoitus'""".as[Long].first
+    val createdBy = "batch_process_"+inputDateFormat.print(DateTime.now())
 
     sqlu"""
          insert into asset(id, asset_type_id, created_by, created_date)
-         values ($assetId, $typeId, $Modifier, sysdate)
+         values ($assetId, $typeId, $createdBy, sysdate)
     """.execute
 
     sqlu"""
