@@ -38,6 +38,20 @@
     calibrationPointLayer.setVisible(true);
     indicatorLayer.setVisible(true);
 
+    var isAnomalousById = function(featureId){
+      var anomalousMarkers = anomalousMarkerLayer.getSource().getFeatures();
+      return !_.isUndefined(_.find(anomalousMarkers, function(am){
+        return am.id === featureId;
+      }));
+    };
+
+    var isFloatingById = function(featureId){
+      var floatingMarkers = floatingMarkerLayer.getSource().getFeatures();
+      return !_.isUndefined(_.find(floatingMarkers, function(fm){
+        return fm.id === featureId;
+      }));
+    };
+
     /**
      * We declare the type of interaction we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
@@ -66,8 +80,7 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
-      var extent = map.getView().calculateExtent(map.getSize());
-      var visibleAnomalyMarkers = anomalousMarkerLayer.getSource().getFeaturesInExtent(extent);
+      var visibleFeatures = getVisibleFeatures(true, true, false);
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
@@ -83,7 +96,7 @@
         var selection = _.find(event.selected, function(selectionTarget){
           return !_.isUndefined(selectionTarget.roadLinkData);
         });
-        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleAnomalyMarkers);
+        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
@@ -112,7 +125,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: roadLayer.layer,
+      layer: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -133,58 +146,29 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select',function(event) {
-      if(selectMarkers.getFeatures().getLength() === 0) {
-        var visibleFeatures = getVisibleFeatures(true,true,false);
-        if (selectDoubleClick.getFeatures().getLength() !== 0) {
-          selectDoubleClick.getFeatures().clear();
-        }
-        var selection = _.find(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.roadLinkData);
-        });
-        //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
-        if (!_.isUndefined(selection)) {
-          if (event.selected.length !== 0) {
-            if (roadLayer.layer.getOpacity() === 1) {
-              roadLayer.layer.setOpacity(0.2);
-              floatingMarkerLayer.setOpacity(0.2);
-              anomalousMarkerLayer.setOpacity(0.2);
-            }
-            selectedLinkProperty.close();
+      var visibleFeatures = getVisibleFeatures(true,true,false);
+      if (selectDoubleClick.getFeatures().getLength() !== 0) {
+        selectDoubleClick.getFeatures().clear();
+      }
+      var selection = _.find(event.selected, function (selectionTarget) {
+        return !_.isUndefined(selectionTarget.roadLinkData);
+      });
+      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
+      if (!_.isUndefined(selection)) {
+        if (event.selected.length !== 0) {
+          if (roadLayer.layer.getOpacity() === 1) {
+            roadLayer.layer.setOpacity(0.2);
+            floatingMarkerLayer.setOpacity(0.2);
+            anomalousMarkerLayer.setOpacity(0.2);
+          }
+          selectedLinkProperty.close();
+          if(isAnomalousById(selection.id) || isFloatingById(selection.id)){
+            selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
+          } else {
             selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
           }
-        } else if (event.selected.length === 0 && event.deselected.length !== 0) {
-          selectedLinkProperty.close();
-          roadLayer.layer.setOpacity(1);
-          //floatingMarkerLayer.setOpacity(1);
-          //anomalousMarkerLayer.setOpacity(1);
         }
-      }
-    });
-
-    //select Markers on the map (Floating Markers and Anomalous Markers)
-    var selectMarkers = new ol.interaction.Select({
-      toggleCondition: ol.events.condition.never,
-      condition: ol.events.condition.click,
-      layers: [floatingMarkerLayer, anomalousMarkerLayer]
-    });
-
-    map.addInteraction(selectMarkers);
-
-    //set opacity on the markers when the other markers aren't selected
-    selectMarkers.on('select',function(event) {
-      if(event.selected.length !== 0) {
-        var visibleFeatures = getVisibleFeatures(true, true, false);
-        if (floatingMarkerLayer.getOpacity() === 1 && anomalousMarkerLayer.getOpacity() === 1) {
-          roadLayer.layer.setOpacity(0.2);
-          floatingMarkerLayer.setOpacity(0.2);
-          anomalousMarkerLayer.setOpacity(0.2);
-        }
-        selectedLinkProperty.close();
-        var selection = _.find(event.selected, function(selectionTarget){
-          return !_.isUndefined(selectionTarget.roadLinkData);
-        });
-        selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
-      } else if (event.selected.length === 0 && event.deselected.length !== 0){
+      } else if (event.selected.length === 0 && event.deselected.length !== 0) {
         selectedLinkProperty.close();
         roadLayer.layer.setOpacity(1);
         floatingMarkerLayer.setOpacity(1);
@@ -199,7 +183,6 @@
     var addFeaturesToSelection = function (ol3Features) {
       _.each(ol3Features, function(feature){
         selectSingleClick.getFeatures().push(feature);
-        selectMarkers.getFeatures().push(feature);
       });
     };
 
@@ -243,24 +226,20 @@
      * This will remove all the following interactions from the map:
      * -selectDoubleClick
      * -selectSingleClick
-     * -selectMarkers
      */
     var deactivateSelection = function() {
       map.removeInteraction(selectDoubleClick);
       map.removeInteraction(selectSingleClick);
-      map.removeInteraction(selectMarkers);
     };
 
     /**
      * This will add all the following interactions from the map:
      * -selectDoubleClick
      * -selectSingleClick
-     * -selectMarkers
      */
     var activateSelection = function () {
       map.addInteraction(selectDoubleClick);
       map.addInteraction(selectSingleClick);
-      map.addInteraction(selectMarkers);
     };
 
 	var unselectRoadLink = function() {
