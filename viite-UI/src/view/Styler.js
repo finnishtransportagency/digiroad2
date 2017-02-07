@@ -157,7 +157,8 @@
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType);
-        lineCap  = 'square';
+        //lineCap  = 'square';
+        lineCap  = 'butt';
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
@@ -186,7 +187,7 @@
       });
 
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
-        line.setLineDash([5, 20]);
+        line.setLineDash([10, 10]);
       }
 
       //Declaration of the Line Styles
