@@ -9,47 +9,41 @@
     <script type="text/javascript">
 
         function saveFormData() {
+            var username = $( "input[name=username]" ).val();
             $.ajax({
                 //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
-                url: "/api/userconfig/user/" + $( "input[name=username]" ).val(),
+                url: "/api/userconfig/user/" + username,
                 type: "get",
                 success: function () {
                     new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
                         successCallback: function(){
-                            ajaxRequestPost($( "input[name=username]" ).val(), showCreatedUser);
+                            ajaxRequestPost(username, 'Käyttäjän "' + username + '" tietoja muokattu', showCreatedUser);
                         }
                     });
                 },
                 error: function (errorValue) {
                     if (errorValue.status === 404) {
-                        ajaxRequestPost($( "input[name=username]" ).val(), showCreatedUser);
+                        ajaxRequestPost(username, 'Uusi käyttäjä "' + username + '" luotu', showCreatedUser);
                     }
                 }
             });
             return false;
         }
-        function ajaxRequestPost(successResponseValue, func) {
+        function ajaxRequestPost(username, successResponseValue, func) {
             $.ajax({
                 type: "POST",
                 url: "api/userconfig/newuser",
                 data: $(".form-horizontal").serialize(),
                 success: function()
                 {
-                    func(successResponseValue);
+                    func(username, successResponseValue);
                 }
             });
         }
 
-        function getParameterByName(name) {
-            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-                    results = regex.exec(location.search);
-            return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-        }
-
-        function showCreatedUser(username) {
+        function showCreatedUser(username, alertMessage) {
             if (username) {
-                alert('Uusi käyttäjä "' + username + '" luotu');
+                alert(alertMessage);
                 window.location.search='';
             }
         }
