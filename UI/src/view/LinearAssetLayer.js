@@ -154,6 +154,13 @@ window.LinearAssetLayer = function(params) {
   vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
 
+  var indicatorVector = new ol.source.Vector({});
+  var indicatorLayer = new ol.layer.Vector({
+     source : indicatorVector
+  });
+  map.addLayer(indicatorLayer);
+  indicatorLayer.setVisible(false);
+
   // var indicatorVector = new ol.source.Vector({});
   // var indicatorLayer = new ol.layer.Vector({
   //     source : indicatorVector,
@@ -391,7 +398,7 @@ window.LinearAssetLayer = function(params) {
   };
   this.removeLayerFeatures = function() {
   //  vectorLayer.removeAllFeatures();
- //   indicatorLayer.clearMarkers();
+    indicatorLayer.getSource().clear();
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
@@ -401,26 +408,33 @@ window.LinearAssetLayer = function(params) {
   };
 
   var drawIndicators = function(links) {
+    var features = [];
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
 
     var markerContainer = function(position) {
-        //ol.extent.boundingExtent
       // var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
       // return new OpenLayers.Marker.Box(bounds, "00000000");
-
-      var bounds = ol.geom.Polygon.fromExtent([position.x, position.y, position.x, position.y]);
-      return new ol.Feature({
-         geometry : bounds
-      });
+      return new ol.Feature(new ol.extent.boundingExtent([position.x, position.y, position.x, position.y]));
     };
 
     var indicatorsForSplit = function() {
       return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-        var box = markerContainer(middlePoint);
-        var $marker = $(markerTemplate(link));
-        $(box.div).html($marker);
-        $(box.div).css({overflow: 'visible'});
-        return box;
+          var style = new ol.style.Style({
+              image : new ol.style.Icon({
+                    src: 'images/center-marker.svg'
+              }),
+              text : new ol.style.Text({
+                  text : link.marker,
+                  fill: new ol.style.Fill({
+                      color: "#ffffff"
+                  })
+              })
+          });
+          var marker = new ol.Feature({
+              geometry : new ol.geom.Point([middlePoint.x, middlePoint.y])
+          });
+          marker.setStyle(style);
+          features.push(marker);
       });
     };
 
@@ -447,10 +461,11 @@ window.LinearAssetLayer = function(params) {
         return indicatorsForSeparation();
       }
     };
+    indicators();
 
-    //_.forEach(indicators(), function(indicator) {
-      vectorLayer.getSource().addFeatures(indicators());
-    //});
+    // _.forEach(indicators(), function(indicator) {
+    indicatorLayer.getSource().addFeatures(features);
+    // });
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
@@ -502,14 +517,14 @@ window.LinearAssetLayer = function(params) {
 
   var show = function(map) {
     vectorLayer.setVisible(true);
- //   indicatorLayer.setVisible(true);
+    indicatorLayer.setVisible(true);
     me.show(map);
   };
 
   var hideLayer = function() {
     reset();
     vectorLayer.setVisible(false);
-//    indicatorLayer.setVisible(false);
+    indicatorLayer.setVisible(false);
     me.stop();
     me.hide();
   };

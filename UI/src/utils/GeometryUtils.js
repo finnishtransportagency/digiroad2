@@ -161,7 +161,7 @@
       var y2 = end[1];
       var dx = x2 - x1;
       var dy = y2 - y1;
-      var along = (dx == 0 && dy == 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
+      var along = (dx === 0 && dy === 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
           (Math.pow(dx, 2) + Math.pow(dy, 2));
       var x, y;
       if (along <= 0) {
