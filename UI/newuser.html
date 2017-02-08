@@ -10,39 +10,34 @@
 
         function saveFormData() {
             $.ajax({
-                //verify if user already exist, in case of success open a confirm popup, in case of error NotFound(404) insert a new user
+                //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
                 url: "/api/userconfig/user/" + $( "input[name=username]" ).val(),
                 type: "get",
                 success: function () {
-                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?');
-
-                    $(".yes").click(function(){
-                        $.ajax({
-                            type: "POST",
-                            url: "api/userconfig/newuser",
-                            data: $(".form-horizontal").serialize(),
-                            success: function()
-                            {
-                                alert("record successfully updated");
-                            }
-                        });
+                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+                        successCallback: function(){
+                            ajaxRequestPost($( "input[name=username]" ).val(), showCreatedUser);
+                        }
                     });
                 },
-                error: function (errovalue) {
-                    if (errovalue.status === 404) {
-                        $.ajax({
-                            type: "POST",
-                            url: "api/userconfig/newuser",
-                            data: $(".form-horizontal").serialize(),
-                            success: function()
-                            {
-                                showCreatedUser($( "input[name=username]" ).val());
-                            }
-                        });
+                error: function (errorValue) {
+                    if (errorValue.status === 404) {
+                        ajaxRequestPost($( "input[name=username]" ).val(), showCreatedUser);
                     }
                 }
             });
             return false;
+        }
+        function ajaxRequestPost(successResponseValue, func) {
+            $.ajax({
+                type: "POST",
+                url: "api/userconfig/newuser",
+                data: $(".form-horizontal").serialize(),
+                success: function()
+                {
+                    func(successResponseValue);
+                }
+            });
         }
 
         function getParameterByName(name) {
@@ -92,8 +87,8 @@
                 <div class="form-group">
                     <label class="control-label">Ylläpitäjän rooli</label>
                     <select name="roleName" class="form-control">
-                        <option value="true">Ylläpitäjä</option>
-                        <option>Ei ELY-pysäkkien ylläpitäjä</option>
+                        <option>Ylläpitäjä</option>
+                        <option selected>Ei ELY-pysäkkien ylläpitäjä</option>
                         <option>ELY-Joukkoliikenteen pysäkkien ylläpitäjä</option>
                         <option>Operaattori</option>
                     </select>
