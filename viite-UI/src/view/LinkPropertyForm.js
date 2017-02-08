@@ -226,7 +226,7 @@
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
           '</div>';
       else
         return '';
