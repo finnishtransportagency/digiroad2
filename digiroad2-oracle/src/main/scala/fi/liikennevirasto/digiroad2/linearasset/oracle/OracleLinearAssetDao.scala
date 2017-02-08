@@ -981,14 +981,19 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String, vvhTimeStamp: Long = 0L): Long  = {
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double,
+                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L,
+                        fromUpdate: Boolean = false,
+                        createdByFromUpdate: Option[String] = Some(""),
+                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if(expired) "sysdate" else "null"
-    sqlu"""
+    val validTo = if (expired) "sysdate" else "null"
+    if (fromUpdate) {
+      sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-        values ($id, $typeId, $username, sysdate, #$validTo)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
@@ -997,7 +1002,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         values ($id, $lrmPositionId)
       select * from dual
     """.execute
+    } else {
+      sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, valid_to)
+      values ($id, $typeId, $username, sysdate, #$validTo)
 
+      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
+      values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+
+      into asset_link(asset_id, position_id)
+      values ($id, $lrmPositionId)
+      select * from dual
+        """.execute
+    }
     id
   }
 
@@ -1046,20 +1064,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   /**
-    * Updates MaintenanceRoad property. Used by LinearAssetService.updateWithoutTransaction.
+    * Updates MaintenanceRoad property. Used by LinearAssetService.updateProjected.
     */
   def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
-    val assetsUpdated = Queries.updateAssetModified(assetId, username).first
-
     value.maintenanceRoad.foreach { prop =>
-
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
-    prop.propertyType match {
-
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
+      prop.propertyType match {
         case "text" => {
           if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
             Queries.insertTextProperty(assetId, propertyId, prop.value).first
-          } else if (prop.value.isEmpty){
+          } else if (prop.value.isEmpty) {
             Queries.deleteTextProperty(assetId, propertyId).execute
           } else {
             Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
@@ -1074,7 +1088,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         }
       }
     }
-      Some(assetId)
+    Some(assetId)
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
