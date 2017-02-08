@@ -321,8 +321,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def mergeRoadAddress(data: RoadAddressMerge) = {
     withDynTransaction {
-      updateMergedSegments(data.merged)
-      createMergedSegments(data.created)
+      val mergedCount = updateMergedSegments(data.merged)
+      if (mergedCount == data.merged.size)
+        createMergedSegments(data.created)
+      else
+        throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
     }
   }
 
@@ -331,7 +334,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def updateMergedSegments(expiredIds: Set[Long]) = {
-    expiredIds.grouped(500).foreach(group => RoadAddressDAO.updateMergedSegmentsById(group))
+    expiredIds.grouped(500).map(group => RoadAddressDAO.updateMergedSegmentsById(group)).sum
   }
 
   /**
