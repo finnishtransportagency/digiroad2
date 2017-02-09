@@ -88,17 +88,15 @@
     var getLinkAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
-      //TODO check if isSingleLinkSelection
-      var allowFilter = !isSingleLinkSelection() ? 1 : 0;
       _.each(current, function(link){
         if(!_.isUndefined(link))
         chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        chainLinks.push(parseInt(targets));
+        chainLinks.push(link.getData().linkId);
       });
       var data = {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
-        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode), "allowFilter": allowFilter};
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)};
 
        backend.getFloatingAdjacent(data, function(adjacents) {
          if(!_.isEmpty(adjacents))
@@ -117,7 +115,6 @@
       sources = current;
       sources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
       var chainLinks = [];
-      var allowFilter = !isSingleLinkSelection() ? 1 : 0;
       _.each(sources, function(link){
         if(!_.isUndefined(link))
         chainLinks.push(link.getData().linkId);
@@ -131,7 +128,7 @@
       // var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
-          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode), "allowFilter": allowFilter};
+          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
@@ -204,8 +201,7 @@
     };
 
     var addTargets = function(target, adjacents){
-      if(!_.contains(targets,target))
-        targets.push(target);
+      targets.push(roadCollection.getRoadLinkByLinkId(parseInt(target)));
       var targetData = _.filter(adjacents, function(adjacent){
         return adjacent.linkId == target;
       });
@@ -216,12 +212,16 @@
       }
     };
 
-    var getSources = function(){
-      return _.union(sources);
+    var getSources = function() {
+      return _.union(_.map(sources, function (roadLink) {
+        return roadLink.getData();
+      }));
     };
 
     var getTargets = function(){
-      return _.union(targets);
+      return _.union(_.map(targets, function (roadLink) {
+        return roadLink.getData();
+      }));
     };
 
     var transferringCalculation = function(){
@@ -229,7 +229,7 @@
       var targetDataIds = [];
       var sourceDataIds = [];
       _.each(targets, function (target) {
-        targetDataIds.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData().linkId.toString());
+        targetDataIds.push(targets.getData().linkId.toString());
       });
       _.each(current, function (source){
         sourceDataIds.push(source.getData().linkId.toString());

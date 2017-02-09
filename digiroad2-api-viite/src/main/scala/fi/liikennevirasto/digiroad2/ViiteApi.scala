@@ -103,10 +103,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
         val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
         val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
-      //the selection might be singleSelection, so there may be the need to not filter the previous selected ones
-        val filterpreviousPoint = (1 == data.get("allowFilter").get.asInstanceOf[Double].toLong)
 
-        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode, filterpreviousPoint).map(roadAddressLinkToApi)
+        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
 
   get("/roadlinks/multiSourceAdjacents") {

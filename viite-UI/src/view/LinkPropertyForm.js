@@ -124,8 +124,8 @@
       } else if(labelText === 'VALITUT LINKIT'){
         var linkIds = "";
         var id = 0;
-        var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get()
-        _.each(selectedLinkProperty.getSources(), function(slp){
+        var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
+        _.each(sources, function(slp){
           var divId = "VALITUTLINKIT" + id;
           var linkid = slp.linkId.toString();
           if (linkIds.length === 0) {
@@ -213,16 +213,6 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
-    var notification = function(displayNotification) {
-      if(displayNotification)
-        return '' +
-          '<div class="form-group form-notification">' +
-          ' <p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
-          '</div>';
-      else
-        return '';
-    };
-
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
@@ -282,7 +272,7 @@
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
         roadTypes +
-        notification(true)   +
+        notificationFloatingTransfer(true)   +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
