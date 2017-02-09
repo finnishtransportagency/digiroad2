@@ -124,7 +124,8 @@
       } else if(labelText === 'VALITUT LINKIT'){
         var linkIds = "";
         var id = 0;
-        _.each(selectedLinkProperty.get(), function(slp){
+        var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get()
+        _.each(selectedLinkProperty.getSources(), function(slp){
           var divId = "VALITUTLINKIT" + id;
           var linkid = slp.linkId.toString();
           if (linkIds.length === 0) {
@@ -146,7 +147,7 @@
       return field;
     };
 
-    var aditionalSource = function(linkId, marker){
+    var additionalSource = function(linkId, marker){
       return '' +
         '<div class = "form-group" id = "aditionalSource">' +
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -443,7 +444,7 @@
         });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-          return aditionalSource(fa.linkId, fa.marker);
+          return additionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){

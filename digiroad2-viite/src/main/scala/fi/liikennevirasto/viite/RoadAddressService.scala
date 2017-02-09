@@ -513,9 +513,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def transferFloatingToGap(expiringLinkIds: Set[Long], roadAddress: RoadAddress) = {
+  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: RoadAddress) = {
     withDynTransaction {
-      RoadAddressDAO.expireRoadAddresses(expiringLinkIds)
+      RoadAddressDAO.expireRoadAddresses(sourceIds)
+      RoadAddressDAO.expireMissingRoadAddresses(targetIds)
       RoadAddressDAO.create(Seq(roadAddress))
     }
   }

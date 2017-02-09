@@ -398,11 +398,21 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
-  def expireRoadAddresses (expiredLinkIds: Set[Long]) = {
-    if (!expiredLinkIds.isEmpty) {
+  def expireRoadAddresses (sourceIds: Set[Long]) = {
+    if (!sourceIds.isEmpty) {
       val query =
         s"""
-          Update road_address Set valid_to = sysdate Where lrm_position_id in (Select id From lrm_position where link_id in (${expiredLinkIds.mkString(",")}))
+          Update road_address Set valid_to = sysdate Where lrm_position_id in (Select id From lrm_position where link_id in (${sourceIds.mkString(",")}))
+        """
+      Q.updateNA(query).first
+    }
+  }
+
+  def expireMissingRoadAddresses (targetIds: Set[Long]) = {
+    if (!targetIds.isEmpty) {
+      val query =
+        s"""
+          Delete from missing_road_address Where link_id in (${targetIds.mkString(",")}))
         """
       Q.updateNA(query).first
     }

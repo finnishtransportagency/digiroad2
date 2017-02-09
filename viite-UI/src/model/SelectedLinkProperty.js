@@ -89,6 +89,7 @@
       var linkIds = {};
       var chainLinks = [];
       //TODO check if isSingleLinkSelection
+      var allowFilter = !isSingleLinkSelection() ? 1 : 0;
       _.each(current, function(link){
         if(!_.isUndefined(link))
         chainLinks.push(link.getData().linkId);
@@ -97,7 +98,7 @@
         chainLinks.push(parseInt(targets));
       });
       var data = {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
-        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)};
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode), "allowFilter": allowFilter};
 
        backend.getFloatingAdjacent(data, function(adjacents) {
          if(!_.isEmpty(adjacents))
@@ -116,6 +117,7 @@
       sources = current;
       sources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
       var chainLinks = [];
+      var allowFilter = !isSingleLinkSelection() ? 1 : 0;
       _.each(sources, function(link){
         if(!_.isUndefined(link))
         chainLinks.push(link.getData().linkId);
@@ -126,9 +128,10 @@
       var newSources = [existingSources];
       if(!_.isUndefined(additionalSourceLinkId))
         newSources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
+      // var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
-          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
+          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode), "allowFilter": allowFilter};
       });
      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
@@ -181,15 +184,16 @@
     
     var saveTransfer = function() {
       eventbus.trigger('linkProperties:saving');
-      var linkIds = [];
+      var sourceIds = [];
+      var targetIds = [];
       _.each(current, function(link){
-        linkIds.push(link.getData().linkId);
+        sourceIds.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        linkIds.push(parseInt(link));
+        targetIds.push(parseInt(link));
       });
       var roadAddress = roadCollection.getNewTmpRoadAddress()[0];
-      var data = {'linkIds': linkIds, 'roadAddress': roadAddress};
+      var data = {'sourceIds': sourceIds, 'targetIds': targetIds, 'roadAddress': roadAddress};
 
       backend.createRoadAddress(data, function() {
         dirty = false;
@@ -210,6 +214,10 @@
         $('#adjacentsData').remove();
         getLinkAdjacents(_.first(targetData));
       }
+    };
+
+    var getSources = function(){
+      return _.union(sources);
     };
 
     var getTargets = function(){
@@ -287,6 +295,7 @@
     });
 
     return {
+      getSources: getSources,
       addTargets: addTargets,
       getTargets: getTargets,
       transferringCalculation: transferringCalculation,

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
   * Created by venholat on 25.8.2016.
   */
 
-case class newAddressDataExtractor(linkIds: Set[Long], roadAddress: RoadAddressCreator)
+case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: RoadAddressCreator)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -103,7 +103,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
         val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
         val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
-        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+      //the selection might be singleSelection, so there may be the need to not filter the previous selected ones
+        val filterpreviousPoint = (1 == data.get("allowFilter").get.asInstanceOf[Double].toLong)
+
+        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode, filterpreviousPoint).map(roadAddressLinkToApi)
     }
 
   get("/roadlinks/multiSourceAdjacents") {
@@ -141,11 +144,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress") {
     try{
-    val test = parsedBody.extract[newAddressDataExtractor]
-    val roadAddressData = test.roadAddress
-    val linkIds = test.linkIds
+      val test = parsedBody.extract[newAddressDataExtractor]
+      val roadAddressData = test.roadAddress
+      val sourceIds = test.sourceIds
+      val targetIds = test.targetIds
 
-    val roadAddress = new RoadAddress(roadAddressData.id, roadAddressData.roadNumber, roadAddressData.roadPartNumber,
+      val roadAddress = new RoadAddress(roadAddressData.id, roadAddressData.roadNumber, roadAddressData.roadPartNumber,
                                       Track.apply(roadAddressData.trackCode), Discontinuity.apply(roadAddressData.discontinuity),
                                       roadAddressData.startAddressM, roadAddressData.endAddressM,
       //TODO - Validate Dates on UI
@@ -158,7 +162,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       roadAddressData.points
       )
 
-    roadAddressService.transferFloatingToGap(linkIds, roadAddress)
+      roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddress)
     } catch {
       case e: Exception => {
         println(e.getCause)
