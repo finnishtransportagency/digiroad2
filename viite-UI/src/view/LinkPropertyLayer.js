@@ -116,13 +116,14 @@
     var draw = function(action, changedTargetIds) {
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
+      var roadLinks = [];
         if(!applicationModel.isActiveButtons() && window.eventbus.on('map:moved')) {
             prepareRoadLinkDraw();
         }
       if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)){
-        var roadLinks = roadCollection.getAllTmp();
+         roadLinks = roadCollection.getAllTmp();
       } else {
-        var roadLinks = roadCollection.getAll();
+         roadLinks = roadCollection.getAll();
       }
       if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculating))
         _.each(roadLinks, function(roadlink){
@@ -486,13 +487,14 @@
     };
 
     var redrawSelected = function(action) {
+      var selectedRoadLinks = [];
         if(!applicationModel.isActiveButtons()){
       roadLayer.layer.removeFeatures(getSelectedFeatures());
         }
       if((!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculated)) || !_.isEmpty(roadCollection.getAllTmp())){
-        var selectedRoadLinks = roadCollection.getAllTmp();
+        selectedRoadLinks = roadCollection.getAllTmp();
       } else {
-        var selectedRoadLinks = selectedLinkProperty.get();
+        selectedRoadLinks = selectedLinkProperty.get();
       }
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
