@@ -200,6 +200,9 @@
       }, function() {
         eventbus.trigger('linkProperties:updateFailed');
       });
+      targets = [];
+      //cancel();
+      applicationModel.setActiveButtons(false);
     };
 
     var addTargets = function(target, adjacents){
@@ -239,7 +242,7 @@
       var targetDataIds = [];
       var sourceDataIds = [];
       _.each(targets, function (target) {
-        targetDataIds.push(target.linkId.toString());
+        targetDataIds.push(target.getData().linkId.toString());
       });
       _.each(current, function (source){
         sourceDataIds.push(source.getData().linkId.toString());

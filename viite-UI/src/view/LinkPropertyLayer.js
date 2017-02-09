@@ -134,7 +134,6 @@
 
       roadLayer.drawRoadLinks(roadLinks, zoom, action);
       drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawSigns(roadLayer.layer, roadLinks);
 
       floatingMarkerLayer.clearMarkers();
       anomalousMarkerLayer.clearMarkers();
@@ -149,19 +148,35 @@
         });
 
         _.each(floatingRoadMarkers, function(floatlink) {
-          var mouseClickHandler = createMouseClickHandler(floatlink);
-          var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          marker.events.register('click',marker, mouseClickHandler);
-          marker.events.registerPriority('dblclick',marker, mouseClickHandler);
-          floatingMarkerLayer.addMarker(marker);
+          var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
+          var source = sources.find(function(s){
+             return s.linkId === floatlink.linkId ;
+          });
+          var tempFlag = roadCollection.getAllTmp().find(function(road){
+              return road.linkId === floatlink.linkId;
+          });
+
+          if((_.isUndefined(tempFlag) || _.isUndefined(source))){
+              var mouseClickHandler = createMouseClickHandler(floatlink);
+              var marker = cachedLinkPropertyMarker.createMarker(floatlink);
+              marker.events.register('click',marker, mouseClickHandler);
+              marker.events.registerPriority('dblclick',marker, mouseClickHandler);
+              floatingMarkerLayer.addMarker(marker);
+          }
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var mouseClickHandler = createMouseClickHandler(anomalouslink);
-          var marker = cachedMarker.createMarker(anomalouslink);
-          marker.events.register('click',marker, mouseClickHandler);
-          marker.events.registerPriority('dblclick',marker, mouseClickHandler);
-          anomalousMarkerLayer.addMarker(marker);
+            var targets =selectedLinkProperty.getTargets();
+            var target = targets.find(function(s){
+             return s.linkId === anomalouslink.linkId ;
+          });
+          if((_.isUndefined(target))){
+              var mouseClickHandler = createMouseClickHandler(anomalouslink);
+              var marker = cachedMarker.createMarker(anomalouslink);
+              marker.events.register('click',marker, mouseClickHandler);
+              marker.events.registerPriority('dblclick',marker, mouseClickHandler);
+              anomalousMarkerLayer.addMarker(marker);
+          }
         });
       }
 
