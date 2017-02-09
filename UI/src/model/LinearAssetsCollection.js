@@ -168,7 +168,8 @@
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
       };
-
+      separatedLimit.A = _.omit(separatedLimit.A, 'geometry');
+      separatedLimit.B =_.omit(separatedLimit.B, 'geometry');
       if (separatedLimit.A.id) {
         backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
       } else {
@@ -188,8 +189,11 @@
     };
 
     this.separateLinearAsset = function(selectedLinearAsset) {
-      var limitA = _.cloneDeep(selectedLinearAsset);
-      var limitB = _.cloneDeep(selectedLinearAsset);
+      // var limitA = _.cloneDeep(selectedLinearAsset);
+      // var limitB = _.cloneDeep(selectedLinearAsset);
+
+      var limitA = _.clone(selectedLinearAsset);
+      var limitB = _.clone(selectedLinearAsset);
 
       limitA.sideCode = 2;
       limitA.marker = 'A';
