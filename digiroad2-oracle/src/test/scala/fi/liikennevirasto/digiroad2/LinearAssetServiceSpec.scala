@@ -189,7 +189,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
       updAssets.length should be(1)
 
-      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).filterNot(_.expired).head
       asset.value should be (Some(maintenanceRoadFetch))
       asset.expired should be (false)
     }
