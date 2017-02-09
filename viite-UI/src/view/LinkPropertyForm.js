@@ -451,6 +451,8 @@
             $('[id*="aditionalSourceButton"]').click(sources,function(event) {
               applicationModel.addSpinner();
               eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
+              rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              applicationModel.setActiveButtons(true)
             });
         }
 

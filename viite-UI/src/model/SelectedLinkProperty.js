@@ -15,6 +15,8 @@
         _.forEach(current, function(selected) { selected.unselect(); });
         eventbus.trigger('linkProperties:unselected');
         current = [];
+        sources = [];
+        targets = [];
         dirty = false;
       }
     };
@@ -120,7 +122,7 @@
         chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        chainLinks.push(parseInt(link));
+        chainLinks.push(link.getData().linkId);
       });
       var newSources = [existingSources];
       if(!_.isUndefined(additionalSourceLinkId))
@@ -224,12 +226,20 @@
       }));
     };
 
+    var resetSources = function() {
+      return sources = [];
+    };
+
+    var resetTargets = function() {
+      return targets = [];
+    };
+
     var transferringCalculation = function(){
       var selected = _.first(current).getData();
       var targetDataIds = [];
       var sourceDataIds = [];
       _.each(targets, function (target) {
-        targetDataIds.push(targets.getData().linkId.toString());
+        targetDataIds.push(target.linkId.toString());
       });
       _.each(current, function (source){
         sourceDataIds.push(source.getData().linkId.toString());
@@ -296,8 +306,10 @@
 
     return {
       getSources: getSources,
+      resetSources: resetSources,
       addTargets: addTargets,
       getTargets: getTargets,
+      resetTargets: resetTargets,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
