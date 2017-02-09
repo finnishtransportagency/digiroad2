@@ -4,8 +4,8 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, AdministrativeClass}
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, NewLinearAsset}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, State, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, NumericalLimitFiller, RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.MassTransitStopService
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -703,6 +703,110 @@ object DataFixture {
   }
 
 
+  def fillLaneAmountsMissingInRoadLink(): Unit = {
+    println("\nFill Lane Amounts in missing road links")
+    println(DateTime.now())
+
+
+
+    val LanesNumberAssetTypeId = 140
+    val NumberOfRoadLanesMotorway = 2
+    val NumberOfRoadLanesSingleCarriageway = 1
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    println("Obtaining all Road Links By Municipality")
+
+    //For each municipality get all VVH Roadlinks for pick link id and pavement data
+    municipalities.foreach { municipality =>
+
+      var countMotorwayBothDir = 0
+      var countMotorwayTowardDir  = 0
+      var countMotorwayAgainstDir = 0
+      var countSinglewayBothDir = 0
+      println("Start processing municipality %d".format(municipality))
+
+      //Obtain all RoadLink by municipality
+      val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
+
+      println ("Total roadlink by municipality -> " + roadLinks.size)
+
+      OracleDatabase.withDynTransaction{
+        //Obtain all existing RoadLinkId by AssetType and roadLinks
+        val assetCreated: Seq[Long] = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
+
+      println ("Total created previously      -> " + assetCreated.size)
+
+      //Filter roadLink by Class
+      val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == State))
+      println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
+
+      //Exclude previously roadlink created
+      val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetCreated.contains(f.linkId))
+      println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
+
+      if (filteredRoadLinksByNonCreated.size != 0) {
+          //Create new Assets for the RoadLinks from VVH
+          filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
+
+            val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
+            roadLinkProp.linkType match {
+              case asset.SingleCarriageway =>
+
+                roadLinkProp.trafficDirection match {
+                  case asset.TrafficDirection.BothDirections => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value , NumberOfRoadLanesSingleCarriageway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesSingleCarriageway)
+                    countSinglewayBothDir = countSinglewayBothDir + 1
+                  }
+                  case _ => {
+                    None
+                  }
+                }
+              case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
+                roadLinkProp.trafficDirection match {
+                  case asset.TrafficDirection.BothDirections => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
+                    countMotorwayBothDir = countMotorwayBothDir + 1
+                  }
+                  case asset.TrafficDirection.TowardsDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
+                    countMotorwayTowardDir = countMotorwayTowardDir + 1
+                  }
+                  case asset.TrafficDirection.AgainstDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
+                    countMotorwayAgainstDir = countMotorwayAgainstDir + 1
+                  }
+                  case _ => {
+                    None
+                  }
+                }
+              case _ => {
+                None
+              }
+            }
+          }
+        }
+      }
+      println("Inserts SingleCarriage bothDir - " + countSinglewayBothDir)
+      println("Inserts Motorway... bothDir    - " + countMotorwayBothDir)
+      println("Inserts Motorway... towardDir  - " + countMotorwayTowardDir)
+      println("Inserts Motorway... AgainstDir - " + countMotorwayAgainstDir)
+      println("End processing municipality %d".format(municipality))
+      println("")
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -782,13 +886,16 @@ object DataFixture {
         checkBusStopMatchingBetweenOTHandTR(dryRun)
       case Some("listing_bus_stops_with_side_code_conflict_with_roadLink_direction") =>
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
+      case Some("fill_lane_amounts_in_missing_road_links") =>
+        fillLaneAmountsMissingInRoadLink()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | european_roads | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
-        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction")
+        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
+        " fill_lane_amounts_in_missing_road_links")
     }
   }
 }
