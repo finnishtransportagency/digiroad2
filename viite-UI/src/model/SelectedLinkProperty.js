@@ -230,11 +230,13 @@
     };
 
     var resetSources = function() {
-      return sources = [];
+      sources = [];
+      return sources;
     };
 
     var resetTargets = function() {
-      return targets = [];
+      targets = [];
+      return targets;
     };
 
     var transferringCalculation = function(){
