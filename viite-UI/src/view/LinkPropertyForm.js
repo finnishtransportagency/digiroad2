@@ -147,14 +147,20 @@
       return field;
     };
 
-    var additionalSource = function(linkId, marker){
-      return '' +
+    var additionalSource = function(linkId, marker) {
+        return (!_.isUndefined(marker)) ? '' +
         '<div class = "form-group" id = "aditionalSource">' +
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
         '<label class="control-label-floating"> LINK ID:</label>' +
         '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
         '<span class="marker">' + marker + '</span>' +
         '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+        '</div>' +
+        '</div>' : '' +
+        '<div class = "form-group" id = "aditionalSource">' +
+        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+        '<label class="control-label-floating"> LINK ID:</label>' +
+        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
         '</div>' +
         '</div>';
     };
@@ -417,17 +423,18 @@
 
       });
 
-      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets) {
+      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets, additionalSourceLinkId) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
-        processAdjacents(sources, targets);
+        processAdjacents(sources, targets, additionalSourceLinkId);
         applicationModel.removeSpinner();
       });
 
-      var processAdjacents = function (sources, targets) {
+      var processAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t){
           return t.roadLinkType == -1;
         });
+
 
         var floatingAdjacents = _.filter(targets, function(t){
           return t.roadLinkType == -1;
@@ -436,6 +443,13 @@
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
           return additionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
+
+        if(!_.isUndefined(additionalSourceLinkId)){
+          return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+            '<label class="control-label-floating"> LINK ID:</label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
+            '</div>');
+        }
 
         if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
@@ -452,7 +466,7 @@
               applicationModel.addSpinner();
               eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
               rootElement.find('.link-properties button.cancel').attr('disabled', false);
-              applicationModel.setActiveButtons(true)
+              applicationModel.setActiveButtons(true);
             });
         }
 
