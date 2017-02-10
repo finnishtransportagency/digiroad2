@@ -409,10 +409,11 @@ object RoadAddressDAO {
   }
 
   def expireMissingRoadAddresses (targetIds: Set[Long]) = {
+
     if (!targetIds.isEmpty) {
       val query =
         s"""
-          Delete from missing_road_address Where link_id in (${targetIds.mkString(",")}))
+          Delete from missing_road_address Where link_id in (${targetIds.mkString(",")})
         """
       Q.updateNA(query).first
     }

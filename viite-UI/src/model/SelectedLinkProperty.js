@@ -189,7 +189,7 @@
         sourceIds.push(link.getData().linkId);
       });
       _.each(targets, function(link){
-        targetIds.push(parseInt(link));
+        targetIds.push(link.getData().linkId);
       });
       var roadAddress = roadCollection.getNewTmpRoadAddress()[0];
       var data = {'sourceIds': sourceIds, 'targetIds': targetIds, 'roadAddress': roadAddress};
