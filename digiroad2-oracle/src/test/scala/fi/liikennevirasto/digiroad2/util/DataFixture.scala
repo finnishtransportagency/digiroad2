@@ -731,7 +731,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality
-      val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
       println ("Total roadlink by municipality -> " + roadLinks.size)
 
