@@ -358,7 +358,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     addresses.foreach { address =>
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
-        GeometryUtils.truncateGeometry2D(rl.geometry, address.startMValue, address.endMValue))
+        GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
       if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
@@ -535,7 +535,7 @@ object RoadAddressLinkBuilder {
 
     val roadLinkType = if (roadLink.linkSource == LinkGeomSource.ComplimentaryLinkInterface) ComplementaryRoadLinkType else NormalRoadLinkType
 
-    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
@@ -548,7 +548,7 @@ object RoadAddressLinkBuilder {
   }
 
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
-    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
@@ -564,7 +564,7 @@ object RoadAddressLinkBuilder {
 
     val roadLinkType = FloatingRoadLinkType
 
-    val geom = GeometryUtils.truncateGeometry2D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry3D(historyRoadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, historyRoadLink.linkId, geom,
       length, historyRoadLink.administrativeClass, UnknownLinkType, roadLinkType, ConstructionType.UnknownConstructionType, LinkGeomSource.HistoryLinkInterface, getRoadType(historyRoadLink.administrativeClass, UnknownLinkType), extractModifiedAtVVH(historyRoadLink.attributes), Some("vvh_modified"),
@@ -687,7 +687,7 @@ object RoadAddressLinkBuilder {
 //        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " " + nextSegment.geom)
 //      println(startMValue, endMValue)
 //      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry2D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
 //      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
