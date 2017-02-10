@@ -435,10 +435,12 @@
           return t.roadLinkType == -1;
         });
 
-
-        var floatingAdjacents = _.filter(targets, function(t){
-          return t.roadLinkType == -1;
-        });
+        //singleLinkSelection case
+        var floatingAdjacents = [];
+          if(selectedLinkProperty.count() === 1)
+            floatingAdjacents = _.filter(targets, function(t){
+            return t.roadLinkType == -1;
+          });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
           return additionalSource(fa.linkId, fa.marker);

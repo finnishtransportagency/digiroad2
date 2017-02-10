@@ -201,7 +201,6 @@
         eventbus.trigger('linkProperties:updateFailed');
       });
       targets = [];
-      //cancel();
       applicationModel.setActiveButtons(false);
     };
 
