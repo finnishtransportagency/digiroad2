@@ -269,7 +269,32 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     withDynTransaction {
-      ids.flatMap(dao.updateSpeedLimitValue(_, value, username, municipalityValidation))
+      ids.flatMap(updateSpeedLimitValue(_, value, username, municipalityValidation))
+    }
+  }
+
+  /**
+    * Create new speed limit when value received from UI changes and expire the old one. Used by SpeeedLimitsService.updateValues.
+    */
+  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]): Unit = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+    }
+
+    validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
+
+    //Get all data from the speedLimit to update
+    val speedLimit = dao.getPersistedSpeedLimit(id).map(toSpeedLimit).get
+
+    //Expire old speed limit
+    dao.updateExpiration(id, true, username)
+
+    //Create New Asset copy by the old one with new value
+    dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure),
+      speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDateTime,
+      Some(username), Some(DateTime.now())) match {
+      case None => None
+      case Some(value) => Some(value)
     }
   }
 
@@ -279,13 +304,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
     withDynTransaction {
       val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
-      dao.updateSpeedLimitValue(id, existingValue, username, municipalityValidation)
-      Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
+      val idUpdated = updateSpeedLimitValue(id, existingValue, username, municipalityValidation).get
+      Seq(loadSpeedLimit(idUpdated).get, loadSpeedLimit(newId).get)
     }
   }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
-    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.linkId).get
+    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.linkId, false).get
 
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
@@ -306,17 +331,17 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
-    val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id) }
+    val speedLimit = withDynTransaction { dao.getPersistedSpeedLimit(id)
       .map(toSpeedLimit)
       .map(isSeparableValidation)
-      .get
+      .get }
 
     withDynTransaction {
-      dao.updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
-      dao.updateSideCode(id, SideCode.TowardsDigitizing)
+      val idUpdated = updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation).get
+      dao.updateSideCode(idUpdated, SideCode.TowardsDigitizing)
       val newId = dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization, None).get
 
-      Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
+      Seq(loadSpeedLimit(idUpdated).get, loadSpeedLimit(newId).get)
     }
   }
 
