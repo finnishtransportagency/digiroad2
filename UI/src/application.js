@@ -220,9 +220,9 @@
        linearAsset.title);
     });
 
-    //_.forEach(pointAssets, function(pointAsset) {
-    //  PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
-    //});
+    _.forEach(pointAssets, function(pointAsset) {
+     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
+    });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
@@ -241,20 +241,20 @@
      return acc;
     }, {});
 
-    //var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
-    //  acc[asset.layerName] = new PointAssetLayer({
-    //    roadLayer: roadLayer,
-    //    roadCollection: models.roadCollection,
-    //    collection: asset.collection,
-    //    map: map,
-    //    selectedAsset: asset.selectedPointAsset,
-    //    style: PointAssetStyle(asset.layerName),
-    //    mapOverlay: mapOverlay,
-    //    layerName: asset.layerName,
-    //    newAsset: asset.newAsset
-    //  });
-    //  return acc;
-    //}, {});
+    var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
+     acc[asset.layerName] = new PointAssetLayer({
+       roadLayer: roadLayer,
+       roadCollection: models.roadCollection,
+       collection: asset.collection,
+       map: map,
+       selectedAsset: asset.selectedPointAsset,
+       style: PointAssetStyle(asset.layerName),
+       mapOverlay: mapOverlay,
+       layerName: asset.layerName,
+       newAsset: asset.newAsset
+     });
+     return acc;
+    }, {});
 
     var layers = _.merge({
       road: roadLayer,
@@ -271,7 +271,7 @@
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
        */
-    }, linearAssetLayers/*, pointAssetLayers*/);
+    }, linearAssetLayers, pointAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
