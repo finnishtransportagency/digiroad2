@@ -36,9 +36,14 @@
         roadLayer.redraw();
         highlightFeatures();
         if(selectedLinkProperty.getFloatingsToKeep().length > 1){
-          for(var i = 0; i < selectedLinkProperty.getFloatingsToKeep().length-1; i++){
-            highlightFeatureByLinkId(selectedLinkProperty.getFloatingsToKeep()[i].linkId);
-          }
+        var floatingMinusLast = _.initial(selectedLinkProperty.getFloatingsToKeep());
+          floatingMinusLast.forEach(function (fml){
+            highlightFeatureByLinkId(fml.linkId);
+          });
+        var floatingMinusFirst = _.rest(selectedLinkProperty.getFloatingsToKeep());
+          floatingMinusFirst.forEach(function (fmf){
+            editFeatureDataForGreen(fmf.linkId);
+          });
         }
       }
     };
@@ -46,6 +51,14 @@
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
+      _.map(roadLayer.layer.features,function (feature){
+        if(feature.data.gapTransfering) {
+          feature.data.gapTransfering = false;
+          feature.attributes.gapTransfering = false;
+          feature.data.anomaly = feature.data.prevAnomaly;
+          feature.attributes.anomaly = feature.attributes.prevAnomaly;
+        }
+      });
       roadLayer.redraw();
       indicatorLayer.clearMarkers();
       unhighlightFeatures();
@@ -527,23 +540,27 @@
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
-      _.find(roadLayer.layer.features, function(feature) {
-        return targets !== 0 && feature.attributes.linkId == targets;
-      }).data.gapTransfering = true;
-      _.find(roadLayer.layer.features, function(feature) {
-        return targets !== 0 && feature.attributes.linkId == targets;
-      }).attributes.gapTransfering = true;
-      _.find(roadLayer.layer.features, function(feature) {
-        return targets !== 0 && feature.attributes.linkId == targets;
-      }).data.anomaly = 0;
-      _.find(roadLayer.layer.features, function(feature) {
-        return targets !== 0 && feature.attributes.linkId == targets;
-      }).attributes.anomaly = 0;
-      var feature = _.find(roadLayer.layer.features, function(feature) {
-        return targets !== 0 && feature.attributes.linkId == targets;
-      });
+      editFeatureDataForGreen(targets);
       reselectRoadLink();
       draw();
+    };
+
+    var editFeatureDataForGreen = function (targets) {
+      var features =[];
+      if(targets !== 0){
+        _.map(roadLayer.layer.features, function(feature){
+        if(feature.attributes.linkId === targets){
+          feature.attributes.prevAnomaly = feature.attributes.anomaly;
+          feature.data.prevAnomaly = feature.data.anomaly;
+          feature.attributes.gapTransfering = true;
+          feature.data.gapTransfering = true;
+          features.push(feature);
+         }
+      });
+    }
+     if(features.length === 0)
+       return undefined;
+      else return _.first(features);
     };
 
     this.removeLayerFeatures = function() {
