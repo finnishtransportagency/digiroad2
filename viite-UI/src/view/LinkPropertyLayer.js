@@ -26,11 +26,20 @@
 
     var selectRoadLink = function(feature) {
       if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
-        selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
+        if (selectedLinkProperty.getFloatingsToKeep().length === 0) {
+          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
+        } else {
+          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
+        }
         unhighlightFeatures();
         currentRenderIntent = 'select';
         roadLayer.redraw();
         highlightFeatures();
+        if(selectedLinkProperty.getFloatingsToKeep().length > 1){
+          for(var i = 0; i < selectedLinkProperty.getFloatingsToKeep().length-1; i++){
+            highlightFeatureByLinkId(selectedLinkProperty.getFloatingsToKeep()[i].linkId);
+          }
+        }
       }
     };
 

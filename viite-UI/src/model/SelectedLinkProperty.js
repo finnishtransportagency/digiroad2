@@ -4,6 +4,7 @@
     var dirty = false;
     var targets = [];
     var sources = [];
+    var floatingsToKeep = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -18,6 +19,7 @@
         sources = [];
         targets = [];
         dirty = false;
+        floatingsToKeep = [];
       }
     };
 
@@ -69,7 +71,13 @@
     var open = function(linkId, id, singleLinkSelect) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
-        close();
+        if(floatingsToKeep.length === 0){
+          close();
+        } else {
+          if (!_.isEmpty(current) && !isDirty()) {
+            _.forEach(current, function(selected) { selected.unselect(); });
+          }
+        }
         if(!_.isUndefined(linkId)){
           current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);  
         } else {
@@ -79,37 +87,52 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
-
-        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+        var data4Display = extractDataForDisplay(get());
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
-          applicationModel.addSpinner();
+          if (floatingsToKeep.length !== 0) {
+            applicationModel.addSpinner();
+          }
+          floatingsToKeep.push(data4Display);
         }
+        var contains = _.find(floatingsToKeep, function(fk){
+          return fk.linkId === data4Display.linkId;
+        });
+        if(floatingsToKeep.length !== 0 && _.isUndefined(contains)){
+          floatingsToKeep.push(data4Display);
+        }
+        eventbus.trigger('linkProperties:selected', data4Display);
       }
     };
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
-      _.each(current, function(link){
-        if(!_.isUndefined(link))
+      _.each(current, function (link) {
+        if (!_.isUndefined(link))
+          chainLinks.push(link.getData().linkId);
+      });
+      _.each(targets, function (link) {
         chainLinks.push(link.getData().linkId);
       });
-      _.each(targets, function(link){
-        chainLinks.push(link.getData().linkId);
-      });
-      var data = {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
-        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)};
+      var data = {
+        "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
+      };
 
-       backend.getFloatingAdjacent(data, function(adjacents) {
-         if(!_.isEmpty(adjacents))
-          linkIds = adjacents;
-         if(!applicationModel.isReadOnly()){
-           var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
-             return _.merge({}, a, {"marker": markers[index]});
-         }), "links": link};
-           eventbus.trigger("adjacents:added",calculatedRoads.links, calculatedRoads.adjacents );
-         }
-       });
+      if (floatingsToKeep.length > 1){
+        backend.getFloatingAdjacent(data, function (adjacents) {
+          if (!_.isEmpty(adjacents))
+            linkIds = adjacents;
+          if (!applicationModel.isReadOnly()) {
+            var calculatedRoads = {
+              "adjacents": _.map(adjacents, function (a, index) {
+                return _.merge({}, a, {"marker": markers[index]});
+              }), "links": link
+            };
+            eventbus.trigger("adjacents:added", calculatedRoads.links, calculatedRoads.adjacents);
+          }
+        });
+      }
       return linkIds;
     };
 
@@ -308,12 +331,22 @@
       }
     });
 
+    var getFloatingsToKeep = function(){
+      return floatingsToKeep;
+    };
+
+    var clearFloatingsToKeep = function() {
+      floatingsToKeep = [];
+    };
+
     return {
       getSources: getSources,
       resetSources: resetSources,
       addTargets: addTargets,
       getTargets: getTargets,
       resetTargets: resetTargets,
+      getFloatingsToKeep: getFloatingsToKeep,
+      clearFloatingsToKeep: clearFloatingsToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,

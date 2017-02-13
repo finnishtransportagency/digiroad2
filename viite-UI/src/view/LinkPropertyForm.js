@@ -333,6 +333,7 @@
 
           if(!applicationModel.isReadOnly()){
             rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            $('#floatingEditModeForm').show();
           } else {
             rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
           }
@@ -342,8 +343,8 @@
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         if(!_.isEmpty(selectedLinkProperty.get())){
-          compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
-          if(compactForm && !applicationModel.isReadOnly())
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFloatingsToKeep().length >= 1);
+          if(compactForm && !applicationModel.isReadOnly() && selectedLinkProperty.getFloatingsToKeep().length > 1)
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
