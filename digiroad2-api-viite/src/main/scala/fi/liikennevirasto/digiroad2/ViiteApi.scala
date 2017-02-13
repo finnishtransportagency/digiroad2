@@ -254,7 +254,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "constructionType" ->roadAddressLink.constructionType.value,
       "startMValue" -> roadAddressLink.startMValue,
       "endMValue" -> roadAddressLink.endMValue,
-      "sideCode" -> roadAddressLink.sideCode.value
+      "sideCode" -> roadAddressLink.sideCode.value,
+      "linkType" -> roadAddressLink.linkType.value
     )
   }
 
