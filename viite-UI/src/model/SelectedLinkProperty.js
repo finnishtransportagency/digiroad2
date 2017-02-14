@@ -333,9 +333,6 @@
     eventbus.on("roadLink:editModeAdjacents", function(){
       if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
         eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-        if(get()[0].roadLinkType === -1) {
-          applicationModel.addSpinner();
-        }
       }
     });
 
