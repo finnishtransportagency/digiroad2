@@ -241,11 +241,12 @@
             setRulesByName(name, allRules);
         };
 
-        this.getStyle = function(context, feature){
-           return this.getStyleByName(defaultRuleName, context, feature);
+        this.getStyle = function(feature, extraProperties){
+            return this.getStyleByName(defaultRuleName, feature, extraProperties);
         };
 
-        this.getStyleByName = function(name, context, feature){
+        this.getStyleByName = function(name, feature, extraProperties){
+            var context = _.merge({}, feature.getProperties(), extraProperties);
             var allRules = getRulesByName(name);
             var configObj = _.merge({}, defaultStyle);
             var returnStyles = [];

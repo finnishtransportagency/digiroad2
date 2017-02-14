@@ -36,12 +36,6 @@
     browseStyleProvider.addRules(oneWayRules);
     browseStyleProvider.addRules(featureTypeRules);
 
-    var selectionStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.15 }});
-    selectionStyleProvider.addRules(expirationRules);
-    selectionStyleProvider.addRules(zoomLevelRules);
-    selectionStyleProvider.addRules(oneWayRules);
-    selectionStyleProvider.addRules(featureTypeRules);
-
     var lineFeatures = function(linearAssets) {
       return _.flatten(_.map(linearAssets, function(linearAsset) {
         var points = _.map(linearAsset.points, function(point) {
@@ -74,9 +68,7 @@
 
     return {
       browsingStyleProvider: browseStyleProvider,
-      selectionStyleProvider: selectionStyleProvider,
       vectorOpacity: 0.15,
-      getNewFeatureProperties: getNewFeatureProperties,
       renderFeatures: renderFeatures
     };
   };

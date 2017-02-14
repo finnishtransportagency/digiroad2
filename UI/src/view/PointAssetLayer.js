@@ -29,6 +29,7 @@
 
     me.selectControl = defineOpenLayersSelectControl();
     function defineOpenLayersSelectControl() {
+
       var selectControl = new ol.interaction.Select({
          layers : [vectorLayer],
          condition : ol.events.condition.singleClick,
@@ -36,7 +37,7 @@
              return feature.setStyle(style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties()), feature));
          }
       });
-      map.addInteraction(selectControl);
+      //map.addInteraction(selectControl);
       selectControl.on('select', pointAssetOnSelect);
 
       // var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
@@ -64,12 +65,12 @@
       //   }
       // }
       var activate = function () {
-         map.addInteraction(selectControl);
+         //map.addInteraction(selectControl);
 
       };
 
       var deactivate = function () {
-          map.removeInteraction(selectControl);
+          //map.removeInteraction(selectControl);
       };
 
       return {
@@ -113,7 +114,7 @@
 
         var activate = function () {
             // dragControl.features = vectorLayer.getSource().getFeatures();
-            map.addInteraction(dragControl);
+            //map.addInteraction(dragControl);
         };
 
         var deactivate = function () {
