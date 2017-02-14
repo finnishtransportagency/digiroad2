@@ -290,7 +290,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     dao.updateExpiration(id, true, username)
 
     //Create New Asset copy by the old one with new value
-    dao.createSpeedLimit(username, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure),
+    dao.createSpeedLimit(speedLimit.createdBy.get, speedLimit.linkId, (speedLimit.startMeasure, speedLimit.endMeasure),
       speedLimit.sideCode, value, Some(speedLimit.vvhTimeStamp), speedLimit.createdDateTime,
       Some(username), Some(DateTime.now())) match {
       case None => None
