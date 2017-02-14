@@ -200,12 +200,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       float.map(f => RoadAddressLinkBuilder.build(rl, f, true)).filter(_.length > 0.0)
   }
 
-//  def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-//    roadAddrSeq.map( ra => {
-//      RoadAddressLinkBuilder.build(rl, ra, true)
-//    })
-//  }
-
   private def combineGeom(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.length == 1) {
       roadAddresses.head
@@ -271,7 +265,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
     (addresses.size, roadLinks.size) match {
       case (0,0) => List()
-//      case (_,0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (_,0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
       case (0,_) => missedRL.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
       case (_,_) => addresses.flatMap( a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
     }
