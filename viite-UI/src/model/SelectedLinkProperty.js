@@ -120,12 +120,20 @@
       };
 
       if (floatingsToKeep.length > 1){
+        applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
+          applicationModel.removeSpinner();
           if (!_.isEmpty(adjacents))
             linkIds = adjacents;
           if (!applicationModel.isReadOnly()) {
+            var selectedLinkIds = _.map(get().concat(floatingsToKeep), function (roads) {
+              return roads.linkId;
+            });
+            var filteredAdjacents = _.filter(adjacents, function(adj){
+              return !_.contains(selectedLinkIds, adj.linkId);
+            });
             var calculatedRoads = {
-              "adjacents": _.map(adjacents, function (a, index) {
+              "adjacents": _.map(filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
