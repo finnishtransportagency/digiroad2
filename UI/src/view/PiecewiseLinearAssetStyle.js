@@ -36,6 +36,12 @@
     browseStyleProvider.addRules(oneWayRules);
     browseStyleProvider.addRules(featureTypeRules);
 
+    var selectionStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.15 }});
+    selectionStyleProvider.addRules(expirationRules);
+    selectionStyleProvider.addRules(zoomLevelRules);
+    selectionStyleProvider.addRules(oneWayRules);
+    selectionStyleProvider.addRules(featureTypeRules);
+
     var lineFeatures = function(linearAssets) {
       return _.flatten(_.map(linearAssets, function(linearAsset) {
         var points = _.map(linearAsset.points, function(point) {
@@ -47,7 +53,7 @@
       }));
     };
 
-    var renderFeatures = function(linearAssets) {
+    var getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(limit) {
         var expired = _.isUndefined(limit.value);
         return _.merge({}, limit, { type: 'line', expired: expired });
@@ -59,12 +65,18 @@
       var sortedAssets = _.sortBy(linearAssetsWithAdjustments, function(asset) {
         return asset.expired ? -1 : 1;
       });
-      return lineFeatures(sortedAssets);
+      return sortedAssets;
+    };
+
+    var renderFeatures = function(linearAssets) {
+      return lineFeatures(getNewFeatureProperties(linearAssets));
     };
 
     return {
       browsingStyleProvider: browseStyleProvider,
+      selectionStyleProvider: selectionStyleProvider,
       vectorOpacity: 0.15,
+      getNewFeatureProperties: getNewFeatureProperties,
       renderFeatures: renderFeatures
     };
   };
