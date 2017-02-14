@@ -439,6 +439,10 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
+        _.map(_.rest(selectedLinkProperty.getFloatingsToKeep()), function (roads){
+          editFeatureDataForGreen(roads);
+          highlightFeatureByLinkId(roads.linkId);
+        });
         highlightFeatureByLinkId(aditionalLinkId);
       });
       eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
@@ -462,6 +466,7 @@
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
           prepareRoadLinkDraw();
       });
+      eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
     };
 
     var clearIndicators = function () {
@@ -549,7 +554,7 @@
       var features =[];
       if(targets !== 0){
         _.map(roadLayer.layer.features, function(feature){
-        if(feature.attributes.linkId === targets){
+        if(feature.attributes.linkId == targets){
           feature.attributes.prevAnomaly = feature.attributes.anomaly;
           feature.data.prevAnomaly = feature.data.anomaly;
           feature.attributes.gapTransfering = true;

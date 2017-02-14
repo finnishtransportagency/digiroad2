@@ -294,6 +294,7 @@
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(current).getData();
+      clearFloatingsToKeep();
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
       if(_.isEmpty(changedTargetIds)){
         roadCollection.resetTmp();
@@ -309,6 +310,7 @@
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
+      close();
     };
 
     var setLinkProperty = function(key, value) {
