@@ -39,6 +39,7 @@
             new StyleRule().where('floating').is(false).use({
                 icon: {
                     scale : 0.75,
+                    rotateWithView: true,
                     rotation: '${rotation}',
                     src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg'
                 }}),
@@ -46,6 +47,7 @@
             new StyleRule().where('floating').is(true).use({
                 icon: {
                     scale : 0.75,
+                    rotateWithView: true,
                     rotation: '${rotation}',
                     src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning-directional-traffic-sign.svg'
                 }})
@@ -79,16 +81,15 @@
   }
 
   root.PointAssetStyle = function(layerName) {
-    var defaultStyleParameters = {
-      graphicWidth: 14,
-      graphicHeight: 14,
-      graphicXOffset: -7,
-      graphicYOffset: -7,
-      externalGraphic: 'images/point-assets/point_blue.svg'
-    };
+    // var defaultStyleParameters = {
+    //   graphicWidth: 14,
+    //   graphicHeight: 14,
+    //   graphicXOffset: -7,
+    //   graphicYOffset: -7,
+    //   externalGraphic: 'images/point-assets/point_blue.svg'
+    // };
 
     var featureTypeRules = getFeatureTypeRules(layerName);
-
     // var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults(defaultStyleParameters));
     // browseStyle.addRules(featureTypeRules);
     // var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
@@ -103,7 +104,7 @@
     //   select: selectionSelectStyle
     // });
 
-    var browseStyleProvider = new StyleRuleProvider({stroke : { opacity: 0.9 } });
+    var browseStyleProvider = new StyleRuleProvider({stroke : { opacity: 0.9 }, icon : {src: 'images/point-assets/point_blue.svg' }});
     browseStyleProvider.addRules(featureTypeRules);
 
     return {

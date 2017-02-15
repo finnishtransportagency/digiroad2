@@ -1,17 +1,29 @@
 var RoadStyles = function() {
 
   var administrativeClassStyleRule = [
-    new StyleRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb' }),
-    new StyleRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00' }),
-    new StyleRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000' }),
-    new StyleRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888' })
+    new StyleRule().where('administrativeClass').is('Private').use({ stroke: {color: '#0011bb' }}),
+    new StyleRule().where('administrativeClass').is('Municipality').use({ stroke: {color: '#11bb00' }}),
+    new StyleRule().where('administrativeClass').is('State').use({ stroke: {color: '#ff0000' }}),
+    new StyleRule().where('administrativeClass').is('Unknown').use({ stroke: {color: '#888' }})
   ];
 
-  var styleProvider = new StyleRuleProvider({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }});
-  styleProvider.addRules(administrativeClassStyleRule);
-
+  var selectionStyle = [new StyleRule().use({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }})];
   return {
-    provider: styleProvider
+    provider: function () {
+        //TODO: Remove this and give support to defaults
+        var defaultProvider = new StyleRuleProvider({ stroke: {width:5 , opacity: 0.7, color: "#a4a4a2" }});
+        var selectionProvider = new StyleRuleProvider({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }});
+        selectionProvider.addRules(selectionStyle);
+
+        if (applicationModel.isRoadTypeShown()){
+            defaultProvider.addRules(administrativeClassStyleRule);
+            return defaultProvider;
+        }
+        return {
+            defaultStyleProvider: defaultProvider,
+            selectionStyleProvider: selectionProvider
+        };
+    }
   };
 };
 
@@ -21,7 +33,14 @@ var RoadStyles = function() {
     var layerMinContentZoomLevels = {};
     var layerStyleProviders = {};
     var uiState = { zoomLevel: 9 };
-
+    var selectControl = new ol.interaction.Select({
+        layers : [vectorLayer],
+        //TODO: Review this style application
+        style : function(feature) {
+           return (new RoadStyles()).provider().selectionStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+        }
+    });
+    map.addInteraction(selectControl);
     var vectorSource = new ol.source.Vector({
       //loader: function(extent, resolution, projection) {
       //  var zoom = Math.log(1024/resolution) / Math.log(2);
@@ -91,8 +110,13 @@ var RoadStyles = function() {
     };
 
     function vectorLayerStyle(feature, resolution) {
-      var styleProvider = stylesUndefined() ? (new RoadStyles()).provider : layerStyleProviders[applicationModel.getSelectedLayer()]();
-      return styleProvider.getStyle(_.merge({}, feature.getProperties(), {zoomLevel: uiState.zoomLevel}), feature);
+      if(stylesUndefined())
+          return (new RoadStyles()).provider().defaultStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+
+      var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
+      if(currentLayerProvider.defaultStyleProvider)
+        return currentLayerProvider.defaultStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
     }
 
     function stylesUndefined() {
@@ -188,6 +212,29 @@ var RoadStyles = function() {
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
+    var selectRoadLink = function(roadLink) {
+      var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) {
+          if (roadLink.linkId) return feature.getProperties().linkId === roadLink.linkId;
+          else return feature.getProperties().roadLinkId === roadLink.roadLinkId;
+      });
+     // selectControl.unselectAll();
+      var featureClone = feature.clone();
+      featureClone.setId(feature.getId());
+
+      addSelectionFeatures(featureClone);
+    };
+
+    var clearSelection = function(){
+      selectControl.getFeatures().clear();
+    };
+
+    var addSelectionFeatures = function(feature){
+        clearSelection();
+     // _.each(features, function(feature){
+      selectControl.getFeatures().push(feature);
+     // });
+    };
+
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       //TODO change this to use the new way to do selectcontrol
       //selectControl.unselectAll();
@@ -208,7 +255,9 @@ var RoadStyles = function() {
       setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
+      selectRoadLink: selectRoadLink,
       clear: clear,
+      clearSelection: clearSelection,
       layer: vectorLayer
     };
   };

@@ -19,10 +19,9 @@
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
        style : function(feature){
-           return style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties()), feature);
+           return style.browsingStyleProvider.getStyle(feature);
        }
     });
-
     vectorLayer.setOpacity(1);
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
@@ -32,89 +31,78 @@
 
       var selectControl = new ol.interaction.Select({
          layers : [vectorLayer],
-         condition : ol.events.condition.singleClick,
+         condition : function(events){ return enable && ol.events.condition.singleClick(events); },
          style : function (feature) {
-             return feature.setStyle(style.browsingStyleProvider.getStyle(_.merge({}, feature.getProperties()), feature));
+             return feature.setStyle(style.browsingStyleProvider.getStyle(feature));
          }
       });
-      //map.addInteraction(selectControl);
       selectControl.on('select', pointAssetOnSelect);
-
-      // var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-      //   onSelect: pointAssetOnSelect,
-      //   onUnselect: pointAssetOnUnselect
-      // });
-      // map.addControl(selectControl);
 
       function pointAssetOnSelect(feature) {
         if(feature.selected.length > 0){
           selectedAsset.open(feature.selected[0].values_);
           toggleMode(applicationModel.isReadOnly());
-          //dragControl.activate();
         }
         else {
           if(feature.deselected.length > 0) {
-           // dragControl.deactivate();
             selectedAsset.close();
           }
         }
       }
-      // function pointAssetOnUnselect() {
-      //   if (selectedAsset.exists()) {
-      //     selectedAsset.close();
-      //   }
-      // }
-      var activate = function () {
-         //map.addInteraction(selectControl);
+      var enable = false;
+      console.log('init');
+      map.addInteraction(selectControl);
 
+      var activate = function () {
+         enable=true;
+         console.log('activate');
       };
 
       var deactivate = function () {
-          //map.removeInteraction(selectControl);
+        enable = false;
+        console.log('deactivate');
+        //map.removeInteraction(selectControl);
       };
 
       return {
+          selectControl : selectControl,
           activate : activate,
           deactivate : deactivate
       };
     }
 
-   // var dragControl = defineOpenLayersDragControl();
+    var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
         var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
         var dragControl = new ol.interaction.Translate({
-           layers : [vectorLayer]
+           features : me.selectControl.selectControl.getFeatures()
         });
 
         dragControl.on('translating', dragHandler);
 
-        function dragFreely(feature, mousePosition) {
+        function dragFreely(feature) {
           if (selectedAsset.isSelected(feature.attributes)) {
-            selectedAsset.set({lon: mousePosition.x, lat: mousePosition.y});
-          } else {
-            this.cancel();
+            selectedAsset.set({lon: feature.coordinate[0], lat: feature.coordinate[1]});
           }
         }
 
-        function dragAlongNearestLink(feature, mousePosition) {
+        //TODO : remove feature.features.array_[0] to feature.getFeatures()
+        function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.array_[0].getProperties())) {
            // var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
-            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), event.x, event.y);
+            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
-              var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: event.x, y: event.y});
-              roadLayer.selectRoadLink(nearestLine);
-              feature.move(new ol.geom.Point(newPosition.x, newPosition.y));
+              var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
+              roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
+              feature.features.array_[0].getGeometry().setCoordinates([newPosition.x, newPosition.y]);
               var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-              selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, linkId: nearestLine.linkId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
+              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.array_[0].getGeometry(), floating: false, bearing: newBearing});
             }
-          } else {
-            this.cancel();
           }
         }
 
         var activate = function () {
-            // dragControl.features = vectorLayer.getSource().getFeatures();
-            //map.addInteraction(dragControl);
+            map.addInteraction(dragControl);
         };
 
         var deactivate = function () {
@@ -125,55 +113,18 @@
             activate : activate,
             deactivate : deactivate
         };
-
-
-      // var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
-      // var dragControl = new OpenLayers.Control.DragFeature(vectorLayer, { onDrag: dragHandler });
-      // allowClickEventBubbling();
-      // map.addControl(dragControl);
-      //
-      // function allowClickEventBubbling() {
-      //   dragControl.handlers.feature.stopClick = false;
-      // }
-      //
-      // function dragFreely(feature, mousePosition) {
-      //   if (selectedAsset.isSelected(feature.attributes)) {
-      //     var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
-      //     selectedAsset.set({lon: currentLonLat.lon, lat: currentLonLat.lat});
-      //   } else {
-      //     this.cancel();
-      //   }
-      // }
-      //
-      // function dragAlongNearestLink(feature, mousePosition) {
-      //   if (selectedAsset.isSelected(feature.attributes)) {
-      //     var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
-      //     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentLonLat.lon, currentLonLat.lat);
-      //     if (nearestLine) {
-      //       var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: currentLonLat.lon, y: currentLonLat.lat});
-      //       roadLayer.selectRoadLink(nearestLine);
-      //       feature.move(new OpenLayers.LonLat(newPosition.x, newPosition.y));
-      //       var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      //       selectedAsset.set({lon: feature.geometry.x, lat: feature.geometry.y, linkId: nearestLine.linkId, geometry: [nearestLine.start, nearestLine.end], floating: false, bearing: newBearing});
-      //     }
-      //   } else {
-      //     this.cancel();
-      //   }
-      // }
-      //
-      // return dragControl;
     }
 
     function createFeature(asset) {
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
-      //return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(asset.lon, asset.lat), _.merge({}, asset, {rotation: rotation, bearing: bearing}));
       var feature =  new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
       var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing}, feature.values_);
       feature.setProperties(obj);
       return feature;
     }
 
+    //TODO: edit validity-direction
     function determineRotation(asset) {
       var rotation = 0;
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
@@ -196,10 +147,10 @@
       return bearing;
     }
 
-
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+          me.selectControl.activate();
       });
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
@@ -270,6 +221,7 @@
     //  me.selectControl.unselectAll();
     //  me.activateSelection();
       mapOverlay.hide();
+        roadLayer.clearSelection();
     //  vectorLayer.styleMap = style.browsing;
       me.refreshView();
     }
@@ -281,8 +233,11 @@
     }
 
     function handleSavedOrCancelled() {
+        me.selectControl.activate();
       mapOverlay.hide();
+      //TODO use that instead of doing me.selectControl.activate();
      // me.activateSelection();
+        roadLayer.clearSelection();
       me.refreshView();
     }
 
@@ -293,8 +248,7 @@
       // _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
       //vectorLayer.redraw();
-      //vectorLayer.getSource().addFeatures(feature);
-      applySelection();
+
     }
 
     function handleMapClick(coordinates) {
@@ -307,6 +261,7 @@
     }
 
     function handleUnSelected() {
+        me.selectControl.activate();
       //me.selectControl.unselectAll();
       //vectorLayer.styleMap = style.browsing;
       //vectorLayer.redraw();
