@@ -559,6 +559,7 @@
           feature.data.prevAnomaly = feature.data.anomaly;
           feature.attributes.gapTransfering = true;
           feature.data.gapTransfering = true;
+          selectedLinkProperty.getFloatingsToKeep().push(feature.data);
           features.push(feature);
          }
       });

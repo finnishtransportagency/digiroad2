@@ -480,22 +480,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
-
-    try {
-      val sourceLinks = sources.flatMap(rd => {
-        getUniqueRoadAddressLink(rd.toLong)
-      })
-      val targetLinks = targets.flatMap(rd => {
-        getUniqueRoadAddressLink(rd.toLong)
-      })
-      RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks, user)
-    } catch {
-      case e: Exception => {
-        println(e.getCause)
-        println(e.getMessage)
-        Nil
-      }
-    }
+    val sourceLinks = sources.flatMap(rd => {
+      getUniqueRoadAddressLink(rd.toLong)
+    })
+    val targetLinks = targets.flatMap(rd => {
+      getUniqueRoadAddressLink(rd.toLong)
+    })
+    RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks, user)
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: RoadAddress) = {
@@ -717,7 +708,7 @@ object RoadAddressLinkBuilder {
 
 
     val tempId = -1000
-    val geom = GeometryUtils.truncateGeometry2D(targetsGeom, minStartMValue, maxEndMValue)
+    val geom = GeometryUtils.truncateGeometry3D(targetsGeom, minStartMValue, maxEndMValue)
 
     Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,

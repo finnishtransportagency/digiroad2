@@ -458,7 +458,7 @@
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
             if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-              eventbus.trigger("adjacents:roadTransferForm");
+              eventbus.trigger("adjacents:roadTransfer");
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
               rootElement.find('.link-properties button.calculate').attr('disabled', false);
@@ -504,11 +504,12 @@
         applicationModel.setActiveButtons(true);
         
       });
-      eventbus.on('adjacents:roadTransferForm', function() {
+      eventbus.on('adjacents:roadTransfer', function() {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        rootElement.find('.link-properties button.calculate').attr('disabled', true);
         applicationModel.removeSpinner();
       });
 
