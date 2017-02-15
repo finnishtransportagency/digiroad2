@@ -122,28 +122,34 @@
             '</div>';
           }
       } else if(labelText === 'VALITUT LINKIT'){
-        var linkIds = "";
-        var id = 0;
         var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
-        _.each(sources, function(slp){
-          var divId = "VALITUTLINKIT" + id;
-          var linkid = slp.linkId.toString();
-          if (linkIds.length === 0) {
-            field = '<div class="form-group" id=' +divId +'>' +
-              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-              '<p class="form-control-static-floating">' + linkid + '</p>' +
-              '</div>' ;
-            linkIds = linkid;
-          } else if(linkIds.search(linkid) === -1){
-            field = field + '<div class="form-group" id=' +divId +'>' +
-              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-              '<p class="form-control-static-floating">' + linkid + '</p>' +
-              '</div>' ;
-            linkIds = linkIds + ", " + linkid;
-          }
-          id = id + 1;
-        });
+        field = formFields(sources);
       }
+      return field;
+    };
+
+    var formFields = function (sources){
+      var linkIds = "";
+      var field;
+      var id = 0;
+      _.each(sources, function(slp){
+        var divId = "VALITUTLINKIT" + id;
+        var linkid = slp.linkId.toString();
+        if (linkIds.length === 0) {
+          field = '<div class="form-group" id=' +divId +'>' +
+            '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+            '<p class="form-control-static-floating">' + linkid + '</p>' +
+            '</div>' ;
+          linkIds = linkid;
+        } else if(linkIds.search(linkid) === -1){
+          field = field + '<div class="form-group" id=' +divId +'>' +
+            '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+            '<p class="form-control-static-floating">' + linkid + '</p>' +
+            '</div>' ;
+          linkIds = linkIds + ", " + linkid;
+        }
+        id = id + 1;
+      });
       return field;
     };
 
@@ -504,12 +510,20 @@
         applicationModel.setActiveButtons(true);
         
       });
-      eventbus.on('adjacents:roadTransfer', function() {
+      eventbus.on('adjacents:roadTransfer', function(result, sourceIds) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
+        $('[id^=VALITUTLINKIT]').remove();
+
+        var fields = formFields(_.map(sourceIds, function(sId){
+          return {'linkId' : sId};
+        })) + '' + afterCalculationTemplate;
+
+        $('.form-group:last').after(fields);
+
         applicationModel.removeSpinner();
       });
 
