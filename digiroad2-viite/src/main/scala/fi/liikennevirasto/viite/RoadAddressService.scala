@@ -647,16 +647,22 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-//  def adjustRoadAddressTopology(prevStartMAddress: Double ,prevEndMAddress: Double, prevEndMValue: Double ,maxEndMValue: Double, source: RoadAddressLink, target: RoadAddressLink): RoadAddressLink = {
-//    val tempId = -1000
-//    val geom = GeometryUtils.truncateGeometry2D(target.geometry, prevEndMValue, maxEndMValue)
-//    val endMAddress = prevStartMAddress + GeometryUtils.geometryLength(geom)
-//    val endMValue = prevEndMValue + GeometryUtils.geometryLength(geom)
-//
-//    RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
-//      source.roadType, source.modifiedAt, source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-//      minStartAddressM, maxEndAddressM, source.startDate, source.endDate, prevEndMValue, endMValue, source.sideCode, None, None)
-//  }
+  def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, newRoadAddresses: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    val tempId = -1000
+    val sorted = newRoadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
+    val lastTarget = sorted.head
+    val startAddressM = newRoadAddresses.filterNot(_.id == 0).size match {
+      case 0 => minStartMAddress
+      case _ => lastTarget.endAddressM
+    }
+
+    val endMAddress = startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
+
+    val roadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
+      source.roadType, source.modifiedAt, source.modifiedBy, currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
+      startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, None, None))
+    (newRoadAddresses++roadAddress)
+  }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
 
@@ -677,7 +683,6 @@ object RoadAddressLinkBuilder {
     )
 
     val allLinks = sources ++ targets
-    val targetsGeom = targets.flatMap(_.geometry)
     val targetsGeomLength = targets.map(_.length).sum
 
     val allStartCp = sources.flatMap(_.startCalibrationPoint) ++ targets.flatMap(_.startCalibrationPoint)
@@ -690,13 +695,14 @@ object RoadAddressLinkBuilder {
     val maxEndAddressM = sources.map(_.endAddressM).max
     var minStartMValue = 0.0
     var maxEndMValue = 0.0
-    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSource, operation) => operation(targetsGeomLength, previousSource) }
+    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
     if (!allLinks.flatMap(_.startCalibrationPoint).isEmpty) {
       minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
     } else {
       minStartMValue = adjustedSegments.map(_.startMValue).min
     }
+
     if (!allLinks.flatMap(_.endCalibrationPoint).isEmpty) {
       maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     } else {
@@ -704,17 +710,11 @@ object RoadAddressLinkBuilder {
     }
 
     val source = sources.head
-//    val adjustedCreatedRoads = targets.foldLeft(sources) { (previousSource, target) => adjustRoadAddressTopology(minStartAddressM, maxEndAddressM, cena1, cena2) }
+    val adjustedCreatedRoads: Seq[RoadAddressLink] = targets.foldLeft(targets) { (previousTargets, target) =>
+      adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets).filterNot(_.id == 0) }
 
-
-    val tempId = -1000
-    val geom = GeometryUtils.truncateGeometry3D(targetsGeom, minStartMValue, maxEndMValue)
-
-    Seq(RoadAddressLink(tempId, source.linkId, geom, GeometryUtils.geometryLength(geom), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
-      source.roadType, source.modifiedAt, source.modifiedBy, source.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      minStartAddressM, maxEndAddressM, source.startDate, source.endDate, minStartMValue, maxEndMValue, source.sideCode, startCp, endCp))
-//
-  }
+    adjustedCreatedRoads
+    }
 
   private def toIntNumber(value: Any) = {
     try {
