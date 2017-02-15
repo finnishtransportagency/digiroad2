@@ -637,6 +637,16 @@ object RoadAddressLinkBuilder {
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
   private def fuseTwo(nextSegment: RoadAddress, previousSegment: RoadAddress): Seq[RoadAddress] = {
+
+    // Test that at the road addresses lap at least partially or are connected (one extends another)
+    def addressConnected(nextSegment: RoadAddress, previousSegment: RoadAddress) = {
+      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
+        previousSegment.startAddrMValue == nextSegment.endAddrMValue) ||
+        (nextSegment.startAddrMValue >= previousSegment.startAddrMValue &&
+          nextSegment.startAddrMValue <= previousSegment.endAddrMValue) ||
+        (previousSegment.startAddrMValue >= nextSegment.startAddrMValue &&
+          previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
+    }
     val cpNext = nextSegment.calibrationPoints
     val cpPrevious = previousSegment.calibrationPoints
     def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
@@ -658,8 +668,7 @@ object RoadAddressLinkBuilder {
       nextSegment.startDate       == previousSegment.startDate &&
       nextSegment.endDate         == previousSegment.endDate &&
       nextSegment.linkId          == previousSegment.linkId &&
-      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
-        previousSegment.startAddrMValue == nextSegment.endAddrMValue) &&
+      addressConnected(nextSegment, previousSegment) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
 
