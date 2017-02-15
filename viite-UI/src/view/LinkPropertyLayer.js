@@ -422,6 +422,7 @@
             });
           }
         }
+        clearIndicators();
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:reselect', reselectRoadLink);

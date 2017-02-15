@@ -270,8 +270,6 @@
     };
 
     var transferringCalculation = function(){
-      var selected = _.first(current).getData();
-      var test = featuresToKeep;
       var targetsData = _.map(targets,function (t){
         return t.getData();
       });
@@ -303,12 +301,14 @@
     var cancel = function(action, changedTargetIds) {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
-      var originalData = _.first(current).getData();
+      var originalData = _.first(featuresToKeep);
       clearFloatingsToKeep();
-      if(_.isUndefined(changedTargetIds)) {
+      if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
-        eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+        _.defer(function(){
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData))
+        });
       }
 
       $('#adjacentsData').remove();
@@ -320,11 +320,6 @@
         }
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-      }
-      if(_.isEmpty(changedTargetIds)){
-        roadCollection.resetTmp();
-        roadCollection.resetChangedIds();
-        close();
       }
     };
 
