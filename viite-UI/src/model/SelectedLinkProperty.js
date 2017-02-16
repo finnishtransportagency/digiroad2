@@ -211,19 +211,60 @@
         eventbus.trigger('linkProperties:updateFailed');
       });
     };
-    
+
+    var transferringCalculation = function(){
+      var targetsData = _.map(targets,function (t){
+        return t.getData();
+      });
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
+        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+          return feature.linkId.toString();
+        }
+      }), function (target){
+        return !_.isUndefined(target);
+      }));
+      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
+        if(feature.roadLinkType == -1){
+          return feature.linkId.toString();
+        }
+      }), function (source){
+        return !_.isUndefined(source);
+      });
+      var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
+
+      backend.getTransferResult(data, function(result) {
+        if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
+          eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
+          roadCollection.setNewTmpRoadAddress(result);
+        }
+      });
+
+    };
+
     var saveTransfer = function() {
       eventbus.trigger('linkProperties:saving');
-      var sourceIds = [];
-      var targetIds = [];
-      _.each(current, function(link){
-        sourceIds.push(link.getData().linkId);
+      var roadAddresses = roadCollection.getNewTmpRoadAddress();
+
+      var targetsData = _.map(targets,function (t){
+        return t.getData();
       });
-      _.each(targets, function(link){
-        targetIds.push(link.getData().linkId);
+
+      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
+        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+          return feature.linkId;
+        }
+      }), function (target){
+        return !_.isUndefined(target);
+      }));
+      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
+        if(feature.roadLinkType == -1){
+          return feature.linkId;
+        }
+      }), function (source){
+        return !_.isUndefined(source);
       });
-      var roadAddress = roadCollection.getNewTmpRoadAddress()[0];
-      var data = {'sourceIds': sourceIds, 'targetIds': targetIds, 'roadAddress': roadAddress};
+
+      var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds, 'roadAddress': roadAddresses};
 
       backend.createRoadAddress(data, function() {
         dirty = false;
@@ -269,40 +310,12 @@
       return targets;
     };
 
-    var transferringCalculation = function(){
-      var targetsData = _.map(targets,function (t){
-        return t.getData();
-      });
-      var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType != -1 && feature.anomaly == 1){
-          return feature.linkId.toString();
-        }
-      }), function (target){
-        return !_.isUndefined(target);
-      }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType == -1){
-          return feature.linkId.toString();
-        }
-      }), function (source){
-        return !_.isUndefined(source);
-      });
-      var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
-
-      backend.getTransferResult(data, function(result) {
-        if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
-          eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
-          roadCollection.setNewTmpRoadAddress(result);
-        }
-      });
-
-    };
-
     var cancel = function(action, changedTargetIds) {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(featuresToKeep);
-      clearFloatingsToKeep();
+      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+        clearFloatingsToKeep();
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
@@ -316,7 +329,6 @@
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:deleteSelection');
-          eventbus.trigger('roadLinks:unselected');
         }
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);

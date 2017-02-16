@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
   * Created by venholat on 25.8.2016.
   */
 
-case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: RoadAddressCreator)
+case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -146,21 +146,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val roadAddressData = test.roadAddress
       val sourceIds = test.sourceIds
       val targetIds = test.targetIds
+      val roadAddresses = roadAddressData.map{ ra =>
+        RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
+        Some(DateTime.now()), None, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
+      }
 
-      val roadAddress = new RoadAddress(roadAddressData.id, roadAddressData.roadNumber, roadAddressData.roadPartNumber,
-                                      Track.apply(roadAddressData.trackCode), Discontinuity.apply(roadAddressData.discontinuity),
-                                      roadAddressData.startAddressM, roadAddressData.endAddressM,
-      //TODO - Validate Dates on UI
-      Some(DateTime.now()),
-      None,
-      roadAddressData.linkId, roadAddressData.startMValue, roadAddressData.endMValue,
-      SideCode.apply(roadAddressData.sideCode),
-      roadAddressData.calibrationPoints,
-      false,
-      roadAddressData.points
-      )
-
-      roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddress)
+      roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
     } catch {
       case e: Exception => {
         println(e.getCause)
