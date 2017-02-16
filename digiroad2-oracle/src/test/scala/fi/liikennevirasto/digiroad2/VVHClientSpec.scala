@@ -22,6 +22,12 @@ class VVHClientSpec extends FunSuite with Matchers{
      result.size should be >1
     }
 
+  test("Fetch roadlinks with polygon") {
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val result= vvhClient.queryByPolygons("{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}")
+    result.size should be >1
+  }
+
   /**
     * Checks that VVH history link id search works and returns something
     */

@@ -258,6 +258,25 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   /**
+    * Returns VVH road links in polygon area. Municipalities are optional.
+    *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
+    */
+  def queryByPolygons(polygon: String): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val urlpoly=URLEncoder.encode(polygon)
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+    s"layerDefs=$definition&geometry=" + urlpoly +
+    "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+
+
+
+  /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByMunicipalitiesAndBoundsF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetOperations.getByBoundingBox and ServicePointImporter.importServicePoints.
