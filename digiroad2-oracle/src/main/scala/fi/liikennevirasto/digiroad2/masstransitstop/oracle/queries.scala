@@ -237,6 +237,14 @@ object Queries {
     """.as[Int].list
   }
 
+  def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
+    var municipalitiesOfAhvenanmaa = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+    val listInString = municipalitiesOfAhvenanmaa.mkString(", ")
+    sql"""
+      select id from municipality where id not in (#$listInString)
+      """.as[Int].list
+  }
+
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
     sql"""
       select m.id from municipality m where m.ELY_NRO = $elyNro
