@@ -286,6 +286,13 @@
       roadLayer.redraw();
       highlightFeatures();
     };
+    //
+    //var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
+    //  style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    //  onDragEnd: onDragEnd,
+    //  onSelect: OnSelect,
+    //  backgroundOpacity: style.vectorOpacity
+    //});
 
     //var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
     //  onSelect: selectRoadLink,
@@ -380,37 +387,40 @@
       return selectedLinkProperty.isDirty();
     };
 
-    //var createDashedLineFeatures = function(roadLinks, dashedLineFeature) {
-    //  return _.flatten(_.map(roadLinks, function(roadLink) {
-    //    var points = _.map(roadLink.points, function(point) {
-    //      return new OpenLayers.Geometry.Point(point.x, point.y);
-    //    });
-    //    var attributes = {
-    //      dashedLineFeature: roadLink[dashedLineFeature],
-    //      linkId: roadLink.linkId,
-    //      type: 'overlay',
-    //      linkType: roadLink.linkType
-    //    };
-    //    return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-    //  }));
-    //};
+    var createDashedLineFeatures = function(roadLinks, dashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return [point.x, point.y];
+        });
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+        feature.setProperties({
+          dashedLineFeature: roadLink[dashedLineFeature],
+          linkId: roadLink.linkId,
+          type: 'overlay',
+          linkType: roadLink.linkType
+        });
+        return feature;
+      }));
+    };
 
     var drawDashedLineFeatures = function(roadLinks, layer) {
+      //TODO don't understand why this is needed here
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedFunctionalClasses, roadLink.functionalClass) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
-      //layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
+      layer.getSource().addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks, layer) {
+      //TODO don't understand why this is needed here
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedLinkTypes, roadLink.linkType) && !_.contains(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
-      //layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
+      layer.getSource().addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
     var getSelectedFeatures = function() {

@@ -4,7 +4,7 @@
         var styles = [];
 
         var runExpression = function(expression, obj, previousCondition){
-            if(previousCondition)
+            if(previousCondition !== undefined)
                 return expression.compareExpressions(previousCondition, expression.compare(expression.getValue(obj)));
             return expression.compare(expression.getValue(obj));
         };
@@ -171,6 +171,9 @@
             {
                 name: 'fill',
                 factory: function(settings){
+                    if(settings.color)
+                        settings.color = mergeColorOpacity(settings.color, settings.opacity);
+
                     return { fill: new ol.style.Fill(settings) };
                 }
             },
@@ -256,9 +259,11 @@
                     var styles = rule._get();
                     for(var j=0; j < styles.length ; j++){
                         configObj = _.merge(configObj, styles[j]);
+                        //returnStyles.push(createOpenLayerStyle(configObj, feature));
                     }
                 }
             }
+            //return returnStyles; //createOpenLayerStyle(configObj, feature);
             return createOpenLayerStyle(configObj, feature);
         };
     };

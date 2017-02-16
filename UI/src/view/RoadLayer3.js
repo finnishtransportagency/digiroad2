@@ -160,7 +160,7 @@ var RoadStyles = function() {
     //TODO have a look on the vectorlayer redraw if exists
     var toggleRoadType = function() {
       if (applicationModel.isRoadTypeShown()) {
-        enableColorsOnRoadLayer();
+        //enableColorsOnRoadLayer();
       } else {
         disableColorsOnRoadLayer();
       }
