@@ -320,12 +320,12 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         _.defer(function(){
-          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData))
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
         });
       }
 
       $('#adjacentsData').remove();
-      if(applicationModel.isActiveButtons()){
+      if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:deleteSelection');
@@ -360,7 +360,7 @@
       }
     });
 
-    var getFloatingsToKeep = function(){
+    var getFeaturesToKeep = function(){
       return featuresToKeep;
     };
 
@@ -374,7 +374,7 @@
       addTargets: addTargets,
       getTargets: getTargets,
       resetTargets: resetTargets,
-      getFloatingsToKeep: getFloatingsToKeep,
+      getFeaturesToKeep: getFeaturesToKeep,
       clearFloatingsToKeep: clearFloatingsToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
