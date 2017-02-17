@@ -34,8 +34,12 @@ window.LinearAssetLayer = function(params) {
       vectorSource.addFeatures(scissorFeatures);
     };
 
-    var remove = function() {
-      //vectorLayer.removeFeatures(scissorFeatures);
+    var remove = function () {
+      _.each(scissorFeatures, function (feature) {
+          if(_.contains(vectorSource.getFeatures(), feature)){
+              vectorSource.removeFeature(feature);
+          }
+      });
       scissorFeatures = [];
     };
 
@@ -99,7 +103,7 @@ window.LinearAssetLayer = function(params) {
     this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
       if (closestLinearAssetLink) {
-        if (isWithinCutThreshold(closestLinearAssetLink)) {
+        if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
           moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
         } else {
           remove();
@@ -366,12 +370,14 @@ window.LinearAssetLayer = function(params) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
   };
 
-  var decorateSelection = function() {
-    if (selectedLinearAsset.isSplitOrSeparated()) {
-      var offsetBySideCode = function(linearAsset) {
-        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-      };
-      drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
+  var decorateSelection = function () {
+    if (selectedLinearAsset.exists()) {
+      if (selectedLinearAsset.isSplitOrSeparated()) {
+        var offsetBySideCode = function (linearAsset) {
+          return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+        };
+        drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
+      }
     }
   };
 

@@ -27,7 +27,7 @@
     ];
 
     var featureTypeRules = [
-      new StyleRule().where('type').is('cutter').use({ externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 })
+      new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
     ];
 
     var browseStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
