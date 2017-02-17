@@ -221,14 +221,15 @@
     var buttons =
       '<div class="link-properties form-controls">' +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
       '</div>';
 
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
+          //' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
           '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
           '</div>';
       else
