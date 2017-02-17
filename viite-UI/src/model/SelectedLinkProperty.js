@@ -235,7 +235,7 @@
 
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
-          eventbus.trigger("adjacents:roadTransfer", result, targetDataIds);
+          eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
           roadCollection.setNewTmpRoadAddress(result);
         }
       });

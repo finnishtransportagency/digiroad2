@@ -511,7 +511,7 @@
         applicationModel.setActiveButtons(true);
         
       });
-      eventbus.on('adjacents:roadTransfer', function(result, sourceIds) {
+      eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
         rootElement.find('.link-properties button.save').attr('disabled', false);
@@ -519,7 +519,7 @@
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
         $('[id^=VALITUTLINKIT]').remove();
 
-        var fields = formFields(_.map(sourceIds, function(sId){
+        var fields = formFields(_.map(targets, function(sId){
           return {'linkId' : sId};
         })) + '' + afterCalculationTemplate;
 
