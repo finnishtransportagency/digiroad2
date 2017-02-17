@@ -316,6 +316,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def createSingleMissingRoadAddress(missingAddress: MissingRoadAddress) = {
+    //println("LinkId:  %d ".format(missingAddress.linkId))
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
