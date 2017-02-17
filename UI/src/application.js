@@ -258,19 +258,20 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)
-      /*
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
+
+       //massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
        backend: backend,
+       style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer
-       }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
-       */
+       })
+       //manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+
     }, linearAssetLayers, pointAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');

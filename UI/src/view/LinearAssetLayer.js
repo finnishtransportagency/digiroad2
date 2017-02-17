@@ -285,7 +285,7 @@ window.LinearAssetLayer = function(params) {
   };
   this.deactivateSelection = function() {
     selectToolControl.toggleDragBox();
-    selectedLinearAsset.deactivate();
+    selectToolControl.deactivate();
   };
   this.removeLayerFeatures = function() {
     vectorLayer.getSource().clear();
