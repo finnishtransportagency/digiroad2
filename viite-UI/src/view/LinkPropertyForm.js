@@ -528,7 +528,10 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('layer:selected', function(layer) {
+      eventbus.on('adjacents:startedFloatingTransfer', function() {
+        action = applicationModel.actionCalculating;
+        rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        applicationModel.setActiveButtons(true);
       });
     };
     bindEvents();

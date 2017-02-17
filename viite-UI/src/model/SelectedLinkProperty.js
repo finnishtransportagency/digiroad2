@@ -89,7 +89,7 @@
         });
         var data4Display = extractDataForDisplay(get());
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
-          if (featuresToKeep.length !== 0) {
+          if (!_.isEmpty(featuresToKeep)) {
             applicationModel.addSpinner();
           }
           featuresToKeep.push(data4Display);
@@ -97,7 +97,7 @@
         var contains = _.find(featuresToKeep, function(fk){
           return fk.linkId === data4Display.linkId;
         });
-        if(featuresToKeep.length !== 0 && _.isUndefined(contains)){
+        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
           featuresToKeep.push(data4Display);
         }
         eventbus.trigger('linkProperties:selected', data4Display);
@@ -138,6 +138,7 @@
               }), "links": link
             };
             eventbus.trigger("adjacents:added", calculatedRoads.links, calculatedRoads.adjacents);
+            eventbus.trigger('adjacents:startedFloatingTransfer');
           }
         });
       }
@@ -168,6 +169,7 @@
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+         eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
         applicationModel.removeSpinner();
        }
