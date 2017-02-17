@@ -68,7 +68,7 @@ case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: 
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
@@ -187,12 +187,12 @@ object RoadAddressDAO {
 
   private def queryList(query: String) = {
     val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Double, Double, Int,
-      Option[DateTime], Option[DateTime], String, Option[DateTime], Int, Boolean, Double, Double, Double, Double)](query).list
+      Option[DateTime], Option[DateTime], Option[String], Option[DateTime], Int, Boolean, Double, Double, Double, Double)](query).list
     tuples.map {
       case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue,
       linkId, startMValue, endMValue, sideCode, startDate, endDate, createdBy, createdDate, calibrationCode, floating, x, y, x2, y2) =>
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), Discontinuity.apply(discontinuity),
-          startAddrMValue, endAddrMValue, startDate, endDate, linkId, startMValue, endMValue, SideCode.apply(sideCode),
+          startAddrMValue, endAddrMValue, startDate, endDate, createdBy, linkId, startMValue, endMValue, SideCode.apply(sideCode),
           calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
             endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)))
     }
@@ -690,8 +690,8 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, "-") //TODO: Created by is missing
-    var (p1, p2) = (address.geom.head, address.geom.last)
+      addressPS.setString(11, address.modifiedBy.getOrElse("-"))
+    val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)
