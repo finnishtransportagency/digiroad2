@@ -158,7 +158,6 @@
       var newSources = [existingSources];
       if(!_.isUndefined(additionalSourceLinkId))
         newSources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
-      // var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
       var data = _.map(newSources, function (ns){
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
@@ -234,7 +233,7 @@
 
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
-          eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds));
+          eventbus.trigger("adjacents:roadTransfer", result, targetDataIds);
           roadCollection.setNewTmpRoadAddress(result);
         }
       });
@@ -315,10 +314,11 @@
       _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(featuresToKeep);
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
-        clearFloatingsToKeep();
+        clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        clearFeaturesToKeep();
         _.defer(function(){
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
         });
@@ -364,7 +364,7 @@
       return featuresToKeep;
     };
 
-    var clearFloatingsToKeep = function() {
+    var clearFeaturesToKeep = function() {
       featuresToKeep = [];
     };
 
@@ -375,7 +375,7 @@
       getTargets: getTargets,
       resetTargets: resetTargets,
       getFeaturesToKeep: getFeaturesToKeep,
-      clearFloatingsToKeep: clearFloatingsToKeep,
+      clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       close: close,

@@ -454,6 +454,7 @@
         _.map(newRoads, function(road){
           afterTransferLinks.push(road);
         });
+        indicatorLayer.clearMarkers();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
         selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
