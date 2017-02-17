@@ -28,7 +28,9 @@ window.LinearAssetLayer = function(params) {
 
     var moveTo = function(x, y) {
       _.each(scissorFeatures, function(feature){
-        vectorSource.removeFeature(feature);
+          if(_.contains(vectorSource.getFeatures(), feature)) {
+              vectorSource.removeFeature(feature);
+          }
       });
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
       vectorSource.addFeatures(scissorFeatures);
