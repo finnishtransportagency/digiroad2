@@ -238,10 +238,9 @@ object Queries {
   }
 
   def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
-    var municipalitiesOfAhvenanmaa = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
-    val listInString = municipalitiesOfAhvenanmaa.mkString(", ")
+    var AhvenanmaaRoadMaintainerId = 0
     sql"""
-      select id from municipality where id not in (#$listInString)
+      select id from municipality where ROAD_MAINTAINER_ID != #$AhvenanmaaRoadMaintainerId
       """.as[Int].list
   }
 
