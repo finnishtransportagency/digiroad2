@@ -315,11 +315,7 @@ class AssetDataImporter {
         println("Processing municipality %d at time: %s".format(municipality, DateTime.now().toString))
         val missing = service.getMissingRoadAddresses(roadNumbersToFetch, municipality)
         println("Got %d links".format(missing.size))
-        var a = 0
-        for (a<- 0 to missing.size-1) {
-          println("Municipality: %d   LinkCount: %d of %d ".format(municipality, a, missing.size))
-          service.createSingleMissingRoadAddress(missing(a))
-        }
+        missing.foreach(service.createSingleMissingRoadAddress)
         println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
       })
     }
