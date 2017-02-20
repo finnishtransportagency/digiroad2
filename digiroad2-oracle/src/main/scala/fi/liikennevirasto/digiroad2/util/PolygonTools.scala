@@ -41,14 +41,14 @@ class PolygonTools {
     * @return returns string in format that VVH accepts in URL
     */
   def stringifyPolygonForVVHClient(polygon: Polygon): String = {
-    var returnString:String = "{rings:[["
+    var polygonString:String = "{rings:[["
     if (polygon.getCoordinates.length>0)
     {
       for (point <- polygon.getCoordinates.dropRight(1)) { // drop removes duplicates
-        returnString+= "[" + point.x + "," + point.y + "],"
+        polygonString+= "[" + point.x + "," + point.y + "],"
       }
-      returnString= returnString.dropRight(1) + "]}"
-      returnString
+      polygonString= polygonString.dropRight(1) + "]}"
+      polygonString
     } else
       ""
   }
