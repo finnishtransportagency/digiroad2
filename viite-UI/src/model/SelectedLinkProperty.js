@@ -57,6 +57,7 @@
         var discontinuity = {discontinuity: extractUniqueValues(selectedData, 'discontinuity')};
         var startAddressM = {startAddressM: _.min(_.chain(selectedData).pluck('startAddressM').uniq().value())};
         var endAddressM = {endAddressM: _.max(_.chain(selectedData).pluck('endAddressM').uniq().value())};
+        var roadLinkSource = {roadLinkSource: extractUniqueValues(selectedData, 'roadLinkSource')};
 
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
