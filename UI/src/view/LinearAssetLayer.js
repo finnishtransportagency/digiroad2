@@ -27,21 +27,13 @@ window.LinearAssetLayer = function(params) {
     var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-      _.each(scissorFeatures, function(feature){
-          if(_.contains(vectorSource.getFeatures(), feature)) {
-              vectorSource.removeFeature(feature);
-          }
-      });
+      selectToolControl.clearFeatures();
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      vectorSource.addFeatures(scissorFeatures);
+      selectToolControl.addFeatures(scissorFeatures);
     };
 
     var remove = function () {
-      _.each(scissorFeatures, function (feature) {
-          if(_.contains(vectorSource.getFeatures(), feature)){
-              vectorSource.removeFeature(feature);
-          }
-      });
+      selectToolControl.clearFeatures();
       scissorFeatures = [];
     };
 

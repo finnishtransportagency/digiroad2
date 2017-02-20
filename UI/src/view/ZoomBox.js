@@ -14,7 +14,8 @@
       });
     });
     container.find('.minus').click(function() {
-      if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
+      //TODO : check function canZoomOutEditMode
+      if (applicationModel.canZoomOut() /* && applicationModel.canZoomOutEditMode() */) {
         var zoom=map.getView().getZoom();
         map.getView().animate({
           zoom: zoom -1,

@@ -88,6 +88,20 @@
             unhighlightLayer();
         };
 
+        var addFeatures = function(features){
+            _.each(features, function(feature){
+                selectInteraction.getFeatures().push(feature);
+            });
+        };
+
+        var clearFeatures = function () {
+            _.each(selectInteraction.getFeatures().getArray(), function(feature){
+                if(feature.getProperties().type === 'cutter') {
+                    selectInteraction.getFeatures().remove(feature);
+                }
+            });
+        };
+
         map.addInteraction(selectInteraction);
         eventbus.on('application:readOnly', toggleDragBox);
 
@@ -95,6 +109,8 @@
             getSelectInteraction: function(){ return selectInteraction; },
             getDragBoxInteraction: function(){ return dragBoxInteraction; },
             addSelectionFeatures: addSelectionFeatures,
+            addFeatures: addFeatures,
+            clearFeatures: clearFeatures,
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,

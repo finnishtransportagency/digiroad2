@@ -88,15 +88,15 @@
 
         //TODO : remove feature.features.array_[0] to feature.getFeatures()
         function dragAlongNearestLink(feature) {
-          if (selectedAsset.isSelected(feature.features.array_[0].getProperties())) {
+          if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
            // var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
             var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
-              feature.features.array_[0].getGeometry().setCoordinates([newPosition.x, newPosition.y]);
+              feature.features.getArray()[0].getGeometry().setCoordinates([newPosition.x, newPosition.y]);
               var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.array_[0].getGeometry(), floating: false, bearing: newBearing});
+              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
             }
           }
         }
@@ -221,7 +221,7 @@
     //  me.selectControl.unselectAll();
     //  me.activateSelection();
       mapOverlay.hide();
-        roadLayer.clearSelection();
+      roadLayer.clearSelection();
     //  vectorLayer.styleMap = style.browsing;
       me.refreshView();
     }
@@ -233,7 +233,7 @@
     }
 
     function handleSavedOrCancelled() {
-        me.selectControl.activate();
+      me.selectControl.activate();
       mapOverlay.hide();
       //TODO use that instead of doing me.selectControl.activate();
      // me.activateSelection();

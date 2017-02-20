@@ -210,7 +210,7 @@
     var roadLayer = new RoadLayer3(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
-    //new ManoeuvreForm(models.selectedManoeuvreSource);
+    new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
      LinearAssetForm.initialize(
        linearAsset.selectedLinearAsset,
@@ -259,7 +259,6 @@
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
-
        //massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
        speedLimit: new SpeedLimitLayer({
        map: map,
@@ -269,8 +268,8 @@
        backend: backend,
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer
-       })
-       //manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+       }),
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
 

@@ -7,13 +7,13 @@ var RoadStyles = function() {
     new StyleRule().where('administrativeClass').is('Unknown').use({ stroke: {color: '#888' }})
   ];
 
-  var selectionStyle = [new StyleRule().use({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }})];
+  //var selectionStyle = [new StyleRule().use({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }})];
   return {
     provider: function () {
         //TODO: Remove this and give support to defaults
         var defaultProvider = new StyleRuleProvider({ stroke: {width:5 , opacity: 0.7, color: "#a4a4a2" }});
         var selectionProvider = new StyleRuleProvider({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }});
-        selectionProvider.addRules(selectionStyle);
+        //selectionProvider.addRules(selectionStyle);
 
         if (applicationModel.isRoadTypeShown()){
             defaultProvider.addRules(administrativeClassStyleRule);
