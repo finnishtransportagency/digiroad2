@@ -141,24 +141,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress") {
-    try{
-      val test = parsedBody.extract[newAddressDataExtractor]
-      val roadAddressData = test.roadAddress
-      val sourceIds = test.sourceIds
-      val targetIds = test.targetIds
-      val roadAddresses = roadAddressData.map{ ra =>
-        RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
+    val test = parsedBody.extract[newAddressDataExtractor]
+    val roadAddressData = test.roadAddress
+    val sourceIds = test.sourceIds
+    val targetIds = test.targetIds
+    val roadAddresses = roadAddressData.map{ ra =>
+      RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
         Some(DateTime.now()), None, Option(ra.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
-      }
-
-      roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
-    } catch {
-      case e: Exception => {
-        println(e.getCause)
-        println(e.getMessage)
-        Nil
-      }
     }
+    roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
