@@ -238,9 +238,9 @@ object Queries {
   }
 
   def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
-    var AhvenanmaaRoadMaintainerId = 0
+    //The road_maintainer_id of Ahvenanmaa is 0
     sql"""
-      select id from municipality where ROAD_MAINTAINER_ID != #$AhvenanmaaRoadMaintainerId
+      select id from municipality where ROAD_MAINTAINER_ID != 0
       """.as[Int].list
   }
 
