@@ -24,9 +24,9 @@ class PolygonTools {
     val leftTopP = Point(leftBottomP.x, rightTopP.y)
     val rightBottom = Point(rightTopP.x, leftBottomP.y)
     val BoundingBoxAsPoly = geomBuilder.polygon(leftTopP.x, leftTopP.y, rightTopP.x, rightTopP.y, rightBottom.x, rightBottom.y, leftBottomP.x, leftBottomP.y)
-    val intersectionGeometry=polygon.intersection(BoundingBoxAsPoly) // Polygon empty string that touches but has no area has to be checked
+    val intersectionGeometry=polygon.intersection(BoundingBoxAsPoly)
     if (intersectionGeometry.getGeometryType.toLowerCase.contains("polygon"))
-    {
+    {//checks that result is polygon
       geomFact.createPolygon(intersectionGeometry.getCoordinates)
     }
     else
@@ -52,10 +52,7 @@ class PolygonTools {
     } else
       ""
   }
-    //TODO Conversion method to DB polygon data
 
-
-
-
+  //TODO Conversion method to DB polygon data
 
 }

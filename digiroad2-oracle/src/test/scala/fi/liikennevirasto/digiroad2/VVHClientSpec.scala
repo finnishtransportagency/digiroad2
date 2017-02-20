@@ -17,8 +17,8 @@ class VVHClientSpec extends FunSuite with Matchers{
   test("Tries to connect VVH history API and retrive result") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val result= vvhClient.historyData.fetchVVHRoadlinkHistoryByBoundsAndMunicipalities(BoundingRectangle(Point(564000, 6930000),Point(566000, 6931000)), Set(420))
-     result.size should be >1
-    }
+    result.size should be >1
+  }
 
   test("Fetch roadlinks with polygon string ") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
