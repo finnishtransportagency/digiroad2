@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.scalatest.{FunSuite, Matchers}
 
@@ -12,7 +11,6 @@ class VVHClientSpec extends FunSuite with Matchers{
     props
   }
 
-
   /**
     * Checks that VVH history bounding box search works uses API example bounding box so it should receive results
     */
@@ -22,12 +20,17 @@ class VVHClientSpec extends FunSuite with Matchers{
      result.size should be >1
     }
 
-  test("Fetch roadlinks with polygon") {
+  test("Fetch roadlinks with polygon string ") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val result= vvhClient.queryByPolygons("{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}")
     result.size should be >1
   }
 
+  test("Fetch roadlinks with empty polygon string") {
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val result= vvhClient.queryByPolygons("")
+    result.size should be (0)
+  }
   /**
     * Checks that VVH history link id search works and returns something
     */

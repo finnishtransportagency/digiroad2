@@ -262,6 +262,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
     */
   def queryByPolygons(polygon: String): Seq[VVHRoadlink] = {
+    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+      {
+      return  Seq.empty[VVHRoadlink]
+      }
     val definition = layerDefinition(combineFiltersWithAnd("",""))
     val urlpoly=URLEncoder.encode(polygon)
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
@@ -272,8 +276,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
-
-
 
 
   /**
