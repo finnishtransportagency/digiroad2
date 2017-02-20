@@ -1,14 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress, RoadAddressCreator}
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
-import org.json4s.{DefaultFormats, Formats}
+import org.joda.time.DateTime
+import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
@@ -16,6 +19,9 @@ import org.slf4j.LoggerFactory
 /**
   * Created by venholat on 25.8.2016.
   */
+
+case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
@@ -91,30 +97,68 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
     get("/roadlinks/adjacent") {
-      val linkid = params("linkid").toLong
-      val roadNumber = params("roadNumber").toLong
-      val roadPartNumber = params("roadPartNumber").toLong
-      val trackCode = params("trackCode").toLong
-      roadAddressService.getFloatingAdjacent(linkid, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+        val data = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Map[String,Any]]
+        val chainLinks = data.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+          rl.toLong
+        }).toSet[Long]
+        val linkId = data.get("linkId").get.asInstanceOf[Double].toLong
+        val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
+        val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
+        val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
+
+        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
     }
 
   get("/roadlinks/multiSourceAdjacents") {
-      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Double]]]
+      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Any]]]
       if (roadData.isEmpty){
         Set.empty
       } else {
         val adjacents:Seq[RoadAddressLink] = {
           roadData.flatMap(rd => {
-            roadAddressService.getFloatingAdjacent(rd.get("linkId").get.toLong,
-              rd.get("roadNumber").get.toLong, rd.get("roadPartNumber").get.toLong, rd.get("trackCode").get.toLong)
+            val chainLinks = rd.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+              rl.toLong
+            }).toSet[Long]
+            val linkId = rd.get("linkId").get.asInstanceOf[Double].toLong
+            val roadNumber = rd.get("roadNumber").get.asInstanceOf[Double].toLong
+            val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
+            val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
+            roadAddressService.getFloatingAdjacent(chainLinks, linkId,
+              roadNumber, roadPartNumber, trackCode, false)
           })
         }
-        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.toLong)
+        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
         val result = adjacents.filter(adj => {
           !linkIds.contains(adj.linkId)
-        })
+        }).distinct
         result.map(roadAddressLinkToApi)
       }
+  }
+
+  get("/roadlinks/transferRoadLink") {
+    val (sources, targets) = roadlinksData()
+    val user = userProvider.getCurrentUser()
+    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
+    result.map(roadAddressLinkToApi)
+  }
+
+  put("/roadlinks/roadaddress") {
+    val test = parsedBody.extract[newAddressDataExtractor]
+    val roadAddressData = test.roadAddress
+    val sourceIds = test.sourceIds
+    val targetIds = test.targetIds
+    val roadAddresses = roadAddressData.map{ ra =>
+      RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
+        Some(DateTime.now()), None, Option(ra.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
+    }
+    roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+  }
+
+  private def roadlinksData(): (Seq[String], Seq[String]) = {
+    val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
+    val sources = data.get("sourceLinkIds").get.asInstanceOf[Seq[String]]
+    val targets = data.get("targetLinkIds").get.asInstanceOf[Seq[String]]
+    (sources, targets)
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
@@ -187,10 +231,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> roadAddressLink.startAddressM,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
+      "startDate" -> roadAddressLink.startDate,
       "endDate" -> roadAddressLink.endDate,
       "anomaly" -> roadAddressLink.anomaly.value,
       "roadLinkType" -> roadAddressLink.roadLinkType.value,
-      "constructionType" ->roadAddressLink.constructionType.value
+      "constructionType" ->roadAddressLink.constructionType.value,
+      "startMValue" -> roadAddressLink.startMValue,
+      "endMValue" -> roadAddressLink.endMValue,
+      "sideCode" -> roadAddressLink.sideCode.value,
+      "linkType" -> roadAddressLink.linkType.value
     )
   }
 

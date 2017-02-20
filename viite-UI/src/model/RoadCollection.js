@@ -58,16 +58,21 @@
 
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
+    var tmpRoadAddresses = [];
+    var tmpNewRoadAddress = [];
+    var changedIds = [];
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
     };
+
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
+
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
@@ -107,6 +112,14 @@
       return _.map(roadLinks(), function(roadLink) {
         return roadLink.getData();
       });
+    };
+
+    this.getAllTmp = function(){
+      return tmpRoadAddresses;
+    };
+
+    this.getChangedIds = function(){
+      return changedIds;
     };
 
     this.get = function(ids) {
@@ -152,8 +165,31 @@
       });
     };
 
+    this.setTmpRoadAddresses = function (tmp){
+      tmpRoadAddresses = tmp;
+    };
+
+    this.setChangedIds = function (ids){
+      changedIds = ids;
+    };
+    
     this.reset = function(){
       roadLinkGroups = [];
     };
+    this.resetTmp = function(){
+      tmpRoadAddresses = [];
+    };
+    this.resetChangedIds = function(){
+      changedIds = [];
+    };
+
+    this.setNewTmpRoadAddress = function (tmp){
+      tmpNewRoadAddress = tmp;
+    };
+
+    this.getNewTmpRoadAddress = function(){
+      return tmpNewRoadAddress;
+    };
+
   };
 })(this);

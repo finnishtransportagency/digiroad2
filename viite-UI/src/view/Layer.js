@@ -64,22 +64,7 @@
 
       layer.addFeatures(signs);
     };
-    this.drawRoadNumberMarkers = function(layer, roadLinks) {
-      // var groupedLinks = _.groupBy(roadLinks, 'roadPartNumber');
-      // var midpoint = _.map(groupedLinks, function(n, links) {
-      //   var x = _.flatMap(links, function(link) {
-      //     return link.points.x;
-      //   });
-      //   var y = _.flatMap(links, function(link) {
-      //     return link.points.x;
-      //   });
-      //   return {x: x, y: y, text: links[0].roadNumber + ' / ' + links[0].roadPartNumber };
-      // });
-      // var markers = _.map(midpoint, function (rno, middlePoint) {
-      //   return new OpenLayers.Feature.Vector(OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), {label: middlePoint.text});
-      // });
-      // layer.addFeatures(markers);
-    };
+
     this.drawCalibrationMarkers = function(layer, roadLinks) {
       var calibrationPoints = _.flatten(_.filter(roadLinks, function(roadLink) {
         return roadLink.calibrationPoints.length > 0;

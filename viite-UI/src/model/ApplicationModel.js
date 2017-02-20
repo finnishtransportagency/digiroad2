@@ -10,6 +10,9 @@
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
     var readOnly = true;
     var activeButtons = false;
+    var actionCalculating = 0;
+    var actionCalculated = 1;
+    var currentAction;
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -39,7 +42,27 @@
       }
     }
 
+    var getCurrentAction = function() {
+      return currentAction;
+    };
+
+    var setCurrentAction = function(action) {
+      currentAction = action;
+    };
+
+    var addSpinner = function () {
+      jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function(){
+      jQuery('.spinner-overlay').remove();
+    };
+
     return {
+      getCurrentAction: getCurrentAction,
+      setCurrentAction: setCurrentAction,
+      actionCalculating: actionCalculating,
+      actionCalculated: actionCalculated,
       moveMap: function(zoom, bbox) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
@@ -70,6 +93,8 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      addSpinner: addSpinner,
+      removeSpinner: removeSpinner,
       isReadOnly: function() {
         return readOnly;
       },
