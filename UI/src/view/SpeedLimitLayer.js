@@ -44,17 +44,22 @@ window.SpeedLimitLayer = function(params) {
   var SpeedLimitCutter = function(vectorLayer, collection, eventListener) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
+    var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
       _.each(scissorFeatures, function(feature){
         vectorSource.removeFeature(feature);
       });
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      vectorSource.getSource().addFeatures(scissorFeatures);
+      vectorSource.addFeatures(scissorFeatures);
     };
 
     var remove = function() {
-      //vectorLayer.removeFeatures(scissorFeatures);
+      _.each(scissorFeatures, function (feature) {
+        if(_.contains(vectorSource.getFeatures(), feature)){
+          vectorSource.removeFeature(feature);
+        }
+      });
       scissorFeatures = [];
     };
 
@@ -91,7 +96,9 @@ window.SpeedLimitLayer = function(params) {
 
     var findNearestSpeedLimitLink = function(point) {
       return _.chain(vectorSource.getFeatures())
-          .filter(function(feature) { return feature.getGeometry() instanceof ol.geom.LineString; })
+          .filter(function(feature) {
+            return feature.getGeometry() instanceof ol.geom.LineString;
+          })
           .reject(function(feature) {
             var properties = feature.getProperties();
             return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
@@ -113,7 +120,7 @@ window.SpeedLimitLayer = function(params) {
     };
 
     this.updateByPosition = function(mousePoint) {
-      var closestSpeedLimitLink = findNearestSpeedLimitLink([mousePoint.x, mousePoint.y]);
+      var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint);
       if (!closestSpeedLimitLink) {
         return;
       }
@@ -154,7 +161,6 @@ window.SpeedLimitLayer = function(params) {
 
   var uiState = { zoomLevel: 9 };
 
-  //var vectorLayerHistory = new OpenLayers.Layer.Vector(layerName, { styleMap: historyStyleMap});
   var vectorSourceHistory = new ol.source.Vector();
   var vectorLayerHistory = new ol.layer.Vector({
     source : vectorSourceHistory,
@@ -173,7 +179,7 @@ window.SpeedLimitLayer = function(params) {
       return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
     }
   });
-
+  vectorLayer.set('name', layerName);
   vectorLayer.setOpacity(1);
   vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
@@ -203,7 +209,7 @@ window.SpeedLimitLayer = function(params) {
   var setSelectionStyleAndHighlightFeature = function() {
     vectorLayer.styleMap = style.selectionStyle;
     highlightSpeedLimitFeatures();
-    vectorLayer.redraw();
+   // vectorLayer.redraw();
   };
 
   var speedLimitOnSelect = function(feature) {
@@ -221,6 +227,7 @@ window.SpeedLimitLayer = function(params) {
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
       selectedSpeedLimit.open(feature.selected[0].values_, true);
+      //setSelectionStyleAndHighlightFeature();
     }else{
       if (selectedSpeedLimit.exists()) {
         selectedSpeedLimit.close();
@@ -231,8 +238,7 @@ window.SpeedLimitLayer = function(params) {
   var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
     onDragEnd: onDragEnd,
-    onSelect: OnSelect,
-    //backgroundOpacity: style.vectorOpacity
+    onSelect: OnSelect
   });
 
   function onDragEnd(speedLimits) {
@@ -265,7 +271,6 @@ window.SpeedLimitLayer = function(params) {
   function cancelSelection() {
     selectToolControl.clear();
     selectedSpeedLimit.closeMultiple();
-    //activate.style.browsingStyle();
     collection.fetch(map.getView().calculateExtent(map.getSize()));
   }
 
@@ -277,7 +282,6 @@ window.SpeedLimitLayer = function(params) {
     });
 
     vectorLayer.styleMap = style.browsingStyle;
-    //vectorLayer.redraw();
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   };
 
@@ -293,7 +297,6 @@ window.SpeedLimitLayer = function(params) {
 
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
-    //vectorLayer.redraw();
     vectorLayerHistory.setVisible(true);
   };
 
@@ -311,7 +314,6 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.styleMap = style.selectionStyle;
     selectedSpeedLimit.openMultiple(selectedSpeedLimits);
     highlightMultipleSpeedLimitFeatures();
-  //  vectorLayer.redraw();
   };
 
   var bindEvents = function(eventListener) {
@@ -340,11 +342,22 @@ window.SpeedLimitLayer = function(params) {
     vectorLayerHistory.getSource().clear();
   };
 
+  var  indexOf = function (layers, layer) {
+    var length = layers.getLength();
+    for (var i = 0; i < length; i++) {
+      if (layer === layers.item(i)) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
   var drawSpeedLimitsHistory = function (historySpeedLimitChains) {
     isActive = true;
-    map.addLayer(vectorLayerHistory);
-    //var roadLinksLayerIndex = map.getLayers().indexOf(_.find(map.getLayers(), {name: 'road'} ));
-    //map.setLayerIndex(vectorLayerHistory, roadLinksLayerIndex - 1);
+    vectorLayerHistory.set('name', layerName);
+
+    var roadLinksLayerIndex = indexOf(map.getLayers(),_.find(map.getLayers().getArray(), function(item){ return item.get('name') == 'road';}));
+    map.getLayers().setAt(roadLinksLayerIndex - 1, vectorLayerHistory);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
 
     drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
@@ -369,7 +382,6 @@ window.SpeedLimitLayer = function(params) {
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
-    //vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
 
     //drawSpeedLimits(selectedSpeedLimit.get(), vectorLayer);
@@ -436,7 +448,6 @@ window.SpeedLimitLayer = function(params) {
   var redrawSpeedLimits = function(speedLimitChains) {
     vectorSource.clear();
     selectToolControl.deactivate();
-    //me.removeLayerFeatures();
     indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
@@ -515,7 +526,6 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var reset = function() {
-    //selectControl.unselectAll();
     vectorLayer.styleMap = style.browsingStyle;
     speedLimitCutter.deactivate();
   };

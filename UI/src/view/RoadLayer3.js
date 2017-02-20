@@ -209,6 +209,7 @@ var RoadStyles = function() {
       source: vectorSource,
       style: vectorLayerStyle
     });
+    vectorLayer.set('name', 'road');
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 

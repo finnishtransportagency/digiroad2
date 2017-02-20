@@ -47,33 +47,33 @@
     ];
 
     var speedLimitStyleRules = [
-      new StyleRule().where('value').is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg', scale: 0.5}}),
-      new StyleRule().where('value').is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg', scale: 0.5}})
+      new StyleRule().where('value').is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
+      new StyleRule().where('value').is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
+      new StyleRule().where('value').is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg'}}),
+      new StyleRule().where('value').is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg'}}),
+      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
+      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
+      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
+      new StyleRule().where('value').is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg'}}),
+      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}}),
+      new StyleRule().where('value').is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg'}})
     ];
 
     var speedLimitFeatureSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}, pointRadius: 0 }),
-      new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}, pointRadius: 10 }),
-      new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}, pointRadius: 14 }),
-      new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}, pointRadius: 16 }),
-      new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10}, pointRadius: 16 }),
-      new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14}, pointRadius: 22 }),
-      new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14}, pointRadius: 22 })
+      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}, pointRadius: 0 ,icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}, pointRadius: 10 ,icon: {scale: 1}}),
+      new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}, pointRadius: 14 ,icon: {scale: 1.3}}),
+      new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}, pointRadius: 16 ,icon: {scale: 1.6}}),
+      new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10}, pointRadius: 16 ,icon: {scale: 1.8}}),
+      new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14}, pointRadius: 22 ,icon: {scale: 2}}),
+      new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14}, pointRadius: 22 ,icon: {scale: 2.2}})
     ];
 
     var typeSpecificStyleRules = [
       new StyleRule().where('type').is('overlay').use({ stroke: {opacity: 1.0}}),
       new StyleRule().where('type').is('other').use({ stroke: {opacity: 0.7}}),
-      new StyleRule().where('type').is('unknown').use({stroke: {color: '#000000', opacity: 0.6},  icon: {src: 'images/speed-limits/unknown.svg' ,scale: 0.5}}),
-      new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg', pointRadius: 11.5}})
+      new StyleRule().where('type').is('unknown').use({stroke: {color: '#000000', opacity: 0.6},  icon: {src: 'images/speed-limits/unknown.svg'}}),
+      new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
     var browseStyle = new StyleRuleProvider({});
@@ -97,9 +97,8 @@
     var typeSpecificStyleRulesHistory = [
         new StyleRule().where('type').is('overlay').use({ stroke: {opacity: 0.8}}),
         new StyleRule().where('type').is('other').use({ stroke: {opacity: 0.5}}),
-        new StyleRule().where('type').is('unknown').use({ stroke: {color: '#000000', opacity: 0.6}, icon: {src: 'images/speed-limits/unknown.svg',  scale: 0.5}}),
-
-      new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg', pointRadius: 11.5}})
+        new StyleRule().where('type').is('unknown').use({ stroke: {color: '#000000', opacity: 0.6}, icon: {src: 'images/speed-limits/unknown.svg'}}),
+        new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
     var overlayStyleRuleHistory = _.partial(createZoomAndTypeDependentRule, 'overlay');
@@ -124,13 +123,13 @@
     ];
 
     var speedLimitFeatureSizeRulesHistory = [
-        new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}, pointRadius: 0 }),
-        new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}, pointRadius: 10 }),
-        new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}, pointRadius: 14 }),
-        new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}, pointRadius: 16 }),
-        new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10}, pointRadius: 16 }),
-        new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14}, pointRadius: 22 }),
-        new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14}, pointRadius: 22 })
+        new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3}}),
+        new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5}}),
+        new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 7}}),
+        new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10}}),
+        new StyleRule().where('zoomLevel').is(13).use({ stroke: {width: 10}}),
+        new StyleRule().where('zoomLevel').is(14).use({ stroke: {width: 14}}),
+        new StyleRule().where('zoomLevel').is(15).use({ stroke: {width: 14}})
     ];
 
   var historyStyle = new StyleRuleProvider({ stroke: {opacity: 0.15},   graphic: {opacity: 0.3}});
