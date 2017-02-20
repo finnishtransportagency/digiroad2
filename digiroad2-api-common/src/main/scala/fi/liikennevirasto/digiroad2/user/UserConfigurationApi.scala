@@ -85,9 +85,9 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
-    val (username, elyNumber, municipalities, hasWriteAccess) =
+    val (username, elyNumber, municipalities, roleName) =
       (request.getParameter("username"), request.getParameter("elyNumber"),
-        request.getParameter("municipalityNumbers"), request.getParameter("hasWriteAccess"))
+        request.getParameter("municipalityNumbers"), request.getParameter("roleName"))
 
     val municipalitiesOfEly = splitToInts(elyNumber) match {
       case None => Set()
@@ -95,17 +95,18 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
-    val role = hasWriteAccess match {
-      case "true" => Set(Role.Premium)
-      case _ => Set(Role.Viewer)
+    val availableRoles = Set(Role.BusStopMaintainer, Role.Operator, Role.Premium)
+    val roles = availableRoles.find(_ == roleName) match{
+      case Some(role) => Set[String](role)
+      case _ => Set[String]()
     }
 
     userProvider.getUser(username) match {
       case Some(u) =>
-        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, roles = role))
+        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, roles = roles))
         userProvider.saveUser(updatedUser)
       case None =>
-        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, roles = role))
+        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, roles = roles))
     }
     redirect("/newuser.html?username="+username)
   }

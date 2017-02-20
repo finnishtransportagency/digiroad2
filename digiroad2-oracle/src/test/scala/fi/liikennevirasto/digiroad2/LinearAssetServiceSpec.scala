@@ -65,10 +65,59 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithRollback {
-      ServiceWithDao.update(Seq(11111l), NumericValue(2000), "lol")
-      val limit = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
-      limit.value should be (Some(NumericValue(2000)))
-      limit.expired should be (false)
+      //Update Numeric Values By Expiring the Old Asset
+      val limitToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
+
+      //Verify if the new data of the new asset is equal to old asset
+      val limitUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
+
+      limitUpdated.id should not be (limitToUpdate.id)
+      limitUpdated.linkId should be (limitToUpdate.linkId)
+      limitUpdated.sideCode should be (limitToUpdate.sideCode)
+      limitUpdated.value should be (Some(NumericValue(2000)))
+      limitUpdated.startMeasure should be (limitToUpdate.startMeasure)
+      limitUpdated.endMeasure should be (limitToUpdate.endMeasure)
+      limitUpdated.createdBy should be (limitToUpdate.createdBy)
+      limitUpdated.createdDateTime should be (limitToUpdate.createdDateTime)
+      limitUpdated.modifiedBy should be (Some("UnitTestsUser"))
+      limitUpdated.modifiedDateTime should not be empty
+      limitUpdated.expired should be (false)
+      limitUpdated.typeId should be (limitToUpdate.typeId)
+      limitUpdated.vvhTimeStamp should be (limitToUpdate.vvhTimeStamp)
+
+      //Verify if old asset is expired
+      val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      limitExpired.expired should be (true)
+    }
+  }
+
+  test("Update Exit number Text Field") {
+    runWithRollback {
+      //Update Text Values By Expiring the Old Asset
+      val assetToUpdate = linearAssetDao.fetchAssetsWithTextualValuesByIds(Set(600068), "liittymänumero").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(600068), TextualValue("Value for Test"), "UnitTestsUser")
+
+      //Verify if the new data of the new asset is equal to old asset
+      val assetUpdated = linearAssetDao.fetchAssetsWithTextualValuesByIds(newAssetIdCreatedWithUpdate.toSet, "liittymänumero").head
+
+      assetUpdated.id should not be (assetToUpdate.id)
+      assetUpdated.linkId should be(assetToUpdate.linkId)
+      assetUpdated.sideCode should be(assetToUpdate.sideCode)
+      assetUpdated.value should be(Some(TextualValue("Value for Test")))
+      assetUpdated.startMeasure should be(assetToUpdate.startMeasure)
+      assetUpdated.endMeasure should be(assetToUpdate.endMeasure)
+      assetUpdated.createdBy should be(assetToUpdate.createdBy)
+      assetUpdated.createdDateTime should be(assetToUpdate.createdDateTime)
+      assetUpdated.modifiedBy should be(Some("UnitTestsUser"))
+      assetUpdated.modifiedDateTime should not be empty
+      assetUpdated.expired should be(false)
+      assetUpdated.typeId should be(assetToUpdate.typeId)
+      assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
+
+      //Verify if old asset is expired
+      val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head
+      assetExpired.expired should be(true)
     }
   }
 
@@ -83,13 +132,65 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limit.expired should be (false)
     }
   }
-
   test("Create new linear asset") {
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, NumericValue(1000), 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
+      asset.expired should be (false)
+    }
+  }
+
+  test("Create new maintenanceRoad") {
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
+      asset.value should be (Some(maintenanceRoad))
+      asset.expired should be (false)
+    }
+  }
+
+  test("update new maintenanceRoad") {
+    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val propIns3 = Properties("huoltotie_postinumero", "text", "text prop3")
+    val propIns4 = Properties("huoltotie_puh1" , "text", "text prop4")
+    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
+    val maintenanceRoadIns = MaintenanceRoad(propIns)
+
+    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", "4")
+    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", "1")
+    val propUpd3 = Properties("huoltotie_postinumero", "text",  "text prop3 Update")
+    val propUpd4 = Properties("huoltotie_puh1" , "text", "")
+    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+    val propUpd6 = Properties("huoltotie_puh2" , "text", "text prop puh2")
+
+    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
+    val maintenanceRoadUpd = MaintenanceRoad(propUpd)
+
+    val maintenanceRoadFetch = MaintenanceRoad(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
+
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
+      updAssets.length should be(1)
+
+      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).filterNot(_.expired).head
+      asset.value should be (Some(maintenanceRoadFetch))
       asset.expired should be (false)
     }
   }
@@ -102,6 +203,28 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
       asset.value should be (Some(prohibition))
       asset.expired should be (false)
+    }
+  }
+
+  test("Should delete maintenanceRoad asset"){
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+      var asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.value should be (Some(maintenanceRoad))
+      asset.expired should be (false)
+
+      val assetId : Seq[Long] = List(asset.id)
+      val deleted = ServiceWithDao.expire( assetId , "testuser")
+      asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
+      asset.expired should be (true)
     }
   }
 
@@ -129,9 +252,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
-      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit).filter(_ != assetId).head
-      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val createdId = ServiceWithDao.separate(assetId, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
+      val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId(1))).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -195,9 +318,10 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
-      ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit).filter(_ != assetId) shouldBe empty
+      val newAssetIdAfterUpdate = ServiceWithDao.separate(assetId, Some(NumericValue(2)), None, "unittest", (i) => Unit)
+      newAssetIdAfterUpdate.size should be(1)
 
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(newAssetIdAfterUpdate.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -215,9 +339,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val ids = ServiceWithDao.split(assetId, 2.0, Some(NumericValue(2)), Some(NumericValue(3)), "unittest", (i) => Unit)
 
-      val createdId = ids.filter(_ != assetId).head
+      val createdId = ids(1)
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
-      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(assetId)).head
+      val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
 
       oldLimit.linkId should be (388562360)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
@@ -1729,6 +1853,42 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       result.length should be(1)
       result.head.link.linkType should not be (TractorRoad)
       result.head.link.linkType should not be (CycleOrPedestrianPath)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Verify if we have all changes between given date after update a NumericValue Field in OTH") {
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadLink1 = RoadLink(1611374, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val totalWeightLimitAssetId = 30
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+
+      //Linear assets that have been changed in OTH between given date values Before Update
+      val resultBeforeUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+
+      //Update Numeric Values
+      val assetToUpdate = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head
+      val newAssetIdCreatedWithUpdate = ServiceWithDao.update(Seq(11111l), NumericValue(2000), "UnitTestsUser")
+      val assetUpdated = linearAssetDao.fetchLinearAssetsByIds(newAssetIdCreatedWithUpdate.toSet, "mittarajoitus").head
+
+      //Linear assets that have been changed in OTH between given date values After Update
+      val resultAfterUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+
+      val oldAssetInMessage = resultAfterUpdate.find { changedLinearAsset => changedLinearAsset.linearAsset.id == assetToUpdate.id }
+      val newAssetInMessage = resultAfterUpdate.find { changedLinearAsset => changedLinearAsset.linearAsset.id == assetUpdated.id }
+
+      resultAfterUpdate.size should be (resultBeforeUpdate.size + 1)
+      oldAssetInMessage.size should be (1)
+      newAssetInMessage.size should be (1)
+
+      oldAssetInMessage.head.linearAsset.expired should be (true)
+      oldAssetInMessage.head.linearAsset.value should be (assetToUpdate.value)
 
       dynamicSession.rollback()
     }

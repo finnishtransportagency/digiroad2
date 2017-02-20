@@ -8,15 +8,20 @@
         .map(function(assets) {
           var assetGroupDiv = $('<div class="asset-group"></div>');
           return assetGroupDiv.append(_.map(assets, function (asset) {
-            return $('<div class="radio">').append($('<label>', {
-              'for': 'nav-' + asset.layerName,
-              text: ' ' + asset.title
-            }).prepend($('<input>', {
-              type: 'radio',
-              name: 'navigation-radio',
-              id: 'nav-' + asset.layerName,
-              value: asset.layerName
-            })));
+
+              var radioDiv= $($('<div class="radio">').append($('<label>', {
+                'for': 'nav-' + asset.layerName,
+                text: ' ' + asset.title
+              }).prepend($('<input>', {
+                type: 'radio',
+                name: 'navigation-radio',
+                id: 'nav-' + asset.layerName,
+                value: asset.layerName
+              }))));
+            if (asset.title == "Rautateiden huoltotie") {
+              radioDiv.prepend($('<span><b>' + "Vain ELYn ylläpidossa" + '</b></span>'));
+            }
+            return radioDiv;
           }));
         })
         .values()

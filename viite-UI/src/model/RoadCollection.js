@@ -129,9 +129,10 @@
     };
 
     this.getByLinkId = function(ids) {
-      return _.map(ids, function(id) {
-        return _.find(roadLinks(), function(road) { return road.getData().linkId === id; });
+      var segments = _.filter(roadLinks(), function (road){
+        return road.getData().linkId == ids;
       });
+      return segments;
     };
 
     this.getById = function(ids) {

@@ -346,7 +346,8 @@
         .concat(getLinearAsset(assetType.bogieWeightLimit))
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
-        .concat(getLinearAsset(assetType.widthLimit))
+        .concat(getLinearAsset(assetType.widthLimit)),
+      [].concat(getLinearAsset(assetType.maintenanceRoad))
     ];
 
     function getLinearAsset(typeId) {

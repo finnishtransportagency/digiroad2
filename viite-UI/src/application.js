@@ -142,6 +142,7 @@
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
+    $('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date + ' ' + startupParameters.revision);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {

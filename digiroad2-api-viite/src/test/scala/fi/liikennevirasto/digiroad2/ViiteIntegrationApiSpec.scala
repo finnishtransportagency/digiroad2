@@ -58,7 +58,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
 
   test("encode road adress") {
     val geometry = Seq(Point(0.0, 0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
-    val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality, UnknownLinkType, NormalRoadLinkType,  InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.Unknown,Some(CalibrationPoint(120,1,2)),None)
+    val roadAdressLink = RoadAddressLink(63298,5171208, geometry, GeometryUtils.geometryLength(geometry),Municipality, UnknownLinkType, NormalRoadLinkType,  InUse, NormalLinkInterface, RoadType.MunicipalityStreetRoad,None,None,Map("linkId" ->5171208, "segmentId" -> 63298 ),5,205,1,0,0,0,6,"2015-01-01","2016-01-01",0.0,0.0,SideCode.TowardsDigitizing,Some(CalibrationPoint(120,1,2)),None)
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -68,6 +68,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "road_number" -> 5,
       "road_part_number" -> 205,
       "track_code" -> 1,
+      "side_code" -> 2,
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
@@ -75,7 +76,7 @@ class ViiteIntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAnd
       "discontinuity" -> 0,
       "start_date" ->  "2015-01-01",
       "end_date" ->  "2016-01-01",
-      "calibration_points" -> Map("start" ->  Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1)), "end" -> None)
+      "calibration_points" -> Map("start" ->  Some(Map("link_id" -> 120, "address_m_value" -> 2, "segment_m_value" -> 1.0)), "end" -> None)
     )))
   }
 

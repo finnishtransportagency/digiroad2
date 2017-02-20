@@ -133,6 +133,9 @@
             staticField('Tien nimi (Saame)', 'roadNameSm') +
             staticField('Tien numero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
+            staticField('Ajorata', 'track') +
+            staticField('Etäisyys tieosan alusta', 'startAddrMValue') +
+            staticField('Etäisyys tieosan lopusta', 'endAddrMValue') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
@@ -183,6 +186,9 @@
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         linkProperties.roadNumber = linkProperties.roadNumber || '';
         linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+        linkProperties.track = isNaN(parseFloat(linkProperties.track)) ? '' : linkProperties.track;
+        linkProperties.startAddrMValue = isNaN(parseFloat(linkProperties.startAddrMValue)) ? '' : linkProperties.startAddrMValue;
+        linkProperties.endAddrMValue = isNaN(parseFloat(linkProperties.endAddrMValue)) ? '' : linkProperties.endAddrMValue;
         linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
         linkProperties.constructionType = getConstructionType(linkProperties.constructionType) || '';
         linkProperties.linkSource = getLinkSource(linkProperties.linkSource) || '';

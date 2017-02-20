@@ -22,12 +22,35 @@
     };
 
     var extractDataForDisplay = function(selectedData) {
-      var extractUniqueValues = function(selectedData, property) {
+      var pickUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
           .pluck(property)
           .uniq()
-          .value()
-          .join(', ');
+          .value();
+      };
+
+      var extractUniqueValues = function(selectedData, property) {
+        return pickUniqueValues(selectedData, property).join(', ');
+      };
+
+      var extractMinAddressValue = function(selectedData, property) {
+        var roadPartNumber = Math.min.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        return Math.min.apply(null, _.chain(selectedData)
+          .filter(function (data) {
+            return data.roadPartNumber == roadPartNumber;
+          })
+          .pluck(property)
+          .value());
+      };
+
+      var extractMaxAddressValue = function(selectedData, property) {
+        var roadPartNumber = Math.max.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        return Math.max.apply(null, _.chain(selectedData)
+          .filter(function (data) {
+            return data.roadPartNumber == roadPartNumber;
+          })
+          .pluck(property)
+          .value());
       };
 
       var properties = _.cloneDeep(_.first(selectedData));
@@ -39,13 +62,23 @@
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
         var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
-        var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
+        var roadNumbers = extractUniqueValues(selectedData, 'roadNumber');
+        var roadPartNumbers = {roadPartNumber: null};
+        var startAddrMValue = {startAddrMValue: null};
+        var endAddrMValue = {endAddrMValue: null};
+        // Don't show address data if multiple roads (with distinct road numbers) are selected
+        if (roadNumbers !== null && roadNumbers.length > 0 && !roadNumbers.match("/,/")) {
+          roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
+          startAddrMValue = {startAddrMValue: extractMinAddressValue(selectedData, 'startAddrMValue')};
+          endAddrMValue = {endAddrMValue: extractMaxAddressValue(selectedData, 'endAddrMValue')};
+        }
+
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames);
+        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, startAddrMValue, endAddrMValue);
       }
 
       return properties;

@@ -26,7 +26,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
-                    linkSource: LinkGeomSource = LinkGeomSource.Unknown ) extends PolyLine with RoadLinkLike {
+                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface ) extends PolyLine with RoadLinkLike {
 
   val Roadlink_SurfaceType_Unknown = 0
   val Roadlink_SurfaceType_None = 1

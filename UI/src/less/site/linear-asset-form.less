@@ -134,3 +134,40 @@
     width: 270px;
   }
 }
+
+form.maintenanceRoad,
+.form-control-static.maintenanceRoad,
+form.maintenanceRoad-a,
+form.maintenanceRoad-b {
+  width: 300px;
+
+  .control-label {
+    width: 100px !important;
+  }
+
+  .form-control {
+    width: 190px !important;
+    margin-top: 6px !important;
+  }
+
+  p {
+    width: 60%;
+  }
+}
+
+.form-editable-maintenanceRoad{
+  > .control-label:first-child {
+    width: 0;
+    max-width: 0;
+    margin-right: 4px;
+  }
+}
+
+.modal-dialog& form.maintenanceRoad {
+  margin-left: -20px;
+
+  .form-control {
+    width: 170px !important;
+    margin-top: 6px !important;
+  }
+}

@@ -265,11 +265,12 @@
         if(roadCollection) {
             var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
             var linkId = nearestLine.linkId;
-            var massTransitStopDirection = currentAsset.payload.validityDirection;
+
+            var massTransitStopDirection =  currentAsset.payload.validityDirection;
             if (!currentAsset.linkId)
                 currentAsset.linkId = linkId;
             var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
-            var roadLinkDirection = directions_decode[getRoadLink().getData().trafficDirection];
+            var roadLinkDirection = directions_decode[nearestLine.trafficDirection];
             return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
         }else{
           return false;

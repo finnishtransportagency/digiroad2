@@ -86,7 +86,7 @@
       }
     };
 
-    var getFloatingType = function(floatingValue) {
+    /*var getFloatingType = function(floatingValue) {
       var floatingType =  _.find(floatingText, function (f) {
         return f[0] === floatingValue;
       });
@@ -94,7 +94,7 @@
         floatingType = [0, 'Ei'];
       }
       return floatingType && floatingType[1];
-    };
+    };*/
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -238,8 +238,9 @@
 
 
     var template = function(options) {
-      var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
-        staticField('LAKKAUTUS', 'endDate') : '';
+      //VIITE-198
+      //var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
+      //staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
@@ -261,8 +262,6 @@
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
-        staticField('KELLUVA', 'floating') +
-        endDateField  +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
     };
@@ -379,9 +378,9 @@
           linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
           linkProperties.endAddressM = linkProperties.endAddressM || '';
           linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-          linkProperties.endDate = linkProperties.endDate || '';
+          //linkProperties.endDate = linkProperties.endDate || '';
           linkProperties.roadType = linkProperties.roadType || '';
-          linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+          //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
           linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
           var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {

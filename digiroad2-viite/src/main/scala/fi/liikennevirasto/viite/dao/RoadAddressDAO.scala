@@ -105,7 +105,9 @@ object RoadAddressDAO {
         (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and (ra.valid_to > sysdate or ra.valid_to is null)
+        where $filter $floatingFilter and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     (queryList(query), Seq())
   }
@@ -180,7 +182,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where $floating $history and t.id < t2.id
+        $where $floating $history and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -220,7 +224,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id
+        $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -247,7 +253,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where t.id < t2.id $floating $history
+        where t.id < t2.id $floating $history and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
@@ -264,7 +272,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id
+        where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
+        (valid_to IS NULL OR valid_to >= sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
@@ -390,7 +399,7 @@ object RoadAddressDAO {
   def updateMergedSegmentsById (ids: Set[Long]): Int = {
     val query =
       s"""
-          Update ROAD_ADDRESS ra Set valid_to = sysdate where id in (${ids.mkString(",")})
+          Update ROAD_ADDRESS ra Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
         """
     if (ids.isEmpty)
       0
@@ -567,7 +576,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
         join $idTableName i on i.id = pos.link_id
-        where floating='1' and t.id < t2.id
+        where floating='1' and t.id < t2.id AND
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
@@ -592,7 +603,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where AND floating='1' and t.id < t2.id
+        $where AND floating='1' and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -617,7 +630,9 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        $where and t.id < t2.id
+        $where and t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
     queryList(query)
   }
@@ -635,8 +650,10 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        join $idTableName i on i.id = pos.link_id
-        where t.id < t2.id
+        join $idTableName i on i.id = ra.id
+        where t.id < t2.id and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
       """
         queryList(query)
     }
@@ -657,7 +674,7 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Seq[RoadAddress]): Seq[Long] = {
+  def create(roadAddresses: Seq[RoadAddress], createdBy : String = "-"): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
@@ -690,7 +707,8 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, address.modifiedBy.getOrElse("-"))
+//      addressPS.setString(11, address.modifiedBy.getOrElse("-"))
+      addressPS.setString(11, createdBy)
     val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)

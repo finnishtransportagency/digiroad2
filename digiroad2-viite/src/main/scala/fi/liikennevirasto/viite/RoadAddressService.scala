@@ -333,17 +333,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def mergeRoadAddress(data: RoadAddressMerge) = {
     withDynTransaction {
-      updateMergedSegments(data.merged)
-      createMergedSegments(data.created)
+      val mergedCount = updateMergedSegments(data.merged)
+      if (mergedCount == data.merged.size)
+        createMergedSegments(data.created)
+      else
+        throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
     }
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
-    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group))
+    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, "Automatic_merged"))
   }
 
   def updateMergedSegments(expiredIds: Set[Long]) = {
-    expiredIds.grouped(500).foreach(group => RoadAddressDAO.updateMergedSegmentsById(group))
+    expiredIds.grouped(500).map(group => RoadAddressDAO.updateMergedSegmentsById(group)).sum
   }
 
   /**
@@ -369,12 +372,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     addresses.foreach { address =>
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
-        GeometryUtils.truncateGeometry2D(rl.geometry, address.startMValue, address.endMValue))
-      if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)
+        GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
+      if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
+        println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
-      else {
-        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom))
+      } else {
+        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom)) {
+          println("Updating geometry for id %d (link id %d)".format(address.id, address.linkId))
           RoadAddressDAO.changeRoadAddressFloating(float = false, address.id, addressGeometry)
+        }
       }
     }
   }
@@ -383,6 +389,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   */
 
   def getRoadAddressesLinkByMunicipality(municipality: Int): Seq[RoadAddressLink] = {
+    //TODO: Remove null checks and make sure no nulls are generated
     val roadLinks =
     {
       val tempRoadLinks = roadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipality)
@@ -574,7 +581,7 @@ object RoadAddressLinkBuilder {
       case (false, LinkGeomSource.ComplimentaryLinkInterface) => ComplementaryRoadLinkType
       case (false, _) => NormalRoadLinkType
     }
-    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     RoadAddressLink(roadAddress.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
@@ -587,7 +594,7 @@ object RoadAddressLinkBuilder {
   }
 
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
-    val geom = GeometryUtils.truncateGeometry2D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
@@ -778,6 +785,16 @@ object RoadAddressLinkBuilder {
     * @return A sequence of RoadAddresses, 1 if possible to fuse, 2 if they are unfusable
     */
   private def fuseTwo(nextSegment: RoadAddress, previousSegment: RoadAddress): Seq[RoadAddress] = {
+
+    // Test that at the road addresses lap at least partially or are connected (one extends another)
+    def addressConnected(nextSegment: RoadAddress, previousSegment: RoadAddress) = {
+      (nextSegment.startAddrMValue == previousSegment.endAddrMValue ||
+        previousSegment.startAddrMValue == nextSegment.endAddrMValue) ||
+        (nextSegment.startAddrMValue >= previousSegment.startAddrMValue &&
+          nextSegment.startAddrMValue <= previousSegment.endAddrMValue) ||
+        (previousSegment.startAddrMValue >= nextSegment.startAddrMValue &&
+          previousSegment.startAddrMValue <= nextSegment.endAddrMValue)
+    }
     val cpNext = nextSegment.calibrationPoints
     val cpPrevious = previousSegment.calibrationPoints
     def getMValues[T](leftMValue: T, rightMValue: T, op: (T, T) => T,
@@ -799,6 +816,7 @@ object RoadAddressLinkBuilder {
       nextSegment.startDate       == previousSegment.startDate &&
       nextSegment.endDate         == previousSegment.endDate &&
       nextSegment.linkId          == previousSegment.linkId &&
+      addressConnected(nextSegment, previousSegment) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
 
@@ -815,19 +833,19 @@ object RoadAddressLinkBuilder {
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
-      if (previousSegment.geom.isEmpty)
-        println("P linkid" + previousSegment.linkId + " N/A")
-      else
-        println("P linkid" + previousSegment.linkId + " " + previousSegment.geom)
-
-      if (nextSegment.geom.isEmpty)
-        println("N linkid" + nextSegment.linkId + " N/A")
-      else
-        println("N linkid" + nextSegment.linkId + " " + nextSegment.geom)
-      println(startMValue, endMValue)
-      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry2D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
-      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
+//      if (previousSegment.geom.isEmpty)
+//        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " N/A")
+//      else
+//        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " " + previousSegment.geom)
+//
+//      if (nextSegment.geom.isEmpty)
+//        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " N/A")
+//      else
+//        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " " + nextSegment.geom)
+//      println(startMValue, endMValue)
+//      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
+//      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
