@@ -42,7 +42,7 @@ window.LinearAssetLayer = function(params) {
     var clickHandler = function(evt) {
       if (application.getSelectedTool() === 'Cut') {
         if (collection.isDirty()) {
-          displayConfirmMessage();
+          me.displayConfirmMessage();
         } else {
           self.cut(evt);
         }
@@ -193,7 +193,7 @@ window.LinearAssetLayer = function(params) {
 
   function onDragEnd(linearAssets) {
     if (selectedLinearAsset.isDirty()) {
-        displayConfirmMessage();
+        me.displayConfirmMessage();
     } else {
         if (linearAssets.length > 0) {
             selectedLinearAsset.close();
@@ -249,14 +249,12 @@ window.LinearAssetLayer = function(params) {
     applicationModel.setSelectedTool('Select');
   };
 
-  var displayConfirmMessage = function() { new Confirm(); };
-
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
 
     //Disable interaction so the user can not click on another feature after made changes
     selectToolControl.deactivate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+    eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+    eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
 
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
 
@@ -293,7 +291,7 @@ window.LinearAssetLayer = function(params) {
   var handleLinearAssetCancelled = function(eventListener) {
     selectToolControl.clear();
     selectToolControl.activate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     decorateSelection();
   };
 

@@ -69,6 +69,10 @@ var RoadStyles = function() {
       uiState.zoomLevel = zoom;
     };
 
+    var getZoomLevel = function(){
+      return uiState.zoomLevel;
+    };
+
     var clear = function() {
       vectorSource.clear();
     };
@@ -185,23 +189,12 @@ var RoadStyles = function() {
     };
 
     var mapMovedHandler = function(mapState) {
-      //TODO be sure about the less 2 in the zoom
-      /*
-      var zoom = mapState.zoom - 2;
-      if (zoom !== uiState.zoomLevel) {
-        uiState.zoomLevel = zoom;
+      if (mapState.zoom >= minimumContentZoomLevel()) {
+        changeRoadsWidthByZoomLevel();
+      } else {
         vectorSource.clear();
+        roadCollection.reset();
       }
-*/
-      // If zoom changes clear the road list
-      // if (mapState.zoom >= minimumContentZoomLevel()) {
-      //
-      //   vectorLayer.setVisible(true);
-      //   changeRoadsWidthByZoomLevel();
-      // } else {
-      //   vectorLayer.clear();
-      //   roadCollection.reset();
-      // }generateStyleByFeature
       handleRoadsVisibility();
     };
 
@@ -211,6 +204,7 @@ var RoadStyles = function() {
     });
     vectorLayer.set('name', 'road');
     vectorLayer.setVisible(true);
+    vectorLayer.set('name', 'road');
     map.addLayer(vectorLayer);
 
     var selectRoadLink = function(roadLink) {
@@ -238,6 +232,7 @@ var RoadStyles = function() {
 
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       //TODO change this to use the new way to do selectcontrol
+
       //selectControl.unselectAll();
     }, this);
 
@@ -252,6 +247,7 @@ var RoadStyles = function() {
     }, this);
 
     return {
+      createRoadLinkFeature: createRoadLinkFeature,
       setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,
       setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
       drawRoadLink: drawRoadLink,
@@ -259,6 +255,7 @@ var RoadStyles = function() {
       selectRoadLink: selectRoadLink,
       clear: clear,
       clearSelection: clearSelection,
+      getZoomLevel: getZoomLevel,
       layer: vectorLayer
     };
   };
