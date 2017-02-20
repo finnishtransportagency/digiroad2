@@ -308,7 +308,7 @@ class AssetDataImporter {
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     OracleDatabase.withDynTransaction {
-      val municipalities = Queries.getMunicipalities
+      val municipalities = Queries.getMunicipalitiesWithoutAhvenanmaa
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
       println("Old address data cleared")
       municipalities.foreach(municipality => {
