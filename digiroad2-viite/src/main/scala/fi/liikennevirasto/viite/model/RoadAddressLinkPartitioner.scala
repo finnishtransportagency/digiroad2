@@ -6,10 +6,6 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
 
   def partition(links: Seq[RoadAddressLink]): Seq[Seq[RoadAddressLink]] = {
     val linkGroups = links.groupBy { link => (
-      /*
-      Ignores the roadLinkType from the linkGroups, to the task 245 -> complementary roads
-      */
-      //link.anomaly.value, link.roadNumber, link.roadPartNumber, link.trackCode, link.roadLinkType.value
       link.anomaly.value, link.roadNumber, link.roadPartNumber, link.trackCode
       )
     }
