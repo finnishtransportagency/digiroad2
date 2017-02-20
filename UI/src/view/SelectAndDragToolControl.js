@@ -75,9 +75,18 @@
             map.unByKey(mapDoubleClickEventKey);
         };
 
-        var clear = function(){
-            selectInteraction.getFeatures().clear();
-            highlightLayer();
+        var clear = function(type){
+            if(!type){
+                selectInteraction.getFeatures().clear();
+                highlightLayer();
+                return;
+            }
+            _.each(selectInteraction.getFeatures().getArray(), function(feature){
+                if(feature.getProperties().type === type) {
+                    selectInteraction.getFeatures().remove(feature);
+                }
+            });
+
         };
 
         var addSelectionFeatures = function(features){
@@ -89,16 +98,9 @@
         };
 
         var addFeatures = function(features){
+            clear('cutter');
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
-            });
-        };
-
-        var clearFeatures = function () {
-            _.each(selectInteraction.getFeatures().getArray(), function(feature){
-                if(feature.getProperties().type === 'cutter') {
-                    selectInteraction.getFeatures().remove(feature);
-                }
             });
         };
 
@@ -110,7 +112,6 @@
             getDragBoxInteraction: function(){ return dragBoxInteraction; },
             addSelectionFeatures: addSelectionFeatures,
             addFeatures: addFeatures,
-            clearFeatures: clearFeatures,
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
