@@ -6,6 +6,7 @@ case class Configuration(
                         north: Option[Long] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
+                        authorizedAreas: Set[Int] = Set(),
                         roles: Set[String] = Set()
                         )
 case class User(id: Long, username: String, configuration: Configuration) {
@@ -46,5 +47,5 @@ object Role {
   val Viewer = "viewer"
   val ViiteUser = "viite"
   val BusStopMaintainer = "busStopMaintainer"
-  val ServiceRoadMaintainer = "ServiceRoadMaintainer"
+  val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }
