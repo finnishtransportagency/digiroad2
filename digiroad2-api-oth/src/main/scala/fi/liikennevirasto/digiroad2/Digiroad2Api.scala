@@ -433,8 +433,9 @@ Returns empty result as Json message, not as page not found
 
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
-
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("Not authenticated"))
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
 
     params.get("bbox")
