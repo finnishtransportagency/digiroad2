@@ -73,7 +73,6 @@
      * Overrides the Layer.js removeLayerFeatures method
      */
     this.removeLayerFeatures = function() {
-      // indicatorLayer.clearMarkers();
       indicatorLayer.getSource().clear();
     };
 
@@ -82,6 +81,11 @@
      *  Utility functions
      * ------------------------------------------
      */
+
+    var enableSelect = function (feature) {
+        return feature && feature.selected.length > 0 && roadCollection.get([feature.selected[0].getProperties().linkId])[0].isCarTrafficRoad();
+    };
+
 
     /**
      * Selects a manoeuvre on the map. First checks that road link is a car traffic road.
@@ -93,9 +97,9 @@
       pastAdjacents = [];
       if (feature.selected.length > 0 && roadCollection.get([feature.selected[0].getProperties().linkId])[0].isCarTrafficRoad()) {
         //roadLayer.setLayerSpecificStyleProvider(layerName, manoeuvreStyle.getSelectedStyle);
-        selectedManoeuvreSource.open(feature.selected[0].getProperties().linkId);
+         selectedManoeuvreSource.open(feature.selected[0].getProperties().linkId);
       } else {
-        unselectManoeuvre();
+         unselectManoeuvre();
       }
       //roadLayer.redraw();
     };
@@ -109,124 +113,103 @@
       selectedManoeuvreSource.close();
       //roadLayer.setLayerSpecificStyleProvider(layerName, manoeuvreStyle.getDefaultStyle);
       //roadLayer.redraw();
-      highlightFeatures(null);
-      highlightOneWaySigns([]);
-      highlightOverlayFeatures([]);
-      highlightManoeuvreFeatures([]);
+      //  highlightFeatures(null);
+      // highlightOneWaySigns([]);
+      // highlightOverlayFeatures([]);
+      // highlightManoeuvreFeatures([]);
       // indicatorLayer.clearMarkers();
       indicatorLayer.getSource().clear();
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
 
-    /**
-     * Creates an OpenLayers selectControl and defines onSelect and onUnselect properties for it.
-     * The selectControl is then added as Layer.js this.selectControl value and as a control to the OpenLayers map.
-     */
-    // var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-    //   onSelect: selectManoeuvre,
-    //   onUnselect: unselectManoeuvre
-    // });
-    // this.selectControl = selectControl;
-    // map.addControl(selectControl);
-
-    this.selectControl = defineSelectControlInteraction();
-    function defineSelectControlInteraction() {
-        var selectControlInteraction = new ol.interaction.Select({
-            layers: [roadLayer.layer],
-            condition :  function(events){ return enable && ol.events.condition.singleClick(events); },
-            style : function(feature){
-               if(roadCollection.get([feature.getProperties().linkId])[0].isCarTrafficRoad()) {
-                   return manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
-               }else{
-                   return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
-               }
+    this.selectControl = new SelectAndDragToolControl(application, roadLayer.layer, map, {
+        style : function(feature){
+            if(roadCollection.get([feature.getProperties().linkId])[0].isCarTrafficRoad()) {
+                return manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
+            }else{
+                return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
             }
-        });
+        },
+        onSelect: selectManoeuvre,
+        draggable : false,
+        enableSelect : enableSelect
+       //backgroundOpacity: style.vectorOpacity
+    });
 
-        selectControlInteraction.on('select', selectManoeuvre);
-        var enable = false;
-        map.addInteraction(selectControlInteraction);
-        var activate = function () {
-          enable = true;
-        };
-
-        var deactivate = function () {
-            enable = false;
-        };
-
-        return{
-            selectControl: selectControlInteraction,
-            activate : activate,
-            deactivate : deactivate
-        };
-    }
-
-    var highlightFeatures = function(linkId) {
-      _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-        if (x.getProperties().type === 'normal') {
-          if (linkId && (x.getProperties().linkId === linkId)) {
-            //selectControl.highlight(x);
-            me.selectControl.activate();
-          } else {
-            //selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightOneWaySigns = function(linkIds) {
-      var isOneWaySign = function(feature) { return !_.isUndefined(roadLayer.layer.getProperties().source.getFeatures().rotation); };
-
-      _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-        if (isOneWaySign(x)) {
-          if (_.contains(linkIds, x.getProperties().linkId)) {
-            //selectControl.highlight(x);
-            me.selectControl.activate();
-          } else {
-            //selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightOverlayFeatures = function(linkIds) {
-      _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-        if (x.getProperties().type === 'overlay') {
-          if (_.contains(linkIds, x.getProperties().linkId)) {
-            //selectControl.highlight(x);
-            me.selectControl.activate();
-          } else {
-            //selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightIntermediateFeatures = function(linkIds) {
-      _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-        if (x.getProperties().type === 'intermediate') {
-          if (_.contains(linkIds, x.getProperties().linkId)) {
-            me.selectControl.activate();
-            //selectControl.highlight(x);
-          } else {
-            //selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightManoeuvreFeatures = function(linkIds) {
-      _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-        if (x.getProperties().type !== 'normal') {
-          if (_.contains(linkIds, x.getProperties().linkId)) {
-            //selectControl.highlight(x);
-            me.selectControl.activate();
-          } else {
-            //selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
+    // var highlightFeatures = function(linkId) {
+    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
+    //     if (x.getProperties().type === 'normal') {
+    //       if (linkId && (x.getProperties().linkId === linkId)) {
+    //           //selectControl.highlight(x);
+    //           me.selectControl.activate();
+    //       } else {
+    //           //selectControl.unhighlight(x);
+    //       }
+    //     }
+    //   });
+    // };
+    //
+    // var highlightOneWaySigns = function(linkIds) {
+    //   var isOneWaySign = function(feature) { return !_.isUndefined(roadLayer.layer.getProperties().source.getFeatures().rotation); };
+    //
+    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
+    //     if (isOneWaySign(x)) {
+    //       if (_.contains(linkIds, x.getProperties().linkId)) {
+    //         //selectControl.highlight(x);
+    //         //   roadLayer.layer.setOpacity(1);
+    //           me.selectControl.activate();
+    //       } else {
+    //           // roadLayer.layer.setOpacity(0.5);
+    //         //selectControl.unhighlight(x);
+    //       }
+    //     }
+    //   });
+    // };
+    //
+    // var highlightOverlayFeatures = function(linkIds) {
+    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
+    //     if (x.getProperties().type === 'overlay') {
+    //       if (_.contains(linkIds, x.getProperties().linkId)) {
+    //          roadLayer.layer.setOpacity(1);
+    //       } else {
+    //          roadLayer.layer.setOpacity(0.5);
+    //       }
+    //     }
+    //   });
+    // };
+    //
+    // var highlightIntermediateFeatures = function(linkIds) {
+    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
+    //     if (x.getProperties().type === 'intermediate') {
+    //       if (_.contains(linkIds, x.getProperties().linkId)) {
+    //           // roadLayer.layer.setOpacity(1);
+    //
+    //           me.selectControl.activate();
+    //         //selectControl.highlight(x);
+    //
+    //       } else {
+    //           // roadLayer.layer.setOpacity(0.5);
+    //         //selectControl.unhighlight(x);
+    //       }
+    //     }
+    //   });
+    // };
+    //
+    // var highlightManoeuvreFeatures = function(linkIds) {
+    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
+    //     if (x.getProperties().type !== 'normal') {
+    //       if (_.contains(linkIds, x.getProperties().linkId)) {
+    //         //selectControl.highlight(x);
+    //         //   roadLayer.layer.setOpacity(1);
+    //
+    //           me.selectControl.activate();
+    //       } else {
+    //           // roadLayer.layer.setOpacity(0.5);
+    //         //selectControl.unhighlight(x);
+    //       }
+    //     }
+    //   });
+    // };
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -374,8 +357,8 @@
             if(!("adjacentLinks" in addedManoeuvre))
               addedManoeuvre.adjacentLinks = selectedManoeuvreSource.getAdjacents(addedManoeuvre.destLinkId);
 
-            highlightOverlayFeatures([addedManoeuvre.firstTargetLinkId, addedManoeuvre.destLinkId]);
-            highlightIntermediateFeatures(addedManoeuvre.intermediateLinkIds);
+             // highlightOverlayFeatures([addedManoeuvre.firstTargetLinkId, addedManoeuvre.destLinkId]);
+            // highlightIntermediateFeatures(addedManoeuvre.intermediateLinkIds);
           }
 
           var manoeuvreAdjacentLinks = _.isEmpty(addedManoeuvre) ?  adjacentLinks(manoeuvreSource) : addedManoeuvre.adjacentLinks;
@@ -386,7 +369,7 @@
 
         redrawRoadLayer();
 
-        highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
+        // highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
 
       }
       me.selectControl.onSelect = originalOnSelectHandler;
@@ -454,21 +437,6 @@
           markerContainer(link, middlePoint);
         });
       };
-      // var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
-      // var visibleLinks = _.filter(links, function (link) {
-      //   return typeof link.points != 'undefined';
-      // });
-      // var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-      //   var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-      //   var box = new OpenLayers.Marker.Box(bounds, "00000000");
-      //   $(box.div).html(markerTemplate(link));
-      //   $(box.div).css('overflow', 'visible');
-      //   return box;
-      // });
-      //
-      // _.forEach(indicators, function(indicator) {
-      //   indicatorLayer.addMarker(indicator);
-      // });
       indicators();
       indicatorLayer.getSource().addFeatures(features);
     };
@@ -527,19 +495,19 @@
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
       var targetLinkIds = _.pluck(tLinks, 'linkId');
 
-      highlightFeatures(roadLink.linkId);
-      highlightOneWaySigns([roadLink.linkId]);
+     // highlightFeatures(roadLink.linkId);
+     // highlightOneWaySigns([roadLink.linkId]);
 
       if(application.isReadOnly()){
         var allTargetLinkIds = manoeuvresCollection.getNextTargetRoadLinksBySourceLinkId(roadLink.linkId);
-        highlightManoeuvreFeatures(allTargetLinkIds);
+        // highlightManoeuvreFeatures(allTargetLinkIds);
       }
 
       markAdjacentFeatures(application.isReadOnly() ? targetLinkIds : adjacentLinkIds);
 
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
-      highlightOverlayFeatures(destinationRoadLinkList);
+      // highlightOverlayFeatures(destinationRoadLinkList);
       if (!application.isReadOnly()) {
         drawIndicators(tLinks);
         drawIndicators(aLinks);
@@ -587,7 +555,7 @@
           })));
 
           roadLayer.layer.getSource().addFeatures(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]));
-          highlightOverlayFeatures([destLinkId]);
+          // highlightOverlayFeatures([destLinkId]);
 
           selectedManoeuvreSource.setTargetRoadLink(manoeuvre.destLinkId);
 
@@ -606,7 +574,7 @@
       mode="edit";
       if (!application.isReadOnly()) {
         indicatorLayer.getSource().clear();
-        highlightManoeuvreFeatures(data.linkIds.slice(1));
+        // highlightManoeuvreFeatures(data.linkIds.slice(1));
       }
     };
 

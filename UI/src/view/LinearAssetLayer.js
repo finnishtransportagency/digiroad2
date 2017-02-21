@@ -27,14 +27,13 @@ window.LinearAssetLayer = function(params) {
     var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-  //    selectToolControl.clearFeatures();
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      selectToolControl.addFeatures(scissorFeatures);
+      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
     };
 
     var remove = function () {
-      selectToolControl.addFeatures();
       scissorFeatures = [];
+      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
     };
 
     var self = this;
@@ -169,8 +168,8 @@ window.LinearAssetLayer = function(params) {
   var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
     onDragEnd: onDragEnd,
-    onSelect: OnSelect,
-    backgroundOpacity: style.vectorOpacity
+    onSelect: OnSelect
+    //backgroundOpacity: style.vectorOpacity
   });
 
   var showDialog = function (linearAssets) {

@@ -3,13 +3,16 @@
 
         var mapDoubleClickEventKey;
         var enabled = false;
+        var initialized = false;
 
         var settings = _.extend({
             onDragStart: function(){},
             onDragEnd: function(){},
             onSelect: function() {},
             style: function(){},
-            backgroundOpacity: 0.15
+            enableSelect: function(){ return true; },
+            backgroundOpacity: 0.15,
+            draggable : true
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
@@ -19,7 +22,7 @@
         var selectInteraction = new ol.interaction.Select({
             layer: layer,
             condition: function(events){
-                return enabled && (ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
+                return enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style
         });
@@ -35,7 +38,7 @@
         });
 
         selectInteraction.on('select',  function(evt){
-            if(evt.selected.length > 0)
+            if(evt.selected.length > 0 && settings.enableSelect(evt))
                 unhighlightLayer();
             else
                 highlightLayer();
@@ -44,7 +47,7 @@
         });
 
         var toggleDragBox = function() {
-            if (!application.isReadOnly() && enabled)
+            if (!application.isReadOnly() && enabled && settings.draggable && !initialized)
                 map.addInteraction(dragBoxInteraction);
             else
                 map.removeInteraction(dragBoxInteraction);
@@ -60,6 +63,12 @@
 
         var activate = function() {
             enabled = true;
+
+            if(!initialized){
+                map.addInteraction(selectInteraction);
+                initialized = true;
+            }
+
             mapDoubleClickEventKey = map.on('dblclick', function () {
                 _.defer(function(){
                     if(selectInteraction.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
@@ -89,29 +98,21 @@
 
         };
 
-        var addSelectionFeatures = function(features){
-            clear();
+        var addSelectionFeatures = function(features, type){
+            clear(type);
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
             });
-            unhighlightLayer();
+            if(!type)
+                unhighlightLayer();
         };
 
-        var addFeatures = function(features){
-            clear('cutter');
-            _.each(features, function(feature){
-                selectInteraction.getFeatures().push(feature);
-            });
-        };
-
-        map.addInteraction(selectInteraction);
         eventbus.on('application:readOnly', toggleDragBox);
 
         return {
             getSelectInteraction: function(){ return selectInteraction; },
             getDragBoxInteraction: function(){ return dragBoxInteraction; },
             addSelectionFeatures: addSelectionFeatures,
-            addFeatures: addFeatures,
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
