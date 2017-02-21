@@ -42,24 +42,16 @@
         var setLayerSpecificStyleProvider = function(layer, provider) {
             layerStyleProviders[layer] = provider;
         };
-        //
-        //var activateLayerStyleMap = function() {
-        //    vectorLayer.styleMap = layerStyleMap || new RoadStyles().roadStyles;
-        //};
 
         var redraw = function() {
             usingLayerSpecificStyleProvider(function() {
-                //vectorLayer.redraw();
-                //If the redraw now ir really needed we can do it like this
-                //vectorSource.changed();
+                //TODO Check if this is need after close all tasks
             });
         };
 
         var clear = function() {
             vectorSource.clear();
         };
-
-
 
         var usingLayerSpecificStyleProvider = function(action) {
             if (!_.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()])) {
@@ -68,89 +60,13 @@
             action();
         };
 
-        //var getSelectedFeatures = function (){
-        //    return _.filter(vectorLayer.features, function (feature) {
-        //        return selectedLinkProperty.isSelected(feature.attributes.linkId);
-        //    });
-        //};
-
-        //var removeSelectedFeatures = function() {
-        //    vectorLayer.removeFeatures(getSelectedFeatures());
-        //};
-
-        //var removeFeatures = function(){
-        //    vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'overlay'));
-        //};
-
-        //var getSelectControl = function(){
-        //    return selectControl;
-        //};
-
-        //var highlightFeatures = function() {
-        //    _.each(vectorLayer.features, function(x) {
-        //        if (selectedLinkProperty.isSelected(x.attributes.linkId)) {
-        //            selectControl.highlight(x);
-        //        } else {
-        //            selectControl.unhighlight(x);
-        //        }
-        //    });
-        //};
-
-        //var reselectRoadLink = function() {
-        //    var originalOnSelectHandler = selectControl.onSelect;
-        //     selectControl.onSelect = function() {};
-        //     var features = getSelectedFeatures();
-        //     if (!_.isEmpty(features)) {
-        //     selectControl.select(_.first(features));
-        //     highlightFeatures();
-        //     }
-        //     selectControl.onSelect = originalOnSelectHandler;
-        //};
-
-        //var selectRoadLink = function(roadLink) {
-        //    var feature = _.find(vectorSource.getFeatures(), function(feature) {
-        //        var properties = feature.getProperties();
-        //        if (roadLink.linkId)
-        //            return properties.linkId === roadLink.linkId;
-        //        return properties.roadLinkId === roadLink.roadLinkId;
-        //    });
-        //    selectControl.unselectAll();
-        //    selectControl.select(feature);
-        //};
-
-        //var selectRoadLinkByLinkId = function(linkId){
-        //    var feature = _.find(vectorLayer.features, function(feature) {
-        //        return feature.attributes.linkId === linkId;
-        //    });
-        //    if (feature) {
-        //        selectControl.select(feature);
-        //    }
-        //};
-
-        //var selectFeatureRoadLink = function(feature) {
-        //    selectedLinkProperty.open(feature.attributes.linkId, feature.singleLinkSelect);
-        //    vectorLayer.redraw();
-        //    highlightFeatures();
-        //};
-
-        //var unselectFeatureRoadLink = function() {
-        //    selectedLinkProperty.close();
-        //    vectorLayer.redraw();
-        //    highlightFeatures();
-        //};
-
-        //selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-        //    onSelect: selectFeatureRoadLink,
-        //    onUnselect: unselectFeatureRoadLink
-        //});
-
         function stylesUndefined() {
             return _.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()]);
         }
 
         var disableColorsOnRoadLayer = function() {
             if (stylesUndefined()) {
-                //vectorLayer.styleMap.styles.default.rules = [];
+                //TODO Check if this is need after close all tasks
             }
         };
 
@@ -160,7 +76,6 @@
             } else {
                 disableColorsOnRoadLayer();
             }
-            //changeRoadsWidthByZoomLevel();
             usingLayerSpecificStyleProvider(function() {
                 //TODO now the redraw will always happen after a source change
                 //vectorLayer.redraw();
@@ -231,18 +146,9 @@
             map.getLayers().setAt(idx - 1, layer);
         };
 
-
         vectorLayer.set('name', 'historyDataLayer');
-        //vectorLayer.setProperties({transparent: "true", isBaseLayer: false});
-        //vectorLayer.setVisibility(true);
-        //
-        //var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-        //map.setLayerIndex(vectorLayer, roadLinksLayerIndex - 1);
-        //map.getLayers().insertAt(0, vectorLayer);
         addLayerBehind(map, vectorLayer, 'road');
-        //map.addLayer(vectorLayer);
         vectorLayer.setVisible(false);
-        //map.addControl(selectControl);
 
         eventbus.on('roadLinkHistory:show', function(){
             isActive = true;
@@ -260,7 +166,6 @@
         eventbus.on('map:moved', mapMovedHandler, this);
 
         eventbus.on('layer:selected', function(layer) {
-            //activateLayerStyleMap(layer);
             toggleRoadType();
         }, this);
 
@@ -269,17 +174,9 @@
             layer: vectorLayer,
             redraw: redraw,
             clear: clear,
-            //selectRoadLink: selectRoadLink,
             setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
             drawRoadLink: drawRoadLink,
             drawRoadLinks: drawRoadLinks,
-            //removeSelectedFeatures: removeSelectedFeatures,
-            //removeFeatures: removeFeatures,
-            //getSelectControl: getSelectControl,
-            //reselectRoadLink: reselectRoadLink,
-            //selectFeatureRoadLink: selectFeatureRoadLink,
-            //unselectFeatureRoadLink: unselectFeatureRoadLink,
-            //selectRoadLinkByLinkId: selectRoadLinkByLinkId,
             show: showLayer,
             hide: hideLayer,
             refreshView: refreshView
@@ -319,24 +216,12 @@
           currentRenderIntent = 'default';
           selectedLinkProperty.close();
       }
-   /*else{
-        if (selectedLinearAsset.exists()) {
-            selectedLinearAsset.close();
-        }
-    }*/
-
-
-      //currentRenderIntent = 'select';
-      //roadLayer.redraw();
-      //highlightFeatures();
     };
 
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectToolControl.clear();
       selectedLinkProperty.close();
-      //roadLayer.redraw();
-      //highlightFeatures();
     };
 
     var onDragEnd = function(links) {
@@ -373,33 +258,6 @@
     });
 
     selectToolControl.activate();
-    //var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-    //  onSelect: selectRoadLink,
-    //  onUnselect: unselectRoadLink
-    //});
-    //map.addControl(selectControl);
-    //var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
-    //this.selectControl = selectControl;
-
-    //var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, function(links) {
-    //  selectedLinkProperty.openMultiple(links);
-    //
-    //  LinkPropertyMassUpdateDialog.show({
-    //    linkCount: selectedLinkProperty.count(),
-    //    onCancel: cancelSelection,
-    //    onSave: function(functionalClass, linkType) {
-    //      if (functionalClass) {
-    //        selectedLinkProperty.setFunctionalClass(functionalClass);
-    //      }
-    //
-    //      if (linkType) {
-    //        selectedLinkProperty.setLinkType(linkType);
-    //      }
-    //
-    //      selectedLinkProperty.save();
-    //    }
-    //  });
-    //});
 
     this.activateSelection = function() {
       selectToolControl.toggleDragBox();
@@ -410,16 +268,6 @@
       selectToolControl.toggleDragBox();
       selectToolControl.deactivate();
     };
-
-    //var updateMassUpdateHandlerState = function() {
-    //  if (!applicationModel.isReadOnly() &&
-    //      applicationModel.getSelectedTool() === 'Select' &&
-    //      applicationModel.getSelectedLayer() === layerName) {
-    //    //massUpdateHandler.activate();
-    //  } else {
-    //    //massUpdateHandler.deactivate();
-    //  }
-    //};
 
     var highlightFeatures = function() {
       selectToolControl.clear();
@@ -499,35 +347,6 @@
       return createDashedLineFeatures(dashedRoadLinks, 'linkType');
     };
 
-    //var getSelectedFeatures = function() {
-    //  return _.filter(roadLayer.layer.features, function (feature) {
-    //    return selectedLinkProperty.isSelected(feature.attributes.linkId);
-    //  });
-    //};
-
-    //var reselectRoadLink = function() {
-    //    if (selectedLinkProperty.isDirty())
-    //        me.deactivateSelection();
-    //    else
-    //        me.activateSelection();
-    //    //highlightFeatures();
-    //  /*asdasdas
-    //  me.activateSelection();
-    //  var originalOnSelectHandler = selectControl.onSelect;
-    //  selectControl.onSelect = function() {};
-    //  var features = getSelectedFeatures();
-    //  if (!_.isEmpty(features)) {
-    //    currentRenderIntent = 'select';
-    //    selectControl.select(_.first(features));
-    //    //highlightFeatures();
-    //  }
-    //  selectControl.onSelect = originalOnSelectHandler;
-    //  if (selectedLinkProperty.isDirty()) {
-    //    me.deactivateSelection();
-    //  }
-    //  */
-    //};
-
     var prepareRoadLinkDraw = function() {
       me.deactivateSelection();
     };
@@ -548,19 +367,9 @@
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
-      //eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
-      //  var feature = _.find(roadLayer.layer.features, function(feature) {
-      //    return feature.attributes.linkId === link.linkId;
-      //  });
-      //  if (feature) {
-      //    //selectControl.select(feature);
-      //  }
-      //  //historyLayer.selectRoadLinkByLinkId(link.linkId);
-      //});
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
       eventListener.listenTo(eventbus, 'roadLinks:historyFetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
-      //eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
       eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
@@ -591,7 +400,6 @@
 
     var handleLinkPropertyChanged = function(eventListener) {
       redrawSelected();
-      //var features = selectToolControl.getSelectInteraction().getFeatures();
       me.deactivateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
@@ -604,8 +412,6 @@
     };
 
     var redrawSelected = function() {
-      //roadLayer.layer.removeFeatures(getSelectedFeatures());
-      //historyLayer.removeSelectedFeatures();
 
       if (selectedLinkProperty.isDirty())
         me.deactivateSelection();
@@ -624,14 +430,10 @@
       features = features.concat(drawDashedLineFeaturesIfApplicable(selectedRoadLinks));
 
       selectToolControl.addSelectionFeatures(features);
-
-      //roadLayer.layer.getSource().addFeatures();
-      //me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks);
-      //me.drawOneWaySigns(historyLayer.layer, selectedRoadLinks);
-      //reselectRoadLink();
     };
 
     this.removeLayerFeatures = function() {
+      //TODO check if is really needed
       //roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
       //historyLayer.removeFeatures();
     };
@@ -642,7 +444,6 @@
 
     var hideLayer = function() {
       unselectRoadLink();
-      //historyLayer.unselectFeatureRoadLink();
       historyLayer.clear();
       me.stop();
       me.hide();
