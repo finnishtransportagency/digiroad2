@@ -49,7 +49,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with CorsSupport
     with RequestHeaderAuthentication
     with GZipSupport {
-  val logger = LoggerFactory.getLogger(getClass)
+    val serviceRoadTypeid=290
+    val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
 
@@ -644,6 +645,8 @@ Returns empty result as Json message, not as page not found
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
@@ -676,6 +679,8 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val linkIds = linearAssetService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
     roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
@@ -686,6 +691,9 @@ Returns empty result as Json message, not as page not found
 
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       extractLinearAssetValue(parsedBody \ "existingValue"),
@@ -696,7 +704,9 @@ Returns empty result as Json message, not as page not found
 
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
-
+    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     linearAssetService.separate(params("id").toLong,
       extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
       extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
@@ -799,6 +809,8 @@ Returns empty result as Json message, not as page not found
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val ids = (parsedBody \ "ids").extract[Seq[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
@@ -813,7 +825,8 @@ Returns empty result as Json message, not as page not found
 
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     speedLimitService.split(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
@@ -824,7 +837,8 @@ Returns empty result as Json message, not as page not found
 
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     speedLimitService.separate(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[Int],
       (parsedBody \ "valueAgainstDigitization").extract[Int],
@@ -834,7 +848,8 @@ Returns empty result as Json message, not as page not found
 
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val newLimit = NewLimit((parsedBody \ "linkId").extract[Long],
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
@@ -868,7 +883,8 @@ Returns empty result as Json message, not as page not found
 
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
@@ -890,7 +906,8 @@ Returns empty result as Json message, not as page not found
 
   delete("/manoeuvres") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
 
     manoeuvreIds.foreach { manoeuvreId =>
@@ -902,7 +919,8 @@ Returns empty result as Json message, not as page not found
 
   put("/manoeuvres") {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
       .map { case (id, updates) => (id.toLong, updates) }
@@ -951,7 +969,8 @@ Returns empty result as Json message, not as page not found
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
-
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     service.getByBoundingBox(user, bbox)
@@ -959,6 +978,8 @@ Returns empty result as Json message, not as page not found
 
   private def getPointAssetById(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = service.getById(params("id").toLong)
     asset match {
       case None => halt(NotFound("Asset with given id not found"))
@@ -970,6 +991,8 @@ Returns empty result as Json message, not as page not found
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val includedMunicipalities = user.isOperator() match {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
@@ -979,6 +1002,8 @@ Returns empty result as Json message, not as page not found
 
   private def deletePointAsset(service: PointAssetOperations): Long = {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val id = params("id").toLong
     service.getPersistedAssetsByIds(Set(id)).headOption.map(_.municipalityCode).foreach(validateUserMunicipalityAccess(user))
     service.expire(id, user.username)
@@ -986,6 +1011,8 @@ Returns empty result as Json message, not as page not found
 
   private def updatePointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     roadLinkService.getRoadLinkFromVVH(updatedAsset.linkId) match {
@@ -996,6 +1023,8 @@ Returns empty result as Json message, not as page not found
 
   private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
     for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
@@ -1010,6 +1039,8 @@ Returns empty result as Json message, not as page not found
 
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
     roadLinkService.getClosestRoadlinkFromVVH(user, Point(asset.lon, asset.lat)) match {
       case None =>
@@ -1023,6 +1054,8 @@ Returns empty result as Json message, not as page not found
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     roadLinkService.getClosestRoadlinkFromVVH(user, Point(updatedAsset.lon, updatedAsset.lat)) match {
       case None =>
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
@@ -1034,6 +1067,8 @@ Returns empty result as Json message, not as page not found
   delete("/servicePoints/:id") {
     val id = params("id").toLong
     val user = userProvider.getCurrentUser()
+    if (user.isServiceRoadMaintainer())
+      halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     servicePointService.expire(id, user.username)
   }
 }
