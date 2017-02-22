@@ -530,6 +530,7 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        rootElement.find('.link-properties button.calculate').attr('disabled', false);
         applicationModel.setActiveButtons(true);
       });
     };
