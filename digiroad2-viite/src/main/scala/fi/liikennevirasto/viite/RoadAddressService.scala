@@ -448,9 +448,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, filterpreviousPoint: Boolean = true): Seq[RoadAddressLink] = {
-    val chainRoadLinks = roadLinkService.getViiteRoadLinksHistoryFromVVH(chainLinks)
-    val sourceRoadLink = chainRoadLinks.filter(_.linkId == linkId).headOption
-    val sourceLinkGeometryOption = sourceRoadLink.map(_.geometry)
+    val chainRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(chainLinks)
+    val geomInChain = chainRoadLinks._1.filter(_.linkId == linkId).map(_.geometry)++chainRoadLinks._2.filter(_.linkId == linkId).map(_.geometry)
+    val ignoreAdjacentGeomInChain = chainRoadLinks._1.filter(_.linkId != linkId).map(_.geometry)++chainRoadLinks._2.filter(_.linkId != linkId).map(_.geometry)
+    val sourceLinkGeometryOption = geomInChain.headOption
     sourceLinkGeometryOption.map(sourceLinkGeometry => {
       val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
       val delta: Vector3d = Vector3d(0.1, 0.1, 0)
@@ -478,8 +479,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
         && ral.roadLinkType == UnknownRoadLinkType ))
         .filterNot(_._2.exists(ral =>
-          chainRoadLinks.filterNot(_.linkId == linkId).exists{ cl =>
-            GeometryUtils.areAdjacent(ral.geometry, cl.geometry)
+          ignoreAdjacentGeomInChain.exists{ cl =>
+            GeometryUtils.areAdjacent(ral.geometry, cl)
           }
         ) && filterpreviousPoint)
         .flatMap(_._2)
