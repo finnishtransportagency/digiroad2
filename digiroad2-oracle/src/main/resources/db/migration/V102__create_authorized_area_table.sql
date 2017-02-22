@@ -68,11 +68,6 @@ insert into user_sdo_geom_metadata (table_name, column_name, diminfo, srid)
                                       mdsys.sdo_dim_element('M',0,0,0.1)),
                                     3067);
 
-/*create index authorized_area_geometry_sx
-  on authorized_area(geometry)
-  indextype is mdsys.spatial_index;*/
-
-
 -- create all authorized areas
 Insert into AUTHORIZED_AREA
    (KPALUE, GEOMETRY)
