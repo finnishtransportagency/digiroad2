@@ -27,7 +27,7 @@
     var selectRoadLink = function(feature) {
       if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
         if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, feature.singleLinkSelect);
+          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
         } else {
           selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
         }
