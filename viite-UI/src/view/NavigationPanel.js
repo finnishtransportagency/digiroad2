@@ -3,10 +3,11 @@
     initialize: initialize
   };
 
-  function initialize(container, searchBox, assetControlGroups) {
+  function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
     var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
+    navigationPanel.append(openProjectsBox.element);
 
     var assetControls = _.flatten(assetControlGroups);
 
@@ -23,6 +24,8 @@
       .zipObject()
       .value();
 
+    bindEvents();
+
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var previousControl = assetControlMap[previouslySelectedLayer];
       if (previousControl) previousControl.hide();
@@ -31,6 +34,12 @@
     });
 
     container.append(navigationPanel);
+
+    function bindEvents() {
+      openProjectsBox.button.on('click', function(){
+        openProjectsBox.toggle();
+      });
+    }
     
   }
 })(this);
