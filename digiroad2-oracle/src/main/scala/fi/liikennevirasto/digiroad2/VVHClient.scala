@@ -277,6 +277,21 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  def queryChangesByPolygonAndMunicipalities(polygon: String): Seq[ChangeInfo] = {
+    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+        return  Seq.empty[ChangeInfo]
+    val urlpoly=URLEncoder.encode(polygon)
+    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
+    s"layerDefs=$definition&geometry=" +  urlpoly +
+    "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
+
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHChangeInfo)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+
+  }
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -302,6 +317,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     */
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitesAndBounds(bounds, municipalities))
+  }
+
+  def fetchRoadLinksByPolygonF(polygonString : String): Future[Seq[VVHRoadlink]] = {
+    Future(queryByPolygons(polygonString))
+  }
+
+  def fetchChangesByPolygonF(polygonstring : String): Future[Seq[ChangeInfo]] = {
+    Future(queryChangesByPolygonAndMunicipalities(polygonstring))
   }
 
   /**

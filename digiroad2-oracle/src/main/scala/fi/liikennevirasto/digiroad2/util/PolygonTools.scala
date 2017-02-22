@@ -16,7 +16,6 @@ class PolygonTools {
     * @param boundingBox BoundingRectangle
     * @return Returns polygon which have common area with BoundingRectangle and given polygon.
     *         returns empty polygon if there is no common area.
-    *         do empty check before calling stringifyPolygonForVVHClient with result polygon
     */
   def polygonInterceptorToBoundingBox(polygon: Polygon, boundingBox: BoundingRectangle): Polygon = {
     val leftBottomP = boundingBox.leftBottom
@@ -53,6 +52,8 @@ class PolygonTools {
       ""
   }
 
-  //TODO Conversion method to DB polygon data
-
+  def getAreaPolygonFromDatabase(areaId : Int): Polygon = {
+  //TODO Conversion method to DB polygon data now returns empty polygon
+    geomBuilder.polygon()
+  }
 }

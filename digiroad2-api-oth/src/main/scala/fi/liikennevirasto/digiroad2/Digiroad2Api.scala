@@ -435,8 +435,6 @@ Returns empty result as Json message, not as page not found
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
-    if (user.isServiceRoadMaintainer())
-      halt(Unauthorized("Not authenticated"))
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
 
     params.get("bbox")
@@ -580,6 +578,27 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
+      if(user.isServiceRoadMaintainer())
+      linearAssetService.getByIntersectedBoundingBox(typeId,user.configuration.authorizedAreas.head, boundingRectangle, municipalities).map { links =>
+        links.map { link =>
+          Map(
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "linkId" -> link.linkId,
+            "sideCode" -> link.sideCode,
+            "trafficDirection" -> link.trafficDirection,
+            "value" -> link.value.map(_.toJson),
+            "points" -> link.geometry,
+            "expired" -> link.expired,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedAt" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdAt" -> link.createdDateTime
+          )
+        }
+      }
+      else
       linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities).map { links =>
         links.map { link =>
           Map(
