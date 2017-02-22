@@ -6,6 +6,55 @@
     <script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
     <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 
+    <script type="text/javascript">
+
+        function showHideInfo() {
+            if ($("select[name='roleName']").val() == "serviceRoadMaintainer")
+                $(".authArea").show();
+            else
+                $(".authArea").hide();
+        }
+
+        function saveFormData() {
+            var username = $( "input[name=username]" ).val();
+            $.ajax({
+                //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
+                url: "api/userconfig/user/" + username,
+                type: "get",
+                success: function () {
+                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+                        successCallback: function(){
+                            ajaxRequestPost(username, 'Käyttäjän "' + username + '" tietoja muokattu', showCreatedUser);
+                        }
+                    });
+                },
+                error: function (errorValue) {
+                    if (errorValue.status === 404) {
+                        ajaxRequestPost(username, 'Uusi käyttäjä "' + username + '" luotu', showCreatedUser);
+                    }
+                }
+            });
+            return false;
+        }
+        function ajaxRequestPost(username, successResponseValue, func) {
+            $.ajax({
+                type: "POST",
+                url: "api/userconfig/newuser",
+                data: $(".form-horizontal").serialize(),
+                success: function()
+                {
+                    func(username, successResponseValue);
+                }
+            });
+        }
+
+        function showCreatedUser(username, alertMessage) {
+            if (username) {
+                alert(alertMessage);
+                window.location.search='';
+            }
+        }
+    </script>
     <!-- Google Analytics loaded asynchronously -->
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -21,7 +70,7 @@
         <div class="container"></div>
         <div class="content-box form-box">
             <header>Luo uusi k&auml;ytt&auml;j&auml;</header>
-            <form id="form-newuser" class="form form-horizontal" role="form">
+            <form class="form form-horizontal" role="form" onsubmit="return saveFormData()">
                 <div class="form-group">
                     <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
                     <input type="text" name="username" class="form-control">
@@ -69,56 +118,6 @@
             </form>
         </div>
     </div>
-
-    <script type="text/javascript">
-        function showHideInfo() {
-            if ($("select[name='roleName']").val() == "serviceRoadMaintainer")
-                $(".authArea").show();
-            else
-                $(".authArea").hide();
-        }
-
-        $('#form-newuser').on('submit', function() {
-            var username = $( "input[name=username]" ).val();
-            $.ajax({
-                //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
-                url: "api/userconfig/user/" + username,
-                type: "get",
-                success: function () {
-                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
-                        successCallback: function(){
-                            ajaxRequestPost(username, 'Käyttäjän "' + username + '" tietoja muokattu', showCreatedUser);
-                        }
-                    });
-                },
-                error: function (errorValue) {
-                    if (errorValue.status === 404) {
-                        ajaxRequestPost(username, 'Uusi käyttäjä "' + username + '" luotu', showCreatedUser);
-                    }
-                }
-            });
-            return false;
-        });
-
-        function ajaxRequestPost(username, successResponseValue, func) {
-            $.ajax({
-                type: "POST",
-                url: "api/userconfig/newuser",
-                data: $(".form-horizontal").serialize(),
-                success: function()
-                {
-                    func(username, successResponseValue);
-                }
-            });
-        }
-
-        function showCreatedUser(username, alertMessage) {
-            if (username) {
-                alert(alertMessage);
-                window.location.search='';
-            }
-        }
-    </script>
 <script type="text/javascript" src="src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="src/analytics.js"></script>
 <script type="application/javascript">

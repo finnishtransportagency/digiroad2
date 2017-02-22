@@ -113,7 +113,6 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
       case None =>
         userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, authorizedAreas = authorizedAreas, roles = roles))
     }
-    redirect("/newuser.html?username="+username)
   }
 
   put("/user/:username/roles") {
