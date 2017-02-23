@@ -1,56 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
-    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var compactForm = false;
-    var options;
-
-    var localizedAdministrativeClasses = {
-      Private: 'Yksityisen omistama',
-      Municipality: 'Kunnan omistama',
-      State: 'Valtion omistama'
-    };
-
-    var localizedTrafficDirections = {
-      BothDirections: 'Molempiin suuntiin',
-      AgainstDigitizing: 'Digitointisuuntaa vastaan',
-      TowardsDigitizing: 'Digitointisuuntaan'
-    };
-
-    var linkTypes = [
-      [1, 'Moottoritie'],
-      [2, 'Moniajoratainen tie'],
-      [3, 'Yksiajoratainen tie'],
-      [4, 'Moottoriliikennetie'],
-      [5, 'Kiertoliittymä'],
-      [6, 'Ramppi'],
-      [7, 'Levähdysalue'],
-      [8, 'Kevyen liikenteen väylä'],
-      [9, 'Jalankulkualue'],
-      [10, 'Huolto- tai pelastustie'],
-      [11, 'Liitännäisliikennealue'],
-      [12, 'Ajopolku'],
-      [13, 'Huoltoaukko moottoritiellä'],
-      [21, 'Lautta/lossi']
-    ];
-
-    var verticalLevelTypes= [
-      [-11, 'Tunneli'],
-      [-1, 'Alikulku'],
-      [0, 'Maan pinnalla'],
-      [1, 'Silta, Taso 1'],
-      [2, 'Silta, Taso 2'],
-      [3, 'Silta, Taso 3'],
-      [4, 'Silta, Taso 4']
-    ];
-
-    var allRoadTypes = [
-      [1, 'Yleinen tie'],
-      [2, 'Lauttaväylä yleisellä tiellä'],
-      [3, 'Kunnan katuosuus'],
-      [4, 'Yleisen tien työmaa'],
-      [5, 'Yksityistie'],
-      [9, 'Omistaja selvittämättä']
-    ];
 
     var discontinuities = [
       [1, 'Tien loppu'],
@@ -60,24 +10,9 @@
       [5, 'Jatkuva']
     ];
 
-    var floatingText = [
-      [0, 'Ei'],
-      [-1, 'Kyllä']
-    ];
-
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
-    };
-
-    var getLocalizedLinkType = function(linkType) {
-      var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
-      return localizedLinkType && localizedLinkType[1];
-    };
-
-    var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
-      return verticalLevelType && verticalLevelType[1];
     };
 
     var checkIfMultiSelection = function(mmlId){
@@ -85,16 +20,6 @@
         return mmlId;
       }
     };
-
-    /*var getFloatingType = function(floatingValue) {
-      var floatingType =  _.find(floatingText, function (f) {
-        return f[0] === floatingValue;
-      });
-      if(typeof floatingType == 'undefined'){
-        floatingType = [0, 'Ei'];
-      }
-      return floatingType && floatingType[1];
-    };*/
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -229,7 +154,6 @@
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          //' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
           '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
           '</div>';
       else
@@ -237,7 +161,7 @@
     };
 
 
-    var template = function(options) {
+    var template = function() {
       //VIITE-198
       //var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
       //staticField('LAKKAUTUS', 'endDate') : '';
@@ -263,10 +187,10 @@
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
         '</div>' +
-        '<footer>' + buttons + '</footer>', options);
+        '<footer>' + buttons + '</footer>');
     };
 
-    var templateFloating = function(options) {
+    var templateFloating = function() {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
@@ -287,10 +211,10 @@
         notificationFloatingTransfer(true)   +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer>', options);
+        '<footer>' + buttons + '</footer>');
     };
 
-    var templateFloatingEditMode = function(options) {
+    var templateFloatingEditMode = function() {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
@@ -314,7 +238,7 @@
         linkIds  +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer> </div>', options);
+        '<footer>' + buttons + '</footer> </div>');
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -338,10 +262,10 @@
         if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
 
           if(!applicationModel.isReadOnly()){
-            rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            rootElement.html(templateFloatingEditMode(selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
             $('#floatingEditModeForm').show();
           } else {
-            rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            rootElement.html(templateFloating(selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
           }
           rootElement.find('.form-controls').toggle(!readOnly && compactForm);
           rootElement.find('.btn-move').toggle(!readOnly && compactForm);
@@ -354,14 +278,11 @@
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-          linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
-          linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
           linkProperties.roadNameFi = linkProperties.roadNameFi || '';
           linkProperties.roadNameSe = linkProperties.roadNameSe || '';
           linkProperties.roadNameSm = linkProperties.roadNameSm || '';
           linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
           linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-          linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
           linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
           linkProperties.roadAddress = linkProperties.roadAddress || '';
           linkProperties.segmentId = linkProperties.segmentId || '';
@@ -378,49 +299,18 @@
           linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
           linkProperties.endAddressM = linkProperties.endAddressM || '';
           linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-          //linkProperties.endDate = linkProperties.endDate || '';
           linkProperties.roadType = linkProperties.roadType || '';
-          //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
           linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
-          var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
-            var selected = key === linkProperties.trafficDirection ? " selected" : "";
-            return '<option value="' + key + '"' + selected + '>' + value + '</option>';
-          }).join('');
-          var functionalClassOptionTags = _.map(functionalClasses, function (value) {
-            var selected = value == linkProperties.functionalClass ? " selected" : "";
-            return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-          }).join('');
-          var linkTypesOptionTags = _.map(linkTypes, function (value) {
-            var selected = value[0] == linkProperties.linkType ? " selected" : "";
-            return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
-          }).join('');
-          var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-          options = {
-            imports: {
-              trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-              functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-              linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
-            }
-          };
           if (compactForm){
             if(!applicationModel.isReadOnly()){
-              rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
+              rootElement.html(templateFloatingEditMode(linkProperties)(linkProperties));
           } else {
-              rootElement.html(templateFloating(options, linkProperties)(linkProperties));
+              rootElement.html(templateFloating(linkProperties)(linkProperties));
             }
           } else {
-            rootElement.html(template(options, linkProperties)(linkProperties));
+            rootElement.html(template(linkProperties)(linkProperties));
           }
-          rootElement.find('.traffic-direction').change(function(event) {
-            selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
-          });
-          rootElement.find('.functional-class').change(function(event) {
-            selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-          });
-          rootElement.find('.link-types').change(function(event) {
-            selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-          });
           toggleMode(applicationModel.isReadOnly());
         }
       });
@@ -528,7 +418,6 @@
       });
 
       eventbus.on('adjacents:startedFloatingTransfer', function() {
-        action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
       });
