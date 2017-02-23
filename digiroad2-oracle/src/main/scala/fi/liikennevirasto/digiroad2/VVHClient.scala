@@ -261,7 +261,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH road links in polygon area. Municipalities are optional.
     *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
     */
-  def queryByPolygons(polygon: String): Seq[VVHRoadlink] = {
+  def queryRoadLinksByPolygons(polygon: String): Seq[VVHRoadlink] = {
     if (!polygon.contains("{rings:[")) //check that input is somewhat correct
     {
       return  Seq.empty[VVHRoadlink]
@@ -277,19 +277,18 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-  def queryChangesByPolygonAndMunicipalities(polygon: String): Seq[ChangeInfo] = {
+  def queryChangesByPolygon(polygon: String): Seq[ChangeInfo] = {
     if (!polygon.contains("{rings:[")) //check that input is somewhat correct
-        return  Seq.empty[ChangeInfo]
-    val urlpoly=URLEncoder.encode(polygon)
-    val definition = layerDefinition(combineFiltersWithAnd("",""))
+      return  Seq.empty[ChangeInfo]
+    val defs="[{\"layerId\":0,\"outFields\":\"OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE\"}]"
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
-    s"layerDefs=$definition&geometry=" +  urlpoly +
-    "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters(false)
+    "layerDefs="+URLEncoder.encode(defs, "UTF-8")+"&geometry=" +  URLEncoder.encode(polygon) + "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=false&f=pjson"
 
-      fetchVVHFeatures(url) match {
-        case Left(features) => features.map(extractVVHChangeInfo)
-        case Right(error) => throw new VVHClientException(error.toString)
-      }
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHChangeInfo)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
 
   }
 
@@ -320,11 +319,11 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   def fetchRoadLinksByPolygonF(polygonString : String): Future[Seq[VVHRoadlink]] = {
-    Future(queryByPolygons(polygonString))
+    Future(queryRoadLinksByPolygons(polygonString))
   }
 
   def fetchChangesByPolygonF(polygonstring : String): Future[Seq[ChangeInfo]] = {
-    Future(queryChangesByPolygonAndMunicipalities(polygonstring))
+    Future(queryChangesByPolygon(polygonstring))
   }
 
   /**

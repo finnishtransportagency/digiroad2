@@ -22,13 +22,13 @@ class VVHClientSpec extends FunSuite with Matchers{
 
   test("Fetch roadlinks with polygon string ") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val result= vvhClient.queryByPolygons("{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}")
+    val result= vvhClient.queryRoadLinksByPolygons("{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}")
     result.size should be >1
   }
 
   test("Fetch roadlinks with empty polygon string") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val result= vvhClient.queryByPolygons("")
+    val result= vvhClient.queryRoadLinksByPolygons("")
     result.size should be (0)
   }
   /**
@@ -38,5 +38,15 @@ class VVHClientSpec extends FunSuite with Matchers{
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val result = vvhClient.historyData.fetchVVHRoadlinkHistory(Set(440484,440606,440405,440489))
     result.nonEmpty should be (true)
+  }
+  test("Fetch changes with polygon string ") {
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val result= vvhClient.queryChangesByPolygon("{rings:[[[528428,6977212],[543648,6977212],[543648,7002668],[528428,7002668]]]}")
+    result.size should be >1
+  }
+  test("Fetch changes with empty polygon string") {
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val result= vvhClient.queryChangesByPolygon("")
+    result.size should be (0)
   }
 }
