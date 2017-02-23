@@ -343,14 +343,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.createMissingRoadAddress(missingAddress)
   }
 
-  def mergeRoadAddress(data: RoadAddressMerge) = {
+  def mergeRoadAddress(data: RoadAddressMerge): Unit = {
     withDynTransaction {
-      val mergedCount = updateMergedSegments(data.merged)
-      if (mergedCount == data.merged.size)
-        createMergedSegments(data.created)
-      else
-        throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
+      mergeRoadAddressInTX(data)
     }
+  }
+
+  def mergeRoadAddressInTX(data: RoadAddressMerge): Unit = {
+    RoadAddressDAO.lockRoadAddressTable()
+    val unMergedCount = RoadAddressDAO.queryById(data.merged).size
+    if (unMergedCount != data.merged.size)
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
+    val mergedCount = updateMergedSegments(data.merged)
+    if (mergedCount == data.merged.size)
+      createMergedSegments(data.created)
+    else
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
@@ -731,7 +739,7 @@ object RoadAddressLinkBuilder {
       adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
-    }
+  }
 
   private def toIntNumber(value: Any) = {
     try {
@@ -843,19 +851,19 @@ object RoadAddressLinkBuilder {
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
-//      if (previousSegment.geom.isEmpty)
-//        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " N/A")
-//      else
-//        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " " + previousSegment.geom)
-//
-//      if (nextSegment.geom.isEmpty)
-//        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " N/A")
-//      else
-//        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " " + nextSegment.geom)
-//      println(startMValue, endMValue)
-//      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
+      //      if (previousSegment.geom.isEmpty)
+      //        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " N/A")
+      //      else
+      //        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " " + previousSegment.geom)
+      //
+      //      if (nextSegment.geom.isEmpty)
+      //        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " N/A")
+      //      else
+      //        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " " + nextSegment.geom)
+      //      println(startMValue, endMValue)
+      //      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
-//      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
+      //      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
