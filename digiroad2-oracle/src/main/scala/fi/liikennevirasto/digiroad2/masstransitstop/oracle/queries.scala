@@ -237,6 +237,13 @@ object Queries {
     """.as[Int].list
   }
 
+  def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
+    //The road_maintainer_id of Ahvenanmaa is 0
+    sql"""
+      select id from municipality where ROAD_MAINTAINER_ID != 0
+      """.as[Int].list
+  }
+
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
     sql"""
       select m.id from municipality m where m.ELY_NRO = $elyNro

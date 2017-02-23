@@ -105,9 +105,10 @@ var RoadStyles = function() {
       handleRoadsVisibility();
     };
 
-    var drawRoadLinks = function(roadLinks, zoom) {
+    var drawRoadLinks = function(roadLinks, zoom, action) {
       uiState.zoomLevel = zoom;
       eventbus.trigger('roadLinks:beforeDraw');
+      if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculated)){
       vectorLayer.removeAllFeatures();
       var features = _.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
@@ -119,6 +120,7 @@ var RoadStyles = function() {
         vectorLayer.addFeatures(features);
       });
       eventbus.trigger('roadLinks:afterDraw', roadLinks);
+      }
     };
 
     var drawRoadLink = function(roadLink) {

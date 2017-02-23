@@ -122,46 +122,61 @@
             '</div>';
           }
       } else if(labelText === 'VALITUT LINKIT'){
-        var linkIds = "";
-        var id = 0;
-        _.each(selectedLinkProperty.get(), function(slp){
-          var divId = "VALITUTLINKIT" + id;
-          var linkid = slp.linkId.toString();
-          if (linkIds.length === 0) {
-            field = '<div class="form-group" id=' +divId +'>' +
-              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-              '<p class="form-control-static-floating">' + linkid + '</p>' +
-              '</div>' ;
-            linkIds = linkid;
-          } else if(linkIds.search(linkid) === -1){
-            field = field + '<div class="form-group" id=' +divId +'>' +
-              '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
-              '<p class="form-control-static-floating">' + linkid + '</p>' +
-              '</div>' ;
-            linkIds = linkIds + ", " + linkid;
-          }
-          id = id + 1;
-        });
+        var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
+        field = formFields(sources);
       }
       return field;
     };
 
-    var aditionalSource = function(linkId, marker){
-      return '' +
+    var formFields = function (sources){
+      var linkIds = "";
+      var field;
+      var id = 0;
+      _.each(sources, function(slp){
+        var divId = "VALITUTLINKIT" + id;
+        var linkid = slp.linkId.toString();
+        if (linkIds.length === 0) {
+          field = '<div class="form-group" id=' +divId +'>' +
+            '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+            '<p class="form-control-static-floating">' + linkid + '</p>' +
+            '</div>' ;
+          linkIds = linkid;
+        } else if(linkIds.search(linkid) === -1){
+          field = field + '<div class="form-group" id=' +divId +'>' +
+            '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
+            '<p class="form-control-static-floating">' + linkid + '</p>' +
+            '</div>' ;
+          linkIds = linkIds + ", " + linkid;
+        }
+        id = id + 1;
+      });
+      return field;
+    };
+
+    var additionalSource = function(linkId, marker) {
+        return (!_.isUndefined(marker)) ? '' +
         '<div class = "form-group" id = "aditionalSource">' +
         '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
         '<label class="control-label-floating"> LINK ID:</label>' +
         '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
-        /*'<span class="marker">' + marker + '</span>' +
-        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +*/
+        '<span class="marker">' + marker + '</span>' +
+        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+        '</div>' +
+        '</div>' : '' +
+        '<div class = "form-group" id = "aditionalSource">' +
+        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+        '<label class="control-label-floating"> LINK ID:</label>' +
+        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
         '</div>' +
         '</div>';
     };
 
     var adjacentsTemplate = '' +
       '<div class="target-link-selection" id="adjacentsData">' +
-      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
       '<div class="form-group" id="adjacents">' +
+      '<% if(!_.isEmpty(adjacentLinks)){ %>' +
+      '<br><br><label class="control-label-adjacents">VALITTAVISSA OLEVAT TIELINKIT, JOILTA PUUTTUU TIEOSOITE:</label>' +
+      ' <% } %>' +
       '<% _.forEach(adjacentLinks, function(l) { %>' +
       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
       '<label class="control-label-floating"> LINK ID: </label>' +
@@ -175,6 +190,12 @@
       '</div>' +
       '</div>';
 
+    var afterCalculationTemplate ='' +
+      '<div class="form-group" id="afterCalculationInfo">' +
+      ' <br><br><p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">TARKISTA TEKEMÄSI MUUTOKSET KARTTANÄKYMÄSTÄ.</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENA</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS HALUAT KORJATA TEKEMÄSI MUUTOKSIA, PAINA PERUUTA</span></p>' +
+      '</div>';
 
     var staticField = function(labelText, dataField) {
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
@@ -200,25 +221,16 @@
     var buttons =
       '<div class="link-properties form-controls">' +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
       '</div>';
-
-    var notification = function(displayNotification) {
-      if(displayNotification)
-        return '' +
-          '<div class="form-group form-notification">' +
-          ' <p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
-          '</div>';
-      else
-        return '';
-    };
 
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          ' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
+          //' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
           '</div>';
       else
         return '';
@@ -272,7 +284,7 @@
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
         roadTypes +
-        notification(true)   +
+        notificationFloatingTransfer(true)   +
         '</div>' +
         '</div>' +
         '<footer>' + buttons + '</footer>', options);
@@ -316,16 +328,18 @@
     };
 
     var bindEvents = function() {
+
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').toggle(false);
-        if(compactForm){
+        if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
 
           if(!applicationModel.isReadOnly()){
             rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            $('#floatingEditModeForm').show();
           } else {
             rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
           }
@@ -334,119 +348,136 @@
         }
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        compactForm = !_.isEmpty(selectedLinkProperty.get()) && selectedLinkProperty.get()[0].roadLinkType === -1;
-        if(compactForm && !applicationModel.isReadOnly())
-          selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
-        linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
-        linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-        linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
-        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
-        linkProperties.roadNameFi = linkProperties.roadNameFi || '';
-        linkProperties.roadNameSe = linkProperties.roadNameSe || '';
-        linkProperties.roadNameSm = linkProperties.roadNameSm || '';
-        linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
-        linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-        linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
-        linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-        linkProperties.roadAddress = linkProperties.roadAddress || '';
-        linkProperties.segmentId = linkProperties.segmentId || '';
-        linkProperties.roadNumber = linkProperties.roadNumber || '';
-        if (linkProperties.roadNumber > 0) {
-          linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-          linkProperties.startAddressM = linkProperties.startAddressM || '0';
-          linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
-        } else {
-          linkProperties.roadPartNumber = '';
-          linkProperties.trackCode = '';
-          linkProperties.startAddressM = '';
-        }
-        linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
-        linkProperties.endAddressM = linkProperties.endAddressM || '';
-        linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-        //linkProperties.endDate = linkProperties.endDate || '';
-        linkProperties.roadType = linkProperties.roadType || '';
-        //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
-        linkProperties.roadLinkType = linkProperties.roadLinkType || '';
+        if(!_.isEmpty(selectedLinkProperty.get())){
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
+          if(compactForm && !applicationModel.isReadOnly() && selectedLinkProperty.getFeaturesToKeep().length > 1)
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
+          linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
+          linkProperties.modifiedAt = linkProperties.modifiedAt || '';
+          linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
+          linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
+          linkProperties.roadNameFi = linkProperties.roadNameFi || '';
+          linkProperties.roadNameSe = linkProperties.roadNameSe || '';
+          linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+          linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
+          linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
+          linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
+          linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
+          linkProperties.roadAddress = linkProperties.roadAddress || '';
+          linkProperties.segmentId = linkProperties.segmentId || '';
+          linkProperties.roadNumber = linkProperties.roadNumber || '';
+          if (linkProperties.roadNumber > 0) {
+            linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
+            linkProperties.startAddressM = linkProperties.startAddressM || '0';
+            linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
+          } else {
+            linkProperties.roadPartNumber = '';
+            linkProperties.trackCode = '';
+            linkProperties.startAddressM = '';
+          }
+          linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
+          linkProperties.endAddressM = linkProperties.endAddressM || '';
+          linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
+          //linkProperties.endDate = linkProperties.endDate || '';
+          linkProperties.roadType = linkProperties.roadType || '';
+          //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
+          linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
-        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
-          var selected = key === linkProperties.trafficDirection ? " selected" : "";
-          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
-        }).join('');
-        var functionalClassOptionTags = _.map(functionalClasses, function (value) {
-          var selected = value == linkProperties.functionalClass ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-        }).join('');
-        var linkTypesOptionTags = _.map(linkTypes, function (value) {
-          var selected = value[0] == linkProperties.linkType ? " selected" : "";
-          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
-        }).join('');
-        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        options = {
-          imports: {
-            trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+          var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
+            var selected = key === linkProperties.trafficDirection ? " selected" : "";
+            return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var functionalClassOptionTags = _.map(functionalClasses, function (value) {
+            var selected = value == linkProperties.functionalClass ? " selected" : "";
+            return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var linkTypesOptionTags = _.map(linkTypes, function (value) {
+            var selected = value[0] == linkProperties.linkType ? " selected" : "";
+            return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+          }).join('');
+          var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
+          options = {
+            imports: {
+              trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+              functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+              linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+            }
+          };
+          if (compactForm){
+            if(!applicationModel.isReadOnly()){
+              rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
+          } else {
+              rootElement.html(templateFloating(options, linkProperties)(linkProperties));
+            }
+          } else {
+            rootElement.html(template(options, linkProperties)(linkProperties));
           }
-        };
-        if (compactForm){
-          if(!applicationModel.isReadOnly()){
-            rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
-        } else {
-            rootElement.html(templateFloating(options, linkProperties)(linkProperties));
-          }
-        } else {
-          rootElement.html(template(options, linkProperties)(linkProperties));
+          rootElement.find('.traffic-direction').change(function(event) {
+            selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          });
+          rootElement.find('.functional-class').change(function(event) {
+            selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          });
+          rootElement.find('.link-types').change(function(event) {
+            selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          });
+          toggleMode(applicationModel.isReadOnly());
         }
-        rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
-        });
-        rootElement.find('.functional-class').change(function(event) {
-          selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-        });
-        rootElement.find('.link-types').change(function(event) {
-          selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-        });
-        toggleMode(applicationModel.isReadOnly());
       });
-      
       eventbus.on('adjacents:added', function(sources, targets) {
         processAdjacents(sources,targets);
+        applicationModel.removeSpinner();
+
       });
 
-      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets) {
+      eventbus.on('adjacents:aditionalSourceFound', function(sources, targets, additionalSourceLinkId) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
-        processAdjacents(sources, targets);
+        processAdjacents(sources, targets, additionalSourceLinkId);
+        applicationModel.removeSpinner();
       });
 
-      var processAdjacents = function (sources, targets) {
+      var processAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t){
           return t.roadLinkType == -1;
         });
-        if(_.isEmpty(adjacents)) return;
 
-        var floatingAdjacents = _.filter(targets, function(t){
-          return t.roadLinkType == -1;
-        });
+        //singleLinkSelection case
+        var floatingAdjacents = [];
+          if(selectedLinkProperty.count() === 1)
+            floatingAdjacents = _.filter(targets, function(t){
+            return t.roadLinkType == -1;
+          });
 
-        var fullTemplate = !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-          return aditionalSource(fa.linkId, fa.marker);
+        var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
+          return additionalSource(fa.linkId, fa.marker);
         })[0] + adjacentsTemplate : adjacentsTemplate;
 
-        $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
-        $('#floatingEditModeForm').show();
-        $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
-          eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
-          //TODO Uncomment for task 182
-          //begin
-          // rootElement.find('.link-properties button.calculate').attr('disabled', false);
-          rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          applicationModel.setActiveButtons(true);
-          //end
-        });
-        $('[id*="aditionalSourceButton"]').click(sources,function(event) {
-          eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
-        });
+        if(!_.isUndefined(additionalSourceLinkId)){
+          return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+            '<label class="control-label-floating"> LINK ID:</label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
+            '</div>');
+        }
+
+        if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
+            $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
+            $('#floatingEditModeForm').show();
+            if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
+              eventbus.trigger("adjacents:roadTransfer");
+            $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
+              eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
+              rootElement.find('.link-properties button.calculate').attr('disabled', false);
+              rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              applicationModel.setActiveButtons(true);
+            });
+            $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+              applicationModel.addSpinner();
+              eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
+              rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              applicationModel.setActiveButtons(true);
+            });
+        }
 
       };
       
@@ -458,20 +489,51 @@
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
-        selectedLinkProperty.save();
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
+        {
+          selectedLinkProperty.saveTransfer();
+        } else {
+          selectedLinkProperty.save();
+        }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
-        selectedLinkProperty.cancel();
+        var action;
+        if(applicationModel.isActiveButtons())
+          action = applicationModel.actionCalculating;
+        applicationModel.setCurrentAction(action);
+        selectedLinkProperty.cancel(action);
         applicationModel.setActiveButtons(false);
       });
+      rootElement.on('click', '.link-properties button.calculate', function() {
+        applicationModel.addSpinner();
+        selectedLinkProperty.transferringCalculation();
+        applicationModel.setActiveButtons(true);
+        
+      });
+      eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
+        $('#aditionalSource').remove();
+        $('#adjacentsData').remove();
+        rootElement.find('.link-properties button.save').attr('disabled', false);
+        rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        rootElement.find('.link-properties button.calculate').attr('disabled', true);
+        $('[id^=VALITUTLINKIT]').remove();
 
+        var fields = formFields(_.map(targets, function(sId){
+          return {'linkId' : sId};
+        })) + '' + afterCalculationTemplate;
 
-      eventbus.on('layer:selected', function(layer) {
+        $('.form-group:last').after(fields);
 
+        applicationModel.removeSpinner();
       });
 
+      eventbus.on('adjacents:startedFloatingTransfer', function() {
+        action = applicationModel.actionCalculating;
+        rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        rootElement.find('.link-properties button.calculate').attr('disabled', false);
+        applicationModel.setActiveButtons(true);
+      });
     };
-
     bindEvents();
   };
 })(this);
