@@ -7,6 +7,7 @@
     <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 
     <script type="text/javascript">
+
         function showHideInfo() {
             if ($("select[name='roleName']").val() == "serviceRoadMaintainer")
                 $(".authArea").show();
@@ -18,7 +19,7 @@
             var username = $( "input[name=username]" ).val();
             $.ajax({
                 //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
-                url: "/api/userconfig/user/" + username,
+                url: "api/userconfig/user/" + username,
                 type: "get",
                 success: function () {
                     new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
