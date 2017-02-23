@@ -6,8 +6,6 @@
     projectList.append('<div style="float: right; margin-top: 55px; margin-right: -60px"><button class="save btn btn-primary" >Uusi tieosoiteprojekti</button></div>');
     projectList.append('<hr style="margin-top: 90px">').hide();
 
-
-
     function toggle() {
       jQuery('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
       jQuery('.modal-dialog').append(projectList.toggle());
