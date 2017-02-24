@@ -4,6 +4,7 @@
         var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
+        var initDrag = false;
 
         var settings = _.extend({
             onDragStart: function(){},
@@ -47,10 +48,14 @@
         });
 
         var toggleDragBox = function() {
-            if (!application.isReadOnly() && enabled && settings.draggable && !initialized)
+            if (!application.isReadOnly() && enabled && settings.draggable) {
+                destroyDragBoxInteraction();
                 map.addInteraction(dragBoxInteraction);
-            else
-                map.removeInteraction(dragBoxInteraction);
+            }
+            else{
+                if(!settings.draggable && enabled)
+                    destroyDragBoxInteraction();
+            }
         };
 
         var highlightLayer = function(){
@@ -98,13 +103,22 @@
 
         };
 
-        var addSelectionFeatures = function(features, type){
-            clear(type);
+        var addSelectionFeatures = function(features, type, hasAdjacent){
+            if(!hasAdjacent)
+                clear(type);
+
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
             });
             if(!type)
                 unhighlightLayer();
+        };
+
+        var destroyDragBoxInteraction = function () {
+            _.each(map.getInteractions().getArray(), function (interaction) {
+                if(interaction instanceof ol.interaction.DragBox)
+                    map.removeInteraction(interaction);
+            });
         };
 
         eventbus.on('application:readOnly', toggleDragBox);
@@ -116,7 +130,8 @@
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
-            clear: clear
+            clear: clear,
+            destroyDragBoxInteraction: destroyDragBoxInteraction
         };
     };
 })(this);

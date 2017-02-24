@@ -1,6 +1,7 @@
 (function(root) {
   root.PointAssetLayer = function(params) {
     var roadLayer = params.roadLayer,
+      application= applicationModel,
       collection = params.collection,
       map = params.map,
       roadCollection = params.roadCollection,
@@ -26,56 +27,32 @@
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
-    me.selectControl = defineOpenLayersSelectControl();
-    function defineOpenLayersSelectControl() {
+    var selectControl = new SelectAndDragToolControl(application, vectorLayer, map, {
+        style : function (feature) {
+            return feature.setStyle(style.browsingStyleProvider.getStyle(feature));
+        },
+        onSelect : pointAssetOnSelect
+    });
 
-      var selectControl = new ol.interaction.Select({
-         layers : [vectorLayer],
-         condition : function(events){ return enable && ol.events.condition.singleClick(events); },
-         style : function (feature) {
-             return feature.setStyle(style.browsingStyleProvider.getStyle(feature));
-         }
-      });
-      selectControl.on('select', pointAssetOnSelect);
-
-      function pointAssetOnSelect(feature) {
-        if(feature.selected.length > 0){
-          selectedAsset.open(feature.selected[0].values_);
-          toggleMode(applicationModel.isReadOnly());
-        }
-        else {
-          if(feature.deselected.length > 0) {
-            selectedAsset.close();
-          }
+    function pointAssetOnSelect(feature) {
+      if(feature.selected.length > 0){
+        selectedAsset.open(feature.selected[0].values_);
+        toggleMode(application.isReadOnly());
+      }
+      else {
+        if(feature.deselected.length > 0) {
+          selectedAsset.close();
         }
       }
-      var enable = false;
-      console.log('init');
-      map.addInteraction(selectControl);
-
-      var activate = function () {
-         enable=true;
-         console.log('activate');
-      };
-
-      var deactivate = function () {
-        enable = false;
-        console.log('deactivate');
-        //map.removeInteraction(selectControl);
-      };
-
-      return {
-          selectControl : selectControl,
-          activate : activate,
-          deactivate : deactivate
-      };
     }
+
+    this.selectControl = selectControl;
 
     var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
         var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
         var dragControl = new ol.interaction.Translate({
-           features : me.selectControl.selectControl.getFeatures()
+           features : selectControl.getSelectInteraction().getFeatures()
         });
 
         dragControl.on('translating', dragHandler);
@@ -150,7 +127,7 @@
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
-          me.selectControl.activate();
+         // me.selectControl.activate();
       });
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
@@ -179,7 +156,6 @@
         var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.values_); });
         if (feature) {
           //me.selectControl.select(feature);
-            me.selectControl.activate();
         }
       }
     }
@@ -187,9 +163,9 @@
     function withDeactivatedSelectControl(f) {
       var isActive = me.selectControl.active;
       if (isActive) {
-        me.selectControl.deactivate();
+       // me.selectControl.deactivate();
         f();
-        me.selectControl.activate();
+        //me.selectControl.activate();
       } else {
         f();
       }
@@ -233,7 +209,7 @@
     }
 
     function handleSavedOrCancelled() {
-      me.selectControl.activate();
+     // me.selectControl.activate();
       mapOverlay.hide();
       //TODO use that instead of doing me.selectControl.activate();
      // me.activateSelection();
@@ -242,7 +218,7 @@
     }
 
     function handleChanged() {
-      me.deactivateSelection();
+      //me.deactivateSelection();
       var asset = selectedAsset.get();
       var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset)});
       // _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
@@ -252,7 +228,7 @@
     }
 
     function handleMapClick(coordinates) {
-      if (applicationModel.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
+      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
        // var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
         createNewAsset(coordinates);
       } else if (selectedAsset.isDirty()) {
@@ -261,7 +237,7 @@
     }
 
     function handleUnSelected() {
-        me.selectControl.activate();
+      //  me.selectControl.activate();
       //me.selectControl.unselectAll();
       //vectorLayer.styleMap = style.browsing;
       //vectorLayer.redraw();

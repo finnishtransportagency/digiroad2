@@ -10,12 +10,12 @@ window.SpeedLimitLayer = function(params) {
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
-    selectToolControl.toggleDragBox();
+   // selectToolControl.toggleDragBox();
     selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    selectToolControl.toggleDragBox();
-    selectToolControl.activate();
+    //selectToolControl.destroyDragBoxInteraction();
+    selectToolControl.deactivate();
   };
   this.minZoomForContent = zoomlevels.minZoomForAssets;
   this.layerStarted = function(eventListener) {

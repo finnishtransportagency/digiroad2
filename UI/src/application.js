@@ -244,6 +244,7 @@
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
      acc[asset.layerName] = new PointAssetLayer({
        roadLayer: roadLayer,
+       application: applicationModel,
        roadCollection: models.roadCollection,
        collection: asset.collection,
        map: map,

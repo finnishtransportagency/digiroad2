@@ -69,9 +69,9 @@
     });
 
     eventbus.on('coordinates:selected', function(position) {
-      if (geometrycalculator.isInBounds(map.getView().getExtent(), position.lon, position.lat)) {
+      if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
         map.getView().setCenter([position.lon, position.lat]);
-        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
+        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getView().getZoom()));
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }

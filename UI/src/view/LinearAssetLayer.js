@@ -275,11 +275,11 @@ window.LinearAssetLayer = function(params) {
   };
 
   this.activateSelection = function() {
-    selectToolControl.toggleDragBox();
+   // selectToolControl.toggleDragBox();
     selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    selectToolControl.toggleDragBox();
+   // selectToolControl.destroyDragBoxInteraction();
     selectToolControl.deactivate();
   };
   this.removeLayerFeatures = function() {
