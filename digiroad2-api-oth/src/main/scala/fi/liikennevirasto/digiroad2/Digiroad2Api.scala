@@ -245,19 +245,6 @@ Returns empty result as Json message, not as page not found
     assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
-  post("/geocode"){
-    Map("results" -> Seq (
-      Map("ely" -> "1",
-         "address" -> "Tattariharjuntie, Helsinki",
-         "maakunta"-> "01",
-         "kuntakoodi"-> "091",
-         "urakka_alue"-> "131",
-         "y"-> 6681275.071,
-         "x"-> 392818.286
-      ))
-    )
-  }
-
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
