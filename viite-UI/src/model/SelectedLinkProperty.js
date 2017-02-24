@@ -338,6 +338,45 @@
       }
     };
 
+    var gapTransferingCancel = function(){
+      //First we grab the floatings
+      var floatings = _.uniq(_.filter(_.map(featuresToKeep, function(feature){
+        if(feature.roadLinkType === -1){
+          return feature.linkId;
+        }
+      }), function (target){
+        return !_.isUndefined(target);
+      }));
+      //Secondly we clear them
+      clearFeaturesToKeep();
+      applicationModel.setActiveButtons(false);
+      eventbus.trigger('roadLinks:deleteSelection');
+
+      if (!_.isEmpty(current) && !isDirty()) {
+        _.forEach(current, function (selected) {
+          selected.unselect();
+        });
+        eventbus.trigger('linkProperties:unselected');
+        sources = [];
+        targets = [];
+        current = [];
+        featuresToKeep = [];
+      }
+      _.forEach(floatings, function(f){
+        var roadAddress = roadCollection.getByLinkId([f]);
+        var roads = _.map(get(), function (r){
+          return r.linkId;
+        });
+        var fetchedRoads = _.map(roadAddress, function (r){
+          return r.getData().linkId;
+        });
+        if(!_.contains(roads, _.first(fetchedRoads))){
+          current = current.concat(roadAddress);
+        }
+      });
+      eventbus.trigger('roadLinks:drawAfterGapCanceling');
+    };
+
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
@@ -381,6 +420,7 @@
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
+      gapTransferingCancel: gapTransferingCancel,
       close: close,
       open: open,
       isDirty: isDirty,

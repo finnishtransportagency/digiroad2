@@ -501,7 +501,7 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        selectedLinkProperty.cancel(action);
+        selectedLinkProperty.gapTransferingCancel();
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {

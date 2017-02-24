@@ -59,9 +59,9 @@
           feature.attributes.anomaly = feature.attributes.prevAnomaly;
         }
       });
-      roadLayer.redraw();
       indicatorLayer.clearMarkers();
       unhighlightFeatures();
+      roadLayer.redraw();
     };
 
     var unselectAllRoadLinks = function(options) {
@@ -427,6 +427,37 @@
 
       eventListener.listenTo(eventbus, 'linkProperties:reselect', reselectRoadLink);
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
+      eventListener.listenTo(eventbus, 'roadLinks:drawAfterGapCanceling', function() {
+        currentRenderIntent = 'default';
+        _.map(roadLayer.layer.features,function (feature){
+          if(feature.data.gapTransfering) {
+            feature.data.gapTransfering = false;
+            feature.attributes.gapTransfering = false;
+            feature.data.anomaly = feature.data.prevAnomaly;
+            feature.attributes.anomaly = feature.attributes.prevAnomaly;
+          }
+        });
+        unhighlightFeatures();
+        roadLayer.redraw();
+        var current = selectedLinkProperty.get();
+        _.forEach(current, function(road){
+          var feature = _.find(roadLayer.layer.features, function (feature) {
+            return road.linkId !== 0 && feature.attributes.linkId === road.linkId;
+          });
+          if (feature) {
+            _.each(selectControl.layer.selectedFeatures, function (selectedFeature) {
+              if (selectedFeature.attributes.linkId !== feature.attributes.linkId) {
+                selectControl.select(feature);
+              }
+            });
+          }
+        });
+        indicatorLayer.clearMarkers();
+      });
+
+
+
+
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
