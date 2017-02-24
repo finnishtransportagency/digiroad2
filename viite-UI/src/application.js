@@ -25,12 +25,15 @@
       // assetSelectionMenu.select(layer);
     });
 
+    var projectListMenu = ProjectListMenu();
+
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
           instructionsPopup,
           new LocationSearch(backend, window.applicationModel)
       ),
+      new ProjectSelectBox(projectListMenu),
       assetGroups
     );
 
