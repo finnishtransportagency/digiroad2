@@ -129,9 +129,7 @@
             addSelectionFeatures: addSelectionFeatures,
             toggleDragBox: toggleDragBox,
             activate: activate,
-            deactivate: deactivate,
-            clear: clear,
-            destroyDragBoxInteraction: destroyDragBoxInteraction
+            deactivate: deactivate
         };
     };
 })(this);

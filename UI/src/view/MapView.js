@@ -69,7 +69,7 @@
     });
 
     eventbus.on('coordinates:selected', function(position) {
-      if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
+      if (geometrycalculator.isInBounds(map.getProperties().extent, position.lon, position.lat)) {
         map.getView().setCenter([position.lon, position.lat]);
         map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getView().getZoom()));
       } else {
@@ -95,6 +95,10 @@
     });
 
     map.on('pointermove', function(event) {
+      var pixel = map.getEventPixel(event.originalEvent);
+      var hit = map.hasFeatureAtPixel(pixel);
+      var target = document.getElementById(map.getTarget());
+      target.style.cursor = hit ? 'pointer' : '';
       eventbus.trigger('map:mouseMoved', event);
     }, true);
 
