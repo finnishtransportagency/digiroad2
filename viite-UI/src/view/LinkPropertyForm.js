@@ -281,8 +281,6 @@
           linkProperties.roadNameFi = linkProperties.roadNameFi || '';
           linkProperties.roadNameSe = linkProperties.roadNameSe || '';
           linkProperties.roadNameSm = linkProperties.roadNameSm || '';
-          linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
-          linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
           linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
           linkProperties.roadAddress = linkProperties.roadAddress || '';
           linkProperties.segmentId = linkProperties.segmentId || '';
