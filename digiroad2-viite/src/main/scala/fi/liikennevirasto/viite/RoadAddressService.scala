@@ -353,12 +353,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     RoadAddressDAO.lockRoadAddressTable()
     val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
-      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
     val mergedCount = updateMergedSegments(data.merged)
     if (mergedCount == data.merged.size)
       createMergedSegments(data.created)
     else
-      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction")
+      throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows not updated")
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
