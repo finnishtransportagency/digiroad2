@@ -1,4 +1,306 @@
 (function(root) {
+
+  root.MassTransitMarker2 = function(data, map){
+    var IMAGE_HEIGHT = 17;
+    var IMAGE_WIDTH = 28;
+    var IMAGE_MARGIN = 2;
+    var IMAGE_PADDING = 4;
+    var STICK_HEIGHT = 15;
+    var NATIONAL_ID_WIDTH = 45;
+    var EMPTY_IMAGE_TYPE = '99';
+    var scale = 1;
+
+    var roundRect = function(canvasContext, x, y, width, height, radius) {
+      canvasContext.beginPath();
+      canvasContext.moveTo(x + radius, y);
+      canvasContext.lineTo(x + width - radius, y);
+      canvasContext.quadraticCurveTo(x + width, y, x + width, y + radius);
+      canvasContext.lineTo(x + width, y + height - radius);
+      canvasContext.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      canvasContext.lineTo(x + radius, y + height);
+      canvasContext.quadraticCurveTo(x, y + height, x, y + height - radius);
+      canvasContext.lineTo(x, y + radius);
+      canvasContext.quadraticCurveTo(x, y, x + radius, y);
+      canvasContext.closePath();
+    };
+
+    var createDivOffeset = function(){
+      var div = document.createElement('div');
+      div.setAttribute('style', 'font: 10px sans-serif; position: absolute; visibility: hidden; height: auto; width: auto; white-space: nowrap;');
+      div.setAttribute('id', 'offset-text-width');
+      document.getElementsByTagName('body')[0].appendChild(div);
+      return div;
+    };
+
+    var getOffset = function(text){
+      var textMeasure = document.getElementById('offset-text-width');
+      if(!textMeasure)
+        textMeasure = createDivOffeset();
+      textMeasure.innerHTML = text;
+      return textMeasure.clientWidth + 10;
+    };
+
+    var createSelectionBackgroundImage = function(busStopsNumber, text){
+      var canvas = document.createElement('canvas');
+      var canvasContext = canvas.getContext('2d');
+      var textOffset = getOffset(text) + 10;
+      canvas.width = ''+(IMAGE_MARGIN + (IMAGE_PADDING * 2) + IMAGE_WIDTH + NATIONAL_ID_WIDTH + textOffset + 15);
+      canvas.height = ''+((IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) + (IMAGE_HEIGHT * busStopsNumber) + 5);
+
+      roundRect(canvasContext, 1,1, IMAGE_MARGIN + (IMAGE_PADDING * 2) + IMAGE_WIDTH + NATIONAL_ID_WIDTH + textOffset, (IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) + (IMAGE_HEIGHT * busStopsNumber), 0);
+      canvasContext.lineWidth = 2;
+      canvasContext.stroke();
+      canvasContext.fillStyle = '#383836';
+      canvasContext.fill();
+
+      var image = new Image();
+      image.src = canvas.toDataURL("image/png");
+      return { img:image, width: canvas.width, height: canvas.height };
+    };
+
+    var getCachedImage = function(key){
+      if(window.cachedStopsBackgroundImage && window.cachedStopsBackgroundImage[key])
+        return window.cachedStopsBackgroundImage[key];
+      return false;
+    };
+
+    var cacheImage = function(key, image, width, height){
+      var imageInfo = { img: image, width: width, height: height };
+      if(!window.cachedStopsBackgroundImage)
+        window.cachedStopsBackgroundImage = {};
+      window.cachedStopsBackgroundImage[key] = imageInfo;
+      return imageInfo;
+    };
+
+    var createStickImage = function(){
+      var cachedImageKey = 'stick';
+      var cachedImage = getCachedImage(cachedImageKey);
+
+      if(cachedImage)
+        return cachedImage;
+
+      var canvas = document.createElement('canvas');
+      var canvasContext = canvas.getContext('2d');
+
+      canvas.width = '5';
+      canvas.height = '20';
+
+      canvasContext.beginPath();
+      canvasContext.moveTo(1, 1);
+      canvasContext.lineTo(1, 20);
+      canvasContext.lineWidth = 5;
+      canvasContext.strokeStyle = '#5a5a57';
+      canvasContext.stroke();
+
+      var image = new Image();
+      image.src = canvas.toDataURL("image/png");
+
+      return cacheImage(cachedImageKey, image, canvas.width, canvas.height );
+    };
+
+    var createStopBackgroundImage = function(busStopsNumber){
+      var cachedImageKey = 'image_'+busStopsNumber;
+      var cachedImage = getCachedImage(cachedImageKey);
+
+      if(cachedImage)
+        return cachedImage;
+
+      var canvas = document.createElement('canvas');
+      var canvasContext = canvas.getContext('2d');
+
+      canvas.width = '' + (IMAGE_WIDTH + (IMAGE_PADDING * 2) + 5);
+      canvas.height = '' + ((IMAGE_PADDING * 2) + (IMAGE_HEIGHT * busStopsNumber) + 5);
+
+      roundRect(canvasContext, 1,1, IMAGE_WIDTH + (IMAGE_PADDING * 2), (IMAGE_PADDING * 2) + (IMAGE_HEIGHT * busStopsNumber), 3);
+      canvasContext.lineWidth = 2;
+      canvasContext.stroke();
+      canvasContext.fillStyle = '#fff';
+      canvasContext.fill();
+
+      roundRect(canvasContext, 1 + IMAGE_PADDING, 1 + IMAGE_PADDING, IMAGE_WIDTH, IMAGE_HEIGHT * busStopsNumber, 3);
+      canvasContext.lineWidth = 2;
+      canvasContext.stroke();
+      canvasContext.fillStyle = '#000';
+      canvasContext.fill();
+
+      var image = new Image();
+      image.src = canvas.toDataURL("image/png");
+
+      return cacheImage(cachedImageKey, image, canvas.width, canvas.height );
+    };
+
+    var createStopTypeStyles = function(stopTypes, margin){
+      var imgMargin = margin ? margin : 0;
+      stopTypes.sort();
+      var i = 0;
+      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
+        i++;
+        return new ol.style.Style({
+          image: new ol.style.Icon(({
+            anchor: [-(IMAGE_PADDING+1+imgMargin), (i * IMAGE_HEIGHT)+ IMAGE_PADDING + STICK_HEIGHT + imgMargin],
+            anchorXUnits: 'pixels',
+            anchorYUnits: 'pixels',
+            src: 'images/mass-transit-stops/' + stopType + '.png',
+            scale: scale
+          }))
+        });
+      });
+    };
+
+    var createSelectionBackgroundStyle = function(stopTypes, text){
+      var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
+      var background = createSelectionBackgroundImage(types, text);
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          anchor: [0, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + (IMAGE_MARGIN * 2) + 1],
+          anchorXUnits: 'pixels',
+          anchorYUnits: 'pixels',
+          img: background.img,
+          imgSize: [background.width,background.height],
+          scale: scale
+        }))
+      });
+    };
+
+    var createStopBackgroundStyle = function(stopTypes, margin){
+      var imgMargin = margin ? margin : 0;
+      var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
+      var background = createStopBackgroundImage(types);
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          anchor: [0-imgMargin, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 1+ imgMargin],
+          anchorXUnits: 'pixels',
+          anchorYUnits: 'pixels',
+          img: background.img,
+          imgSize: [background.width,background.height],
+          scale: scale
+        }))
+      });
+    };
+
+    var createStickStyle = function(){
+      var stickImage = createStickImage();
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          anchor: [0, STICK_HEIGHT+5],
+          anchorXUnits: 'pixels',
+          anchorYUnits: 'pixels',
+          img: stickImage.img,
+          imgSize: [stickImage.width,stickImage.height],
+          scale: scale
+        }))
+      });
+    };
+
+    var createDirectionArrowStyle = function() {
+      var directionArrowSrc = data.floating ? 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg' : 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg';
+      var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: directionArrowSrc,
+          rotation: rotation,
+          scale: scale
+        }))
+      });
+    };
+
+    var createTextStyles = function(stopTypes, nationalId, name, direction, margin){
+      var imgMargin = margin ? margin : 0;
+      var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
+      var beginOffset = IMAGE_WIDTH + (IMAGE_PADDING * 2) + (IMAGE_MARGIN * 2) + 5;
+      var offsetY = (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 1 + imgMargin - 10; //minus font size
+      return [
+        new ol.style.Style({
+          text: new ol.style.Text(({
+            text: ''+nationalId,
+            textAlign: 'start',
+            offsetX: beginOffset,
+            offsetY: -offsetY,
+            fill: new ol.style.Fill({ color: '#fff'}),
+            scale: scale
+          }))
+        }),
+        new ol.style.Style({
+          text: new ol.style.Text(({
+            text: ''+name,
+            textAlign: 'start',
+            offsetX: beginOffset + NATIONAL_ID_WIDTH,
+            offsetY: -offsetY,
+            fill: new ol.style.Fill({ color: '#a4a4a2'}),
+            scale: scale
+          }))
+        }),
+        new ol.style.Style({
+          text: new ol.style.Text(({
+            text: ''+direction,
+            offsetX: (beginOffset + NATIONAL_ID_WIDTH + getOffset(direction)),
+            offsetY: -offsetY,
+            textAlign: 'start',
+            fill: new ol.style.Fill({ color: '#fff'}),
+            scale: scale
+          }))
+        })
+      ];
+    };
+
+    var createSelectionMarkerStyles = function(){
+      var name = '';
+      var direction = '';
+      if(selectedMassTransitStopModel.exists()){
+        name = selectedMassTransitStopModel.getName();
+        direction = selectedMassTransitStopModel.getDirection();
+      }else
+      {
+        name = selectedMassTransitStopModel.getName(data.propertyData);
+        direction = selectedMassTransitStopModel.getDirection(data.propertyData);
+      }
+
+      var styles = [];
+      styles = styles.concat(createDirectionArrowStyle());
+      styles = styles.concat(createStickStyle());
+      styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
+      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN));
+      styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
+      styles = styles.concat(createTextStyles(data.stopTypes, data.nationalId, name, direction, IMAGE_MARGIN));
+      //feature.setStyle(styles);
+      //return feature;
+      return styles;
+    };
+
+    var createDefaultMarkerStyles = function(){
+      var styles = [];
+      styles = styles.concat(createDirectionArrowStyle());
+      styles = styles.concat(createStickStyle());
+      styles = styles.concat(createStopBackgroundStyle(data.stopTypes));
+      styles = styles.concat(createStopTypeStyles(data.stopTypes));
+      //feature.setStyle(styles);
+      //return feature;
+      return styles;
+    };
+
+    var createFeature = function(){
+      return new ol.Feature({geometry : new ol.geom.Point([data.group.lon, data.group.lat])});
+    };
+
+    //TODO add the offset if the bus stop is on a group of busstops
+    var extractStopTypes = function(properties) {
+      return _.chain(properties)
+          .where({ publicId: 'pysakin_tyyppi' })
+          .pluck('values')
+          .flatten()
+          .pluck('propertyValue')
+          .value();
+    };
+
+    return {
+      createSelectionMarkerStyles: createSelectionMarkerStyles,
+      createDefaultMarkerStyles: createDefaultMarkerStyles,
+      createFeature: createFeature
+    };
+  };
+
+
+  /*
   root.MassTransitMarker = function(data) {
 
     var GROUP_ASSET_PADDING = 8;
@@ -177,4 +479,5 @@
       rePlaceInGroup: rePlaceInGroup
     };
   };
+  */
 }(this));

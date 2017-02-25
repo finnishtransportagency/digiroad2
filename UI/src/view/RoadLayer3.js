@@ -17,7 +17,10 @@ var RoadStyles = function() {
 
         if (applicationModel.isRoadTypeShown()){
             defaultProvider.addRules(administrativeClassStyleRule);
-            return defaultProvider;
+            return {
+              defaultStyleProvider: defaultProvider,
+              selectionStyleProvider: selectionProvider
+            };
         }
         return {
             defaultStyleProvider: defaultProvider,
@@ -33,9 +36,14 @@ var RoadStyles = function() {
     var layerMinContentZoomLevels = {};
     var layerStyleProviders = {};
     var uiState = { zoomLevel: 9 };
+    var enabled = true;
+
     var selectControl = new ol.interaction.Select({
         layers : [vectorLayer],
         //TODO: Review this style application
+        condition: function(events){
+          return enabled &&ol.events.condition.singleClick(events);
+        },
         style : function(feature) {
            return (new RoadStyles()).provider().selectionStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
         }
@@ -120,6 +128,10 @@ var RoadStyles = function() {
       var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
       if(currentLayerProvider.defaultStyleProvider)
         return currentLayerProvider.defaultStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+
+      if(currentLayerProvider.default)
+        return currentLayerProvider.default.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+
       return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
     }
 
@@ -230,6 +242,14 @@ var RoadStyles = function() {
      // });
     };
 
+    var deactivateSelection = function() {
+      enabled = false;
+    };
+
+    var activateSelection = function() {
+      enabled = true;
+    };
+
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       //TODO change this to use the new way to do selectcontrol
 
@@ -247,6 +267,8 @@ var RoadStyles = function() {
     }, this);
 
     return {
+      deactivateSelection: deactivateSelection,
+      activateSelection: activateSelection,
       createRoadLinkFeature: createRoadLinkFeature,
       setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,
       setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,

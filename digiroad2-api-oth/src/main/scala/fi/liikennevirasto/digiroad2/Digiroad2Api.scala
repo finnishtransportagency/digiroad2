@@ -124,6 +124,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(bbox)
     massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
         Map("id" -> stop.id,
+          "propertyData" -> stop.propertyData,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
           "municipalityNumber" -> stop.municipalityCode,
