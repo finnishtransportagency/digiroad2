@@ -288,7 +288,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    selectToolControl.clear();
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
     selectToolControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     decorateSelection();

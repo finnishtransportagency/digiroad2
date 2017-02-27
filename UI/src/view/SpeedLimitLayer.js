@@ -47,20 +47,13 @@ window.SpeedLimitLayer = function(params) {
     var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-      _.each(scissorFeatures, function(feature){
-        vectorSource.removeFeature(feature);
-      });
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      vectorSource.addFeatures(scissorFeatures);
+      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
     };
 
     var remove = function() {
-      _.each(scissorFeatures, function (feature) {
-        if(_.contains(vectorSource.getFeatures(), feature)){
-          vectorSource.removeFeature(feature);
-        }
-      });
       scissorFeatures = [];
+      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
     };
 
     var self = this;
@@ -236,7 +229,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
-    style: function(feature){ return feature.setStyle(style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onDragEnd: onDragEnd,
     onSelect: OnSelect
   });
@@ -252,7 +245,7 @@ window.SpeedLimitLayer = function(params) {
     }
   }
   var showDialog = function (speedLimits) {
-      activateSelectionStyle(speedLimits);
+    activateSelectionStyle(speedLimits);
 
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
 
@@ -342,7 +335,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayerHistory.getSource().clear();
   };
 
-  var  indexOf = function (layers, layer) {
+  var indexOf = function (layers, layer) {
     var length = layers.getLength();
     for (var i = 0; i < length; i++) {
       if (layer === layers.item(i)) {
@@ -388,6 +381,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitCancelled = function() {
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
     selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
@@ -483,7 +477,7 @@ window.SpeedLimitLayer = function(params) {
         selectControl.select(feature);
       }
      highlightMultipleSpeedLimitFeatures();
-      selectToolControl.onSelect = speedLimitOnSelect;
+     selectToolControl.onSelect = speedLimitOnSelect;
 
       if (selectedSpeedLimit.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
