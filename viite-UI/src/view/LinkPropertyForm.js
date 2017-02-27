@@ -463,8 +463,6 @@
         if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
-            if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-              eventbus.trigger("adjacents:roadTransfer");
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
               rootElement.find('.link-properties button.calculate').attr('disabled', false);
@@ -478,7 +476,6 @@
               applicationModel.setActiveButtons(true);
             });
         }
-
       };
       
       eventbus.on('linkProperties:changed', function() {
@@ -501,7 +498,8 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        selectedLinkProperty.gapTransferingCancel();
+        // selectedLinkProperty.gapTransferingCancel();
+        selectedLinkProperty.cancel(action);
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {

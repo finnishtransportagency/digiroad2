@@ -314,7 +314,6 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(featuresToKeep);
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
@@ -322,16 +321,13 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         clearFeaturesToKeep();
-        _.defer(function(){
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
-        });
       }
 
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
