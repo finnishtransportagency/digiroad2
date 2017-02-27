@@ -108,7 +108,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
   }
 
-  selectControl.activate();
+  //selectControl.activate();
 
   //TODO belive this can be removed
   var clickTimestamp;

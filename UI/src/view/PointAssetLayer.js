@@ -31,7 +31,8 @@
         style : function (feature) {
             return feature.setStyle(style.browsingStyleProvider.getStyle(feature));
         },
-        onSelect : pointAssetOnSelect
+        onSelect : pointAssetOnSelect,
+        draggable : false
     });
 
     function pointAssetOnSelect(feature) {

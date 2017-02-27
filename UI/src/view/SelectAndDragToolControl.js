@@ -116,7 +116,7 @@
 
         var destroyDragBoxInteraction = function () {
             _.each(map.getInteractions().getArray(), function (interaction) {
-                if(interaction instanceof ol.interaction.DragBox)
+                if(!(interaction instanceof ol.interaction.DragZoom) && (interaction instanceof ol.interaction.DragBox))
                     map.removeInteraction(interaction);
             });
         };
@@ -129,7 +129,8 @@
             addSelectionFeatures: addSelectionFeatures,
             toggleDragBox: toggleDragBox,
             activate: activate,
-            deactivate: deactivate
+            deactivate: deactivate,
+            clear : clear
         };
     };
 })(this);
