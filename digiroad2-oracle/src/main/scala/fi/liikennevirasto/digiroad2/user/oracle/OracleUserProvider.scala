@@ -12,12 +12,18 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.{Point}
 
 class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
      User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
+    }
+  }
+  implicit val getUserArea = new GetResult[Point] {
+    def apply(r: PositionedResult) = {
+      Point(r.nextDouble(), r.nextDouble(), r.nextDouble())
     }
   }
 
@@ -47,6 +53,12 @@ class OracleUserProvider extends UserProvider {
   def deleteUser(username: String) = {
     OracleDatabase.withDynSession {
       sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute
+    }
+  }
+
+  def getUserArea(userAreaId: Int): Seq[Point] = {
+    OracleDatabase.withDynSession {
+      sql"""select x, y, z from table(sdo_util.getvertices((select geometry from authorized_area where kpalue = $userAreaId))) order by id""".as[Point].list
     }
   }
 }

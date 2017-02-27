@@ -57,4 +57,15 @@ class PolygonToolsSpec extends FunSuite with Matchers {
     interceptedPolygon.isEmpty should be (true)
   }
 
+  test("Create Polygon Area by User Area Id") {
+    val areaId = 6
+    val polygonCreated = polygonTools.getAreaPolygonFromDatabase(areaId)
+    polygonCreated.isEmpty should be (false)
+    polygonCreated.getCoordinates.contains(new Coordinate(550178.445401047,6802283.40780392)) should be (true)
+    polygonCreated.getCoordinates.contains(new Coordinate(551304.917434648,6803227.70953582)) should be (true)
+    polygonCreated.getCoordinates.contains(new Coordinate(512221.448850843,6906608.45909083)) should be (true)
+    polygonCreated.getCoordinates.contains(new Coordinate(508664.63007409,6906839.54021787)) should be (true)
+    polygonCreated.getCoordinates.contains(new Coordinate(508337.292976877,6906670.20484475)) should be (true)
+  }
+
 }
