@@ -409,7 +409,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
-      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+      eventListener.listenTo(eventbus, 'linkProperties:multiSelected', function(link) {
         if (!_.isEmpty(selectedLinkProperty.get())){
           var feature = _.find(roadLayer.layer.features, function (feature) {
               return link.linkId !== 0 && feature.attributes.linkId === link.linkId;

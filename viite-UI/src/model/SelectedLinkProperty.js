@@ -323,7 +323,6 @@
         clearFeaturesToKeep();
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
-
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
@@ -394,7 +393,7 @@
 
     eventbus.on("roadLink:editModeAdjacents", function(){
       if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
-        eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
+        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
     });
 
