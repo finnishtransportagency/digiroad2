@@ -86,16 +86,6 @@
       }
     };
 
-    /*var getFloatingType = function(floatingValue) {
-      var floatingType =  _.find(floatingText, function (f) {
-        return f[0] === floatingValue;
-      });
-      if(typeof floatingType == 'undefined'){
-        floatingType = [0, 'Ei'];
-      }
-      return floatingType && floatingType[1];
-    };*/
-
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field;
@@ -218,9 +208,15 @@
       return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
 
-    var buttons =
+    var editButtons =
       '<div class="link-properties form-controls">' +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
+      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '</div>';
+
+    var buttons =
+      '<div class="link-properties form-controls">' +
       '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
       '</div>';
@@ -229,7 +225,6 @@
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          //' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
           '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
           '</div>';
       else
@@ -238,13 +233,10 @@
 
 
     var template = function(options) {
-      //VIITE-198
-      //var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
-      //staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
-        title() + buttons +
+        title() +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -270,7 +262,7 @@
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
-        title() + buttons +
+        title() +
         '</header>' +
         '<div class="wrapper read-only-floating">' +
         '<div class="form form-horizontal form-dark">' +
@@ -314,7 +306,7 @@
         linkIds  +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer> </div>', options);
+        '<footer>' + editButtons + '</footer> </div>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -336,12 +328,15 @@
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').toggle(false);
         if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
-
-          if(!applicationModel.isReadOnly()){
-            rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
-            $('#floatingEditModeForm').show();
+          if(selectedLinkProperty.get()[0].anomaly === 0 && selectedLinkProperty.get()[0].roadLinkType === 1){
+            rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
           } else {
-            rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            if (!applicationModel.isReadOnly()) {
+              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              $('#floatingEditModeForm').show();
+            } else {
+              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
           }
           rootElement.find('.form-controls').toggle(!readOnly && compactForm);
           rootElement.find('.btn-move').toggle(!readOnly && compactForm);
@@ -349,8 +344,11 @@
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         if(!_.isEmpty(selectedLinkProperty.get())){
+
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-          if(compactForm && !applicationModel.isReadOnly() && selectedLinkProperty.getFeaturesToKeep().length > 1)
+          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
+          if(canStartTransfer)
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';

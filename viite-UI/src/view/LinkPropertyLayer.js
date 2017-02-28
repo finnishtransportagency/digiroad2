@@ -40,8 +40,12 @@
           floatingMinusLast.forEach(function (fml){
             highlightFeatureByLinkId(fml.linkId);
           });
-        var floatingMinusFirst = _.rest(selectedLinkProperty.getFeaturesToKeep());
-          floatingMinusFirst.forEach(function (fmf){
+          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(ft){
+            return ft.anomaly === 1;
+          })
+        );
+
+          anomalousFeatures.forEach(function (fmf){
             editFeatureDataForGreen(fmf.linkId);
           });
         }
