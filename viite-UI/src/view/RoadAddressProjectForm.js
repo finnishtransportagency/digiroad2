@@ -1,18 +1,6 @@
 (function (root) {
   root.RoadAddressProjectForm = function(selectedProject) {
 
-    // var discontinuities = [
-    //   [1, 'Tien loppu'],
-    //   [2, 'Epäjatkuva'],
-    //   [3, 'ELY:n raja'],
-    //   [4, 'Lievä epäjatkuvuus'],
-    //   [5, 'Jatkuva']
-    // ];
-    //
-    // var getDiscontinuityType = function(discontinuity){
-    //   var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
-    //   return DiscontinuityType && DiscontinuityType[1];
-    // };
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly());
@@ -72,33 +60,6 @@
       return field;
     };
 
-    var createTextElement = function(readOnly, property) {
-      var element;
-      var elementType;
-
-      if (readOnly) {
-        elementType = $('<p />').addClass('form-control-static');
-        element = elementType;
-
-        // if (property.values[0]) {
-        //   element.text(property.values[0].propertyDisplayValue);
-        // } else {
-        //   element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
-        // }
-      } else {
-        // elementType = property.propertyType === 'long_text' ?
-        //   $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
-        // element = elementType.bind('input', function(target){
-        //   selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
-        // });
-        //
-        // if(property.values[0]) {
-        //   element.val(property.values[0].propertyDisplayValue);
-        // }
-      }
-
-      return element;
-    };
 
     var inputField = function(labelText) {
       var field = '<div class="form-group">' +
@@ -109,7 +70,7 @@
     };
 
     var title = function() {
-      return '<span>Tieosoitemuutosprojekti</span>';
+      return '<span class ="edit-mode-title">Tieosoitemuutosprojekti</span>';
     };
 
     var buttons =
@@ -119,70 +80,75 @@
       '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
       '</div>';
 
-    // var projectTemplate = function() {
-    //   var roadTypes = selectedProject.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
-    //   return _.template('' +
-    //     '<header>' +
-    //     title() + buttons +
-    //     '</header>' +
-    //     '<div class="wrapper read-only">' +
-    //     '<div class="form form-horizontal form-dark">' +
-    //     '<div class="form-group">' +
-    //     '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
-    //     '</div>' +
-    //     '<div class="form-group">' +
-    //     '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedProject.count() + '</p>' +
-    //     '</div>' +
-    //     //label + input type // $('<input type="text"/>').addClass('form-control');
-    //     staticField('TIENUMERO', 'roadNumber') +
-    //     staticField('TIEOSANUMERO', 'roadPartNumber') +
-    //     staticField('AJORATA', 'trackCode') +
-    //     staticField('ALKUETÄISYYS', 'startAddressM') +
-    //     staticField('LOPPUETÄISUUS', 'endAddressM') +
-    //     staticField('ELY', 'elyCode') +
-    //     roadTypes +
-    //     staticField('JATKUVUUS', 'discontinuity') +
-    //     '</div>' +
-    //     '<footer>' + buttons + '</footer>');
-    // };
-
     var newProjectTemplate = function() {
       return _.template('' +
         '<header>' +
         title() +
+        '<div class="linear-asset form-controls">'+
+        '<button class="cancel btn btn-secondary">Sulje projekti</button>'+
+        '</div>'+
         '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        inputField('NIMI') +
-        // staticField('TIENUMERO', 'roadNumber') +
-        // staticField('TIEOSANUMERO', 'roadPartNumber') +
-        // staticField('AJORATA', 'trackCode') +
-        // staticField('ALKUETÄISYYS', 'startAddressM') +
-        // staticField('LOPPUETÄISUUS', 'endAddressM') +
-        // staticField('ELY', 'elyCode') +
-        // roadTypes +
-        // staticField('JATKUVUUS', 'discontinuity') +
-        '</div>' +
+        '<div class="wrapper read-only">'+
+        '<div class="form form-horizontal form-dark linear-asset">'+
+        '<div class="edit-control-group choice-group">'+
+          '<div class="form-group editable form-editable-roadAddressProject"> '+
+
+        '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '<div class="form-group">' +
+        '<label class="control-label required">*Nimi</label>'+
+              '<input type="text" class="form-control roadAddressProject" id="nimi" value="" onclick=""/>'+
+        '</div>'+
+              '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Lisätty järjestelmään: -</p>' +
+              '</div>'+
+              '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: -</p>' +
+              '</div>'+
+        '<div class="form-group">' +
+              '<label class="control-label required">*Alkupvm</label>'+
+              '<input type="text" class="form-control" id="alkupvm" placeholder="pp.kk.vvvv">'+
+        '</div>'+
+        '<div class="form-group">' +
+              '<label class="control-label">LISÄTIEDOT</label>'+
+              '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" value="" onclick=""/>'+
+        '</div>'+
+
+        '<div class="form-group">' +
+        '<label class="control-label-small">TIE</label>'+
+        '<label class="control-label-small">AOSA</label>'+
+        '<label class="control-label-small">LOSA</label>'+
+        '</div>'+
+        '<div class="form-group">' +
+        '<input type="text" class="form-control small-input roadAddressProject" id="tie" value="" onclick=""/>'+
+        '<input type="text" class="form-control small-input roadAddressProject" id="aosa" value="" onclick=""/>'+
+        '<input type="text" class="form-control small-input roadAddressProject" id="losa" value="" onclick=""/>'+
+        '</div>'+
+        '</form>' +
+        '</div></div></div></div>'+
         '<footer>' + buttons + '</footer>');
+
+
+    };
+
+    var addDatePicker = function () {
+      var $validFrom = $('#alkupvm');
+
+      dateutil.addSingleDependentDatePicker($validFrom);
+
     };
 
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
-        rootElement.find('.editable .form-control-static').toggle(readOnly);
-        rootElement.find('select').toggle(!readOnly);
-        rootElement.find('.form-controls').toggle(!readOnly);
-        rootElement.find('.btn-move').toggle(false);
-        rootElement.html(projectTemplate(selectedProject.get()[0])(selectedProject.get()[0]));
-          //
-          // rootElement.find('.form-controls').toggle(!readOnly);
-          // rootElement.find('.btn-move').toggle(!readOnly);
+        rootElement.find('.wrapper read-only').toggle();
       };
 
       eventbus.on('roadAddress:newProject', function(linkProperties) {
         rootElement.html(newProjectTemplate());
+        addDatePicker();
       });
+
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         // rootElement.html(newProjectTemplate(selectedProject.get()[0]));
@@ -199,62 +165,12 @@
           eventbus.trigger('roadaddress:projectFailed');
         });
       });
-      // eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-      //   if(!_.isEmpty(selectedLinkProperty.get())){
-      //     compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-      //     if(compactForm && !applicationModel.isReadOnly() && selectedLinkProperty.getFeaturesToKeep().length > 1)
-      //       selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
-      //     linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
-      //     linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-      //     linkProperties.roadNameFi = linkProperties.roadNameFi || '';
-      //     linkProperties.roadNameSe = linkProperties.roadNameSe || '';
-      //     linkProperties.roadNameSm = linkProperties.roadNameSm || '';
-      //     linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
-      //     linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
-      //     linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
-      //     linkProperties.roadAddress = linkProperties.roadAddress || '';
-      //     linkProperties.segmentId = linkProperties.segmentId || '';
-      //     linkProperties.roadNumber = linkProperties.roadNumber || '';
-      //     if (linkProperties.roadNumber > 0) {
-      //       linkProperties.roadPartNumber = linkProperties.roadPartNumber || '';
-      //       linkProperties.startAddressM = linkProperties.startAddressM || '0';
-      //       linkProperties.trackCode = isNaN(parseFloat(linkProperties.trackCode)) ? '' : parseFloat(linkProperties.trackCode);
-      //     } else {
-      //       linkProperties.roadPartNumber = '';
-      //       linkProperties.trackCode = '';
-      //       linkProperties.startAddressM = '';
-      //     }
-      //     linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
-      //     linkProperties.endAddressM = linkProperties.endAddressM || '';
-      //     linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-      //     linkProperties.roadType = linkProperties.roadType || '';
-      //     linkProperties.roadLinkType = linkProperties.roadLinkType || '';
-      //
-      //     if (compactForm){
-      //       if(!applicationModel.isReadOnly()){
-      //         rootElement.html(templateFloatingEditMode(linkProperties)(linkProperties));
-      //       } else {
-      //         rootElement.html(templateFloating(linkProperties)(linkProperties));
-      //       }
-      //     } else {
-      //       rootElement.html(template(linkProperties)(linkProperties));
-      //     }
-      //     toggleMode(applicationModel.isReadOnly());
-      //   }
-      // });
-
-      eventbus.on('roadAddress:changed', function() {
-        // rootElement.find('.link-properties button').attr('disabled', false);
-      });
-      eventbus.on('roadAddress:unselected', function() {
-        // rootElement.empty();
-      });
-      eventbus.on('application:readOnly', toggleMode);
-      rootElement.on('click', '.project button.save', function() {
-        // selectedProject.save();
-      });
-      rootElement.on('click', '.project button.cancel', function() {
-        // selectedProject.cancel(action);
+      
+      rootElement.on('click', 'button.cancel', function(){
+        jQuery('.modal-overlay').remove();
+        rootElement.find('header').toggle();
+        rootElement.find('.wrapper').toggle();
+        rootElement.find('footer').toggle();
       });
 
     };
