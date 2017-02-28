@@ -26,9 +26,11 @@
       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)
     ]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
+    var userRoles;
 
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
+        userRoles = roles;
         if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
@@ -45,7 +47,11 @@
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      if ( (_.contains(userRoles, 'busStopMaintainer')) && !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium')) ) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
       element.show();
     }
 
