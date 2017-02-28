@@ -518,9 +518,14 @@
         });
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
         prepareRoadLinkDraw();
-        clearIndicators();
-        unselectRoadLink();
       });
+      eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function () {
+        prepareRoadLinkDraw();
+        clearIndicators();
+        selectControl.unselectAll();
+        roadLayer.redraw();
+      });
+
       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
     };
 
