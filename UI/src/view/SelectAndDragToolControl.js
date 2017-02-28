@@ -28,8 +28,7 @@
             multi: true,
             style: settings.style,
             filter : function (feature, layer) {
-                return (feature.getGeometry() instanceof ol.geom.Point && _.isUndefined(layer.get('type')) && settings.isPoint)
-                     || (feature.getGeometry() instanceof ol.geom.LineString && !settings.isPoint)
+                return ((feature.getGeometry() instanceof ol.geom.Point && settings.isPoint) || (feature.getGeometry() instanceof ol.geom.LineString && !settings.isPoint));
             }
         });
 
