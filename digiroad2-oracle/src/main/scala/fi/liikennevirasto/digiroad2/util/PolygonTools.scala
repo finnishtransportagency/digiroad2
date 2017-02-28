@@ -1,6 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
+
+import java.util.Properties
+
 import com.vividsolutions.jts.geom._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.Point
 
@@ -10,6 +14,14 @@ import fi.liikennevirasto.digiroad2.Point
 class PolygonTools {
   val geomFact = new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+  lazy val userProvider: UserProvider = {
+    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
   /**
     *
     * @param polygon     jts.geom Polygon
@@ -52,8 +64,8 @@ class PolygonTools {
       ""
   }
 
-  def getAreaPolygonFromDatabase(areaId : Int): Polygon = {
-  //TODO Conversion method to DB polygon data now returns empty polygon
-    geomBuilder.polygon()
+  def getAreaPolygonFromDatabase(areaId: Int): Polygon = {
+    val areaGeometries = userProvider.getUserArea(areaId)
+    geomBuilder.polygon(areaGeometries.flatMap( point => Seq(point.x, point.y)):_*)
   }
 }
