@@ -4,7 +4,6 @@
         var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
-        var initDrag = false;
 
         var settings = _.extend({
             onDragStart: function(){},
@@ -13,7 +12,8 @@
             style: function(){},
             enableSelect: function(){ return true; },
             backgroundOpacity: 0.15,
-            draggable : true
+            draggable : true,
+            isPoint : false
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
@@ -25,7 +25,12 @@
             condition: function(events){
                 return enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
-            style: settings.style
+            multi: true,
+            style: settings.style,
+            filter : function (feature, layer) {
+                return (feature.getGeometry() instanceof ol.geom.Point && _.isUndefined(layer.get('type')) && settings.isPoint)
+                     || (feature.getGeometry() instanceof ol.geom.LineString && !settings.isPoint)
+            }
         });
 
         dragBoxInteraction.on('boxstart', settings.onDragStart);

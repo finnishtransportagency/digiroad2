@@ -133,85 +133,9 @@
         onSelect: selectManoeuvre,
         draggable : false,
         enableSelect : enableSelect
-       //backgroundOpacity: style.vectorOpacity
     });
 
     this.selectControl = selectControl;
-
-    // var highlightFeatures = function(linkId) {
-    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-    //     if (x.getProperties().type === 'normal') {
-    //       if (linkId && (x.getProperties().linkId === linkId)) {
-    //           //selectControl.highlight(x);
-    //           me.selectControl.activate();
-    //       } else {
-    //           //selectControl.unhighlight(x);
-    //       }
-    //     }
-    //   });
-    // };
-    //
-    // var highlightOneWaySigns = function(linkIds) {
-    //   var isOneWaySign = function(feature) { return !_.isUndefined(roadLayer.layer.getProperties().source.getFeatures().rotation); };
-    //
-    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-    //     if (isOneWaySign(x)) {
-    //       if (_.contains(linkIds, x.getProperties().linkId)) {
-    //         //selectControl.highlight(x);
-    //         //   roadLayer.layer.setOpacity(1);
-    //           me.selectControl.activate();
-    //       } else {
-    //           // roadLayer.layer.setOpacity(0.5);
-    //         //selectControl.unhighlight(x);
-    //       }
-    //     }
-    //   });
-    // };
-    //
-    // var highlightOverlayFeatures = function(linkIds) {
-    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-    //     if (x.getProperties().type === 'overlay') {
-    //       if (_.contains(linkIds, x.getProperties().linkId)) {
-    //          roadLayer.layer.setOpacity(1);
-    //       } else {
-    //          roadLayer.layer.setOpacity(0.5);
-    //       }
-    //     }
-    //   });
-    // };
-    //
-    // var highlightIntermediateFeatures = function(linkIds) {
-    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-    //     if (x.getProperties().type === 'intermediate') {
-    //       if (_.contains(linkIds, x.getProperties().linkId)) {
-    //           // roadLayer.layer.setOpacity(1);
-    //
-    //           me.selectControl.activate();
-    //         //selectControl.highlight(x);
-    //
-    //       } else {
-    //           // roadLayer.layer.setOpacity(0.5);
-    //         //selectControl.unhighlight(x);
-    //       }
-    //     }
-    //   });
-    // };
-    //
-    // var highlightManoeuvreFeatures = function(linkIds) {
-    //   _.each(roadLayer.layer.getProperties().source.getFeatures(), function(x) {
-    //     if (x.getProperties().type !== 'normal') {
-    //       if (_.contains(linkIds, x.getProperties().linkId)) {
-    //         //selectControl.highlight(x);
-    //         //   roadLayer.layer.setOpacity(1);
-    //
-    //           me.selectControl.activate();
-    //       } else {
-    //           // roadLayer.layer.setOpacity(0.5);
-    //         //selectControl.unhighlight(x);
-    //       }
-    //     }
-    //   });
-    // };
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -334,10 +258,10 @@
 
     var reselectManoeuvre = function() {
       if (!selectedManoeuvreSource.isDirty()) {
-        //me.selectControl.activate();
+        selectControl.activate();
       }
-      var originalOnSelectHandler = me.selectControl.onSelect;
-      me.selectControl.onSelect = function() {};
+      var originalOnSelectHandler = selectControl.onSelect;
+      selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
         var manoeuvreSource = selectedManoeuvreSource.get();
 
@@ -346,7 +270,7 @@
         });
 
         if (feature) {
-          //me.selectControl.activate();
+          selectControl.addSelectionFeatures([feature]);
         }
 
         indicatorLayer.getSource().clear();
@@ -374,7 +298,7 @@
         // highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
 
       }
-      me.selectControl.onSelect = originalOnSelectHandler;
+      selectControl.onSelect = originalOnSelectHandler;
     };
 
     var draw = function() {
@@ -399,7 +323,7 @@
 
     var concludeManoeuvreEdit = function(eventListener) {
       mode="consult";
-      me.selectControl.activate();
+      selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       selectedManoeuvreSource.setTargetRoadLink(null);
       draw();

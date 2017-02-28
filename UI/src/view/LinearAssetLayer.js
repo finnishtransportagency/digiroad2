@@ -142,6 +142,7 @@ window.LinearAssetLayer = function(params) {
     }
   });
 
+  vectorLayer.set('name', layerName);
   vectorLayer.setOpacity(1);
   vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
@@ -300,13 +301,17 @@ window.LinearAssetLayer = function(params) {
     var markerContainer = function(link, position) {
         var style = new ol.style.Style({
             image : new ol.style.Icon({
-                src: 'images/center-marker.svg'
+                src: 'images/center-marker2.svg',
+                anchor : [-0.45, 0.15]
             }),
             text : new ol.style.Text({
                 text : link.marker,
                 fill: new ol.style.Fill({
-                    color: "#ffffff"
-                })
+                    color: '#ffffff'
+                }),
+                offsetX : 23,
+                offsetY : 7.5,
+                font : '12px sans-serif'
             })
         });
         var marker = new ol.Feature({

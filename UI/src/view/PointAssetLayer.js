@@ -23,16 +23,18 @@
            return style.browsingStyleProvider.getStyle(feature);
        }
     });
+    vectorLayer.set('name', layerName);
     vectorLayer.setOpacity(1);
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
     var selectControl = new SelectAndDragToolControl(application, vectorLayer, map, {
         style : function (feature) {
-            return feature.setStyle(style.browsingStyleProvider.getStyle(feature));
+            return style.browsingStyleProvider.getStyle(feature);
         },
         onSelect : pointAssetOnSelect,
-        draggable : false
+        draggable : false,
+        isPoint : true
     });
 
     function pointAssetOnSelect(feature) {

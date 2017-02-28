@@ -90,7 +90,9 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
-    map.on('moveend', function() {
+    map.on('moveend', function(event) {
+      var target = document.getElementById(map.getTarget());
+      target.style.cursor = '';
       applicationModel.moveMap(map.getView().getZoom(), map.getView().calculateExtent(map.getSize()), map.getView().getCenter());
     });
 
@@ -98,12 +100,18 @@
       var pixel = map.getEventPixel(event.originalEvent);
       var hit = map.hasFeatureAtPixel(pixel);
       var target = document.getElementById(map.getTarget());
-      target.style.cursor = hit ? 'pointer' : '';
+      target.style.cursor = hit ? 'pointer' : (target.style.cursor === 'move' ? target.style.cursor : '');
       eventbus.trigger('map:mouseMoved', event);
     }, true);
 
     map.on('singleclick', function(event) {
-        eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+      eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+    });
+
+    //TODO : experimental event
+    map.on('pointerdrag', function(event) {
+      var target = document.getElementById(map.getTarget());
+      target.style.cursor = 'move';
     });
 
     addCenterMarkerLayerToMap(map);
