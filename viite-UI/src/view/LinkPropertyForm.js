@@ -458,6 +458,18 @@
             '</div>');
         }
 
+        $('[id^=VALITUTLINKIT]').remove();
+
+        var nonFloatingFeatures = _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
+          return t.roadLinkType == -1;
+        });
+
+        var fields = formFields(_.map(nonFloatingFeatures, function(sId){
+            return {'linkId' : sId.linkId};
+          }));
+
+        $('.form-group:last').after(fields);
+
         if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
