@@ -375,7 +375,7 @@
           var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
           var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
           if(canStartTransfer)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], uniqFeaturesToKeep[uniqFeaturesToKeep.length-2]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -524,7 +524,6 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        // selectedLinkProperty.gapTransferingCancel();
         selectedLinkProperty.cancel(action);
         applicationModel.setActiveButtons(false);
       });

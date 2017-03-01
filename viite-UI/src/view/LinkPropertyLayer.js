@@ -495,6 +495,12 @@
         selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
         roadCollection.setChangedIds(changedIds);
       });
+
+      eventbus.on('linkProperties:reselectRoadLink', function(){
+        reselectRoadLink();
+        roadLayer.redraw();
+      });
+
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
 
           if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
