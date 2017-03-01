@@ -27,7 +27,7 @@
     button.click(function() {
       executeOrShowConfirmDialog(function() {
         toggleReadOnlyMode(!applicationModel.isReadOnly());
-        // eventbus.trigger('roadLink:editModeAdjacents');
+        eventbus.trigger('roadLink:editModeAdjacents');
       });
     });
     var reset = function() {

@@ -339,7 +339,7 @@
             if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
               rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
               $('#floatingEditModeForm').show();
-            } else {
+            } else { //check if the before selected was a floating link and if the next one is unknown
               if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
                 rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
                 $('#floatingEditModeForm').show();

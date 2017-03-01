@@ -496,29 +496,29 @@
         roadCollection.setChangedIds(changedIds);
       });
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
-          // if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
-          //   indicatorLayer.clearMarkers();
-          //   var floatingsLinkIds = _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (feature) {
-          //     return feature.roadLinkType == -1;
-          //   }), function (floating) {
-          //     return floating.linkId;
-          //   });
-          //   unselectRoadLink();
-          //   _.defer(function(){
-          //     _.map(roadLayer.layer.features, function (feature) {
-          //       if (_.contains(floatingsLinkIds, feature.attributes.linkId)) {
-          //         selectControl.select(feature);
-          //       }
-          //     });
-          //   });
-          // } else {
-          //   var selectedFloatings = _.filter(selectedLinkProperty.get(), function(features){
-          //     return features.roadLinkType == -1;
-          //   });
-          //   _.each(selectedFloatings, function(sf){
-          //     selectedLinkProperty.getFeaturesToKeep().push(sf);
-          //   });
-          // }
+
+          if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
+            indicatorLayer.clearMarkers();
+            var floatingsLinkIds = _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (feature) {
+              return feature.roadLinkType == -1;
+            }), function (floating) {
+              return floating.linkId;
+            });
+            _.defer(function(){
+              _.map(roadLayer.layer.features, function (feature) {
+                if (_.contains(floatingsLinkIds, feature.attributes.linkId)) {
+                  selectControl.select(feature);
+                }
+              });
+            });
+          } else {
+            var selectedFloatings = _.filter(selectedLinkProperty.get(), function(features){
+              return features.roadLinkType == -1;
+            });
+            _.each(selectedFloatings, function(sf){
+              selectedLinkProperty.getFeaturesToKeep().push(sf);
+            });
+          }
         });
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
         prepareRoadLinkDraw();
