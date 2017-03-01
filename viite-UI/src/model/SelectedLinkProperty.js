@@ -330,10 +330,34 @@
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
 
-        if (action === applicationModel.actionCalculated ){
+        //if (action ){
         eventbus.trigger('roadLinks:deleteSelection');
+        //}
+
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+      }
+    };
+
+    var cancelGreenRoad = function(action, changedTargetIds) {
+      dirty = false;
+      var originalData = _.first(featuresToKeep);
+      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+        clearFeaturesToKeep();
+      if(_.isEmpty(changedTargetIds)) {
+        roadCollection.resetTmp();
+        roadCollection.resetChangedIds();
+        clearFeaturesToKeep();
+        eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+      }
+      $('#adjacentsData').remove();
+      if(applicationModel.isActiveButtons() || action === -1){
+        if(action !== applicationModel.actionCalculated){
+          applicationModel.setActiveButtons(false);
+          //eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
 
+        if (action )
+          eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
     };
@@ -426,6 +450,7 @@
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
+      cancelGreenRoad: cancelGreenRoad,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,

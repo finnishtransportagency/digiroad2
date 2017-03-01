@@ -492,7 +492,8 @@
         indicatorLayer.clearMarkers();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
-        selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
+        //selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
+        selectedLinkProperty.cancelGreenRoad(applicationModel.actionCalculated, changedIds);
         roadCollection.setChangedIds(changedIds);
       });
 
@@ -533,6 +534,7 @@
         prepareRoadLinkDraw();
         clearIndicators();
         selectControl.unselectAll();
+        roadCollection.getAll();
         var features =[];
         _.each(roadLayer.layer.features, function(feature){
           if(feature.data.linkId == originalFeature.linkId)
@@ -544,10 +546,6 @@
             selectControl.select(_.first(features));
             highlightFeatures();
           }
-        //selectRoadLink(originalFeature);
-        //reselectRoadLink();
-        //roadLayer.redraw();
-        //redrawSelected();
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
