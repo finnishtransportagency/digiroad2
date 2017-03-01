@@ -529,11 +529,25 @@
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
         prepareRoadLinkDraw();
       });
-      eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function () {
+      eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function (originalFeature) {
         prepareRoadLinkDraw();
         clearIndicators();
         selectControl.unselectAll();
-        roadLayer.redraw();
+        var features =[];
+        _.each(roadLayer.layer.features, function(feature){
+          if(feature.data.linkId == originalFeature.linkId)
+            features.push(feature);
+        });
+       
+          if (!_.isEmpty(features)) {
+            currentRenderIntent = 'select';
+            selectControl.select(_.first(features));
+            highlightFeatures();
+          }
+        //selectRoadLink(originalFeature);
+        //reselectRoadLink();
+        //roadLayer.redraw();
+        //redrawSelected();
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);

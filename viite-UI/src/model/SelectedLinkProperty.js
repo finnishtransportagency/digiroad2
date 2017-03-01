@@ -105,10 +105,7 @@
       }
     };
 
-    var getLinkAdjacents = function(link, firstFloatingSelected) {
-      if(!_.isEmpty(firstFloatingSelected)){
-        sources.push(roadCollection.getRoadLinkByLinkId(parseInt(firstFloatingSelected.linkId)));
-      }
+    var getLinkAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
       _.each(current, function (link) {
@@ -317,28 +314,28 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      var originalData = _.first(sources);
+      var originalData = _.first(featuresToKeep);
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         clearFeaturesToKeep();
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:unSelectIndicators');
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
-        if (action )
+
+        if (action === applicationModel.actionCalculated ){
         eventbus.trigger('roadLinks:deleteSelection');
+        }
+
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
-      current=[originalData];
-      eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
-      sources = [];
-      eventbus.trigger('linkProperties:reselectRoadLink');
     };
 
     var gapTransferingCancel = function(){
