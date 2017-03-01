@@ -25,7 +25,6 @@
             condition: function(events){
                 return enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
-            multi: true,
             style: settings.style,
             filter : function (feature, layer) {
                 return ((feature.getGeometry() instanceof ol.geom.Point && settings.isPoint) || (feature.getGeometry() instanceof ol.geom.LineString && !settings.isPoint));

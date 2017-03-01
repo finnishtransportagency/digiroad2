@@ -52,8 +52,8 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var remove = function() {
-      scissorFeatures = [];
       selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      scissorFeatures = [];
     };
 
     var self = this;
@@ -219,8 +219,9 @@ window.SpeedLimitLayer = function(params) {
   };
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
-      selectedSpeedLimit.open(feature.selected[0].values_, true);
+      selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
       //setSelectionStyleAndHighlightFeature();
+      selectSpeedLimitByLinkId(feature.selected[0].getProperties().linkId)
     }else{
       if (selectedSpeedLimit.exists()) {
         selectedSpeedLimit.close();
@@ -357,9 +358,9 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var selectSpeedLimitByLinkId = function(linkId) {
-    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
+    var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return feature.getProperties().linkId === linkId; });
     if (feature) {
-      selectControl.select(feature);
+      selectToolControl.addSelectionFeatures(feature);
     }
   };
 
@@ -445,7 +446,7 @@ window.SpeedLimitLayer = function(params) {
 
   var redrawSpeedLimits = function(speedLimitChains) {
     vectorSource.clear();
-    selectToolControl.deactivate();
+    selectToolControl.clear();
     indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
@@ -472,9 +473,9 @@ window.SpeedLimitLayer = function(params) {
 
     if (selectedSpeedLimit.exists()) {
       selectToolControl.onSelect = function() {};
-      var feature = _.find(layerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
-     if (feature) {
-        selectControl.select(feature);
+      var feature = _.filter(layerToUse.getSource().getFeatures(), function(feature) { return selectedSpeedLimit.isSelected(feature.getProperties()); });
+      if (feature) {
+        selectToolControl.addSelectionFeatures(feature);
       }
      highlightMultipleSpeedLimitFeatures();
      selectToolControl.onSelect = speedLimitOnSelect;

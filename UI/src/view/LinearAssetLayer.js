@@ -32,8 +32,8 @@ window.LinearAssetLayer = function(params) {
     };
 
     var remove = function () {
-      scissorFeatures = [];
       selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      scissorFeatures = [];
     };
 
     var self = this;
@@ -167,7 +167,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
-    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    style: function(feature){ return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onDragEnd: onDragEnd,
     onSelect: OnSelect
     //backgroundOpacity: style.vectorOpacity
