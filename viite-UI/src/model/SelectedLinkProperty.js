@@ -393,11 +393,10 @@
       return current.length;
     };
 
-    eventbus.on("roadLink:editModeAdjacents", function(){
-      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
-        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
-      }
-    });
+    // eventbus.on('roadLink:editModeAdjacents', function(){
+    //   if(!applicationModel.isActiveButtons() && count() > 0) {
+    //   }
+    // });
 
     var getFeaturesToKeep = function(){
       return featuresToKeep;

@@ -320,30 +320,56 @@
     };
 
     var bindEvents = function() {
-
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').toggle(false);
-        if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
-          if(selectedLinkProperty.get()[0].anomaly === 0 && selectedLinkProperty.get()[0].roadLinkType === 1){
-            rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+
+        if(!_.isEmpty(uniqFeaturesToKeep)){
+          if(readOnly){
+            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
+              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
           } else {
-            if (!applicationModel.isReadOnly()) {
+            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
               rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
               $('#floatingEditModeForm').show();
             } else {
-              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
+                rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+                $('#floatingEditModeForm').show();
+              } else {
+                rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              }
             }
           }
-          rootElement.find('.form-controls').toggle(!readOnly && compactForm);
-          rootElement.find('.btn-move').toggle(!readOnly && compactForm);
+        } else if(!_.isEmpty(selectedLinkProperty.get())){
+          if(readOnly){
+            if(selectedLinkProperty.get()[0].roadLinkType === -1){
+              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
+          } else {
+            if(selectedLinkProperty.get()[0].roadLinkType === -1){
+              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              $('#floatingEditModeForm').show();
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
+          }
         }
+        rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.btn-move').toggle(!readOnly);
       };
+
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        if(!_.isEmpty(selectedLinkProperty.get())){
+        if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
 
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
@@ -376,9 +402,7 @@
           linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
           linkProperties.endAddressM = linkProperties.endAddressM || '';
           linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-          //linkProperties.endDate = linkProperties.endDate || '';
           linkProperties.roadType = linkProperties.roadType || '';
-          //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
           linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
           var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
@@ -401,15 +425,7 @@
               linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
             }
           };
-          if (compactForm){
-            if(!applicationModel.isReadOnly()){
-              rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
-          } else {
-              rootElement.html(templateFloating(options, linkProperties)(linkProperties));
-            }
-          } else {
-            rootElement.html(template(options, linkProperties)(linkProperties));
-          }
+
           rootElement.find('.traffic-direction').change(function(event) {
             selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
           });
@@ -422,10 +438,10 @@
           toggleMode(applicationModel.isReadOnly());
         }
       });
+
       eventbus.on('adjacents:added', function(sources, targets) {
         processAdjacents(sources,targets);
         applicationModel.removeSpinner();
-
       });
 
       eventbus.on('adjacents:aditionalSourceFound', function(sources, targets, additionalSourceLinkId) {
