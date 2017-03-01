@@ -51,20 +51,25 @@
       return field;
     };
 
-    var staticField = function(labelText, fieldType, dataField) {
+    var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
-        '<label class="control-label">' + labelText + '</label>' +
-        '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+        '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
         '</div>';
       return field;
     };
 
+    var largeInputField = function (dataField) {
+      return '<div class="form-group">' +
+      '<label class="control-label">LISÄTIEDOT</label>'+
+      '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" value="'+dataField+'" onclick=""/>'+
+      '</div>'
+    };
 
-    var inputField = function(labelText) {
+    var inputFieldRequired = function(labelText, id, placeholder,  value) {
       var field = '<div class="form-group">' +
-      '<label class="control-label">' + labelText + '</label>' +
-        '<p input type="text" class="form-control-static"></p>' +
+      '<label class="control-label required">' + labelText + '</label>' +
+        '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
       return field;
     };
@@ -76,58 +81,78 @@
     var buttons =
       '<div class="link-properties form-controls">' +
       '<button class="next btn btn-next" disabled>Seuraava</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-tallena">Tallenna</button>' +
+      '<button class="cancel btn btn-perruta">Peruuta</button>' +
+      '</div>';
+
+    var headerButton =
+      '<div class="linear-asset form-controls">'+
+      '<button class="cancel btn btn-secondary">Sulje projekti</button>'+
       '</div>';
 
     var newProjectTemplate = function() {
       return _.template('' +
         '<header>' +
         title() +
-        '<div class="linear-asset form-controls">'+
-        '<button class="cancel btn btn-secondary">Sulje projekti</button>'+
-        '</div>'+
+        headerButton +
+        '</header>' +
+        '<div class="wrapper read-only">' +
+        '<div class="form form-horizontal form-dark linear-asset">' +
+        '<div class="edit-control-group choice-group">' +
+        staticField('Lisätty järjestelmään', '-') +
+        staticField('Muokattu viimeksi', '-') +
+        '<div class="form-group editable form-editable-roadAddressProject"> ' +
+        '<form class="input-unit-combination form-group form-horizontal roadAddressProject">' +
+        inputFieldRequired('*Nimi', 'nimi', '', '') +
+        inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
+        largeInputField() +
+        '<div class="form-group">' +
+        addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
+        '</div>' +
+        '<div class="form-group">' +
+        addSmallInput('tie') + addSmallInput('aosa') + addSmallInput('losa') +
+        '</div>' +
+        '</form>' +
+        '</div>' + '</div>' + '</div>' + '</div>' +
+        '<footer>' + buttons + '</footer>');
+    };
+
+    var openProjectTemplate = function(project) {
+      //TODO - Get the fields from project to open existent project
+      return _.template('' +
+        '<header>' +
+        title() +
+        headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark linear-asset">'+
         '<div class="edit-control-group choice-group">'+
-          '<div class="form-group editable form-editable-roadAddressProject"> '+
+        //staticField('Lisätty järjestelmään', project.creator)+
+        //staticField('Muokattu viimeksi', project.modifiedAt)+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        //inputFieldRequired('*Nimi', 'nimi', '', project.name) +
+        //inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
+        largeInputField()+
         '<div class="form-group">' +
-        '<label class="control-label required">*Nimi</label>'+
-              '<input type="text" class="form-control roadAddressProject" id="nimi" value="" onclick=""/>'+
-        '</div>'+
-              '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Lisätty järjestelmään: -</p>' +
-              '</div>'+
-              '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: -</p>' +
-              '</div>'+
-        '<div class="form-group">' +
-              '<label class="control-label required">*Alkupvm</label>'+
-              '<input type="text" class="form-control" id="alkupvm" placeholder="pp.kk.vvvv">'+
+        addSmallLabel('TIE')+ addSmallLabel('AOSA')+ addSmallLabel('LOSA')+
         '</div>'+
         '<div class="form-group">' +
-              '<label class="control-label">LISÄTIEDOT</label>'+
-              '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" value="" onclick=""/>'+
-        '</div>'+
-
-        '<div class="form-group">' +
-        '<label class="control-label-small">TIE</label>'+
-        '<label class="control-label-small">AOSA</label>'+
-        '<label class="control-label-small">LOSA</label>'+
-        '</div>'+
-        '<div class="form-group">' +
-        '<input type="text" class="form-control small-input roadAddressProject" id="tie" value="" onclick=""/>'+
-        '<input type="text" class="form-control small-input roadAddressProject" id="aosa" value="" onclick=""/>'+
-        '<input type="text" class="form-control small-input roadAddressProject" id="losa" value="" onclick=""/>'+
+        //addSmallInput('tie', project.tie)+ addSmallInput('aosa', project.aosa)+ addSmallInput('losa', project.losa)+
         '</div>'+
         '</form>' +
-        '</div></div></div></div>'+
+        '</div>' + '</div>' + '</div>' + '</div>'+
         '<footer>' + buttons + '</footer>');
+    };
 
 
+    var addSmallLabel = function(label){
+      return '<label class="control-label-small">'+label+'</label>';
+    };
+
+    var addSmallInput = function(id, value){
+      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addDatePicker = function () {
@@ -144,8 +169,9 @@
         rootElement.find('.wrapper read-only').toggle();
       };
 
-      eventbus.on('roadAddress:newProject', function(linkProperties) {
+      eventbus.on('roadAddress:newProject', function() {
         rootElement.html(newProjectTemplate());
+        jQuery('.modal-overlay').remove();
         addDatePicker();
       });
 
@@ -167,7 +193,6 @@
       });
       
       rootElement.on('click', 'button.cancel', function(){
-        jQuery('.modal-overlay').remove();
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();

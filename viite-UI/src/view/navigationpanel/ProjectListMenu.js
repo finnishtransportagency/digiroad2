@@ -25,6 +25,9 @@
       projectList.on('click', 'button.new', function() {
         jQuery('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
         eventbus.trigger("roadAddress:newProject");
+        if(applicationModel.isReadOnly()) {
+          $('.edit-mode-btn:visible').click();
+        }
       });
     }
 
