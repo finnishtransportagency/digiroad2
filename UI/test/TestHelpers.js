@@ -74,80 +74,94 @@ define(['AssetsTestData',
     $('.btn.yes:visible').click();
   };
 
+  var getLayerByName = function(map, name){
+      var layers = map.getLayers().getArray();
+      return _.find(layers, function(layer){
+          return layer.get('name') === name;
+      });
+  };
+
   var clickMarker = function(id, map) {
-    var markerBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
-    var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
+      //TODO
+      /*
+    var markerBounds = _.find(getLayerByName(map, 'massTransitStop').markers, {id: id}).bounds;
+    var markerPixelPosition = map.getPixelFromCoordinate([markerBounds.top, markerBounds.left]);
     var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
     var asset = massTransitStopsCollection.getAsset(id);
     if (asset) { asset.mouseClickHandler(event); }
+    */
   };
 
   var moveMarker = function(id, map, deltaLon, deltaLat) {
     var asset = massTransitStopsCollection.getAsset(id);
-    if (asset) {
-      var originBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
-      var originLonLat = new OpenLayers.LonLat(originBounds.top, originBounds.left);
-      var targetLonLat = new OpenLayers.LonLat(originLonLat.lon + deltaLon, originLonLat.lat + deltaLat);
-      var originPixel = map.getPixelFromLonLat(originLonLat);
-      var targetPixel = map.getPixelFromLonLat(targetLonLat);
+    //TODO
+      /*if (asset) {
+      var originBounds = _.find(getLayerByName(map, 'massTransitStop').markers, {id: id}).bounds;
+      var originLonLat = [originBounds.top, originBounds.left];
+      var targetLonLat = [originLonLat.lon + deltaLon, originLonLat.lat + deltaLat];
+      var originPixel = map.getPixelFromCoordinate(originLonLat);
+      var targetPixel = map.getPixelFromCoordinate(targetLonLat);
       var mouseDownEvent = {clientX: originPixel.x, clientY: originPixel.y};
       var mouseUpEvent = {clientX: targetPixel.x, clientY: targetPixel.y};
       asset.mouseDownHandler(mouseDownEvent);
       eventbus.trigger('map:mouseMoved', {clientX: targetPixel.x, clientY: targetPixel.y, xy: {x: targetPixel.x, y: targetPixel.y - 40}});
       asset.mouseUpHandler(mouseUpEvent);
-    }
+    }*/
   };
 
   var clickMap = function(map, longitude, latitude) {
-    var pixel = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude, latitude));
-    map.events.triggerEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+    var pixel = map.getPixelFromCoordinate([longitude, latitude]);
+    map.dispatchEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
   };
 
   var massSelect = function(map, longitude1, latitude1, longitude2, latitude2) {
-    var topLeft = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude1, latitude1));
-    var bottomRight = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude2, latitude2));
+    var topLeft = map.getPixelFromCoordinate([longitude1, latitude1]);
+    var bottomRight = map.getPixelFromCoordinate([longitude2, latitude2]);
     var commonParameters = {target: {}, srcElement: {}, button: 1};
     var modifierKey = (navigator.platform.toLowerCase().indexOf('mac') === 0) ? { metaKey: true } : { ctrlKey: true };
     var mouseDownEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: topLeft.x, y: topLeft.y} });
     var mouseMoveEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
     var mouseUpEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
-    map.events.triggerEvent('mousedown', mouseDownEvent);
-    map.events.triggerEvent('mousemove', mouseMoveEvent);
-    map.events.triggerEvent('mouseup', mouseUpEvent);
+    map.dispatchEvent('mousedown', mouseDownEvent);
+    map.dispatchEvent('mousemove', mouseMoveEvent);
+    map.dispatchEvent('mouseup', mouseUpEvent);
   };
 
   var getAssetMarkers = function(map) {
-    return map.getLayersByName('massTransitStop')[0].markers;
+    return getLayerByName(map, 'massTransitStop').getSource().getFeatures();
   };
 
   var getSpeedLimitFeatures = function(map) {
-    return map.getLayersByName('speedLimit')[0].features;
+    return getLayerByName(map, 'speedLimit').getSource().getFeatures();
   };
 
  var getSpeedLimitLayer = function(map) {
-   return map.getLayersByName('speedLimit')[0];
+   return getLayerByName(map, 'speedLimit');
  };
 
  var getLineStringFeatures = function(layer) {
-   return _.filter(layer.features, function(feature) {
-    return feature.geometry instanceof OpenLayers.Geometry.LineString;
+   return _.filter(layer.getSource().getFeatures(), function(feature) {
+    return feature.getGeometry() instanceof ol.geom.LineString;
    });
  };
 
  var getSpeedLimitVertices = function(openLayersMap, id) {
   return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
-    .filter(function(feature) { return feature.attributes.id === id; })
-    .map(function(feature)  { return feature.geometry.getVertices(); })
+    .filter(function(feature) { return feature.getProperties().id === id; })
+    .map(function(feature)  { return feature.getGeometry().getCoordinates(); })
     .flatten()
     .value();
   };
 
  var selectSpeedLimit = function(map, speedLimitId, singleLinkSelect) {
-   var control = _.find(map.controls, function(control) { return control.layer && control.layer.name === 'speedLimit'; });
-   var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
-     return feature.attributes.id === speedLimitId;
+   var interaction = _.find(map.getInteractions().getArray(), function(interaction) {
+       return interaction.get('name') === 'speedLimit';
    });
-   control.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
+   var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
+     return feature.getProperties().id === speedLimitId;
+   });
+   interaction.getFeatures().push(feature);
+     //interaction.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
  };
 
  var clickElement = function(element) {

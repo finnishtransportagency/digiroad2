@@ -36,8 +36,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       }, backend);
 
       $('.speed-limits .action.cut').click();
-      var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 110.0));
-      openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+      var pixel = openLayersMap.getPixelFromCoordinate([0.0, 110.0]);
+      openLayersMap.dispatchEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
       $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
       $('.speed-limit .save.btn').click();
     });
@@ -71,8 +71,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and cutting a speed limit', function() {
         before(function () {
-          var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 40.0));
-          openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+          var pixel = openLayersMap.getPixelFromCoordinate([0.0, 40.0]);
+          openLayersMap.dispatchEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
         });
 
         it('the speed limit should be split into two features', function() {

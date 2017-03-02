@@ -31,6 +31,8 @@
             filter : settings.filterGeometry
         });
 
+        selectInteraction.set('name', layer.get('name'));
+
         dragBoxInteraction.on('boxstart', settings.onDragStart);
         dragBoxInteraction.on('boxend', function() {
             var extent = dragBoxInteraction.getGeometry().getExtent();

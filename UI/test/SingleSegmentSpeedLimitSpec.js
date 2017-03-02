@@ -6,11 +6,11 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-      return feature.attributes.id === speedLimitId;
+      return feature.getProperties().id === speedLimitId;
     });
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
-      expect(feature.attributes.value).to.equal(limitValue);
+      expect(feature.getProperties().value).to.equal(limitValue);
     });
     expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
     expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
@@ -53,9 +53,10 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and clicking on the background map', function() {
         before(function(done) {
-          var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
+          //TODO
+          /*var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
           eventbus.once('speedLimit:unselect', function() { done(); });
-          testHelpers.clickElement(layer);
+          testHelpers.clickElement(layer);*/
         });
         it('deselects speed limit', function() {
           expect($('#feature-attributes header')).not.to.exist;
@@ -105,11 +106,11 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
       it('should update all speed limit links on map', function() {
         var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-          return feature.attributes.id === speedLimitId;
+          return feature.getProperties().id === speedLimitId;
         });
         expect(features.length).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.attributes.value).to.equal(100);
+          expect(feature.getProperties().value).to.equal(100);
         });
       });
 
