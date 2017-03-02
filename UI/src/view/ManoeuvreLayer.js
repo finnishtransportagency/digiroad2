@@ -480,14 +480,14 @@
             return roadCollection.getRoadLinkByLinkId(linkId).getData();
           })));
 
-          selectControl.addSelectionFeatures(createIntermediateFeatures(_.map(_.without(linkIdLists, destLinkId), function(linkId){
+          selectControl.addNewFeature(createIntermediateFeatures(_.map(_.without(linkIdLists, destLinkId), function(linkId){
               return roadCollection.getRoadLinkByLinkId(linkId).getData();
-          })), false, true);
+          })), false);
 
           roadLayer.layer.getSource().addFeatures(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]));
           // highlightOverlayFeatures([destLinkId]);
 
-          selectControl.addSelectionFeatures(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]), false, true);
+          selectControl.addNewFeature(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]), false);
 
           selectedManoeuvreSource.setTargetRoadLink(manoeuvre.destLinkId);
 

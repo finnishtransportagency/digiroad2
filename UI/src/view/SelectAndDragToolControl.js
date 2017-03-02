@@ -56,7 +56,7 @@
                 map.addInteraction(dragBoxInteraction);
             }
             else{
-                if(!settings.draggable && enabled)
+                if((!settings.draggable && enabled) || application.isReadOnly() )
                     destroyDragBoxInteraction();
             }
         };
@@ -92,30 +92,39 @@
             map.unByKey(mapDoubleClickEventKey);
         };
 
-        var clear = function(type){
-            if(!type){
-                selectInteraction.getFeatures().clear();
-                highlightLayer();
-                return;
-            }
+        var clear = function(){
+
+            selectInteraction.getFeatures().clear();
+            highlightLayer();
+        };
+
+        var removeFeatures = function (match) {
+
             _.each(selectInteraction.getFeatures().getArray(), function(feature){
-                if(feature.getProperties().type === type) {
+                if(match(feature)) {
                     selectInteraction.getFeatures().remove(feature);
                 }
             });
-
         };
 
-        var addSelectionFeatures = function(features, type, hasAdjacent){
-            if(!hasAdjacent)
-                clear(type);
+
+        var addSelectionFeatures = function(features){
+
+            clear();
+            addNewFeature(features);
+        };
+
+        var addNewFeature = function (features, highlightLayer) {
 
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
             });
-            if(!type)
+
+            if(!highlightLayer)
                 unhighlightLayer();
+
         };
+
 
         var destroyDragBoxInteraction = function () {
             _.each(map.getInteractions().getArray(), function (interaction) {
@@ -130,10 +139,12 @@
             getSelectInteraction: function(){ return selectInteraction; },
             getDragBoxInteraction: function(){ return dragBoxInteraction; },
             addSelectionFeatures: addSelectionFeatures,
+            addNewFeature : addNewFeature,
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
-            clear : clear
+            clear : clear,
+            removeFeatures : removeFeatures
         };
     };
 })(this);

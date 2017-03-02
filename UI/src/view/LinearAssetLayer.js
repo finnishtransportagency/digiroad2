@@ -28,11 +28,16 @@ window.LinearAssetLayer = function(params) {
 
     var moveTo = function(x, y) {
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      selectToolControl.removeFeatures(function(feature) {
+            return feature.getProperties().type === 'cutter';
+      });
+      selectToolControl.addNewFeature(scissorFeatures, true);
     };
 
     var remove = function () {
-      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      selectToolControl.removeFeatures(function(feature) {
+          return feature.getProperties().type === 'cutter';
+      });
       scissorFeatures = [];
     };
 
@@ -289,10 +294,12 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
-    selectToolControl.activate();
+    //selectToolControl.clear();
+      selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
+      selectToolControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-    decorateSelection();
+   // decorateSelection();
+    redrawLinearAssets(collection.getAll());
   };
 
   var drawIndicators = function(links) {
@@ -353,7 +360,8 @@ window.LinearAssetLayer = function(params) {
   var redrawLinearAssets = function(linearAssetChains) {
     vectorSource.clear();
     selectToolControl.deactivate();
-    me.removeLayerFeatures();
+    indicatorLayer.getSource().clear();
+
     if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
     }

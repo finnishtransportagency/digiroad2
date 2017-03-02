@@ -48,11 +48,16 @@ window.SpeedLimitLayer = function(params) {
 
     var moveTo = function(x, y) {
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      selectToolControl.removeFeatures(function(feature) {
+        return feature.getProperties().type === 'cutter';
+      });
+      selectToolControl.addNewFeature(scissorFeatures, true);
     };
 
     var remove = function() {
-      selectToolControl.addSelectionFeatures(scissorFeatures, 'cutter');
+      selectToolControl.removeFeatures(function(feature) {
+        return feature.getProperties().type === 'cutter';
+      });
       scissorFeatures = [];
     };
 
@@ -220,7 +225,7 @@ window.SpeedLimitLayer = function(params) {
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
       selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
-      selectSpeedLimitByLinkId(feature.selected[0].getProperties().linkId);
+        selectSpeedLimit(feature.selected[0].getProperties());
     }else{
       if (selectedSpeedLimit.exists()) {
         selectedSpeedLimit.close();
@@ -360,6 +365,15 @@ window.SpeedLimitLayer = function(params) {
     var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return feature.getProperties().linkId === linkId; });
     if (feature) {
       selectToolControl.addSelectionFeatures(feature);
+    }
+  };
+
+  var selectSpeedLimit = function(feature) {
+    var features = _.filter(vectorLayer.getSource().getFeatures(), function(item) {
+        return item.getProperties().id === feature.id && item.getProperties().linkId === feature.linkId ;
+    });
+    if (features) {
+        selectToolControl.addSelectionFeatures(features);
     }
   };
 
