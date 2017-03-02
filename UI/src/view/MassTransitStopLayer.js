@@ -1,5 +1,6 @@
 window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
-  Layer.call(this, 'massTransitStop', roadLayer);
+  var layerName = 'massTransitStop';
+  Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
   var eventListener = _.extend({running: false}, eventbus);
@@ -24,6 +25,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   });
 
+  assetLayer.set('name', layerName);
   assetLayer.setOpacity(1);
   assetLayer.setVisible(true);
   map.addLayer(assetLayer);
