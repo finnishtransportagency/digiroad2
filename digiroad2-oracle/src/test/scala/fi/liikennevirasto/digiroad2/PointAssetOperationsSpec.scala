@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.PointAssetOperations._
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, State, Modification}
+import fi.liikennevirasto.digiroad2.PointAssetFiller._
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
@@ -82,5 +83,92 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val updatedAsset = persistedAsset.copy(mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, geometry))
 
     PointAssetOperations.isFloating(updatedAsset, roadLink)._1 should be (false)
+  }
+
+  test("Auto correct floating point: join floating point to first roadlink geometry point") {
+
+    val persistedAsset =  testPersistedPointAsset(11, 453464.069, 6845913.849, 24, 101, 68.02, false)
+
+    val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
+      Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
+      Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
+      Point(453638.671,6845996.516,114.12300000000687))
+
+    val roadLink = VVHRoadlink(100,172, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLink)
+
+    updPersistedAsset.isEmpty should be (false)
+    updPersistedAsset.map{ s =>
+      s.linkId should equal(100)
+      s.lon should equal(453466.069)
+      s.lat should equal(6845915.849)
+      s.mValue should equal(0)
+      s.floating should be (false)
+    }
+  }
+
+  test("Auto correct floating point: join floating point to last roadlink geometry point") {
+
+    val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 101, 68.02, false)
+
+    val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
+      Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
+      Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
+      Point(453638.674,6845996.889,114.12300000000687))
+
+    val roadLink = VVHRoadlink(100, 20, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLink)
+
+    updPersistedAsset.isEmpty should be (false)
+    updPersistedAsset.map{ s =>
+      s.linkId should equal(100)
+      s.lon should equal(453638.674)
+      s.lat should equal(6845996.889)
+      s.mValue should equal(192.00 +- 0.01)
+      s.floating should be (false)
+    }
+  }
+
+  test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint > endPoint ") {
+
+    val persistedAsset = testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 101, 68.02, false)
+    // start to point = 2.400894
+    // end to point = 2.227137
+
+    val geometry = List(Point(453636.069, 6845995.849, 108.81900000000314),
+      Point(453638.674, 6845997.889, 114.12300000000687))
+
+    val roadLink = VVHRoadlink(100, 20, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLink)
+
+    updPersistedAsset.isEmpty should be(false)
+    updPersistedAsset.map { s =>
+      s.linkId should equal(100)
+      s.lon should equal(453638.674)
+      s.lat should equal(6845997.889)
+      s.mValue should equal(3.30 +- 0.01)
+      s.floating should be(false)
+    }
+  }
+    test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint < endPoint ") {
+
+      val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 101, 68.02, false)
+      // start to point = 1.679194
+      // end to point = 2.227137
+
+      val geometry = List(Point(453636.269,6845996.549,108.81900000000314),
+        Point(453638.674,6845997.889,114.12300000000687))
+
+      val roadLink = VVHRoadlink(100, 20, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath)
+      val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLink)
+
+      updPersistedAsset.isEmpty should be (false)
+      updPersistedAsset.map{ s =>
+        s.linkId should equal(100)
+        s.lon should equal(453636.269)
+        s.lat should equal(6845996.549)
+        s.mValue should equal(0)
+        s.floating should be (false)
+      }
   }
 }

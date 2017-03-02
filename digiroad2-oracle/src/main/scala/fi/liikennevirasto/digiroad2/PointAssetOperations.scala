@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -54,8 +54,6 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
-
-  private val MaxDistanceDiffAllowed = 3.0
 
   case class FloatingPointAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
 
@@ -230,31 +228,6 @@ trait PointAssetOperations {
   def isFloating(persistedAsset: PersistedPointAsset, roadLink: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
-  }
-
-  def correctRoadLinkAndGeometry(asset: PersistedAsset , newRoadLink: RoadLinkLike) : PersistedAsset = {
-
-    val points = GeometryUtils.geometryEndpoints(newRoadLink.geometry)
-    val assetPoint = Point(asset.lon, asset.lat)
-    val pointToIni = Seq(assetPoint, points._1)
-    val pointToEnd = Seq(assetPoint, points._2)
-    val distBetweenPointEnd = GeometryUtils.geometryLength(pointToEnd)
-
-    val newAssetPoint = GeometryUtils.geometryLength(pointToIni) match {
-
-      case iniDist if (iniDist > MaxDistanceDiffAllowed && distBetweenPointEnd <= MaxDistanceDiffAllowed) => points._2
-      case iniDist if (iniDist <= MaxDistanceDiffAllowed && iniDist <= distBetweenPointEnd) => points._1
-      case iniDist if (iniDist <= MaxDistanceDiffAllowed  &&  iniDist > distBetweenPointEnd) => points._2
-      case iniDist if (iniDist <= MaxDistanceDiffAllowed) => points._1
-      case _ => return asset
-    }
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLink.geometry)
-
-    new PersistedAsset(asset.id, asset.lon, asset.lat , asset.municipalityCode, newRoadLink.linkId, mValue: Double, false)
-    // I need to return the same asset structure type that the one is given by parameter(PersistedAsset). But is giving me this error:
-
-    // Error:(258, 9) class type required but PointAssetOperations.this.PersistedAsset found
-    //new PersistedAsset(asset.id, asset.lon, asset.lat , asset.municipalityCode, newRoadLink.linkId, mValue: Double, false)
   }
 }
 
