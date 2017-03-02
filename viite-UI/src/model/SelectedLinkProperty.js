@@ -327,13 +327,10 @@
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
+          eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
-
-        //if (action ){
         eventbus.trigger('roadLinks:deleteSelection');
-        //}
-
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
     };
@@ -353,7 +350,7 @@
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-          //eventbus.trigger('roadLinks:unSelectIndicators', originalData);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
 
         if (action )
