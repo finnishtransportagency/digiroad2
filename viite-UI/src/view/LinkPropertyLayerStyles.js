@@ -36,7 +36,7 @@
     ];
 
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#FAFF82', strokeOpacity: 0.3, graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#FAFF82', strokeOpacity: 0.6, graphicZIndex: 2})
     ];
 
     var typeFilter = function(type) {
