@@ -219,7 +219,9 @@
 
     var createMouseClickHandler = function(floatlink) {
       return function(event){
-        selectControl.unselectAll();
+        if(floatlink.anomaly !== 1) {
+          selectControl.unselectAll();
+        }
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
         });
