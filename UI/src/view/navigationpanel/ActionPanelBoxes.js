@@ -127,7 +127,8 @@
       .hide();
 
     function show() {
-      if ( (_.contains(userRoles, 'busStopMaintainer')) && !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium')) ) {
+      if (( (_.contains(userRoles, 'busStopMaintainer')) || (_.isEmpty(userRoles)) ) &&
+          !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());
