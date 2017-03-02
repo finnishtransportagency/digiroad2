@@ -13,7 +13,9 @@
             enableSelect: function(){ return true; },
             backgroundOpacity: 0.15,
             draggable : true,
-            isPoint : false
+            filterGeometry : function(feature){
+                return feature.getGeometry() instanceof ol.geom.LineString;
+            }
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
@@ -26,9 +28,7 @@
                 return enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style,
-            filter : function (feature, layer) {
-                return ((feature.getGeometry() instanceof ol.geom.Point && settings.isPoint) || (feature.getGeometry() instanceof ol.geom.LineString && !settings.isPoint));
-            }
+            filter : settings.filterGeometry
         });
 
         dragBoxInteraction.on('boxstart', settings.onDragStart);

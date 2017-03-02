@@ -14,7 +14,6 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-   // var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
 
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
@@ -34,17 +33,21 @@
         },
         onSelect : pointAssetOnSelect,
         draggable : false,
-        isPoint : true
+        filterGeometry : function(feature){
+           return feature.getGeometry() instanceof ol.geom.Point;
+        }
     });
 
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0){
-        selectedAsset.open(feature.selected[0].values_);
+        selectedAsset.open(feature.selected[0].getProperties());
         toggleMode(application.isReadOnly());
       }
       else {
-        if(feature.deselected.length > 0) {
+        if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
           selectedAsset.close();
+        }else{
+          applySelection();
         }
       }
     }
@@ -66,7 +69,6 @@
           }
         }
 
-        //TODO : remove feature.features.array_[0] to feature.getFeatures()
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
            // var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
@@ -99,7 +101,7 @@
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
       var feature =  new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
-      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing}, feature.values_);
+      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing}, feature.getProperties());
       feature.setProperties(obj);
       return feature;
     }
@@ -130,7 +132,7 @@
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
-         // me.selectControl.activate();
+         selectControl.activate();
       });
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
@@ -156,9 +158,9 @@
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.values_); });
+        var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
         if (feature) {
-          //me.selectControl.select(feature);
+          selectControl.addSelectionFeatures([feature]);
         }
       }
     }
@@ -166,9 +168,9 @@
     function withDeactivatedSelectControl(f) {
       var isActive = me.selectControl.active;
       if (isActive) {
-       // me.selectControl.deactivate();
+          selectControl.deactivate();
         f();
-        //me.selectControl.activate();
+          selectControl.activate();
       } else {
         f();
       }
@@ -212,11 +214,11 @@
     }
 
     function handleSavedOrCancelled() {
-     // me.selectControl.activate();
+      selectControl.activate();
       mapOverlay.hide();
       //TODO use that instead of doing me.selectControl.activate();
      // me.activateSelection();
-        roadLayer.clearSelection();
+      roadLayer.clearSelection();
       me.refreshView();
     }
 
@@ -227,6 +229,10 @@
       // _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
       //vectorLayer.redraw();
+      var featureRedraw = _.filter(vectorLayer.getSource().getFeatures(), function(feature) {
+          return feature.getProperties().id === newAsset.id;
+      });
+      selectControl.addSelectionFeatures(featureRedraw);
 
     }
 

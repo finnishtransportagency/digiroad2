@@ -207,7 +207,7 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitOnSelect = function(feature) {
     if(feature.selected.length !== 0) {
-      selectedSpeedLimit.open(feature.selected[0].values_, true);
+      selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
       setSelectionStyleAndHighlightFeature();
     }else {
       if (feature.selected.length === 0 && feature.deselected.length > 0) {
@@ -220,8 +220,7 @@ window.SpeedLimitLayer = function(params) {
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
       selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
-      //setSelectionStyleAndHighlightFeature();
-      selectSpeedLimitByLinkId(feature.selected[0].getProperties().linkId)
+      selectSpeedLimitByLinkId(feature.selected[0].getProperties().linkId);
     }else{
       if (selectedSpeedLimit.exists()) {
         selectedSpeedLimit.close();

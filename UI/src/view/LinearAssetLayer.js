@@ -158,7 +158,7 @@ window.LinearAssetLayer = function(params) {
 
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
-      selectedLinearAsset.open(feature.selected[0].values_, true);
+      selectedLinearAsset.open(feature.selected[0].getProperties(), true);
     }else{
       if (selectedLinearAsset.exists()) {
           selectedLinearAsset.close();
