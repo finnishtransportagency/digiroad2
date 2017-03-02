@@ -1,4 +1,5 @@
 (function(root) {
+  //TODO this can be removed there is no need anymore
   root.MassTransitStop = function(data, map) {
     var me = this;
     var cachedMassTransitMarker = null;
@@ -33,7 +34,7 @@
     };
 
     var createNewMarker = function() {
-      cachedMassTransitMarker = new MassTransitMarker2(data, map);
+      cachedMassTransitMarker = new MassTransitMarkerStyle(data, map);
       /*
       cachedMarkerStyles = {
         default: cachedMassTransitMarker.createDefaultMarkerStyles(),

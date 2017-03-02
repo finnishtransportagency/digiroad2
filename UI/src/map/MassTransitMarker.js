@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.MassTransitMarker2 = function(data, map){
+  root.MassTransitMarkerStyle = function(data, map){
     var IMAGE_HEIGHT = 17;
     var IMAGE_WIDTH = 28;
     var IMAGE_MARGIN = 2;
@@ -8,7 +8,7 @@
     var STICK_HEIGHT = 15;
     var NATIONAL_ID_WIDTH = 45;
     var EMPTY_IMAGE_TYPE = '99';
-    var scale = 1;
+    var styleScale = 1;
 
     var roundRect = function(canvasContext, x, y, width, height, radius) {
       canvasContext.beginPath();
@@ -38,6 +38,10 @@
         textMeasure = createDivOffeset();
       textMeasure.innerHTML = text;
       return textMeasure.clientWidth + 10;
+    };
+
+    var scale = function(value){
+      return value * styleScale;
     };
 
     var createSelectionBackgroundImage = function(busStopsNumber, text){
@@ -83,11 +87,11 @@
       var canvasContext = canvas.getContext('2d');
 
       canvas.width = '5';
-      canvas.height = '20';
+      canvas.height = '15';
 
       canvasContext.beginPath();
       canvasContext.moveTo(1, 1);
-      canvasContext.lineTo(1, 20);
+      canvasContext.lineTo(1, 15);
       canvasContext.lineWidth = 5;
       canvasContext.strokeStyle = '#5a5a57';
       canvasContext.stroke();
@@ -130,6 +134,7 @@
     };
 
     var createStopTypeStyles = function(stopTypes, margin){
+      var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       stopTypes.sort();
       var i = 0;
@@ -137,43 +142,45 @@
         i++;
         return new ol.style.Style({
           image: new ol.style.Icon(({
-            anchor: [-(IMAGE_PADDING+1+imgMargin), (i * IMAGE_HEIGHT)+ IMAGE_PADDING + STICK_HEIGHT + imgMargin],
+            anchor: [-(IMAGE_PADDING+1+imgMargin), (i * IMAGE_HEIGHT)+ IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset],
             anchorXUnits: 'pixels',
             anchorYUnits: 'pixels',
             src: 'images/mass-transit-stops/' + stopType + '.png',
-            scale: scale
+            scale: styleScale
           }))
         });
       });
     };
 
     var createSelectionBackgroundStyle = function(stopTypes, text){
+      var groupOffset = groupOffsetForAsset();
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
       var background = createSelectionBackgroundImage(types, text);
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          anchor: [0, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + (IMAGE_MARGIN * 2) + 1],
+          anchor: [0, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + (IMAGE_MARGIN * 2) + 1 + groupOffset],
           anchorXUnits: 'pixels',
           anchorYUnits: 'pixels',
           img: background.img,
           imgSize: [background.width,background.height],
-          scale: scale
+          scale: styleScale
         }))
       });
     };
 
     var createStopBackgroundStyle = function(stopTypes, margin){
+      var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
       var background = createStopBackgroundImage(types);
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          anchor: [0-imgMargin, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 1+ imgMargin],
+          anchor: [0-imgMargin, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 1 + imgMargin + groupOffset],
           anchorXUnits: 'pixels',
           anchorYUnits: 'pixels',
           img: background.img,
           imgSize: [background.width,background.height],
-          scale: scale
+          scale: styleScale
         }))
       });
     };
@@ -182,12 +189,12 @@
       var stickImage = createStickImage();
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          anchor: [0, STICK_HEIGHT+5],
+          anchor: [0, STICK_HEIGHT+1],
           anchorXUnits: 'pixels',
           anchorYUnits: 'pixels',
           img: stickImage.img,
           imgSize: [stickImage.width,stickImage.height],
-          scale: scale
+          scale: styleScale
         }))
       });
     };
@@ -199,12 +206,13 @@
         image: new ol.style.Icon(({
           src: directionArrowSrc,
           rotation: rotation,
-          scale: scale
+          scale: styleScale
         }))
       });
     };
 
     var createTextStyles = function(stopTypes, nationalId, name, direction, margin){
+      var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
       var beginOffset = IMAGE_WIDTH + (IMAGE_PADDING * 2) + (IMAGE_MARGIN * 2) + 5;
@@ -214,30 +222,30 @@
           text: new ol.style.Text(({
             text: ''+nationalId,
             textAlign: 'start',
-            offsetX: beginOffset,
-            offsetY: -offsetY,
+            offsetX: scale(beginOffset),
+            offsetY: scale(-(offsetY + groupOffset)),
             fill: new ol.style.Fill({ color: '#fff'}),
-            scale: scale
+            scale: styleScale
           }))
         }),
         new ol.style.Style({
           text: new ol.style.Text(({
             text: ''+name,
             textAlign: 'start',
-            offsetX: beginOffset + NATIONAL_ID_WIDTH,
-            offsetY: -offsetY,
+            offsetX: scale(beginOffset + NATIONAL_ID_WIDTH),
+            offsetY: scale(-(offsetY + groupOffset)),
             fill: new ol.style.Fill({ color: '#a4a4a2'}),
-            scale: scale
+            scale: styleScale
           }))
         }),
         new ol.style.Style({
           text: new ol.style.Text(({
             text: ''+direction,
-            offsetX: (beginOffset + NATIONAL_ID_WIDTH + getOffset(direction)),
-            offsetY: -offsetY,
+            offsetX: scale(beginOffset + NATIONAL_ID_WIDTH + getOffset(name)),
+            offsetY: scale(-(offsetY + groupOffset)),
             textAlign: 'start',
             fill: new ol.style.Fill({ color: '#fff'}),
-            scale: scale
+            scale: styleScale
           }))
         })
       ];
@@ -282,15 +290,47 @@
       return new ol.Feature({geometry : new ol.geom.Point([data.group.lon, data.group.lat])});
     };
 
-    //TODO add the offset if the bus stop is on a group of busstops
-    var extractStopTypes = function(properties) {
-      return _.chain(properties)
-          .where({ publicId: 'pysakin_tyyppi' })
-          .pluck('values')
-          .flatten()
-          .pluck('propertyValue')
-          .value();
+    var groupOffsetForAsset = function() {
+      var height = 0;
+      _.each(data.group.assetGroup, function(asset){
+        if(asset.id == data.id)
+          return false;
+        height += (asset.stopTypes.length * IMAGE_HEIGHT) + (IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) - 2;
+      });
+      return height;
     };
+
+    //TODO we can do something like this to be like the rest of the application
+    //var cachedDefaultStyle = {};
+    //
+    //var styleProviders = {
+    //  default: {
+    //    getStyle: function(asset, zoomLevel){
+    //      var style = createDefaultMarkerStyles(zoomLevel);
+    //      cachedDefaultStyle['zoom_'+zoomLevel] = style;
+    //      if(style)
+    //        return style;
+    //
+    //
+    //
+    //    }
+    //  },
+    //  selection: {
+    //    getStyle: function(){
+    //
+    //    }
+    //  }
+    //};
+
+    ////TODO add the offset if the bus stop is on a group of busstops
+    //var extractStopTypes = function(properties) {
+    //  return _.chain(properties)
+    //      .where({ publicId: 'pysakin_tyyppi' })
+    //      .pluck('values')
+    //      .flatten()
+    //      .pluck('propertyValue')
+    //      .value();
+    //};
 
     return {
       createSelectionMarkerStyles: createSelectionMarkerStyles,

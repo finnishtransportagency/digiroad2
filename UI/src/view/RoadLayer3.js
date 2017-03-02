@@ -120,9 +120,9 @@ var RoadStyles = function() {
     var setLayerSpecificMinContentZoomLevel = function(layer, zoomLevel) {
       layerMinContentZoomLevels[layer] = zoomLevel;
     };
-
+    var roadTypeWithSpecifiedStyle = false;
     function vectorLayerStyle(feature, resolution) {
-      if(stylesUndefined())
+      if(stylesUndefined() || roadTypeWithSpecifiedStyle)
           return (new RoadStyles()).provider().defaultStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
 
       var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
@@ -133,6 +133,12 @@ var RoadStyles = function() {
         return currentLayerProvider.default.getStyle(feature, {zoomLevel: uiState.zoomLevel});
 
       return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+    }
+
+    function toggleRoadTypeWithSpecifiedStyle(){
+      roadTypeWithSpecifiedStyle = !roadTypeWithSpecifiedStyle;
+      //force layer redraw
+      vectorSource.changed();
     }
 
     function stylesUndefined() {
@@ -278,7 +284,8 @@ var RoadStyles = function() {
       clear: clear,
       clearSelection: clearSelection,
       getZoomLevel: getZoomLevel,
-      layer: vectorLayer
+      layer: vectorLayer,
+      toggleRoadTypeWithSpecifiedStyle: toggleRoadTypeWithSpecifiedStyle
     };
   };
 })(this);
