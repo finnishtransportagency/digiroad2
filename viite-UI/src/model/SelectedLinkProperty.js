@@ -417,10 +417,10 @@
       return current.length;
     };
 
-    // eventbus.on('roadLink:editModeAdjacents', function(){
-    //   if(!applicationModel.isActiveButtons() && count() > 0) {
-    //   }
-    // });
+     eventbus.on('roadLink:editModeAdjacents', function(){
+       if(!applicationModel.isActiveButtons() && count() > 0) {
+       }
+     });
 
     var getFeaturesToKeep = function(){
       return featuresToKeep;
