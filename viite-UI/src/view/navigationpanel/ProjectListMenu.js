@@ -1,10 +1,10 @@
 (function (root) {
   root.ProjectListMenu = function (openProjects) {
-    var projectList = $('<div class="project-list">');
-    projectList.append('<div style="float: left"><h1 style="margin-top: 30px; margin-left: 5px"> Tieosoiteprojektit </h1></div>');
-    projectList.append('<div style="float: right; margin-top: 20px; margin-right: 20px"><button class="cancel btn btn-secondary" >Peruuta</button></div>');
-    projectList.append('<div style="float: right; margin-top: 55px; margin-right: -60px"><button class="save btn btn-primary" >Uusi tieosoiteprojekti</button></div>');
-    projectList.append('<hr style="margin-top: 90px">').hide();
+    var projectList = $('<div class="form-horizontal project-list"></div>');
+    projectList.append('<div class="content"> Tieosoiteprojektit</div>');
+    projectList.append('<div class="actions" style = "position: absolute; bottom: 0px; right: 0px" >' +
+      '<button class="save btn btn-primary" >Uusi tieosoiteprojekti</button>' +
+      '<button class="cancel btn btn-secondary" >Peruuta</button></div>').hide();
 
     function toggle() {
       jQuery('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
