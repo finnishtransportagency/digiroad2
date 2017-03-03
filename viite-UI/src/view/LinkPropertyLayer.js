@@ -494,7 +494,6 @@
         indicatorLayer.clearMarkers();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
-        //selectedLinkProperty.cancel(applicationModel.actionCalculated, changedIds);
         selectedLinkProperty.cancelGreenRoad(applicationModel.actionCalculated, changedIds);
         roadCollection.setChangedIds(changedIds);
       });
