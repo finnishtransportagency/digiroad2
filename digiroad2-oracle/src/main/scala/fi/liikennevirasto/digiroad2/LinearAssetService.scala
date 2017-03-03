@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.collection.mutable.ListBuffer
 import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
@@ -78,12 +79,19 @@ trait LinearAssetOperations {
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val polygonTool = new PolygonTools()
-    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon(
-      polygonTool.stringifyGeometryForVVHClient(
+    var roadLinkS= ListBuffer.empty[RoadLink]
+    var changeS= ListBuffer.empty[ChangeInfo]
+    val polygonStringList =      polygonTool.stringifyGeometryForVVHClient(
         polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometryFromDatabase(serviceArea),bounds)))
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+          polygonTool.getAreaGeometryFromDatabase(serviceArea),bounds))
+    for (polygonQueryString<-polygonStringList)
+      {
+        val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon(polygonQueryString)
+       roadLinkS++=roadLinks
+      changeS++=change
+      }
+    val linearAssets = getByRoadLinks(typeId,  roadLinkS, changeS)
+    LinearAssetPartitioner.partition(linearAssets, roadLinkS.groupBy(_.linkId).mapValues(_.head))
   }
 
   /**
