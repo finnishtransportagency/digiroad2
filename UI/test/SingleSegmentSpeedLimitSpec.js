@@ -17,6 +17,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   };
 
   describe('when loading application with speed limit data', function() {
+    this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -51,15 +52,27 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
       });
 
+      //TODO
       describe('and clicking on the background map', function() {
         before(function(done) {
-          //TODO
-          /*var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
           eventbus.once('speedLimit:unselect', function() { done(); });
-          testHelpers.clickElement(layer);*/
+
+          var interaction = _.find(openLayersMap.getInteractions().getArray(), function(interaction) {
+            return interaction.get('name') === 'speedLimit';
+          });
+
+          interaction.getFeatures().clear();
+          interaction.dispatchEvent({
+            type: 'select',
+            selected: [],
+            deselected: []
+          });
         });
         it('deselects speed limit', function() {
-          expect($('#feature-attributes header')).not.to.exist;
+
+            expect($('#feature-attributes header')).not.to.exist;
+
+
         });
       });
     });
@@ -85,6 +98,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   });
 
   describe('when loading application in edit mode with speed limits', function() {
+    this.timeout(1500000);
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
@@ -105,7 +119,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('#feature-attributes .form-control.speed-limit').val('100').change();
       });
       it('should update all speed limit links on map', function() {
-        var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
+        var features = _.filter(testHelpers.getSelectedSpeedLimitFeatures(openLayersMap), function(feature) {
           return feature.getProperties().id === speedLimitId;
         });
         expect(features.length).not.to.equal(0);
@@ -124,6 +138,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   });
 
   describe('when loading application in edit mode with speed limits', function() {
+    this.timeout(1500000);
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];

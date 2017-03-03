@@ -135,6 +135,13 @@ define(['AssetsTestData',
     return getLayerByName(map, 'speedLimit').getSource().getFeatures();
   };
 
+  var getSelectedSpeedLimitFeatures = function(map) {
+    var interactions = _.find(map.getInteractions().getArray(), function(interaction) {
+      return interaction.get('name') === 'speedLimit';
+    });
+    return interactions.getFeatures().getArray();
+  };
+
  var getSpeedLimitLayer = function(map) {
    return getLayerByName(map, 'speedLimit');
  };
@@ -148,7 +155,9 @@ define(['AssetsTestData',
  var getSpeedLimitVertices = function(openLayersMap, id) {
   return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
     .filter(function(feature) { return feature.getProperties().id === id; })
-    .map(function(feature)  { return feature.getGeometry().getCoordinates(); })
+    .map(function(feature)  {
+        return _.map(feature.getGeometry().getCoordinates(), function(coordinate){ return { x: coordinate[0], y: coordinate[1]}; });
+    })
     .flatten()
     .value();
   };
@@ -160,7 +169,13 @@ define(['AssetsTestData',
    var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
      return feature.getProperties().id === speedLimitId;
    });
+   interaction.getFeatures().clear();
    interaction.getFeatures().push(feature);
+   interaction.dispatchEvent({
+     type: 'select',
+     selected: [feature],
+     deselected: []
+   });
      //interaction.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
  };
 
@@ -174,8 +189,20 @@ define(['AssetsTestData',
    applicationModel.selectLayer(layerName);
  };
 
+ var getPixelFromCoordinateAsync = function(map, coordinate, callback) {
+   var pixel = map.getPixelFromCoordinate(coordinate);
+   if (pixel) {
+     window.setTimeout(function() { callback(pixel); }, 0);
+   } else {
+     map.once('postrender', function() {
+       getPixelFromCoordinateAsync(map, coordinate, callback);
+     });
+   }
+ };
+
  return {
    restartApplication: restartApplication,
+   getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
    defaultBackend: defaultBackend,
    fakeBackend: fakeBackend,
    clickVisibleEditModeButton: clickVisibleEditModeButton,
@@ -186,10 +213,12 @@ define(['AssetsTestData',
    massSelect: massSelect,
    getAssetMarkers: getAssetMarkers,
    getLineStringFeatures: getLineStringFeatures,
+   getSelectedSpeedLimitFeatures: getSelectedSpeedLimitFeatures,
    getSpeedLimitFeatures: getSpeedLimitFeatures,
    getSpeedLimitVertices: getSpeedLimitVertices,
    selectSpeedLimit: selectSpeedLimit,
    clickElement: clickElement,
-   selectLayer: selectLayer
+   selectLayer: selectLayer,
+   getLayerByName: getLayerByName
  };
 });

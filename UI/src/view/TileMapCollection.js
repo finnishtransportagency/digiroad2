@@ -33,11 +33,11 @@
       url: 'maasto/wmts/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
-    var parser = new ol.format.WMTSCapabilities();
-    var result = parser.read(arcgisConfig);
-    var config = {layer: "Taustakartat_Harmaasavy"};
-    var options = ol.source.WMTS.optionsFromCapabilities(result, config);
-    var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
+    //var parser = new ol.format.WMTSCapabilities();
+    //var result = parser.read(arcgisConfig);
+    //var config = {layer: "Taustakartat_Harmaasavy"};
+    //var options = ol.source.WMTS.optionsFromCapabilities(result, config);
+    //var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
 
     var aerialMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
@@ -58,7 +58,7 @@
     }, layerConfig));
     var tileMapLayers = {
       background: backgroundMapLayer,
-      greyscale: greyscaleLayer,
+      //greyscale: greyscaleLayer,
       aerial: aerialMapLayer,
       terrain: terrainMapLayer
     };

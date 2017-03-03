@@ -45,6 +45,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           eventbus.once('speedLimit:unselect', function() { done(); });
           testHelpers.clickElement(layer);
           */
+          //eventbus.once('speedLimit:unselect', function() { done(); });
+          //testHelpers.clickElement(layer);
+          //$('#mapdiv')[0]
         });
         it('deselects speed limit', function() {
           expect($('#feature-attributes header')).not.to.exist;

@@ -89,7 +89,7 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var isWithinCutThreshold = function(speedLimitLink) {
-      return speedLimitLink && speedLimitLink < CUT_THRESHOLD;
+      return speedLimitLink !== undefined && speedLimitLink < CUT_THRESHOLD;
     };
 
     var findNearestSpeedLimitLink = function(point) {
