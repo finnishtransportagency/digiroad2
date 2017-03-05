@@ -138,9 +138,18 @@ trait LinearAssetOperations {
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L),
       adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
 
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
+    val newAsset = toConvertLinearAsset(filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty))
+
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets ++ newAsset)
 
     filledTopology
+  }
+
+  private def toConvertLinearAsset(dbAssets: Seq[PieceWiseLinearAsset]): Seq[PersistedLinearAsset] = {
+    dbAssets.map { dbAsset =>
+      PersistedLinearAsset(dbAsset.id, dbAsset.linkId, dbAsset.sideCode.value, dbAsset.value, dbAsset.startMeasure, dbAsset.endMeasure, dbAsset.createdBy,
+        dbAsset.createdDateTime, dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.expired, dbAsset.typeId, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate)
+    }
   }
 
   def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
