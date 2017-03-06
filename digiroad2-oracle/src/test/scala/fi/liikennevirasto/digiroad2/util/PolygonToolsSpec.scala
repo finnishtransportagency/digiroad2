@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, MultiPolygon}
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
@@ -23,9 +23,9 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   }
 
   test("Polygon & BoundingBox intersection test") {
-    val boundingbox= BoundingRectangle(Point(24,60), Point(25,61))
+    val boundingBox= BoundingRectangle(Point(24,60), Point(25,61))
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingbox).head
+    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).head
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.2,60.5)) should be (true)
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.2,60)) should be (true)
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.8,60)) should be (true)
@@ -33,16 +33,16 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   }
 
   test("Multipolygon & BoundingBox intersection test") {
-    val boundingbox= BoundingRectangle(Point(0,0), Point(100,100))
+    val boundingBox= BoundingRectangle(Point(0,0), Point(100,100))
     val poly1= wKTParser.read("MULTIPOLYGON(((20 80,40 80,40 60,20 60, 20 80)),((70 80, 90 80, 90 60, 70 60, 70 80)))")
-    val interceptedPolygonListSize= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingbox).length
+    val interceptedPolygonListSize= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).length
     interceptedPolygonListSize should be (2)
   }
 
   test("Polygon & BoundingBox intersection no-common points test") {
-    val boundingbox= BoundingRectangle(Point(240,600), Point(250,610))
+    val boundingBox= BoundingRectangle(Point(240,600), Point(250,610))
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingbox).head
+    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).head
     interceptedPolygon.isEmpty should be (true)
   }
 
@@ -52,16 +52,4 @@ class PolygonToolsSpec extends FunSuite with Matchers {
     val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,bounds)
     interceptedPolygon.isEmpty should be (true)
   }
-
-  test("Create Polygon Area by User Area Id") {
-    val areaId = 6
-    val polygonCreated = polygonTools.getAreaPolygonFromDatabase(areaId)
-    polygonCreated.isEmpty should be (false)
-    polygonCreated.getCoordinates.contains(new Coordinate(550178.445401047,6802283.40780392)) should be (true)
-    polygonCreated.getCoordinates.contains(new Coordinate(551304.917434648,6803227.70953582)) should be (true)
-    polygonCreated.getCoordinates.contains(new Coordinate(512221.448850843,6906608.45909083)) should be (true)
-    polygonCreated.getCoordinates.contains(new Coordinate(508664.63007409,6906839.54021787)) should be (true)
-    polygonCreated.getCoordinates.contains(new Coordinate(508337.292976877,6906670.20484475)) should be (true)
-  }
-
 }

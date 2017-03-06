@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.user
 
-import fi.liikennevirasto.digiroad2.Point
 
 trait UserProvider {
   val threadLocalUser: ThreadLocal[User] = new ThreadLocal[User]
@@ -23,5 +22,4 @@ trait UserProvider {
   def createUser(username: String, config: Configuration)
   def getUser(username: String): Option[User]
   def saveUser(user: User): User
-  def getUserArea(userAreaId: Int): Seq[Point]
 }

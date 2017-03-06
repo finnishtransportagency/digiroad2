@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.user;
 
-import fi.liikennevirasto.digiroad2.Point
 
 class DummyUserProvider extends UserProvider {
   def createUser(username: String, config: Configuration) = {
@@ -19,7 +18,4 @@ class DummyUserProvider extends UserProvider {
   }
   def saveUser(user: User): User = user
 
-  def getUserArea(userAreaId: Int): Seq[Point] = {
-    Seq(Point(0.1, 0.2, 0.0))
-  }
 }
