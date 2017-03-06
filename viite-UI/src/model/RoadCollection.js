@@ -191,5 +191,9 @@
       return tmpNewRoadAddress;
     };
 
+    this.resetNewTmpRoadAddress = function(){
+     tmpNewRoadAddress = [];
+    };
+
   };
 })(this);

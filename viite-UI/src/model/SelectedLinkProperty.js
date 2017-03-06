@@ -323,6 +323,7 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         applicationModel.resetCurrentAction();
+        roadCollection.resetNewTmpRoadAddress();
         clearFeaturesToKeep();
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
@@ -355,9 +356,9 @@
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
-
-        if (action )
+        if (action){
           eventbus.trigger('roadLinks:deleteSelection');
+        }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
     };

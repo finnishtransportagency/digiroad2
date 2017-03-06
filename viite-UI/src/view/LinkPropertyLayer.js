@@ -503,7 +503,6 @@
         roadCollection.setChangedIds(changedIds);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
         selectedLinkProperty.cancelGreenRoad(applicationModel.actionCalculated, changedIds);
-        roadCollection.setChangedIds(changedIds);
       });
 
       eventbus.on('linkProperties:reselectRoadLink', function(){
