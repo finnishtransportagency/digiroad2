@@ -182,7 +182,11 @@
               return road.linkId === floatlink.linkId;
           });
 
-          if((_.isUndefined(tempFlag) || _.isUndefined(source))){
+          var changedFlag = roadCollection.getChangedIds().find(function(id){
+              return id == floatlink.linkId
+          });
+
+          if((_.isUndefined(tempFlag) || _.isUndefined(source)) && _.isUndefined(changedFlag)){
               var mouseClickHandler = createMouseClickHandler(floatlink);
               var marker = cachedLinkPropertyMarker.createMarker(floatlink);
               marker.events.register('click',marker, mouseClickHandler);
@@ -194,9 +198,12 @@
         _.each(anomalousRoadMarkers, function(anomalouslink) {
             var targets =selectedLinkProperty.getTargets();
             var target = targets.find(function(s){
-             return s.linkId === anomalouslink.linkId ;
+              return s.linkId === anomalouslink.linkId ;
+            });
+          var changedTarget = roadCollection.getChangedIds().find(function(id){
+            return id == anomalouslink.linkId
           });
-          if((_.isUndefined(target))){
+          if((_.isUndefined(target)) && _.isUndefined(changedTarget)){
               var mouseClickHandler = createMouseClickHandler(anomalouslink);
               var marker = cachedMarker.createMarker(anomalouslink);
               marker.events.register('click',marker, mouseClickHandler);
