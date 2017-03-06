@@ -883,6 +883,7 @@ Returns empty result as Json message, not as page not found
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
+    if (!user.isServiceRoadMaintainer())
     if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
     }
