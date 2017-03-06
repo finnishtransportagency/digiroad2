@@ -110,19 +110,8 @@ var RoadStyles = function() {
       uiState.zoomLevel = zoom;
       eventbus.trigger('roadLinks:beforeDraw');
       var filteredRoadLinks = [];
-      // if(applicationModel.isActiveButtons() && _.isEqual(action, applicationModel.actionCalculated) && !_.isEmpty(roadCollection.getChangedIds())){
-      //   filteredRoadLinks = _.filter(roadLinks, function(roadlink){
-      //     return !_.contains(roadCollection.getChangedIds(), roadlink.linkId.toString());
-      //   });
-      // }
-
-      // if(applicationModel.isActiveButtons() && _.isEqual(action, applicationModel.actionCalculating) && !_.isEmpty(roadCollection.getChangedIds())){
       if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculating) || _.isEqual(action, applicationModel.actionCalculated)){
-        _.map(roadLinks, function(roadlink){
-          if (_.contains(roadCollection.getChangedIds(), roadlink.linkId.toString())){
-            roadCollection.setNewTmpRoadAddress(roadlink);
-          }
-        });
+
         filteredRoadLinks = _.filter(roadLinks, function(rl){
               return !_.contains(roadCollection.getChangedIds(), rl.linkId.toString());
             });
