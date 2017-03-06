@@ -120,7 +120,7 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (featuresToKeep.length > 1){
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
@@ -133,12 +133,19 @@
             var filteredAdjacents = _.filter(adjacents, function(adj){
               return !_.contains(selectedLinkIds, adj.linkId);
             });
-            var calculatedRoads = {
-              "adjacents": _.map(filteredAdjacents, function (a, index) {
+            var markedRoads = {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+                return t.roadLinkType != -1;
+              }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            eventbus.trigger("adjacents:added", calculatedRoads.links, calculatedRoads.adjacents);
+            if(applicationModel.getSelectionType() === 'floating') {
+              eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+            }
+            else {
+              eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
+            }
             eventbus.trigger('adjacents:startedFloatingTransfer');
           }
         });
@@ -149,6 +156,7 @@
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
       sources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
+      featuresToKeep.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
       var chainLinks = [];
       _.each(sources, function(link){
         if(!_.isUndefined(link))
@@ -166,7 +174,17 @@
       });
      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-         var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
+         var nonSelectedAdjacents = _.reject(adjacents, function(adj){
+           var selectedLinkIds = _.map(featuresToKeep, function(features){
+             return features.linkId;
+           });
+           return _.contains(selectedLinkIds, adj.linkId);
+         });
+         var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
+           return t.roadLinkType !== -1;
+         }) :nonSelectedAdjacents ;
+
+         var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
@@ -321,7 +339,9 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         clearFeaturesToKeep();
+        if (applicationModel.getSelectionType() !== 'floating') {
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+        }
       }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
@@ -333,6 +353,7 @@
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
+      applicationModel.toggleSelectionTypeAll();
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {

@@ -13,6 +13,24 @@
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
+    var selectionType = 'all';
+
+    var getSelectionType = function (){
+      return selectionType;
+    };
+
+    var toggleSelectionTypeAll = function () {
+      selectionType = 'all';
+    };
+
+    var toggleSelectionTypeFloating = function(){
+      selectionType = 'floating';
+    };
+
+    var toggleSelectionTypeUnknown = function (){
+      selectionType = 'unknown';
+    };
+
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -123,7 +141,11 @@
       },
       getCurrentLocation: function() {
         return centerLonLat;
-      }
+      },
+      getSelectionType: getSelectionType,
+      toggleSelectionTypeAll: toggleSelectionTypeAll,
+      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
+      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown
     };
   };
 })(this);
