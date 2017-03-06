@@ -50,6 +50,10 @@
       currentAction = action;
     };
 
+    var resetCurrentAction = function(){
+      currentAction = null;
+    };
+
     var addSpinner = function () {
       jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
     };
@@ -61,6 +65,7 @@
     return {
       getCurrentAction: getCurrentAction,
       setCurrentAction: setCurrentAction,
+      resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
       moveMap: function(zoom, bbox) {

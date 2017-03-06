@@ -124,8 +124,10 @@
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
-          if (!_.isEmpty(adjacents))
+          if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
+            applicationModel.setCurrentAction(applicationModel.actionCalculating)
+          }
           if (!applicationModel.isReadOnly()) {
             var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
               return roads.linkId;
@@ -321,6 +323,7 @@
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        applicationModel.resetCurrentAction();
         clearFeaturesToKeep();
         _.defer(function(){
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));

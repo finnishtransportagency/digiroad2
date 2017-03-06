@@ -105,12 +105,34 @@ var RoadStyles = function() {
       handleRoadsVisibility();
     };
 
-    var drawRoadLinks = function(roadLinks, zoom, action) {
+    var drawRoadLinks = function(roadLinks, zoom) {
+      var action = applicationModel.getCurrentAction();
       uiState.zoomLevel = zoom;
       eventbus.trigger('roadLinks:beforeDraw');
-      if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculated)){
+      var filteredRoadLinks = [];
+      // if(applicationModel.isActiveButtons() && _.isEqual(action, applicationModel.actionCalculated) && !_.isEmpty(roadCollection.getChangedIds())){
+      //   filteredRoadLinks = _.filter(roadLinks, function(roadlink){
+      //     return !_.contains(roadCollection.getChangedIds(), roadlink.linkId.toString());
+      //   });
+      // }
+
+      // if(applicationModel.isActiveButtons() && _.isEqual(action, applicationModel.actionCalculating) && !_.isEmpty(roadCollection.getChangedIds())){
+      if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculating) || _.isEqual(action, applicationModel.actionCalculated)){
+        _.map(roadLinks, function(roadlink){
+          if (_.contains(roadCollection.getChangedIds(), roadlink.linkId.toString())){
+            roadCollection.setNewTmpRoadAddress(roadlink);
+          }
+        });
+        filteredRoadLinks = _.filter(roadLinks, function(rl){
+              return !_.contains(roadCollection.getChangedIds(), rl.linkId.toString());
+            });
+       if (_.isEmpty(filteredRoadLinks))
+       filteredRoadLinks=roadLinks;
+      _.each(roadCollection.getNewTmpRoadAddress(), function (tmp){
+        filteredRoadLinks.push(tmp);
+      });
       vectorLayer.removeAllFeatures();
-      var features = _.map(roadLinks, function(roadLink) {
+      var features = _.map(filteredRoadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
@@ -119,7 +141,7 @@ var RoadStyles = function() {
       usingLayerSpecificStyleProvider(function() {
         vectorLayer.addFeatures(features);
       });
-      eventbus.trigger('roadLinks:afterDraw', roadLinks);
+      eventbus.trigger('roadLinks:afterDraw', filteredRoadLinks);
       }
     };
 

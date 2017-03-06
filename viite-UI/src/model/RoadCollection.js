@@ -81,8 +81,8 @@
         });
         var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
           return _.map(roadLinkGroup, function(roadLink) {
-              return new RoadLinkModel(roadLink);
-            });
+            return new RoadLinkModel(roadLink);
+          });
         });
         roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
@@ -116,10 +116,6 @@
 
     this.getAllTmp = function(){
       return tmpRoadAddresses;
-    };
-
-    this.getChangedIds = function(){
-      return changedIds;
     };
 
     this.get = function(ids) {
@@ -172,7 +168,11 @@
     this.setChangedIds = function (ids){
       changedIds = ids;
     };
-    
+
+    this.getChangedIds = function (){
+      return changedIds;
+    };
+
     this.reset = function(){
       roadLinkGroups = [];
     };
