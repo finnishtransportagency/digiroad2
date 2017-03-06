@@ -86,16 +86,6 @@
       }
     };
 
-    /*var getFloatingType = function(floatingValue) {
-      var floatingType =  _.find(floatingText, function (f) {
-        return f[0] === floatingValue;
-      });
-      if(typeof floatingType == 'undefined'){
-        floatingType = [0, 'Ei'];
-      }
-      return floatingType && floatingType[1];
-    };*/
-
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
       var field;
@@ -218,9 +208,15 @@
       return '<span>Tieosoitteen ominaisuustiedot</span>';
     };
 
-    var buttons =
+    var editButtons =
       '<div class="link-properties form-controls">' +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
+      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '</div>';
+
+    var buttons =
+      '<div class="link-properties form-controls">' +
       '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
       '</div>';
@@ -229,8 +225,7 @@
       if(displayNotification)
         return '' +
           '<div class="form-group form-notification">' +
-          //' <p>Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.</p>' +
-          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti valitsemalla ensimmäinen kohdelinkki, jolle haluat siirtää tieosoitesegmentin.</p>' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
           '</div>';
       else
         return '';
@@ -238,13 +233,10 @@
 
 
     var template = function(options) {
-      //VIITE-198
-      //var endDateField = selectedLinkProperty.count() == 1 && typeof selectedLinkProperty.get()[0].endDate !== 'undefined' ?
-      //staticField('LAKKAUTUS', 'endDate') : '';
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
-        title() + buttons +
+        title() +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -270,7 +262,7 @@
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
-        title() + buttons +
+        title() +
         '</header>' +
         '<div class="wrapper read-only-floating">' +
         '<div class="form form-horizontal form-dark">' +
@@ -314,7 +306,7 @@
         linkIds  +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer> </div>', options);
+        '<footer>' + editButtons + '</footer> </div>', options);
     };
 
     var addressNumberString = function(minAddressNumber, maxAddressNumber) {
@@ -328,30 +320,62 @@
     };
 
     var bindEvents = function() {
-
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').toggle(false);
-        if(compactForm && !_.isEmpty(selectedLinkProperty.get())){
+        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
 
-          if(!applicationModel.isReadOnly()){
-            rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
-            $('#floatingEditModeForm').show();
+        if(!_.isEmpty(uniqFeaturesToKeep)){
+          if(readOnly){
+            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
+              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
           } else {
-            rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
+              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              $('#floatingEditModeForm').show();
+            } else { //check if the before selected was a floating link and if the next one is unknown
+              if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
+                rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+                $('#floatingEditModeForm').show();
+              } else {
+                rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              }
+            }
           }
-          rootElement.find('.form-controls').toggle(!readOnly && compactForm);
-          rootElement.find('.btn-move').toggle(!readOnly && compactForm);
+        } else if(!_.isEmpty(selectedLinkProperty.get())){
+          if(readOnly){
+            if(selectedLinkProperty.get()[0].roadLinkType === -1){
+              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
+          } else {
+            if(selectedLinkProperty.get()[0].roadLinkType === -1){
+              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              $('#floatingEditModeForm').show();
+            } else {
+              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            }
+          }
         }
+        rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.btn-move').toggle(!readOnly);
       };
+
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        if(!_.isEmpty(selectedLinkProperty.get())){
+        if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
+
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-          if(compactForm && !applicationModel.isReadOnly() && selectedLinkProperty.getFeaturesToKeep().length > 1)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
+          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
+          if(canStartTransfer)
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], uniqFeaturesToKeep[uniqFeaturesToKeep.length-2]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -378,9 +402,7 @@
           linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
           linkProperties.endAddressM = linkProperties.endAddressM || '';
           linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
-          //linkProperties.endDate = linkProperties.endDate || '';
           linkProperties.roadType = linkProperties.roadType || '';
-          //linkProperties.floating = getFloatingType(linkProperties.roadLinkType);
           linkProperties.roadLinkType = linkProperties.roadLinkType || '';
 
           var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
@@ -403,15 +425,7 @@
               linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
             }
           };
-          if (compactForm){
-            if(!applicationModel.isReadOnly()){
-              rootElement.html(templateFloatingEditMode(options, linkProperties)(linkProperties));
-          } else {
-              rootElement.html(templateFloating(options, linkProperties)(linkProperties));
-            }
-          } else {
-            rootElement.html(template(options, linkProperties)(linkProperties));
-          }
+
           rootElement.find('.traffic-direction').change(function(event) {
             selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
           });
@@ -424,10 +438,10 @@
           toggleMode(applicationModel.isReadOnly());
         }
       });
+
       eventbus.on('adjacents:added', function(sources, targets) {
         processAdjacents(sources,targets);
         applicationModel.removeSpinner();
-
       });
 
       eventbus.on('adjacents:aditionalSourceFound', function(sources, targets, additionalSourceLinkId) {
@@ -460,11 +474,21 @@
             '</div>');
         }
 
+        $('[id^=VALITUTLINKIT]').remove();
+
+        var nonFloatingFeatures = _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
+          return t.roadLinkType == -1;
+        });
+
+        var fields = formFields(_.map(nonFloatingFeatures, function(sId){
+            return {'linkId' : sId.linkId};
+          }));
+
+        $('.form-group:last').after(fields);
+
         if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
-            if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-              eventbus.trigger("adjacents:roadTransfer");
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
               rootElement.find('.link-properties button.calculate').attr('disabled', false);
@@ -478,7 +502,6 @@
               applicationModel.setActiveButtons(true);
             });
         }
-
       };
       
       eventbus.on('linkProperties:changed', function() {

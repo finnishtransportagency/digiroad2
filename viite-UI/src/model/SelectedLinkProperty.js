@@ -316,7 +316,6 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(featuresToKeep);
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
@@ -325,20 +324,81 @@
         roadCollection.resetChangedIds();
         applicationModel.resetCurrentAction();
         clearFeaturesToKeep();
-        _.defer(function(){
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
-        });
       }
-
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:deleteSelection');
+          eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
+    };
+
+    var cancelGreenRoad = function(action, changedTargetIds) {
+      dirty = false;
+      var originalData = _.first(featuresToKeep);
+      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+        clearFeaturesToKeep();
+      if(_.isEmpty(changedTargetIds)) {
+        roadCollection.resetTmp();
+        roadCollection.resetChangedIds();
+        clearFeaturesToKeep();
+        eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+      }
+      $('#adjacentsData').remove();
+      if(applicationModel.isActiveButtons() || action === -1){
+        if(action !== applicationModel.actionCalculated){
+          applicationModel.setActiveButtons(false);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
+        }
+
+        if (action )
+          eventbus.trigger('roadLinks:deleteSelection');
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+      }
+    };
+
+    var gapTransferingCancel = function(){
+      //First we grab the floatings
+      var floatings = _.uniq(_.filter(_.map(featuresToKeep, function(feature){
+        if(feature.roadLinkType === -1){
+          return feature.linkId;
+        }
+      }), function (target){
+        return !_.isUndefined(target);
+      }));
+      //Secondly we clear them
+      clearFeaturesToKeep();
+      applicationModel.setActiveButtons(false);
+      eventbus.trigger('roadLinks:deleteSelection');
+
+      if (!_.isEmpty(current) && !isDirty()) {
+        _.forEach(current, function (selected) {
+          selected.unselect();
+        });
+        eventbus.trigger('linkProperties:unselected');
+        sources = [];
+        targets = [];
+        current = [];
+        featuresToKeep = [];
+      }
+      _.forEach(floatings, function(f){
+        var roadAddress = roadCollection.getByLinkId([f]);
+        var roads = _.map(get(), function (r){
+          return r.linkId;
+        });
+        var fetchedRoads = _.map(roadAddress, function (r){
+          return r.getData().linkId;
+        });
+        if(!_.contains(roads, _.first(fetchedRoads))){
+          current = current.concat(roadAddress);
+        }
+      });
+      eventbus.trigger('roadLinks:drawAfterGapCanceling');
     };
 
     var setLinkProperty = function(key, value) {
@@ -360,12 +420,6 @@
       return current.length;
     };
 
-    eventbus.on("roadLink:editModeAdjacents", function(){
-      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
-        eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-      }
-    });
-
     var getFeaturesToKeep = function(){
       return featuresToKeep;
     };
@@ -384,12 +438,14 @@
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
+      gapTransferingCancel: gapTransferingCancel,
       close: close,
       open: open,
       isDirty: isDirty,
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
+      cancelGreenRoad: cancelGreenRoad,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,
