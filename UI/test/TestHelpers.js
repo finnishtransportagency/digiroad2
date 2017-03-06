@@ -135,16 +135,9 @@ define(['AssetsTestData',
     return getLayerByName(map, 'speedLimit').getSource().getFeatures();
   };
 
-  var getSelectedSpeedLimitFeatures = function(map) {
-    var interactions = _.find(map.getInteractions().getArray(), function(interaction) {
-      return interaction.get('name') === 'speedLimit';
-    });
-    return interactions.getFeatures().getArray();
+  var getSpeedLimitLayer = function(map) {
+    return getLayerByName(map, 'speedLimit');
   };
-
- var getSpeedLimitLayer = function(map) {
-   return getLayerByName(map, 'speedLimit');
- };
 
  var getLineStringFeatures = function(layer) {
    return _.filter(layer.getSource().getFeatures(), function(feature) {
@@ -199,6 +192,14 @@ define(['AssetsTestData',
      });
    }
  };
+
+ var getSelectedSpeedLimitFeatures = function(map) {
+   var interactions = _.find(map.getInteractions().getArray(), function(interaction) {
+       return interaction.get('name') === 'speedLimit';
+   });
+   return interactions.getFeatures().getArray();
+ };
+
 
  return {
    restartApplication: restartApplication,
