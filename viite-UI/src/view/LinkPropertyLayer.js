@@ -183,7 +183,7 @@
           });
 
           var changedFlag = roadCollection.getChangedIds().find(function(id){
-              return id == floatlink.linkId
+              return id == floatlink.linkId;
           });
 
           if((_.isUndefined(tempFlag) || _.isUndefined(source)) && _.isUndefined(changedFlag)){
@@ -201,7 +201,7 @@
               return s.linkId === anomalouslink.linkId ;
             });
           var changedTarget = roadCollection.getChangedIds().find(function(id){
-            return id == anomalouslink.linkId
+            return id == anomalouslink.linkId;
           });
           if((_.isUndefined(target)) && _.isUndefined(changedTarget)){
               var mouseClickHandler = createMouseClickHandler(anomalouslink);
