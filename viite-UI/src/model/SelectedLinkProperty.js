@@ -126,7 +126,7 @@
           applicationModel.removeSpinner();
           if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
-            applicationModel.setCurrentAction(applicationModel.actionCalculating)
+            applicationModel.setCurrentAction(applicationModel.actionCalculating);
           }
           if (!applicationModel.isReadOnly()) {
             var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
