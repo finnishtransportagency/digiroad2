@@ -29,7 +29,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
   }
 
   def hasEarlyAccess(): Boolean = {
-    configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
+    configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
   }
 
   def isAuthorizedToRead(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode) || isViewer()
