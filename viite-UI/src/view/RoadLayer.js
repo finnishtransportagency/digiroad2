@@ -113,24 +113,24 @@ var RoadStyles = function() {
       if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculating) || _.isEqual(action, applicationModel.actionCalculated)){
 
         filteredRoadLinks = _.filter(roadLinks, function(rl){
-              return !_.contains(roadCollection.getChangedIds(), rl.linkId.toString());
-            });
-       if (_.isEmpty(filteredRoadLinks))
-       filteredRoadLinks=roadLinks;
-      _.each(roadCollection.getNewTmpRoadAddress(), function (tmp){
-        filteredRoadLinks.push(tmp);
-      });
-      vectorLayer.removeAllFeatures();
-      var features = _.map(filteredRoadLinks, function(roadLink) {
-        var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return !_.contains(roadCollection.getChangedIds(), rl.linkId.toString());
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-      });
-      usingLayerSpecificStyleProvider(function() {
-        vectorLayer.addFeatures(features);
-      });
-      eventbus.trigger('roadLinks:afterDraw', filteredRoadLinks);
+        if (_.isEmpty(filteredRoadLinks))
+          filteredRoadLinks=roadLinks;
+        _.each(roadCollection.getNewTmpRoadAddress(), function (tmp){
+          filteredRoadLinks.push(tmp);
+        });
+        vectorLayer.removeAllFeatures();
+        var features = _.map(filteredRoadLinks, function(roadLink) {
+          var points = _.map(roadLink.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
+        });
+        usingLayerSpecificStyleProvider(function() {
+          vectorLayer.addFeatures(features);
+        });
+        eventbus.trigger('roadLinks:afterDraw', filteredRoadLinks);
       }
     };
 

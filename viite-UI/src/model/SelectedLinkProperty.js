@@ -29,7 +29,7 @@
 
     var isDifferingSelection = function(singleLinkSelect) {
       return (!_.isUndefined(singleLinkSelect) &&
-              (singleLinkSelect !== isSingleLinkSelection()));
+      (singleLinkSelect !== isSingleLinkSelection()));
     };
 
     var extractDataForDisplay = function(selectedData) {
@@ -80,11 +80,11 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);  
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
-        
+
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -154,7 +154,7 @@
       var chainLinks = [];
       _.each(sources, function(link){
         if(!_.isUndefined(link))
-        chainLinks.push(link.getData().linkId);
+          chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
         chainLinks.push(link.getData().linkId);
@@ -166,16 +166,16 @@
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
-     backend.getAdjacentsFromMultipleSources(data, function(adjacents){
-       if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-         var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
-           return _.merge({}, a, {"marker": markers[index]});
-         }), "links": newSources};
-         eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
-         eventbus.trigger('adjacents:startedFloatingTransfer');
-       } else {
-        applicationModel.removeSpinner();
-       }
+      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
+          var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
+            return _.merge({}, a, {"marker": markers[index]});
+          }), "links": newSources};
+          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+          eventbus.trigger('adjacents:startedFloatingTransfer');
+        } else {
+          applicationModel.removeSpinner();
+        }
       });
     });
 
@@ -325,7 +325,7 @@
         applicationModel.resetCurrentAction();
         roadCollection.resetNewTmpRoadAddress();
         clearFeaturesToKeep();
-          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+        eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){

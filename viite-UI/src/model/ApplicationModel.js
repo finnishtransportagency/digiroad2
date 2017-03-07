@@ -104,7 +104,7 @@
         return readOnly;
       },
       isActiveButtons: function() {
-          return activeButtons;
+        return activeButtons;
       },
       isDirty: function() {
         return isDirty();
@@ -112,9 +112,9 @@
       canZoomOut: function() {
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
-        canZoomOutEditMode: function () {
-          return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
-        },
+      canZoomOutEditMode: function () {
+        return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
+      },
       assetDragDelay: 100,
       assetGroupingDistance: 36,
       setRoadTypeShown: function(bool) {

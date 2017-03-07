@@ -192,7 +192,7 @@
     };
 
     this.resetNewTmpRoadAddress = function(){
-     tmpNewRoadAddress = [];
+      tmpNewRoadAddress = [];
     };
 
   };
