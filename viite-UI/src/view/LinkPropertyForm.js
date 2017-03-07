@@ -320,6 +320,13 @@
       }
     };
 
+    var processAditionalFloatings = function(floatingRoads, value){
+      applicationModel.addSpinner();
+      eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+      $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
+      applicationModel.setActiveButtons(true);
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -498,7 +505,7 @@
 
         $('.form-group:last').after(fields);
 
-        if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
+        if($(".form-group[id^='VALITUTLINKIT']:last").length !== 0 && $(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
@@ -508,10 +515,7 @@
               applicationModel.setActiveButtons(true);
             });
             $('[id*="aditionalSourceButton"]').click(sources,function(event) {
-              applicationModel.addSpinner();
-              eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
-              rootElement.find('.link-properties button.cancel').attr('disabled', false);
-              applicationModel.setActiveButtons(true);
+              processAditionalFloatings(sources, event.currentTarget.value);
             });
         }
       };
@@ -579,11 +583,11 @@
         });
         $(".form-group:last").after(floatingPart);
         $('[id*="aditionalSourceButton"]').click(floatingRoads,function(event) {
-          applicationModel.addSpinner();
-          eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, event.currentTarget.value);
-          rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          applicationModel.setActiveButtons(true);
+          processAditionalFloatings(floatingRoads,event.currentTarget.value);
         });
+      });
+      eventbus.on('linkProperties:additionalFloatingSelected',function(data){
+        processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
       });
     };
     bindEvents();

@@ -25,34 +25,38 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
-        if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
-          applicationModel.toggleSelectionTypeFloating();
-        }
-        else if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType !== -1){
-          return false;
-        }
-        if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+      if(typeof feature.attributes.linkId !== 'undefined') {
+        if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
+          var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+            return feature.roadLinkType !== -1;
+          }), 'selectedLinkId': feature.data.linkId};
+          eventbus.trigger('linkProperties:additionalFloatingSelected', data);
         } else {
-          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
-        }
-        unhighlightFeatures();
-        currentRenderIntent = 'select';
-        roadLayer.redraw();
-        highlightFeatures();
-        if(selectedLinkProperty.getFeaturesToKeep().length > 1){
-        var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
-          floatingMinusLast.forEach(function (fml){
-            highlightFeatureByLinkId(fml.linkId);
-          });
-          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(ft){
-            return ft.anomaly === 1;
-          })
-        );
-          anomalousFeatures.forEach(function (fmf){
-            editFeatureDataForGreen(fmf.linkId);
-          });
+          if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
+            applicationModel.toggleSelectionTypeFloating();
+          }
+          if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
+            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+          } else {
+            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
+          }
+          unhighlightFeatures();
+          currentRenderIntent = 'select';
+          roadLayer.redraw();
+          highlightFeatures();
+          if (selectedLinkProperty.getFeaturesToKeep().length > 1) {
+            var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
+            floatingMinusLast.forEach(function (fml) {
+              highlightFeatureByLinkId(fml.linkId);
+            });
+            var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
+                return ft.anomaly === 1;
+              })
+            );
+            anomalousFeatures.forEach(function (fmf) {
+              editFeatureDataForGreen(fmf.linkId);
+            });
+          }
         }
       }
     };
@@ -113,10 +117,20 @@
         return true;
       } else {
         if(applicationModel.getSelectionType() === 'floating'){
-          return feature.roadLinkType === -1;
+          if(feature.roadLinkType !== -1){
+            me.displayConfirmMessage();
+            return false;
+          } else {
+            return true;
+          };
         }
         if(applicationModel.getSelectionType() === 'unknown'){
-          return feature.roadLinkType === 0 && feature.anomaly === 1;
+          if(feature.roadLinkType === 0 && feature.anomaly === 1) {
+            me.displayConfirmMessage();
+            return false;
+          } else {
+            return true;
+          }
         }
       }
 
