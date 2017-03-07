@@ -382,7 +382,7 @@
       });
     };
 
-    var reselectRoadLink = function() {
+    var reselectRoadLink = function(action) {
       me.activateSelection();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
@@ -397,7 +397,15 @@
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
-        highlightFeatures();
+        if(_.isEqual(action, applicationModel.actionCalculated) || !_.isEmpty(roadCollection.getChangedIds())){
+          _.each(roadCollection.getChangedIds(), function (id){
+             highlightFeatureByLinkId(id);
+          });
+        }
+        else{
+          highlightFeatures();
+        }
+
       }
       selectControl.onSelect = originalOnSelectHandler;
       if (selectedLinkProperty.isDirty()) {
@@ -631,7 +639,7 @@
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
       me.drawSigns(roadLayer.layer, selectedRoadLinks);
-      reselectRoadLink();
+      reselectRoadLink(action);
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
