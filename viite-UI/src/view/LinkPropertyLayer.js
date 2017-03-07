@@ -122,7 +122,7 @@
             return false;
           } else {
             return true;
-          };
+          }
         }
         if(applicationModel.getSelectionType() === 'unknown'){
           if(feature.roadLinkType === 0 && feature.anomaly === 1) {

@@ -155,8 +155,11 @@
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
-      sources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
-      featuresToKeep.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
+      var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
+      if(!_.isUndefined(fetchedFeature)){
+        sources.push(fetchedFeature);
+        featuresToKeep.push(fetchedFeature.getData());
+      }
       var chainLinks = [];
       _.each(sources, function(link){
         if(!_.isUndefined(link))
@@ -165,9 +168,9 @@
       _.each(targets, function(link){
         chainLinks.push(link.getData().linkId);
       });
-      var newSources = [existingSources];
-      if(!_.isUndefined(additionalSourceLinkId))
-        newSources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
+      var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
+      if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
+        newSources.push(fetchedFeature.getData());
       var data = _.map(newSources, function (ns){
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
