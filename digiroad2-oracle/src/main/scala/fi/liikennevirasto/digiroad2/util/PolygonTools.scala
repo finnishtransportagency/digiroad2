@@ -69,7 +69,7 @@ class PolygonTools {
     stringPolygonList
   }
 
-  def getAreaGeometryFromDatabase(areaId: Int): Geometry = {
+  def getAreaGeometry(areaId: Int): Geometry = {
     val wKTParser = new WKTReader()
     val areaChoose= new getServiceArea()
     wKTParser.read(areaChoose.getArea(areaId))

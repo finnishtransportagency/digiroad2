@@ -83,7 +83,7 @@ trait LinearAssetOperations {
     var changeS= ListBuffer.empty[ChangeInfo]
     val polygonStringList =      polygonTool.stringifyGeometryForVVHClient(
         polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometryFromDatabase(serviceArea),bounds))
+          polygonTool.getAreaGeometry(serviceArea),bounds))
     for (polygonQueryString<-polygonStringList)
       {
         val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon(polygonQueryString)
