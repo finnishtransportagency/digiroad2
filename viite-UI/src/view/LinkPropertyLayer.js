@@ -109,7 +109,7 @@
 
     roadLayer.layer.events.register("beforefeatureselected", this, function(event){
       var feature = event.feature.attributes;
-      if (applicationModel.getSelectionType() === 'all'){
+      if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all'){
         return true;
       } else {
         if(applicationModel.getSelectionType() === 'floating'){
