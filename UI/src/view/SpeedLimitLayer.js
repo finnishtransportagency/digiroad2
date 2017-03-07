@@ -191,6 +191,7 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
+  //TODO remove this because at least the highlight no longer exists
   var highlightMultipleSpeedLimitFeatures = function() {
     var partitioned = _.groupBy(vectorLayer.features, function(feature) {
       return selectedSpeedLimit.isSelected(feature.attributes);
@@ -272,6 +273,7 @@ window.SpeedLimitLayer = function(params) {
     collection.fetch(map.getView().calculateExtent(map.getSize()));
   }
 
+  //TODO remove this because is no longer used
   var handleSpeedLimitUnSelected = function(selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
       return selection.isSelected(feature.attributes);

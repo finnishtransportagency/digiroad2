@@ -63,7 +63,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     },
     onSelect: onSelectMassTransitStop,
     draggable : false,
-    isPoint : true
+    filterGeometry : function(feature){
+      return feature.getGeometry() instanceof ol.geom.Point
+    }
   });
 
   this.selectControl = selectControl;
@@ -75,6 +77,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var dragControl = new ol.interaction.Translate({
       features : selectControl.getSelectInteraction().getFeatures()
     });
+
+    dragControl.set('name', 'translate_massTransitStop');
 
     var translateSelectedAsset = function(event) {
       //if (feature.massTransitStop.getMarker()) {
@@ -493,7 +497,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
     //  data: data,
     //  massTransitStop: massTransitStop};
-    //selectedAsset.data.stopTypes = [];
+    //selectedAsset.data.stopTypes = [];x
     if(placement){
       selectedMassTransitStopModel.place(data, currentAsset);
     }else {
@@ -501,8 +505,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
 
     selectedAsset = createAsset(data);
-    //onCreationFeature = marker.massTransitStop.getMarkerFeature();
-    //selectControl.addSelectionFeatures([feature], false, false);
+    var feature = selectedAsset.massTransitStop.getMarkerFeature();
+    selectControl.addSelectionFeatures([feature], false, false);
     //assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     //assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
 
@@ -909,7 +913,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var show = function() {
+  var show = function(map) {
     roadLayer.deactivateSelection();
     selectedControl = 'Select';
     startListening();
@@ -917,6 +921,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     assetLayer.setVisible(true);
     registerRoadLinkFetched();
     isComplementaryActiveBS = false;
+    me.show(map);
   };
 
   var showWithComplementary = function() {

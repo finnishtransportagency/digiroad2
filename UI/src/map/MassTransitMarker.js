@@ -254,6 +254,7 @@
     var createSelectionMarkerStyles = function(){
       var name = '';
       var direction = '';
+      var nationalId = data.nationalId ? data.nationalId : '';
       if(selectedMassTransitStopModel.exists()){
         name = selectedMassTransitStopModel.getName();
         direction = selectedMassTransitStopModel.getDirection();
@@ -269,7 +270,7 @@
       styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
       styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN));
       styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
-      styles = styles.concat(createTextStyles(data.stopTypes, data.nationalId, name, direction, IMAGE_MARGIN));
+      styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
       //feature.setStyle(styles);
       //return feature;
       return styles;
