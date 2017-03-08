@@ -5,6 +5,7 @@
     var targets = [];
     var sources = [];
     var featuresToKeep = [];
+    var EmptyFloating =false;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -144,6 +145,9 @@
             };
             if(applicationModel.getSelectionType() === 'floating') {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+              if(_.isEmpty(markedRoads.adjacents)){
+                EmptyFloating = true;
+              }
             }
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
@@ -193,6 +197,8 @@
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+         if(_.isEmpty(calculatedRoads.adjacents))
+           EmptyFloating = true;
          eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
         applicationModel.removeSpinner();
@@ -453,6 +459,16 @@
       featuresToKeep = [];
     };
 
+    var continueSelectUnknown = function() {
+      if(EmptyFloating !== true){
+        new Confirm();
+        new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
+        return false;
+      }else {
+        return true;
+      }
+    };
+
     return {
       getSources: getSources,
       resetSources: resetSources,
@@ -471,6 +487,7 @@
       saveTransfer: saveTransfer,
       cancel: cancel,
       cancelGreenRoad: cancelGreenRoad,
+      continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,

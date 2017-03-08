@@ -210,7 +210,7 @@
 
     var editButtons =
       '<div class="link-properties form-controls">' +
-      '<button class="selection ready btn btn-continue" disabled>Valinta valmis</button>'  +
+      '<button class="continue ready btn btn-continue" disabled>Valinta valmis</button>'  +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
@@ -547,12 +547,17 @@
         applicationModel.addSpinner();
         selectedLinkProperty.transferringCalculation();
         applicationModel.setActiveButtons(true);
-        
       });
       rootElement.on('click', '.link-properties button.continue',function(){
-        applicationModel.toggleSelectionTypeUnknown();
-        eventbus.trigger('gapTransferingPhase:unknown');
+        if(selectedLinkProperty.continueSelectUnknown())
+          applicationModel.setContinueButton(true);
       });
+      eventbus.on('linkProperties:valintaActive', function() {
+        selectedLinkProperty.continueSelectUnknown();
+        rootElement.find('.link-properties button.continue').attr('disabled', true);
+        applicationModel.setContinueButton(true);
+      });
+
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();

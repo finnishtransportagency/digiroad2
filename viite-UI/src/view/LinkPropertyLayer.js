@@ -441,7 +441,7 @@
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
-        highlightFeatures();
+          highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
       if (selectedLinkProperty.isDirty()) {
@@ -707,6 +707,22 @@
       if(features.length === 0)
         return undefined;
       else return _.first(features);
+    };
+
+    var highlightAnomalousFeaturesByFloating = function() {
+      var floatingFeatures =[];
+      _.each(roadLayer.layer.features, function(feature){
+        if(feature.data.roadLinkType == -1)
+          floatingFeatures.push(feature);
+      });
+      _.each(roadLayer.layer.features, function(feature) {
+        _.each(floatingFeatures, function(floating) {
+          if(!_.isEmpty(floatingFeatures)){
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds))
+              selectControl.highlight(feature);
+          }
+        });
+      });
     };
 
     this.removeLayerFeatures = function() {

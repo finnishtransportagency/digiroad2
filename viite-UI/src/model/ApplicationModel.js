@@ -10,6 +10,7 @@
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
     var readOnly = true;
     var activeButtons = false;
+    var continueButton = false;
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
@@ -45,6 +46,13 @@
         eventbus.trigger('application:activeButtons', newState);
       }
     };
+    var setContinueButton = function(newState){
+      if(continueButton !== newState){
+        continueButton = newState;
+        eventbus.trigger('linkProperties:valintaActive');
+      }
+    };
+
     var roadTypeShown = true;
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
@@ -116,6 +124,7 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      setContinueButton: setContinueButton,
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
       isReadOnly: function() {
@@ -123,6 +132,9 @@
       },
       isActiveButtons: function() {
         return activeButtons;
+      },
+      isContinueButton: function() {
+        return continueButton;
       },
       isDirty: function() {
         return isDirty();
