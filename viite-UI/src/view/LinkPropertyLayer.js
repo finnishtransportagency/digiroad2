@@ -25,7 +25,10 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.linkId !== 'undefined') {
+      if(!applicationModel.isReadOnly() && feature.attributes.anomaly !== 1 && feature.attributes.roadLinkType !== -1){
+        unhighlightFeatureByLinkId(feature.attributes.linkId);
+      }
+      else if(typeof feature.attributes.linkId !== 'undefined') {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
           var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
             return feature.roadLinkType !== -1;
@@ -162,6 +165,14 @@
       _.each(roadLayer.layer.features, function(x) {
         if(x.attributes.linkId == linkId){
           selectControl.highlight(x);
+        }
+      });
+    };
+
+    var unhighlightFeatureByLinkId = function (linkId) {
+      _.each(roadLayer.layer.features, function(x) {
+        if(x.attributes.linkId == linkId){
+          selectControl.unhighlight(x);
         }
       });
     };
