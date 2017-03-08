@@ -92,6 +92,28 @@ object NumericalLimitFiller {
     * @return
     */
   def adjustTwoWaySegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    //TODO Use this code to remove the fuse method
+    //    assets.groupBy(_.sideCode).foldLeft(Seq.empty[PersistedLinearAsset], changeSet){case ((assetlist, change), test) =>
+    //        val twoWaySegments = test._2.sortWith(modifiedSort)
+    //        if (twoWaySegments.length == 1 /*&& assets.forall(_.sideCode == test._2)*/) {
+    //          val asset = twoWaySegments.head
+    //          val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
+    //          (Seq(adjustedAsset), change.copy(adjustedMValues = change.adjustedMValues ++ mValueAdjustments))
+    //        } else {
+    //          if (twoWaySegments.length > 1) {
+    //            val asset = twoWaySegments.head
+    //            val rest = twoWaySegments.tail
+    //            val (updatedAsset, newChangeSet) = extend(asset, rest, change)
+    //            val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
+    //            (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset) ++ assetlist,
+    //              newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
+    //          } else {
+    //            (assetlist ++ assets,  change)
+    //          }
+    //        }
+    //    }
+
+
     val twoWaySegments = assets.filter(_.sideCode == 1).sortWith(modifiedSort)
     if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
       val asset = twoWaySegments.head
@@ -186,6 +208,9 @@ object NumericalLimitFiller {
       * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
       */
     def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+      if (segmentPieces.size < 2) //TODO confirm if this solution make real sense
+        return segmentPieces
+
       val seg1 = segmentPieces.head
       val seg2 = segmentPieces.last
       (seg1.value, seg2.value) match {
@@ -284,10 +309,10 @@ object NumericalLimitFiller {
       segments.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
     val resultingSpeedLimits = combinedSegment ++ newSegments
-    val droppedIds = segments.map(_.id).toSet.--(resultingSpeedLimits.map(_.id).toSet)
+    val expiredIds = segments.map(_.id).toSet.--(resultingSpeedLimits.map(_.id).toSet)
 
     val returnSegments = cleanSpeedLimitIds(resultingSpeedLimits, Seq())
-    (returnSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
+    (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
   }
 
   private def fuse(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -301,11 +326,11 @@ object NumericalLimitFiller {
         val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
         val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure)
-        val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
+        val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
         // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-          changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedId , adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId , adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
       } else {
         val fused = fuse(roadLink, sortedList.tail, changeSet)
         (Seq(origin) ++ fused._1, fused._2)
