@@ -210,6 +210,7 @@
 
     var editButtons =
       '<div class="link-properties form-controls">' +
+      '<button class="selection ready btn btn-continue" disabled>Valinta valmis</button>'  +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
       '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
@@ -319,53 +320,68 @@
       }
     };
 
+    var processAditionalFloatings = function(floatingRoads, value){
+      applicationModel.addSpinner();
+      eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+      $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
+      applicationModel.setActiveButtons(true);
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
-        rootElement.find('.btn-move').toggle(false);
         var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
 
+        var firstSelectedLinkProperty = selectedLinkProperty.get()[0];
         if(!_.isEmpty(uniqFeaturesToKeep)){
           if(readOnly){
             if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
-              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             } else {
-              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             }
           } else {
             if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
-              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
-              $('#floatingEditModeForm').show();
-            } else { //check if the before selected was a floating link and if the next one is unknown
-              if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
-                rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+              if(applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1){
+                selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 $('#floatingEditModeForm').show();
               } else {
-                rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+                $('#floatingEditModeForm').show();
+              }
+            } else { //check if the before selected was a floating link and if the next one is unknown
+              if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
+                rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+                $('#floatingEditModeForm').show();
+              } else {
+                rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             }
           }
         } else if(!_.isEmpty(selectedLinkProperty.get())){
           if(readOnly){
-            if(selectedLinkProperty.get()[0].roadLinkType === -1){
-              rootElement.html(templateFloating(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            if(firstSelectedLinkProperty.roadLinkType === -1){
+              rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             } else {
-              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             }
           } else {
-            if(selectedLinkProperty.get()[0].roadLinkType === -1){
-              rootElement.html(templateFloatingEditMode(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+            if(_.last(selectedLinkProperty.get()).roadLinkType === -1){
+              applicationModel.toggleSelectionTypeFloating();
+              rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+              selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
               $('#floatingEditModeForm').show();
             } else {
-              rootElement.html(template(options, selectedLinkProperty.get()[0])(selectedLinkProperty.get()[0]));
+              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             }
           }
         }
         rootElement.find('.form-controls').toggle(!readOnly);
-        rootElement.find('.btn-move').toggle(!readOnly);
+        rootElement.find('.btn-move').prop("disabled", true);
+        rootElement.find('.btn-continue').prop("disabled", false);
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
@@ -373,9 +389,12 @@
 
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+          var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
+            return feature.roadLinkType === -1;
+          }));
           var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
           if(canStartTransfer)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], uniqFeaturesToKeep[uniqFeaturesToKeep.length-2]);
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -486,7 +505,7 @@
 
         $('.form-group:last').after(fields);
 
-        if($(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
+        if($(".form-group[id^='VALITUTLINKIT']:last").length !== 0 && $(".form-group[id^='VALITUTLINKIT']:last")[0].childNodes.length <=2){
             $(".form-group[id^='VALITUTLINKIT']:last").append($(_.template(fullTemplate)(_.merge({}, {"adjacentLinks": adjacents}))));
             $('#floatingEditModeForm').show();
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
@@ -496,10 +515,7 @@
               applicationModel.setActiveButtons(true);
             });
             $('[id*="aditionalSourceButton"]').click(sources,function(event) {
-              applicationModel.addSpinner();
-              eventbus.trigger("adjacents:additionalSourceSelected", sources, event.currentTarget.value);
-              rootElement.find('.link-properties button.cancel').attr('disabled', false);
-              applicationModel.setActiveButtons(true);
+              processAditionalFloatings(sources, event.currentTarget.value);
             });
         }
       };
@@ -533,6 +549,10 @@
         applicationModel.setActiveButtons(true);
         
       });
+      rootElement.on('click', '.link-properties button.continue',function(){
+        applicationModel.toggleSelectionTypeUnknown();
+        eventbus.trigger('gapTransferingPhase:unknown');
+      });
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
@@ -553,8 +573,21 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        rootElement.find('.link-properties button.calculate').attr('disabled', false);
         applicationModel.setActiveButtons(true);
+      });
+
+      eventbus.on('adjacents:floatingAdded', function(floatingRoads){
+        var floatingPart = '<br><label class="control-label-floating">VIERESSÄ KELLUVIA TIEOSOITTEITA:</label>';
+        _.each(floatingRoads,function(fr){
+          floatingPart = floatingPart + additionalSource(fr.linkId, fr.marker);
+        });
+        $(".form-group:last").after(floatingPart);
+        $('[id*="aditionalSourceButton"]').click(floatingRoads,function(event) {
+          processAditionalFloatings(floatingRoads,event.currentTarget.value);
+        });
+      });
+      eventbus.on('linkProperties:additionalFloatingSelected',function(data){
+        processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
       });
     };
     bindEvents();
