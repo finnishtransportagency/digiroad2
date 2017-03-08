@@ -260,7 +260,9 @@
     var createMouseClickHandler = function(floatlink) {
       return function(event){
         if(floatlink.anomaly !== 1) {
-          selectControl.unselectAll();
+          if(applicationModel.getSelectionType() !== 'floating' && floatlink.roadLinkType !== -1 || applicationModel.getSelectionType() === 'all'){
+            selectControl.unselectAll();
+          }
         }
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
