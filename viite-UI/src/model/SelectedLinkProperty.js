@@ -29,7 +29,7 @@
 
     var isDifferingSelection = function(singleLinkSelect) {
       return (!_.isUndefined(singleLinkSelect) &&
-              (singleLinkSelect !== isSingleLinkSelection()));
+      (singleLinkSelect !== isSingleLinkSelection()));
     };
 
     var extractDataForDisplay = function(selectedData) {
@@ -80,11 +80,11 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);  
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
-        
+
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -124,8 +124,10 @@
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
-          if (!_.isEmpty(adjacents))
+          if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
+            applicationModel.setCurrentAction(applicationModel.actionCalculating);
+          }
           if (!applicationModel.isReadOnly()) {
             var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
               return roads.linkId;
@@ -163,7 +165,7 @@
       var chainLinks = [];
       _.each(sources, function(link){
         if(!_.isUndefined(link))
-        chainLinks.push(link.getData().linkId);
+          chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
         chainLinks.push(link.getData().linkId);
@@ -341,6 +343,8 @@
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        applicationModel.resetCurrentAction();
+        roadCollection.resetNewTmpRoadAddress();
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
@@ -376,9 +380,9 @@
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
-
-        if (action )
+        if (action){
           eventbus.trigger('roadLinks:deleteSelection');
+        }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
     };

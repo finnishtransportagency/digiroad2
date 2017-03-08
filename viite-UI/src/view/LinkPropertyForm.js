@@ -256,7 +256,7 @@
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
         '</div>' +
-        '<footer>' + buttons + '</footer>', options);
+        '<footer>' + '</footer>', options);
     };
 
     var templateFloating = function(options) {
@@ -280,7 +280,7 @@
         notificationFloatingTransfer(true)   +
         '</div>' +
         '</div>' +
-        '<footer>' + buttons + '</footer>', options);
+        '<footer>' + '</footer>', options);
     };
 
     var templateFloatingEditMode = function(options) {
