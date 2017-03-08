@@ -5,6 +5,7 @@
     var targets = [];
     var sources = [];
     var featuresToKeep = [];
+    var previousAdjacents = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -132,9 +133,11 @@
             var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
               return roads.linkId;
             });
-            var filteredAdjacents = _.filter(adjacents, function(adj){
+            var filteredAdjacents = _.filter(adjacents.concat(previousAdjacents), function(adj){
               return !_.contains(selectedLinkIds, adj.linkId);
             });
+
+            previousAdjacents = filteredAdjacents;
             var calculatedRoads = {
               "adjacents": _.map(filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
