@@ -32,7 +32,6 @@ class PolygonTools {
     * @return returns Sequence of JTS Polygons that are with in bounding box
     */
   def geometryInterceptorToBoundingBox(geometry: Geometry, boundingBox: BoundingRectangle): Seq[Polygon] = {
-    var listGeom = ListBuffer.empty[Polygon]
     val leftBottomP = boundingBox.leftBottom
     val rightTopP = boundingBox.rightTop
     val leftTopP = Point(leftBottomP.x, rightTopP.y)
@@ -40,7 +39,7 @@ class PolygonTools {
     val BoundingBoxAsPoly = geomBuilder.polygon(leftTopP.x, leftTopP.y, rightTopP.x, rightTopP.y, rightBottom.x, rightBottom.y, leftBottomP.x, leftBottomP.y)
     val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
     if (intersectionGeometry.getGeometryType.toLowerCase.startsWith("polygon")) {
-      listGeom += intersectionGeometry.asInstanceOf[Polygon]
+      Seq(intersectionGeometry.asInstanceOf[Polygon])
     } else if (intersectionGeometry.isEmpty) {
       Seq.empty[Polygon]
     } else if (intersectionGeometry.getGeometryType.toLowerCase.contains("multipolygon")) {
