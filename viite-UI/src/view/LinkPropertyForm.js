@@ -320,11 +320,16 @@
       }
     };
 
-    var processAditionalFloatings = function(floatingRoads, value){
-      applicationModel.addSpinner();
-      eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
-      $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
-      applicationModel.setActiveButtons(true);
+    var processAditionalFloatings = function(floatingRoads, value) {
+      var floatingRoadsLinkId = _.map(floatingRoads, function (fr) {
+        return fr.linkId;
+      });
+      if (!_.contains(floatingRoadsLinkId, value)) {
+        applicationModel.addSpinner();
+        eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+        $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
+        applicationModel.setActiveButtons(true);
+      }
     };
 
     var bindEvents = function() {
