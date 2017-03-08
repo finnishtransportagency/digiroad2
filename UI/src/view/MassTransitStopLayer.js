@@ -64,7 +64,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     onSelect: onSelectMassTransitStop,
     draggable : false,
     filterGeometry : function(feature){
-      return feature.getGeometry() instanceof ol.geom.Point
+      return feature.getGeometry() instanceof ol.geom.Point;
     }
   });
 
@@ -250,7 +250,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var removeAssetFromMap = function(asset) {
     //assetDirectionLayer.removeFeatures(asset.massTransitStop.getDirectionArrow());
     var feature = asset.massTransitStop.getMarkerFeature();
-    assetSource.removeFeature(feature);
+    if(_.some(assetSource.getFeatures(), function(f){ return f == feature; }))
+      assetSource.removeFeature(feature);
     //assetLayer.removeMarker(marker);
   };
 
@@ -312,8 +313,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectControl.clear();
     deselectAsset(selectedAsset);
     destroyAsset(asset);
-    addNewAsset(asset);
-    selectedAsset = regroupAssetIfNearOtherAssets(asset);
+    selectedAsset = addNewAsset(asset);
+    selectedAsset = regroupAssetIfNearOtherAssets(selectedAsset.data);
     roadLayer.clearSelection();
     //registerMouseDownHandler(selectedAsset);
     //selectedAsset.massTransitStop.select();
@@ -341,6 +342,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
+  //TODO can be deleted
   function redrawGroup(group) {
     var groupAssets = group.assetGroup;
     _.each(groupAssets, function(asset) {
@@ -353,6 +355,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var assetGroup = _.sortBy(group.assetGroup.concat([asset.data]), 'id');
     _.each(assetGroup, function(asset) {
       asset.group.assetGroup = assetGroup;
+      asset.group.lon = group.lon;
+      asset.group.lat = group.lat;
     });
   };
 
@@ -715,11 +719,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     _.each(uiAssetGroups, massTransitStopsCollection.insertAssetsFromGroup);
   };
 
-  //var renderNewGroups = function(uiAssetGroups) {
-  //  _.each(uiAssetGroups, function(uiAssetGroup) {
-  //    _.each(uiAssetGroup, addAssetToLayersAndSetVisibility);
-  //  });
-  //};
+  var renderNewGroups = function(uiAssetGroups) {
+    //_.each(uiAssetGroups, function(uiAssetGroup) {
+    //  _.each(uiAssetGroup, addAssetToLayersAndSetVisibility);
+    //});
+  };
 
   var handleNewAssetsFetched = function(newBackendAssets) {
     var backendAssetGroups = assetGrouping.groupByDistance(newBackendAssets, map.getView().getZoom());
@@ -855,7 +859,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:saved', handleAssetSaved);
     eventListener.listenTo(eventbus, 'asset:created', handleAssetCreated);
     eventListener.listenTo(eventbus, 'asset:fetched', handleAssetFetched);
-    //eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
+    eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
     eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
     eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);

@@ -260,8 +260,10 @@
         direction = selectedMassTransitStopModel.getDirection();
       }else
       {
-        name = selectedMassTransitStopModel.getName(data.propertyData);
-        direction = selectedMassTransitStopModel.getDirection(data.propertyData);
+        if(data.propertyData){
+          name = selectedMassTransitStopModel.getName(data.propertyData);
+          direction = selectedMassTransitStopModel.getDirection(data.propertyData);
+        }
       }
 
       var styles = [];

@@ -30,18 +30,16 @@ require.config({
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         //'GroupingByValidityPeriodSpec',
-         //'MassTransitStopCreationSpec',
-         //'MassTransitStopMoveSpec',
+         'GroupingByValidityPeriodSpec',
+         'MassTransitStopCreationSpec',
+         'MassTransitStopMoveSpec',
          'SpeedLimitVisualizationSpec',
-         //'RegroupingMassTransitStopsSpec',
-         //'GroupingInCreationSpec',
-
+         'RegroupingMassTransitStopsSpec',
+         'GroupingInCreationSpec',
          'SingleSegmentSpeedLimitSpec',
          'SpeedLimitSplitSpec',
-         //'MultiSegmentSpeedLimitSpec'
-
-         //'BoxSelectControlSpec' NO NEED FOR CHANGE
+         'MultiSegmentSpeedLimitSpec'
+         //'BoxSelectControlSpec' WE ARE NO LONGER USING THE BOX SELECT CONTROL
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);

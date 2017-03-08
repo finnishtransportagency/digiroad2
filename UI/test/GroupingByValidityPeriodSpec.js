@@ -14,7 +14,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     it('only includes bus stops in the selected validity period to the group', function() {
 
-      var features = testHelpers.getAssetMarkers(openLayersMap);
+      var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
       expect(features).to.have.length(1);
       expect(features[0].getProperties().data.id).to.equal(300347);
 
@@ -33,7 +33,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       it('includes bus stops in future and current validity period', function() {
 
-        var features = testHelpers.getAssetMarkers(openLayersMap);
+        var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
         expect(features).to.have.length(2);
         expect(features[0].getProperties().data.id).to.equal(300347);
         expect(features[1].getProperties().data.id).to.equal(300348);
@@ -47,7 +47,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
         it('includes only bus stop in future', function() {
 
-          var features = testHelpers.getAssetMarkers(openLayersMap);
+          var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
           expect(features).to.have.length(1);
           expect(features[0].getProperties().data.id).to.equal(300348);
 

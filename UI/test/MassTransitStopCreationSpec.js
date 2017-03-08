@@ -3,7 +3,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
   var expect = chai.expect;
 
   describe('when loading application', function() {
-
+    this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -20,7 +20,8 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
 
       it('it shows new marker', function() {
-        expect($('.expanded-bus-stop')).to.be.visible;
+        var features = testHelpers.getSelectedAssetMarkers(openLayersMap);
+        expect(features).to.have.length(1);
       });
     });
   });
