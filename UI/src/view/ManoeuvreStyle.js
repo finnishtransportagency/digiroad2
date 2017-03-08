@@ -1,6 +1,5 @@
 (function(root) {
     root.ManoeuvreStyle = function(roadLayer) {
-        //First to add to addRules of provider
         var zoomLevelRules = [
             new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 1 }}),
             new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 3 }}),
@@ -67,20 +66,8 @@
             new StyleRule().where('zoomLevel').is(15).use({ pointRadius: 16 })
         ]);
 
-        var selectionDefaultProvider = new StyleRuleProvider({stroke: {opacity: 0.15, rotation : '${rotation}'},
-                                                    icon: {src: 'images/link-properties/arrow-drop-grey.svg'}});
-
-
         var selectionProvider = new StyleRuleProvider({stroke: {opacity: 0.9, rotation : '${rotation}', color: '#00f'},
                                             icon: {src: 'images/link-properties/arrow-drop-blue.svg'}});
-
-        selectionDefaultProvider.addRules(zoomLevelRules);
-        selectionDefaultProvider.addRules(featureTypeRules);
-        selectionDefaultProvider.addRules(signSizeRules);
-        selectionDefaultProvider.addRules([
-            new StyleRule().where('adjacent').is(0).use({ stroke: {opacity: 0.15, graphicOpacity: 0.15 }}),
-            new StyleRule().where('adjacent').is(1).use({ stroke: {opacity: 0.9, graphicOpacity: 1.0 }})
-        ]);
 
         selectionProvider.addRules(zoomLevelRules);
         selectionProvider.addRules(featureTypeRules);
@@ -89,11 +76,9 @@
         var getDefaultStyle = function () {
             return defaultStyleProvider;
         };
-        //
         var getSelectedStyle = function () {
             return selectionProvider;
         };
-
 
         return {
             getDefaultStyle: getDefaultStyle,

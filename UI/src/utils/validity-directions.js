@@ -8,15 +8,14 @@
       var switchedDirections = { 1: 1, 2: 3, 3: 2 };
       return switchedDirections[validityDirection];
     },
-    //TODO : validate the use of this function in order to work with radius
     calculateRotation: function(bearing, validityDirection) {
       var bearingInPolarCoordinates = geometrycalculator.convertCompassToPolarCoordinates(bearing);
-      bearingInPolarCoordinates = bearingInPolarCoordinates * (Math.PI / 180);
+      var bearingInPolarCoordinatesRadius = geometrycalculator.deg2rad(bearingInPolarCoordinates);
+
       if (validityDirection === validitydirections.oppositeDirection) {
-        //return geometrycalculator.oppositeAngle(bearingInPolarCoordinates);
-          return bearingInPolarCoordinates + Math.PI;
+        return geometrycalculator.oppositeAngleRadius(bearingInPolarCoordinatesRadius);
       } else {
-        return bearingInPolarCoordinates;
+        return bearingInPolarCoordinatesRadius;
       }
     }
   };

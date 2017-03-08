@@ -82,6 +82,10 @@
     return (angle + 180) % 360;
   };
 
+  geometrycalculator.oppositeAngleRadius = function(angle) {
+      return angle + Math.PI;
+  };
+
   //bounds corresponds to [-548576, 6291456, 1548576, 8388608]
   geometrycalculator.isInBounds = function(bounds, x, y) {
       return (x > bounds[0] && x < bounds[2] && y > bounds[1] && y < bounds[3]);

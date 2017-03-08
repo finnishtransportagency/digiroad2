@@ -71,7 +71,6 @@
 
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
-           // var currentLonLat = map.getLonLatFromPixel(new OpenLayers.Pixel(mousePosition.x, mousePosition.y));
             var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
@@ -106,7 +105,6 @@
       return feature;
     }
 
-    //TODO: edit validity-direction
     function determineRotation(asset) {
       var rotation = 0;
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
@@ -208,16 +206,12 @@
     }
 
     function handleSelected() {
-    //  vectorLayer.styleMap = style.selection;
       applySelection();
-      //vectorLayer.redraw();
     }
 
     function handleSavedOrCancelled() {
-      selectControl.activate();
       mapOverlay.hide();
-      //TODO use that instead of doing me.selectControl.activate();
-     // me.activateSelection();
+      me.activateSelection();
       roadLayer.clearSelection();
       me.refreshView();
     }
@@ -226,19 +220,17 @@
       //me.deactivateSelection();
       var asset = selectedAsset.get();
       var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset)});
-      // _.find(vectorLayer.features, {attributes: {id: newAsset.id}}).attributes = newAsset;
       _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
-      //vectorLayer.redraw();
-      var featureRedraw = _.filter(vectorLayer.getSource().getFeatures(), function(feature) {
+      var featureRedraw = _.find(vectorLayer.getSource().getFeatures(), function(feature) {
           return feature.getProperties().id === newAsset.id;
       });
-      selectControl.addSelectionFeatures(featureRedraw);
+      featureRedraw.setProperties({'geometry': new ol.geom.Point([newAsset.lon, newAsset.lat])});
+      selectControl.addSelectionFeatures([featureRedraw]);
 
     }
 
     function handleMapClick(coordinates) {
       if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
-       // var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
         createNewAsset(coordinates);
       } else if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
@@ -286,14 +278,12 @@
 
     function show(map) {
       vectorLayer.setVisible(true);
-      //map.addLayer(vectorLayer);
       me.show(map);
     }
 
     function hide() {
-      //selectedAsset.close();
+      selectedAsset.close();
       vectorLayer.setVisible(false);
-      //map.removeLayer(vectorLayer);
       me.stop();
       me.hide();
     }
