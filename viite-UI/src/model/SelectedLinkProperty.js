@@ -239,7 +239,7 @@
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
-          roadCollection.setNewTmpRoadAddress(result);
+          roadCollection.setNewTmpRoadAddresses(result);
         }
       });
 
@@ -247,7 +247,7 @@
 
     var saveTransfer = function() {
       eventbus.trigger('linkProperties:saving');
-      var roadAddresses = roadCollection.getNewTmpRoadAddress();
+      var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
         return t.getData();
@@ -323,7 +323,8 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         applicationModel.resetCurrentAction();
-        roadCollection.resetNewTmpRoadAddress();
+        roadCollection.resetNewTmpRoadAddresses();
+        roadCollection.resetPreMovedRoadAddresses();
         clearFeaturesToKeep();
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
@@ -347,6 +348,7 @@
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        roadCollection.resetPreMovedRoadAddresses();
         clearFeaturesToKeep();
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }

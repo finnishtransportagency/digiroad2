@@ -151,12 +151,16 @@
       } else {
         roadLinks = roadCollection.getAll();
       }
-      if(!_.isUndefined(action) && _.isEqual(action, applicationModel.actionCalculating))
-        _.each(roadLinks, function(roadlink){
-          if(!_.isUndefined(roadlink.gapTransfering) && roadlink.gapTransfering === true){
-            roadlink.gapTransfering = null;
-          }
+      if(_.isEqual(applicationModel.getCurrentAction(), applicationModel.actionCalculating)){
+        var preMovedIds = _.pluck(roadCollection.getPreMovedRoadAddresses(), 'linkId');
+        roadLinks = _.filter(roadLinks, function(rl){
+          return !_.contains(preMovedIds, rl.linkId);
         });
+
+        _.each(roadCollection.getPreMovedRoadAddresses(), function (ft){
+          roadLinks.push(ft);
+        });
+      }
 
       roadLayer.drawRoadLinks(roadLinks, zoom);
       drawDashedLineFeaturesIfApplicable(roadLinks);
@@ -399,7 +403,7 @@
         selectControl.select(_.first(features));
         if(_.isEqual(action, applicationModel.actionCalculated) || !_.isEmpty(roadCollection.getChangedIds())){
           _.each(roadCollection.getChangedIds(), function (id){
-             highlightFeatureByLinkId(id);
+            highlightFeatureByLinkId(id);
           });
         }
         else{
@@ -484,11 +488,11 @@
       eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
         applicationModel.addSpinner();
-        redrawNextSelectedTarget(targets, adjacents);
         if(applicationModel.getCurrentAction()!==applicationModel.actionCalculated){
           drawIndicators(adjacents);
           selectedLinkProperty.addTargets(targets, adjacents);
         }
+        redrawNextSelectedTarget(targets, adjacents);
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
@@ -659,6 +663,7 @@
             feature.data.gapTransfering = true;
             selectedLinkProperty.getFeaturesToKeep().push(feature.data);
             features.push(feature);
+            roadCollection.addPreMovedRoadAddresses(feature.data);
           }
         });
       }
