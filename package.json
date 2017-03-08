@@ -17,7 +17,6 @@
     "grunt-env": "~0.4.4",
     "grunt-exec": "~0.4.6",
     "grunt-execute": "~0.2.1",
-    "grunt-git-commit-version": "^0.2.0",
     "grunt-mocha": "~0.4.1",
     "grunt-preprocess": "~4.1.0",
     "request": "2.36.0"
