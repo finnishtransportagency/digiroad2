@@ -277,7 +277,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
-  //grunt.loadNpmTasks('grunt-git-commit-version');
 
   grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
 
@@ -293,7 +292,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
-  grunt.registerTask('git_commit_version',
+  grunt.registerTask('save_deploy_info',
       function() {
         var options = this.options({
           file: 'revision.properties'
@@ -302,7 +301,7 @@ module.exports = function(grunt) {
         var exec = require('child_process').exec;
 
         var createVersionFile = function (stdout) {
-          var data = ('digiroad2.revision=' + stdout + 'digiroad2.latestDeploy=' + grunt.template.today());
+          var data = ('digiroad2.revision=' + stdout + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
           grunt.file.write(options.file, data);
         };
 
