@@ -20,6 +20,10 @@
       return selectionType;
     };
 
+    var getContinueButtons = function(){
+      return continueButton;
+    };
+
     var toggleSelectionTypeAll = function () {
       selectionType = 'all';
     };
@@ -49,7 +53,7 @@
     var setContinueButton = function(newState){
       if(continueButton !== newState){
         continueButton = newState;
-        eventbus.trigger('linkProperties:valintaActive');
+        eventbus.trigger('application:valintaActive');
       }
     };
 
@@ -125,6 +129,7 @@
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
       setContinueButton: setContinueButton,
+      getContinueButtons: getContinueButtons,
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
       isReadOnly: function() {

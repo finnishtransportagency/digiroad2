@@ -549,8 +549,7 @@
         applicationModel.setActiveButtons(true);
       });
       rootElement.on('click', '.link-properties button.continue',function(){
-        if(selectedLinkProperty.continueSelectUnknown())
-          applicationModel.setContinueButton(true);
+        selectedLinkProperty.continueSelectUnknown();
       });
       eventbus.on('linkProperties:valintaActive', function() {
         selectedLinkProperty.continueSelectUnknown();

@@ -5,7 +5,6 @@
     var targets = [];
     var sources = [];
     var featuresToKeep = [];
-    var emptyFloating = false;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -146,7 +145,7 @@
             if(applicationModel.getSelectionType() === 'floating') {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
               if(_.isEmpty(markedRoads.adjacents)){
-                emptyFloating = true;
+                applicationModel.setContinueButton(true);
               }
             }
             else {
@@ -198,7 +197,7 @@
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
          if(_.isEmpty(calculatedRoads.adjacents))
-           emptyFloating = true;
+           applicationModel.setContinueButton(true);
          eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
         applicationModel.removeSpinner();
@@ -363,6 +362,7 @@
           eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
+        applicationModel.setContinueButton(false);
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
@@ -387,6 +387,7 @@
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
         if (action){
+          applicationModel.setContinueButton(false);
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
@@ -405,6 +406,7 @@
       //Secondly we clear them
       clearFeaturesToKeep();
       applicationModel.setActiveButtons(false);
+      applicationModel.setContinueButton(false);
       eventbus.trigger('roadLinks:deleteSelection');
 
       if (!_.isEmpty(current) && !isDirty()) {
@@ -460,7 +462,7 @@
     };
 
     var continueSelectUnknown = function() {
-      if(emptyFloating !== true){
+      if(applicationModel.getContinueButtons() !== true){
         new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
         return false;
       }else {
