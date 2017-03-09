@@ -144,6 +144,9 @@
             };
             if(applicationModel.getSelectionType() === 'floating') {
               eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+              if(_.isEmpty(markedRoads.adjacents)){
+                applicationModel.setContinueButton(true);
+              }
             }
             else {
               eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
@@ -193,6 +196,8 @@
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+         if(_.isEmpty(calculatedRoads.adjacents))
+           applicationModel.setContinueButton(true);
          eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
         applicationModel.removeSpinner();
@@ -357,6 +362,7 @@
           eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
+        applicationModel.setContinueButton(false);
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
@@ -381,6 +387,7 @@
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
         if (action){
+          applicationModel.setContinueButton(false);
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
@@ -399,6 +406,7 @@
       //Secondly we clear them
       clearFeaturesToKeep();
       applicationModel.setActiveButtons(false);
+      applicationModel.setContinueButton(false);
       eventbus.trigger('roadLinks:deleteSelection');
 
       if (!_.isEmpty(current) && !isDirty()) {
@@ -453,6 +461,15 @@
       featuresToKeep = [];
     };
 
+    var continueSelectUnknown = function() {
+      if(applicationModel.getContinueButtons() !== true){
+        new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
+        return false;
+      }else {
+        return true;
+      }
+    };
+
     return {
       getSources: getSources,
       resetSources: resetSources,
@@ -471,6 +488,7 @@
       saveTransfer: saveTransfer,
       cancel: cancel,
       cancelGreenRoad: cancelGreenRoad,
+      continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,
