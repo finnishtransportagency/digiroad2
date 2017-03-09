@@ -44,48 +44,66 @@ object PointAssetFiller {
   }
 
   def correctOnlyGeometry(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
-    val pointAssetLastChange = changeInfos.filter(changeInfo => changeInfo.oldId == asset.linkId).head
-    val newRoadLink = roadLinks.filter(roadLink => roadLink.linkId == pointAssetLastChange.newId).head
-    val typed = ChangeType.apply(pointAssetLastChange.changeType)
+    val pointAssetLastChange = changeInfos.filter(_.oldId.getOrElse(0L) == asset.linkId).groupBy(_.oldId.get)
 
-    typed match {
-      case ChangeType.CombinedModifiedPart | ChangeType.CombinedRemovedPart => correctCombinedGeometry(asset.id, pointAssetLastChange, asset.mValue, newRoadLink) //Geometry Combined
-      case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart => correctLengthenedGeometry(asset.id, pointAssetLastChange, asset.mValue, newRoadLink)//Geometry Lengthened
-      case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart => correctDividedGeometry(asset.id, pointAssetLastChange, asset.mValue, newRoadLink) //Geometry Divided
-      case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => correctRoadLinkAndGeometry(asset, roadLinks, changeInfos) //Geometry Shortened
-      case _ => None
-    }
-  }
+    if (!pointAssetLastChange.isEmpty) {
+      pointAssetLastChange.map {
+        case (linkId, filteredChangeInfos) =>
+          ChangeType.apply(filteredChangeInfos.head.changeType) match {
 
-  private def correctCombinedGeometry(assetId: Long, lastAssetChange: ChangeInfo, oldMValue: Double, newRoadLink: RoadLink): Option[AssetAdjustment] = {
-    if (lastAssetChange.oldId != lastAssetChange.newId) {
-      val newAssetPoint = Point((lastAssetChange.newStartMeasure.get + oldMValue), (lastAssetChange.newStartMeasure.get + oldMValue))
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLink.geometry)
-      Some(AssetAdjustment(assetId, newAssetPoint.x, newAssetPoint.y, newRoadLink.linkId, mValue, false))
+            case ChangeType.CombinedModifiedPart | ChangeType.CombinedRemovedPart
+              if filteredChangeInfos.head.newId != filteredChangeInfos.head.oldId => //Geometry Combined
+              val newRoadLink = roadLinks.find(_.linkId == filteredChangeInfos.head.newId.getOrElse(0L)).get
+              correctCombinedGeometry(asset, newRoadLink.linkId, newRoadLink.geometry)
+
+            case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart => //Geometry Lengthened
+              filteredChangeInfos.map {
+                case (filteredChangeInfo) =>
+                  if (asset.mValue < filteredChangeInfo.newStartMeasure.getOrElse(0.0)) {
+                    val newRoadLink = filteredChangeInfo.newId.getOrElse(0L)
+                    val newMValue = asset.mValue + filteredChangeInfo.newStartMeasure.getOrElse(0.0)
+                    correctLengthenedGeometry(asset, newRoadLink, newMValue)
+                  } else {
+                    None
+                  }
+              }.head
+
+            case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart => //Geometry Divided
+              val newRoadLinkChangeInfo = filteredChangeInfos.filter(fci => fci.oldId != fci.newId).head
+              if (asset.mValue >= newRoadLinkChangeInfo.newStartMeasure.getOrElse(0.0)) {
+                val newMValue = asset.mValue - newRoadLinkChangeInfo.newStartMeasure.getOrElse(0.0)
+                val newRoadLink = roadLinks.find(_.linkId == newRoadLinkChangeInfo.newId.getOrElse(0L)).get
+                correctDividedGeometry(asset, newRoadLink.linkId, newMValue)
+              } else {
+                None
+              }
+
+            case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => //Geometry Shortened
+              correctRoadLinkAndGeometry(asset, roadLinks, changeInfos)
+
+            case _ => None
+          }
+        case _ => None
+      }.head
     } else {
       None
     }
   }
 
-  private def correctDividedGeometry(assetId: Long, lastAssetChange: ChangeInfo, oldMValue: Double, newRoadLink: RoadLink): Option[AssetAdjustment] = {
-    if (lastAssetChange.oldId != lastAssetChange.newId) {
-      val newAssetPoint = Point((oldMValue - lastAssetChange.newEndMeasure.get), (oldMValue - lastAssetChange.newEndMeasure.get))
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLink.geometry)
-      Some(AssetAdjustment(assetId, newAssetPoint.x, newAssetPoint.y, newRoadLink.linkId, mValue, false))
-    } else {
-      None
-    }
+  private def correctCombinedGeometry(asset: PersistedPointAsset, newRoadLinkId: Long, newRoadLinkGeometry: Seq[Point]): Option[AssetAdjustment] = {
+    val newAssetPoint = Point(asset.lon, asset.lat)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLinkGeometry)
+    Some(AssetAdjustment(asset.id, newAssetPoint.x, newAssetPoint.y, newRoadLinkId, mValue, false))
   }
 
-  //TODO Nedd to be review
-  private def correctLengthenedGeometry(assetId: Long, lastAssetChange: ChangeInfo, oldMValue: Double, newRoadLink: RoadLink): Option[AssetAdjustment] = {
-    if (lastAssetChange.oldId != lastAssetChange.newId) {
-      val newAssetPoint = Point((oldMValue - lastAssetChange.newEndMeasure.get), (oldMValue - lastAssetChange.newEndMeasure.get))
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLink.geometry)
-      Some(AssetAdjustment(assetId, newAssetPoint.x, newAssetPoint.y, newRoadLink.linkId, mValue, false))
-    } else {
-      None
-    }
+  private def correctDividedGeometry(asset: PersistedPointAsset, newRoadLinkId: Long, newMValue: Double): Option[AssetAdjustment] = {
+    val newAssetPoint = Point(asset.lon, asset.lat)
+    Some(AssetAdjustment(asset.id, newAssetPoint.x, newAssetPoint.y, newRoadLinkId, newMValue, false))
+  }
+
+  private def correctLengthenedGeometry(asset: PersistedPointAsset, newRoadLinkId: Long, newMValue: Double): Option[AssetAdjustment] = {
+    val newAssetPoint = Point(asset.lon, asset.lat)
+    Some(AssetAdjustment(asset.id, newAssetPoint.x, newAssetPoint.y, newRoadLinkId, newMValue, false))
   }
 
 }
