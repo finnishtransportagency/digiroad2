@@ -443,7 +443,7 @@
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
-          highlightFeatures();
+        highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
       if (selectedLinkProperty.isDirty()) {
