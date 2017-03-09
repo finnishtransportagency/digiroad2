@@ -171,11 +171,10 @@ window.LinearAssetLayer = function(params) {
     }
   };
 
-  var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onDragEnd: onDragEnd,
     onSelect: OnSelect
-    //backgroundOpacity: style.vectorOpacity
   });
 
   var showDialog = function (linearAssets) {
@@ -210,7 +209,6 @@ window.LinearAssetLayer = function(params) {
   function cancelSelection() {
     selectToolControl.clear();
     selectedLinearAsset.closeMultiple();
-    //activateBrowseStyle();
     collection.fetch(map.getView().calculateExtent(map.getSize()));
   }
 
@@ -245,7 +243,7 @@ window.LinearAssetLayer = function(params) {
   var selectLinearAssetByLinkId = function(linkId) {
     var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
     if (feature) {
-      selectControl.select(feature);
+        selectToolControl.addSelectionFeatures([feature]);
     }
   };
 
@@ -255,14 +253,11 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
-
     //Disable interaction so the user can not click on another feature after made changes
     selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
-
     decorateSelection();
 
   };
@@ -281,11 +276,9 @@ window.LinearAssetLayer = function(params) {
   };
 
   this.activateSelection = function() {
-   // selectToolControl.toggleDragBox();
     selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-   // selectToolControl.destroyDragBoxInteraction();
     selectToolControl.deactivate();
   };
   this.removeLayerFeatures = function() {
@@ -294,11 +287,9 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    //selectToolControl.clear();
-      selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
-      selectToolControl.activate();
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
+    selectToolControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-   // decorateSelection();
     redrawLinearAssets(collection.getAll());
   };
 

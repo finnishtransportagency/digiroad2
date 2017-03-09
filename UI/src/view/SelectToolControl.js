@@ -1,5 +1,5 @@
 (function(root) {
-    root.SelectAndDragToolControl = function(application, layer, map, options) {
+    root.SelectToolControl = function(application, layer, map, options) {
 
         var mapDoubleClickEventKey;
         var enabled = false;

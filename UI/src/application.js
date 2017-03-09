@@ -191,23 +191,9 @@
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    // TODO
-    // var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
-    //   wheelDown: function(evt, delta) {
-    //     if (applicationModel.canZoomOut()) {
-    //       return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
-    //     } else {
-    //       new Confirm();
-    //     }
-    //   }
-    // });
-    //
-    //map.addControl(new NavigationControl());
-
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    // var roadLayer = new RoadLayer(map, models.roadCollection);
     var roadLayer = new RoadLayer3(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);

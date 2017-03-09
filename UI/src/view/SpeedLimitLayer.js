@@ -10,11 +10,9 @@ window.SpeedLimitLayer = function(params) {
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
-   // selectToolControl.toggleDragBox();
     selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    //selectToolControl.destroyDragBoxInteraction();
     selectToolControl.deactivate();
   };
   this.minZoomForContent = zoomlevels.minZoomForAssets;
@@ -26,7 +24,6 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
     collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
-
         eventbus.trigger('layer:speedLimit:' + event);
       });
     };
@@ -191,42 +188,10 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
-  //TODO remove this because at least the highlight no longer exists
-  var highlightMultipleSpeedLimitFeatures = function() {
-    var partitioned = _.groupBy(vectorLayer.features, function(feature) {
-      return selectedSpeedLimit.isSelected(feature.attributes);
-    });
-    var selected = partitioned[true];
-    var unSelected = partitioned[false];
-    _.each(selected, function(feature) { selectControl.highlight(feature); });
-  };
-
-  var highlightSpeedLimitFeatures = function() {
-    highlightMultipleSpeedLimitFeatures();
-  };
-
-  var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = style.selectionStyle;
-    highlightSpeedLimitFeatures();
-   // vectorLayer.redraw();
-  };
-
-  var speedLimitOnSelect = function(feature) {
-    if(feature.selected.length !== 0) {
-      selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
-      setSelectionStyleAndHighlightFeature();
-    }else {
-      if (feature.selected.length === 0 && feature.deselected.length > 0) {
-        if (selectedSpeedLimit.exists()) {
-          selectedSpeedLimit.close();
-        }
-      }
-    }
-  };
   var OnSelect = function(feature) {
     if(feature.selected.length !== 0) {
       selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
-        selectSpeedLimit(feature.selected[0].getProperties());
+      selectSpeedLimit(feature.selected[0].getProperties());
     }else{
       if (selectedSpeedLimit.exists()) {
         selectedSpeedLimit.close();
@@ -234,7 +199,7 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var selectToolControl = new SelectAndDragToolControl(application, vectorLayer, map, {
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onDragEnd: onDragEnd,
     onSelect: OnSelect
@@ -273,18 +238,6 @@ window.SpeedLimitLayer = function(params) {
     collection.fetch(map.getView().calculateExtent(map.getSize()));
   }
 
-  //TODO remove this because is no longer used
-  var handleSpeedLimitUnSelected = function(selection) {
-    _.each(_.filter(vectorLayer.features, function(feature) {
-      return selection.isSelected(feature.attributes);
-    }), function(feature) {
-      selectControl.unhighlight(feature);
-    });
-
-    vectorLayer.styleMap = style.browsingStyle;
-    me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-  };
-
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
@@ -311,20 +264,15 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var activateSelectionStyle = function(selectedSpeedLimits) {
-    vectorLayer.styleMap = style.selectionStyle;
     selectedSpeedLimit.openMultiple(selectedSpeedLimits);
-    highlightMultipleSpeedLimitFeatures();
   };
 
   var bindEvents = function(eventListener) {
     eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-   // eventListener.listenTo(eventbus, 'speedLimit:selected speedLimit:multiSelected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved speedLimits:massUpdateSucceeded', handleSpeedLimitSaved);
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
-    //eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    //eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
@@ -392,8 +340,6 @@ window.SpeedLimitLayer = function(params) {
     me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
-
-    //drawSpeedLimits(selectedSpeedLimit.get(), vectorLayer);
   };
 
   var handleSpeedLimitCancelled = function() {
@@ -492,9 +438,6 @@ window.SpeedLimitLayer = function(params) {
       if (feature) {
         selectToolControl.addSelectionFeatures(feature);
       }
-     highlightMultipleSpeedLimitFeatures();
-     selectToolControl.onSelect = speedLimitOnSelect;
-
       if (selectedSpeedLimit.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }

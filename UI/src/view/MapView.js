@@ -22,10 +22,6 @@
       }
     };
 
-    /**
-    * TODO: center-marker.svg was edited in order to have width="16px" height="16px".
-    * With this alteration the svg image seems to lose some information.
-    */
     var drawCenterMarker = function(position) {
       var icon = new ol.Feature({
         geometry: new ol.geom.Point(position)
@@ -108,7 +104,6 @@
       eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
 
-    //TODO : experimental event
     map.on('pointerdrag', function(event) {
       var target = document.getElementById(map.getTarget());
       target.style.cursor = 'move';

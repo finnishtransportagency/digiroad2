@@ -27,7 +27,7 @@
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
 
-    var selectControl = new SelectAndDragToolControl(application, vectorLayer, map, {
+    var selectControl = new SelectToolControl(application, vectorLayer, map, {
         style : function (feature) {
             return style.browsingStyleProvider.getStyle(feature);
         },
@@ -144,6 +144,7 @@
             me.removeLayerFeatures();
           });
           var features = _.map(assets, createFeature);
+          selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
           applySelection();
         }
@@ -191,17 +192,13 @@
       eventListener.listenTo(eventbus, layerName + ':saved ' + layerName + ':cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, layerName + ':creationCancelled', handleCreationCancelled);
       eventListener.listenTo(eventbus, layerName + ':selected', handleSelected);
-      eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
 
     function handleCreationCancelled() {
-    //  me.selectControl.unselectAll();
-    //  me.activateSelection();
       mapOverlay.hide();
       roadLayer.clearSelection();
-    //  vectorLayer.styleMap = style.browsing;
       me.refreshView();
     }
 
@@ -217,7 +214,6 @@
     }
 
     function handleChanged() {
-      //me.deactivateSelection();
       var asset = selectedAsset.get();
       var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset)});
       _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
@@ -235,13 +231,6 @@
       } else if (selectedAsset.isDirty()) {
         me.displayConfirmMessage();
       }
-    }
-
-    function handleUnSelected() {
-      //  me.selectControl.activate();
-      //me.selectControl.unselectAll();
-      //vectorLayer.styleMap = style.browsing;
-      //vectorLayer.redraw();
     }
 
     function createNewAsset(coordinates) {

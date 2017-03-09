@@ -91,16 +91,15 @@
      * @param feature Selected OpenLayers feature (road link)
        */
     var selectManoeuvre = function(event) {
-        pastAdjacents = [];
-        if (event.selected.length > 0 && enableSelect(event)) {
-            selectManoeuvreFeatures(event.selected[0]);
-            selectedManoeuvreSource.open(event.selected[0].getProperties().linkId);
-        } else {
-            _.each(event.deselected, function(feature){
-                feature.setStyle(manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()}));
-            });
-            unselectManoeuvre();
-        }
+      if (event.selected.length > 0 && enableSelect(event)) {
+        selectManoeuvreFeatures(event.selected[0]);
+        selectedManoeuvreSource.open(event.selected[0].getProperties().linkId);
+      } else {
+        _.each(event.deselected, function(feature){
+            feature.setStyle(manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()}));
+        });
+        unselectManoeuvre();
+      }
     };
 
   /**
@@ -134,7 +133,7 @@
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
 
-    var selectControl = new SelectAndDragToolControl(application, roadLayer.layer, map, {
+    var selectControl = new SelectToolControl(application, roadLayer.layer, map, {
         style : function(feature){
             return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
         },

@@ -189,9 +189,6 @@
     };
 
     this.separateLinearAsset = function(selectedLinearAsset) {
-      // var limitA = _.cloneDeep(selectedLinearAsset);
-      // var limitB = _.cloneDeep(selectedLinearAsset);
-
       var limitA = _.clone(selectedLinearAsset);
       var limitB = _.clone(selectedLinearAsset);
 
