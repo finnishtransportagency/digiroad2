@@ -53,7 +53,7 @@
     var setContinueButton = function(newState){
       if(continueButton !== newState){
         continueButton = newState;
-        eventbus.trigger('application:valintaActive');
+        eventbus.trigger('application:valintaActive', newState);
       }
     };
 

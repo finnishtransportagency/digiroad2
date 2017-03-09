@@ -554,14 +554,11 @@
         applicationModel.setActiveButtons(true);
       });
       rootElement.on('click', '.link-properties button.continue',function(){
-        selectedLinkProperty.continueSelectUnknown();
+        if(selectedLinkProperty.continueSelectUnknown()){
+          rootElement.find('.link-properties button.continue').attr('disabled', true);
+          applicationModel.setContinueButton(true);
+        }
       });
-      eventbus.on('linkProperties:valintaActive', function() {
-        selectedLinkProperty.continueSelectUnknown();
-        rootElement.find('.link-properties button.continue').attr('disabled', true);
-        applicationModel.setContinueButton(true);
-      });
-
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
