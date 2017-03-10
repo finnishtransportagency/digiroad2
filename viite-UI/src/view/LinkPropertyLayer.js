@@ -39,7 +39,11 @@
             applicationModel.toggleSelectionTypeFloating();
           }
           if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+            if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1) {
+              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, false);
+            } else {
+              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+            }
           } else {
             selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
           }
