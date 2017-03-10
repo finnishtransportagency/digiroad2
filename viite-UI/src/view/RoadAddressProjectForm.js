@@ -183,7 +183,8 @@
       rootElement.on('click', '.project-form button.save', function() {
         //TODO send of getRoadAddressProject() to the backend-utils;
         //for now, for 253 implementation, is go directly to back-utils instead of roadAddressProject controller
-        var data = {'name': "project1", "startDate" : "08.03.2017", "additionalInfo" : "Estou farto!!", "roadNumber" : 1, "startPart": 3, "endPart" : 5 };
+        //Will be solved in VIITE-264
+        var data = {'name': "project1"};
         var backend = new Backend();
         backend.createProject(data, function() {
           eventbus.trigger('roadaddress:projectSaved');
