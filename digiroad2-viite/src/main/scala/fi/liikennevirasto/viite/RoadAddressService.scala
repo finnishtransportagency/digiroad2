@@ -520,12 +520,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       var project = roadAddressProject.copy(id= id)
 
       try {
-        val roadAddressExists = RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match{
+        val roadAddressExists = RoadAddressDAO.getRoadAddressProjectById(project.id) match{
           case None => {
-            RoadAddressDAO.createRoadAddressProject(roadAddressProject)
+            RoadAddressDAO.createRoadAddressProject(project)
             //create ProjectLink
-            if(roadAddressProject.startPart <= roadAddressProject.endPart){
-              //TODO - Create ProjectLink for each road part if road part exists in RoadAddressTable
+            if(project.startPart <= project.endPart){
+              var part = project.startPart
+              while(part <= project.endPart) {
+                var addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, project.startPart)
+                addresses.foreach(address =>
+                  RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+                part +=1
+              }
             }
           }
           case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
@@ -887,7 +893,7 @@ object RoadAddressLinkBuilder {
 
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
         nextSegment.track, discontinuity, startAddrMValue,
-        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.linkId,
+        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
         startMValue, endMValue,
         nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
 

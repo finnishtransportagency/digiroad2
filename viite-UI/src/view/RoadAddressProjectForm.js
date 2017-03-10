@@ -79,7 +79,7 @@
     };
 
     var buttons =
-      '<div class="link-properties form-controls">' +
+      '<div class="project-form form-controls">' +
       '<button class="next btn btn-next" disabled>Seuraava</button>' +
       '<button class="save btn btn-tallena">Tallenna</button>' +
       '<button class="cancel btn btn-perruta">Peruuta</button>' +
@@ -180,11 +180,11 @@
         // rootElement.html(newProjectTemplate(selectedProject.get()[0]));
       });
 
-      rootElement.on('click', '.link-properties button.save', function() {
+      rootElement.on('click', '.project-form button.save', function() {
         //TODO send of getRoadAddressProject() to the backend-utils;
         //for now, for 253 implementation, is go directly to back-utils instead of roadAddressProject controller
-        var data = {'name': "project1"};
-
+        var data = {'name': "project1", "startDate" : "08.03.2017", "additionalInfo" : "Estou farto!!", "roadNumber" : 1, "startPart": 3, "endPart" : 5 };
+        var backend = new Backend();
         backend.createProject(data, function() {
           eventbus.trigger('roadaddress:projectSaved');
         }, function() {
