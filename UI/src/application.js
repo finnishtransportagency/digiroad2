@@ -194,7 +194,7 @@
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    var roadLayer = new RoadLayer3(map, models.roadCollection);
+    var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);

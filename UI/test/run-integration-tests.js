@@ -39,7 +39,6 @@ require(['chai',
          'SingleSegmentSpeedLimitSpec',
          'SpeedLimitSplitSpec',
          'MultiSegmentSpeedLimitSpec'
-         //'BoxSelectControlSpec' WE ARE NO LONGER USING THE BOX SELECT CONTROL
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);

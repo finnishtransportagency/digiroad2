@@ -81,57 +81,6 @@ define(['AssetsTestData',
       });
   };
 
-  var clickMarker = function(id, map) {
-      //TODO
-      var asset = massTransitStopsCollection.getAsset(id);
-      //TODO
-      if (asset) {
-          //var feature = _.find(getLayerByName(map, 'massTransitStop').getSource().getFeatures(), function(feature){
-          //    var properties =  feature.getProperties();
-          //    return properties.data.id == id;
-          //});
-          map.dispatchEvent({ type: 'singleclick', coordinate: [asset.data.lon, asset.data.lat] });
-          /*
-          getPixelFromCoordinateAsync(map, [asset.data.lon, asset.data.lat], function(pixel){
-
-          });
-          */
-      }
-      /*
-    var markerBounds = _.find(getLayerByName(map, 'massTransitStop').markers, {id: id}).bounds;
-    var markerPixelPosition = map.getPixelFromCoordinate([markerBounds.top, markerBounds.left]);
-    var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
-    var asset = massTransitStopsCollection.getAsset(id);
-    if (asset) { asset.mouseClickHandler(event); }
-    */
-  };
-
-  //var moveMarker = function(id, map, deltaLon, deltaLat) {
-  //  var asset = massTransitStopsCollection.getAsset(id);
-  //  //TODO
-  //  if (asset) {
-  //      debugger;
-  //    var feature = _.find(getLayerByName(map, 'massTransitStop').getSource().getFeatures(), function(feature){
-  //      var properties =  feature.getProperties();
-  //      return properties.data.id == id;
-  //    });
-  //    var originLonLat = feature.getGeometry().getCoordinates();
-  //    //var originBounds = _.find(getLayerByName(map, 'massTransitStop').markers, {id: id}).bounds;
-  //    //var originLonLat = [originBounds, originBounds.left];
-  //    var targetLonLat = [originLonLat.lon + deltaLon, originLonLat.lat + deltaLat];
-  //    //feature.getGeometry().setCoordinates([coordinates.lon, coordinates.lat])
-  //    /*/
-  //    var originPixel = map.getPixelFromCoordinate(originLonLat);
-  //    var targetPixel = map.getPixelFromCoordinate(targetLonLat);
-  //    var mouseDownEvent = {clientX: originPixel.x, clientY: originPixel.y};
-  //    var mouseUpEvent = {clientX: targetPixel.x, clientY: targetPixel.y};
-  //    asset.mouseDownHandler(mouseDownEvent);
-  //    eventbus.trigger('map:mouseMoved', {clientX: targetPixel.x, clientY: targetPixel.y, xy: {x: targetPixel.x, y: targetPixel.y - 40}});
-  //    asset.mouseUpHandler(mouseUpEvent);
-  //    */
-  //  }
-  //};
-
   var moveMassTransitStop = function(map, id, coordinate, doneCallback){
       getPixelFromCoordinateAsync(map, coordinate, function(pixel){
           eventbus.once('asset:fetched', function(asset){
@@ -150,12 +99,7 @@ define(['AssetsTestData',
   };
 
   var clickMap = function(map, longitude, latitude) {
-    //var pixel = map.getPixelFromCoordinate([longitude, latitude]);
     map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
-    /*  getPixelFromCoordinateAsync(openLayersMap, coordinate, function(pixel){
-
-
-    map.dispatchEvent(,  {target: {}, srcElement: {}, pixel: pixel});*/
   };
 
   var selectMassTransitStop = function(map, massTranstiStopId) {
@@ -173,19 +117,6 @@ define(['AssetsTestData',
          deselected: []
      });
   };
-
-  //var massSelect = function(map, longitude1, latitude1, longitude2, latitude2) {
-  //  var topLeft = map.getPixelFromCoordinate([longitude1, latitude1]);
-  //  var bottomRight = map.getPixelFromCoordinate([longitude2, latitude2]);
-  //  var commonParameters = {target: {}, srcElement: {}, button: 1};
-  //  var modifierKey = (navigator.platform.toLowerCase().indexOf('mac') === 0) ? { metaKey: true } : { ctrlKey: true };
-  //  var mouseDownEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: topLeft.x, y: topLeft.y} });
-  //  var mouseMoveEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
-  //  var mouseUpEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
-  //  map.dispatchEvent('mousedown', mouseDownEvent);
-  //  map.dispatchEvent('mousemove', mouseMoveEvent);
-  //  map.dispatchEvent('mouseup', mouseUpEvent);
-  //};
 
    var getAssetMarker = function(map, id){
        return _.find(getAssetMarkers(map), function(properties){
@@ -222,14 +153,14 @@ define(['AssetsTestData',
  //    return getLayerByName(map, 'massTransitStop');
  //};
 
- var getLineStringFeatures = function(layer) {
+  var getLineStringFeatures = function(layer) {
    return _.filter(layer.getSource().getFeatures(), function(feature) {
     return feature.getGeometry() instanceof ol.geom.LineString;
    });
- };
+  };
 
- var getSpeedLimitVertices = function(openLayersMap, id) {
-  return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
+  var getSpeedLimitVertices = function(openLayersMap, id) {
+   return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
     .filter(function(feature) { return feature.getProperties().id === id; })
     .map(function(feature)  {
         return _.map(feature.getGeometry().getCoordinates(), function(coordinate){ return { x: coordinate[0], y: coordinate[1]}; });
@@ -252,14 +183,6 @@ define(['AssetsTestData',
      selected: [feature],
      deselected: []
    });
-     //interaction.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
- };
-
- //TODO can be deleted
- var clickElement = function(element) {
-   var event = document.createEvent('MouseEvent');
-   event.initMouseEvent('click', true, true, window, null, 0, 0, 0, 0, false, false, false, false, 0, null);
-   element.dispatchEvent(event);
  };
 
  var selectLayer = function(layerName) {
@@ -284,7 +207,6 @@ define(['AssetsTestData',
    return interactions.getFeatures().getArray();
  };
 
-
  return {
    restartApplication: restartApplication,
    getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
@@ -292,11 +214,8 @@ define(['AssetsTestData',
    fakeBackend: fakeBackend,
    clickVisibleEditModeButton: clickVisibleEditModeButton,
    clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
-   clickMarker: clickMarker,
-   //moveMarker: moveMarker,
    clickMap: clickMap,
    moveMassTransitStop: moveMassTransitStop,
-   //massSelect: massSelect,
    getAssetMarkers: getAssetMarkers,
    getAssetMarker: getAssetMarker,
    getSelectedAssetMarkers: getSelectedAssetMarkers,
@@ -305,7 +224,6 @@ define(['AssetsTestData',
    getSpeedLimitFeatures: getSpeedLimitFeatures,
    getSpeedLimitVertices: getSpeedLimitVertices,
    selectSpeedLimit: selectSpeedLimit,
-   clickElement: clickElement,
    selectLayer: selectLayer,
    getLayerByName: getLayerByName,
    selectMassTransitStop: selectMassTransitStop,

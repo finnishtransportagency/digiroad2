@@ -125,7 +125,7 @@
             return styles;
         };
     };
-    //TODO try to cache the created styles maybe trying to move the creation responsability to the rule
+
     root.StyleRuleProvider = function(defaultStyle){
 
         var mergeColorOpacity = function(color, opacity){
@@ -180,7 +180,7 @@
             {
                 name: 'icon',
                 factory: function(settings, feature){
-                    //TODO add support to configure this on the style rule
+                    //If in the future we need to have more field like rotation we should add support
                     settings.rotation = feature.getProperties().rotation;
                     return { geometry: feature.getGeometry(), image:  new ol.style.Icon((settings)) };
                 }
@@ -189,16 +189,6 @@
                 name: 'text',
                 factory: function(settings){
                     return { text: new ol.style.Text(settings) };
-                }
-            },
-            {
-                name: 'middlePointIcon',
-                factory: function(settings, feature) {
-                    /*
-                    return {
-                        geometry: new ol.geom.Point(end)
-                    }*/
-                    return {};
                 }
             }
         ];
@@ -252,18 +242,15 @@
             var context = _.merge({}, feature.getProperties(), extraProperties);
             var allRules = getRulesByName(name);
             var configObj = _.merge({}, defaultStyle);
-            var returnStyles = [];
             for(var i=0; i < allRules.length; i++){
                 var rule = allRules[i];
                 if(rule._match(context)){
                     var styles = rule._get();
                     for(var j=0; j < styles.length ; j++){
                         configObj = _.merge(configObj, styles[j]);
-                        //returnStyles.push(createOpenLayerStyle(configObj, feature));
                     }
                 }
             }
-            //return returnStyles; //createOpenLayerStyle(configObj, feature);
             return createOpenLayerStyle(configObj, feature);
         };
     };

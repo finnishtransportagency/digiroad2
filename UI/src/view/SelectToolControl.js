@@ -95,13 +95,11 @@
         };
 
         var clear = function(){
-
             selectInteraction.getFeatures().clear();
             highlightLayer();
         };
 
         var removeFeatures = function (match) {
-
             _.each(selectInteraction.getFeatures().getArray(), function(feature){
                 if(match(feature)) {
                     selectInteraction.getFeatures().remove(feature);
@@ -109,24 +107,19 @@
             });
         };
 
-
         var addSelectionFeatures = function(features){
-
             clear();
             addNewFeature(features);
         };
 
         var addNewFeature = function (features, highlightLayer) {
-
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
             });
 
             if(!highlightLayer)
                 unhighlightLayer();
-
         };
-
 
         var destroyDragBoxInteraction = function () {
             _.each(map.getInteractions().getArray(), function (interaction) {

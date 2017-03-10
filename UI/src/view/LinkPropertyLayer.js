@@ -1,10 +1,8 @@
 (function(root) {
 
-    //TODO check if it's possible to reuse the Roadlayer class to that but just in the end of the user story
-    var RoadHistoryLayer = function(map, roadCollection, selectedLinkProperty){
+    var RoadHistoryLayer = function(map, roadCollection){
         var vectorSource = new ol.source.Vector({ strategy: ol.loadingstrategy.bbox });
         var vectorLayer;
-        //var selectControl;
         var layerStyleProviders = {};
         var layerMinContentZoomLevels = {};
         var uiState = { zoomLevel: 9 };
@@ -20,16 +18,12 @@
             var features = _.map(roadLinks, function(roadLink) {
                 return createRoadLinkFeature(roadLink);
             });
-            usingLayerSpecificStyleProvider(function() {
-                vectorSource.addFeatures(features);
-            });
+            vectorSource.addFeatures(features);
         };
 
         var drawRoadLink = function(roadLink){
             var feature = createRoadLinkFeature(roadLink);
-            usingLayerSpecificStyleProvider(function() {
-                vectorSource.addFeatures(feature);
-            });
+            vectorSource.addFeatures(feature);
         };
 
         var createRoadLinkFeature = function(roadLink){
@@ -43,44 +37,13 @@
             layerStyleProviders[layer] = provider;
         };
 
-        var redraw = function() {
-            usingLayerSpecificStyleProvider(function() {
-                //TODO Check if this is need after close all tasks
-            });
-        };
-
         var clear = function() {
             vectorSource.clear();
-        };
-
-        var usingLayerSpecificStyleProvider = function(action) {
-            if (!_.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()])) {
-                // vectorLayer.style = layerStyleProviders[applicationModel.getSelectedLayer()]();
-            }
-            action();
         };
 
         function stylesUndefined() {
             return _.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()]);
         }
-
-        var disableColorsOnRoadLayer = function() {
-            if (stylesUndefined()) {
-                //TODO Check if this is need after close all tasks
-            }
-        };
-
-        var toggleRoadType = function() {
-            if (applicationModel.isRoadTypeShown()) {
-                //enableColorsOnRoadLayer();
-            } else {
-                disableColorsOnRoadLayer();
-            }
-            usingLayerSpecificStyleProvider(function() {
-                //TODO now the redraw will always happen after a source change
-                //vectorLayer.redraw();
-            });
-        };
 
         var minimumContentZoomLevel = function() {
             if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
@@ -116,8 +79,8 @@
 
         var vectorLayerStyle = function(feature) {
             var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
-            if(currentLayerProvider.defaultStyleProvider)
-                return currentLayerProvider.defaultStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+            if(currentLayerProvider.default)
+                return currentLayerProvider.default.getStyle(feature, {zoomLevel: uiState.zoomLevel});
             return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
         };
 
@@ -129,7 +92,7 @@
             source: vectorSource,
             style: vectorLayerStyle
         });
-        //TODO change this to a place that can be reused
+
         var findLayerIndexByName = function(map, name){
             var layers = map.getLayers().getArray();
             for (var i = 0; i < layers.length; i++) {
@@ -140,7 +103,6 @@
             return -1;
         };
 
-        //TODO change this to a place that can be reused
         var addLayerBehind = function(map, layer, name){
             var idx = findLayerIndexByName(map, name);
             map.getLayers().setAt(idx - 1, layer);
@@ -161,18 +123,11 @@
             hideLayer();
         });
 
-        eventbus.on('road-type:selected', toggleRoadType, this);
-
         eventbus.on('map:moved', mapMovedHandler, this);
-
-        eventbus.on('layer:selected', function(layer) {
-            toggleRoadType();
-        }, this);
 
         return {
             uiState: uiState,
             layer: vectorLayer,
-            redraw: redraw,
             clear: clear,
             setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
             drawRoadLink: drawRoadLink,
@@ -193,7 +148,7 @@
 
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
-    var historyLayer = new RoadHistoryLayer(map, roadCollection, selectedLinkProperty);
+    var historyLayer = new RoadHistoryLayer(map, roadCollection);
     var linkPropertyHistoryLayerStyles = LinkPropertyLayerStyles(historyLayer);
     historyLayer.setLayerSpecificStyleProvider(layerName, function(){
       var styleProvider = linkPropertyHistoryLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), 'history');
@@ -215,6 +170,7 @@
         });
         selectToolControl.addSelectionFeatures(features);
         selectedLinkProperty.open(properties.linkId, feature.singleLinkSelect);
+        redrawSelected();
         currentRenderIntent = 'select';
       }else{
           currentRenderIntent = 'default';
@@ -252,24 +208,19 @@
     };
 
     var selectToolControl = new SelectToolControl(applicationModel, roadLayer.layer, map, {
-          style: function(feature){
-              var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
-              return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
-          },
-          onDragEnd: onDragEnd,
-          onSelect: selectRoadLink
-          //backgroundOpacity: style.vectorOpacity
-      });
-
-    //selectToolControl.activate();
+      style: function(feature){
+          var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
+          return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
+      },
+      onDragEnd: onDragEnd,
+      onSelect: selectRoadLink
+    });
 
     this.activateSelection = function() {
-     // selectToolControl.toggleDragBox();
       selectToolControl.activate();
     };
 
     this.deactivateSelection = function() {
-     // selectToolControl.destroyDragBoxInteraction();
       selectToolControl.deactivate();
     };
 
@@ -331,8 +282,7 @@
       }));
     };
 
-    var drawDashedLineFeatures = function(roadLinks, layer) {
-      //TODO problems with dash line are not because
+    var drawDashedLineFeatures = function(roadLinks) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -341,8 +291,7 @@
       return createDashedLineFeatures(dashedRoadLinks, 'functionalClass');
     };
 
-    var drawDashedLineFeaturesForType = function(roadLinks, layer) {
-      //TODO don't understand why this is needed here
+    var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedNotAllowInLinkStatus = [1, 3];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
@@ -386,8 +335,8 @@
     };
 
     var refreshViewAfterSaving = function() {
-      unselectRoadLink();
       me.refreshView();
+      unselectRoadLink();
     };
 
     var showRoadLinksWithComplementary = function() {
@@ -437,9 +386,6 @@
     };
 
     this.removeLayerFeatures = function() {
-      //TODO check if is really needed
-      //roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-      //historyLayer.removeFeatures();
     };
 
     var show = function(map) {
