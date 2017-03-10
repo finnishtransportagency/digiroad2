@@ -515,11 +515,11 @@
             $('#floatingEditModeForm').show();
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
-              rootElement.find('.link-properties button.calculate').attr('disabled', false);
-              rootElement.find('.link-properties button.cancel').attr('disabled', false);
-              applicationModel.setActiveButtons(true);
             });
-            $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+          rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          rootElement.find('.link-properties button.cancel').attr('disabled', false);
+          applicationModel.setActiveButtons(true);
+          $('[id*="aditionalSourceButton"]').click(sources,function(event) {
               processAditionalFloatings(sources, event.currentTarget.value);
             });
         }
