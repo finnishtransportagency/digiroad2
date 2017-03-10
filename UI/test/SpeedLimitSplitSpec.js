@@ -36,7 +36,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('.speed-limits .action.cut').click();
         var coordinate = [0.0, 110.0];
         testHelpers.getPixelFromCoordinateAsync(openLayersMap, coordinate, function(pixel){
-          openLayersMap.dispatchEvent({ type: 'singleclick', coordinate: coordinate, pixel: pixel });//{target: {}, srcElement: {}, xy: {x: pixel[0], y: pixel[1]}});
+          openLayersMap.dispatchEvent({ type: 'singleclick', coordinate: coordinate, pixel: pixel });
           $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
           $('.speed-limit .save.btn').click();
           done();

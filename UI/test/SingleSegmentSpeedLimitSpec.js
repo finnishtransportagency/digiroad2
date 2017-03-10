@@ -52,7 +52,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
       });
 
-      //TODO
       describe('and clicking on the background map', function() {
         before(function(done) {
           eventbus.once('speedLimit:unselect', function() { done(); });
@@ -69,10 +68,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           });
         });
         it('deselects speed limit', function() {
-
             expect($('#feature-attributes header')).not.to.exist;
-
-
         });
       });
     });
@@ -175,7 +171,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
-
     });
   });
 });
