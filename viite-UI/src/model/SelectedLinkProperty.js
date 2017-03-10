@@ -5,6 +5,7 @@
     var targets = [];
     var sources = [];
     var featuresToKeep = [];
+    var previousAdjacents = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -129,12 +130,16 @@
             applicationModel.setCurrentAction(applicationModel.actionCalculating);
           }
           if (!applicationModel.isReadOnly()) {
-            var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
+            var selectedLinkIds = _.map(_.reject(get().concat(featuresToKeep), function(link){return link.segmentId === "";}), function (roads) {
               return roads.linkId;
             });
-            var filteredAdjacents = _.filter(adjacents, function(adj){
-              return !_.contains(selectedLinkIds, adj.linkId);
+            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+            }).concat(previousAdjacents);
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+              return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
+            previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
                 return t.roadLinkType != -1;
@@ -265,7 +270,7 @@
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
-          roadCollection.setNewTmpRoadAddress(result);
+          roadCollection.setNewTmpRoadAddresses(result);
         }
       });
 
@@ -273,7 +278,7 @@
 
     var saveTransfer = function() {
       eventbus.trigger('linkProperties:saving');
-      var roadAddresses = roadCollection.getNewTmpRoadAddress();
+      var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
         return t.getData();
@@ -349,7 +354,9 @@
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         applicationModel.resetCurrentAction();
-        roadCollection.resetNewTmpRoadAddress();
+        roadCollection.resetNewTmpRoadAddresses();
+        roadCollection.resetPreMovedRoadAddresses();
+        previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
@@ -377,6 +384,7 @@
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        roadCollection.resetPreMovedRoadAddresses();
         clearFeaturesToKeep();
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }

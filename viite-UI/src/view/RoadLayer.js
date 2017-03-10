@@ -111,13 +111,12 @@ var RoadStyles = function() {
       eventbus.trigger('roadLinks:beforeDraw');
       var filteredRoadLinks = [];
       if(!applicationModel.isActiveButtons() || _.isEqual(action, applicationModel.actionCalculating) || _.isEqual(action, applicationModel.actionCalculated)){
-
         filteredRoadLinks = _.filter(roadLinks, function(rl){
           return !_.contains(roadCollection.getChangedIds(), rl.linkId.toString());
         });
         if (_.isEmpty(filteredRoadLinks))
           filteredRoadLinks=roadLinks;
-        _.each(roadCollection.getNewTmpRoadAddress(), function (tmp){
+        _.each(roadCollection.getNewTmpRoadAddresses(), function (tmp){
           filteredRoadLinks.push(tmp);
         });
         vectorLayer.removeAllFeatures();
