@@ -63,7 +63,7 @@
       return '<div class="form-group">' +
       '<label class="control-label">LISÄTIEDOT</label>'+
       '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" value="'+dataField+'" onclick=""/>'+
-      '</div>'
+      '</div>';
     };
 
     var inputFieldRequired = function(labelText, id, placeholder,  value) {

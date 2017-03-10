@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, Flo
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
@@ -515,6 +516,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def createRoadLinkProject(roadAddressProject: RoadAddressProject) = {
     withDynTransaction {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      var project = roadAddressProject.copy(id= id)
+
       try {
         val roadAddressExists = RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match{
           case None => {

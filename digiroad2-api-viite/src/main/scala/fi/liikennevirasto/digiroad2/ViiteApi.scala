@@ -162,10 +162,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/new"){
     val test = parsedBody.extract[newRoadAddressProject]
-    //val id = Sequences.nextViitePrimaryKeySeqValue.toLong
+
+   // val id = Sequences.nextViitePrimaryKeySeqValue.toLong
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject(1, 1, test.name, user.username, "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
+    val roadAddressProject  = RoadAddressProject( 0, 1, test.name, user.username, "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
     roadAddressService.createRoadLinkProject(roadAddressProject)
   }
 
