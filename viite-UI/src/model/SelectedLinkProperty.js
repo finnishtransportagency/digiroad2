@@ -69,7 +69,7 @@
       return properties;
     };
 
-    var open = function(linkId, id, singleLinkSelect) {
+    var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
@@ -88,6 +88,17 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+        if(checkAdjacency){
+          var orderedCurrent = _.sortBy(current, function(curr){
+            return curr.getData().endAddressM;
+          });
+          var previous = _.first(orderedCurrent);
+          var areAdjacent = true;
+          _.forEach(_.rest(orderedCurrent),function (oc){
+            areAdjacent = areAdjacent && GeometryUtils.areAdjacents(previous.getPoints(),oc.getPoints());
+            previous = oc;
+          });
+        }
         var data4Display = extractDataForDisplay(get());
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
           if (!_.isEmpty(featuresToKeep)) {

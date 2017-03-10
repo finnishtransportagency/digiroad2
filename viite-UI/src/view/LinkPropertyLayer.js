@@ -40,7 +40,7 @@
           }
           if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
             if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1) {
-              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, false);
+              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, false, true);
             } else {
               selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
             }
