@@ -556,9 +556,11 @@
       rootElement.on('click', '.link-properties button.continue',function(){
         if(selectedLinkProperty.continueSelectUnknown()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
+          applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(true);
         }
       });
+
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {
         $('#aditionalSource').remove();
         $('#adjacentsData').remove();
