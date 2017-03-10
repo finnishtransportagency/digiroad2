@@ -25,29 +25,41 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(typeof feature.attributes.linkId !== 'undefined' && !applicationModel.isActiveButtons()) {
-        if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+      if(!applicationModel.isReadOnly() && feature.attributes.anomaly !== 1 && feature.attributes.roadLinkType !== -1){
+        unhighlightFeatureByLinkId(feature.attributes.linkId);
+      }
+      else if(typeof feature.attributes.linkId !== 'undefined') {
+        if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
+          var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+            return feature.roadLinkType !== -1;
+          }), 'selectedLinkId': feature.data.linkId};
+          eventbus.trigger('linkProperties:additionalFloatingSelected', data);
         } else {
-          selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
-        }
-        unhighlightFeatures();
-        currentRenderIntent = 'select';
-        roadLayer.redraw();
-        highlightFeatures();
-        if(selectedLinkProperty.getFeaturesToKeep().length > 1){
-          var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
-          floatingMinusLast.forEach(function (fml){
-            highlightFeatureByLinkId(fml.linkId);
-          });
-          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function(ft){
-              return ft.anomaly === 1;
-            })
-          );
-
-          anomalousFeatures.forEach(function (fmf){
-            editFeatureDataForGreen(fmf.linkId);
-          });
+          if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
+            applicationModel.toggleSelectionTypeFloating();
+          }
+          if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
+            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+          } else {
+            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
+          }
+          unhighlightFeatures();
+          currentRenderIntent = 'select';
+          roadLayer.redraw();
+          highlightFeatures();
+          if (selectedLinkProperty.getFeaturesToKeep().length > 1) {
+            var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
+            floatingMinusLast.forEach(function (fml) {
+              highlightFeatureByLinkId(fml.linkId);
+            });
+            var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
+                return ft.anomaly === 1;
+              })
+            );
+            anomalousFeatures.forEach(function (fmf) {
+              editFeatureDataForGreen(fmf.linkId);
+            });
+          }
         }
       }
     };
@@ -102,6 +114,30 @@
       unselectAll: unselectAllRoadLinks
     });
 
+    roadLayer.layer.events.register("beforefeatureselected", this, function(event){
+      var feature = event.feature.attributes;
+      if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all'){
+        return true;
+      } else {
+        if(applicationModel.getSelectionType() === 'floating'){
+          if(feature.roadLinkType !== -1){
+            me.displayConfirmMessage();
+            return false;
+          } else {
+            return true;
+          }
+        }
+        if(applicationModel.getSelectionType() === 'unknown'){
+          if(feature.roadLinkType !== 0 && feature.anomaly !== 1) {
+            me.displayConfirmMessage();
+            return false;
+          } else {
+            return true;
+          }
+        }
+      }
+
+    });
     map.addControl(selectControl);
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
@@ -129,6 +165,14 @@
       _.each(roadLayer.layer.features, function(x) {
         if(x.attributes.linkId == linkId){
           selectControl.highlight(x);
+        }
+      });
+    };
+
+    var unhighlightFeatureByLinkId = function (linkId) {
+      _.each(roadLayer.layer.features, function(x) {
+        if(x.attributes.linkId == linkId){
+          selectControl.unhighlight(x);
         }
       });
     };
@@ -231,7 +275,9 @@
     var createMouseClickHandler = function(floatlink) {
       return function(event){
         if(floatlink.anomaly !== 1) {
-          selectControl.unselectAll();
+          if(applicationModel.getSelectionType() !== 'floating' && floatlink.roadLinkType !== -1 || applicationModel.getSelectionType() === 'all'){
+            selectControl.unselectAll();
+          }
         }
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
@@ -502,6 +548,10 @@
         });
         highlightFeatureByLinkId(aditionalLinkId);
       });
+
+      eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
+        drawIndicators(floatings);
+      });
       eventListener.listenTo(eventbus, 'adjacents:roadTransfer', function(newRoads,changedIds){
         var roadLinks = roadCollection.getAll();
         var afterTransferLinks=  _.filter(roadLinks, function(roadlink){
@@ -555,16 +605,18 @@
         clearIndicators();
         selectControl.unselectAll();
         roadCollection.getAll();
-        var features =[];
-        _.each(roadLayer.layer.features, function(feature){
-          if(feature.data.linkId == originalFeature.linkId)
-            features.push(feature);
-        });
+        if (applicationModel.getSelectionType() !== 'floating') {
+          var features = [];
+          _.each(roadLayer.layer.features, function (feature) {
+            if (feature.data.linkId == originalFeature.linkId)
+              features.push(feature);
+          });
 
-        if (!_.isEmpty(features)) {
-          currentRenderIntent = 'select';
-          selectControl.select(_.first(features));
-          highlightFeatures();
+          if (!_.isEmpty(features)) {
+            currentRenderIntent = 'select';
+            selectControl.select(_.first(features));
+            highlightFeatures();
+          }
         }
       });
 
@@ -670,6 +722,22 @@
       if(features.length === 0)
         return undefined;
       else return _.first(features);
+    };
+
+    var highlightAnomalousFeaturesByFloating = function() {
+      var floatingFeatures =[];
+      _.each(roadLayer.layer.features, function(feature){
+        if(feature.data.roadLinkType == -1)
+          floatingFeatures.push(feature);
+      });
+      _.each(roadLayer.layer.features, function(feature) {
+        _.each(floatingFeatures, function(floating) {
+          if(!_.isEmpty(floatingFeatures)){
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds))
+              selectControl.highlight(feature);
+          }
+        });
+      });
     };
 
     this.removeLayerFeatures = function() {

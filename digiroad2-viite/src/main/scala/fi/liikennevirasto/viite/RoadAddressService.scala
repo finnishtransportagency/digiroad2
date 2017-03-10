@@ -120,7 +120,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    roadAddrSeq.map( ra => {
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    fusedRoadAddresses.map( ra => {
       RoadAddressLinkBuilder.build(rl, ra)
     })
   }

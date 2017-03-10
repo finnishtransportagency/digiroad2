@@ -10,9 +10,32 @@
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
     var readOnly = true;
     var activeButtons = false;
+    var continueButton = false;
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
+    var selectionType = 'all';
+
+    var getSelectionType = function (){
+      return selectionType;
+    };
+
+    var getContinueButtons = function(){
+      return continueButton;
+    };
+
+    var toggleSelectionTypeAll = function () {
+      selectionType = 'all';
+    };
+
+    var toggleSelectionTypeFloating = function(){
+      selectionType = 'floating';
+    };
+
+    var toggleSelectionTypeUnknown = function (){
+      selectionType = 'unknown';
+    };
+
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -27,6 +50,13 @@
         eventbus.trigger('application:activeButtons', newState);
       }
     };
+    var setContinueButton = function(newState){
+      if(continueButton !== newState){
+        continueButton = newState;
+        eventbus.trigger('application:valintaActive', newState);
+      }
+    };
+
     var roadTypeShown = true;
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
@@ -98,6 +128,8 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      setContinueButton: setContinueButton,
+      getContinueButtons: getContinueButtons,
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
       isReadOnly: function() {
@@ -105,6 +137,9 @@
       },
       isActiveButtons: function() {
         return activeButtons;
+      },
+      isContinueButton: function() {
+        return continueButton;
       },
       isDirty: function() {
         return isDirty();
@@ -128,7 +163,11 @@
       },
       getCurrentLocation: function() {
         return centerLonLat;
-      }
+      },
+      getSelectionType: getSelectionType,
+      toggleSelectionTypeAll: toggleSelectionTypeAll,
+      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
+      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown
     };
   };
 })(this);
