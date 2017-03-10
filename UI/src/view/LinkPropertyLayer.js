@@ -251,7 +251,7 @@
         });
     };
 
-    var selectToolControl = new SelectAndDragToolControl(applicationModel, roadLayer.layer, map, {
+    var selectToolControl = new SelectToolControl(applicationModel, roadLayer.layer, map, {
           style: function(feature){
               var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
               return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});

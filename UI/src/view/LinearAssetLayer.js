@@ -172,7 +172,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
-    style: function(feature){ return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
+    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
     onDragEnd: onDragEnd,
     onSelect: OnSelect
   });
@@ -299,16 +299,13 @@ window.LinearAssetLayer = function(params) {
     var markerContainer = function(link, position) {
         var style = new ol.style.Style({
             image : new ol.style.Icon({
-                src: 'images/center-marker2.svg',
-                anchor : [-0.45, 0.15]
+                src: 'images/center-marker2.svg'
             }),
             text : new ol.style.Text({
                 text : link.marker,
                 fill: new ol.style.Fill({
                     color: '#ffffff'
                 }),
-                offsetX : 23,
-                offsetY : 7.5,
                 font : '12px sans-serif'
             })
         });
@@ -345,20 +342,20 @@ window.LinearAssetLayer = function(params) {
       }
     };
     indicators();
-    indicatorLayer.getSource().addFeatures(features);
+    selectToolControl.addNewFeature(features);
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
     vectorSource.clear();
     selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
-
     if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
     }
     var linearAssets = _.flatten(linearAssetChains);
-    drawLinearAssets(linearAssets);
-    decorateSelection();
+      decorateSelection();
+
+      drawLinearAssets(linearAssets);
   };
 
   var drawLinearAssets = function(linearAssets) {

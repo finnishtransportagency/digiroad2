@@ -192,6 +192,8 @@
       var limitA = _.clone(selectedLinearAsset);
       var limitB = _.clone(selectedLinearAsset);
 
+      limitA = _.omit(limitA, 'geometry');
+      limitB = _.omit(limitB, 'geometry');
       limitA.sideCode = 2;
       limitA.marker = 'A';
       limitB.sideCode = 3;
