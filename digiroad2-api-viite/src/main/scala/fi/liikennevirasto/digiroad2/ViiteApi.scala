@@ -1,16 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
+import java.time.format.DateTimeFormatter
+
 import fi.liikennevirasto.digiroad2.asset._
 
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress, RoadAddressCreator}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
@@ -21,6 +25,8 @@ import org.slf4j.LoggerFactory
   */
 
 case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+
+case class newRoadAddressProject(name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -152,6 +158,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Some(DateTime.now()), None, Option(ra.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
     }
     roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+  }
+
+  put("/roadlinks/roadaddress/project/new"){
+    val test = parsedBody.extract[newRoadAddressProject]
+    //val id = Sequences.nextViitePrimaryKeySeqValue.toLong
+    val user = userProvider.getCurrentUser()
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val roadAddressProject  = RoadAddressProject(1, 1, test.name, user.username, "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
+    roadAddressService.createRoadLinkProject(roadAddressProject)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

@@ -513,6 +513,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def createRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+    withDynTransaction {
+      try {
+        val roadAddressExists = RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match{
+          case None => {
+            RoadAddressDAO.createRoadAddressProject(roadAddressProject)
+            //create ProjectLink
+            if(roadAddressProject.startPart <= roadAddressProject.endPart){
+              //TODO - Create ProjectLink for each road part if road part exists in RoadAddressTable
+            }
+          }
+          case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+        }
+      }
+      catch {
+        case a: Exception => println(a.getMessage)
+      }
+    }
+  }
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
