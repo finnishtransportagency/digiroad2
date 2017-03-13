@@ -97,12 +97,12 @@
         headerButton +
         '</header>' +
         '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark linear-asset">' +
+        '<div class="form form-horizontal form-dark">' +
         '<div class="edit-control-group choice-group">' +
         staticField('Lisätty järjestelmään', '-') +
         staticField('Muokattu viimeksi', '-') +
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
-        '<form class="input-unit-combination form-group form-horizontal roadAddressProject">' +
+        '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
         inputFieldRequired('*Nimi', 'nimi', '', '') +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
         largeInputField() +
@@ -125,7 +125,7 @@
         headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
-        '<div class="form form-horizontal form-dark linear-asset">'+
+        '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group choice-group">'+
         //staticField('Lisätty järjestelmään', project.creator)+
         //staticField('Muokattu viimeksi', project.modifiedAt)+
@@ -176,17 +176,15 @@
       });
 
 
-      eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
-        // rootElement.html(newProjectTemplate(selectedProject.get()[0]));
+      eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
+
       });
 
       rootElement.on('click', '.project-form button.save', function() {
-        //TODO send of getRoadAddressProject() to the backend-utils;
-        //for now, for 253 implementation, is go directly to back-utils instead of roadAddressProject controller
-        //Will be solved in VIITE-264
-        var data = {'name': "project1"};
+        var data = $('#roadAddressProject').get(0);
+        var dataJson = {name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value, roadNumber : parseInt(data[3].value), startPart: parseInt(data[4].value), endPart : parseInt(data[5].value) };
         var backend = new Backend();
-        backend.createProject(data, function() {
+        backend.createProject(dataJson, function() {
           eventbus.trigger('roadaddress:projectSaved');
         }, function() {
           eventbus.trigger('roadaddress:projectFailed');
