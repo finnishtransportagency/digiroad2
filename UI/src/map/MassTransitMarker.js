@@ -294,7 +294,8 @@
       _.each(data.group.assetGroup, function(asset){
         if(asset.id == data.id)
           return false;
-        height += (asset.stopTypes.length * IMAGE_HEIGHT) + (IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) - 2;
+        if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.validityPeriod))
+          height += (asset.stopTypes.length * IMAGE_HEIGHT) + (IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) - 2;
       });
       return height;
     };
