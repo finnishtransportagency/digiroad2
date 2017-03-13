@@ -353,10 +353,8 @@
               rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               if(applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1){
                 selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
-                $('#floatingEditModeForm').show();
-              } else {
-                $('#floatingEditModeForm').show();
               }
+                $('#floatingEditModeForm').show();
             } else { //check if the before selected was a floating link and if the next one is unknown
               if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
