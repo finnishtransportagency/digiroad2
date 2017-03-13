@@ -57,6 +57,7 @@
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
+      //if(!_.isEmpty(models.selectedLinkProperty.getFirst())){
       if(!_.isEmpty(models.selectedLinkProperty.get())){
         if(_.isArray(linkProperty)){
           router.navigate('linkProperty/' + _.first(linkProperty).linkId);
