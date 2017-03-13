@@ -88,7 +88,7 @@
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field;
+      var field = '';
       //If other fields get the same treatment they can be added here
       if(labelText === 'TIETYYPPI'){
         var roadTypes = "";
@@ -110,10 +110,22 @@
             '<label class="control-label">' + labelText + '</label>' +
             '<p class="form-control-static">' + roadTypes + '</p>' +
             '</div>';
-          }
+        }
       } else if(labelText === 'VALITUT LINKIT'){
         var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
         field = formFields(sources);
+      } else if(labelText === 'ALKUETÄISYYS'){
+        var startAddress =  _.min(_.pluck(selectedLinkProperty.get(), 'startAddressM'));
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + startAddress + '</p>' +
+            '</div>';
+      } else if(labelText === 'LOPPUETÄISUUS'){
+        var endAddress =  _.max(_.pluck(selectedLinkProperty.get(), 'endAddressM'));
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + endAddress + '</p>' +
+            '</div>';
       }
       return field;
     };
@@ -235,6 +247,8 @@
 
     var template = function(options) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
       return _.template('' +
         '<header>' +
         title() +
@@ -250,8 +264,8 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
-        staticField('ALKUETÄISYYS', 'startAddressM') +
-        staticField('LOPPUETÄISUUS', 'endAddressM') +
+        startAddress +
+        endAddress +
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
