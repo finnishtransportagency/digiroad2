@@ -118,7 +118,6 @@
     };
 
     var openProjectTemplate = function(project) {
-      //TODO - Get the fields from project to open existent project
       return _.template('' +
         '<header>' +
         title() +
@@ -127,19 +126,19 @@
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group choice-group">'+
-        //staticField('Lisätty järjestelmään', project.creator)+
-        //staticField('Muokattu viimeksi', project.modifiedAt)+
+        staticField('Lisätty järjestelmään', project.creator)+
+        staticField('Muokattu viimeksi', project.modifiedAt)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        //inputFieldRequired('*Nimi', 'nimi', '', project.name) +
-        //inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
+        inputFieldRequired('*Nimi', 'nimi', '', project.name) +
+        inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
         largeInputField()+
         '<div class="form-group">' +
         addSmallLabel('TIE')+ addSmallLabel('AOSA')+ addSmallLabel('LOSA')+
         '</div>'+
         '<div class="form-group">' +
-        //addSmallInput('tie', project.tie)+ addSmallInput('aosa', project.aosa)+ addSmallInput('losa', project.losa)+
+        addSmallInput('tie', project.roadNumber)+ addSmallInput('aosa', project.startPart)+ addSmallInput('losa', project.endPart)+
         '</div>'+
         '</form>' +
         '</div>' + '</div>' + '</div>' + '</div>'+
