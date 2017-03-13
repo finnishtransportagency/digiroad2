@@ -114,30 +114,32 @@
       unselectAll: unselectAllRoadLinks
     });
 
-    roadLayer.layer.events.register("beforefeatureselected", this, function(event){
-      var feature = event.feature.attributes;
-      if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all'){
-        return true;
-      } else {
-        if(applicationModel.getSelectionType() === 'floating'){
-          if(feature.roadLinkType !== -1){
-            me.displayConfirmMessage();
-            return false;
-          } else {
-            return true;
-          }
-        }
-        if(applicationModel.getSelectionType() === 'unknown'){
-          if(feature.roadLinkType !== 0 && feature.anomaly !== 1) {
-            me.displayConfirmMessage();
-            return false;
-          } else {
-            return true;
-          }
-        }
-      }
+    if(applicationModel.isActiveButtons()){
+        roadLayer.layer.events.register("beforefeatureselected", this, function(event){
+            var feature = event.feature.attributes;
+            if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all'){
+                return true;
+            } else {
+                if(applicationModel.getSelectionType() === 'floating'){
+                    if(feature.roadLinkType !== -1){
+                        me.displayConfirmMessage();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+                if(applicationModel.getSelectionType() === 'unknown'){
+                    if(feature.roadLinkType !== 0 && feature.anomaly !== 1) {
+                        me.displayConfirmMessage();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            }
 
-    });
+        });
+    }
     map.addControl(selectControl);
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
