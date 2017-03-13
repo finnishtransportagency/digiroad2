@@ -2,6 +2,56 @@
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var compactForm = false;
 
+    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    var localizedAdministrativeClasses = {
+      Private: 'Yksityisen omistama',
+      Municipality: 'Kunnan omistama',
+      State: 'Valtion omistama'
+    };
+
+    var localizedTrafficDirections = {
+      BothDirections: 'Molempiin suuntiin',
+      AgainstDigitizing: 'Digitointisuuntaa vastaan',
+      TowardsDigitizing: 'Digitointisuuntaan'
+    };
+
+    var linkTypes = [
+      [1, 'Moottoritie'],
+      [2, 'Moniajoratainen tie'],
+      [3, 'Yksiajoratainen tie'],
+      [4, 'Moottoriliikennetie'],
+      [5, 'Kiertoliittymä'],
+      [6, 'Ramppi'],
+      [7, 'Levähdysalue'],
+      [8, 'Kevyen liikenteen väylä'],
+      [9, 'Jalankulkualue'],
+      [10, 'Huolto- tai pelastustie'],
+      [11, 'Liitännäisliikennealue'],
+      [12, 'Ajopolku'],
+      [13, 'Huoltoaukko moottoritiellä'],
+      [21, 'Lautta/lossi']
+    ];
+
+    var verticalLevelTypes= [
+      [-11, 'Tunneli'],
+      [-1, 'Alikulku'],
+      [0, 'Maan pinnalla'],
+      [1, 'Silta, Taso 1'],
+      [2, 'Silta, Taso 2'],
+      [3, 'Silta, Taso 3'],
+      [4, 'Silta, Taso 4']
+    ];
+
+    var allRoadTypes = [
+      [1, 'Yleinen tie'],
+      [2, 'Lauttaväylä yleisellä tiellä'],
+      [3, 'Kunnan katuosuus'],
+      [4, 'Yleisen tien työmaa'],
+      [5, 'Yksityistie'],
+      [9, 'Omistaja selvittämättä']
+    ];
+
     var discontinuities = [
       [1, 'Tien loppu'],
       [2, 'Epäjatkuva'],
@@ -13,6 +63,16 @@
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
+    };
+
+    var getLocalizedLinkType = function(linkType) {
+      var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
+      return localizedLinkType && localizedLinkType[1];
+    };
+
+    var getVerticalLevelType = function(verticalLevel){
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+      return verticalLevelType && verticalLevelType[1];
     };
 
     var checkIfMultiSelection = function(mmlId){
@@ -278,9 +338,12 @@
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0]);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
+          linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
+          linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
           linkProperties.roadNameFi = linkProperties.roadNameFi || '';
           linkProperties.roadNameSe = linkProperties.roadNameSe || '';
           linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+          linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
           linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
           linkProperties.roadAddress = linkProperties.roadAddress || '';
           linkProperties.segmentId = linkProperties.segmentId || '';
@@ -297,8 +360,30 @@
           linkProperties.elyCode = isNaN(parseFloat(linkProperties.elyCode)) ? '' : linkProperties.elyCode;
           linkProperties.endAddressM = linkProperties.endAddressM || '';
           linkProperties.discontinuity = getDiscontinuityType(linkProperties.discontinuity) || '';
+          linkProperties.endDate = linkProperties.endDate || '';
           linkProperties.roadType = linkProperties.roadType || '';
           linkProperties.roadLinkType = linkProperties.roadLinkType || '';
+
+          var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function (value, key) {
+            var selected = key === linkProperties.trafficDirection ? " selected" : "";
+            return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var functionalClassOptionTags = _.map(functionalClasses, function (value) {
+            var selected = value == linkProperties.functionalClass ? " selected" : "";
+            return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+          }).join('');
+          var linkTypesOptionTags = _.map(linkTypes, function (value) {
+            var selected = value[0] == linkProperties.linkType ? " selected" : "";
+            return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+          }).join('');
+          var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
+          options = {
+            imports: {
+              trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+              functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+              linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags)
+            }
+          };
 
           if (compactForm){
             if(!applicationModel.isReadOnly()){
