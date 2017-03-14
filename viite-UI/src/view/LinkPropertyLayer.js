@@ -38,6 +38,18 @@
           if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
             applicationModel.toggleSelectionTypeFloating();
           }
+
+          //VIITE-271
+          /*if(applicationModel.isContinueButton() === true){
+            var containsAnomulous = _.find(anomalousFeaturesByFloating, function(tp){
+              return tp.linkId === feature.attributes.linkId;
+            });
+            //VIITE-271
+            if(_.isUndefined(containsAnomulous)) {
+              feature.data.gapTransfering = true;
+            }
+          }*/
+
           if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
             selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
           } else {
@@ -724,6 +736,10 @@
       else return _.first(features);
     };
 
+    eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
+      highlightAnomalousFeaturesByFloating();
+    });
+
     var highlightAnomalousFeaturesByFloating = function() {
       var floatingFeatures =[];
       _.each(roadLayer.layer.features, function(feature){
@@ -733,9 +749,30 @@
       _.each(roadLayer.layer.features, function(feature) {
         _.each(floatingFeatures, function(floating) {
           if(!_.isEmpty(floatingFeatures)){
-            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds))
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds) && feature.data.anomaly == 1)
               selectControl.highlight(feature);
+              //feature.attributes.gapTransfering = false;
+              //feature.data.gapTransfering = false;
+              //selectedLinkProperty.getFeaturesToKeep().push(feature.data);
           }
+        });
+      });
+    };
+
+    var anomalousFeaturesByFloating = function () {
+      var AnomalousFeaturesFloating =[];
+      var floatingFeatures =[];
+      _.each(roadLayer.layer.features, function(feature){
+        if(feature.data.roadLinkType == -1)
+          floatingFeatures.push(feature);
+      });
+      _.each(roadLayer.layer.features, function(feature) {
+        _.each(floatingFeatures, function(floating) {
+          if(!_.isEmpty(floatingFeatures)){
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds) && feature.data.anomaly == 1)
+              AnomalousFeaturesFloating.push(feature);
+          }
+          return AnomalousFeaturesFloating;
         });
       });
     };
