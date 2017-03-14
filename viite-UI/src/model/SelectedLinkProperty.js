@@ -70,7 +70,7 @@
       return properties;
     };
 
-    var open = function(linkId, id, singleLinkSelect) {
+    var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
@@ -89,6 +89,10 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+        //Segment to construct adjacency
+        if(checkAdjacency){
+          fillAdjacents(linkId);
+      }
         var data4Display = extractDataForDisplay(get());
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
           if (!_.isEmpty(featuresToKeep)) {
@@ -103,6 +107,62 @@
           featuresToKeep.push(data4Display);
         }
         eventbus.trigger('linkProperties:selected', data4Display);
+      }
+    };
+
+    var fillAdjacents = function(linkId){
+      var orderedCurrent = _.sortBy(current, function(curr){
+        return curr.getData().endAddressM;
+      });
+      var previous = _.first(orderedCurrent);
+      var areAdjacent = true;
+      //Quick Check to find if the features in the group are all adjacent
+      _.forEach(_.rest(orderedCurrent),function (oc){
+        areAdjacent = areAdjacent && GeometryUtils.areAdjacents(previous.getPoints(),oc.getPoints());
+        previous = oc;
+      });
+      //If they are then no change to the current is needed, however if they aren't then we need to discover the adjacent network and put that as the current.
+      if(!areAdjacent) {
+        var adjacentNetwork = [];
+        var selectedFeature = _.find(orderedCurrent, function(oc){
+          return oc.getData().linkId === linkId;
+        });
+        var selectedFeatureIndex = _.findIndex(orderedCurrent, function(oc){
+          return oc.getData().linkId === linkId;
+        });
+        //We get the all the roads until the clicked target
+        var firstPart = orderedCurrent.slice(0, selectedFeatureIndex);
+        //Since the clicked target is not included in the slice we need to add it to the head
+        firstPart.push(selectedFeature);
+        //Then we get the roads from the clicked target to the finish
+        var rest = orderedCurrent.slice(selectedFeatureIndex);
+        previous = _.last(firstPart);
+        //we put the clicked target in the network
+        adjacentNetwork = adjacentNetwork.concat(previous);
+        //Then we keep adding to the network until we find the break in adjacency, terminating the cycle
+        for(var i = firstPart.length-2; i >= 0; i--) {
+          if(GeometryUtils.areAdjacents(firstPart[i].getPoints(), previous.getPoints())){
+            adjacentNetwork.push(firstPart[i]);
+            previous = firstPart[i];
+          } else {
+            i = -1;
+          }
+        }
+        previous = _.first(rest);
+        //Same logic as prior but since in this part the clicked target is the in the beginning we just look forward
+        for(var j = 1; j < rest.length; j++) {
+          if(GeometryUtils.areAdjacents(rest[j].getPoints(),previous.getPoints())){
+            adjacentNetwork.push(rest[j]);
+            previous = rest[j];
+          }
+          else {
+            j = rest.length +1;
+          }
+        }
+        //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
+        current = _.sortBy(adjacentNetwork, function(curr){
+          return curr.getData().endAddressM;
+        });
       }
     };
 
@@ -478,6 +538,16 @@
       }
     };
 
+    var featureExistsInSelection = function(checkMe){
+      var linkIds = _.map(get(), function(feature){
+        return feature.linkId;
+      });
+      var didIfindIt = _.find(linkIds,function (link) {
+        return checkMe.data.linkId === link;
+      });
+      return !_.isUndefined(didIfindIt);
+    };
+
     return {
       getSources: getSources,
       resetSources: resetSources,
@@ -504,7 +574,8 @@
       setLinkType: setLinkType,
       get: get,
       count: count,
-      openMultiple: openMultiple
+      openMultiple: openMultiple,
+      featureExistsInSelection: featureExistsInSelection
     };
   };
 })(this);
