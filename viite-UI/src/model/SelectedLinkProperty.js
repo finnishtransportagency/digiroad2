@@ -90,7 +90,7 @@
         });
         //Segment to construct adjacency
         if(checkAdjacency){
-          fillAdjancets(linkId);
+          fillAdjacents(linkId);
       }
         var data4Display = extractDataForDisplay(get());
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
@@ -109,7 +109,7 @@
       }
     };
 
-    var fillAdjancets = function(linkId){
+    var fillAdjacents = function(linkId){
       var orderedCurrent = _.sortBy(current, function(curr){
         return curr.getData().endAddressM;
       });
