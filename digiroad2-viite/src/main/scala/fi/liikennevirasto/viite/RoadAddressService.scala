@@ -16,7 +16,6 @@ import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddres
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration

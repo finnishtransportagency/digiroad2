@@ -1,12 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import java.time.format.DateTimeFormatter
-
 import fi.liikennevirasto.digiroad2.asset._
-
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
