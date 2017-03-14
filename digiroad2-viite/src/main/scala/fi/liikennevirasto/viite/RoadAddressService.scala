@@ -513,24 +513,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def createRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) = {
     withDynTransaction {
       try {
-        RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match{
-          case None => {
-            val id = Sequences.nextViitePrimaryKeySeqValue
-            var project = roadAddressProject.copy(id= id)
-            RoadAddressDAO.createRoadAddressProject(project)
-            //create ProjectLink
-            if(project.startPart <= project.endPart ){
-              for(part <- project.startPart to project.endPart) {
-                val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
-                addresses.foreach(address =>
-                  RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+        if(roadAddressProject.roadNumber != 0) {
+          RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match {
+            case None => {
+              val id = Sequences.nextViitePrimaryKeySeqValue
+              val project = roadAddressProject.copy(id = id)
+              RoadAddressDAO.createRoadAddressProject(project)
+              //create ProjectLink
+              if (project.startPart <= project.endPart) {
+                for (part <- project.startPart to project.endPart) {
+                  val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
+                  addresses.foreach(address =>
+                    RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+                }
               }
             }
+            case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
           }
-          case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
         }
       }
       catch {

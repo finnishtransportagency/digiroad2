@@ -110,7 +110,7 @@
         addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
         '</div>' +
         '<div class="form-group">' +
-        addSmallInput('tie') + addSmallInput('aosa') + addSmallInput('losa') +
+        addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +
         '</div>' +
         '</form>' +
         '</div>' + '</div>' + '</div>' + '</div>' +
@@ -138,7 +138,7 @@
         addSmallLabel('TIE')+ addSmallLabel('AOSA')+ addSmallLabel('LOSA')+
         '</div>'+
         '<div class="form-group">' +
-        addSmallInput('tie', project.roadNumber)+ addSmallInput('aosa', project.startPart)+ addSmallInput('losa', project.endPart)+
+        addSmallInputNumber('tie', project.roadNumber)+ addSmallInputNumber('aosa', project.startPart)+ addSmallInputNumber('losa', project.endPart)+
         '</div>'+
         '</form>' +
         '</div>' + '</div>' + '</div>' + '</div>'+
@@ -150,8 +150,9 @@
       return '<label class="control-label-small">'+label+'</label>';
     };
 
-    var addSmallInput = function(id, value){
-      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+    var addSmallInputNumber = function(id, value){
+      //Validate only numebers characters on "onkeypress"
+      return '<input type="text" onkeypress="return event.charCode >= 48 && event.charCode <= 57" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addDatePicker = function () {
@@ -181,7 +182,7 @@
 
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
-        var dataJson = {name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value, roadNumber : parseInt(data[3].value), startPart: parseInt(data[4].value), endPart : parseInt(data[5].value) };
+        var dataJson = {name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value, roadNumber : data[3].value === '' ? 0 : parseInt(data[3].value), startPart: data[4].value === '' ? 0 : parseInt(data[4].value), endPart : data[5].value === '' ? 0 : parseInt(data[5].value) };
         var backend = new Backend();
         backend.createProject(dataJson, function() {
           eventbus.trigger('roadaddress:projectSaved');
