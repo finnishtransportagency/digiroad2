@@ -1,8 +1,8 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
-    var compactForm = false;
-
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var compactForm = false;
+    var options;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -58,6 +58,11 @@
       [3, 'ELY:n raja'],
       [4, 'Lievä epäjatkuvuus'],
       [5, 'Jatkuva']
+    ];
+
+    var floatingText = [
+      [0, 'Ei'],
+      [-1, 'Kyllä']
     ];
 
     var getDiscontinuityType = function(discontinuity){
@@ -255,7 +260,7 @@
         '<footer>' + '</footer>', options);
     };
 
-    var templateFloating = function() {
+    var templateFloating = function(options) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       return _.template('' +
         '<header>' +
@@ -279,7 +284,7 @@
         '<footer>' + '</footer>', options);
     };
 
-    var templateFloatingEditMode = function() {
+    var templateFloatingEditMode = function(options) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
@@ -403,6 +408,8 @@
           linkProperties.roadNameFi = linkProperties.roadNameFi || '';
           linkProperties.roadNameSe = linkProperties.roadNameSe || '';
           linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+          linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
+          linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
           linkProperties.verticalLevel = getVerticalLevelType(linkProperties.verticalLevel) || '';
           linkProperties.mmlId = checkIfMultiSelection(linkProperties.mmlId) || '';
           linkProperties.roadAddress = linkProperties.roadAddress || '';
@@ -444,15 +451,6 @@
             }
           };
 
-          if (compactForm){
-            if(!applicationModel.isReadOnly()){
-              rootElement.html(templateFloatingEditMode(linkProperties)(linkProperties));
-          } else {
-              rootElement.html(templateFloating(linkProperties)(linkProperties));
-            }
-          } else {
-            rootElement.html(template(linkProperties)(linkProperties));
-          }
           rootElement.find('.traffic-direction').change(function(event) {
             selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
           });
@@ -582,6 +580,7 @@
       });
 
       eventbus.on('adjacents:startedFloatingTransfer', function() {
+        action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
       });
