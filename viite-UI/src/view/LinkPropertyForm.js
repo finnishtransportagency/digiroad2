@@ -558,6 +558,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(true);
+          eventbus.trigger('linkProperties:highlightAnomalousByFloating');
         }
       });
 
