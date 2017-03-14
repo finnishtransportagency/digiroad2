@@ -515,12 +515,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def createRoadLinkProject(roadAddressProject: RoadAddressProject) = {
     withDynTransaction {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      var project = roadAddressProject.copy(id= id)
-
       try {
-        RoadAddressDAO.getRoadAddressProjectById(project.id) match{
+        RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match{
           case None => {
+            val id = Sequences.nextViitePrimaryKeySeqValue
+            var project = roadAddressProject.copy(id= id)
             RoadAddressDAO.createRoadAddressProject(project)
             //create ProjectLink
             if(project.startPart <= project.endPart ){
