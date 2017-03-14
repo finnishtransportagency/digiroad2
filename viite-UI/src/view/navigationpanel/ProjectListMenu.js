@@ -4,7 +4,7 @@
     var header = $('<div class="content"> Tieosoiteprojektit </div>');
     projectList.append('<button class="close btn-close"  >x</button>');
     projectList.append(header).append('<div class="actions" style = "position: absolute; bottom: 0px; right: 0px" >' +
-      '<button class="save btn btn-primary" >Uusi tieosoiteprojekti</button></div>').hide();
+      '<button class="new btn btn-primary" >Uusi tieosoiteprojekti</button></div>').hide();
 
 
     function toggle() {
