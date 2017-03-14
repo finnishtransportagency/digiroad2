@@ -530,6 +530,16 @@
       }
     };
 
+    var featureExistsInSelection = function(checkMe){
+      var linkIds = _.map(get(), function(feature){
+        return feature.linkId;
+      });
+      var didIfindIt = _.find(linkIds,function (link) {
+        return checkMe.data.linkId === link;
+      });
+      return !_.isUndefined(didIfindIt);
+    };
+
     return {
       getSources: getSources,
       resetSources: resetSources,
@@ -556,7 +566,8 @@
       setLinkType: setLinkType,
       get: get,
       count: count,
-      openMultiple: openMultiple
+      openMultiple: openMultiple,
+      featureExistsInSelection: featureExistsInSelection
     };
   };
 })(this);
