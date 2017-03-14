@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, Flo
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
@@ -15,7 +16,6 @@ import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddres
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
-import slick.jdbc.{StaticQuery => Q}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -517,6 +517,33 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+    withDynTransaction {
+      try {
+        if(roadAddressProject.roadNumber != 0) {
+          RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match {
+            case None => {
+              val id = Sequences.nextViitePrimaryKeySeqValue
+              val project = roadAddressProject.copy(id = id)
+              RoadAddressDAO.createRoadAddressProject(project)
+              //create ProjectLink
+              if (project.startPart <= project.endPart) {
+                for (part <- project.startPart to project.endPart) {
+                  val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
+                  addresses.foreach(address =>
+                    RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+                }
+              }
+            }
+            case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+          }
+        }
+      }
+      catch {
+        case a: Exception => println(a.getMessage)
+      }
+    }
+  }
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
@@ -868,7 +895,7 @@ object RoadAddressLinkBuilder {
 
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber,
         nextSegment.track, discontinuity, startAddrMValue,
-        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.linkId,
+        endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
         startMValue, endMValue,
         nextSegment.sideCode, calibrationPoints, false, combinedGeometry))
 

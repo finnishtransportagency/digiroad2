@@ -133,6 +133,8 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
+    new RoadAddressProjectForm(backend);
+
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)});

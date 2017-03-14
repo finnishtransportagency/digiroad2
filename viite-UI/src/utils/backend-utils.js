@@ -39,12 +39,23 @@
       });
     }, 1000);
 
-
     this.createRoadAddress = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.createProject = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/new",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
