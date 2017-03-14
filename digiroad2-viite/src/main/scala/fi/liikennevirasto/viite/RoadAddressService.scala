@@ -519,17 +519,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       var project = roadAddressProject.copy(id= id)
 
       try {
-        val roadAddressExists = RoadAddressDAO.getRoadAddressProjectById(project.id) match{
+        RoadAddressDAO.getRoadAddressProjectById(project.id) match{
           case None => {
             RoadAddressDAO.createRoadAddressProject(project)
             //create ProjectLink
-            if(project.startPart <= project.endPart){
-              var part = project.startPart
-              while(part <= project.endPart) {
-                var addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, project.startPart)
+            if(project.startPart <= project.endPart ){
+              for(part <- project.startPart to project.endPart) {
+                val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
                 addresses.foreach(address =>
                   RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
-                part +=1
               }
             }
           }
