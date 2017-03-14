@@ -37,6 +37,7 @@
 
     function bindEvents() {
       openProjectsBox.button.on('click', function(){
+        //TODO get the list of projects to show on VIITE-86
         openProjectsBox.toggle();
       });
     }

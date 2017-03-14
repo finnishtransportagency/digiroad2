@@ -141,7 +141,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
           val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
             Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
-      localRoadAddressService.mergeRoadAddress(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
+      localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
   }
 

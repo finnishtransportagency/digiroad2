@@ -74,7 +74,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = if (user.isViiteUser()) Set() else user.configuration.authorizedMunicipalities
 
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
 
