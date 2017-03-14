@@ -88,7 +88,7 @@
 
     var dynamicField = function(labelText){
       var floatingTransfer = (!applicationModel.isReadOnly() && compactForm);
-      var field;
+      var field = '';
       //If other fields get the same treatment they can be added here
       if(labelText === 'TIETYYPPI'){
         var roadTypes = "";
@@ -110,10 +110,22 @@
             '<label class="control-label">' + labelText + '</label>' +
             '<p class="form-control-static">' + roadTypes + '</p>' +
             '</div>';
-          }
+        }
       } else if(labelText === 'VALITUT LINKIT'){
         var sources = !_.isEmpty(selectedLinkProperty.getSources()) ? selectedLinkProperty.getSources() : selectedLinkProperty.get();
         field = formFields(sources);
+      } else if(labelText === 'ALKUETÄISYYS'){
+        var startAddress =  _.min(_.pluck(selectedLinkProperty.get(), 'startAddressM'));
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + startAddress + '</p>' +
+            '</div>';
+      } else if(labelText === 'LOPPUETÄISUUS'){
+        var endAddress =  _.max(_.pluck(selectedLinkProperty.get(), 'endAddressM'));
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + endAddress + '</p>' +
+            '</div>';
       }
       return field;
     };
@@ -235,6 +247,8 @@
 
     var template = function(options) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
       return _.template('' +
         '<header>' +
         title() +
@@ -250,8 +264,8 @@
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
         staticField('AJORATA', 'trackCode') +
-        staticField('ALKUETÄISYYS', 'startAddressM') +
-        staticField('LOPPUETÄISUUS', 'endAddressM') +
+        startAddress +
+        endAddress +
         staticField('ELY', 'elyCode') +
         roadTypes +
         staticField('JATKUVUUS', 'discontinuity') +
@@ -353,10 +367,8 @@
               rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               if(applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1){
                 selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
-                $('#floatingEditModeForm').show();
-              } else {
-                $('#floatingEditModeForm').show();
               }
+                $('#floatingEditModeForm').show();
             } else { //check if the before selected was a floating link and if the next one is unknown
               if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1){
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
@@ -515,11 +527,11 @@
             $('#floatingEditModeForm').show();
             $('[id*="sourceButton"]').click({"sources": sources, "adjacents": adjacents},function(event) {
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
-              rootElement.find('.link-properties button.calculate').attr('disabled', false);
-              rootElement.find('.link-properties button.cancel').attr('disabled', false);
-              applicationModel.setActiveButtons(true);
             });
-            $('[id*="aditionalSourceButton"]').click(sources,function(event) {
+          rootElement.find('.link-properties button.calculate').attr('disabled', false);
+          rootElement.find('.link-properties button.cancel').attr('disabled', false);
+          applicationModel.setActiveButtons(true);
+          $('[id*="aditionalSourceButton"]').click(sources,function(event) {
               processAditionalFloatings(sources, event.currentTarget.value);
             });
         }
