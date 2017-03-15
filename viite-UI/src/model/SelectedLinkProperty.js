@@ -6,6 +6,7 @@
     var sources = [];
     var featuresToKeep = [];
     var previousAdjacents = [];
+    var featuresToHighlight = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -389,6 +390,14 @@
       }));
     };
 
+    var getFeaturesToHighlight = function() {
+      return featuresToHighlight;
+    };
+
+    var setFeaturesToHighlight = function(ft) {
+      featuresToHighlight = ft;
+    };
+
     var getTargets = function(){
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
@@ -434,6 +443,7 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
+      applicationModel.setContinueButton(false);
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {
@@ -459,6 +469,7 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+        applicationModel.setContinueButton(false);
       }
     };
 
@@ -559,6 +570,8 @@
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       gapTransferingCancel: gapTransferingCancel,
+      getFeaturesToHighlight:getFeaturesToHighlight,
+      setFeaturesToHighlight:setFeaturesToHighlight,
       close: close,
       open: open,
       isDirty: isDirty,
