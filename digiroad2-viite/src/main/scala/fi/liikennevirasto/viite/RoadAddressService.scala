@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite
 
+import java.sql.SQLException
+
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -531,7 +533,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                 for (part <- project.startPart to project.endPart) {
                   val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
                   addresses.foreach(address =>
-                    RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+                    try {
+                      RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project)
+                    } catch
+                      {
+                        case _:SQLException =>
+                        //TODO what to do when reserved, now we just dismiss all that we couldn't add
+                      }
+                  )
                 }
               }
             }
