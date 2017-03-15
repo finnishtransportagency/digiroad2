@@ -28,7 +28,7 @@
       if(!applicationModel.isReadOnly() && feature.attributes.anomaly !== 1 && feature.attributes.roadLinkType !== -1){
         unhighlightFeatureByLinkId(feature.attributes.linkId);
       }
-      else if(typeof feature.attributes.linkId !== 'undefined') {
+      else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
           var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
             return feature.roadLinkType !== -1;
@@ -39,7 +39,11 @@
             applicationModel.toggleSelectionTypeFloating();
           }
           if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-            selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+            if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1) {
+              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, false, true);
+            } else {
+              selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
+            }
           } else {
             selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, true);
           }
@@ -67,6 +71,7 @@
           });
         }
       }
+
     };
 
     var unselectRoadLink = function() {
@@ -118,31 +123,32 @@
       onUnselect: unselectRoadLink,
       unselectAll: unselectAllRoadLinks
     });
-
     roadLayer.layer.events.register("beforefeatureselected", this, function(event){
-      var feature = event.feature.attributes;
-      if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all'){
-        return true;
-      } else {
-        if(applicationModel.getSelectionType() === 'floating'){
-          if(feature.roadLinkType !== -1){
-            me.displayConfirmMessage();
-            return false;
-          } else {
-            return true;
-          }
+        if(applicationModel.isActiveButtons()) {
+            var feature = event.feature.attributes;
+            if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all') {
+                return true;
+            } else {
+                if (applicationModel.getSelectionType() === 'floating') {
+                    if (feature.roadLinkType !== -1) {
+                        me.displayConfirmMessage();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+                if (applicationModel.getSelectionType() === 'unknown') {
+                    if (feature.roadLinkType !== 0 && feature.anomaly !== 1 && !applicationModel.isActiveButtons()) {
+                        me.displayConfirmMessage();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            }
         }
-        if(applicationModel.getSelectionType() === 'unknown'){
-          if(feature.roadLinkType !== 0 && feature.anomaly !== 1) {
-            me.displayConfirmMessage();
-            return false;
-          } else {
-            return true;
-          }
-        }
-      }
-
     });
+
     map.addControl(selectControl);
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;

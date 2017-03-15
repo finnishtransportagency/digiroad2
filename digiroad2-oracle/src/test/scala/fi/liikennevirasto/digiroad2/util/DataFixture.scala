@@ -628,7 +628,8 @@ object DataFixture {
             if(!dryRun)
               massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
           } catch {
-            case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+            case vkme: VKMClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+            case tre: TierekisteriClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+tre.getMessage)
           }
         }
       }
