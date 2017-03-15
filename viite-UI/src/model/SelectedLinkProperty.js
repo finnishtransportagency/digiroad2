@@ -186,28 +186,28 @@
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
-      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
-        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-          var nonSelectedAdjacents = _.reject(adjacents, function(adj){
-            var selectedLinkIds = _.map(featuresToKeep, function(features){
-              return features.linkId;
-            });
-            return _.contains(selectedLinkIds, adj.linkId);
-          });
-          var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
-            return t.roadLinkType !== -1;
-          }) :nonSelectedAdjacents ;
+     backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+       if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
+         var nonSelectedAdjacents = _.reject(adjacents, function(adj){
+           var selectedLinkIds = _.map(featuresToKeep, function(features){
+             return features.linkId;
+           });
+           return _.contains(selectedLinkIds, adj.linkId);
+         });
+         var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
+           return t.roadLinkType !== -1;
+         }) :nonSelectedAdjacents ;
 
-          var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
-            return _.merge({}, a, {"marker": markers[index]});
-          }), "links": newSources};
-          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
-          if(_.isEmpty(calculatedRoads.adjacents))
-            applicationModel.setContinueButton(true);
-          eventbus.trigger('adjacents:startedFloatingTransfer');
-        } else {
-          applicationModel.removeSpinner();
-        }
+         var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
+           return _.merge({}, a, {"marker": markers[index]});
+         }), "links": newSources};
+         eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+         if(_.isEmpty(calculatedRoads.adjacents))
+           applicationModel.setContinueButton(true);
+         eventbus.trigger('adjacents:startedFloatingTransfer');
+       } else {
+         applicationModel.removeSpinner();
+       }
       });
     });
 
