@@ -206,7 +206,7 @@
            applicationModel.setContinueButton(true);
          eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
-         applicationModel.removeSpinner();
+        applicationModel.removeSpinner();
        }
       });
     });
