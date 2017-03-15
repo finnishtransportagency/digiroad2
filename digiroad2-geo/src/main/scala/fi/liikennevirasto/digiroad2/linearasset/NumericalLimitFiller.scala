@@ -231,7 +231,7 @@ object NumericalLimitFiller {
     }
 
     /**
-      * Creates speed limits from orphaned segments (segments originating from a speed limit but no longer connected
+      * Creates Numerical limits from orphaned segments (segments originating from a speed limit but no longer connected
       * to them)
       * @param origin Segments Lanes that was split by overwriting a segment piece(s)
       * @param orphans List of orphaned segment pieces
