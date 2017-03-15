@@ -398,6 +398,12 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def lockRoadAddressTable(): Unit = {
+    sqlu"""
+           LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
+          """.execute
+  }
+
   def updateMergedSegmentsById (ids: Set[Long]): Int = {
     val query =
       s"""
@@ -612,6 +618,11 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  /**
+    * Return road address table rows that are valid by their ids
+    * @param ids
+    * @return
+    */
   def queryById(ids: Set[Long]): List[RoadAddress] = {
     if (ids.size > 1000) {
       return queryByIdMassQuery(ids)

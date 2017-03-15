@@ -1,12 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import java.time.format.DateTimeFormatter
-
 import fi.liikennevirasto.digiroad2.asset._
-
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
@@ -78,7 +74,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = if (user.isViiteUser()) Set() else user.configuration.authorizedMunicipalities
 
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
 
@@ -165,7 +161,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject  = RoadAddressProject( 0, 1, test.name, user.username, "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
-    roadAddressService.createRoadLinkProject(roadAddressProject)
+    roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

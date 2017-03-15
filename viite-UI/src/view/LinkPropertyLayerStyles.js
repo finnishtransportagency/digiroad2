@@ -34,8 +34,9 @@
     var floatingRoadAddressRules = [
       new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.9, graphicZIndex: 2 })
     ];
+
     var floatingRoadAddressUnselectedRules = [
-      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#F7FE2E', strokeOpacity: 0.6, graphicZIndex: 2})
+      new OpenLayersRule().where('roadLinkType').is(-1).use({ strokeColor: '#FAFF82', strokeOpacity: 0.6, graphicZIndex: 2})
     ];
 
     var typeFilter = function(type) {

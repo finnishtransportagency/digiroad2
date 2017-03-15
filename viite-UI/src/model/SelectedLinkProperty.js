@@ -5,6 +5,7 @@
     var targets = [];
     var sources = [];
     var featuresToKeep = [];
+    var previousAdjacents = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -29,7 +30,7 @@
 
     var isDifferingSelection = function(singleLinkSelect) {
       return (!_.isUndefined(singleLinkSelect) &&
-              (singleLinkSelect !== isSingleLinkSelection()));
+      (singleLinkSelect !== isSingleLinkSelection()));
     };
 
     var extractDataForDisplay = function(selectedData) {
@@ -80,11 +81,11 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);  
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
-        
+
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -120,25 +121,41 @@
         "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
       };
 
-      if (featuresToKeep.length > 1){
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
         applicationModel.addSpinner();
         backend.getFloatingAdjacent(data, function (adjacents) {
           applicationModel.removeSpinner();
-          if (!_.isEmpty(adjacents))
+          if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
+            applicationModel.setCurrentAction(applicationModel.actionCalculating);
+          }
           if (!applicationModel.isReadOnly()) {
-            var selectedLinkIds = _.map(get().concat(featuresToKeep), function (roads) {
+            var selectedLinkIds = _.map(_.reject(get().concat(featuresToKeep), function(link){return link.segmentId === "";}), function (roads) {
               return roads.linkId;
             });
-            var filteredAdjacents = _.filter(adjacents, function(adj){
-              return !_.contains(selectedLinkIds, adj.linkId);
+            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+            }).concat(previousAdjacents);
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+              return !_.contains(selectedLinkIds, prvAdj.linkId);
             });
-            var calculatedRoads = {
-              "adjacents": _.map(filteredAdjacents, function (a, index) {
+            previousAdjacents = filteredAdjacents;
+            var markedRoads = {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+                return t.roadLinkType != -1;
+              }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
-            eventbus.trigger("adjacents:added", calculatedRoads.links, calculatedRoads.adjacents);
+            if(applicationModel.getSelectionType() === 'floating') {
+              eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+              if(_.isEmpty(markedRoads.adjacents)){
+                applicationModel.setContinueButton(true);
+              }
+            }
+            else {
+              eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
+            }
             eventbus.trigger('adjacents:startedFloatingTransfer');
           }
         });
@@ -148,28 +165,44 @@
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
-      sources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)));
+      var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
+      if(!_.isUndefined(fetchedFeature)){
+        sources.push(fetchedFeature);
+        featuresToKeep.push(fetchedFeature.getData());
+      }
       var chainLinks = [];
       _.each(sources, function(link){
         if(!_.isUndefined(link))
-        chainLinks.push(link.getData().linkId);
+          chainLinks.push(link.getData().linkId);
       });
       _.each(targets, function(link){
         chainLinks.push(link.getData().linkId);
       });
-      var newSources = [existingSources];
-      if(!_.isUndefined(additionalSourceLinkId))
-        newSources.push(roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData());
+      var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
+      if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
+        newSources.push(fetchedFeature.getData());
       var data = _.map(newSources, function (ns){
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-         var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
+         var nonSelectedAdjacents = _.reject(adjacents, function(adj){
+           var selectedLinkIds = _.map(featuresToKeep, function(features){
+             return features.linkId;
+           });
+           return _.contains(selectedLinkIds, adj.linkId);
+         });
+         var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
+           return t.roadLinkType !== -1;
+         }) :nonSelectedAdjacents ;
+
+         var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
            return _.merge({}, a, {"marker": markers[index]});
          }), "links": newSources};
          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+         if(_.isEmpty(calculatedRoads.adjacents))
+           applicationModel.setContinueButton(true);
          eventbus.trigger('adjacents:startedFloatingTransfer');
        } else {
         applicationModel.removeSpinner();
@@ -237,7 +270,7 @@
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
-          roadCollection.setNewTmpRoadAddress(result);
+          roadCollection.setNewTmpRoadAddresses(result);
         }
       });
 
@@ -245,7 +278,7 @@
 
     var saveTransfer = function() {
       eventbus.trigger('linkProperties:saving');
-      var roadAddresses = roadCollection.getNewTmpRoadAddress();
+      var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
         return t.getData();
@@ -314,28 +347,99 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      _.each(current, function(selected) { selected.cancel(); });
       var originalData = _.first(featuresToKeep);
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
+        applicationModel.resetCurrentAction();
+        roadCollection.resetNewTmpRoadAddresses();
+        roadCollection.resetPreMovedRoadAddresses();
+        previousAdjacents = [];
         clearFeaturesToKeep();
-        _.defer(function(){
+        if (applicationModel.getSelectionType() !== 'floating') {
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
-        });
+        }
       }
-
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
           applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:deleteSelection');
+          eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
         }
+        applicationModel.setContinueButton(false);
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
+      applicationModel.toggleSelectionTypeAll();
+    };
+
+    var cancelGreenRoad = function(action, changedTargetIds) {
+      dirty = false;
+      var originalData = _.first(featuresToKeep);
+      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+        clearFeaturesToKeep();
+      if(_.isEmpty(changedTargetIds)) {
+        roadCollection.resetTmp();
+        roadCollection.resetChangedIds();
+        roadCollection.resetPreMovedRoadAddresses();
+        clearFeaturesToKeep();
+        eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+      }
+      $('#adjacentsData').remove();
+      if(applicationModel.isActiveButtons() || action === -1){
+        if(action !== applicationModel.actionCalculated){
+          applicationModel.setActiveButtons(false);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
+        }
+        if (action){
+          applicationModel.setContinueButton(false);
+          eventbus.trigger('roadLinks:deleteSelection');
+        }
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+      }
+    };
+
+    var gapTransferingCancel = function(){
+      //First we grab the floatings
+      var floatings = _.uniq(_.filter(_.map(featuresToKeep, function(feature){
+        if(feature.roadLinkType === -1){
+          return feature.linkId;
+        }
+      }), function (target){
+        return !_.isUndefined(target);
+      }));
+      //Secondly we clear them
+      clearFeaturesToKeep();
+      applicationModel.setActiveButtons(false);
+      applicationModel.setContinueButton(false);
+      eventbus.trigger('roadLinks:deleteSelection');
+
+      if (!_.isEmpty(current) && !isDirty()) {
+        _.forEach(current, function (selected) {
+          selected.unselect();
+        });
+        eventbus.trigger('linkProperties:unselected');
+        sources = [];
+        targets = [];
+        current = [];
+        featuresToKeep = [];
+      }
+      _.forEach(floatings, function(f){
+        var roadAddress = roadCollection.getByLinkId([f]);
+        var roads = _.map(get(), function (r){
+          return r.linkId;
+        });
+        var fetchedRoads = _.map(roadAddress, function (r){
+          return r.getData().linkId;
+        });
+        if(!_.contains(roads, _.first(fetchedRoads))){
+          current = current.concat(roadAddress);
+        }
+      });
+      eventbus.trigger('roadLinks:drawAfterGapCanceling');
     };
 
     var setLinkProperty = function(key, value) {
@@ -357,18 +461,21 @@
       return current.length;
     };
 
-    eventbus.on("roadLink:editModeAdjacents", function(){
-      if(!applicationModel.isReadOnly() && !applicationModel.isActiveButtons() && count() > 0) {
-        eventbus.trigger("linkProperties:selected", extractDataForDisplay(get()));
-      }
-    });
-
     var getFeaturesToKeep = function(){
       return featuresToKeep;
     };
 
     var clearFeaturesToKeep = function() {
       featuresToKeep = [];
+    };
+
+    var continueSelectUnknown = function() {
+      if(applicationModel.getContinueButtons() !== true){
+        new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
+        return false;
+      }else {
+        return true;
+      }
     };
 
     return {
@@ -381,12 +488,15 @@
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
+      gapTransferingCancel: gapTransferingCancel,
       close: close,
       open: open,
       isDirty: isDirty,
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
+      cancelGreenRoad: cancelGreenRoad,
+      continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
       setTrafficDirection: setTrafficDirection,
