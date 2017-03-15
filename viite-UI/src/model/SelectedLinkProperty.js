@@ -383,6 +383,7 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
+      applicationModel.setContinueButton(false);
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {
@@ -408,6 +409,7 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+        applicationModel.setContinueButton(false);
       }
     };
 

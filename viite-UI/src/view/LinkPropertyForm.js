@@ -327,6 +327,7 @@
       if (!_.contains(floatingRoadsLinkId, value)) {
         applicationModel.addSpinner();
         eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
+        $('#feature-attributes').find('.link-properties button.continue').attr('disabled', false);
         $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
       }
@@ -517,6 +518,7 @@
               eventbus.trigger("adjacents:nextSelected", event.data.sources, event.data.adjacents, event.currentTarget.value);
               rootElement.find('.link-properties button.calculate').attr('disabled', false);
               rootElement.find('.link-properties button.cancel').attr('disabled', false);
+              rootElement.find('.link-properties button.continue').attr('disabled', true);
               applicationModel.setActiveButtons(true);
             });
             $('[id*="aditionalSourceButton"]').click(sources,function(event) {
@@ -557,7 +559,8 @@
         if(selectedLinkProperty.continueSelectUnknown()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
-          applicationModel.setContinueButton(true);
+          //applicationModel.setContinueButton(true);
+          applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
         }
       });
@@ -568,6 +571,7 @@
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
+        rootElement.find('.link-properties button.continue').attr('disabled', true);
         $('[id^=VALITUTLINKIT]').remove();
 
         var fields = formFields(_.map(targets, function(sId){
@@ -582,6 +586,11 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
+        if(applicationModel.isContinueButton() === false){
+          rootElement.find('.link-properties button.continue').attr('disabled', true);
+        }else {
+          rootElement.find('.link-properties button.continue').attr('disabled', false);
+        }
         applicationModel.setActiveButtons(true);
       });
 
