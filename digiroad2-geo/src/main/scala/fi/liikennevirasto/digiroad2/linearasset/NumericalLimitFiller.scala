@@ -162,6 +162,171 @@ object NumericalLimitFiller {
     (segments ++ generated, changeSet)
   }
 
+  private def combine(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+
+    /**
+      * Pick the latest asset for each single piece and create SegmentPiece objects for those
+      */
+    def squash(startM: Double, endM: Double, segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+      val sl = segments.filter(sl => sl.startMeasure <= startM && sl.endMeasure >= endM)
+      val a = sl.filter(sl => sl.sideCode.equals(SideCode.AgainstDigitizing.value) || sl.sideCode.equals(SideCode.BothDirections.value)).sortWith(modifiedSort).headOption
+      val t = sl.filter(sl => sl.sideCode.equals(SideCode.TowardsDigitizing.value) || sl.sideCode.equals(SideCode.BothDirections.value)).sortWith(modifiedSort).headOption
+
+      (a, t) match {
+        case (Some(x),Some(y)) => Seq(SegmentPiece(x.id, startM, endM, SideCode.AgainstDigitizing, x.value), SegmentPiece(y.id, startM, endM, SideCode.TowardsDigitizing, y.value))
+        case (Some(x),None) => Seq(SegmentPiece(x.id, startM, endM, SideCode.AgainstDigitizing, x.value))
+        case (None,Some(y)) => Seq(SegmentPiece(y.id, startM, endM, SideCode.TowardsDigitizing, y.value))
+        case _ => Seq()
+      }
+    }
+    /**
+      * Combine sides together if matching m-values and segment values.
+      * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
+      * @param segments All segments on road link
+      * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
+      */
+    def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+      if (segmentPieces.size < 2)
+        return segmentPieces
+
+      val seg1 = segmentPieces.head
+      val seg2 = segmentPieces.last
+      (seg1.value, seg2.value) match {
+        case (Some(v1), Some(v2)) =>
+          val sl1 = segments.find(_.id == seg1.assetId).get
+          val sl2 = segments.find(_.id == seg2.assetId).get
+          if (v1.equals(v2) && sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
+            val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+              s.endMeasure - s.startMeasure).head
+            Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+          } else {
+            segmentPieces
+          }
+        case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
+        case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
+        case _ => segmentPieces
+      }
+    }
+
+    /**
+      * Take pieces of segment and combine two of them if they are related to the similar segment and extend each other
+      * (matching startM, endM, value and sidecode)
+      * Return altered PersistedLinearAsset as well as the pieces that could not be added to that segments.
+      * @param segmentPieces
+      * @param segments
+      * @return
+      */
+    def extendOrDivide(segmentPieces: Seq[SegmentPiece], segments: PersistedLinearAsset): (PersistedLinearAsset, Seq[SegmentPiece]) = {
+      val sorted = segmentPieces.sortBy(_.startM)
+      val current = sorted.head
+      val rest = sorted.tail
+      if (rest.nonEmpty) {
+        val next = rest.find(sp => sp.startM == current.endM && sp.sideCode == current.sideCode &&
+          sp.value == current.value)
+        if (next.nonEmpty) {
+          return extendOrDivide(Seq(current.copy(endM = next.get.endM)) ++ rest.filterNot(sp => sp.equals(next.get)), segments)
+        }
+      }
+      (segments.copy(sideCode = current.sideCode.value, startMeasure = current.startM, endMeasure = current.endM), rest)
+    }
+
+    /**
+      * Creates Numerical limits from orphaned segments (segments originating from a speed limit but no longer connected
+      * to them)
+      * @param origin Segments Lanes that was split by overwriting a segment piece(s)
+      * @param orphans List of orphaned segment pieces
+      * @return New segments Lanes for orphaned segment pieces
+      */
+    def generateLimitsForOrphanSegments(origin: PersistedLinearAsset, orphans: Seq[SegmentPiece]): Seq[PersistedLinearAsset] = {
+      if (orphans.nonEmpty) {
+        val segmentPiece = orphans.sortBy(_.startM).head
+        if (orphans.tail.nonEmpty) {
+          // Try to extend this segment as far as possible: if SegmentPieces are consecutive produce just one Segments
+          val t = extendOrDivide(orphans, origin.copy(startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode.value))
+          // t now has a Numerical limit and any orphans it left behind: recursively call this method again
+          return Seq(t._1.copy(id = 0L)) ++ generateLimitsForOrphanSegments(origin, t._2)
+        }
+        // Only orphan in the list, create a new segment Lane for it
+        val sl = origin.copy(id = 0L, startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode.value)
+        return Seq(sl)
+      }
+      Seq()
+    }
+
+    /**
+      * Make sure that no two segments lanes share the same id, rewrite the ones appearing later with id=0
+      * @param toProcess List of Numerical limits to go thru
+      * @param processed List of processed Numerical limits
+      * @return List of segments with unique or zero ids
+      */
+    def cleanNumericalLimitIds(toProcess: Seq[PersistedLinearAsset], processed: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+      val (current, rest) = (toProcess.head, toProcess.tail)
+      val modified = processed.exists(_.id == current.id) || current.id < 0L match {
+        case true => current.copy(id = 0L)
+        case _ => current
+      }
+      if (rest.nonEmpty) {
+        cleanNumericalLimitIds(rest, processed ++ Seq(modified))
+      } else {
+        processed ++ Seq(modified)
+      }
+    }
+
+    if (typeId == 140) {
+      val pointsOfInterest = (segments.map(_.startMeasure) ++ segments.map(_.endMeasure)).distinct.sorted
+      if (pointsOfInterest.length < 2)
+        return (segments, changeSet)
+
+      val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
+      val segmentPieces = pieces.flatMap(p => squash(p._1, p._2, segments)).sortBy(_.assetId)
+      val combinedSegmentPieces = segmentPieces.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, segments))
+      val segmentsAndOrphanPieces = combinedSegmentPieces.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, segments.find(_.id == n._1).get))
+      val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
+      val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
+
+      val changedSideCodes = combinedSegment.filter(cl =>
+        segments.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
+        map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
+      val resultingNumericalLimits = combinedSegment ++ newSegments
+      val expiredIds = segments.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
+
+      val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
+      (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
+    } else {
+      (segments, changeSet)
+    }
+  }
+
+  private def fuse(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    if (typeId == 140) {
+      val sortedList = segments.sortBy(_.startMeasure)
+      if (segments.nonEmpty) {
+        val origin = sortedList.head
+        val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < MaxAllowedError &&
+          sl.value.equals(origin.value) && sl.sideCode.equals(origin.sideCode))
+        if (target.nonEmpty) {
+          // pick id if it already has one regardless of which one is newer
+          val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
+          val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
+          val modified = toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure)
+          val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
+          val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
+          // Replace origin and target with this new item in the list and recursively call itself again
+          fuse(typeId)(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
+            changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
+        } else {
+          val fused = fuse(typeId)(roadLink, sortedList.tail, changeSet)
+          (Seq(origin) ++ fused._1, fused._2)
+        }
+      } else {
+        (segments, changeSet)
+      }
+    } else {
+      (segments, changeSet)
+    }
+  }
+  case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[Value])
+
   private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
     dbAssets.map { dbAsset =>
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
@@ -245,6 +410,8 @@ object NumericalLimitFiller {
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
+      fuse(typeId),
+      combine(typeId),
       capSegmentsThatOverflowGeometry,
       expireOverlappingSegments,
       adjustTwoWaySegments,
