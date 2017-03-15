@@ -258,6 +258,41 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   /**
+    * Returns VVH road links in polygon area. Municipalities are optional.
+    *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
+    */
+  def queryRoadLinksByPolygons(polygon: String): Seq[VVHRoadlink] = {
+    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+    {
+      return  Seq.empty[VVHRoadlink]
+    }
+    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val urlpoly=URLEncoder.encode(polygon)
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+    s"layerDefs=$definition&geometry=" + urlpoly +
+    "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  def queryChangesByPolygon(polygon: String): Seq[ChangeInfo] = {
+    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+      return  Seq.empty[ChangeInfo]
+    val defs="[{\"layerId\":0,\"outFields\":\"OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE\"}]"
+    val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
+    "layerDefs="+URLEncoder.encode(defs, "UTF-8")+"&geometry=" +  URLEncoder.encode(polygon) + "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=false&f=pjson"
+
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHChangeInfo)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+
+  }
+
+  /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByMunicipalitiesAndBoundsF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetOperations.getByBoundingBox and ServicePointImporter.importServicePoints.
@@ -281,6 +316,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     */
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitesAndBounds(bounds, municipalities))
+  }
+
+  def fetchRoadLinksByPolygonF(polygonString : String): Future[Seq[VVHRoadlink]] = {
+    Future(queryRoadLinksByPolygons(polygonString))
+  }
+
+  def fetchChangesByPolygonF(polygonstring : String): Future[Seq[ChangeInfo]] = {
+    Future(queryChangesByPolygon(polygonstring))
   }
 
   /**

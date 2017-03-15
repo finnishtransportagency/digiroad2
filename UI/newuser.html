@@ -8,6 +8,13 @@
 
     <script type="text/javascript">
 
+        function showHideInfo() {
+            if ($("select[name='roleName']").val() == "serviceRoadMaintainer")
+                $(".authArea").show();
+            else
+                $(".authArea").hide();
+        }
+
         function saveFormData() {
             var username = $( "input[name=username]" ).val();
             $.ajax({
@@ -80,11 +87,29 @@
                 </div>
                 <div class="form-group">
                     <label class="control-label">Ylläpitäjän rooli</label>
-                    <select name="roleName" class="form-control">
+                    <select name="roleName" class="form-control" onchange="showHideInfo()">
                         <option value="premium">Ylläpitäjä</option>
                         <option value="">Ei ELY-pysäkkien ylläpitäjä</option>
                         <option value="busStopMaintainer">ELY-Joukkoliikenteen pysäkkien ylläpitäjä</option>
                         <option value="operator">Operaattori</option>
+                        <option value="serviceRoadMaintainer">Huoltoteiden ylläpitäjä</option>
+                    </select>
+                </div>
+                <div class="form-group authArea" style="display:none">
+                    <label class="control-label">Ylläpitoalue</label>
+                    <select name="authorizationArea" class="form-control">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
                     </select>
                 </div>
                 <div class="form-group form-controls">

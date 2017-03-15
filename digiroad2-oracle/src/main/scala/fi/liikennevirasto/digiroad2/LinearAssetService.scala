@@ -10,12 +10,13 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.collection.mutable.ListBuffer
 import scala.slick.jdbc.{StaticQuery => Q}
 
 object LinearAssetTypes {
@@ -72,6 +73,19 @@ trait LinearAssetOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
+
+  def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val polygonTool = new PolygonTools()
+    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
+        polygonTool.geometryInterceptorToBoundingBox(
+          polygonTool.getAreaGeometry(serviceArea),bounds))
+    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
+    val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
+    val changes =vVHRoadLinksAndChanges.flatMap(_._2)
+    val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 

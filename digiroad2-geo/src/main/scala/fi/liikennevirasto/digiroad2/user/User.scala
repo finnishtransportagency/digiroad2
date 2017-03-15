@@ -1,17 +1,20 @@
 package fi.liikennevirasto.digiroad2.user
 
 case class Configuration(
-    zoom: Option[Long] = None,
-    east: Option[Long] = None,
-    north: Option[Long] = None,
-    municipalityNumber: Option[Int]  = None,
-    authorizedMunicipalities: Set[Int] = Set(),
-    roles: Set[String] = Set()
-)
+                        zoom: Option[Long] = None,
+                        east: Option[Long] = None,
+                        north: Option[Long] = None,
+                        municipalityNumber: Option[Int]  = None,
+                        authorizedMunicipalities: Set[Int] = Set(),
+                        authorizedAreas: Set[Int] = Set(),
+                        roles: Set[String] = Set()
+                        )
 case class User(id: Long, username: String, configuration: Configuration) {
   def hasWriteAccess() = !isViewer()
 
   def isViewer() = configuration.roles(Role.Viewer)
+
+  def isServiceRoadMaintainer(): Boolean= configuration.roles(Role.ServiceRoadMaintainer)
 
   def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
 
@@ -44,4 +47,5 @@ object Role {
   val Viewer = "viewer"
   val ViiteUser = "viite"
   val BusStopMaintainer = "busStopMaintainer"
+  val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }

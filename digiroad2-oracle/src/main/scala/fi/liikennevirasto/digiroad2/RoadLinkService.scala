@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
@@ -221,6 +222,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, changes), changes)
+    }
+  }
+
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
