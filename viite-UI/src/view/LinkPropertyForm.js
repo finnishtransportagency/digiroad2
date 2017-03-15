@@ -559,7 +559,6 @@
         if(selectedLinkProperty.continueSelectUnknown()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
-          //applicationModel.setContinueButton(true);
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
         }
