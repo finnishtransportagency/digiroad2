@@ -56,7 +56,11 @@
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if(!_.isEmpty(models.selectedLinkProperty.get())){
-      router.navigate('linkProperty/' + linkProperty.linkId);
+        if(_.isArray(linkProperty)){
+          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
+        } else {
+          router.navigate('linkProperty/' + linkProperty.linkId);
+        }
       }
     });
 

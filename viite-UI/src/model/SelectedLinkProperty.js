@@ -93,19 +93,28 @@
         //Segment to construct adjacency
         if(checkAdjacency){
           fillAdjacents(linkId);
-      }
-        var data4Display = extractDataForDisplay(get());
+        }
+        var data4Display = _.map(get(), function(feature){
+          return extractDataForDisplay([feature]);
+        });
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
           if (!_.isEmpty(featuresToKeep)) {
             applicationModel.addSpinner();
           }
-          featuresToKeep.push(data4Display);
-        }
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }        }
         var contains = _.find(featuresToKeep, function(fk){
-          return fk.linkId === data4Display.linkId;
+          return fk.linkId === linkId;
         });
         if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          featuresToKeep.push(data4Display);
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
         }
         eventbus.trigger('linkProperties:selected', data4Display);
       }
@@ -390,14 +399,6 @@
       }));
     };
 
-    var getFeaturesToHighlight = function() {
-      return featuresToHighlight;
-    };
-
-    var setFeaturesToHighlight = function(ft) {
-      featuresToHighlight = ft;
-    };
-
     var getTargets = function(){
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
@@ -416,7 +417,9 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      var originalData = _.first(featuresToKeep);
+      var originalData = _.filter(featuresToKeep, function(feature){
+        return feature.roadLinkType === -1;
+      });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
@@ -428,7 +431,7 @@
         previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
-          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
         }
       }
       $('#adjacentsData').remove();
@@ -443,12 +446,13 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
-      applicationModel.setContinueButton(false);
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {
       dirty = false;
-      var originalData = _.first(featuresToKeep);
+      var originalData = _.filter(featuresToKeep, function(feature){
+        return feature.roadLinkType === -1;
+      });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
@@ -469,7 +473,6 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-        applicationModel.setContinueButton(false);
       }
     };
 
@@ -537,7 +540,13 @@
     };
 
     var clearFeaturesToKeep = function() {
-      featuresToKeep = [];
+      if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
+        featuresToKeep = _.filter(featuresToKeep, function(feature){
+          return feature.roadLinkType === -1;
+        });
+      } else {
+        featuresToKeep = [];
+      }
     };
 
     var continueSelectUnknown = function() {
@@ -570,8 +579,6 @@
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       gapTransferingCancel: gapTransferingCancel,
-      getFeaturesToHighlight:getFeaturesToHighlight,
-      setFeaturesToHighlight:setFeaturesToHighlight,
       close: close,
       open: open,
       isDirty: isDirty,

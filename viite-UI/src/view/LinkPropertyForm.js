@@ -341,7 +341,6 @@
       if (!_.contains(floatingRoadsLinkId, value)) {
         applicationModel.addSpinner();
         eventbus.trigger("adjacents:additionalSourceSelected", floatingRoads, value);
-        $('#feature-attributes').find('.link-properties button.continue').attr('disabled', false);
         $('#feature-attributes').find('.link-properties button.cancel').attr('disabled', false);
         applicationModel.setActiveButtons(true);
       }
@@ -354,17 +353,17 @@
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-
-        var firstSelectedLinkProperty = selectedLinkProperty.get()[0];
+        var lastFeatureToKeep = _.isUndefined(_.last(_.initial(uniqFeaturesToKeep))) ? _.last(uniqFeaturesToKeep) : _.last(_.initial(uniqFeaturesToKeep));
+        var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
         if(!_.isEmpty(uniqFeaturesToKeep)){
           if(readOnly){
-            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
+            if(lastFeatureToKeep.roadLinkType === -1){
               rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             } else {
               rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
             }
           } else {
-            if(uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].roadLinkType === -1){
+            if(lastFeatureToKeep.roadLinkType === -1){
               rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               if(applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1){
                 selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -531,7 +530,6 @@
             });
           rootElement.find('.link-properties button.calculate').attr('disabled', false);
           rootElement.find('.link-properties button.cancel').attr('disabled', false);
-          rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.setActiveButtons(true);
           $('[id*="aditionalSourceButton"]').click(sources,function(event) {
               processAditionalFloatings(sources, event.currentTarget.value);
@@ -543,7 +541,9 @@
         rootElement.find('.link-properties button').attr('disabled', false);
       });
       eventbus.on('linkProperties:unselected', function() {
-        rootElement.empty();
+        if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
+          rootElement.empty();
+        }
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
@@ -554,7 +554,7 @@
           selectedLinkProperty.save();
         }
       });
-      rootElement.on('click', '.link-properties button.cancel', function() {
+      rootElement.on('click', '.link-properties button.cancel', function(e) {
         var action;
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
@@ -571,8 +571,7 @@
         if(selectedLinkProperty.continueSelectUnknown()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
-          applicationModel.setContinueButton(false);
-          eventbus.trigger('linkProperties:highlightAnomalousByFloating');
+          applicationModel.setContinueButton(true);
         }
       });
 
@@ -582,7 +581,6 @@
         rootElement.find('.link-properties button.save').attr('disabled', false);
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
         rootElement.find('.link-properties button.calculate').attr('disabled', true);
-        rootElement.find('.link-properties button.continue').attr('disabled', true);
         $('[id^=VALITUTLINKIT]').remove();
 
         var fields = formFields(_.map(targets, function(sId){
@@ -597,11 +595,6 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        if(applicationModel.isContinueButton() === false){
-          rootElement.find('.link-properties button.continue').attr('disabled', true);
-        }else {
-          rootElement.find('.link-properties button.continue').attr('disabled', false);
-        }
         applicationModel.setActiveButtons(true);
       });
 
