@@ -31,12 +31,12 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
         userRoles = roles;
-        if (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && !elements.expanded.hasClass('panel maintenanceRoad')) ||
-           (_.contains(roles, 'serviceRoadMaintainer') && elements.expanded.hasClass('panel maintenanceRoad'))) {
+        if (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && layerName != 'maintenanceRoad') ||
+           (_.contains(roles, 'serviceRoadMaintainer') && layerName == 'maintenanceRoad')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
-      }
+        }
       });
       eventbus.on('application:readOnly', function(readOnly) {
         elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
