@@ -90,6 +90,17 @@ object PointAssetFiller {
     }
   }
 
+  def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo]): Option[AssetAdjustment] = {
+//    correctRoadLinkAndGeometry(asset, roadLinks, changeInfos) match {
+//      case Some(asset) => Some(asset)
+//      case None =>
+        correctOnlyGeometry(asset, roadLinks, changeInfo) match {
+          case Some(asset_) => Some(asset_)
+          case None => None
+      }
+//  }
+  }
+
   private def correctCombinedGeometry(asset: PersistedPointAsset, newRoadLinkId: Long, newRoadLinkGeometry: Seq[Point]): Option[AssetAdjustment] = {
     val newAssetPoint = Point(asset.lon, asset.lat)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLinkGeometry)
@@ -105,5 +116,4 @@ object PointAssetFiller {
     val newAssetPoint = Point(asset.lon, asset.lat)
     Some(AssetAdjustment(asset.id, newAssetPoint.x, newAssetPoint.y, newRoadLinkId, newMValue, false))
   }
-
 }

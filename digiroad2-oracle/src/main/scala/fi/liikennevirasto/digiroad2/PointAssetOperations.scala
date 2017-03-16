@@ -4,7 +4,7 @@ import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory

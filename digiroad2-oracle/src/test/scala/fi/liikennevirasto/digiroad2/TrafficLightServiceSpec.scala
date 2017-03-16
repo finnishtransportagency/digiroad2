@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.pointasset.oracle.TrafficLight
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -34,6 +34,8 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
       result.id should equal(600070)
@@ -44,9 +46,44 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Can fetch by bounding box with floating obstacle") {
+    val modifiedLinkId = 1611387
+    val newLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(modifiedLinkId), Some(modifiedLinkId), 12345, 5, Some(0), Some(20.0), Some(0), Some(15.0), 144000000),
+      ChangeInfo(Some(modifiedLinkId), Some(newLinkId), 12346, 6, Some(0), Some(0), Some(15.0), Some(20.0), 144000000)
+    )
+
+    val roadLinks = Seq(
+      RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+
+    runWithRollback {
+      val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
+      result.id should equal(600070)
+      result.linkId should equal(6002)
+      result.lon should equal(374101.60105163435)
+      result.lat should equal(6677437.872017591)
+      result.mValue should equal(1.5919999999999987)
+      result.floating should be(false)
+    }
+  }
+
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600070).get
@@ -56,6 +93,42 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
       result.mValue should equal(16.592)
+    }
+  }
+
+  test("Can fetch by municipality with floating traffic light asset") {
+    val modifiedLinkId = 1611387
+    val newLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(modifiedLinkId), Some(modifiedLinkId), 12345, 5, Some(0), Some(20.0), Some(0), Some(15.0), 144000000),
+      ChangeInfo(Some(modifiedLinkId), Some(newLinkId), 12346, 6, Some(0), Some(0), Some(15.0), Some(20.0), 144000000)
+    )
+
+    val roadLinks = Seq(
+      RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(newLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((roadLinks, changeInfo))
+
+    runWithRollback {
+      val result = service.getByMunicipality(235).find(_.id == 600070).get
+
+      result.id should equal(600070)
+      result.linkId should equal(6002)
+      result.lon should equal(374101.60105163435)
+      result.lat should equal(6677437.872017591)
+      result.mValue should equal(1.5919999999999987)
+      result.floating should be(false)
     }
   }
 
@@ -93,10 +166,10 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Update traffic light") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinksFromVVH(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(91)).thenReturn((Seq(
+      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val beforeUpdate = service.getByMunicipality(235).find(_.id == 600070).get
