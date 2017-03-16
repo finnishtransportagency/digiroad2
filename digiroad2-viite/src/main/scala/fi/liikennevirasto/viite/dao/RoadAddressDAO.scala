@@ -72,7 +72,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
-case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String, roadNumber: Long, startPart: Long, endPart: Long)
+case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String, roadNumber: Long, startPart: Long, endPart: Long)
 
 case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
@@ -742,8 +742,8 @@ object RoadAddressDAO {
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
-           insert into project (id, state, name, ely, created_by, created_date, modified_by, modified_date, add_info)
-           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, ${roadAddressProject.startDate}, '-' , '', ${roadAddressProject.additionalInfo})
+           insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
+           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , '', ${roadAddressProject.additionalInfo})
            """.execute
   }
 
@@ -763,11 +763,11 @@ object RoadAddressDAO {
 
   def getRoadAddressProjectById(id : Long) : Option[RoadAddressProject] = {
     val where = s""" where id =${id}"""
-    val query = s"""SELECT id, state, name, created_by, created_date, modified_by, modified_date, add_info
+    val query = s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info
             FROM project $where"""
-    Q.queryNA[(Long, Long, String, String, DateTime, String, DateTime, String )](query).list.map{
-      case(id, state, name, createdBy, createdDate, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
+      case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
+        RoadAddressProject(id, state, name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
     }.headOption
   }
 
