@@ -79,8 +79,6 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
       assetsBeforeUpdate.map(_.asset)
     }
   }
-
-
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
 
@@ -89,31 +87,35 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map { (persistedAsset: PersistedAsset) =>
-          val (floating, assetFloatingReason) = super.isFloating(persistedAsset, linkIdToRoadLink(persistedAsset.linkId))
-          val pointAsset = setFloating(persistedAsset, floating)
-
-          if (persistedAsset.floating != pointAsset.floating) {
-            PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
-              case Some(obstacle) =>
-                new PersistedAsset(obstacle.assetId, obstacle.linkId, obstacle.lon, obstacle.lat,
-                  obstacle.mValue, obstacle.floating, persistedAsset.municipalityCode, persistedAsset.obstacleType, persistedAsset.createdBy,
-                  persistedAsset.createdAt, persistedAsset.modifiedBy, persistedAsset.modifiedAt)
-
-              case None => {
-                val logger = LoggerFactory.getLogger(getClass)
-                val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-                logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
-                updateFloating(pointAsset.id, pointAsset.floating, assetFloatingReason)
-                pointAsset
-              }
-            }
-          }else{
-              pointAsset
-          }
-        }
+        .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks)))
         .toList
     }
+  }
+
+  def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
+                               linkIdToRoadLink: (Long) => Option[RoadLinkLike],
+                               changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink])
+                              (persistedStop: PersistedAsset):(T, Option[FloatingReason]) = {
+
+    val (floating, assetFloatingReason) = isFloating(persistedStop, linkIdToRoadLink(persistedStop.linkId))
+    if(floating) {
+      val persistedAsset = PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
+        case Some(obstacle) =>
+          new PersistedAsset(obstacle.assetId, obstacle.linkId, obstacle.lon, obstacle.lat,
+            obstacle.mValue, obstacle.floating, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
+            persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+
+        case None => {
+          val logger = LoggerFactory.getLogger(getClass)
+          val floatingReasonMessage = floatingReason(persistedStop, roadLinks.find(_.linkId == persistedStop.linkId))
+          logger.info("Floating asset %d, reason: %s".format(persistedStop.id, floatingReasonMessage))
+          persistedStop
+        }
+      }
+      (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
+    }
+    else
+      (conversion(persistedStop, floating), assetFloatingReason)
   }
 
   def getFloatingObstacles(floating: Int, lastIdUpdate: Long, batchSize: Int): Seq[Obstacle] = {

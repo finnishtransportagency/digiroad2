@@ -83,8 +83,6 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     }
   }
 
-
-
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
 
