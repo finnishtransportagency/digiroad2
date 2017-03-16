@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddres
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
+import sun.security.pkcs11.wrapper.CK_SSL3_MASTER_KEY_DERIVE_PARAMS
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -532,10 +533,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                   val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
                   addresses.foreach(address =>
                     RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+
                 }
               }
+
+              val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+              val groupedAddresses = createdAddresses.groupBy{address =>
+                (address.roadNumber, address.roadPartNumber, address.roadType)}
+              val formInfo = groupedAddresses.map(addressGroup =>{
+                val length = addressGroup._2.map(_.length).sum.toLong
+                val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, length,addressGroup._1._3 , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1))
+                addressFormLine
+              })
+              Map("project" -> project, "projectAddresses" -> createdAddresses, "formInfo" -> formInfo)
             }
-            case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+            case _ => {
+              RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+              (roadAddressProject)
+            }
           }
         }
       }

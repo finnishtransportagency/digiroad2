@@ -184,7 +184,7 @@
         var data = $('#roadAddressProject').get(0);
         var dataJson = {name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value, roadNumber : data[3].value === '' ? 0 : parseInt(data[3].value), startPart: data[4].value === '' ? 0 : parseInt(data[4].value), endPart : data[5].value === '' ? 0 : parseInt(data[5].value) };
         var backend = new Backend();
-        backend.createProject(dataJson, function() {
+        backend.createProject(dataJson, function(result) {
           eventbus.trigger('roadaddress:projectSaved');
         }, function() {
           eventbus.trigger('roadaddress:projectFailed');

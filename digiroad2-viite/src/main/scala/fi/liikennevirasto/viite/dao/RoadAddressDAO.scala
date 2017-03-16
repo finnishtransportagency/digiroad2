@@ -74,6 +74,10 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
 case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String, roadNumber: Long, startPart: Long, endPart: Long)
 
+case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
+
+case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, roadType: Long, ely : Long)
+
 case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
                               id : Long, linkId: Long, linkType: Long, mmlId: Long, modifiedAt : String, modifiedBy: String, municipalityCode : Long, points: Seq[Point],
@@ -753,6 +757,19 @@ object RoadAddressDAO {
            values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
             ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, ${roadAddressProject.dateModified})
            """.execute
+  }
+
+  def getRoadAddressProjectLinks(projectId : Long): List[RoadAddressProjectLink] ={
+    val query =
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length
+         from PROJECT_LINK join ROAD_ADDRESS join LRM_POSITION
+         on LRM_POSITION.ID = ROAD_ADDRESS.LRM_POSITION_ID
+         on (PROJECT_LINK.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER and PROJECT_LINK.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER and ROAD_ADDRESS.LRM_POSITION_ID = PROJECT_LINK.LRM_POSITION_ID)
+         where (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.road_type asc, LRM_POSITION.link_id asc """
+    Q.queryNA[(Long, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double)](query).list.map{
+      case(projectLinkId, projectId, roadType, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length) =>
+        RoadAddressProjectLink(projectLinkId, projectId, roadType, Discontinuity.apply(discontinuityType.toInt), roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length)
+    }
   }
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
