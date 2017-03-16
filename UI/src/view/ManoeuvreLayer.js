@@ -128,6 +128,7 @@
      * This variable is set as onUnselect property in selectControl.
      */
     var unselectManoeuvre = function() {
+      selectControl.clear();
       selectedManoeuvreSource.close();
       indicatorLayer.getSource().clear();
       selectedManoeuvreSource.setTargetRoadLink(null);

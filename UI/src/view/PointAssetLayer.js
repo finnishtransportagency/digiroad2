@@ -192,6 +192,7 @@
       eventListener.listenTo(eventbus, layerName + ':saved ' + layerName + ':cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, layerName + ':creationCancelled', handleCreationCancelled);
       eventListener.listenTo(eventbus, layerName + ':selected', handleSelected);
+      eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
@@ -204,6 +205,10 @@
 
     function handleSelected() {
       applySelection();
+    }
+
+    function handleUnSelected() {
+       selectControl.clear();
     }
 
     function handleSavedOrCancelled() {

@@ -495,6 +495,8 @@ window.SpeedLimitLayer = function(params) {
 
   var hideLayer = function(map) {
     reset();
+    selectToolControl.clear();
+    selectedSpeedLimit.close();
     vectorLayer.setVisible(false);
     vectorLayerHistory.setVisible(false);
     indicatorLayer.setVisible(false);

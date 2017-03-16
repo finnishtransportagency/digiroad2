@@ -229,7 +229,7 @@ window.LinearAssetLayer = function(params) {
   var bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
-
+    eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
@@ -245,6 +245,10 @@ window.LinearAssetLayer = function(params) {
     if (feature) {
         selectToolControl.addSelectionFeatures([feature]);
     }
+  };
+
+  var linearAssetUnSelected = function () {
+    selectToolControl.clear();
   };
 
   var handleLinearAssetSaved = function() {
@@ -374,7 +378,6 @@ window.LinearAssetLayer = function(params) {
   };
 
   var reset = function() {
-    vectorLayer.styleMap = style.browsing;
     linearAssetCutter.deactivate();
   };
 
@@ -388,6 +391,7 @@ window.LinearAssetLayer = function(params) {
     reset();
     vectorLayer.setVisible(false);
     indicatorLayer.setVisible(false);
+    selectedLinearAsset.close();
     me.stop();
     me.hide();
   };

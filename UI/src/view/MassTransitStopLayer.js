@@ -630,8 +630,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var hideLayer = function() {
     roadLayer.activateSelection();
     selectedMassTransitStopModel.close();
+    selectControl.clear();
     assetLayer.setVisible(false);
     stopListening();
+    me.stop();
     me.hide();
   };
 
