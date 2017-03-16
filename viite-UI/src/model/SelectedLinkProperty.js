@@ -432,6 +432,8 @@
         applicationModel.resetCurrentAction();
         roadCollection.resetNewTmpRoadAddresses();
         roadCollection.resetPreMovedRoadAddresses();
+        resetSources();
+        resetTargets();
         previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
