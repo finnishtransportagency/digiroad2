@@ -56,6 +56,11 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
         else
           AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
       }
+      assetsBeforeUpdate.foreach { asset =>
+        if (asset.asset.floating != asset.persistedFloating) {
+          updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
+        }
+      }
       assetsBeforeUpdate.map(_.asset)
     }
   }
