@@ -694,21 +694,21 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, newRoadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+  def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
-    val sorted = newRoadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
+    val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val lastTarget = sorted.head
-    val startAddressM = newRoadAddresses.filterNot(_.id == 0).size match {
+    val startAddressM = roadAddresses.filterNot(_.id == 0).size match {
       case 0 => minStartMAddress
       case _ => lastTarget.endAddressM
     }
 
     val endMAddress = startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
 
-    val roadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
+    val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
       startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, None, None))
-    (newRoadAddresses++roadAddress)
+    (roadAddresses++newRoadAddress)
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
