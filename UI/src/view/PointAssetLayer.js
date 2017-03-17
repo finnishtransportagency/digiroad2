@@ -39,7 +39,7 @@
     });
 
     function pointAssetOnSelect(feature) {
-      if(feature.selected.length > 0){
+      if(feature.selected.length > 0 && feature.deselected.length == 0){
         selectedAsset.open(feature.selected[0].getProperties());
         toggleMode(application.isReadOnly());
       }
@@ -87,7 +87,12 @@
         };
 
         var deactivate = function () {
-            map.removeInteraction(dragControl);
+          var forRemove = _.filter(map.getInteractions().getArray(), function(interaction) {
+              return interaction instanceof ol.interaction.Translate;
+          });
+          _.each(forRemove, function (interaction) {
+             map.removeInteraction(interaction);
+          });
         };
 
         return {

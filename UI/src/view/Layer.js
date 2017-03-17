@@ -61,7 +61,6 @@
         return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
       });
       var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
-        console.log(middlePoint.angleFromNorth);
         var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
         var attributes = _.merge({}, link, { rotation: rotation  });
         return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));

@@ -188,12 +188,13 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
-  var OnSelect = function(feature) {
-    if(feature.selected.length !== 0) {
-      selectedSpeedLimit.open(feature.selected[0].getProperties(), true);
-      selectSpeedLimit(feature.selected[0].getProperties());
+  var OnSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      selectedSpeedLimit.open(evt.selected[0].getProperties(), true);
+      selectSpeedLimit(evt.selected[0].getProperties());
     }else{
       if (selectedSpeedLimit.exists()) {
+        selectToolControl.clear()
         selectedSpeedLimit.close();
       }
     }
@@ -202,7 +203,8 @@ window.SpeedLimitLayer = function(params) {
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
     onDragEnd: onDragEnd,
-    onSelect: OnSelect
+    onSelect: OnSelect,
+    filterGeometry: function(feature) { return true; }
   });
 
   function onDragEnd(speedLimits) {
