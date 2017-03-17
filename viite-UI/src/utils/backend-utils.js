@@ -51,7 +51,7 @@
       });
     }, 1000);
 
-    this.createProject = _.throttle(function(data, success, failure) {
+    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -61,6 +61,10 @@
         success: success,
         error: failure
       });
+    }, 1000);
+
+    this.getRoadAddressProjects = _.throttle(function(callback) {
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all', callback);
     }, 1000);
 
     this.getUserRoles = function () {

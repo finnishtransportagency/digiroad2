@@ -133,7 +133,9 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new RoadAddressProjectForm(backend);
+    var roadAddressProject = new RoadAddressProjectCollection(backend);
+
+    new RoadAddressProjectForm(roadAddressProject);
 
     var layers = _.merge({
       road: roadLayer,
