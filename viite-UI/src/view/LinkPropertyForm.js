@@ -556,7 +556,7 @@
           selectedLinkProperty.save();
         }
       });
-      rootElement.on('click', '.link-properties button.cancel', function(e) {
+      rootElement.on('click', '.link-properties button.cancel', function() {
         var action;
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
