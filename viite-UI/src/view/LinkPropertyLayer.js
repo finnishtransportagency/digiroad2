@@ -37,7 +37,7 @@
             eventbus.trigger('linkProperties:additionalFloatingSelected', data);
           }else{
             unhighlightFeatureByLinkId(feature.attributes.linkId);
-            new Confirm();
+            new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
           }
         } else {
           if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
