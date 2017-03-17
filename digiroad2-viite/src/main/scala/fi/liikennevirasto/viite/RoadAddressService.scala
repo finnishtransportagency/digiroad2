@@ -483,13 +483,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val viiteMissingRoadLinks = distinctRoadLinks.map { rl =>
         val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
         val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
-        //val endpoints = GeometryUtils.geometryEndpoints(chainRoadLinks
         rl.linkId -> buildRoadAddressLink(rl, ra, missed)
       }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
         && ral.roadLinkType == UnknownRoadLinkType ))
-
-        //.filterNot(GeometryUtils.geometryEndpoints(chainRoadLinks.map) )
-
         .flatMap(_._2)
 
       val viiteFloatingRoadLinks = floatingViiteRoadLinks
