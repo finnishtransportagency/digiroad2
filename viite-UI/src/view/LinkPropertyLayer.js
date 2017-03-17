@@ -293,7 +293,9 @@
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
         });
-        if(event.type === 'click' || event.type === 'dblclick'){
+        if(event.type === 'click'){
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else if( event.type === 'dblclick'){
           selectControl.select(_.assign({singleLinkSelect: true}, feature));
         } else {
           selectControl.unselectAll();
