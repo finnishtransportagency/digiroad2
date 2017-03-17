@@ -399,6 +399,14 @@
       }));
     };
 
+    var getFeaturesToHighlight = function() {
+      return featuresToHighlight;
+    };
+
+    var setFeaturesToHighlight = function(ft) {
+      featuresToHighlight = ft;
+    };
+
     var getTargets = function(){
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
@@ -446,6 +454,7 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
+      applicationModel.setContinueButton(false);
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {
@@ -473,6 +482,7 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+        applicationModel.setContinueButton(false);
       }
     };
 
@@ -579,6 +589,8 @@
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       gapTransferingCancel: gapTransferingCancel,
+      getFeaturesToHighlight:getFeaturesToHighlight,
+      setFeaturesToHighlight:setFeaturesToHighlight,
       close: close,
       open: open,
       isDirty: isDirty,

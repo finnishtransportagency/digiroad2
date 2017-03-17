@@ -51,22 +51,25 @@
           currentRenderIntent = 'select';
           roadLayer.redraw();
           highlightFeatures();
-          if (selectedLinkProperty.getFeaturesToKeep().length > 1) {
+          if (selectedLinkProperty.getFeaturesToKeep().length > 1 && applicationModel.getSelectionType()!== 'unknown') {
             var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
             floatingMinusLast.forEach(function (fml) {
               highlightFeatureByLinkId(fml.linkId);
             });
-            var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
-                return ft.anomaly === 1;
-              })
-            );
-            anomalousFeatures.forEach(function (fmf) {
-              editFeatureDataForGreen(fmf.linkId);
+          } else if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown'){
+            selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
+              highlightFeatureByLinkId(fml.data.linkId);
             });
           }
+          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
+              return ft.anomaly === 1;
+            })
+          );
+          anomalousFeatures.forEach(function (fmf) {
+            editFeatureDataForGreen(fmf.linkId);
+          });
         }
       }
-
     };
 
     var unselectRoadLink = function() {
@@ -119,29 +122,29 @@
       unselectAll: unselectAllRoadLinks
     });
     roadLayer.layer.events.register("beforefeatureselected", this, function(event){
-        if(applicationModel.isActiveButtons()) {
-            var feature = event.feature.attributes;
-            if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all') {
-                return true;
+      if(applicationModel.isActiveButtons()) {
+        var feature = event.feature.attributes;
+        if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all') {
+          return true;
+        } else {
+          if (applicationModel.getSelectionType() === 'floating') {
+            if (feature.roadLinkType !== -1) {
+              me.displayConfirmMessage();
+              return false;
             } else {
-                if (applicationModel.getSelectionType() === 'floating') {
-                    if (feature.roadLinkType !== -1) {
-                        me.displayConfirmMessage();
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
-                if (applicationModel.getSelectionType() === 'unknown') {
-                    if (feature.roadLinkType !== 0 && feature.anomaly !== 1 && !applicationModel.isActiveButtons()) {
-                        me.displayConfirmMessage();
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
+              return true;
             }
+          }
+          if (applicationModel.getSelectionType() === 'unknown') {
+            if (feature.roadLinkType !== 0 && feature.anomaly !== 1 && !applicationModel.isActiveButtons()) {
+              me.displayConfirmMessage();
+              return false;
+            } else {
+              return true;
+            }
+          }
         }
+      }
     });
 
     map.addControl(selectControl);
@@ -602,7 +605,7 @@
           });
         }
       });
-      
+
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
         prepareRoadLinkDraw();
       });
@@ -713,6 +716,11 @@
       editFeatureDataForGreen(targets);
       reselectRoadLink();
       draw();
+      if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown') {
+        selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
+          highlightFeatureByLinkId(fml.data.linkId);
+        });
+      }
     };
 
     var editFeatureDataForGreen = function (targets) {
@@ -735,20 +743,29 @@
       else return _.first(features);
     };
 
+    eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
+      highlightAnomalousFeaturesByFloating();
+    });
+
     var highlightAnomalousFeaturesByFloating = function() {
-      var floatingFeatures =[];
+      var floatingFeatures = [];
+      var featuresToHighlight = [];
       _.each(roadLayer.layer.features, function(feature){
         if(feature.data.roadLinkType == -1)
           floatingFeatures.push(feature);
       });
+      featuresToHighlight = floatingFeatures;
       _.each(roadLayer.layer.features, function(feature) {
         _.each(floatingFeatures, function(floating) {
           if(!_.isEmpty(floatingFeatures)){
-            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds))
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds)  && feature.data.anomaly == 1) {
               selectControl.highlight(feature);
+              featuresToHighlight.push(feature);
+            }
           }
         });
       });
+      selectedLinkProperty.setFeaturesToHighlight(featuresToHighlight);
     };
 
     this.removeLayerFeatures = function() {
