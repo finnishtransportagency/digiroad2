@@ -25,6 +25,7 @@ import slick.jdbc.{GetResult, StaticQuery => Q}
 
 sealed trait Discontinuity {
   def value: Int
+  def description: String
 }
 object Discontinuity {
   val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, MinorDiscontinuity, Continuous)
@@ -33,11 +34,11 @@ object Discontinuity {
     values.find(_.value == intValue).getOrElse(Continuous)
   }
 
-  case object EndOfRoad extends Discontinuity { def value = 1 }
-  case object Discontinuous extends Discontinuity { def value = 2 }
-  case object ChangingELYCode extends Discontinuity { def value = 3 }
-  case object MinorDiscontinuity extends Discontinuity { def value = 4 }
-  case object Continuous extends Discontinuity { def value = 5 }
+  case object EndOfRoad extends Discontinuity { def value = 1; def description="Tien loppu" }
+  case object Discontinuous extends Discontinuity { def value = 2 ; def description = "Epäjatkuva"}
+  case object ChangingELYCode extends Discontinuity { def value = 3 ; def description = "ELY:n raja"}
+  case object MinorDiscontinuity extends Discontinuity { def value = 4 ; def description= "Lievä epäjatkuvuus" }
+  case object Continuous extends Discontinuity { def value = 5 ; def description = "Jatkuva"}
 }
 
 sealed trait CalibrationCode {
@@ -76,7 +77,7 @@ case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: S
 
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
-case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, roadType: Long, ely : Long)
+case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
 
 case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
@@ -765,7 +766,7 @@ object RoadAddressDAO {
          from PROJECT_LINK join ROAD_ADDRESS join LRM_POSITION
          on LRM_POSITION.ID = ROAD_ADDRESS.LRM_POSITION_ID
          on (PROJECT_LINK.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER and PROJECT_LINK.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER and ROAD_ADDRESS.LRM_POSITION_ID = PROJECT_LINK.LRM_POSITION_ID)
-         where (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.road_type asc, LRM_POSITION.link_id asc """
+         where (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     Q.queryNA[(Long, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double)](query).list.map{
       case(projectLinkId, projectId, roadType, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length) =>
         RoadAddressProjectLink(projectLinkId, projectId, roadType, Discontinuity.apply(discontinuityType.toInt), roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length)

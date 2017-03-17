@@ -1,5 +1,6 @@
 (function (root) {
   root.RoadAddressProjectForm = function(selectedProject) {
+    var currentProject ;
 
 
     var dynamicField = function(labelText){
@@ -78,6 +79,10 @@
       return '<span class ="edit-mode-title">Tieosoitemuutosprojekti</span>';
     };
 
+    var titleWithProjectName = function(projectName) {
+      return '<span class ="edit-mode-title">'+projectName+'</span>';
+    };
+
     var buttons =
       '<div class="project-form form-controls">' +
       '<button class="next btn btn-next" disabled>Seuraava</button>' +
@@ -113,27 +118,31 @@
         addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +
         '</div>' +
         '</form>' +
-        '</div>' + '</div>' + '</div>' + '</div>' +
+
+        '</div>' +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
+        '</div>' +
+
+        '</div>' + '</div>' +
         '<footer>' + buttons + '</footer>');
     };
 
-    var openProjectTemplate = function(project) {
+    var openProjectTemplate = function(project, formInfo) {
       return _.template('' +
         '<header>' +
-        title() +
+        titleWithProjectName(project.name) +
         headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group choice-group">'+
-        staticField('Lisätty järjestelmään', project.creator)+
-        staticField('Muokattu viimeksi', project.modifiedAt)+
+        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate.toString())+
+        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified.toString())+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         inputFieldRequired('*Nimi', 'nimi', '', project.name) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
-        largeInputField()+
+        largeInputField(project.additionalInfo)+
         '<div class="form-group">' +
         addSmallLabel('TIE')+ addSmallLabel('AOSA')+ addSmallLabel('LOSA')+
         '</div>'+
@@ -141,7 +150,16 @@
         addSmallInputNumber('tie', project.roadNumber)+ addSmallInputNumber('aosa', project.startPart)+ addSmallInputNumber('losa', project.endPart)+
         '</div>'+
         '</form>' +
-        '</div>' + '</div>' + '</div>' + '</div>'+
+
+        '</div>'+
+        '</div>' +
+        '<div class = "form-result">' +
+          '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
+          '<div>' +
+          addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+          '</div>'+
+          formInfo +
+        '</div></div></div>'+
         '<footer>' + buttons + '</footer>');
     };
 
@@ -180,12 +198,28 @@
 
       });
 
+      eventbus.on('roadAddress:projectSaved', function (result) {
+        currentProject = result.project;
+        var text = '';
+        _.each(result.formInfo, function(line){
+          text += '<div>' +
+          addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely)+
+          '</div>';
+        });
+        rootElement.html(openProjectTemplate(result.project, text));
+
+        jQuery('.modal-overlay').remove();
+        addDatePicker();
+      });
+
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         var dataJson = {name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value, roadNumber : data[3].value === '' ? 0 : parseInt(data[3].value), startPart: data[4].value === '' ? 0 : parseInt(data[4].value), endPart : data[5].value === '' ? 0 : parseInt(data[5].value) };
         var backend = new Backend();
-        backend.createProject(dataJson, function(result) {
-          eventbus.trigger('roadaddress:projectSaved');
+        applicationModel.addSpinner();
+        backend.createProject(dataJson,
+          function(result) {
+          eventbus.trigger('roadAddress:projectSaved', result);
         }, function() {
           eventbus.trigger('roadaddress:projectFailed');
         });

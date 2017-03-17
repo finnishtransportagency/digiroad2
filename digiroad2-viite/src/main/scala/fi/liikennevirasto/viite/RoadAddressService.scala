@@ -539,11 +539,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
               val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
               val groupedAddresses = createdAddresses.groupBy{address =>
-                (address.roadNumber, address.roadPartNumber, address.roadType)}
+                (address.roadNumber, address.roadPartNumber)}
               val formInfo = groupedAddresses.map(addressGroup =>{
-                val length = addressGroup._2.map(_.length).sum.toLong
-                val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
-                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, length,addressGroup._1._3 , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1))
+                val lastAddressM = addressGroup._2.last.endAddrM
+                val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
                 addressFormLine
               })
               Map("project" -> project, "projectAddresses" -> createdAddresses, "formInfo" -> formInfo)
