@@ -86,10 +86,12 @@
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
-
-        _.forEach(current, function (selected) {
-          selected.select();
+        var currentFloatings = _.filter(current, function(curr){
+          return curr.getData().roadLinkType === -1;
         });
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
         //Segment to construct adjacency
         if(checkAdjacency){
           fillAdjacents(linkId);
@@ -328,7 +330,8 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
+
+      var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
         if(feature.roadLinkType == -1){
           return feature.linkId.toString();
         }
@@ -399,6 +402,10 @@
       }));
     };
 
+    var setSources = function(scs) {
+      sources = scs;
+    };
+
     var getFeaturesToHighlight = function() {
       return featuresToHighlight;
     };
@@ -436,12 +443,15 @@
         applicationModel.resetCurrentAction();
         roadCollection.resetNewTmpRoadAddresses();
         roadCollection.resetPreMovedRoadAddresses();
+        resetSources();
+        resetTargets();
         previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
           eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
         }
       }
+      applicationModel.toggleSelectionTypeAll();
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
@@ -578,8 +588,18 @@
       return !_.isUndefined(didIfindIt);
     };
 
+    var isFloatingHomogeneous = function(floatingFeature) {
+      var firstFloating = _.first(featuresToKeep);
+      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
+          return true;
+      }else{
+          return false;
+      }
+    };
+
     return {
       getSources: getSources,
+      setSources: setSources,
       resetSources: resetSources,
       addTargets: addTargets,
       getTargets: getTargets,
@@ -607,7 +627,8 @@
       get: get,
       count: count,
       openMultiple: openMultiple,
-      featureExistsInSelection: featureExistsInSelection
+      featureExistsInSelection: featureExistsInSelection,
+      isFloatingHomogeneous: isFloatingHomogeneous
     };
   };
 })(this);

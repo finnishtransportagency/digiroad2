@@ -30,10 +30,15 @@
       }
       else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
-          var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
-            return feature.roadLinkType !== -1;
-          }), 'selectedLinkId': feature.data.linkId};
-          eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          if(selectedLinkProperty.isFloatingHomogeneous(feature)){
+              var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+              return feature.roadLinkType !== -1;
+            }), 'selectedLinkId': feature.data.linkId};
+            eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          }else{
+            unhighlightFeatureByLinkId(feature.attributes.linkId);
+            new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
+          }
         } else {
           if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
             applicationModel.toggleSelectionTypeFloating();
@@ -291,7 +296,9 @@
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
         });
-        if(event.type === 'click' || event.type === 'dblclick'){
+        if(event.type === 'click'){
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else if( event.type === 'dblclick'){
           selectControl.select(_.assign({singleLinkSelect: true}, feature));
         } else {
           selectControl.unselectAll();
