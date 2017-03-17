@@ -48,7 +48,7 @@
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      if (editModeToggle.hasNoRolesPermission(userRoles) || (_.contains(userRoles, 'premium') && elements.expanded.hasClass('panel maintenanceRoad')) ) {
+      if (editModeToggle.hasNoRolesPermission(userRoles) || (_.contains(userRoles, 'premium') && (layerName == 'maintenanceRoad'))) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());
