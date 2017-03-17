@@ -8,7 +8,7 @@
     }).join('');
 
     var expandedTemplate = [
-      '<div class="panel">',
+      '<div class="panel ' + layerName +'">',
       '  <header class="panel-header expanded">',
       '    ' + title,
       '  </header>',
@@ -31,7 +31,11 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
         userRoles = roles;
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        if (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && !elements.expanded.hasClass('panel maintenanceRoad'))) {
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
+        }else if ( _.contains(roles, 'serviceRoadMaintainer') && elements.expanded.hasClass('panel maintenanceRoad')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);

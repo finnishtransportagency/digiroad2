@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.user
 
+
 trait UserProvider {
   val threadLocalUser: ThreadLocal[User] = new ThreadLocal[User]
 

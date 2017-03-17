@@ -6,6 +6,7 @@
     var sources = [];
     var featuresToKeep = [];
     var previousAdjacents = [];
+    var featuresToHighlight = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -85,10 +86,12 @@
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
-
-        _.forEach(current, function (selected) {
-          selected.select();
+        var currentFloatings = _.filter(current, function(curr){
+          return curr.getData().roadLinkType === -1;
         });
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
         //Segment to construct adjacency
         if(checkAdjacency){
           fillAdjacents(linkId);
@@ -318,7 +321,8 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
+
+      var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
         if(feature.roadLinkType == -1){
           return feature.linkId.toString();
         }
@@ -389,6 +393,18 @@
       }));
     };
 
+    var setSources = function(scs) {
+      sources = scs;
+    };
+
+    var getFeaturesToHighlight = function() {
+      return featuresToHighlight;
+    };
+
+    var setFeaturesToHighlight = function(ft) {
+      featuresToHighlight = ft;
+    };
+
     var getTargets = function(){
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
@@ -416,6 +432,8 @@
         applicationModel.resetCurrentAction();
         roadCollection.resetNewTmpRoadAddresses();
         roadCollection.resetPreMovedRoadAddresses();
+        resetSources();
+        resetTargets();
         previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
@@ -434,6 +452,7 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
+      applicationModel.setContinueButton(false);
     };
 
     var cancelGreenRoad = function(action, changedTargetIds) {
@@ -459,6 +478,7 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+        applicationModel.setContinueButton(false);
       }
     };
 
@@ -550,6 +570,7 @@
 
     return {
       getSources: getSources,
+      setSources: setSources,
       resetSources: resetSources,
       addTargets: addTargets,
       getTargets: getTargets,
@@ -559,6 +580,8 @@
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
       gapTransferingCancel: gapTransferingCancel,
+      getFeaturesToHighlight:getFeaturesToHighlight,
+      setFeaturesToHighlight:setFeaturesToHighlight,
       close: close,
       open: open,
       isDirty: isDirty,

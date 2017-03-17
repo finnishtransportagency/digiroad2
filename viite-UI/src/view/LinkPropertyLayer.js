@@ -51,19 +51,24 @@
           currentRenderIntent = 'select';
           roadLayer.redraw();
           highlightFeatures();
-          if (selectedLinkProperty.getFeaturesToKeep().length > 1) {
+
+          if (selectedLinkProperty.getFeaturesToKeep().length > 1 && applicationModel.getSelectionType()!== 'unknown') {
             var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
             floatingMinusLast.forEach(function (fml) {
               highlightFeatureByLinkId(fml.linkId);
             });
-            var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
-                return ft.anomaly === 1;
-              })
-            );
-            anomalousFeatures.forEach(function (fmf) {
-              editFeatureDataForGreen(fmf.linkId);
+          } else if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown') {
+            selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
+              highlightFeatureByLinkId(fml.data.linkId);
             });
           }
+          var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
+              return ft.anomaly === 1;
+            })
+          );
+          anomalousFeatures.forEach(function (fmf) {
+            editFeatureDataForGreen(fmf.linkId);
+          });
         }
       }
 
@@ -288,7 +293,9 @@
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
         });
-        if(event.type === 'click' || event.type === 'dblclick'){
+        if(event.type === 'click'){
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else if( event.type === 'dblclick'){
           selectControl.select(_.assign({singleLinkSelect: true}, feature));
         } else {
           selectControl.unselectAll();
@@ -611,19 +618,16 @@
         clearIndicators();
         selectControl.unselectAll();
         roadCollection.getAll();
-        if (applicationModel.getSelectionType() !== 'floating') {
           var features = [];
           _.each(roadLayer.layer.features, function (feature) {
             if (feature.data.linkId == originalFeature.linkId)
               features.push(feature);
           });
-
           if (!_.isEmpty(features)) {
             currentRenderIntent = 'select';
             selectControl.select(_.first(features));
             highlightFeatures();
           }
-        }
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
@@ -708,6 +712,11 @@
       editFeatureDataForGreen(targets);
       reselectRoadLink();
       draw();
+      if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown') {
+        selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
+          highlightFeatureByLinkId(fml.data.linkId);
+        });
+      }
     };
 
     var editFeatureDataForGreen = function (targets) {
@@ -730,20 +739,29 @@
       else return _.first(features);
     };
 
+    eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
+      highlightAnomalousFeaturesByFloating();
+    });
+
     var highlightAnomalousFeaturesByFloating = function() {
-      var floatingFeatures =[];
+      var floatingFeatures = [];
+      var featuresToHighlight = [];
       _.each(roadLayer.layer.features, function(feature){
         if(feature.data.roadLinkType == -1)
           floatingFeatures.push(feature);
       });
+      featuresToHighlight = floatingFeatures;
       _.each(roadLayer.layer.features, function(feature) {
         _.each(floatingFeatures, function(floating) {
           if(!_.isEmpty(floatingFeatures)){
-            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds))
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds) && feature.data.anomaly == 1){
               selectControl.highlight(feature);
+              featuresToHighlight.push(feature);
+            }
           }
         });
       });
+      selectedLinkProperty.setFeaturesToHighlight(featuresToHighlight);
     };
 
     this.removeLayerFeatures = function() {

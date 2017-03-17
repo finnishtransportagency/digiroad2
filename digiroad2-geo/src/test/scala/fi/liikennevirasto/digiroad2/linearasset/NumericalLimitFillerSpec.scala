@@ -251,6 +251,54 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     output.length should be (6)
   }
 
+  test("combine two segments with same value in same RoadLink") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 4.5, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None),
+      PersistedLinearAsset(2, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 4.5, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None)
+    )
+
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
+    filledTopology.map(_.typeId) should be(List(140))
+    filledTopology.map(_.startMeasure) should be(List(0.0))
+    filledTopology.map(_.endMeasure) should be(List(10.0))
+    changeSet.adjustedMValues should have size 1
+    changeSet.adjustedSideCodes should be(List())
+  }
+
+  test("fuse two segments with same value in same RoadLink with different side code") {
+    val roadLinks = Seq(
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None),
+      PersistedLinearAsset(2, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None)
+    )
+
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, Map(1L -> assets), 140)
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
+    filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
+    filledTopology.map(_.typeId) should be(List(140))
+    filledTopology.map(_.startMeasure) should be(List(0.0))
+    filledTopology.map(_.endMeasure) should be(List(10.0))
+    changeSet.adjustedMValues should be(List())
+    changeSet.adjustedSideCodes.map(_.assetId) should be(List(1))
+    changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+    changeSet.droppedAssetIds should be(Set())
+    changeSet.expiredAssetIds should be(Set(2))
+  }
+
   test("adjustTwoWaySegments") {
     val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
     TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
