@@ -31,7 +31,7 @@
       else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
           if(selectedLinkProperty.isFloatingHomogeneous(feature)){
-              var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+            var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
               return feature.roadLinkType !== -1;
             }), 'selectedLinkId': feature.data.linkId};
             eventbus.trigger('linkProperties:additionalFloatingSelected', data);
@@ -580,7 +580,7 @@
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
-        selectedLinkProperty.cancelGreenRoad(applicationModel.actionCalculated, changedIds);
+        selectedLinkProperty.cancelAfterSiirra(applicationModel.actionCalculated, changedIds);
       });
 
       eventbus.on('linkProperties:reselectRoadLink', function(){
@@ -628,7 +628,7 @@
             return of.linkId;
           });
           _.each(roadLayer.layer.features, function (feature) {
-            if (_.contains(extractedLinkIds, feature.data.linkId) && feature.data.roadLinkType === -1){
+            if (!_.contains(extractedLinkIds, feature.data.linkId) && feature.data.roadLinkType === -1){
               features.push(feature);
             }
           });
