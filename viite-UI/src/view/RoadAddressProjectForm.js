@@ -191,7 +191,7 @@
         });
       });
       
-      rootElement.on('click', 'button.cancel', function(){
+      rootElement.on('click', '.project-form button.cancel', function(){
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();
