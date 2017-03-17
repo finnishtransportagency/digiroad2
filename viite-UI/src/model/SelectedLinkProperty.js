@@ -440,6 +440,7 @@
           eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
         }
       }
+      applicationModel.toggleSelectionTypeAll();
       $('#adjacentsData').remove();
       if(applicationModel.isActiveButtons() || action === -1){
         if(action !== applicationModel.actionCalculated){
@@ -568,6 +569,15 @@
       return !_.isUndefined(didIfindIt);
     };
 
+    var isFloatingHomogeneous = function(floatingFeature) {
+      var firstFloating = _.first(featuresToKeep);
+      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
+          return true;
+      }else{
+          return false;
+      }
+    };
+
     return {
       getSources: getSources,
       setSources: setSources,
@@ -598,7 +608,8 @@
       get: get,
       count: count,
       openMultiple: openMultiple,
-      featureExistsInSelection: featureExistsInSelection
+      featureExistsInSelection: featureExistsInSelection,
+      isFloatingHomogeneous: isFloatingHomogeneous
     };
   };
 })(this);

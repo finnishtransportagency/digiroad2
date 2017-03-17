@@ -30,10 +30,15 @@
       }
       else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
-          var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
-            return feature.roadLinkType !== -1;
-          }), 'selectedLinkId': feature.data.linkId};
-          eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          if(selectedLinkProperty.isFloatingHomogeneous(feature)){
+              var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+              return feature.roadLinkType !== -1;
+            }), 'selectedLinkId': feature.data.linkId};
+            eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          }else{
+            unhighlightFeatureByLinkId(feature.attributes.linkId);
+            new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
+          }
         } else {
           if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
             applicationModel.toggleSelectionTypeFloating();
