@@ -93,9 +93,10 @@
         center: [startupParameters.lon, startupParameters.lat],
         projection: 'EPSG:3067',
         zoom: startupParameters.zoom,
-        resolutions: [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5]
+        resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
       })
     });
+    map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
 
