@@ -194,7 +194,7 @@ window.SpeedLimitLayer = function(params) {
       selectSpeedLimit(evt.selected[0].getProperties());
     }else{
       if (selectedSpeedLimit.exists()) {
-        selectToolControl.clear()
+        selectToolControl.clear();
         selectedSpeedLimit.close();
       }
     }
