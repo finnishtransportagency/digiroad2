@@ -10,6 +10,9 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
 
 class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -48,6 +51,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by bounding box with floating corrected") {
+
     val modifiedLinkId = 1611317
     val newLinkId = 6002
     val municipalityCode = 235
@@ -72,6 +76,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
 
     runWithRollback {
+      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600029""".as[(Long, Int, Double, Int)].first
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600029)
       result.linkId should equal(6002)
@@ -79,6 +89,22 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       result.lat should equal(6677347)
       result.mValue should equal(3)
       result.floating should be(false)
+
+      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600029""".as[(Long, Int, Double, Int)].first
+
+      assetIdAfterCorretion should equal(result.id)
+      correctedLinkid should equal(result.linkId)
+      correctedStartMeasure should equal(result.mValue)
+      correctedFloatingStatus should equal(0)
+
+      assetIdAfterCorretion should be (assetId)
+      correctedLinkid should not be (oldLinkId)
+      correctedStartMeasure should not be(oldStartMeasure)
     }
   }
 
@@ -124,13 +150,37 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((roadLinks, changeInfo))
 
     runWithRollback {
+      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600029""".as[(Long, Int, Double, Int)].first
+
       val result = service.getByMunicipality(235).find(_.id == 600029).get
+
       result.id should equal(600029)
       result.linkId should equal(6002)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(3)
       result.floating should be(false)
+
+      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600029""".as[(Long, Int, Double, Int)].first
+
+      assetIdAfterCorretion should equal(result.id)
+      correctedLinkid should equal(result.linkId)
+      correctedStartMeasure should equal(result.mValue)
+      correctedFloatingStatus should equal(0)
+
+      assetIdAfterCorretion should be (assetId)
+      correctedLinkid should not be (oldLinkId)
+      correctedStartMeasure should not be(oldStartMeasure)
     }
   }
 

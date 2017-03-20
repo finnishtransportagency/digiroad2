@@ -5,11 +5,14 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.pointasset.oracle.RailwayCrossing
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -49,6 +52,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       result.mValue should equal(103)
     }
   }
+
   test("Can fetch by bounding box with floating corrected") {
     val modifiedLinkId = 1611317
     val newLinkId = 6002
@@ -57,7 +61,6 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     val trafficDirection = TrafficDirection.BothDirections
     val functionalClass = 1
     val linkType = Freeway
-
 
     val changeInfo = Seq(
       ChangeInfo(Some(modifiedLinkId), Some(modifiedLinkId), 12345, 5, Some(0), Some(150.0), Some(0), Some(100.0), 144000000),
@@ -74,6 +77,12 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
 
     runWithRollback {
+      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600049""".as[(Long, Int, Double, Int)].first
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       Set(600049, 600050, 600051) should contain (result.id)
       result.linkId should equal(6002)
@@ -81,6 +90,22 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       result.lat should equal(6677347)
       result.mValue should equal(3)
       result.floating should be(false)
+
+      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600049""".as[(Long, Int, Double, Int)].first
+
+      assetIdAfterCorretion should equal(result.id)
+      correctedLinkid should equal(result.linkId)
+      correctedStartMeasure should equal(result.mValue)
+      correctedFloatingStatus should equal(0)
+
+      assetIdAfterCorretion should be (assetId)
+      correctedLinkid should not be (oldLinkId)
+      correctedStartMeasure should not be(oldStartMeasure)
     }
   }
 
@@ -99,6 +124,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       result.createdAt shouldBe defined
     }
   }
+
   test("Can fetch by municipality with floating corrected") {
     val modifiedLinkId = 12345
     val newLinkId = 6002
@@ -124,6 +150,12 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((roadLinks, changeInfo))
 
     runWithRollback {
+      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600051""".as[(Long, Int, Double, Int)].first
       val result = service.getByMunicipality(235).find(_.id == 600051).get
 
       result.id should equal(600051)
@@ -133,6 +165,22 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       result.mValue should equal(3.0)
       result.createdAt shouldBe defined
       result.floating should be(false)
+
+      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
+        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
+                  from asset a
+                  join asset_link al on al.asset_id = a.id
+                  join lrm_position lp on lp.id = al.position_id
+                 where a.id = 600051""".as[(Long, Int, Double, Int)].first
+
+      assetIdAfterCorretion should equal(result.id)
+      correctedLinkid should equal(result.linkId)
+      correctedStartMeasure should equal(result.mValue)
+      correctedFloatingStatus should equal(0)
+
+      assetIdAfterCorretion should be (assetId)
+      correctedLinkid should not be (oldLinkId)
+      correctedStartMeasure should not be(oldStartMeasure)
     }
   }
 
@@ -149,5 +197,4 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(235).find(_.id == 600051) should equal(None)
     }
   }
-
 }
