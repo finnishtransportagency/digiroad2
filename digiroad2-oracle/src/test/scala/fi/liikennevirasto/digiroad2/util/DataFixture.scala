@@ -725,10 +725,8 @@ object DataFixture {
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
     municipalities.foreach { municipality =>
 
-      var countMotorwayBothDir = 0
-      var countMotorwayTowardDir  = 0
-      var countMotorwayAgainstDir = 0
-      var countSinglewayBothDir = 0
+      var countMotorway = 0
+      var countSingleway = 0
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality
@@ -757,31 +755,20 @@ object DataFixture {
             val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
             roadLinkProp.linkType match {
               case asset.SingleCarriageway =>
-
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value , NumberOfRoadLanesSingleCarriageway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesSingleCarriageway)
-                    countSinglewayBothDir = countSinglewayBothDir + 1
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value , NumberOfRoadLanesSingleCarriageway)
+                    countSingleway = countSingleway+ 1
                   }
                   case _ => {
                     None
                   }
                 }
-              case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
+              case asset.Motorway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
-                  case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayBothDir = countMotorwayBothDir + 1
-                  }
-                  case asset.TrafficDirection.TowardsDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayTowardDir = countMotorwayTowardDir + 1
-                  }
-                  case asset.TrafficDirection.AgainstDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayAgainstDir = countMotorwayAgainstDir + 1
+                  case asset.TrafficDirection.TowardsDigitizing | asset.TrafficDirection.AgainstDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value, NumberOfRoadLanesMotorway)
+                    countMotorway = countMotorway + 1
                   }
                   case _ => {
                     None
@@ -794,10 +781,8 @@ object DataFixture {
           }
         }
       }
-      println("Inserts SingleCarriage bothDir - " + countSinglewayBothDir)
-      println("Inserts Motorway... bothDir    - " + countMotorwayBothDir)
-      println("Inserts Motorway... towardDir  - " + countMotorwayTowardDir)
-      println("Inserts Motorway... AgainstDir - " + countMotorwayAgainstDir)
+      println("Inserts SingleCarriage - " + countSingleway)
+      println("Inserts Motorway...    - " + countMotorway)
       println("End processing municipality %d".format(municipality))
       println("")
     }

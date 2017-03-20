@@ -181,9 +181,7 @@ object Digiroad2Context {
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
-  lazy val revision: String = {
-    revisionInfo.getProperty("digiroad2.revision")
-  }
+
   lazy val deploy_date: String = {
     revisionInfo.getProperty("digiroad2.latestDeploy")
   }

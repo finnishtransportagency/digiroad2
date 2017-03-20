@@ -226,8 +226,8 @@
           eventbus.trigger('roadaddress:projectFailed');
         });
       });
-      
-      rootElement.on('click', 'button.cancel', function(){
+    
+      rootElement.on('click', '.project-form button.cancel', function(){
         applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
