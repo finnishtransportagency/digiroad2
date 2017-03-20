@@ -298,7 +298,7 @@ module.exports = function(grunt) {
           file: 'revision.properties'
         });
 
-        var data = ('digiroad2.revision=' + " " + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
+        var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
         grunt.file.write(options.file, data);
 
       }
