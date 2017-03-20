@@ -63,7 +63,7 @@
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
       '<label class="control-label">LISÄTIEDOT</label>'+
-      '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" value="'+dataField+'" onclick=""/>'+
+      '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined ? "" : dataField )+'</textarea>'+
       '</div>';
     };
 
@@ -126,7 +126,7 @@
         '<footer>' + buttons + '</footer>');
     };
 
-    var openProjectTemplate = function(project, formInfo) {
+    var openProjectTemplate = function(project, formInfo, info) {
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -135,8 +135,8 @@
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group choice-group">'+
-        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate.toString())+
-        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified.toString())+
+        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
+        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
@@ -155,8 +155,8 @@
         '</div>' +
         '<div class = "form-result">' +
           '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-          '<div>' +
-          addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+          '<div style="margin-left: 15px;">' +
+            addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
           '</div>'+
           formInfo +
         '</div></div></div>'+
@@ -203,13 +203,15 @@
         var text = '';
         _.each(result.formInfo, function(line){
           text += '<div>' +
-          addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely)+
+            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
           '</div>';
         });
-        rootElement.html(openProjectTemplate(result.project, text));
+        rootElement.html(openProjectTemplate(result.project, text, result.formInfo[0]));
 
         jQuery('.modal-overlay').remove();
         addDatePicker();
+        if(!_.isUndefined(result.projectAddresses))
+          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -226,6 +228,7 @@
       });
       
       rootElement.on('click', 'button.cancel', function(){
+        applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();

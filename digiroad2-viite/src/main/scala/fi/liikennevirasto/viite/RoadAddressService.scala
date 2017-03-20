@@ -15,6 +15,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
+import org.scalatra.util.DateUtil
 import org.slf4j.LoggerFactory
 import sun.security.pkcs11.wrapper.CK_SSL3_MASTER_KEY_DERIVE_PARAMS
 
@@ -539,14 +540,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
               val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
               val groupedAddresses = createdAddresses.groupBy{address =>
-                (address.roadNumber, address.roadPartNumber)}
+                (address.roadNumber, address.roadPartNumber)}.toSeq.sortBy(_._1._2 )(Ordering[Long])
               val formInfo = groupedAddresses.map(addressGroup =>{
                 val lastAddressM = addressGroup._2.last.endAddrM
                 val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
                 addressFormLine
               })
-              Map("project" -> project, "projectAddresses" -> createdAddresses, "formInfo" -> formInfo)
+              Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
             }
             case _ => {
               RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
@@ -559,6 +560,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         case a: Exception => println(a.getMessage)
       }
     }
+  }
+
+  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    Map(
+      "id" -> roadAddressProject.id,
+      "roadNumber" -> roadAddressProject.roadNumber,
+      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
+      "startDate" -> roadAddressProject.startDate.toString(formatter),
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "createdBy" -> roadAddressProject.createdBy,
+      "endPart" -> roadAddressProject.endPart,
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "name" -> roadAddressProject.name,
+      "startPart" -> roadAddressProject.startPart,
+      "status" -> roadAddressProject.status
+    )
   }
 }
 

@@ -71,7 +71,7 @@
     };
 
     var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      var canIOpen = (!_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect)) && !applicationModel.isProjectOpen();
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();

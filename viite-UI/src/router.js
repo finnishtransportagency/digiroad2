@@ -60,6 +60,14 @@
       }
     });
 
+    eventbus.on('linkProperties:selectedProject', function (linkId) {
+        router.navigate('linkProperty/' + linkId);
+      applicationModel.selectLayer('linkProperty');
+      backend.getRoadLinkByLinkId(linkId, function (response) {
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 10);
+      });
+    });
+
     eventbus.on('layer:selected', function (layer) {
       router.navigate(layer);
     });
