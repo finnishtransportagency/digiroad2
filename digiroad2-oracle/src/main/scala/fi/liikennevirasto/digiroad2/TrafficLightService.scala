@@ -42,7 +42,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds)
 
-    withDynSession {
+    withDynTransaction {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
@@ -51,11 +51,13 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = super.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
+
         if (floating && !persistedAsset.floating) {
-
-          PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match{
-
+          PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
             case Some(trafficLight) =>
+              OracleTrafficLightDao.update(trafficLight.assetId, TrafficLightToBePersisted(trafficLight.linkId,
+                trafficLight.lon, trafficLight.lat, trafficLight.mValue, persistedAsset.municipalityCode, "vvh_generated"))
+
               AssetBeforeUpdate(new PersistedAsset(trafficLight.assetId, trafficLight.linkId, trafficLight.lon, trafficLight.lat,
                 trafficLight.mValue, trafficLight.floating, persistedAsset.municipalityCode, persistedAsset.createdBy,
                 persistedAsset.createdAt, persistedAsset.modifiedBy, persistedAsset.modifiedAt), trafficLight.floating, Some(FloatingReason.Unknown))
@@ -86,7 +88,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.map(l => l.linkId -> l).toMap.get(linkId)
 
-    withDynSession {
+    withDynTransaction {
       fetchPointAssets(withMunicipality(municipalityCode))
         .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks)))
         .toList
@@ -96,12 +98,15 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
                                linkIdToRoadLink: (Long) => Option[RoadLinkLike],
                                changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink])
-                              (persistedStop: PersistedAsset):(T, Option[FloatingReason]) = {
+                              (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
 
     val (floating, assetFloatingReason) = isFloating(persistedStop, linkIdToRoadLink(persistedStop.linkId))
-    if(floating) {
+    if (floating) {
       val persistedAsset = PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
         case Some(trafficLight) =>
+          OracleTrafficLightDao.update(trafficLight.assetId, TrafficLightToBePersisted(trafficLight.linkId,
+            trafficLight.lon, trafficLight.lat, trafficLight.mValue, persistedStop.municipalityCode, "vvh_generated"))
+
           new PersistedAsset(trafficLight.assetId, trafficLight.linkId, trafficLight.lon, trafficLight.lat,
             trafficLight.mValue, trafficLight.floating, persistedStop.municipalityCode, persistedStop.createdBy,
             persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)

@@ -45,7 +45,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds)
 
-    withDynSession {
+    withDynTransaction {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
@@ -54,11 +54,13 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = super.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
+
         if (floating && !persistedAsset.floating) {
-
           PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match{
-
             case Some(pedestrian) =>
+              OraclePedestrianCrossingDao.update(pedestrian.assetId, PedestrianCrossingToBePersisted(pedestrian.linkId,
+                pedestrian.lon, pedestrian.lat, pedestrian.mValue, persistedAsset.municipalityCode, "vvh_generated"))
+
               AssetBeforeUpdate(new PersistedAsset(pedestrian.assetId, pedestrian.linkId, pedestrian.lon, pedestrian.lat,
                 pedestrian.mValue, pedestrian.floating, persistedAsset.municipalityCode, persistedAsset.createdBy,
                 persistedAsset.createdAt, persistedAsset.modifiedBy, persistedAsset.modifiedAt), pedestrian.floating, assetFloatingReason)
@@ -89,7 +91,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.map(l => l.linkId -> l).toMap.get(linkId)
 
-    withDynSession {
+    withDynTransaction {
       fetchPointAssets(withMunicipality(municipalityCode))
         .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks)))
         .toList
@@ -97,14 +99,17 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   }
 
   def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
-                                          linkIdToRoadLink: (Long) => Option[RoadLinkLike],
-                                          changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink])
-                                          (persistedStop: PersistedAsset):(T, Option[FloatingReason]) = {
+                               linkIdToRoadLink: (Long) => Option[RoadLinkLike],
+                               changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink])
+                              (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
 
     val (floating, assetFloatingReason) = isFloating(persistedStop, linkIdToRoadLink(persistedStop.linkId))
-    if(floating) {
+    if (floating) {
       val persistedAsset = PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
         case Some(pedestrian) =>
+          OraclePedestrianCrossingDao.update(pedestrian.assetId, PedestrianCrossingToBePersisted(pedestrian.linkId,
+            pedestrian.lon, pedestrian.lat, pedestrian.mValue, persistedStop.municipalityCode, "vvh_generated"))
+
           new PersistedAsset(pedestrian.assetId, pedestrian.linkId, pedestrian.lon, pedestrian.lat,
             pedestrian.mValue, pedestrian.floating, persistedStop.municipalityCode, persistedStop.createdBy,
             persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
