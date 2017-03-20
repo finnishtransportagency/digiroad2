@@ -286,7 +286,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
@@ -297,22 +297,10 @@ module.exports = function(grunt) {
         var options = this.options({
           file: 'revision.properties'
         });
-        var done = this.async();
-        var exec = require('child_process').exec;
 
-        var createVersionFile = function (stdout) {
-          var data = ('digiroad2.revision=' + stdout + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
-          grunt.file.write(options.file, data);
-        };
+        var data = ('digiroad2.revision=' + " " + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
+        grunt.file.write(options.file, data);
 
-        exec('git rev-parse --short HEAD', function (err, stdout) {
-          if (err) {
-            grunt.log.error(err);
-            return done(false);
-          }
-          createVersionFile(stdout);
-          return done();
-        });
       }
   );
 };
