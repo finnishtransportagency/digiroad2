@@ -3,12 +3,14 @@
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
+    var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
     var models = {
       roadCollection: roadCollection,
+      roadAddressProjectCollection: roadAddressProjectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel
     };
@@ -25,7 +27,7 @@
       // assetSelectionMenu.select(layer);
     });
 
-    var projectListMenu = ProjectListMenu();
+    var projectListMenu = ProjectListMenu(models.roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
@@ -133,9 +135,7 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    var roadAddressProject = new RoadAddressProjectCollection(backend);
-
-    new RoadAddressProjectForm(roadAddressProject);
+    new RoadAddressProjectForm(models.roadAddressProjectCollection);
 
     var layers = _.merge({
       road: roadLayer,

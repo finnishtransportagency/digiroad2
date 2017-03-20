@@ -9,7 +9,10 @@
       function selectLayerOrShowConfirmDialog() {
         if (applicationModel.isDirty()) {
           new Confirm();
+        } else {
+          
         }
+
       }
       selectProjectButton.on('click', selectLayerOrShowConfirmDialog);
     };

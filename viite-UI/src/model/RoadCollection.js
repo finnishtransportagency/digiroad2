@@ -67,13 +67,11 @@
       return _.flatten(roadLinkGroups);
     };
 
-
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
-
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {

@@ -249,11 +249,13 @@ input[type="checkbox"] {
 form.roadAddressProject{
   width: 350px;
 }
-form.roadAddressProject .control-label {
+form.roadAddressProject .control-label,
+form.roadAddressProject .control-label-projects {
   width: 110px !important;
 }
 
-form.roadAddressProject .control-label.required {
+form.roadAddressProject .control-label.required,
+form.roadAddressProject .control-label-projects.required {
   color: @warning;
 }
 
@@ -283,7 +285,8 @@ form.roadAddressProject .form-control{
 form.roadAddressProject p {
   width: 60%;
 }
-.form-editable-roadAddressProject > .control-label:first-child {
+.form-editable-roadAddressProject > .control-label:first-child,
+.form-editable-roadAddressProject > .control-label-projects:first-child {
   width: 0;
   max-width: 0;
   margin-right: 4px;
@@ -330,7 +333,8 @@ form.roadAddressProject p {
   }
 
   .control-label,
-  .control-label-floating {
+  .control-label-floating,
+  .control-label-projects {
     display: block;
     float: left;
     margin-bottom: 0;
