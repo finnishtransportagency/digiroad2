@@ -739,9 +739,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
       val stringCaptor: ArgumentCaptor[Option[String]] = ArgumentCaptor.forClass(classOf[Option[String]])
-      verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, stringCaptor.capture)
+      val stringCaptor2: ArgumentCaptor[Option[String]] = ArgumentCaptor.forClass(classOf[Option[String]])
+      verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, stringCaptor.capture, stringCaptor2.capture)
       val trStop = captor.getValue
       stringCaptor.getValue shouldNot be (None)
+      stringCaptor2.getValue shouldNot be (Some("test"))
       val liviId = stringCaptor.getValue.get
 
       liviId shouldNot be ("")
@@ -954,7 +956,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
       verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
-      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
 
@@ -987,7 +989,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
       verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
-      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
 
@@ -1002,7 +1004,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
+      verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
     }
   }
@@ -1027,7 +1029,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
       verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
-      verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
+      verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
 
@@ -1205,7 +1207,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
             SimpleProperty(p.publicId, Seq(PropertyValue("1")))
         ).toSet, "pekka", Int => Unit)
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
-      verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, any[Option[String]])
+      verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, any[Option[String]], any[Option[String]])
       val capturedStop = captor.getValue
       capturedStop.liviId should be ("livi114873")
       val dbResult = sql"""SELECT value_fi FROM text_property_value where value_fi='livi114873' and asset_id = 300008""".as[String].list
@@ -1225,7 +1227,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
     val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
-    when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
+    when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
     when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Option[Int]], any[Option[Int]], any[Option[Boolean]])).thenReturn(
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
     )

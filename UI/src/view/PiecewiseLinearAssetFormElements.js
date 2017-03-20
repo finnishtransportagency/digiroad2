@@ -3,6 +3,7 @@
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
     EuropeanRoadsFormElements: TextualValueFormElements,
     ExitNumbersFormElements: TextualValueFormElements,
+    MaintenanceRoadFormElements: MaintenanceRoadFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
@@ -18,6 +19,11 @@
 
   function TextualValueFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
     var formElem = textAreaFormElement();
+    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
+  }
+
+  function MaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+   var formElem = maintenanceRoadFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -95,13 +101,53 @@
       });
     }
 
+    function obtainFormControl(className, valueString, currentValue, possibleValues){
+        var newCurrentValue = _.map(possibleValues, function (property) {
+            var arrayValue =  _.find(currentValue, function (value) {
+                return (property.id == value.publicId);
+            });
+            return {propertyName: property.name, propertyValue: arrayValue};
+        });
+
+        return _.map(newCurrentValue, function(current){
+            var value = singleChoiceValuesConversion(current, possibleValues);
+            return ' <label class="control-label">' + current.propertyName + ': </label>' +
+                  '  <p class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
+        }).join('');
+    }
+
+    function singleChoiceValuesConversion(current, propertyValues){
+      var value = current.propertyValue ? current.propertyValue.value : "";
+      var property = _.find(propertyValues, function(property){
+        return property.name == current.propertyName;
+      });
+
+      var propertyValue = _.find(property.value, function(value){
+        return value.typeId == current.propertyValue.value;
+      });
+
+      return propertyValue ? propertyValue.title : value;
+    }
+
     function singleValueElement(measureInput, valueString, currentValue, sideCode) {
-      return '' +
-        '<div class="form-group editable">' +
-        '  <label class="control-label">' + editControlLabels.title + '</label>' +
-        '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
-        singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
-        '</div>';
+      if(Array.isArray(currentValue)){
+          return '' +
+              '<div class="form-group editable form-editable-'+ className +'">' +
+              ' <label class="control-label">' + editControlLabels.title + '</label>' +
+              ' <div class="form-control-static ' + className + '" style="display:none;">' +
+                obtainFormControl(className, valueString, currentValue, possibleValues)  +
+              ' </div>' +
+                singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+             '</div>';
+
+      }else {
+          return '' +
+              '<div class="form-group editable form-editable-'+ className +'">' +
+              '  <label class="control-label">' + editControlLabels.title + '</label>' +
+              '  <p class="form-control-static ' + className + '" style="display:none;">' + valueString(currentValue).replace(/[\n\r]+/g, '<br>') + '</p>' +
+              singleValueEditElement(currentValue, sideCode, measureInput(currentValue, generateClassName(sideCode), possibleValues)) +
+              '</div>';
+      }
     }
   }
 
@@ -175,7 +221,7 @@
 
   function dropDownFormElement(unit) {
     var template =  _.template(
-      '<div class="input-unit-combination">' +
+     '<div class="input-unit-combination">' +
       '  <select <%- disabled %> class="form-control <%- className %>" ><%= optionTags %></select>' +
       '</div>');
 
@@ -197,11 +243,69 @@
       var value = currentValue ? currentValue : '';
       var disabled = _.isUndefined(currentValue) ? 'disabled' : '';
 
+
       return template({className: className, optionTags: optionTags, disabled: disabled});
     }
 
     function inputElementValue(input) {
       return parseInt(input.val(), 10);
     }
+  }
+
+  function maintenanceRoadFormElement() {
+    var template =  _.template(
+        '<label class="control-label"><%= label %> </label> ' +
+        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
+
+    return {
+      inputElementValue: inputElementValue,
+      valueString: valueString,
+      measureInput: measureInput
+    };
+
+    function valueString(currentValue) {
+      return currentValue ? currentValue : '-';
+    }
+
+    function measureInput(currentValues, className, possibleValues) {
+      var disabled = _.isUndefined(currentValues) ? 'disabled' : '';
+      var template_aux = _.map(possibleValues, function(values) {
+
+        resProp = _.find(currentValues, function (value) {
+          return value.publicId == values.id;
+        });
+
+      currentValue = _.isUndefined(resProp) ? '' : resProp.value;
+
+        switch (values.propType){
+          case "single_choice":
+            var optionTagsLayer = _.map(values.value, function (value) {
+              var selected = value.typeId === parseInt(currentValue) ? " selected" : "";
+              return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
+            }).join('');
+
+            return template({className: className, optionTags: optionTagsLayer, disabled: disabled, label: values.name, id: values.id});
+
+          case "text" :
+            return ' ' +
+                '<label class="control-label">' + values.name + '</label>' +
+                '<input ' +
+                '    type="text" ' +
+                '    class="form-control ' + className + '" id="' + values.id + '"' +
+                '    value="' + currentValue + '" ' + disabled + ' onclick="">';
+        }});
+      return '<form class="input-unit-combination form-group form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
+    }
+
+      function inputElementValue(input) {
+           return _.map(input, function (propElement) {
+              var mapping = {"SELECT" : "single_choice", "INPUT": "text"};
+              return{
+                  'publicId': propElement.id,
+                  'value': propElement.value,
+                  'propertyType': mapping[String(propElement.tagName)]
+              };
+          });
+      }
   }
 })(this);

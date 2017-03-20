@@ -57,7 +57,14 @@
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
-      router.navigate('linkProperty/' + linkProperty.linkId);
+      //if(!_.isEmpty(models.selectedLinkProperty.getFirst())){
+      if(!_.isEmpty(models.selectedLinkProperty.get())){
+        if(_.isArray(linkProperty)){
+          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
+        } else {
+          router.navigate('linkProperty/' + linkProperty.linkId);
+        }
+      }
     });
 
     eventbus.on('layer:selected', function (layer) {

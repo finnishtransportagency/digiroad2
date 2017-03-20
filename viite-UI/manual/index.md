@@ -224,7 +224,30 @@ Tuntemattomia tieosoitesegmenttej&auml; voi valita ja tarkastella klikkailemalla
 
 _Tuntematon tieosoitesegmentti valittuna. Ominaisuustietotaulun tiedot ovat puuttelliset._
 
-6. Geometriasta irti olevat tieosoitesegmentit
+6. Rakenteilla olevat tielinkit ja niiden tieosoitteet
+--------------------------
+
+Rakenteilla olevilla kohteilla tarkoitetaan sellaisia tielinkkej&auml;, joiden valmiusaste/status on Maanmittauslaitoksella "Rakenteilla". 
+
+Rakenteilla olevat, tieosoitteistettavat kohteet n&auml;kyv&auml;t k&auml;ytt&ouml;liittym&auml;ss&auml; oranssi-mustalla raidoituksella (1). N&auml;ill&auml; kohteilla on hallinnollisen luokan arvo 1=Valtion omistama, mutta niilt&auml; puuttuu tieosoite eli kohteet ovat tuntemattomia. Tuntemattomilla, rakenteilla olevilla kohteilla on my&ouml;s musta kysymysmerkki-label kohteen p&auml;&auml;ll&auml;.
+
+![Tuntemattoman rakenteilla oleva kohde](k13.JPG)
+
+_Tuntematon rakenteilla oleva kohde._
+
+Jos rakenteilla olevalle kohteelle on jo annettu tieosoite, se n&auml;kyy k&auml;ytt&ouml;liittym&auml;ss&auml; kuten muutkin tieosoitteistetut tielinkit (3) ja tieosoitetiedot n&auml;kyv&auml;t my&ouml;s ominaisuustietotaulussa (4).
+
+![Tieosoitteistettu rakenteilla oleva kohde](k15.JPG)
+
+_Pisaraliittym&auml; on rakenteilla, mutta koska se on jo saanut tieosoiteen, se n&auml;kyy k&auml;ytt&ouml;liittym&auml;ss&auml; kuten muutkin tieosoitteistetut tielinkit._
+
+Muut rakenteilla olevat kohteet n&auml;kyv&auml;t k&auml;ytt&ouml;liittym&auml;ss&auml; harmaa-mustalla raidoituksella (2). N&auml;iden hallinnollisen luokan arvo on jotain muuta, kuin 1=Valtion omistama.
+
+![Rakenteilla oleva kohde](k14.JPG)
+
+_Rakenteilla oleva kohde, jonka hallinnollisen luokan arvo on jokin muu kuin 1=Valtion omistama._
+
+7. Geometriasta irti olevat tieosoitesegmentit
 --------------------------
 Geometriasta irti olevilla tieosoitesegmenteilla tarkoitetaan sellaisia segmentteja jotka eiv&auml;t l&ouml;yd&auml; omaa tielinkin ID:ta vastaavaa lineaarilokaatiota k&auml;yt&ouml;ss&auml; olevista linkeist&auml;.
 
@@ -232,11 +255,9 @@ Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml
 
 ![Geometriasta irti oleva tieosoitesegmentti](k12.JPG)
 
-_Geometriasta irti olevia tieosoitesegmentteja. Yksitt&auml;isen segmentin tiedot saa n&auml;kyviin tuplaklikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
+_Geometriasta irti olevia tieosoitesegmenttej&auml;. Yksitt&auml;isen segmentin tiedot saa n&auml;kyviin tuplaklikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
 
-Kohteen valinta noudattaa samaa logiikka kuin muidenkin kohteiden tapauksessa. Klikkaamalla kerran sovellus valitsee kartalta ruudulla n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Tuplaklikkaus valitsee yhden tieosoitesegmentin. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tien keskiviivaan. 
+Kohteen valinta noudattaa samaa logiikka kuin muidenkin kohteiden tapauksessa. Klikkaamalla kerran sovellus valitsee kartalta ruudulla n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Tuplaklikkaus valitsee yhden tieosoitesegmentin. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tuntemattomaan tielinkkiin (musta kohde). 
 
 Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustieton&auml;kym&auml;&auml;n. Geometriasta irti olevalla kohteella on ominaisuustieton&auml;kym&auml;ss&auml; huomiolaatikko joka varoittaa tien geometrian muuttuneen (2).
-
-
 

@@ -7,8 +7,8 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, Obstacle}
-import org.joda.time.format.PeriodFormat
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
+import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -1285,8 +1285,43 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       }else{
         sqlu"update text_property_value set value_fi = $vname, modified_date = sysdate, modified_by = $modifiedBy where asset_id = $assetId and property_id = $propertyVal".execute
       }
-
-
     }
+
+  def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
+    val inputDateFormat = DateTimeFormat.forPattern("yyyyMMdd")
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val propertyId = sql"""select id from property where public_id = 'mittarajoitus'""".as[Long].first
+    val createdBy = "batch_process_"+inputDateFormat.print(DateTime.now())
+
+    sqlu"""
+         insert into asset(id, asset_type_id, created_by, created_date)
+         values ($assetId, $typeId, $createdBy, sysdate)
+    """.execute
+
+    sqlu"""
+         insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP)
+      """.execute
+
+    sqlu"""
+         insert into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId)
+      """.execute
+
+    insertNumberPropertyData(propertyId, assetId, value)
+  }
+
+  def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long]) = {
+    MassQuery.withIds(linkId.toSet) { idTableName =>
+      sql"""
+            select distinct (pos.link_id)
+            from ASSET a
+            join ASSET_LINK al on a.id = al.asset_id
+            join LRM_POSITION pos on al.position_id = pos.id
+            join #$idTableName i on i.id = pos.link_id
+            where a.asset_type_id = $typeId""".as[(Long)].list
+    }
+  }
 }
 

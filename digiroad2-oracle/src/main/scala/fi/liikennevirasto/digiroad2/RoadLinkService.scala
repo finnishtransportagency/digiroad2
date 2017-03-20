@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
@@ -32,7 +33,7 @@ sealed trait RoadLinkType {
 }
 
 object RoadLinkType{
-  val values = Set(NormalRoadLinkType, ComplementaryRoadLinkType, UnknownRoadLinkType)
+  val values = Set(NormalRoadLinkType, ComplementaryRoadLinkType, UnknownRoadLinkType, FloatingRoadLinkType)
 
   def apply(intValue: Int): RoadLinkType = {
     values.find(_.value == intValue).getOrElse(UnknownRoadLinkType)
@@ -81,6 +82,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * Returns the road links from VVH by municipality.
+    *
+    * @param municipality A integer, representative of the municipality Id.
+    */
+  def getRoadLinksFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = vvhClient.queryByMunicipality(municipality)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
+  /**
     * This method returns road links by link ids.
     *
     * @param linkIds
@@ -120,7 +136,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
-  getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
+    getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
 
   /**
     * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
@@ -130,7 +146,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
-  getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
+    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
 
   /**
     * This method is utilized to find adjacent links of a road link.
@@ -140,7 +156,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def getRoadLinksFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle) : Seq[RoadLink] =
-  getRoadLinksAndChangesFromVVH(bounds, bounds2)._1
+    getRoadLinksAndChangesFromVVH(bounds, bounds2)._1
 
   /**
     * This method returns VVH road links by link ids.
@@ -206,6 +222,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, changes), changes)
+    }
+  }
+
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
@@ -433,21 +457,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
-      {
-        val td = (row._2, row._3, row._4, row._5) match {
-          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-          case _ => None
-        }
-        val fc = (row._6, row._7, row._8, row._9) match {
-          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-          case _ => None
-        }
-        val lt = (row._10, row._11, row._12, row._13) match {
-          case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-          case _ => None
-        }
-        row._1 ->(td, fc, lt)
+    {
+      val td = (row._2, row._3, row._4, row._5) match {
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case _ => None
       }
+      val fc = (row._6, row._7, row._8, row._9) match {
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case _ => None
+      }
+      val lt = (row._10, row._11, row._12, row._13) match {
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case _ => None
+      }
+      row._1 ->(td, fc, lt)
+    }
     ).toMap
 
   }
@@ -525,8 +549,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns road links without change data for Viite from VVH by bounding box and road numbers and municipalities.
     */
   def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
-                                         municipalities: Set[Int] = Set(),
-                                         publicRoads: Boolean): Seq[RoadLink] = {
+                               municipalities: Set[Int] = Set(),
+                               publicRoads: Boolean): Seq[RoadLink] = {
     val links = Await.result(
       vvhClient.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
       atMost = Duration.Inf)
@@ -716,7 +740,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData and RoadLinkService.isIncomplete.
     */
   def isComplete(roadLink: RoadLink): Boolean = {
-    roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
+    (roadLink.linkSource != LinkGeomSource.NormalLinkInterface && roadLink.linkSource != LinkGeomSource.ComplimentaryLinkInterface) ||
+      roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
     val fut = for {
@@ -772,9 +797,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case _ => true
       }
     }
-    def isNormalGeometryAndInUse(roadLink: RoadLink) = {
-      roadLink.constructionType == ConstructionType.InUse && roadLink.linkSource == LinkGeomSource.NormalLinkInterface
-    }
 
     val roadLinkDataByLinkId: Seq[RoadLink] = getRoadLinkDataByLinkIds(vvhRoadLinks)
     val (incompleteLinks, completeLinks) = roadLinkDataByLinkId.partition(isIncomplete)
@@ -782,7 +804,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val autoGeneratedLinks = linksToAutoGenerate.map(autoGenerateProperties)
     val (changedLinks, stillIncompleteLinks) = fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes)
     val changedPartiallyIncompleteLinks = stillIncompleteLinks.filter(isPartiallyIncomplete)
-    val stillIncompleteLinksInUse = stillIncompleteLinks.filter(isNormalGeometryAndInUse) // Save only 'in use' and actual geometry links to incomplete_link table
+    val stillIncompleteLinksInUse = stillIncompleteLinks.filter(_.constructionType == ConstructionType.InUse)
 
     eventbus.publish("linkProperties:changed",
       RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink)))
@@ -905,7 +927,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * Get the link end points depending on the road link directions
- *
+    *
     * @param roadlink The Roadlink
     * @return End points of the road link directions
     */
@@ -923,7 +945,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * Get the link start points depending on the road link directions
- *
+    *
     * @param roadlink The Roadlink
     * @return Start points of the road link directions
     */
@@ -996,11 +1018,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val reverseMap = reverse.groupBy(_._1).mapValues(s => s.map(_._2))
 
     mapped.map( tuple =>
-        (tuple._1, tuple._2.flatMap(ep => {
-          reverseMap.keys.filter(p => GeometryUtils.areAdjacent(p, ep )).flatMap( p =>
+      (tuple._1, tuple._2.flatMap(ep => {
+        reverseMap.keys.filter(p => GeometryUtils.areAdjacent(p, ep )).flatMap( p =>
           reverseMap.getOrElse(p, Seq()).filterNot(rl => rl.linkId == tuple._1))
-        }))
-      )
+      }))
+    )
   }
 
   private def getCacheDirectory: Option[File] = {
@@ -1143,6 +1165,55 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getCurrentAndComplementaryVVHRoadLinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
+  }
+
+  def withRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    val addressData = getRoadAddressesByLinkIds(roadLinks.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap
+    roadLinks.map(rl =>
+      if (addressData.contains(rl.linkId))
+        rl.copy(attributes = rl.attributes ++ addressData(rl.linkId).asAttributes)
+      else
+        rl
+    )
+  }
+
+  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, sideCode: Int,
+                                 startAddrMValue: Long, endAddrMValue: Long) {
+    def asAttributes: Map[String, Any] = Map("VIITE_ROAD_NUMBER" -> roadNumber,
+      "VIITE_ROAD_PART_NUMBER" -> roadPartNumber,
+      "VIITE_TRACK" -> track,
+      "VIITE_SIDECODE" -> sideCode,
+      "VIITE_START_ADDR" -> startAddrMValue,
+      "VIITE_END_ADDR" -> endAddrMValue)
+  }
+
+  /**
+    * This method fetches road addresses by link ids from Viite ROAD_ADDRESS table using LRM_POSITION
+    *
+    * @param linkIds
+    * @return
+    */
+  def getRoadAddressesByLinkIds(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
+    withDynTransaction {
+      MassQuery.withIds(linkIds) {
+        idTableName =>
+          val query = s"""
+            SELECT pos.LINK_ID, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.TRACK_CODE, pos.SIDE_CODE,
+              MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
+            FROM ROAD_ADDRESS ra
+            JOIN LRM_POSITION pos on ra.LRM_POSITION_ID = pos.ID
+            JOIN $idTableName i on i.ID = pos.LINK_ID
+            WHERE (VALID_FROM IS NULL OR VALID_FROM <= sysdate) AND
+              (VALID_TO IS NULL OR VALID_TO >= sysdate) AND
+              (START_DATE IS NULL OR START_DATE <= sysdate) AND
+              (END_DATE IS NULL OR END_DATE >= sysdate)
+            GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
+          Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
+            case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+            => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+          }
+      }
+    }
   }
 
 }

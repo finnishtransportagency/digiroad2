@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.user;
 
+
 class DummyUserProvider extends UserProvider {
   def createUser(username: String, config: Configuration) = {
     User(0, username, Configuration())
@@ -16,4 +17,5 @@ class DummyUserProvider extends UserProvider {
     }
   }
   def saveUser(user: User): User = user
+
 }

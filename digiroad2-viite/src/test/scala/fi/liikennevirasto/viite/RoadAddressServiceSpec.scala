@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, MissingRoadAddress, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -148,7 +148,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadLink = RoadLink(linkId, Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0)), 0, Municipality, 0, TrafficDirection.TowardsDigitizing, Freeway, Some(modifificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getViiteRoadLinksFromVVHByMunicipality(municipalityId)).thenReturn(Seq(roadLink))
-    val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
+      val roadAddressLink = roadAddressService.getRoadAddressesLinkByMunicipality(municipalityId)
 
       roadAddressLink.isInstanceOf[Seq[RoadAddressLink]] should be(true)
       roadAddressLink.nonEmpty should be(true)
@@ -280,6 +280,23 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
       addressUpdated.geom should be (address.geom)
       addressUpdated.floating should be (true)
+    }
+  }
+
+  ignore("merge road addresses - ignored because rollback doesn't do what it's supposed to do") {
+    runWithRollback {
+      val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
+      addressList should have size (3)
+      val address = addressList.head
+      val newAddr = address.copy(id = -1000L, startAddrMValue = addressList.map(_.startAddrMValue).min,
+        endAddrMValue = addressList.map(_.endAddrMValue).max)
+      val merger = RoadAddressMerge(addressList.map(_.id).toSet, Seq(newAddr))
+      roadAddressService.mergeRoadAddressInTX(merger)
+      val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
+      addressListMerged should have size (1)
+      addressListMerged.head.linkId should be (address.linkId)
+      dynamicSession.rollback()
+      RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)) should have size (3)
     }
   }
 }

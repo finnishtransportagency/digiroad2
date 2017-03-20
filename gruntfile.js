@@ -295,4 +295,16 @@ module.exports = function(grunt) {
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
+
+  grunt.registerTask('save_deploy_info',
+      function() {
+        var options = this.options({
+          file: 'revision.properties'
+        });
+
+        var data = ('digiroad2.revision=' + " " + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
+        grunt.file.write(options.file, data);
+
+      }
+  );
 };

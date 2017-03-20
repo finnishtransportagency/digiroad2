@@ -25,12 +25,15 @@
       // assetSelectionMenu.select(layer);
     });
 
+    var projectListMenu = ProjectListMenu();
+
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
           instructionsPopup,
           new LocationSearch(backend, window.applicationModel)
       ),
+      new ProjectSelectBox(projectListMenu),
       assetGroups
     );
 
@@ -107,6 +110,8 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
+    new RoadAddressProjectForm(backend);
+
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
@@ -119,6 +124,7 @@
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
+    $('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date + ' ' + startupParameters.revision);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {

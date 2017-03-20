@@ -95,29 +95,18 @@ class AssetDataImporter {
     }
   }
 
+  case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
+
   private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, complementaryLinks: Boolean,
                                     vvhClientProd: Option[VVHClient]): Unit = {
     def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)): String ={
       s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
         format(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15)
     }
-    def filler(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
-      val filled = lrmPos.exists(x => x._4 >= length)
-      filled match {
-        case true => lrmPos
-        case false =>
-          val maxEnd = lrmPos.map(_._4).max
-          val (fixthese, good) = lrmPos.partition(_._4 == maxEnd)
-          fixthese.map {
-            case (xid, xlinkId, xstartM, _) => (xid, xlinkId, xstartM, length)
-          } ++ good
-      }
-    }
-    def cutter(lrmPos: Seq[(Long, Long, Double, Double)], length: Double) = {
-      val (good, bad) = lrmPos.partition(_._4 < length)
-      good ++ bad.map {
-        case (id, linkId, startM, endM) => (id, linkId, Math.min(startM, length), Math.min(endM, length))
-      }
+    // Adjust the LRM Positions so that the link is filled with full data
+    def adjust(lrmPos: Seq[LRMPos], length: Double): Seq[LRMPos] = {
+      val coefficient: Double = length / (lrmPos.map(_.endM).max - lrmPos.map(_.startM).min)
+      lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
     }
     val roads = conversionDatabase.withDynSession {
       if (complementaryLinks)
@@ -142,7 +131,7 @@ class AssetDataImporter {
 
     print(s"\n${DateTime.now()} - ")
     println("Read %d rows from conversion database for ELY %d".format(roads.size, ely))
-    val lrmList = roads.map(r => (r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_._2) // linkId -> (id, linkId, startM, endM)
+    val lrmList = roads.map(r => LRMPos(r._16, r._1, r._2.toDouble, r._3.toDouble)).groupBy(_.linkId) // linkId -> (id, linkId, startM, endM)
     val addressList = roads.map(r => r._16 -> (r._4, r._5, r._6, r._7, r._8, r._9, r._10, r._11, r._12, r._13, r._14, r._15, r._17, r._18, r._19, r._20)).toMap
 
     print(s"${DateTime.now()} - ")
@@ -181,18 +170,18 @@ class AssetDataImporter {
 
     val allLinkLengths = linkLengths ++ floatingLinks.mapValues(x => GeometryUtils.geometryLength(x.geometry))
 
-    val (lrmPositions, warningRows) = allLinkLengths.flatMap {
-      case (linkId, length) => cutter(filler(lrmList.getOrElse(linkId, List()), length), length)
-    }.partition(x => x._3 != x._4)
-
-    warningRows.foreach{
-      warning =>
-        val row = roads.find(r => r._16 == warning._1).get
-        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' %s".format(warning._1, printRow(row)))
+    val lrmPositions = allLinkLengths.flatMap {
+      case (linkId, length) => adjust(lrmList.getOrElse(linkId, List()), length)
     }
 
-    print(s"${DateTime.now()} - ")
-    println("%d zero length segments removed".format(warningRows.size))
+//    warningRows.foreach{
+//      warning =>
+//        val row = roads.find(r => r._16 == warning._1).get
+//        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' (%.3f m) %s".format(warning._1, linkLengths.getOrElse(warning._2, Double.NaN), printRow(row)))
+//    }
+
+//    print(s"${DateTime.now()} - ")
+//    println("%d zero length segments removed".format(warningRows.size))
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 
@@ -223,18 +212,24 @@ class AssetDataImporter {
       "?,?,0.0,0.0,?,?,0.0,?)), ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
-    lrmPositions.zip(ids).foreach { case ((id, linkId, startM, endM), (lrmId)) =>
-      assert(addressList.get(id).size == 1)
-      val address = addressList.get(id).head
-      val (startAddrM, endAddrM, sideCode) = address._7 < address._8 match {
-        case true => (address._7, address._8, SideCode.TowardsDigitizing.value)
-        case false => (address._8, address._7, SideCode.AgainstDigitizing.value)
+    lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
+      assert(addressList.get(pos.id).size == 1)
+      val address = addressList.get(pos.id).head
+      val (startAddrM, endAddrM, sideCode) = if (address._7 < address._8) {
+        (address._7, address._8, SideCode.TowardsDigitizing.value)
+      } else {
+        (address._8, address._7, SideCode.AgainstDigitizing.value)
       }
+      val (x1, y1, x2, y2) = if (sideCode == SideCode.TowardsDigitizing.value)
+        (address._13, address._14, address._15, address._16)
+      else
+        (address._15, address._16, address._13, address._14)
+
       lrmPositionPS.setLong(1, lrmId)
-      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(linkId, linkId))
+      lrmPositionPS.setLong(2, linkIdMapping.getOrElse(pos.linkId, pos.linkId))
       lrmPositionPS.setLong(3, sideCode)
-      lrmPositionPS.setDouble(4, startM)
-      lrmPositionPS.setDouble(5, endM)
+      lrmPositionPS.setDouble(4, pos.startM)
+      lrmPositionPS.setDouble(5, pos.endM)
       lrmPositionPS.addBatch()
       addressPS.setLong(1, lrmId)
       addressPS.setLong(2, address._1)
@@ -247,12 +242,12 @@ class AssetDataImporter {
       addressPS.setString(9, address._10.getOrElse(""))
       addressPS.setString(10, address._11)
       addressPS.setString(11, address._12)
-      addressPS.setDouble(12, address._13)
-      addressPS.setDouble(13, address._14)
-      addressPS.setDouble(14, address._15)
-      addressPS.setDouble(15, address._16)
+      addressPS.setDouble(12, x1)
+      addressPS.setDouble(13, y1)
+      addressPS.setDouble(14, x2)
+      addressPS.setDouble(15, y2)
       addressPS.setDouble(16, endAddrM - startAddrM)
-      addressPS.setInt(17, if (floatingLinks.contains(linkId)) 1 else 0)
+      addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -313,7 +308,7 @@ class AssetDataImporter {
     RoadAddressLinkBuilder.municipalityMapping               // Populate it beforehand, because it can't be done in nested TX
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // Populate it beforehand, because it can't be done in nested TX
     OracleDatabase.withDynTransaction {
-      val municipalities = Queries.getMunicipalities
+      val municipalities = Queries.getMunicipalitiesWithoutAhvenanmaa
       sqlu"""DELETE FROM MISSING_ROAD_ADDRESS""".execute
       println("Old address data cleared")
       municipalities.foreach(municipality => {

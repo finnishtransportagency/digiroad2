@@ -452,7 +452,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       lat: coordinates.lat,
       bearing: angle,
       roadLinkId: nearestLine.roadLinkId,
-      linkId: nearestLine.linkId
+      linkId: nearestLine.linkId,
+      validityDirection: selectedAsset.data.validityDirection
     });
   };
 

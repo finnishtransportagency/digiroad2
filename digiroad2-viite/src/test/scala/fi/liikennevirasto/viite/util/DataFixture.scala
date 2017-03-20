@@ -2,13 +2,13 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
 import fi.liikennevirasto.viite.dao.RoadAddressDAO
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
 import org.joda.time.DateTime
 import slick.jdbc.{StaticQuery => Q}
 
@@ -47,6 +47,7 @@ object DataFixture {
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
         case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
+          ex.printStackTrace()
       }
       partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
     }
@@ -123,7 +124,7 @@ object DataFixture {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created)
+            RoadAddressDAO.create(created, "Automatic_merged")
           }
         }
       })

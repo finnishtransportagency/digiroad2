@@ -66,8 +66,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHClient.fetchByLinkIds(Set(388562360l))).thenReturn(Seq(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_) => Unit)
 
-      val existing = speedLimits.find(_.id == 200097).get
-      val created = speedLimits.find(_.id != 200097).get
+      val existing = speedLimits(0)
+      val created = speedLimits(1)
+      existing.value should not be(200097)
+      created.value should not be(200097)
       existing.value should be(Some(NumericValue(50)))
       created.value should be(Some(NumericValue(60)))
     }
@@ -100,15 +102,20 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("separate speed limit to two") {
-    runWithRollback {
-      val createdId = provider.separate(200097, 50, 40, "test", passingMunicipalityValidation).filter(_.id != 200097).head.id
-      val createdLimit = provider.get(Seq(createdId)).head
-      val oldLimit = provider.get(Seq(200097l)).head
+    val municipalityCode = 235
+    val linkId = 388562360
+    val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
+    val vvhRoadLink = VVHRoadlink(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
-      oldLimit.linkId should be (388562360)
-      oldLimit.sideCode should be (SideCode.TowardsDigitizing)
-      oldLimit.value should be (Some(NumericValue(50)))
-      oldLimit.modifiedBy should be (Some("test"))
+    runWithRollback {
+      when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+
+      val Seq(updatedLimit, createdLimit) = provider.separate(200097, 50, 40, "test", passingMunicipalityValidation)
+
+      updatedLimit.linkId should be (388562360)
+      updatedLimit.sideCode should be (SideCode.TowardsDigitizing)
+      updatedLimit.value should be (Some(NumericValue(50)))
+      updatedLimit.modifiedBy should be (Some("test"))
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
@@ -984,6 +991,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinkFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
 
       when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(List(vvhRoadLink))
 
