@@ -775,6 +775,10 @@
       selectedLinkProperty.setFeaturesToHighlight(featuresToHighlight);
     };
 
+    eventbus.on('linkProperties:unselectAllFeatures', function(){
+      selectControl.unselectAll();
+    });
+
     this.removeLayerFeatures = function() {
       roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
       indicatorLayer.clearMarkers();

@@ -90,7 +90,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: '172.17.205.44',
+            host: '172.17.204.46',
             port: '8080',
             https: false,
             changeOrigin: true,
@@ -147,7 +147,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: '172.17.205.44',
+            host: '172.17.204.46',
             port: '8080',
             https: false,
             changeOrigin: true,
