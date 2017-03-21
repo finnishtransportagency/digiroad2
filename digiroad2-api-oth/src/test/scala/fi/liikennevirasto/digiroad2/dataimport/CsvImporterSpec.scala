@@ -270,7 +270,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
+    val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
     stops.foreach { case(id, administrativeClass) =>
       when(mockVVHClient.fetchByLinkId(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
@@ -281,7 +281,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynSession[T](f: => T): T = f
       override def withDynTransaction[T](f: => T): T = f
-      override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+      override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
       override val tierekisteriEnabled = true
     }
