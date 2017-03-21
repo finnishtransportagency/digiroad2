@@ -773,7 +773,7 @@ object RoadAddressDAO {
 
   def getRoadAddressProjects() : List[RoadAddressProject] = {
     val query = s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info
-            FROM project """
+            FROM project order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
         RoadAddressProject(id, state, name, createdBy, start_date ,modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
