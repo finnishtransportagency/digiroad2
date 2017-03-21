@@ -72,6 +72,17 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val trafficVolume: Map[String, Any] ={
+    Map(
+      "tietolaji" -> "tl201",          //Field code
+      "tie" -> 45,                     //Road number
+      "osa" -> 1,                      //Road part number
+      "aet" -> 0,                      //Start distance
+      "let" -> 100,                    //End distance
+      "KTV" -> 1                       //placeholder value for traffic volume
+    )
+  }
+
   get("/pysakit/:id"){
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
@@ -145,5 +156,52 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
     halt(NoContent())
   }
+
+  get("/trrest/tietolajit/:fieldCode/:roadNumber") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber")
+    if(fieldCode == trafficVolume.get("tietolaji") && roadNumber == trafficVolume.get("tie") )
+      trafficVolume.get("KTV")
+
+  }
+
+  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber")
+    val roadPartNumber = params("roadPartNumber")
+
+    trafficVolume.get("KTV")
+
+  }
+
+  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber")
+    val roadPartNumber = params("roadPartNumber")
+    val startDistance = params("startDistance")
+
+    trafficVolume.get("KTV")
+
+  }
+
+  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber")
+    val roadPartNumber = params("roadPartNumber")
+    val startDistance = params("startDistance")
+    val endDistance = params("endDistance")
+
+    trafficVolume.get("KTV")
+
+  }
+
 }
 
