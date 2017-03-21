@@ -75,7 +75,7 @@
     };
 
     var title = function() {
-      return '<span class ="edit-mode-title">Tieosoitemuutosprojekti</span>';
+      return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
     };
 
     var buttons =
@@ -94,7 +94,6 @@
       return _.template('' +
         '<header>' +
         title() +
-        headerButton +
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -107,9 +106,11 @@
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
         largeInputField() +
         '<div class="form-group">' +
+        '<label class="control-label"></label>' +
         addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
         '</div>' +
         '<div class="form-group">' +
+        '<label class="control-label">Tieosat</label>' +
         addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +
         '</div>' +
         '</form>' +
@@ -121,7 +122,6 @@
       return _.template('' +
         '<header>' +
         title() +
-        headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
