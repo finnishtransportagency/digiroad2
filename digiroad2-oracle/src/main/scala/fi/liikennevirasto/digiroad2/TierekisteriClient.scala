@@ -157,11 +157,7 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        removalDate: Option[Date],
                                        inventoryDate: Date)
 
-case class TierekisteriAssetData(assetId: String,
-                                 roadNumber: Int,
-                                 roadPartNumber: Int,
-                                 startDistance: Int,
-                                 endDistance: Int)
+case class TierekisteriAssetData(ktv: Int)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -183,6 +179,7 @@ trait TierekisteriClient{
   protected lazy val logger = LoggerFactory.getLogger(getClass)
 
   def createJson(trMassTransitStop: TierekisteriType) : StringEntity
+  def mapFields(data: Map[String, Any]): TierekisteriType
 
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
@@ -432,7 +429,7 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
-  private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
+  override def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
     def getFieldValue(field: String): Option[String] = {
       try {
         data.get(field).map(_.toString) match {
@@ -533,7 +530,22 @@ class  TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierek
   override def client: CloseableHttpClient = _client
   type TierekisteriType = TierekisteriAssetData
 
-  override def createJson(trMassTransitStop: TierekisteriAssetData): StringEntity = ???
+  private val serviceName = "trrest/tietolajit/"
+  private val trKTV = "ktv"
+
+  private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
+  private def serviceUrl(assetType: String) : String = serviceUrl + assetType
+  private def serviceUrl(assetType: String, roadNumber: Int) : String = serviceUrl + assetType + "/" + roadNumber
+  private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber
+  private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance
+  private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endDistance
+
+//  TODO
+//  override def createJson(trAssetData: TierekisteriAssetData) = {
+//
+//  }
 }
 
 
