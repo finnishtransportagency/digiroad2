@@ -265,6 +265,42 @@ trait TierekisteriClient{
       response.close()
     }
   }
+
+  protected def convertToLong(value: Option[String]): Option[Long] = {
+    try {
+      value.map(_.toLong)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToInt(value: Option[String]): Option[Int] = {
+    try {
+      value.map(_.toInt)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToDate(value: Option[String]): Option[Date] = {
+    try {
+      value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
+    } catch {
+      case e: ParseException =>
+        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertDateToString(date: Option[Date]): Option[String] = {
+    date.map(dv => convertDateToString(dv))
+  }
+
+  protected def convertDateToString(date: Date): String = {
+    new SimpleDateFormat(dateFormat).format(date)
+  }
+
 }
 
 class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient{
@@ -486,44 +522,9 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
       }
     }.toMap
   }
-
-  private def convertToLong(value: Option[String]): Option[Long] = {
-    try {
-      value.map(_.toLong)
-    } catch {
-      case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
-    }
-  }
-
-  private def convertToInt(value: Option[String]): Option[Int] = {
-    try {
-      value.map(_.toInt)
-    } catch {
-      case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
-    }
-  }
-
-  private def convertToDate(value: Option[String]): Option[Date] = {
-    try {
-      value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
-    } catch {
-      case e: ParseException =>
-        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
-    }
-  }
-
-  private def convertDateToString(date: Option[Date]): Option[String] = {
-    date.map(dv => convertDateToString(dv))
-  }
-
-  private def convertDateToString(date: Date): String = {
-    new SimpleDateFormat(dateFormat).format(date)
-  }
 }
 
-class  TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient {
+class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient {
 
   override def tierekisteriRestApiEndPoint: String = _tierekisteriRestApiEndPoint
   override def tierekisteriEnabled: Boolean = _tierekisteriEnabled
@@ -534,7 +535,6 @@ class  TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierek
   private val trKTV = "ktv"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
-  private def serviceUrl(assetType: String) : String = serviceUrl + assetType
   private def serviceUrl(assetType: String, roadNumber: Int) : String = serviceUrl + assetType + "/" + roadNumber
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int) : String =
@@ -542,10 +542,60 @@ class  TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierek
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endDistance
 
-//  TODO
-//  override def createJson(trAssetData: TierekisteriAssetData) = {
-//
-//  }
+  //TODO
+  override def createJson(trMassTransitStop: TierekisteriAssetData): StringEntity = ???
+  //TODO
+  override def mapFields(data: Map[String, Any]): TierekisteriAssetData = ???
+
+  /**
+    * Return all asset data currently active from Tierekisteri
+    * Tierekisteri REST API endpoint: GET /trrest/tietolajit/{tietolaji}/{tie}
+    *
+    * @return
+    */
+  def fetchActiveAssetData(assetType: String, roadNumber: Int): Seq[TierekisteriAssetData] = {
+    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber)) match {
+      case Left(content) =>
+        content.map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchActiveAssetData(assetType: String, roadNumber: Int, roadPartNumber: Int): Seq[TierekisteriAssetData] = {
+    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber)) match {
+      case Left(content) =>
+        content.map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchActiveAssetData(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int): Seq[TierekisteriAssetData] = {
+    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance)) match {
+      case Left(content) =>
+        content.map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchActiveAssetData(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
+    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endDistance)) match {
+      case Left(content) =>
+        content.map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
 }
 
 
