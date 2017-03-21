@@ -162,8 +162,14 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
     val fieldCode = params("fieldCode")
     val roadNumber = params("roadNumber")
-    if(fieldCode == trafficVolume.get("tietolaji") && roadNumber == trafficVolume.get("tie") )
-      trafficVolume.get("KTV")
+
+    if(fieldCode != trafficVolume.get("tietolaji")){
+      halt(BadRequest("Invalid 'field code' value"))
+    } else if (roadNumber != trafficVolume.get("tie")) {
+      halt(BadRequest("Invalid 'road number' value"))
+    }
+
+    trafficVolume.get("KTV")
 
   }
 
@@ -173,6 +179,12 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     val fieldCode = params("fieldCode")
     val roadNumber = params("roadNumber")
     val roadPartNumber = params("roadPartNumber")
+
+    if(fieldCode != trafficVolume.get("tietolaji")){
+      halt(BadRequest("Invalid 'field code' value"))
+    } else if (roadNumber != trafficVolume.get("tie")) {
+      halt(BadRequest("Invalid 'road number' value"))
+    }
 
     trafficVolume.get("KTV")
 
@@ -186,6 +198,12 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     val roadPartNumber = params("roadPartNumber")
     val startDistance = params("startDistance")
 
+    if(fieldCode != trafficVolume.get("tietolaji")){
+      halt(BadRequest("Invalid 'field code' value"))
+    } else if (roadNumber != trafficVolume.get("tie")) {
+      halt(BadRequest("Invalid 'road number' value"))
+    }
+
     trafficVolume.get("KTV")
 
   }
@@ -197,7 +215,14 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     val roadNumber = params("roadNumber")
     val roadPartNumber = params("roadPartNumber")
     val startDistance = params("startDistance")
+    val endPart = params("endPart")
     val endDistance = params("endDistance")
+
+    if(fieldCode != trafficVolume.get("tietolaji")){
+      halt(BadRequest("Invalid 'field code' value"))
+    } else if (roadNumber != trafficVolume.get("tie")) {
+      halt(BadRequest("Invalid 'road number' value"))
+    }
 
     trafficVolume.get("KTV")
 
