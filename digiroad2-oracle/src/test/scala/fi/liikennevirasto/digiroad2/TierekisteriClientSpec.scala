@@ -24,8 +24,8 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     props
   }
 
-  lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
+    new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -319,7 +319,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("Returning only mandatory fields from Tierekisteri should be accepted") {
     val httpClient = MockitoSugar.mock[CloseableHttpClient]
-    val trClient =  new TierekisteriClient(
+    val trClient =  new TierekisteriMassTransitStopClient(
       dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       httpClient)

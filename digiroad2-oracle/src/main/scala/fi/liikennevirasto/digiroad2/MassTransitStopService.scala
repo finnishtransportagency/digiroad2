@@ -47,7 +47,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
-  val tierekisteriClient: TierekisteriClient
+  val tierekisteriClient: TierekisteriMassTransitStopClient
   val tierekisteriEnabled: Boolean
   val roadLinkService: RoadLinkService
   override val idField = "external_id"

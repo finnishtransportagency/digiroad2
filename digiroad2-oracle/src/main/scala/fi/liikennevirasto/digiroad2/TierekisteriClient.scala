@@ -157,24 +157,126 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        removalDate: Option[Date],
                                        inventoryDate: Date)
 
+case class TierekisteriAssetData(assetId: String,
+                                 roadNumber: Int,
+                                 roadPartNumber: Int,
+                                 startDistance: Int,
+                                 endDistance: Int)
+
 case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
 
 class TierekisteriClientWarnings(response: String) extends RuntimeException(response)
 
-/**
-  * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
-  *
-  * @param tierekisteriRestApiEndPoint
-  * @param tierekisteriEnabled
-  *
-  */
-class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnabled: Boolean, client: CloseableHttpClient) {
+trait TierekisteriClient{
+
+  def tierekisteriRestApiEndPoint: String
+  def tierekisteriEnabled: Boolean
+  def client: CloseableHttpClient
+
+  type TierekisteriType
 
   protected implicit val jsonFormats: Formats = DefaultFormats
+  protected val dateFormat = "yyyy-MM-dd"
+  protected val auth = new TierekisteriAuthPropertyReader
+  protected lazy val logger = LoggerFactory.getLogger(getClass)
 
-  private val dateFormat = "yyyy-MM-dd"
+  def createJson(trMassTransitStop: TierekisteriType) : StringEntity
+
+  protected def request[T](url: String): Either[T, TierekisteriError] = {
+    val request = new HttpGet(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode == HttpStatus.SC_NOT_FOUND) {
+        return Right(null)
+      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
+      }
+      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
+    } catch {
+      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def post(url: String, trMassTransitStop: TierekisteriType): Option[TierekisteriError] = {
+    val request = new HttpPost(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.setEntity(createJson(trMassTransitStop))
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def put(url: String, tnMassTransitStop: TierekisteriType): Option[TierekisteriError] = {
+    val request = new HttpPut(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.setEntity(createJson(tnMassTransitStop))
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def delete(url: String): Option[TierekisteriError] = {
+    val request = new HttpDelete(url)
+    request.setHeader("content-type","application/json")
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+}
+
+class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient{
+
+  override def tierekisteriRestApiEndPoint: String = _tierekisteriRestApiEndPoint
+  override def tierekisteriEnabled: Boolean = _tierekisteriEnabled
+  override def client: CloseableHttpClient = _client
+  type TierekisteriType = TierekisteriMassTransitStop
+
   private val serviceName = "pysakit/"
 
   private val trNationalId = "valtakunnallinen_id"
@@ -195,14 +297,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
-  private val auth = new TierekisteriAuthPropertyReader
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + id
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
-  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   private val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
@@ -294,92 +394,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     }
   }
 
-  private def request[T](url: String): Either[T, TierekisteriError] = {
-    val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode == HttpStatus.SC_NOT_FOUND) {
-        return Right(null)
-      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
-      }
-      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
-    } catch {
-      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
-    } finally {
-      response.close()
-    }
-  }
 
-  private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPost(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(trMassTransitStop))
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-     None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPut(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(tnMassTransitStop))
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-      None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def delete(url: String): Option[TierekisteriError] = {
-    val request = new HttpDelete(url)
-    request.setHeader("content-type","application/json")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-      None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
+  override def createJson(trMassTransitStop: TierekisteriType) = {
 
     val jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
@@ -509,6 +525,17 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     new SimpleDateFormat(dateFormat).format(date)
   }
 }
+
+class  TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient {
+
+  override def tierekisteriRestApiEndPoint: String = _tierekisteriRestApiEndPoint
+  override def tierekisteriEnabled: Boolean = _tierekisteriEnabled
+  override def client: CloseableHttpClient = _client
+  type TierekisteriType = TierekisteriAssetData
+
+  override def createJson(trMassTransitStop: TierekisteriAssetData): StringEntity = ???
+}
+
 
 object ErrorMessageConverter {
   protected implicit val jsonFormats: Formats = DefaultFormats
