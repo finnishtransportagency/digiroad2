@@ -1,17 +1,11 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
-    // var roadAddressProjects = [];
-    var roadAddressProjects = [{name: 'proj1', state: 1}];
+    var roadAddressProjects = [];
+    var roadAddressProjects2 = [{name: 'proj1', state: 1}, {name: 'projeto2', state: 1}];
 
     this.getAll = function(){
-      backend.getRoadAddressProjects(function(projects){
+      return backend.getRoadAddressProjects(function(projects){
         roadAddressProjects = projects;
-      });
-    };
-
-    this.getUnfinishedProjects = function(){
-      return _.filter(roadAddressProjects, function(proj){
-        return proj.state === 1;
       });
     };
 

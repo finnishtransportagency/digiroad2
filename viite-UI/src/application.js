@@ -27,7 +27,7 @@
       // assetSelectionMenu.select(layer);
     });
 
-    var projectListMenu = ProjectListMenu(models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(models.roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
@@ -35,7 +35,7 @@
           instructionsPopup,
           new LocationSearch(backend, window.applicationModel)
       ),
-      new ProjectSelectBox(projectListMenu),
+      new ProjectSelectBox(projectListModel),
       assetGroups
     );
 

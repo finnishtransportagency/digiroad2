@@ -64,7 +64,9 @@
     }, 1000);
 
     this.getRoadAddressProjects = _.throttle(function(callback) {
-      return $.getJSON('api/viite/roadlinks/roadaddress/project/all', callback);
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
     }, 1000);
 
     this.getUserRoles = function () {
