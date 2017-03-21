@@ -565,7 +565,11 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        selectedLinkProperty.cancel(action);
+        if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
+          selectedLinkProperty.cancel();
+        } else {
+          selectedLinkProperty.cancelAndReselect(action);
+        }
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {

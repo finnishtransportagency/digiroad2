@@ -85,131 +85,167 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
-
-        var selectedOL3Features = _.filter(visibleFeatures, function(vf){
-          return (_.some(get(), function(s){
-              return s.linkId === vf.roadLinkData.linkId;
-            })) && (_.some(get(), function(s){
-              return s.mmlId === vf.roadLinkData.mmlId;
-            }));
-        });
-        eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
+        processOl3Features(visibleFeatures);
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
     };
 
-    /*var open = function(linkId, id, singleLinkSelect, visibleFeatures) {
-     //var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
-     var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
-     if (canIOpen) {
-     if(featuresToKeep.length === 0){
-     close();
-     } else {
-     if (!_.isEmpty(current) && !isDirty()) {
-     _.forEach(current, function(selected) { selected.unselect(); });
-     }
-     }
-     if(!_.isUndefined(linkId)){
-     current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
-     } else {
-     current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
-     }
+    var openFloating = function(linkId, id, visibleFeatures){
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      if (canIOpen) {
+        applicationModel.toggleSelectionTypeFloating();
+        if(!_.isUndefined(linkId)){
+          current = roadCollection.getGroupByLinkId(linkId);
+        } else {
+          current = roadCollection.getGroupById(id);
+        }
+        
+        var currentFloatings = getCurrentFloatings();
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
+        //Segment to construct adjacency
+        fillAdjacents(linkId);
 
-     _.forEach(current, function (selected) {
-     selected.select();
-     });
-     var currentFloatings = _.filter(current, function(curr){
-     return curr.getData().roadLinkType === -1;
-     });
-     if(!_.isEmpty(currentFloatings)){
-     setSources(currentFloatings);
-     }
-     //Segment to construct adjacency
-     if(checkAdjacency){
-     fillAdjacents(linkId);
-     }
-     var data4Display = _.map(get(), function(feature){
-     return extractDataForDisplay([feature]);
-     });
-     if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
-     if (!_.isEmpty(featuresToKeep)) {
-     applicationModel.addSpinner();
-     }
-     if(_.isArray(data4Display)){
-     featuresToKeep = featuresToKeep.concat(data4Display);
-     } else {
-     featuresToKeep.push(data4Display);
-     }        }
-     var contains = _.find(featuresToKeep, function(fk){
-     return fk.linkId === linkId;
-     });
-     if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-     if(_.isArray(data4Display)){
-     featuresToKeep = featuresToKeep.concat(data4Display);
-     } else {
-     featuresToKeep.push(data4Display);
-     }
-     }
-     eventbus.trigger('linkProperties:selected', data4Display);
-     }
-     };*/
+        var data4Display = _.map(get(), function(feature){
+          return extractDataForDisplay([feature]);
+        });
+
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
+          addToFeaturesToKeep(data4Display);
+        }
+        if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
+          addToFeaturesToKeep(data4Display);
+        }
+        processOl3Features(visibleFeatures);
+        eventbus.trigger('linkProperties:selected', data4Display);
+      }
+    };
+
+     var processOl3Features = function (visibleFeatures){
+      var selectedOL3Features = _.filter(visibleFeatures, function(vf){
+        return (_.some(get().concat(featuresToKeep), function(s){
+            return s.linkId === vf.roadLinkData.linkId;
+          })) && (_.some(get().concat(featuresToKeep), function(s){
+            return s.mmlId === vf.roadLinkData.mmlId;
+          }));
+      });
+      eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
+    };
+
+    var openTEST = function(linkId, id, singleLinkSelect, visibleFeatures) {
+      //var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      if (canIOpen) {
+        if(featuresToKeep.length === 0){
+          close();
+        } else {
+          if (!_.isEmpty(current) && !isDirty()) {
+            _.forEach(current, function(selected) { selected.unselect(); });
+          }
+        }
+        if(!_.isUndefined(linkId)){
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+        } else {
+          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+        }
+
+        _.forEach(current, function (selected) {
+          selected.select();
+        });
+        var currentFloatings = _.filter(current, function(curr){
+          return curr.getData().roadLinkType === -1;
+        });
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
+        //Segment to construct adjacency
+        if(checkAdjacency){
+          fillAdjacents(linkId);
+        }
+        var data4Display = _.map(get(), function(feature){
+          return extractDataForDisplay([feature]);
+        });
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
+          if (!_.isEmpty(featuresToKeep)) {
+            applicationModel.addSpinner();
+          }
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        }
+        var contains = _.find(featuresToKeep, function(fk){
+          return fk.linkId === linkId;
+        });
+        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        }
+        eventbus.trigger('linkProperties:selected', data4Display);
+      }
+    };
 
 
-    /*var fillAdjacents = function(linkId){
-     var orderedCurrent = _.sortBy(current, function(curr){
-     return curr.getData().endAddressM;
-     });
-     var previous = _.first(orderedCurrent);
-     var areAdjacent = true;
-     //Quick Check to find if the features in the group are all adjacent
-     _.forEach(_.rest(orderedCurrent),function (oc){
-     areAdjacent = areAdjacent && GeometryUtils.areAdjacents(previous.getPoints(),oc.getPoints());
-     previous = oc;
-     });
-     //If they are then no change to the current is needed, however if they aren't then we need to discover the adjacent network and put that as the current.
-     if(!areAdjacent) {
-     var adjacentNetwork = [];
-     var selectedFeature = _.find(orderedCurrent, function(oc){
-     return oc.getData().linkId === linkId;
-     });
-     var selectedFeatureIndex = _.findIndex(orderedCurrent, function(oc){
-     return oc.getData().linkId === linkId;
-     });
-     //We get the all the roads until the clicked target
-     var firstPart = orderedCurrent.slice(0, selectedFeatureIndex);
-     //Since the clicked target is not included in the slice we need to add it to the head
-     firstPart.push(selectedFeature);
-     //Then we get the roads from the clicked target to the finish
-     var rest = orderedCurrent.slice(selectedFeatureIndex);
-     previous = _.last(firstPart);
-     //we put the clicked target in the network
-     adjacentNetwork = adjacentNetwork.concat(previous);
-     //Then we keep adding to the network until we find the break in adjacency, terminating the cycle
-     for(var i = firstPart.length-2; i >= 0; i--) {
-     if(GeometryUtils.areAdjacents(firstPart[i].getPoints(), previous.getPoints())){
-     adjacentNetwork.push(firstPart[i]);
-     previous = firstPart[i];
-     } else {
-     i = -1;
-     }
-     }
-     previous = _.first(rest);
-     //Same logic as prior but since in this part the clicked target is the in the beginning we just look forward
-     for(var j = 1; j < rest.length; j++) {
-     if(GeometryUtils.areAdjacents(rest[j].getPoints(),previous.getPoints())){
-     adjacentNetwork.push(rest[j]);
-     previous = rest[j];
-     }
-     else {
-     j = rest.length +1;
-     }
-     }
-     //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
-     current = _.sortBy(adjacentNetwork, function(curr){
-     return curr.getData().endAddressM;
-     });
-     }
-     };*/
+    var fillAdjacents = function(linkId){
+      var orderedCurrent = _.sortBy(current, function(curr){
+        return curr.getData().endAddressM;
+      });
+      var previous = _.first(orderedCurrent);
+      var areAdjacent = true;
+      //Quick Check to find if the features in the group are all adjacent
+      _.forEach(_.rest(orderedCurrent),function (oc){
+        areAdjacent = areAdjacent && GeometryUtils.areAdjacents(previous.getPoints(),oc.getPoints());
+        previous = oc;
+      });
+      //If they are then no change to the current is needed, however if they aren't then we need to discover the adjacent network and put that as the current.
+      if(!areAdjacent) {
+        var adjacentNetwork = [];
+        var selectedFeature = _.find(orderedCurrent, function(oc){
+          return oc.getData().linkId === linkId;
+        });
+        var selectedFeatureIndex = _.findIndex(orderedCurrent, function(oc){
+          return oc.getData().linkId === linkId;
+        });
+        //We get the all the roads until the clicked target
+        var firstPart = orderedCurrent.slice(0, selectedFeatureIndex);
+        //Since the clicked target is not included in the slice we need to add it to the head
+        firstPart.push(selectedFeature);
+        //Then we get the roads from the clicked target to the finish
+        var rest = orderedCurrent.slice(selectedFeatureIndex);
+        previous = _.last(firstPart);
+        //we put the clicked target in the network
+        adjacentNetwork = adjacentNetwork.concat(previous);
+        //Then we keep adding to the network until we find the break in adjacency, terminating the cycle
+        for(var i = firstPart.length-2; i >= 0; i--) {
+          if(GeometryUtils.areAdjacents(firstPart[i].getPoints(), previous.getPoints())){
+            adjacentNetwork.push(firstPart[i]);
+            previous = firstPart[i];
+          } else {
+            i = -1;
+          }
+        }
+        previous = _.first(rest);
+        //Same logic as prior but since in this part the clicked target is the in the beginning we just look forward
+        for(var j = 1; j < rest.length; j++) {
+          if(GeometryUtils.areAdjacents(rest[j].getPoints(),previous.getPoints())){
+            adjacentNetwork.push(rest[j]);
+            previous = rest[j];
+          }
+          else {
+            j = rest.length +1;
+          }
+        }
+        //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
+        current = _.sortBy(adjacentNetwork, function(curr){
+          return curr.getData().endAddressM;
+        });
+      }
+    };
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};
@@ -304,54 +340,55 @@
       });
     });
 
-    /*
-     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
-     sources = current;
-     var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
-     if(!_.isUndefined(fetchedFeature)){
-     sources.push(fetchedFeature);
-     featuresToKeep.push(fetchedFeature.getData());
-     }
-     var chainLinks = [];
-     _.each(sources, function(link){
-     if(!_.isUndefined(link))
-     chainLinks.push(link.getData().linkId);
-     });
-     _.each(targets, function(link){
-     chainLinks.push(link.getData().linkId);
-     });
-     var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
-     if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
-     newSources.push(fetchedFeature.getData());
-     var data = _.map(newSources, function (ns){
-     return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
-     "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
-     });
-     backend.getAdjacentsFromMultipleSources(data, function(adjacents){
-     if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-     var nonSelectedAdjacents = _.reject(adjacents, function(adj){
-     var selectedLinkIds = _.map(featuresToKeep, function(features){
-     return features.linkId;
-     });
-     return _.contains(selectedLinkIds, adj.linkId);
-     });
-     var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
-     return t.roadLinkType !== -1;
-     }) :nonSelectedAdjacents ;
 
-     var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
-     return _.merge({}, a, {"marker": markers[index]});
-     }), "links": newSources};
-     eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
-     if(_.isEmpty(calculatedRoads.adjacents))
-     applicationModel.setContinueButton(true);
-     eventbus.trigger('adjacents:startedFloatingTransfer');
-     } else {
-     applicationModel.removeSpinner();
-     }
-     });
-     });
-     */
+    /*
+    eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
+      sources = current;
+      var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
+      if(!_.isUndefined(fetchedFeature)){
+        sources.push(fetchedFeature);
+        featuresToKeep.push(fetchedFeature.getData());
+      }
+      var chainLinks = [];
+      _.each(sources, function(link){
+        if(!_.isUndefined(link))
+          chainLinks.push(link.getData().linkId);
+      });
+      _.each(targets, function(link){
+        chainLinks.push(link.getData().linkId);
+      });
+      var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
+      if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
+        newSources.push(fetchedFeature.getData());
+      var data = _.map(newSources, function (ns){
+        return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
+          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
+      });
+      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
+          var nonSelectedAdjacents = _.reject(adjacents, function(adj){
+            var selectedLinkIds = _.map(featuresToKeep, function(features){
+              return features.linkId;
+            });
+            return _.contains(selectedLinkIds, adj.linkId);
+          });
+          var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
+            return t.roadLinkType !== -1;
+          }) :nonSelectedAdjacents ;
+
+          var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
+            return _.merge({}, a, {"marker": markers[index]});
+          }), "links": newSources};
+          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+          if(_.isEmpty(calculatedRoads.adjacents))
+            applicationModel.setContinueButton(true);
+          eventbus.trigger('adjacents:startedFloatingTransfer');
+        } else {
+          applicationModel.removeSpinner();
+        }
+      });
+    });*/
+
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
@@ -515,44 +552,52 @@
       }
     };
 
-    /*
-     var cancel = function(action, changedTargetIds) {
-     dirty = false;
-     var originalData = _.filter(featuresToKeep, function (feature) {
-     return feature.roadLinkType === -1;
-     });
-     if (action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating) {
-     clearFeaturesToKeep();
-     }
-     if (_.isEmpty(changedTargetIds)) {
-     roadCollection.resetTmp();
-     roadCollection.resetChangedIds();
-     applicationModel.resetCurrentAction();
-     roadCollection.resetNewTmpRoadAddresses();
-     roadCollection.resetPreMovedRoadAddresses();
-     resetSources();
-     resetTargets();
-     previousAdjacents = [];
-     clearFeaturesToKeep();
-     if (applicationModel.getSelectionType() !== 'floating') {
-     eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
-     }
-     }
-     $('#adjacentsData').remove();
-     if (applicationModel.isActiveButtons() || action === -1) {
-     if (action !== applicationModel.actionCalculated) {
-     applicationModel.setActiveButtons(false);
-     eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-     eventbus.trigger('roadLinks:unSelectIndicators', originalData);
-     }
-     applicationModel.setContinueButton(false);
-     eventbus.trigger('roadLinks:deleteSelection');
-     eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-     }
-     applicationModel.toggleSelectionTypeAll();
-     applicationModel.setContinueButton(true);
-     };
-      */
+
+    var cancelAndReselect = function(action, changedTargetIds) {
+      //Selected data backup
+      var originalData = _.filter(featuresToKeep, function (feature) {
+        return feature.roadLinkType === -1;
+      });
+      //Cancelling
+      dirty = false;
+      if (action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating) {
+        clearFeaturesToKeep();
+      }
+      if (_.isEmpty(changedTargetIds)) {
+        clearAndReset(false);
+        $('#adjacentsData').remove();
+        //Reselecting
+        if (applicationModel.getSelectionType() !== 'floating') {
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
+        }
+      }
+      if (applicationModel.isActiveButtons() || action === -1) {
+        if (action !== applicationModel.actionCalculated) {
+          applicationModel.setActiveButtons(false);
+          eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
+        }
+        applicationModel.setContinueButton(false);
+        eventbus.trigger('roadLinks:deleteSelection');
+        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
+      }
+      applicationModel.toggleSelectionTypeAll();
+      applicationModel.setContinueButton(true);
+    };
+
+    var clearAndReset = function(afterSiira){
+      roadCollection.resetTmp();
+      roadCollection.resetChangedIds();
+      applicationModel.resetCurrentAction();
+      roadCollection.resetPreMovedRoadAddresses();
+      clearFeaturesToKeep();
+      if(!afterSiira) {
+        roadCollection.resetNewTmpRoadAddresses();
+        resetSources();
+        resetTargets();
+        previousAdjacents = [];
+      }
+    };
 
     var cancelAfterSiirra = function(action, changedTargetIds) {
       dirty = false;
@@ -562,10 +607,7 @@
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
-        roadCollection.resetTmp();
-        roadCollection.resetChangedIds();
-        roadCollection.resetPreMovedRoadAddresses();
-        clearFeaturesToKeep();
+        clearAndReset(true);
         eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
       }
       $('#adjacentsData').remove();
@@ -639,12 +681,46 @@
       });
     };
 
+    var getCurrentFloatings = function(){
+      return _.filter(current, function(curr){
+        return curr.getData().roadLinkType === -1;
+      });
+    };
+
+    var getFeaturesToKeepFloatings = function() {
+      return _.filter(featuresToKeep, function (fk) {
+        return fk.roadLinkType === -1;
+      });
+    };
+
+    var isLinkIdInCurrent = function(linkId){
+      var currentLinkIds = _.map(current, function(curr){
+        return curr.getData().linkId;
+      });
+      return _.contains(currentLinkIds, linkId);
+    };
+
+    var isLinkIdInFeaturesToKeep = function(linkId){
+      var featuresToKeepLinkIds = _.map(featuresToKeep, function(fk){
+        return fk.linkId;
+      });
+      return _.contains(featuresToKeepLinkIds, linkId);
+    };
+
     var count = function() {
       return current.length;
     };
 
     var getFeaturesToKeep = function(){
       return featuresToKeep;
+    };
+
+    var addToFeaturesToKeep = function(data4Display){
+      if(_.isArray(data4Display)){
+        featuresToKeep = featuresToKeep.concat(data4Display);
+      } else {
+        featuresToKeep.push(data4Display);
+      }
     };
 
     var clearFeaturesToKeep = function() {
@@ -693,6 +769,7 @@
       getTargets: getTargets,
       resetTargets: resetTargets,
       getFeaturesToKeep: getFeaturesToKeep,
+      addToFeaturesToKeep: addToFeaturesToKeep,
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
@@ -701,11 +778,13 @@
       setFeaturesToHighlight:setFeaturesToHighlight,
       close: close,
       open: open,
+      openFloating: openFloating,
       isDirty: isDirty,
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
       cancelAfterSiirra: cancelAfterSiirra,
+      cancelAndReselect: cancelAndReselect,
       continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
@@ -716,7 +795,11 @@
       count: count,
       openMultiple: openMultiple,
       featureExistsInSelection: featureExistsInSelection,
-      isFloatingHomogeneous: isFloatingHomogeneous
+      isFloatingHomogeneous: isFloatingHomogeneous,
+      getCurrentFloatings: getCurrentFloatings,
+      getFeaturesToKeepFloatings: getFeaturesToKeepFloatings,
+      isLinkIdInCurrent: isLinkIdInCurrent,
+      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep
     };
   };
 })(this);

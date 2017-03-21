@@ -111,7 +111,7 @@
   };
 
   var distanceOfPoints = function (end, start) {
-    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
   root.distanceOfPoints = distanceOfPoints;
 
