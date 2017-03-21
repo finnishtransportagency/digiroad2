@@ -36,10 +36,10 @@
           if(!_.isEmpty(unfinishedProjects)){
             var html = '<table align="center">';
             _.each(unfinishedProjects, function(proj) {
-              html += '<tr id="project-item">' +
+              html += '<tr class="project-item">' +
                 '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
                 '<td>'+ staticField('TILA', proj.status)+'</td>'+
-                '<td>'+'<button class="project-item btn btn-new" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
+                '<td>'+'<button class="project-open btn btn-new" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
                 '</tr>';
             });
             html += '</table>';
@@ -49,6 +49,7 @@
             });
           }
         });
+      setTimeout(function(){}, 0);
       projectList.show();
     }
 
