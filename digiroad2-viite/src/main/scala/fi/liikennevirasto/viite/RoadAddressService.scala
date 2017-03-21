@@ -521,7 +521,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
     withDynTransaction {
       try {
         if(roadAddressProject.roadNumber != 0) {
@@ -552,13 +552,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             }
             case _ => {
               RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-              (roadAddressProject)
+              Map("roadAddressProject" -> roadAddressProject)
             }
           }
         }
+        else Map("project" -> projectToApi(roadAddressProject), "projectAddresses" -> None, "formInfo" -> None)
       }
       catch {
         case a: Exception => println(a.getMessage)
+          Map()
       }
     }
   }
