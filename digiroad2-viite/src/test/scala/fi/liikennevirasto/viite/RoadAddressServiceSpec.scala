@@ -286,15 +286,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("save road link project and get form info") {
+    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-        ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-        InUse,NormalLinkInterface)
+
       val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 5, 202, 202)
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
-
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
@@ -307,11 +306,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("save road link project without values") {
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-        ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-        InUse,NormalLinkInterface)
       val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 0, 0, 0)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
@@ -321,13 +316,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("save road link project without valid roadParts") {
+    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-        ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-        InUse,NormalLinkInterface)
       val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 3, 5)
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
