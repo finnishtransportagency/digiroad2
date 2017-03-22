@@ -72,7 +72,7 @@
     };
 
     var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      var canIOpen = (!_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect)) && !applicationModel.isProjectOpen();
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();
@@ -90,22 +90,37 @@
         _.forEach(current, function (selected) {
           selected.select();
         });
+        var currentFloatings = _.filter(current, function(curr){
+          return curr.getData().roadLinkType === -1;
+        });
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
         //Segment to construct adjacency
         if(checkAdjacency){
           fillAdjacents(linkId);
-      }
-        var data4Display = extractDataForDisplay(get());
+        }
+        var data4Display = _.map(get(), function(feature){
+          return extractDataForDisplay([feature]);
+        });
         if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
           if (!_.isEmpty(featuresToKeep)) {
             applicationModel.addSpinner();
           }
-          featuresToKeep.push(data4Display);
-        }
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }        }
         var contains = _.find(featuresToKeep, function(fk){
-          return fk.linkId === data4Display.linkId;
+          return fk.linkId === linkId;
         });
         if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          featuresToKeep.push(data4Display);
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
         }
         eventbus.trigger('linkProperties:selected', data4Display);
       }
@@ -191,7 +206,10 @@
             applicationModel.setCurrentAction(applicationModel.actionCalculating);
           }
           if (!applicationModel.isReadOnly()) {
-            var selectedLinkIds = _.map(_.reject(get().concat(featuresToKeep), function(link){return link.segmentId === "";}), function (roads) {
+            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
+              return link.segmentId === "";
+            });
+            var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
             });
             var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
@@ -246,28 +264,28 @@
         return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
           "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
-     backend.getAdjacentsFromMultipleSources(data, function(adjacents){
-       if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
-         var nonSelectedAdjacents = _.reject(adjacents, function(adj){
-           var selectedLinkIds = _.map(featuresToKeep, function(features){
-             return features.linkId;
-           });
-           return _.contains(selectedLinkIds, adj.linkId);
-         });
-         var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
-           return t.roadLinkType !== -1;
-         }) :nonSelectedAdjacents ;
+      backend.getAdjacentsFromMultipleSources(data, function(adjacents){
+        if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
+          var nonSelectedAdjacents = _.reject(adjacents, function(adj){
+            var selectedLinkIds = _.map(featuresToKeep, function(features){
+              return features.linkId;
+            });
+            return _.contains(selectedLinkIds, adj.linkId);
+          });
+          var filteredAdjacents = applicationModel.getSelectionType() === 'floating' ? _.reject(nonSelectedAdjacents, function(t){
+            return t.roadLinkType !== -1;
+          }) :nonSelectedAdjacents ;
 
-         var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
-           return _.merge({}, a, {"marker": markers[index]});
-         }), "links": newSources};
-         eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
-         if(_.isEmpty(calculatedRoads.adjacents))
-           applicationModel.setContinueButton(true);
-         eventbus.trigger('adjacents:startedFloatingTransfer');
-       } else {
-        applicationModel.removeSpinner();
-       }
+          var calculatedRoads = {"adjacents" : _.map(filteredAdjacents, function(a, index){
+            return _.merge({}, a, {"marker": markers[index]});
+          }), "links": newSources};
+          eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents, additionalSourceLinkId);
+          if(_.isEmpty(calculatedRoads.adjacents))
+            applicationModel.setContinueButton(true);
+          eventbus.trigger('adjacents:startedFloatingTransfer');
+        } else {
+          applicationModel.removeSpinner();
+        }
       });
     });
 
@@ -319,7 +337,8 @@
       }), function (target){
         return !_.isUndefined(target);
       }));
-      var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
+
+      var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
         if(feature.roadLinkType == -1){
           return feature.linkId.toString();
         }
@@ -390,6 +409,10 @@
       }));
     };
 
+    var setSources = function(scs) {
+      sources = scs;
+    };
+
     var getFeaturesToHighlight = function() {
       return featuresToHighlight;
     };
@@ -416,24 +439,29 @@
 
     var cancel = function(action, changedTargetIds) {
       dirty = false;
-      var originalData = _.first(featuresToKeep);
-      if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
+      var originalData = _.filter(featuresToKeep, function (feature) {
+        return feature.roadLinkType === -1;
+      });
+      if (action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating) {
         clearFeaturesToKeep();
-      if(_.isEmpty(changedTargetIds)) {
+      }
+      if (_.isEmpty(changedTargetIds)) {
         roadCollection.resetTmp();
         roadCollection.resetChangedIds();
         applicationModel.resetCurrentAction();
         roadCollection.resetNewTmpRoadAddresses();
         roadCollection.resetPreMovedRoadAddresses();
+        resetSources();
+        resetTargets();
         previousAdjacents = [];
         clearFeaturesToKeep();
         if (applicationModel.getSelectionType() !== 'floating') {
-          eventbus.trigger('linkProperties:selected', _.cloneDeep(originalData));
+          eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
         }
       }
       $('#adjacentsData').remove();
-      if(applicationModel.isActiveButtons() || action === -1){
-        if(action !== applicationModel.actionCalculated){
+      if (applicationModel.isActiveButtons() || action === -1) {
+        if (action !== applicationModel.actionCalculated) {
           applicationModel.setActiveButtons(false);
           eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
           eventbus.trigger('roadLinks:unSelectIndicators', originalData);
@@ -443,12 +471,14 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
-      applicationModel.setContinueButton(false);
+      applicationModel.setContinueButton(true);
     };
 
-    var cancelGreenRoad = function(action, changedTargetIds) {
+    var cancelAfterSiirra = function(action, changedTargetIds) {
       dirty = false;
-      var originalData = _.first(featuresToKeep);
+      var originalData = _.filter(featuresToKeep, function(feature){
+        return feature.roadLinkType === -1;
+      });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
       if(_.isEmpty(changedTargetIds)) {
@@ -469,7 +499,7 @@
           eventbus.trigger('roadLinks:deleteSelection');
         }
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-        applicationModel.setContinueButton(false);
+        applicationModel.setContinueButton(true);
       }
     };
 
@@ -537,7 +567,13 @@
     };
 
     var clearFeaturesToKeep = function() {
-      featuresToKeep = [];
+      if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
+        featuresToKeep = _.filter(featuresToKeep, function(feature){
+          return feature.roadLinkType === -1;
+        });
+      } else {
+        featuresToKeep = [];
+      }
     };
 
     var continueSelectUnknown = function() {
@@ -559,8 +595,18 @@
       return !_.isUndefined(didIfindIt);
     };
 
+    var isFloatingHomogeneous = function(floatingFeature) {
+      var firstFloating = _.first(featuresToKeep);
+      if(floatingFeature.data.roadPartNumber === parseInt(firstFloating.roadPartNumber) && floatingFeature.data.trackCode === firstFloating.trackCode && floatingFeature.data.roadNumber === firstFloating.roadNumber){
+        return true;
+      }else{
+        return false;
+      }
+    };
+
     return {
       getSources: getSources,
+      setSources: setSources,
       resetSources: resetSources,
       addTargets: addTargets,
       getTargets: getTargets,
@@ -578,7 +624,7 @@
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
-      cancelGreenRoad: cancelGreenRoad,
+      cancelAfterSiirra: cancelAfterSiirra,
       continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
@@ -588,7 +634,8 @@
       get: get,
       count: count,
       openMultiple: openMultiple,
-      featureExistsInSelection: featureExistsInSelection
+      featureExistsInSelection: featureExistsInSelection,
+      isFloatingHomogeneous: isFloatingHomogeneous
     };
   };
 })(this);

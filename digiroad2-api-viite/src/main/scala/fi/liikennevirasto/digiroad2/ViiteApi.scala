@@ -27,7 +27,6 @@ case class newRoadAddressProject(name: String, startDate: String, additionalInfo
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val revision: String = Digiroad2Context.revision,
                val deploy_date: String = Digiroad2Context.deploy_date
                )
   extends ScalatraServlet
@@ -66,7 +65,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val config = userProvider.getCurrentUser().configuration
       (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
     }
-    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), revision, deploy_date)
+    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), deploy_date)
   }
 
 
@@ -156,7 +155,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
   }
 
-  put("/roadlinks/roadaddress/project/new"){
+  put("/roadlinks/roadaddress/project/save"){
     val test = parsedBody.extract[newRoadAddressProject]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -279,7 +278,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, revision: String, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
 
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles

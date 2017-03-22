@@ -30,16 +30,21 @@
       }
       else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
         if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1){
-          var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
-            return feature.roadLinkType !== -1;
-          }), 'selectedLinkId': feature.data.linkId};
-          eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          if(selectedLinkProperty.isFloatingHomogeneous(feature)){
+            var data = {'selectedFloatings':_.reject(selectedLinkProperty.getFeaturesToKeep(), function(feature){
+              return feature.roadLinkType !== -1;
+            }), 'selectedLinkId': feature.data.linkId};
+            eventbus.trigger('linkProperties:additionalFloatingSelected', data);
+          }else{
+            unhighlightFeatureByLinkId(feature.attributes.linkId);
+            new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
+          }
         } else {
           if(!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'all' && feature.attributes.roadLinkType === -1){
             applicationModel.toggleSelectionTypeFloating();
           }
           if (selectedLinkProperty.getFeaturesToKeep().length === 0) {
-            if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() === 'floating' && feature.attributes.roadLinkType === -1) {
+            if (!applicationModel.isReadOnly() && ('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()) && feature.attributes.roadLinkType === -1) {
               selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, false, true);
             } else {
               selectedLinkProperty.open(feature.attributes.linkId, feature.attributes.id, _.isUndefined(feature.singleLinkSelect) ? true : feature.singleLinkSelect);
@@ -51,13 +56,12 @@
           currentRenderIntent = 'select';
           roadLayer.redraw();
           highlightFeatures();
-
           if (selectedLinkProperty.getFeaturesToKeep().length > 1 && applicationModel.getSelectionType()!== 'unknown') {
             var floatingMinusLast = _.initial(selectedLinkProperty.getFeaturesToKeep());
             floatingMinusLast.forEach(function (fml) {
               highlightFeatureByLinkId(fml.linkId);
             });
-          } else if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown') {
+          } else if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown'){
             selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
               highlightFeatureByLinkId(fml.data.linkId);
             });
@@ -71,7 +75,6 @@
           });
         }
       }
-
     };
 
     var unselectRoadLink = function() {
@@ -124,29 +127,29 @@
       unselectAll: unselectAllRoadLinks
     });
     roadLayer.layer.events.register("beforefeatureselected", this, function(event){
-        if(applicationModel.isActiveButtons()) {
-            var feature = event.feature.attributes;
-            if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all') {
-                return true;
+      if(applicationModel.isActiveButtons()) {
+        var feature = event.feature.attributes;
+        if (applicationModel.isReadOnly() || applicationModel.getSelectionType() === 'all') {
+          return true;
+        } else {
+          if (applicationModel.getSelectionType() === 'floating') {
+            if (feature.roadLinkType !== -1) {
+              me.displayConfirmMessage();
+              return false;
             } else {
-                if (applicationModel.getSelectionType() === 'floating') {
-                    if (feature.roadLinkType !== -1) {
-                        me.displayConfirmMessage();
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
-                if (applicationModel.getSelectionType() === 'unknown') {
-                    if (feature.roadLinkType !== 0 && feature.anomaly !== 1 && !applicationModel.isActiveButtons()) {
-                        me.displayConfirmMessage();
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
+              return true;
             }
+          }
+          if (applicationModel.getSelectionType() === 'unknown') {
+            if (feature.roadLinkType !== 0 && feature.anomaly !== 1 && !applicationModel.isActiveButtons()) {
+              me.displayConfirmMessage();
+              return false;
+            } else {
+              return true;
+            }
+          }
         }
+      }
     });
 
     map.addControl(selectControl);
@@ -293,7 +296,9 @@
         var feature = _.find(roadLayer.layer.features, function (feat) {
           return feat.attributes.linkId === floatlink.linkId;
         });
-        if(event.type === 'click' || event.type === 'dblclick'){
+        if(event.type === 'click'){
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else if( event.type === 'dblclick'){
           selectControl.select(_.assign({singleLinkSelect: true}, feature));
         } else {
           selectControl.unselectAll();
@@ -575,7 +580,7 @@
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
-        selectedLinkProperty.cancelGreenRoad(applicationModel.actionCalculated, changedIds);
+        selectedLinkProperty.cancelAfterSiirra(applicationModel.actionCalculated, changedIds);
       });
 
       eventbus.on('linkProperties:reselectRoadLink', function(){
@@ -584,7 +589,6 @@
       });
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
-
         if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
           indicatorLayer.clearMarkers();
           var floatingsLinkIds = _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (feature) {
@@ -592,7 +596,7 @@
           }), function (floating) {
             return floating.linkId;
           });
-          _.defer(function(){
+          _.defer(function () {
             _.map(roadLayer.layer.features, function (feature) {
               if (_.contains(floatingsLinkIds, feature.attributes.linkId)) {
                 selectControl.select(feature);
@@ -600,7 +604,7 @@
             });
           });
         } else {
-          var selectedFloatings = _.filter(selectedLinkProperty.get(), function(features){
+          var selectedFloatings = _.filter(selectedLinkProperty.get(), function (features) {
             return features.roadLinkType == -1;
           });
           _.each(selectedFloatings, function(sf){
@@ -608,24 +612,33 @@
           });
         }
       });
+
       eventListener.listenTo(eventbus, 'roadLinks:deleteSelection', function () {
         prepareRoadLinkDraw();
       });
+
       eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function (originalFeature) {
         prepareRoadLinkDraw();
         clearIndicators();
         selectControl.unselectAll();
         roadCollection.getAll();
+        if (applicationModel.getSelectionType() !== 'floating') {
           var features = [];
-          _.each(roadLayer.layer.features, function (feature) {
-            if (feature.data.linkId == originalFeature.linkId)
-              features.push(feature);
+          var extractedLinkIds = _.map(originalFeature,function(of){
+            return of.linkId;
           });
+          _.each(roadLayer.layer.features, function (feature) {
+            if (!_.contains(extractedLinkIds, feature.data.linkId) && feature.data.roadLinkType === -1){
+              features.push(feature);
+            }
+          });
+
           if (!_.isEmpty(features)) {
             currentRenderIntent = 'select';
             selectControl.select(_.first(features));
             highlightFeatures();
           }
+        }
       });
 
       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
@@ -752,7 +765,7 @@
       _.each(roadLayer.layer.features, function(feature) {
         _.each(floatingFeatures, function(floating) {
           if(!_.isEmpty(floatingFeatures)){
-            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds) && feature.data.anomaly == 1){
+            if(feature.geometry.bounds.containsBounds(floating.geometry.bounds)  && feature.data.anomaly == 1) {
               selectControl.highlight(feature);
               featuresToHighlight.push(feature);
             }

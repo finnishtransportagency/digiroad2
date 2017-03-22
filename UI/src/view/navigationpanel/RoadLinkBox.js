@@ -241,8 +241,7 @@
     bindEventHandlers(elements.expanded);
 
     function show() {
-      if (( (_.contains(userRoles, 'busStopMaintainer')) || (_.isEmpty(userRoles)) ) &&
-          !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))) {
+      if (editModeToggle.hasNoRolesPermission(userRoles)) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());

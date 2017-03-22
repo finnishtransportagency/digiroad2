@@ -16,6 +16,7 @@
         button.removeClass('read-only-btn').addClass('edit-mode-btn');
         button.removeClass('btn-secondary').addClass('btn-primary');
         toolSelection.hide();
+        applicationModel.setOpenProject(false);
       } else {
         button.removeClass('edit-mode-btn').addClass('read-only-btn');
         button.removeClass('btn-primary').addClass('btn-secondary');

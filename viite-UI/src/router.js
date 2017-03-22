@@ -56,8 +56,20 @@
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if(!_.isEmpty(models.selectedLinkProperty.get())){
-      router.navigate('linkProperty/' + linkProperty.linkId);
+        if(_.isArray(linkProperty)){
+          router.navigate('linkProperty/' + _.first(linkProperty).linkId);
+        } else {
+          router.navigate('linkProperty/' + linkProperty.linkId);
+        }
       }
+    });
+
+    eventbus.on('linkProperties:selectedProject', function (linkId) {
+        router.navigate('linkProperty/' + linkId);
+      applicationModel.selectLayer('linkProperty');
+      backend.getRoadLinkByLinkId(linkId, function (response) {
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 10);
+      });
     });
 
     eventbus.on('layer:selected', function (layer) {
