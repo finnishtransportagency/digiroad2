@@ -579,6 +579,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       "status" -> roadAddressProject.status
     )
   }
+
+  def getRoadAddressProjects(): Seq[RoadAddressProject] = {
+    withDynTransaction {
+        val projects = RoadAddressDAO.getRoadAddressProjects()
+        projects
+    }
+  }
+
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
