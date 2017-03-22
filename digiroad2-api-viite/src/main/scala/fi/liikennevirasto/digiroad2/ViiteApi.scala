@@ -155,12 +155,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
   }
 
-  put("/roadlinks/roadaddress/project/new"){
+  put("/roadlinks/roadaddress/project/save"){
     val test = parsedBody.extract[newRoadAddressProject]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject  = RoadAddressProject( 0, 1, test.name, user.username, "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
-    roadAddressService.saveRoadLinkProject(roadAddressProject)
+    (roadAddressService.saveRoadLinkProject(roadAddressProject))
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

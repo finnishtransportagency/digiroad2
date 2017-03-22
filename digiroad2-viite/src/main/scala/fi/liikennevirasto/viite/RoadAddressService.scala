@@ -519,7 +519,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
     withDynTransaction {
       try {
         if(roadAddressProject.roadNumber != 0) {
@@ -533,25 +533,51 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                 for (part <- project.startPart to project.endPart) {
                   val addresses = RoadAddressDAO.fetchByRoadPart(project.roadNumber, part)
                   addresses.foreach(address =>
-                    try {
-                      RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project)
-                    } catch
-                      {
-                        case _:SQLException =>
-                        //TODO what to do when reserved, now we just dismiss all that we couldn't add
-                      }
-                  )
+                    RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
                 }
               }
+
+              val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+              val groupedAddresses = createdAddresses.groupBy{address =>
+                (address.roadNumber, address.roadPartNumber)}.toSeq.sortBy(_._1._2 )(Ordering[Long])
+              val formInfo = groupedAddresses.map(addressGroup =>{
+                val lastAddressM = addressGroup._2.last.endAddrM
+                val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
+                addressFormLine
+              })
+              Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
             }
-            case _ => RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+            case _ => {
+              RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+              Map("roadAddressProject" -> roadAddressProject)
+            }
           }
         }
+        else Map("project" -> projectToApi(roadAddressProject), "projectAddresses" -> None, "formInfo" -> None)
       }
       catch {
         case a: Exception => println(a.getMessage)
+          Map()
       }
     }
+  }
+
+  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    Map(
+      "id" -> roadAddressProject.id,
+      "roadNumber" -> roadAddressProject.roadNumber,
+      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
+      "startDate" -> roadAddressProject.startDate.toString(formatter),
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "createdBy" -> roadAddressProject.createdBy,
+      "endPart" -> roadAddressProject.endPart,
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "name" -> roadAddressProject.name,
+      "startPart" -> roadAddressProject.startPart,
+      "status" -> roadAddressProject.status
+    )
   }
 }
 
