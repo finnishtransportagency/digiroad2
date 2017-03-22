@@ -178,7 +178,6 @@ trait TierekisteriClient{
   protected val auth = new TierekisteriAuthPropertyReader
   protected lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def createJson(trMassTransitStop: TierekisteriType) : StringEntity
   def mapFields(data: Map[String, Any]): TierekisteriType
 
   protected def request[T](url: String): Either[T, TierekisteriError] = {
@@ -200,7 +199,7 @@ trait TierekisteriClient{
     }
   }
 
-  protected def post(url: String, trMassTransitStop: TierekisteriType): Option[TierekisteriError] = {
+  protected def post(url: String, trMassTransitStop: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(trMassTransitStop))
@@ -222,7 +221,7 @@ trait TierekisteriClient{
     }
   }
 
-  protected def put(url: String, tnMassTransitStop: TierekisteriType): Option[TierekisteriError] = {
+  protected def put(url: String, tnMassTransitStop: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPut(url)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(tnMassTransitStop))
@@ -301,6 +300,22 @@ trait TierekisteriClient{
     new SimpleDateFormat(dateFormat).format(date)
   }
 
+  protected def getFieldValue(data: Map[String, Any], field: String): Option[String] = {
+    try {
+      data.get(field).map(_.toString) match {
+        case Some(value) => Some(value)
+        case _ => None
+      }
+    } catch {
+      case ex: NullPointerException => None
+    }
+  }
+  protected def getMandatoryFieldValue(data: Map[String, Any], field: String): Option[String] = {
+    val fieldValue = getFieldValue(data, field)
+    if (fieldValue.isEmpty)
+      throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+    fieldValue
+  }
 }
 
 class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient{
@@ -391,7 +406,7 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
     */
   def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
     logger.info("Creating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
-    post(serviceUrl, trMassTransitStop) match {
+    post(serviceUrl, trMassTransitStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ; // do nothing
     }
@@ -407,7 +422,7 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
     val liviId = overrideLiviIdOption.getOrElse(trMassTransitStop.liviId)
     val trStop = trMassTransitStop.copy(modifiedBy = overrideUserNameOption.getOrElse(trMassTransitStop.modifiedBy))
     logger.info("Updating stop %s in Tierekisteri".format(liviId))
-    put(serviceUrl(liviId), trStop) match {
+    put(serviceUrl(liviId), trStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
     }
@@ -428,7 +443,7 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
   }
 
 
-  override def createJson(trMassTransitStop: TierekisteriType) = {
+  protected def createJson(trMassTransitStop: TierekisteriType) = {
 
     val jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
@@ -466,42 +481,26 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
   }
 
   override def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
-    def getFieldValue(field: String): Option[String] = {
-      try {
-        data.get(field).map(_.toString) match {
-          case Some(value) => Some(value)
-          case _ => None
-        }
-      } catch {
-        case ex: NullPointerException => None
-      }
-    }
-    def getMandatoryFieldValue(field: String): Option[String] = {
-      val fieldValue = getFieldValue(field)
-      if (fieldValue.isEmpty)
-        throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
-      fieldValue
-    }
 
     //Mandatory fields
-    val nationalId = convertToLong(getMandatoryFieldValue(trNationalId)).get
-    val roadSide = TRRoadSide.apply(getMandatoryFieldValue(trSide).get)
-    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
-    val liviId = getMandatoryFieldValue(trLiviId).get
-    val stopType = StopType.apply(getMandatoryFieldValue(trStopType).get)
-    val modifiedBy = getMandatoryFieldValue(trUser).get
-    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
-      convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(trDistance)).get,None)
+    val nationalId = convertToLong(getMandatoryFieldValue(data, trNationalId)).get
+    val roadSide = TRRoadSide.apply(getMandatoryFieldValue(data, trSide).get)
+    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(data, trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(data, trIsExpress))))
+    val liviId = getMandatoryFieldValue(data, trLiviId).get
+    val stopType = StopType.apply(getMandatoryFieldValue(data, trStopType).get)
+    val modifiedBy = getMandatoryFieldValue(data, trUser).get
+    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(data, trRoadNumber)).get,
+      convertToInt(getMandatoryFieldValue(data, trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(data, trDistance)).get,None)
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
-    val stopCode = getFieldValue(trStopCode)
-    val nameFi = getFieldValue(trNameFi)
-    val nameSe = getFieldValue(trNameSe)
-    val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
-    val operatingTo = convertToDate(getFieldValue(trOperatingTo))
-    val removalDate = convertToDate(getFieldValue(trRemovalDate))
-    val inventoryDate = convertToDate(Some(getFieldValue(trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
+    val stopCode = getFieldValue(data, trStopCode)
+    val nameFi = getFieldValue(data, trNameFi)
+    val nameSe = getFieldValue(data, trNameSe)
+    val operatingFrom = convertToDate(getFieldValue(data, trOperatingFrom))
+    val operatingTo = convertToDate(getFieldValue(data, trOperatingTo))
+    val removalDate = convertToDate(getFieldValue(data, trRemovalDate))
+    val inventoryDate = convertToDate(Some(getFieldValue(data, trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)
@@ -542,10 +541,12 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endDistance
 
-  //TODO
-  override def createJson(trMassTransitStop: TierekisteriAssetData): StringEntity = ???
-  //TODO
-  override def mapFields(data: Map[String, Any]): TierekisteriAssetData = ???
+  override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
+    //Mandatory field
+    val ktv = convertToInt(getMandatoryFieldValue(data, trKTV)).get
+
+    TierekisteriAssetData(ktv)
+  }
 
   /**
     * Return all asset data currently active from Tierekisteri
