@@ -145,9 +145,11 @@
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
         largeInputField(project.additionalInfo)+
         '<div class="form-group">' +
+        '<label class="control-label"></label>' +
         addSmallLabel('TIE')+ addSmallLabel('AOSA')+ addSmallLabel('LOSA')+
         '</div>'+
         '<div class="form-group">' +
+        '<label class="control-label">Tieosat</label>' +
         addSmallInputNumber('tie', project.roadNumber)+ addSmallInputNumber('aosa', project.startPart)+ addSmallInputNumber('losa', project.endPart)+
         '</div>'+
         '</form>' +
