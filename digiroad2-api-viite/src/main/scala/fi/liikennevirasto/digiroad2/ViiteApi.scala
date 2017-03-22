@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
-case class newRoadAddressProject(name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
+case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -156,10 +156,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress/project/save"){
-    val test = parsedBody.extract[newRoadAddressProject]
+    val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( 0, 1, test.name, user.username, DateTime.now(), "-", formatter.parseDateTime(test.startDate), DateTime.now(), test.additionalInfo, test.roadNumber, test.startPart, test.endPart)
+    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {

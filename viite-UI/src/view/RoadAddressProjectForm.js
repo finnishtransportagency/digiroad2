@@ -1,6 +1,6 @@
 (function (root) {
   root.RoadAddressProjectForm = function(projectCollection) {
-
+    var currentProject;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -76,7 +76,7 @@
         '<footer>' + buttons + '</footer>');
     };
 
-    var openProjectTemplate = function(project, formInfo, info) {
+    var openProjectTemplate = function(project, formInfo) {
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -158,7 +158,7 @@
             '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
           '</div>';
         });
-        rootElement.html(openProjectTemplate(result.project, text, result.formInfo[0]));
+        rootElement.html(openProjectTemplate(result.project, text));
 
         jQuery('.modal-overlay').remove();
         addDatePicker();
@@ -169,7 +169,7 @@
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
-        projectCollection.createProject(data);
+        projectCollection.createProject(data, currentProject);
       });
     
       rootElement.on('click', '.project-form button.cancel', function(){
