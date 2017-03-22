@@ -551,11 +551,12 @@
      { type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
      };
 
+     /*
      var unknownLimitStyleRule = new OpenLayers.Rule({
      filter: typeFilter('roadAddressAnomaly'),
      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
      });
-
+     */
      /*
      browseStyle.addRules([unknownLimitStyleRule]);
      var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
