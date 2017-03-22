@@ -168,6 +168,7 @@
 
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
+        applicationModel.addSpinner();
         projectCollection.createProject(data);
       });
     
