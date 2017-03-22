@@ -3,7 +3,7 @@
     var projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
-    projectList.append('<div id="project-list"></div>');
+    projectList.append('<div id="project-list" style="width:700px; height:400px; overflow:auto;"></div>');
     projectList.append('<div class="actions" style="position: absolute; bottom: 0px; right: 0px">' +
       '<button class="new btn btn-primary">Uusi tieosoiteprojekti</button></div>');
 
