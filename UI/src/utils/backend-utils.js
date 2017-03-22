@@ -249,24 +249,24 @@
       }
     }, 1000);
 
-    this.splitLinearAssets = function(id, splitMeasure, createdValue, existingValue, success, failure) {
+    this.splitLinearAssets = function(typeId, id, splitMeasure, createdValue, existingValue, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/linearassets/" + id,
-        data: JSON.stringify({splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
+        data: JSON.stringify({typeId: typeId, splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
         dataType: "json",
         success: success,
         error: failure
       });
     };
 
-    this.separateLinearAssets = function(id, valueTowardsDigitization, valueAgainstDigitization, success, failure) {
+    this.separateLinearAssets = function(typeId, id, valueTowardsDigitization, valueAgainstDigitization, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/linearassets/" + id + "/separate",
-        data: JSON.stringify({valueTowardsDigitization: valueTowardsDigitization, valueAgainstDigitization: valueAgainstDigitization}),
+        data: JSON.stringify({typeId: typeId, valueTowardsDigitization: valueTowardsDigitization, valueAgainstDigitization: valueAgainstDigitization}),
         dataType: "json",
         success: success,
         error: failure
