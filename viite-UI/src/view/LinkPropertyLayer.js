@@ -84,7 +84,7 @@
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
-      
+
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
@@ -162,7 +162,7 @@
       });
 
       //if event selected is undefined, in this case if is the map
-     if (!_.isUndefined(selection)) {
+      if (!_.isUndefined(selection)) {
 
         //Disable selection of other roads different than anomaly or floating
         if (!applicationModel.isReadOnly() && selection.roadLinkData.anomaly !== 1 && selection.roadLinkData.roadLinkType !== -1) {
@@ -200,12 +200,16 @@
               }
 
               selectedLinkProperty.close();
-              if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
-                selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
-                //selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
+              if (selection.roadLinkData.roadLinkType === -1 &&
+                ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
+                applicationModel.isReadOnly()) {
+                selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
               } else {
-                selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
-                //selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
+                if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
+                  selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
+                } else {
+                  selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
+                }
               }
             }
           }
@@ -433,7 +437,7 @@
         anomalousMarkerLayer.getSource().clear();
 
       /*roadLayer.drawRoadLinks(roadLinks, zoom);
-      drawDashedLineFeaturesIfApplicable(roadLinks);*/
+       drawDashedLineFeaturesIfApplicable(roadLinks);*/
 
       if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -540,6 +544,7 @@
      var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
      var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
      browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
+     */
 
      var typeFilter = function(type) {
      return new OpenLayers.Filter.Comparison(
@@ -551,6 +556,7 @@
      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
      });
 
+     /*
      browseStyle.addRules([unknownLimitStyleRule]);
      var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
      vectorLayer.setOpacity(1);
