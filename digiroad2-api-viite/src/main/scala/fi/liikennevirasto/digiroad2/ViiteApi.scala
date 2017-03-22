@@ -164,7 +164,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
-    //val user = userProvider.getCurrentUser()
     val projects = roadAddressService.getRoadAddressProjects()
     projects.map(roadAddressProjectToApi)
   }
