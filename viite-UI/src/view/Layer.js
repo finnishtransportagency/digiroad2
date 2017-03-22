@@ -5,9 +5,9 @@
     var mapOverLinkMiddlePoints = function(links, transformation) {
       return _.map(links, function(link) {
         var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return new ol.geom.Point([point.x, point.y]);
         });
-        var lineString = new OpenLayers.Geometry.LineString(points);
+        var lineString = new ol.geom.LineString(points);
         var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
         return transformation(link, middlePoint);
       });
