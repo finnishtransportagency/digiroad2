@@ -538,8 +538,8 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber
   private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance
-  private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int) : String =
-    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endDistance
+  private def serviceUrl(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endPart: Int, endDistance: Int) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endPart + "/" + endDistance
 
   override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
     //Mandatory field
@@ -556,10 +556,11 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
     */
   def fetchActiveAssetData(assetType: String, roadNumber: Int): Seq[TierekisteriAssetData] = {
     request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber)) match {
-      case Left(content) =>
+      case Left(content) => {
         content.map{
           asset => mapFields(asset)
         }
+      }
       case Right(null) => Seq()
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
@@ -587,8 +588,8 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
     }
   }
 
-  def fetchActiveAssetData(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
-    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endDistance)) match {
+  def fetchActiveAssetData(assetType: String, roadNumber: Int, roadPartNumber: Int, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
+    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
       case Left(content) =>
         content.map{
           asset => mapFields(asset)
